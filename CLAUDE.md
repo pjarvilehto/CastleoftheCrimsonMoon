@@ -21,11 +21,14 @@ progression (training, alchemy, forge) in the hub between runs.
 - **Play-stats dashboard:** https://www.castleofthecrimsonmoon.com/analytics/
   (0.095, `analytics/`, static). Every finished run appends a record to
   `profile.history` (`src/meta/history.js`, from `settleRun`; newest 250
-  kept; save v3). The page reads this browser's save live, plus testers'
-  save codes pasted in (title screen → Export Save); imported players are
-  kept in that browser only. There is no server: nothing is collected
-  automatically — a collector (e.g. a Cloudflare Worker) would be a new
-  data source for `analytics/stats.js`.
+  kept; save v3). Automatic collection (0.102): `src/meta/telemetry.js`
+  POSTs the save's history (anonymous random `playerId`, no IPs/personal
+  data) after every run and once per session to the Cloudflare Worker in
+  `collector/` (KV, merges history by timestamp; setup in
+  `collector/README.md`), whose URL goes in `assets/data/telemetry.json`
+  `endpoint` (empty = off; never sends from localhost or Node). The
+  dashboard reads it back (`GET /players?key=READ_KEY`) plus this
+  browser's save and pasted save codes, deduped by playerId.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
   Read it before making structural changes.
 
@@ -213,7 +216,8 @@ static play-stats page.
   the canvas loop only runs while particles live and is off when the 3D
   background fell back to flat.
 - Keep files under ~300 lines; one responsibility per file.
-- A dialog layered over a scene takes the keyboard with `setKeyTrap(fn)`
+- Yes/no dialogs: `ui/confirmPrompt.js` (0.102; e.g. Descend with unspent
+  XP/coins). A dialog layered over a scene takes the keyboard with `setKeyTrap(fn)`
   (scene.js; see `updatePrompt.js`) and releases it with `setKeyTrap(null)`,
   so the scene's hotkeys can't fire underneath. A scene that is mid-run
   sets `inRun: true` on its scene object (a reload there would lose the
@@ -235,7 +239,7 @@ static play-stats page.
 - Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
   only compressed bytes warm and decodes the playing bed on demand.
 
-## Backlog (as of 0.098)
+## Backlog (as of 0.102)
 
 - Engineering: switch Pages to deploy through the test workflow once the
   HTTPS setup is settled (see CI above) · font as WOFF2 (212KB TTF).
@@ -244,6 +248,6 @@ static play-stats page.
   simulator) and meta saturates past ~60 runs — deeper tiers or NG+ ·
   thorns relic is a flat 4 damage, weak against scaled enemy HP · more
   room kinds · music loop variations · portrait-phone layout.
-- Other: automatic play-stats collection (e.g. a Cloudflare Worker) ·
+- Other: deploy the play-stats collector (collector/README.md) ·
   check the DIN Condensed web-embedding licence (macOS system font) ·
   orphaned legacy staging site cleanup.

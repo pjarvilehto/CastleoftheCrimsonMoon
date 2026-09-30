@@ -1,5 +1,5 @@
 {
-  "version": "0.101",
+  "version": "0.102",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -20,6 +20,7 @@
     "src/meta/leveling.js",
     "src/meta/profile.js",
     "src/meta/storage.js",
+    "src/meta/telemetry.js",
     "src/run/combat.js",
     "src/run/loot.js",
     "src/run/roomGen.js",
@@ -35,6 +36,7 @@
     "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
     "src/ui/combatQueue.js",
+    "src/ui/confirmPrompt.js",
     "src/ui/deathModal.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
@@ -48,6 +50,10 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.102": [
+      "Descending with XP or coins still to spend now asks first",
+      "Play stats are shared automatically (anonymous) so the developer sees every tester's runs"
+    ],
     "0.101": [
       "The mist is now made of big soft drifting fog banks that sit between things in the scene — sideways on the ramparts, rolling in at the gate",
       "Smoother backgrounds: the fog costs far less, high-DPI screens render fewer pixels, and slow devices lower quality step by step instead of stuttering"

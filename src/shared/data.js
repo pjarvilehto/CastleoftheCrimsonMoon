@@ -4,7 +4,7 @@
 export const DATA = {};
 
 export async function loadData() {
-  const files = ['enemies', 'items', 'difficulty', 'backgrounds', 'shrines', 'build'];
+  const files = ['enemies', 'items', 'difficulty', 'backgrounds', 'shrines', 'build', 'telemetry'];
   await Promise.all(files.map(async (name) => {
     // no-cache = always revalidate (cheap 304 when unchanged): balance data
     // must match the code version that just loaded (0.082).

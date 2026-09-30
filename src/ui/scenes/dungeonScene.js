@@ -14,6 +14,7 @@
 
 import { el, setBackground, show, transitionTo } from '../../core/scene.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
+import { shareStats } from '../../meta/telemetry.js';
 import { getProfile } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
 import { logLine, itemName } from '../hud.js';
@@ -282,7 +283,7 @@ export function dungeonScene() {
   }
 
   function endRun(root, outcome) {
-    settleRun(run, outcome);
+    shareStats(settleRun(run, outcome)); // play stats (0.102)
     show(runEndScene(run, outcome));
   }
 }

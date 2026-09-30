@@ -1,0 +1,4 @@
+{
+  "_doc": "Automatic play stats (0.102): when endpoint is set, the game sends this browser's run history (anonymous random player id, no personal data) to the collector Worker in collector/ after every run and once per session; the /analytics/ dashboard reads it back. Empty endpoint = nothing is sent. Setup: collector/README.md.",
+  "endpoint": ""
+}

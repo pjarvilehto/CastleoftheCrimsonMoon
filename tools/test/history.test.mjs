@@ -81,3 +81,57 @@ fresh();
   const fxSrc = readFileSync('src/ui/combatFx.js', 'utf8');
   ok('crit numbers carry a CRIT! caption', fxSrc.includes("fx.crit ? 'CRIT!' : null") && /\.fx-tag \{[^}]*display: block/.test(readFileSync('styles.css', 'utf8')));
 }
+
+// T65: 0.102 — automatic play stats: the game sends its history to the
+// collector (anonymous id, dashboard fields only) — never from Node, a
+// local host, an empty endpoint or a save with no runs; the Worker
+// validates, merges history by timestamp and gates reads with its key.
+{
+  const tm = await import('../../src/meta/telemetry.js');
+  const wk = await import('../../collector/worker.js');
+  const realFetch = globalThis.fetch, realLoc = globalThis.location, ep = DATA.telemetry.endpoint;
+  const sent = [];
+  globalThis.fetch = async (url, opts) => { sent.push({ url, opts }); return { ok: true }; };
+  const p = getProfile();
+  p.history = [{ at: 5, build: '0.102', outcome: 'death', room: 4 }];
+  ok('telemetry ships off (empty endpoint) and never sends from tests', ep === '' && tm.shareStats(p) === false && sent.length === 0);
+  DATA.telemetry.endpoint = 'https://stats.example/';
+  globalThis.location = { hostname: 'localhost' };
+  ok('no stats from a local dev server', tm.shareStats(p) === false && sent.length === 0);
+  globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
+  ok('no stats from a save without runs', tm.shareStats({ ...p, history: [] }) === false && sent.length === 0);
+  ok('live site: the history goes to the collector', tm.shareStats(p) === true && sent.length === 1 && sent[0].url === 'https://stats.example/collect'
+    && sent[0].opts.method === 'POST' && sent[0].opts.headers['content-type'] === 'text/plain');
+  const body = JSON.parse(sent[0].opts.body);
+  ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
+    && Object.keys(body.profile).sort().join() === 'coins,equipment,history,playerId,potionCap,potions,records,stats,xp');
+  const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
+  ok('sent after every run and once per session', src.includes('shareStats(settleRun(run, outcome))') && src.includes('shareStats(getProfile())'));
+  globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
+
+  // the Worker, against an in-memory KV
+  const kv = new Map();
+  const env = { READ_KEY: 'k', STATS: {
+    get: async (k) => (kv.has(k) ? JSON.parse(kv.get(k)) : null),
+    put: async (k, v) => { kv.set(k, v); },
+    list: async ({ prefix }) => ({ keys: [...kv.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })), list_complete: true }),
+  } };
+  const post = (obj, cf) => wk.default.fetch(Object.assign(new Request('https://w/collect', { method: 'POST', body: typeof obj === 'string' ? obj : JSON.stringify(obj) }), { cf }), env);
+  const run = (at) => ({ at, room: at });
+  const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] } }, { country: 'FI' });
+  const r2 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(3)] } }); // e.g. after a progress wipe
+  const rec = JSON.parse(kv.get('player:abc123'));
+  ok('collector stores a player by id; history merged by timestamp (a wipe loses nothing)', r1.status === 200 && r2.status === 200
+    && rec.profile.history.map((r) => r.at).join() === '1,2,3' && rec.country === 'FI' && !JSON.stringify(rec).includes('ip'));
+  const bad = await Promise.all([post('nope'), post({ playerId: '../x', profile: { history: [] } }), post({ playerId: 'abcd', profile: {} }),
+    post({ playerId: 'abcd', profile: { history: [], pad: 'x'.repeat(300000) } })]);
+  ok('collector rejects bad json, ids, payloads and oversize bodies', bad.map((r) => r.status).join() === '400,400,400,413' && kv.size === 1);
+  const locked = await wk.default.fetch(new Request('https://w/players'), env);
+  const open = await wk.default.fetch(new Request('https://w/players?key=k'), env);
+  const list = await open.json();
+  ok('reading players needs the key', locked.status === 401 && open.status === 200 && list.players.length === 1 && list.players[0].playerId === 'abc123');
+  ok('collector answers CORS preflight', (await wk.default.fetch(new Request('https://w/collect', { method: 'OPTIONS' }), env)).headers.get('access-control-allow-origin') === '*');
+  const dash = readFileSync('analytics/dashboard.js', 'utf8');
+  ok('dashboard: collected players, deduped by player id, names kept locally', dash.includes('/players?key=') && dash.includes('seen.has(id)') && dash.includes("write(NAMES,"));
+  resetProfile();
+}

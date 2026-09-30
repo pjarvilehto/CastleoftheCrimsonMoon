@@ -168,3 +168,35 @@ process.on('uncaughtException', (e) => {
   ok('Esc closes; the keyboard is released', !prompt() && handleKey('zz') === false);
   globalThis.fetch = realFetch; globalThis.document.body = realBody; globalThis.location = realLoc;
 }
+
+// T64: 0.102 — Descend with XP / coins still to spend asks first; the
+// default answer is to stay. Nothing to spend: straight down.
+{
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const dialog = () => body.children.find((c) => c.className === 'update-overlay');
+  resetProfile();
+  show(hubScene());
+  await sleep(1100);
+  handleKey('d');
+  await sleep(1300);
+  ok('nothing to spend: Descend goes straight down', !dialog() && t().includes('Room 1'));
+  resetProfile();
+  getProfile().xp = 5000; getProfile().coins = 12345;
+  show(hubScene());
+  await sleep(1100);
+  handleKey('d');
+  const d = dialog();
+  ok('unspent XP / coins: Descend asks first', !!d && d.textContent.includes('5,000 XP and 12,345 Coins') && d.textContent.includes('Are you sure') && t().includes('GREAT HALL'));
+  ok('the hall\'s hotkeys are held while it asks', (handleKey('b'), !!dialog()) && t().includes('GREAT HALL'));
+  handleKey('escape');
+  await sleep(1300);
+  ok('Esc / Stay and Spend keeps you in the Great Hall', !dialog() && t().includes('GREAT HALL'));
+  handleKey('d');
+  handleKey('y');
+  await sleep(1300);
+  ok('Descend Anyway goes down', !dialog() && t().includes('Room 1'));
+  globalThis.document.body = realBody;
+  resetProfile();
+}

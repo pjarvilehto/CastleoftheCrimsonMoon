@@ -17,6 +17,7 @@ import { statBox, describeItem, itemName } from '../hud.js';
 import { play } from '../../audio/music.js';
 import { dungeonScene } from './dungeonScene.js';
 import { titleScene } from './titleScene.js';
+import { confirmPrompt } from '../confirmPrompt.js';
 
 // Great Hall potion count color (0.089): green when the satchel is full,
 // red when running low (1 or none, or a quarter of the satchel or less).
@@ -59,7 +60,22 @@ export function hubScene() {
   // Descend (0.098): the dungeon's art loads in the background after the
   // title; if the player is quicker, the button waits for it (showing the
   // progress) rather than letting the first room paint half-drawn.
-  async function descend(btn) {
+  // Unspent XP / coins (0.102): something could still be trained or
+  // bought — ask once before leaving, the default answer is to stay.
+  function descend(btn) {
+    const p = getProfile();
+    const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendCoins(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
+    if (!left.length) return go(btn);
+    confirmPrompt({
+      title: 'Descend Now?',
+      lines: [`You still have ${left.join(' and ')} to spend.`, 'Are you sure you want to proceed?'],
+      yes: ['Descend Anyway', 'y'],
+      no: ['Stay and Spend', 'n'],
+      onYes: () => go(btn),
+    });
+  }
+
+  async function go(btn) {
     if (!restProgress().ready) {
       btn.setAttribute('disabled', '');
       const label = () => { const q = restProgress(); btn.textContent = `Gathering shadows… ${q.total ? Math.round((100 * q.done) / q.total) : 0}%`; };

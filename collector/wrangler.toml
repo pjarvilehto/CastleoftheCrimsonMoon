@@ -1,0 +1,9 @@
+# The play-stats collector Worker (0.102) — separate from the game site.
+# Setup: collector/README.md
+name = "castle-stats"
+main = "worker.js"
+compatibility_date = "2026-09-30"
+
+[[kv_namespaces]]
+binding = "STATS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

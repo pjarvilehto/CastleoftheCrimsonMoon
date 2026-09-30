@@ -1,3 +1,4 @@
 # Don't publish dev tooling — wrangler skips these when uploading assets.
 tools/
 .git/
+collector/

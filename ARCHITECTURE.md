@@ -80,6 +80,8 @@ src/
 │   ├── equipment.js      slot rules + auto-equip/salvage logic
 │   ├── history.js        run history records (0.095; settleRun appends,
 │   │                     the /analytics/ dashboard reads them)
+│   ├── telemetry.js      sends the history to the collector (0.102;
+│   │                     after each run + once per session)
 │   └── leveling.js       training costs, buyStat(), restockPotion()
 ├── run/                  EXISTS only during a dungeon run
 │   ├── runState.js       run object, room progression, settleRun()
@@ -126,6 +128,7 @@ src/
     │                     boss summon bar; summons join mid-fight in front
     │                     of the boss and leave the row when they fall (0.092)
     ├── shrineUI.js       the shrine room: panel, HUD row, boon cards
+    ├── confirmPrompt.js  yes/no dialog (0.102: Descend with unspent XP/coins)
     ├── updatePrompt.js   "Build 0.0NN available" + changelist, reload
     │                     (0.094: polls build.json; waits out a run)
     ├── buffs.js          blessing bar (horizontal, beside resources)
@@ -156,8 +159,11 @@ analytics/              /analytics/ play-stats page (0.095, static):
 ├── index.html            versioned boot (like the game's)
 ├── stats.js              pure aggregation: save codes -> runs -> stats
 ├── charts.js             tiny SVG/HTML charts (labels escaped)
-├── dashboard.js          the page: this browser's save + pasted codes
+├── dashboard.js          the page: collected players + this browser's
+│                         save + pasted codes (deduped by playerId)
 └── dashboard.css
+collector/              play-stats Worker (0.102, Cloudflare + KV; not
+                        part of the site): POST /collect, GET /players
 tools/
 ├── smoke-test.mjs        test runner (~360 checks, <1s) - run pre-deploy
 ├── test/                 harness.mjs (DOM shim, virtual clock) +

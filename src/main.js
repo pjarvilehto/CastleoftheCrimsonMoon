@@ -14,6 +14,8 @@ import { DEBUG } from './shared/debug.js';
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
 import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
 import { initUpdateCheck } from './ui/updatePrompt.js';
+import { shareStats } from './meta/telemetry.js';
+import { getProfile } from './meta/profile.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -108,6 +110,7 @@ async function boot() {
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
   show(titleScene());
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
+  shareStats(getProfile()); // play stats: history from before this session too (0.102)
 }
 
 // ?debug background evaluation (0.083): hide the UI, compare 3D / flat /
