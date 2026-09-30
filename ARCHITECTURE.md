@@ -74,20 +74,33 @@ src/
     ├── fx.js             flashRed (death vignette), tickUp (counters)
     ├── combatPlayback.js log drip queue + replay-HP (owns printing lock)
     ├── battleLine.js     card components: playerCard + enemyCard (units =
-    │                     card + button row beneath; HP as text+bar line)
+    │                     card + button row beneath; HP as text+bar line);
+    │                     adds boss-card + per-id enemy-<id> classes (0.075)
     ├── shrineUI.js       shrine room rendering
     ├── buffs.js          blessing bar (horizontal, beside resources)
     └── scenes/           titleScene, hubScene (two-panel grid),
                           dungeonScene (combat = chromeless card layout,
                           shrine = panel layout), runEndScene
+├── audio/
+│   ├── music.js          five ~61s scene-routed loop beds, 1.6s crossfade,
+│   │                     gesture-gated AudioContext, MUSIC toggle
+│   └── sfx.js            13 one-shots, ±12% pitch jitter, SOUND toggle,
+│                         combat sfx attach to playback queue items
 
 assets/
-├── bg/                   painted backgrounds + shrine art (gold/crystal)
+├── bg/                   painted backgrounds (JPEG) + shrine art
+├── chars/                character portraits (PNG, keep alpha) +
+│                         card_enemy/card_player frame art
+├── audio/                music-*.mp3 beds + sfx-*.mp3 one-shots
 ├── fonts/                DINCondensedBold.ttf (user-supplied)
 └── data/                 ALL balance numbers live here as JSON:
                         enemies, items, difficulty, backgrounds
                         (incl. roomNames), shrines, build
 styles.css              all styling (split out of index.html in 0.034)
+tools/
+├── smoke-test.mjs        DOM-shim suite (168-169 checks) - run pre-deploy
+├── simulate.mjs          headless balance bot (seeded; analyze() flags smells)
+└── cachebust.mjs         stamps ?v=<version> onto 23 files in the DEPLOY tree
 ```
 
 ## Keyboard map
@@ -102,11 +115,15 @@ styles.css              all styling (split out of index.html in 0.034)
 | `F` | dungeon | Accept Your Fate (death) |
 | `1` `2` `3` | shrine | Accept boon |
 | `E` / `N` | title | Enter Castle / New Game |
-| `P` `V` `F` | hub | Train Power / Vitality / Fortune |
-| `U` / `B` | hub | Buy potion / Back |
-| `A` | hub | Train Alchemy (+5 potion heal/lvl, coins-only, 3x potion track) |
+| `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
+| `U` | hub | Buy potion |
+| `A` `Y` `N` | hub | Alchemy tracks: Potency / Efficiency / Infusion (coins) |
+| `D` / `B` | hub | Descend into the Dungeon / Back |
 | `G` | run-end | Return to Great Hall |
+| `D` / `Space` | dungeon | Push Deeper (key2) |
 | `Enter` | anywhere | Primary button |
+
+MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 
 ## Data flow
 
@@ -157,27 +174,59 @@ styles.css              all styling (split out of index.html in 0.034)
   so the fight fills any screen identically. Do NOT author fixed px in
   that block — px there is exactly what broke the layout on the TV.
   Panel scenes (hub/title/shrine/run-end) stay in tuned px, same as ever.
+- Combat card art (0.074): the card frame PNG sits on `.char-card::before`
+  at opacity 0.85 (room art shows faintly through) so card content stays
+  fully opaque. z-index:-1 is safe because `.battle-line` (the stacking
+  context) has no background of its own.
+- Portraits break the card frame (0.075): `.portrait` is absolutely
+  positioned, bottom-anchored (feet under the hp line), height 108% /
+  max-width 142% — object-fit:contain can never exceed the img box, so the
+  box itself is oversized and max-width is the real constraint on wide arts.
+  Text rows (.card-head/.card-sub/.hp-line) are z-index 2 above the art.
+  Bosses loom via `.boss-card` (116%/165%); per-id `enemy-<id>` classes
+  allow individual boosts (vampire_lord: 126%/190%). player.png is WIDE
+  (aspect 1.11), so `.player-card .portrait` bleeds sideways (width 135%,
+  max-height 67% keeps the head clear of the 4 gear-text rows) and
+  `.player-card .hud-chip` needs margin-top:auto to re-pin the HP row
+  (the in-flow portrait's flex used to push it down).
+- Asset cache rule: NEVER replace an asset file in place (edge caches hold
+  ~4h) — new content gets a new filename.
 
 ## Build & release conventions
 
 - Build number lives in `assets/data/build.json`; bump every build; shown
   top-left on every screen (check it when reporting bugs).
-- Ship as `Game_Build_X.XXX.zip` with the launcher + icon instructions
-  inside. Run `node tools/smoke-test.mjs` before zipping; spot-check the
-  zip (`unzip -p ... | grep`) for the files you just changed.
+- Run `node tools/smoke-test.mjs` before any release — all checks green
+  (168–169; the count legitimately varies by one on RNG).
+- Historical: up to 0.042 the game shipped as `Game_Build_X.XXX.zip`;
+  distribution is web-only since 0.043 (see below).
 
-## Web deploy loop (primary distribution)
+## Web deployment (current, 0.073+)
 
-Live dev URL: **https://ublgmuyncizrq.kimi.page** (the player's
-profile/save lives in that origin's localStorage).
+**Production:** https://www.castleofthecrimsonmoon.com — GitHub Pages
+serving the `main` branch root of
+https://github.com/pjarvilehto/CastleoftheCrimsonMoon behind Cloudflare
+DNS. The repo IS the site: pushing to `main` redeploys in ~1 minute.
+A `CNAME` file at the repo root pins the custom domain. DNS: CNAME
+`www` → `pjarvilehto.github.io` (DNS-only so GitHub can issue the TLS
+cert), apex handled by an AAAA `100::` placeholder (proxied) + a
+Cloudflare Redirect Rule (301 → www).
 
-Loop: edit → bump `build.json` → `node tools/smoke-test.mjs` → sync any
-working copy to `/mnt/agents/output/app` → deploy from `app` → curl
-`assets/data/build.json` on the URL (expect the new version) → open the
-URL, screenshot, confirm the new build number → tell the player to
-hard-refresh.
+**Staging:** https://ublgmuyncizrq.kimi.page — published manually by the
+user from Kimi version cards (one card per build).
 
-Gotchas learned the hard way:
+**Release loop (game changes):**
+1. Edit, bump `build.json`, `node tools/smoke-test.mjs` — all green.
+2. Screenshot any visual change (headless chromium harness).
+3. Commit and push to GitHub (production updates itself).
+4. Save a Kimi version card for staging; the user publishes it.
+
+**Save-game caveat:** profiles live in localStorage, which is per-origin.
+Saves on the kimi.page origin do NOT carry to the custom domain (and vice
+versa) — use the title screen's export/import save codes to migrate.
+
+Gotchas learned the hard way (the Kimi staging deploy tool — the first
+four bullets concern it; GitHub Pages has none of these issues):
 - The deploy tool ONLY accepts `/mnt/agents/output/app` as the project
   dir; other paths are rejected. Keep `app` in sync with any working
   copy (e.g. castle-roguelike/) before deploying.
