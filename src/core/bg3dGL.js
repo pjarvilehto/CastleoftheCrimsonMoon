@@ -1,14 +1,30 @@
 // core/bg3dGL.js — WebGL plumbing for the 3D backgrounds (0.098: split out
 // of bg3d.js, which keeps the scene: layers, camera, frame loop, tuning).
 // Shaders, program/buffer helpers, image + depth-map loading, texture upload.
+// The fog puffs have their own (core/bg3dPuffGL.js).
 
-import { WISPS, fogNoise } from './bg3dFog.js';
 import { MAX_LIGHTS } from './bg3dLights.js';
 
+// Flash lights (0.100, core/bg3dLights.js): by true 3D distance — surfaces
+// near the light flare, the far wall barely catches it. Shared by the
+// background and the fog puffs (core/bg3dPuffGL.js).
+export const LIGHT_GLSL = `
+uniform vec3 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}]; uniform float uLightR2;
+vec3 lightAt(vec3 p) {
+  vec3 l = vec3(0.0);
+  for (int i = 0; i < ${MAX_LIGHTS}; i++) { vec3 d = p - uLightPos[i]; l += uLightCol[i] * exp(-dot(d, d) / uLightR2); }
+  return l;
+}`;
+
+// The haze (0.099) and the flash lights vary slowly across the scene, so
+// since 0.101 the ~37k vertices carry them instead of every pixel: the
+// pixel shader is one texture read and a blend (fill rate is what weak
+// GPUs run out of).
 export const VS = `
 attribute vec2 aGrid; attribute float aDepth;
-uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot;
-varying vec2 vUv; varying float vDepth; varying vec3 vWorld;
+uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot, uFog;
+${LIGHT_GLSL}
+varying vec2 vUv; varying float vDepth, vHaze; varying vec3 vLit;
 void main() {
   vUv = vec2(0.5) + (aGrid - 0.5) * uUvScale;
   vDepth = aDepth;
@@ -18,66 +34,24 @@ void main() {
   // (floor 0.4: nothing may come nearer than 40% of the focal distance —
   // strong depth + a far focus otherwise folds geometry past the camera)
   vec3 w = p * max(0.4, 1.0 + uDepthScale * (uPivot - aDepth));
-  vWorld = w; // the surface point in the scene (the fog's ray end, 0.099)
+  // haze: air thickens with distance (exponential, like real air), a bit
+  // less high up (mist hangs low: full near the ground, gone by the top)
+  float low = clamp(0.55 - w.y * 1.1, 0.0, 1.0);
+  vHaze = clamp((1.0 - exp(-2.2 * pow(1.0 - aDepth, 1.3))) * mix(0.6, 1.0, low) * 0.54 * uFog, 0.0, 0.85);
+  vLit = lightAt(w);
   gl_Position = uMVP * vec4(w, 1.0);
 }`;
 
-// Fog (0.099, see core/bg3dFog.js): distance haze + three drifting wisp
-// sheets. A sheet at distance L shows where this pixel's ray crosses it
-// IN FRONT of the surface (t < 1), fading out as it meets the surface, so
-// nearer objects hide it softly and it parallaxes with the camera.
-const f = (x) => (Number.isInteger(x) ? `${x}.0` : String(x));
-const wispCalls = WISPS.map((w, i) => `    fog += wisp(${f(w.dist)}, ${f(w.scale)}, uDrift[${2 * i}], uDrift[${2 * i + 1}]) * ${f(w.weight)};`).join('\n');
 export const FS = `
 precision mediump float;
-uniform sampler2D uTex, uNoise; uniform float uAlpha, uShowDepth, uFog;
-uniform vec3 uFogColor, uCam; uniform vec2 uDrift[${WISPS.length * 2}];
-uniform vec3 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}]; uniform float uLightR2;
-varying vec2 vUv; varying float vDepth; varying vec3 vWorld;
-// mist hangs low: full near the ground, gone by the top of the frame
-float low(float y) { return clamp(0.55 - y * 1.1, 0.0, 1.0); }
-float wisp(float dist, float scale, vec2 drift, vec2 drift2) {
-  vec3 d = vWorld - uCam;
-  float t = (-dist - uCam.z) / d.z;   // ray param where it crosses z = -dist (1 = the surface)
-  if (t <= 0.0) return 0.0;
-  vec2 q = (uCam + d * t).xy;
-  float n = texture2D(uNoise, q * scale + drift).r * 0.6 + texture2D(uNoise, q * scale * 1.9 + drift2).r * 0.4;
-  return smoothstep(0.48, 0.78, n) * mix(0.35, 1.0, low(q.y)) * clamp((1.0 - t) * 6.0, 0.0, 1.0);
-}
-// Flash lights (0.100, core/bg3dLights.js): by true 3D distance from the
-// depth map — surfaces near the light flare, the far wall barely catches it.
-vec3 lightAt(vec3 p) {
-  vec3 l = vec3(0.0);
-  for (int i = 0; i < ${MAX_LIGHTS}; i++) { vec3 d = p - uLightPos[i]; l += uLightCol[i] * exp(-dot(d, d) / uLightR2); }
-  return l;
-}
+uniform sampler2D uTex; uniform float uAlpha, uShowDepth; uniform vec3 uFogColor;
+varying vec2 vUv; varying float vDepth, vHaze; varying vec3 vLit;
 void main() {
   vec3 c = uShowDepth > 0.5 ? vec3(vDepth) : texture2D(uTex, clamp(vUv, 0.0, 1.0)).rgb;
-  vec3 lit = lightAt(vWorld);
-  c += c * lit * 2.2 + lit * 0.05; // the art brightens where lit (keeps its texture) + a faint glow
-  if (uFog > 0.0) {
-    // haze: air thickens with distance (exponential, like real air), a bit
-    // less high up; then the drifting wisp sheets
-    float fog = (1.0 - exp(-2.2 * pow(1.0 - vDepth, 1.3))) * mix(0.6, 1.0, low(vWorld.y)) * 0.9;
-${wispCalls}
-    c = mix(c, uFogColor + lit * 0.7, clamp(fog * 0.6 * uFog, 0.0, 0.85)); // lit mist glows
-  }
+  c += c * vLit * 2.2 + vLit * 0.05;           // the art brightens where lit (keeps its texture) + a faint glow
+  c = mix(c, uFogColor + vLit * 0.7, vHaze);   // lit mist glows
   gl_FragColor = vec4(c, uAlpha);
 }`;
-
-// The wisps' noise: a tileable 128x128 luminance texture (REPEAT wrap).
-export function makeNoiseTexture(gl) {
-  const size = 128;
-  const tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, size, size, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, fogNoise(size));
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-  return tex;
-}
 
 // The art at 64x36 for the fog colour (bg3dFog.js fogColor).
 export function smallPixels(img, w = 64, h = 36) {

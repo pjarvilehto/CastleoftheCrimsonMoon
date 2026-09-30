@@ -49,11 +49,19 @@ src/
 ├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
 │                         slow orbit camera, 2s crossfade, CSS fallback;
 │                         live tuning + localStorage save (0.084)
-├── core/bg3dGL.js        its WebGL plumbing: shaders, program/buffer,
-│                         image + depth-map loading, texture upload (0.098)
-├── core/bg3dFog.js       fog math (0.099): camera position for the wisp
-│                         rays, tileable noise, scene-hued mist colour,
-│                         wrapped drift (the fog itself is in the shader)
+├── core/bg3dGL.js        its WebGL plumbing: shaders (haze + flash lights
+│                         per vertex, 0.101), program/buffer, image +
+│                         depth-map loading, texture upload (0.098)
+├── core/bg3dTuning.js    settings: defaults < backgrounds.json parallax <
+│                         per-file overrides < saved ?debug sliders (0.101)
+├── core/bg3dQuality.js   frame rate (0.101): pixel budget, fps windows,
+│                         quality ladder (resolution -> fog -> flat)
+├── core/bg3dFog.js       fog math (0.099): tileable noise, scene-hued
+│                         mist colour
+├── core/bg3dPuffs.js     fog puffs (0.101): per-scene puff sets, wind
+│                         drift + wrapping, quad vertices, sprite atlas
+├── core/bg3dPuffGL.js    draws them: half-res buffer, soft depth
+│                         occlusion, one blend pass over the scene
 ├── core/bg3dLights.js    flash-light math (0.100): screen point -> scene
 │                         point, rise/fade envelope, brightest-2 uniforms
 ├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,

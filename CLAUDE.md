@@ -161,7 +161,12 @@ static play-stats page.
   displaced mesh with a slowly swaying camera. Tune in `backgrounds.json`
   `parallax` (per-file `overrides`); `enabled: false` is the kill switch.
   Falls back to the flat CSS backgrounds with no WebGL, software-only GL,
-  <20fps in the first 4s, context loss, or prefers-reduced-motion. If you
+  context loss, or prefers-reduced-motion. Frame rate (0.101,
+  `core/bg3dQuality.js`): the canvas renders at most `maxPixels` (2.1M; the
+  art is 2048 wide), and all session long a device that stays under
+  `minFps` (22) steps down: resolution x0.8, x0.64, then no fog, then
+  flat. Keep per-pixel shader work minimal — slowly varying terms (haze,
+  lights) go per vertex. Settings/defaults: `core/bg3dTuning.js`. If you
   raise the sway/depth, the smoke suite's coverage check says when
   `overscan` must grow too.
 - `?debug` also adds HIDE FOREGROUND, BG VIEW (3D / FLAT / DEPTH),
@@ -170,14 +175,19 @@ static play-stats page.
   copies JSON — when the owner sends that JSON, put the values into
   `backgrounds.json` `parallax` to make them the default for everyone).
   The skirt (overscan) now grows automatically for larger sway.
-- Background fog (0.099, `core/bg3dFog.js` + the shader in `bg3dGL.js`):
-  depth-embedded mist — exponential distance haze plus three drifting
-  wisp sheets that nearer objects hide. Amount per background in
+- Background fog (0.099; puffs 0.101): depth-embedded mist — exponential
+  distance haze (per vertex, `bg3dGL.js`) plus ~40 large soft mist puffs
+  placed in the scene volume (`core/bg3dPuffs.js`, drawn at half
+  resolution by `core/bg3dPuffGL.js`): each fades into whatever painted
+  surface is in front of it (depth map), is lit from above (baked into
+  the sprite), and drifts with the scene's `fogWind` [x, y, z] (+z =
+  toward the camera; set per background in overrides), wrapping in a box
+  with faded edges. Shape/count/opacity: `parallax.puffs`. Amount per background in
   `backgrounds.json` `parallax.overrides.<file>.fog` (long exterior views
   ~0.8-1.1, rooms ~0.3-0.4; the title is held at 0.6 to keep its
   silhouette); colour = the scene's own far hue at a fixed brightness
-  (`fogColor: [r,g,b]` overrides). `?debug` BG TUNING has a Fog slider.
-  Weak devices lose the fog first (<26fps), then the 3D (<20fps).
+  (`fogColor: [r,g,b]` overrides). `?debug` BG TUNING has Fog and Fog
+  drift sliders.
 - Flash lights (0.100, `core/bg3dLights.js` + the shader): a crit (on the
   struck card), a potion or a revive (on the knight) puts a short light
   into the 3D scene; surfaces and mist near it glow by true depth

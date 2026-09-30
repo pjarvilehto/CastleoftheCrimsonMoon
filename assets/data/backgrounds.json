@@ -27,7 +27,7 @@
     "castle_throne_room.jpg": "The Throne Room"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099, core/bg3dFog.js) = depth-embedded mist: distance haze + three drifting wisp sheets, amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it); fogSpeed = drift speed. lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -40,36 +40,39 @@
     "swayHitShare": 0.15,
     "fog": 0.36,
     "fogSpeed": 1,
+    "fogWind": [0.012, 0, 0],
+    "puffs": {
+      "count": 40,
+      "size": [0.34, 0.72],
+      "y": [-0.42, 0.12],
+      "width": 1.3,
+      "near": 0.48,
+      "far": 1.8,
+      "nearBand": 0.27,
+      "farBand": 0.25,
+      "soft": 0.12,
+      "opacity": 0.4
+    },
+    "maxPixels": 2100000,
+    "minFps": 22,
     "lights": {
       "enabled": true,
       "dist": 0.8,
       "radius": 0.45,
       "crit": {
-        "color": [
-          1.0,
-          0.72,
-          0.35
-        ],
+        "color": [1.0, 0.72, 0.35],
         "strength": 1.0,
         "fade": 0.3,
         "life": 1.2
       },
       "potion": {
-        "color": [
-          0.4,
-          1.0,
-          0.5
-        ],
+        "color": [0.4, 1.0, 0.5],
         "strength": 0.9,
         "fade": 0.55,
         "life": 2.0
       },
       "revive": {
-        "color": [
-          1.0,
-          0.88,
-          0.55
-        ],
+        "color": [1.0, 0.88, 0.55],
         "strength": 1.6,
         "fade": 0.8,
         "life": 2.8
@@ -77,48 +80,57 @@
     },
     "fovDeg": 40,
     "overscan": 0.09,
-    "grid": [
-      256,
-      144
-    ],
+    "grid": [256, 144],
     "maxFps": 30,
     "fadeMs": 2000,
     "overrides": {
       "medieval_castle.jpg": {
-        "fog": 0.6
+        "fog": 0.6,
+        "fogWind": [0.01, 0, 0]
       },
       "castle_chapel_exterior.jpg": {
-        "fog": 0.84
+        "fog": 0.84,
+        "fogWind": [-0.014, 0, 0.004]
       },
       "castle_courtyard.jpg": {
-        "fog": 0.9
+        "fog": 0.9,
+        "fogWind": [0.008, 0, 0.008]
       },
       "castle_entrance.jpg": {
-        "fog": 0.78
+        "fog": 0.78,
+        "fogWind": [0, 0, 0.014]
       },
       "castle_ramparts.jpg": {
-        "fog": 1.08
+        "fog": 1.08,
+        "fogWind": [0.03, 0.002, 0]
       },
       "castle_great_hall.jpg": {
-        "fog": 0.36
+        "fog": 0.36,
+        "fogWind": [0.004, 0.001, -0.007]
       },
       "castle_throne_room.jpg": {
-        "fog": 0.36
+        "fog": 0.36,
+        "fogWind": [-0.006, 0, 0.004]
       },
       "castle_chapel_interior.jpg": {
-        "fog": 0.42
+        "fog": 0.42,
+        "fogWind": [0.002, 0.002, -0.009]
       },
       "castle_library.jpg": {
-        "fog": 0.36
+        "fog": 0.36,
+        "fogWind": [0.005, 0, 0]
       },
       "castle_shrine_gold.jpg": {
-        "fog": 0.36
+        "fog": 0.36,
+        "fogWind": [0, 0.003, 0.006]
       },
       "castle_alchemy_lab.jpg": {
-        "fog": 0.3
+        "fog": 0.3,
+        "fogWind": [-0.006, 0.003, 0]
       },
       "castle_dungeon.jpg": {
-        "fog": 0.42
+        "fog": 0.42,
+        "fogWind": [0, 0, 0.012]
       }
     },
     "speed": 2.1,

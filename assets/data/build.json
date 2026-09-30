@@ -1,5 +1,5 @@
 {
-  "version": "0.100",
+  "version": "0.101",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -9,6 +9,10 @@
     "src/core/bg3dGL.js",
     "src/core/bg3dLights.js",
     "src/core/bg3dMath.js",
+    "src/core/bg3dPuffGL.js",
+    "src/core/bg3dPuffs.js",
+    "src/core/bg3dQuality.js",
+    "src/core/bg3dTuning.js",
     "src/core/scene.js",
     "src/main.js",
     "src/meta/equipment.js",
@@ -44,6 +48,10 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.101": [
+      "The mist is now made of big soft drifting fog banks that sit between things in the scene — sideways on the ramparts, rolling in at the gate",
+      "Smoother backgrounds: the fog costs far less, high-DPI screens render fewer pixels, and slow devices lower quality step by step instead of stuttering"
+    ],
     "0.100": [
       "Critical hits, potions and revives now light up the scene around the fighter — walls and mist nearby catch the glow"
     ],

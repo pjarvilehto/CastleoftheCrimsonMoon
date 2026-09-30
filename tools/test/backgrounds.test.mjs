@@ -74,7 +74,7 @@ fresh();
   const bg3d = await import('../../src/core/bg3d.js');
   const bm = await import('../../src/core/bg3dMath.js');
   const base = bg3d.tuning('');
-  ok('tunables: depth, speed, sway x/y, focus, fog (0.099)', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot,fogScale'
+  ok('tunables: depth, speed, sway x/y, focus, fog, fog drift (0.101)', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot,fogScale,fogSpeed'
     && base.speed === (DATA.backgrounds.parallax.speed ?? 1)); // shipped value comes from the data
   bg3d.setLiveTuning({ depthScale: 0.9, speed: 2 });
   ok('live values override the shipped ones', bg3d.tuning('').depthScale === 0.9 && bg3d.liveTuning().speed === 2
@@ -85,14 +85,15 @@ fresh();
   bg3d.resetLiveTuning();
   ok('reset restores shipped values and clears storage', bg3d.tuning('').depthScale === base.depthScale && localStorage.getItem('castle-bg-tuning') === null);
   const extreme = { ...base, depthScale: 1.2, yawDeg: 5, pitchDeg: 3, pivot: 0 }; // the sliders' maximums
-  ok('near-plane floor matches the shader', readFileSync('src/core/bg3dGL.js', 'utf8').includes('max(0.4, 1.0 + uDepthScale')
+  ok('near-plane floor matches the shader (and the fog puffs\' occlusion)', readFileSync('src/core/bg3dGL.js', 'utf8').includes('max(0.4, 1.0 + uDepthScale')
+    && readFileSync('src/core/bg3dPuffGL.js', 'utf8').includes('max(0.4, 1.0 + uDepthScale * (uPivot - depth))')
     && readFileSync('src/core/bg3dMath.js', 'utf8').includes('Math.max(0.4, 1 + c.depthScale'));
   const fov = (base.fovDeg * Math.PI) / 180;
   ok('no geometry behind the camera at max sliders', bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9), 0.5, 0.5, 1, 16 / 9, extreme).every(Number.isFinite));
   const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
   ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
-  ok('tuner: 6 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 6
+  ok('tuner: 7 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 7
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
   ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
   ok('clip-enemies experiment fully removed (0.090)', !readFileSync('src/main.js', 'utf8').includes('clip')
@@ -126,40 +127,29 @@ fresh();
     && readFileSync('src/ui/particles.js', 'utf8').includes('x: x + (r() - 0.5) * 36 * u'));
 }
 
-// T60: 0.099 — depth-embedded fog: the wisps' rays start at the real
-// camera, the noise tiles seamlessly, drift stays wrapped (shader
-// precision), the mist takes each scene's hue at a readable brightness,
-// every background has an amount (long exterior views more than rooms),
-// and weak devices drop the fog before the 3D.
+// T60: 0.099 — depth-embedded fog: the noise tiles seamlessly, the mist
+// takes each scene's hue at a readable brightness, every background has an
+// amount (long exterior views more than rooms); 0.101: the haze is per
+// vertex and the background's pixel shader is one texture read.
 {
   const fog = await import('../../src/core/bg3dFog.js');
-  const bm = await import('../../src/core/bg3dMath.js');
   const gl = await import('../../src/core/bg3dGL.js');
-  const camOk = [[0, 0], [0.04, -0.02], [-0.05, 0.03]].every(([y, p]) => {
-    const M = bm.mvp(y, p, 0.7, 16 / 9), c = fog.cameraPos(y, p);
-    return Math.abs(M[3] * c[0] + M[7] * c[1] + M[11] * c[2] + M[15]) < 1e-6; // the camera projects to w = 0
-  });
-  ok('fog rays start at the camera (cameraPos inverts the view)', camOk && fog.cameraPos(0, 0).every((v) => Math.abs(v) < 1e-12));
   const n = fog.fogNoise(64, 3), at = (x, y) => n[y * 64 + x];
   let seam = 0, inside = 0;
   for (let i = 0; i < 64; i++) { seam = Math.max(seam, Math.abs(at(63, i) - at(0, i)), Math.abs(at(i, 63) - at(i, 0))); inside = Math.max(inside, Math.abs(at(32, i) - at(31, i))); }
   ok('fog noise tiles seamlessly (wrap seam no rougher than inside)', seam <= inside + 1 && Math.max(...n) > Math.min(...n) + 100);
-  const d = fog.driftOffsets(123456.7);
-  ok('two drifts per wisp sheet, wrapped to [0, 1)', d.length === fog.WISPS.length * 2 && d.flat().every((v) => v >= 0 && v < 1));
   // a dark teal scene: far half teal, near half black
   const w = 8, h = 4, px = new Uint8Array(w * h * 4);
   for (let i = 0; i < w * h; i++) { const far = i < w * h / 2; px.set(far ? [10, 40, 36, 255] : [0, 0, 0, 255], i * 4); }
   const col = fog.fogColor(px, w, h, (u, v) => (v < 0.5 ? 0.1 : 0.9));
   const lum = 0.2126 * col[0] + 0.7152 * col[1] + 0.0722 * col[2];
   ok('mist keeps the scene hue at a readable brightness', col[1] > col[0] && col[2] > col[0] && lum > 0.3 && lum < 0.55);
-  ok('shader: haze + one wisp call per sheet + fog uniforms', gl.FS.includes('uniform vec3 uFogColor, uCam') && (gl.FS.match(/fog \+= wisp\(/g) || []).length === fog.WISPS.length
-    && gl.VS.includes('vWorld = w;'));
+  ok('haze + flash lights per vertex; one texture read per background pixel (0.101)', gl.VS.includes('vHaze = clamp(') && gl.VS.includes('vLit = lightAt(w);')
+    && (gl.FS.match(/texture2D\(/g) || []).length === 1 && !gl.FS.includes('lightAt') && !gl.FS.includes('exp('));
   const P = DATA.backgrounds.parallax, amt = (f) => P.overrides?.[f]?.fog ?? P.fog;
   const all = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
   ok('every background has a fog amount', all.every((f) => amt(f) > 0 && amt(f) <= 1.5));
   ok('long exterior views are foggier than rooms', amt('castle_ramparts.jpg') > 2 * amt('castle_great_hall.jpg') && amt('castle_courtyard.jpg') > 2 * amt('castle_alchemy_lab.jpg'));
-  const src = readFileSync('src/core/bg3d.js', 'utf8');
-  ok('weak devices drop the fog before the 3D', src.includes('if (fogOn && fps < cfg.fogMinFps)') && src.includes('if (fps < cfg.minFps) { shutdown(); return; }'));
 }
 
 // T61: 0.100 — flash lights: a screen point maps to the scene point that
@@ -186,8 +176,8 @@ fresh();
   ok('no flashes: every light slot dark', none.count === 0 && none.col.every((v) => v === 0) && none.col.length === L.MAX_LIGHTS * 3);
   const three = L.activeLights([mk(900, 0.5, [1, 1, -1]), mk(900, 2, [2, 2, -2]), mk(900, 1, [3, 3, -3]), mk(-5000, 9, [4, 4, -4])], 1000);
   ok('only the brightest live flashes draw', three.count === 2 && three.pos[0] === 2 && three.pos[3] === 3 && three.col[0] > three.col[3] && three.col[2] === 0);
-  ok('shader lights the art and the mist by 3D distance', gl.FS.includes(`uniform vec3 uLightPos[${L.MAX_LIGHTS}]`) && gl.FS.includes('vec3 lit = lightAt(vWorld);')
-    && gl.FS.includes('uFogColor + lit * 0.7'));
+  ok('shader lights the art and the mist by 3D distance', gl.VS.includes(`uniform vec3 uLightPos[${L.MAX_LIGHTS}]`) && gl.VS.includes('vLit = lightAt(w);')
+    && gl.FS.includes('uFogColor + vLit * 0.7') && readFileSync('src/core/bg3dPuffGL.js', 'utf8').includes('vLit = lightAt(aPos)'));
   const fx = readFileSync('src/ui/combatFx.js', 'utf8');
   ok('crits, potions and revives light the scene', ["bgLight('crit'", "bgLight('potion'", "bgLight('revive'"].every((s) => fx.includes(s)));
   const lights = DATA.backgrounds.parallax.lights;
@@ -198,4 +188,80 @@ fresh();
   ok('a crit flash lands in front of its card, on the card\'s side', flash && flash.t0 === 5 && flash.pos[0] > 0 && flash.color === L.LIGHT_DEFAULTS.crit.color);
   ok('lights off (enabled: false) or unknown kind = no flash', L.flashAt('crit', rect, W, H, fov, { ...lights, enabled: false }, 5) === null
     && L.flashAt('nope', rect, W, H, fov, lights, 5) === null && L.flashAt('potion', null, W, H, fov, lights, 5) === null);
+}
+
+// T62: 0.101 — volumetric fog puffs: stable per scene, drifting with each
+// scene's wind (sideways / toward / away from the camera), wrapping inside
+// a box whose edges fade (no popping), drawn back to front as quads on
+// their own atlas cell; the sprites fade out inside their cells and are
+// lit from above; they render at half resolution and fade into the scene
+// in front of them.
+{
+  const pf = await import('../../src/core/bg3dPuffs.js');
+  const P = { ...pf.PUFF_DEFAULTS, ...DATA.backgrounds.parallax.puffs };
+  const a = pf.makePuffs(pf.seedOf('castle_courtyard.jpg'), P), b = pf.makePuffs(pf.seedOf('castle_courtyard.jpg'), P);
+  const c = pf.makePuffs(pf.seedOf('castle_ramparts.jpg'), P);
+  ok('puffs: the same scene always gets the same set, other scenes differ', a.length === P.count && JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a) !== JSON.stringify(c));
+  ok('puffs start inside the fog box, hanging low', a.every((p) => Math.abs(p.x) <= P.width && p.d >= P.near && p.d <= P.far && p.y >= P.y[0] && p.y <= P.y[1])
+    && a.filter((p) => p.y < (P.y[0] + P.y[1]) / 2).length > a.length / 2);
+  const one = [{ ...a[0], x: 0, y: -0.2, d: 1.1, speed: 1 }];
+  const at = (t, wind) => pf.puffFrame(one, t, P, wind)[0];
+  ok('sideways wind carries a puff sideways', at(10, [0.02, 0, 0]).pos[0] > at(0, [0.02, 0, 0]).pos[0] + 0.19);
+  ok('+z wind brings a puff toward the camera, -z takes it away', at(10, [0, 0, 0.02]).pos[2] > at(0, [0, 0, 0.02]).pos[2] + 0.19
+    && at(10, [0, 0, -0.02]).pos[2] < at(0, [0, 0, -0.02]).pos[2] - 0.19);
+  const long = [1e3, 1e5, 3.3e6].map((t) => at(t, [0.03, 0.002, 0.02]));
+  ok('drifting puffs wrap inside the box (any session length)', long.every((q) => Math.abs(q.pos[0]) <= P.width && -q.pos[2] >= P.near && -q.pos[2] <= P.far));
+  const edge = pf.puffFrame([{ ...one[0], x: P.width - 0.001 }, { ...one[0], d: P.near + 0.001 }], 0, P, [0, 0, 0]);
+  ok('puffs fade out at the box edges (wrapping never pops)', edge.length === 0);
+  const fr = pf.puffFrame(a, 12, P, [0.01, 0, 0.01]);
+  ok('puffs draw back to front', fr.length > P.count / 2 && fr.every((q, i) => !i || q.pos[2] >= fr[i - 1].pos[2]));
+  const v = pf.puffVertices([{ pos: [0.1, -0.2, -1], size: 0.5, rot: 0, alpha: 0.7, variant: 3, shade: 1 }]);
+  const corner = (k) => [...v.subarray(k * pf.PUFF_FLOATS, (k + 1) * pf.PUFF_FLOATS)];
+  ok('a puff is a quad around its centre, on its own atlas cell', Math.abs(corner(0)[0] - (0.1 - 0.25)) < 1e-6 && Math.abs(corner(2)[1] - (-0.2 + 0.25 * pf.TALL)) < 1e-6
+    && [0, 1, 2, 3].every((k) => corner(k)[3] >= 0.5 && corner(k)[4] >= 0.5 && corner(k)[6] === Math.fround(0.7))
+    && pf.puffIndices(2).join(',') === '0,1,2,0,2,3,4,5,6,4,6,7');
+  const S = pf.puffSprites(64), size = 128, d = (x, y) => S[(y * size + x) * 2], l = (x, y) => S[(y * size + x) * 2 + 1];
+  let border = 0, outside = 0;
+  for (let i = 0; i < size; i++) border = Math.max(border, d(i, 0), d(i, size - 1), d(0, i), d(size - 1, i), d(i, 63), d(i, 64), d(63, i), d(64, i));
+  for (let y = 0; y < 64; y++) { const py = ((y + 0.5) / 64) * 2 - 1; if (Math.abs(py) >= pf.TALL) for (let x = 0; x < 64; x++) outside = Math.max(outside, d(x, y)); }
+  ok('sprites fade out inside their cells and their quads', border === 0 && outside === 0 && d(32, 32) > 150);
+  let top = 0, bottom = 0;
+  for (let x = 16; x < 48; x++) { top += l(x, 16); bottom += l(x, 44); }
+  ok('sprites are lit from above (baked self-shadow)', top > bottom);
+  const src = readFileSync('src/core/bg3dPuffGL.js', 'utf8');
+  ok('puffs render at half resolution, then blend over the scene once', src.includes('Math.ceil(w / 2)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)'));
+  ok('puffs fade softly into the scene in front of them (depth map)', src.includes('clamp((surf - d) / uSoft, 0.0, 1.0)') && P.soft > 0);
+  const Pb = DATA.backgrounds.parallax, wind = (f) => Pb.overrides?.[f]?.fogWind ?? Pb.fogWind;
+  const allBg = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
+  ok('every scene has its own wind: some sideways, some toward, some away from the camera', allBg.every((f) => wind(f)?.length === 3 && wind(f).every(Number.isFinite))
+    && allBg.some((f) => Math.abs(wind(f)[0]) >= 0.02) && allBg.some((f) => wind(f)[2] > 0.01) && allBg.some((f) => wind(f)[2] < -0.005));
+  ok('tuner: fog drift slider', readFileSync('src/ui/bgTuner.js', 'utf8').includes("['fogSpeed', 'Fog drift'"));
+}
+
+// T63: 0.101 — frame rate: the canvas has a pixel budget (the art is 2048
+// wide), frame-rate windows ignore hidden-tab gaps, and slow devices step
+// down resolution, then fog, then go flat.
+{
+  const q = await import('../../src/core/bg3dQuality.js');
+  const [rw, rh] = q.backingSize(1512, 945, 2, 2.1e6);
+  ok('pixel budget: a Retina screen renders ~2.1M pixels, not 5.7M', rw * rh <= 2.1e6 * 1.01 && rw > 1512 && Math.abs(rw / rh - 1512 / 945) < 0.01);
+  ok('pixel budget: a 1080p screen renders at native size', q.backingSize(1920, 1080, 1, 2.1e6).join('x') === '1920x1080'
+    && q.backingSize(1920, 1080, 1, 2.1e6, 0.8).join('x') === '1536x864');
+  const run = (fps, ms, gapAt = -1) => {
+    let w = null;
+    const got = [];
+    for (let t = 0; t <= ms; t += 1000 / fps) { w = q.fpsWindow(w, t < gapAt ? t : t + (gapAt >= 0 ? 1000 : 0), 22); if (w.fps !== undefined) got.push(w); }
+    return got;
+  };
+  const steady = run(30, 3200), slow = run(15, 3200), gap = run(30, 3200, 1500);
+  ok('frame-rate window measures drawn frames', steady.length === 1 && Math.abs(steady[0].fps - 30) < 1 && Math.abs(slow[0].fps - 15) < 1);
+  ok('a hidden-tab gap restarts the window instead of reading as slow', gap.length === 0);
+  const slow2 = run(15, 6200);
+  ok('one slow window is a hitch; the second in a row steps down', steady[0].slow === 0 && slow[0].slow === 1
+    && slow2.at(-1).slow === q.SLOW_WINDOWS);
+  ok('quality ladder: resolution first, then fog, then flat', q.LADDER[0].scale === 1 && q.LADDER[0].fog
+    && q.LADDER.findIndex((s) => s.scale < 1) < q.LADDER.findIndex((s) => !s.fog) && !q.LADDER.at(-1).fog);
+  const src = readFileSync('src/core/bg3d.js', 'utf8');
+  ok('past the last step: back to the flat backgrounds', src.includes('if (level >= LADDER.length) { shutdown(); return false; }')
+    && src.includes('if (fpsW.slow >= SLOW_WINDOWS && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
 }
