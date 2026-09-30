@@ -147,7 +147,8 @@ export function settleRun(run, outcome) {
   run.coins += equip.coins;
   // Death toll: the castle takes half of everything you carried out.
   // Retreat banks the full purse.
-  run.coinsLost = outcome === 'death' ? Math.floor(run.coins / 2) : 0;
+  run.tollPct = DATA.difficulty.deathCoinToll ?? 0.5; // difficulty.json (0.097)
+  run.coinsLost = outcome === 'death' ? Math.floor(run.coins * run.tollPct) : 0;
   run.coinsRetrieved = run.coins - run.coinsLost;
   run.equipSummary = equip;
   p.coins += run.coinsRetrieved;

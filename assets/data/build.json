@@ -1,5 +1,5 @@
 {
-  "version": "0.096",
+  "version": "0.097",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -39,6 +39,11 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.097": [
+      "Run-end screen counts cleared rooms correctly",
+      "Smoother menus on slower screens (removed a costly background blur)",
+      "Loot summary no longer lists replaced items as equipped"
+    ],
     "0.096": [
       "Shrine blessings sit in a tidy compact row (the same blessing twice shows x2)"
     ],

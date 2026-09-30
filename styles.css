@@ -73,7 +73,8 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    backdrop-filter: blur(2px);
+    /* no backdrop-filter (0.097): re-blurring the live 3D background every
+       frame halved the frame rate on weak GPUs, for a barely visible blur */
   }
 
   h1 {

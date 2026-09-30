@@ -3,7 +3,7 @@
 // refreshes when the game saves in another tab) plus testers' save codes
 // pasted here (kept in this browser only). Nothing is sent anywhere.
 
-import { LOCAL_SAVE_KEY, decodeSave, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
+import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 
@@ -18,8 +18,11 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retu
 
 function loadPlayers() {
   const local = read(LOCAL_SAVE_KEY);
-  const mine = local?.records ? [{ key: 'local', label: 'This browser', source: 'local', profile: local }] : [];
-  const imported = (read(STORE) ?? []).map((s) => ({ ...s, source: 'code' }));
+  const mine = local?.records ? [{ key: 'local', label: 'This browser', source: 'local', profile: sanitizeProfile(local) }] : [];
+  // stored players are re-sanitised too: codes imported before 0.097 were kept as-is
+  const imported = (Array.isArray(read(STORE)) ? read(STORE) : []).map((s) => ({
+    key: String(s.key), label: String(s.label ?? 'Player').slice(0, 40), importedAt: Number(s.importedAt) || 0,
+    source: 'code', profile: sanitizeProfile(s.profile) }));
   players = [...mine, ...imported];
 }
 

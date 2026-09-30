@@ -7,10 +7,6 @@
 
 import { DATA } from '../shared/data.js';
 
-// Single-item slots. Rings are the only multi-slot (handled separately).
-export const SINGLE_SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
-export const RING_SLOTS = 2;
-
 export function emptyEquipment() {
   return { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
 }
@@ -39,8 +35,11 @@ export function salvageValue(id) {
 
 // Auto-equip a list of item ids into the profile. Returns a summary
 // { equipped: [{name,tier}], salvaged: [{name,tier}], coins } for UI display.
+// `equipped` lists only what is still worn at the end: a find that a later
+// find replaced in the same call shows under salvaged only (0.097).
 export function equipItems(profile, itemIds) {
   const summary = { equipped: [], salvaged: [], coins: 0 };
+  const worn = []; // ids equipped by this call, in order (parallel to summary.equipped)
   const eq = profile.equipment;
 
   for (const id of itemIds) {
@@ -52,12 +51,14 @@ export function equipItems(profile, itemIds) {
       if (emptyIdx !== -1) {
         eq.rings[emptyIdx] = id;
         summary.equipped.push({ name: item.name, tier: item.tier });
+        worn.push(id);
         continue;
       }
       const weakerIdx = itemValue(eq.rings[0]) <= itemValue(eq.rings[1]) ? 0 : 1;
       if (itemValue(id) > itemValue(eq.rings[weakerIdx])) {
         swapOut(eq.rings, weakerIdx, id, summary);
         summary.equipped.push({ name: item.name, tier: item.tier });
+        worn.push(id);
       } else {
         salvage(id, summary);
       }
@@ -71,10 +72,19 @@ export function equipItems(profile, itemIds) {
       }
       eq[item.slot] = id;
       summary.equipped.push({ name: item.name, tier: item.tier });
+      worn.push(id);
     } else {
       salvage(id, summary);
     }
   }
+  // Drop the finds that didn't survive the call (newest entries win when
+  // the same id is worn twice, e.g. two identical rings).
+  const left = equippedItemIds(eq).reduce((m, id) => m.set(id, (m.get(id) ?? 0) + 1), new Map());
+  const keep = worn.map(() => false);
+  for (let i = worn.length - 1; i >= 0; i--) {
+    if ((left.get(worn[i]) ?? 0) > 0) { keep[i] = true; left.set(worn[i], left.get(worn[i]) - 1); }
+  }
+  summary.equipped = summary.equipped.filter((_, i) => keep[i]);
   return summary;
 }
 

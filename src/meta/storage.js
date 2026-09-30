@@ -3,8 +3,16 @@
 
 const KEY = 'castle-roguelike-profile-v1';
 
+// A refused write (storage full, blocked, strict private mode) must not
+// break the game mid-transaction (0.097): the in-memory profile stays
+// valid, only this write is lost. Returns whether it saved.
 export function saveProfile(profile) {
-  localStorage.setItem(KEY, JSON.stringify(profile));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(profile));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function loadProfile() {

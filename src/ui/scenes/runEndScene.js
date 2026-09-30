@@ -26,7 +26,8 @@ export function runEndScene(run, outcome) {
               ? `The castle claims another soul on room ${run.roomNumber}.`
               : `You slipped away after room ${run.roomNumber}, purse heavy.`),
           el('div', { class: 'stat-grid' },
-            statBox('Rooms Cleared', run.roomNumber),
+            // dying in room N means N-1 were cleared; a retreat follows a win (0.097)
+            statBox('Rooms Cleared', outcome === 'death' ? Math.max(0, run.roomNumber - 1) : run.roomNumber),
             statBox('Kills', run.kills),
             statBox(outcome === 'death' ? 'Coins Retrieved' : 'Coins Earned', run.coinsRetrieved ?? run.coins),
             statBox('XP Earned', run.xp),
@@ -46,7 +47,7 @@ export function runEndScene(run, outcome) {
             : null,
           outcome === 'death'
             ? el('div', { style: 'text-align:center;color:#e07b7b;margin-top:8px' },
-                run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (50%).` : null)
+                run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round((run.tollPct ?? 0.5) * 100)}%).` : null)
             : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },

@@ -1745,5 +1745,82 @@ process.on('uncaughtException', (e) => {
     css.includes('max-width: calc(50vw - max(23vw, 170px) - 13.5vw)') && /#buffs \{[^}]*flex-wrap: wrap-reverse/.test(css) && css.includes('-webkit-line-clamp: 2'));
 }
 
+// T59: 0.097 review fixes — the dashboard sanitises pasted saves (and
+// defuses spreadsheet formulas in its CSV), run-end counts cleared rooms
+// right, the equip summary no longer lists a replaced find as equipped, a
+// refused save write can't break the game, the death toll is a knob, and
+// the panel blur is gone.
+{
+  const st = await import('../analytics/stats.js');
+  const evil = {
+    playerId: '<b>id</b>-very-long-identifier', coins: '5<img src=x>', xp: 3, stats: { power: '<script>' }, equipment: { weapon: 'rusty_sword', rings: ['x'] },
+    records: { runs: '<img src=x onerror=alert(1)>', bestRoom: 4, deaths: 1, kills: 2 }, secret: 'dropped',
+    history: [{ at: 1, build: '0.095<i>', outcome: '<b>', room: '<svg>', killedBy: 'golem', boons: ['crit', { x: 1 }], extra: 'dropped' }],
+  };
+  const code = Buffer.from(JSON.stringify(evil)).toString('base64');
+  const p = st.decodeSave(code);
+  const numbersOnly = [p.coins, p.xp, ...Object.values(p.stats), ...Object.values(p.records)].every((v) => typeof v === 'number');
+  ok('dashboard: pasted saves become plain numbers / short strings', numbersOnly && p.records.runs === 0 && p.coins === 0 && p.stats.power === 0
+    && p.secret === undefined && p.playerId.length <= 16);
+  const r = p.history[0];
+  ok('...run records too (unknown fields dropped, outcome whitelisted)', typeof r.room === 'number' && r.outcome === 'death' && r.extra === undefined
+    && r.boons.every((b) => typeof b === 'string') && r.killedBy === 'golem');
+  const csv = st.toCsv([{ player: 'a', n: 1, at: 0, build: '=HYPERLINK("x")', outcome: 'death', room: -3, killedBy: '+cmd', boons: ['@x'] }]);
+  const row = csv.split('\n')[1];
+  ok('CSV: formula-looking text is defused, numbers untouched', row.includes(`"'=HYPERLINK(""x"")"`) && row.includes("'+cmd") && row.includes("'@x") && row.includes(',-3,'));
+
+  // Run end: rooms cleared
+  const { runEndScene } = await import('../src/ui/scenes/runEndScene.js');
+  const shown = (run, outcome) => {
+    const root = new El('div');
+    runEndScene(run, outcome).enter(root);
+    const box = root.all((e) => e.className === 'stat-box').find((b) => b.textContent.startsWith('Rooms Cleared'));
+    return box.textContent.replace('Rooms Cleared', '');
+  };
+  const base = { roomNumber: 9, kills: 1, coins: 10, coinsRetrieved: 5, coinsLost: 5, xp: 1, itemsFound: [], tollPct: 0.5 };
+  ok('run end: dying in room 9 = 8 rooms cleared; retreating after 9 = 9', shown(base, 'death') === '8' && shown(base, 'retreat') === '9');
+
+  // Equip summary: a find replaced by a later find is salvaged, not "equipped"
+  const { equipItems } = await import('../src/meta/equipment.js');
+  const weapons = Object.entries(DATA.items).filter(([, v]) => v.slot === 'weapon');
+  const t2 = weapons.find(([, v]) => v.tier === 2)[0], t3 = weapons.find(([, v]) => v.tier === 3)[0];
+  const prof = { equipment: { weapon: 'rusty_sword', armor: null, boots: null, rings: [null, null], trinket: null, amulet: null } };
+  const sum = equipItems(prof, [t2, t3]);
+  ok('equip summary lists only what is still worn', sum.equipped.length === 1 && sum.equipped[0].name === DATA.items[t3].name
+    && sum.salvaged.some((x) => x.name === DATA.items[t2].name));
+  const ring = Object.keys(DATA.items).find((id) => DATA.items[id].slot === 'ring' && DATA.items[id].tier === 1);
+  const twin = equipItems({ equipment: { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null } }, [ring, ring]);
+  ok('...two identical rings both stay listed', twin.equipped.length === 2);
+
+  // A refused save write
+  const { saveProfile } = await import('../src/meta/storage.js');
+  const { persist } = await import('../src/meta/profile.js');
+  const realSet = globalThis.localStorage.setItem;
+  globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+  let threw = false;
+  let res = null;
+  try { res = saveProfile({ a: 1 }); persist(); } catch { threw = true; }
+  globalThis.localStorage.setItem = realSet;
+  ok('a refused save write never throws into the game', !threw && res === false);
+
+  // Death toll knob
+  const { settleRun } = await import('../src/run/runState.js');
+  resetProfile();
+  DATA.difficulty.deathCoinToll = 0.25;
+  const dr = createRun(); dr.coins = 100; dr.roomNumber = 3;
+  settleRun(dr, 'death');
+  DATA.difficulty.deathCoinToll = 0.5;
+  ok('death toll comes from difficulty.json', dr.coinsLost === 25 && dr.coinsRetrieved === 75 && JSON.parse(readFileSync('assets/data/difficulty.json', 'utf8')).deathCoinToll === 0.5);
+  resetProfile();
+
+  // Blur gone, small favicon, dead code gone
+  const css = readFileSync('styles.css', 'utf8');
+  ok('panels have no backdrop blur', !/\n[^/\n]*backdrop-filter:\s*blur/.test(css));
+  const html = readFileSync('index.html', 'utf8');
+  ok('small favicon', html.includes('href="icon-64.png"') && statSync('icon-64.png').size < 20000 && !html.includes('href="icon.png"'));
+  const bl = await import('../src/ui/battleLine.js');
+  ok('dead code removed', bl.playerCard === undefined && !readFileSync('src/meta/equipment.js', 'utf8').includes('SINGLE_SLOTS'));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

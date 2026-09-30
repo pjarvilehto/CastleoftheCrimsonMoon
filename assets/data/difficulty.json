@@ -47,6 +47,7 @@
     "maxLevel": 3
   },
   "salvagePerTier": 8,
+  "deathCoinToll": 0.5,
   "logDelayMs": 100,
   "combatPacing": {
     "playerAttackMs": 300,

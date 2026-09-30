@@ -3,9 +3,9 @@
 **Castle of the Crimson Moon** — a gothic roguelite browser game. Vanilla JS
 ES modules, **no framework, no build step**. DOM-based UI over full-screen
 painted backgrounds; DIN Condensed Bold via @font-face. You play as The
-Curious Knight pushing deeper into a castle: card-based combat rooms, one
-shrine per run, a boss every 8 rooms, and meta progression (training,
-alchemy, forge) in the hub between runs.
+Curious Knight pushing deeper into a castle: card-based combat rooms, a
+shrine in every 8-room stretch, a summoning boss every 8 rooms, and meta
+progression (training, alchemy, forge) in the hub between runs.
 
 ## Where things live
 
@@ -52,27 +52,27 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    (`player`), combat multipliers (`combat`), and every shrine boon's
    numbers (per-offer fields in `shrines.json`; a smoke check keeps the
    card text in sync with them).
-6. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
-   0.079): bump it and append a step to `MIGRATIONS` — never edit a
+3. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
+   0.079; now 3): bump it and append a step to `MIGRATIONS` — never edit a
    shipped step.
-7. **Loot (0.091):** a drop that can't beat the gear (as it will be after
+4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot for its
    salvage value; only upgrades land in `run.itemsFound`. One shrine per
    stretch of `bossEvery` rooms (`run.shrineRooms`: 2-7, 10-15, ...).
    Coin boons can have a flat price (`flatCost` in shrines.json).
-3. **Potions persist** (0.080): a run draws the profile's stock and
+5. **Potions persist** (0.080): a run draws the profile's stock and
    `settleRun()` writes back what's left, capped by `potionCap`; pickups
    go through `runState.addPotion()` (sold when the satchel is full).
    **`run.stats` is a snapshot** taken at run start. Mid-run loot does
    nothing until `settleRun()` auto-equips it into the profile.
-4. **Bump the build with `node tools/bump.mjs 0.0NN --note "..."`** for
+6. **Bump the build with `node tools/bump.mjs 0.0NN --note "..."`** for
    every player-facing change (writes version + module list + changelog
    into `assets/data/build.json`), and run the smoke suite before pushing.
    The notes are what players see in the in-game "Build 0.0NN available"
    prompt (0.094): short, player-facing, one `--note` per change.
    index.html loads CSS/JS under `?v=<version>` from that list (0.082), so
    a deploy can't leave players on a mix of old and new files.
-5. **Never replace an asset file in place** (edge caches hold ~4 hours) —
+7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content = new filename.
 
 ## Architecture in one paragraph
@@ -80,13 +80,17 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
 `src/main.js` boots: load all data JSONs into a `DATA` singleton →
 preload/decode all art → title scene. `src/core/scene.js` is the scene
 manager (`show()`, transitions, background crossfader, the `el()` DOM helper,
-hotkey dispatch). `src/meta/` is persistent profile state (localStorage,
-save schema v1 + migration, export/import base64 save codes on the title
-screen). `src/run/` is per-dungeon state (room generation with threat
-budgets, combat core with heavy-attack multi-kill spill, shrine boons,
-loot). `src/ui/` renders it — combat is a chromeless fluid card layout
-(`vh/vw`, cards 50vh tall), panel scenes use tuned px. `src/audio/` has the
-music beds and SFX (gesture-gated AudioContext).
+hotkey dispatch, dialog key trap). `src/meta/` is persistent profile state
+(localStorage, versioned save schema + migrations, run history,
+export/import base64 save codes on the title screen). `src/run/` is
+per-dungeon state (room generation with threat budgets, combat core with
+heavy-attack multi-kill spill and boss summons, shrine boons, loot).
+`src/ui/` renders it — combat is a chromeless fluid card layout (`vh/vw`,
+cards 50vh tall) whose fight is resolved instantly and replayed line by
+line (`combatPlayback.js`, effects in `combatFx.js`); panel scenes use
+tuned px; `updatePrompt.js` offers new builds. `src/audio/` has the music
+beds and SFX (gesture-gated AudioContext). `analytics/` is the separate
+static play-stats page.
 
 ## Testing notes
 
@@ -96,6 +100,8 @@ music beds and SFX (gesture-gated AudioContext).
   `el.listeners.click[0]()` or `handleKey()`.
 - Check count can vary by one run-to-run (one assertion only runs when the
   T4 fixture run dies — RNG). A flake gets one rerun; a repeat is real.
+- The suite takes ~90s: most of it waits on real-time combat playback and
+  the 1s scene fades.
 - Balance-sensitive tests use constructed fixtures; per-level stat changes
   require retuning them.
 - Headless screenshots: use a fresh `--user-data-dir` and disable CSS
@@ -167,6 +173,13 @@ music beds and SFX (gesture-gated AudioContext).
   the canvas loop only runs while particles live and is off when the 3D
   background fell back to flat.
 - Keep files under ~300 lines; one responsibility per file.
+- A dialog layered over a scene takes the keyboard with `setKeyTrap(fn)`
+  (scene.js; see `updatePrompt.js`) and releases it with `setKeyTrap(null)`,
+  so the scene's hotkeys can't fire underneath. A scene that is mid-run
+  sets `inRun: true` on its scene object (a reload there would lose the
+  run, so the update prompt waits for the next scene).
+- Save data from other browsers (the dashboard's pasted codes) is
+  untrusted: `analytics/stats.js sanitizeProfile()` before rendering.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
 - The obvious next button gets the **'active'** state: `class: 'active'`
   (pulsing yellow) or `'active active-red'` (pulsing red) — 0.079.
@@ -182,10 +195,18 @@ music beds and SFX (gesture-gated AudioContext).
 - Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
   only compressed bytes warm and decodes the playing bed on demand.
 
-## Backlog (as of 0.078)
+## Backlog (as of 0.097)
 
-Merchant room
-(would fix the endgame coin-sink) · boss variety · more room kinds · music
-loop variations · endgame content ceiling (meta saturates past ~60 trained
-runs; needs deeper tiers or prestige/NG+) · orphaned legacy staging site
-cleanup · portrait-phone layout.
+- Engineering (from the 0.097 review, planned for 0.098): staged asset
+  loading (boot downloads ~6MB before the title), faster + split smoke
+  suite, styles.css reorganised by screen (20 selectors are defined in
+  several places), split the files over ~300 lines (dungeonScene, bg3d,
+  combatFx), run the tests before every deploy (GitHub Actions).
+- Game: merchant room (endgame coin sink) · more bosses (only the Vampire
+  Lord; summons since 0.092) · the room-24 boss is a wall (~5% clear in the
+  simulator) and meta saturates past ~60 runs — deeper tiers or NG+ ·
+  thorns relic is a flat 4 damage, weak against scaled enemy HP · more
+  room kinds · music loop variations · portrait-phone layout.
+- Other: automatic play-stats collection (e.g. a Cloudflare Worker) ·
+  check the DIN Condensed web-embedding licence (macOS system font) ·
+  font as WOFF2 · orphaned legacy staging site cleanup.

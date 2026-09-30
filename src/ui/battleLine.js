@@ -186,13 +186,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   return { el: unit, card, portrait: img, id: e.id, summoned: !!e.summoned, update };
 }
 
-// One-shot builders (tests, previews): a unit in a given state.
-export function playerCard(run, s) {
-  const u = createPlayerUnit(run, s);
-  u.update({ hp: run.hp, ...s });
-  return u.el;
-}
-
+// One-shot builder (tests): an enemy unit in a given state.
 export function enemyCard(e, i, hp, s) {
   const u = createEnemyUnit(e, i, s);
   u.update({ hp, dead: hp <= 0, printing: s.printing, combatOver: s.combatOver });

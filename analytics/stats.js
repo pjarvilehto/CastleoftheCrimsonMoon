@@ -13,10 +13,38 @@ export function decodeSave(code) {
   try {
     const raw = decodeURIComponent(escape(atob(String(code).replace(/\s+/g, ''))));
     const p = JSON.parse(raw);
-    return p && typeof p === 'object' && p.records && p.stats ? p : null;
+    return p && typeof p === 'object' && p.records && p.stats ? sanitizeProfile(p) : null;
   } catch {
     return null;
   }
+}
+
+// A save from someone else's browser is untrusted input (0.097): keep only
+// the fields the dashboard shows, as plain numbers / short strings, so
+// nothing in a crafted code can reach the page as markup.
+const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const str = (v, max = 40) => (v === null || v === undefined ? null : String(v).slice(0, max));
+const ITEM_SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
+
+export function sanitizeRun(r = {}) {
+  const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
+    killedBy: str(r.killedBy), relic: !!r.relic,
+    boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [] };
+  for (const k of ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor']) out[k] = num(r[k]);
+  return out;
+}
+
+export function sanitizeProfile(p = {}) {
+  const eq = p.equipment ?? {};
+  const s = p.stats ?? {}, rec = p.records ?? {};
+  return {
+    playerId: str(p.playerId, 16),
+    coins: num(p.coins), xp: num(p.xp), potions: num(p.potions), potionCap: num(p.potionCap),
+    stats: Object.fromEntries(['power', 'vitality', 'fortune', 'precision', 'endurance'].map((k) => [k, num(s[k])])),
+    records: Object.fromEntries(['runs', 'kills', 'bestRoom', 'deaths'].map((k) => [k, num(rec[k])])),
+    equipment: Object.fromEntries(ITEM_SLOTS.map((k) => [k, str(eq[k])])),
+    history: Array.isArray(p.history) ? p.history.map(sanitizeRun) : [],
+  };
 }
 
 // "0.100" > "0.099": compare version parts as numbers.
@@ -133,7 +161,9 @@ export function toCsv(runs, labelOf = (k) => k) {
   const cols = ['player', 'n', 'at', 'build', 'outcome', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'relic',
     'boons', 'bosses', 'killedBy', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
   const cell = (v) => {
-    const s = Array.isArray(v) ? v.join(' ') : v === null || v === undefined ? '' : String(v);
+    let s = Array.isArray(v) ? v.join(' ') : v === null || v === undefined ? '' : String(v);
+    // text from a save could start a spreadsheet formula (=, +, -, @): defuse it
+    if (typeof v !== 'number' && /^[=+\-@]/.test(s)) s = `'${s}`;
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const rows = runs.map((r) => cols.map((c) => cell(c === 'player' ? labelOf(r.player)

@@ -38,8 +38,9 @@ If you add a new earning, route it through the run object.
 src/
 ├── main.js               entry: boot loader panel (progress bar) ->
 │                         loadData() -> preloadAssets() -> initHotkeys()
-│                         -> build tag + INVULNERABLE debug toggle ->
-│                         title scene
+│                         -> build tag, MUSIC/FULLSCREEN/SOUND toggles
+│                         (+ ?debug tools) -> 3D backgrounds, audio,
+│                         update check -> title scene
 ├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
 │                         slow orbit camera, 2s crossfade, CSS fallback;
 │                         live tuning + localStorage save (0.084)
@@ -47,7 +48,8 @@ src/
 │                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),
 │                         bg crossfader (bg0/bg1 layers), el() helper,
-│                         handleKey()/initHotkeys()
+│                         handleKey()/initHotkeys(), setKeyTrap() for
+│                         dialogs, currentScene()/onSceneChange() (0.094)
 ├── meta/                 PERSISTS across runs (localStorage)
 │   ├── storage.js        the only file that touches localStorage;
 │   │                     exportProfile()/importProfile() — base64 save
@@ -83,7 +85,7 @@ src/
 │   └── balance.js        enemy scaling (HP/dmg growth, LV naming)
 └── ui/
     ├── hud.js            hpBar, statBox, logLine (glyphs)
-    ├── fx.js             flashRed (death vignette), tickUp (counters)
+    ├── fx.js             deathFlash (red build + fade), tickUp (counters)
     ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
     │                     snapshot plays with its line; owns printing lock)
     ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
@@ -117,8 +119,8 @@ assets/
 ├── bg/                   painted backgrounds (JPEG) + shrine art
 │   └── depth/            per-background depth maps (PNG, white = near;
 │                         Depth Anything V2 Small via tools/gen-depth.py)
-├── chars/                character portraits (PNG, keep alpha) +
-│                         card_enemy/card_player frame art
+├── chars/                character portraits (WebP with alpha, 0.078) +
+│                         card_enemy/card_player frame art (PNG)
 ├── audio/                music-*.mp3 beds + sfx-*.mp3 one-shots
 ├── fonts/                DINCondensedBold.ttf (user-supplied)
 └── data/                 ALL balance numbers live here as JSON:
@@ -145,8 +147,8 @@ tools/
 
 | Key | Where | Action |
 |---|---|---|
-| `A` | dungeon | Attack first living enemy |
-| `H` | dungeon | Heavy Attack (2x dmg, 3-turn cd) |
+| `A` | dungeon | Attack the front-most living enemy (leftmost card; boss summons stand in front of the boss) |
+| `H` | dungeon | Heavy Attack (2x dmg, 3-turn cd) on the front summon, else the first living enemy |
 | `P` | dungeon | Drink Potion (also after a room is cleared, 0.080) |
 | `D` | dungeon/hub | Push Deeper / Descend |
 | `R` | dungeon | Retreat with Loot (after clear) |
@@ -159,6 +161,7 @@ tools/
 | `A` `Y` `N` | hub | Alchemy tracks: Potency / Efficiency / Infusion (coins) |
 | `D` / `B` | hub | Descend into the Dungeon / Back |
 | `G` | run-end | Return to Great Hall |
+| `Y` / `Enter`, `N` / `Esc` | update prompt | Reload to the new build / later (the prompt owns the keyboard while open) |
 | `D` / `Space` | dungeon | Push Deeper (key2) |
 | `Enter` | anywhere | Primary button |
 
@@ -174,6 +177,8 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 4. Dungeon scene drives `run/combat.js`; kills route loot through
    `runState.applyLoot()` into the run object.
 5. Run end (death OR retreat) → `settleRun()` → profile → persist → hub.
+   settleRun also appends the run's record to `profile.history`
+   (`meta/history.js`, newest 250) — the /analytics/ dashboard's data.
    Potions are a persistent stock (0.080): the run draws `profile.potions`,
    and whatever is left comes back at settle (both outcomes), capped by
    `profile.potionCap` (the satchel). Pickups past the cap sell for coins
@@ -193,10 +198,14 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
   3 random offers from the pool (Fisher-Yates in `run/shrine.js ::
   dealOffers`, shared with the simulator; stored on `room.dealtOffers` so
   re-renders are stable).
-- New room background: drop the file in `assets/bg/`, add to `rooms` and
-  `roomNames` in `backgrounds.json`.
-- New scene: create `ui/scenes/xScene.js` exporting `enter(root)`,
-  navigate via `show(xScene())`.
+- New room background: drop the JPEG in `assets/bg/`, add to `rooms` and
+  `roomNames` in `backgrounds.json`, and generate its depth map
+  (`python3 tools/gen-depth.py <model.onnx> file.jpg`; the smoke suite
+  fails without one).
+- New scene: create `ui/scenes/xScene.js` returning `{ enter(root) }`,
+  navigate via `show(xScene())`. Mid-run scenes add `inRun: true` (the
+  update prompt waits for them to end). A dialog over a scene takes the
+  keyboard with `setKeyTrap(fn)` and releases it with `setKeyTrap(null)`.
 - Item rarity colors (0.047): tier-driven via `hud.js :: rarityClass /
   itemName` + `.rarity-1/2/3` in styles.css — T1 ash, T2 azure (soft
   pulse), T3 amethyst (strong pulse). Use `itemName()` anywhere an item
@@ -267,10 +276,13 @@ Cloudflare Redirect Rule (301 → www).
 user from Kimi version cards (one card per build).
 
 **Release loop (game changes):**
-1. Edit, bump `build.json`, `node tools/smoke-test.mjs` — all green.
+1. Edit, `node tools/bump.mjs 0.0NN --note "..."` (the notes feed the
+   in-game update prompt), `node tools/smoke-test.mjs` — all green.
 2. Screenshot any visual change (headless chromium harness).
-3. Commit and push to GitHub (production updates itself).
-4. Save a Kimi version card for staging; the user publishes it.
+3. Commit and push to GitHub (production updates itself); players get the
+   "Build 0.0NN available" prompt within minutes.
+4. (Legacy) the Kimi staging site is published by the owner from Kimi
+   version cards, when used.
 
 **Save-game caveat:** profiles live in localStorage, which is per-origin.
 Saves on the kimi.page origin do NOT carry to the custom domain (and vice

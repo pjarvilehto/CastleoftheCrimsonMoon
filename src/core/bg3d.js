@@ -6,7 +6,7 @@
 // slowly around the mid-depth "pivot" plane, and near things slide
 // against far things with real perspective.
 //
-// Cheap on purpose (TVs): ~15k vertices, one texture read per pixel,
+// Cheap on purpose (TVs): ~37k vertices (256x144 grid), one texture read per pixel,
 // capped at maxFps. The CSS layers in #bg-stack keep running underneath,
 // so anything that goes wrong (no WebGL, software-only GL, context loss,
 // prefers-reduced-motion) simply leaves the flat backgrounds showing.
@@ -124,7 +124,10 @@ export function initBg3d({ allowSoftware = false } = {}) {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   document.getElementById('bg-stack').append(canvas);
   canvas.addEventListener('webglcontextlost', shutdown);
-  globalThis.addEventListener('resize', resize);
+  // Debounced (0.097): every resize re-samples ~37k vertex depths per layer,
+  // and a window drag fires dozens of events a second.
+  let resizeTimer = null;
+  globalThis.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 120); });
   resize();
   requestAnimationFrame(frame);
   return true;
