@@ -1188,7 +1188,8 @@ process.on('uncaughtException', (e) => {
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
   ok('tuner: 5 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 5
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
-  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
+  ok('tuner + clip toggle only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle(), clip]')
+    && readFileSync('styles.css', 'utf8').includes('body.clip-enemies .enemy-char { clip-path: inset(0 round 1em); }'));
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
@@ -1313,6 +1314,48 @@ process.on('uncaughtException', (e) => {
   } catch (e) { threw = e.message; }
   ok('every effect kind is safe without Web Animations', threw === null, threw ?? '');
   ok('bgJolt is a no-op without WebGL', bg3d.bgJolt(1) === undefined);
+}
+
+// T50: 0.089 — particles by material, elite aura, rat/spider sway, the
+// potion event, Great Hall potion colors.
+{
+  const { MATERIAL, materialOf } = await import('../src/ui/particles.js');
+  ok('particle materials: Cinderborn embers, wraith wisps, bone/stone dust, flesh blood',
+    materialOf('ghoul') === 'embers' && materialOf('wraith') === 'wisps' && materialOf('skeleton') === 'dust'
+    && materialOf('rat') === 'blood' && materialOf('player') === 'blood' && Object.keys(MATERIAL).every((id) => DATA.enemies[id]));
+  const { IDLE_FAMILY, enemyCard } = await import('../src/ui/battleLine.js');
+  ok('rat and spider sway like the skeletons', IDLE_FAMILY.rat === 'prowl' && IDLE_FAMILY.crypt_spider === 'prowl');
+  const opts = { printing: false, combatOver: false, onAttack: () => {} };
+  const elite = enemyCard(scaleEnemy('golem', 1), 0, 70, opts);
+  const plain = enemyCard(scaleEnemy('rat', 1), 1, 14, opts);
+  ok('elites get an aura, plain enemies do not', elite.all((n) => /\baura\b/.test(n.className)).length === 1
+    && plain.all((n) => /\baura\b/.test(n.className)).length === 0);
+  const css = readFileSync('styles.css', 'utf8');
+  const i = css.indexOf('@keyframes aura-pulse');
+  const auraKf = css.slice(i, css.indexOf('} }', i) + 3); // one-line block
+  ok('aura animates only opacity/scale', auraKf.includes('opacity') && auraKf.includes('scale') && !auraKf.includes('filter') && !auraKf.includes('transform'));
+  ok('potion is an event (aura, bar flare, sparkles)', readFileSync('src/ui/combatFx.js', 'utf8').includes("aura.className = 'heal-aura'")
+    && css.includes('.heal-aura {') && readFileSync('src/ui/particles.js', 'utf8').includes("case 'heal':"));
+  const { potionLevel } = await import('../src/ui/scenes/hubScene.js');
+  ok('Great Hall potions: green full, red low',
+    potionLevel({ potions: 4, potionCap: 4 }) === 'potions-full' && potionLevel({ potions: 1, potionCap: 4 }) === 'potions-low'
+    && potionLevel({ potions: 0, potionCap: 4 }) === 'potions-low' && potionLevel({ potions: 2, potionCap: 4 }) === 'potions-ok'
+    && potionLevel({ potions: 2, potionCap: 8 }) === 'potions-low' && potionLevel({ potions: 3, potionCap: 8 }) === 'potions-ok'
+    && css.includes('.hub-stats .potions-full .value { color: #6fe07a; }') && css.includes('.hub-stats .potions-low .value { color: #e05a4a; }'));
+}
+
+// T51: 0.089 — the player card shows TOTAL armor, plus the Infusion
+// potion bonus while it lasts ("14 ARMOR" / "14+2 ARMOR").
+{
+  const { createPlayerUnit } = await import('../src/ui/battleLine.js');
+  resetProfile();
+  const r = createRun(); r.stats.armor = 14; r.tempArmor = 0;
+  const u = createPlayerUnit(r, { onHeavy() {}, onPotion() {} });
+  const st = { hp: r.hp, printing: false, heavyReady: true, heavyCd: 0, dead: false };
+  u.update(st);
+  const plain = u.el.textContent;
+  r.tempArmor = 2; u.update(st);
+  ok('armor line: total, then total+potion bonus', plain.includes('14 ARMOR') && !plain.includes('14+') && u.el.textContent.includes('14+2 ARMOR'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

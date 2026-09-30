@@ -224,6 +224,8 @@
   .hub-stats .stat-box .label { align-self: flex-start; }
   .hub-stats .stat-box .value { align-self: flex-end; line-height: 1.1; }
   .hub-stats .stat-potions { grid-column: 2; }
+  .hub-stats .potions-full .value { color: #6fe07a; }
+  .hub-stats .potions-low .value { color: #e05a4a; }
 
   .item-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -426,20 +428,20 @@
    shifted left by half its width, so its visible bottom-centre sits at
    local x = 0. Transform/opacity only — never filter — in loops. */
 .portrait { transform-origin: 0 100%; }
-.idle-skitter { animation: idle-skitter 1.9s linear infinite; }
 .idle-hover   { animation: idle-hover 4.2s ease-in-out infinite; }
 .idle-heavy   { animation: idle-heavy 5.2s ease-in-out infinite; }
 .idle-prowl   { animation: idle-prowl 3.6s ease-in-out infinite; }
 .idle-boss    { animation: idle-boss 6.5s ease-in-out infinite; }
 .idle-player  { animation: idle-player 4.6s ease-in-out infinite; }
-@keyframes idle-skitter { /* rats, spiders: still, then a quick twitch */
-  0%, 18%, 55%, 100% { translate: 0 0; }
-  10% { translate: 0.4% -0.3%; } 14% { translate: -0.3% 0; }
-  60% { translate: -0.4% -0.3%; } 64% { translate: 0.3% 0; }
-}
 @keyframes idle-hover { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2.2%; } }            /* wraith, shrieker */
 @keyframes idle-heavy { 0%, 100% { scale: 1; } 50% { scale: 1.008 1.016; } }                 /* slow breathing */
-@keyframes idle-prowl { 0%, 100% { rotate: -0.5deg; translate: 0 0; } 50% { rotate: 0.5deg; translate: 0.4% 0; } }
+@keyframes idle-prowl { 0%, 100% { rotate: -0.5deg; translate: 0 0; } 50% { rotate: 0.5deg; translate: 0.4% 0; } } /* incl. rats, spiders */
+/* ?debug CLIP ENEMIES (0.089 experiment): enemy figures kept inside their
+   card frames, scaled down to fit so heads aren't cut off. Player as is. */
+body.clip-enemies .enemy-char { clip-path: inset(0 round 1em); }
+body.clip-enemies .enemy-char .portrait,
+body.clip-enemies .boss-card .portrait,
+body.clip-enemies .enemy-vampire_lord .portrait { height: 80%; max-width: 100%; bottom: 9%; }
 @keyframes idle-boss  { 0%, 100% { rotate: -0.9deg; scale: 1; } 50% { rotate: 0.9deg; scale: 1.015; } }
 @keyframes idle-player { 0%, 100% { scale: 1; } 50% { scale: 1.006 1.012; } }
 @media (prefers-reduced-motion: reduce) { .portrait { animation: none !important; } }
@@ -451,11 +453,36 @@
   text-shadow: 0 0 6px #000, 0 2px 4px #000; will-change: transform, opacity;
 }
 .fx-dmg { color: #ff5a4a; }
+/* particles canvas (0.089, ui/particles.js): under the numbers */
+.fx-particles { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* elite/boss aura (0.089): a pre-rendered radial glow behind the figure;
+   only opacity/scale animate (compositor-only) */
+.aura {
+  position: absolute; left: 50%; bottom: 12%; width: 150%; height: 85%;
+  translate: -50% 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, rgba(214, 60, 40, 0.55) 0%, rgba(160, 30, 30, 0.22) 45%, rgba(0, 0, 0, 0) 70%);
+  animation: aura-pulse 4.2s ease-in-out infinite;
+}
+.aura-boss {
+  width: 190%; height: 105%;
+  background: radial-gradient(ellipse at 50% 58%, rgba(255, 120, 60, 0.6) 0%, rgba(190, 20, 40, 0.3) 45%, rgba(0, 0, 0, 0) 72%);
+  animation-duration: 5.5s;
+}
+@keyframes aura-pulse { 0%, 100% { opacity: 0.35; scale: 0.94; } 50% { opacity: 0.85; scale: 1.04; } }
+.char-card.dying .aura, .char-card.dead .aura { opacity: 0; animation: none; transition: opacity 0.5s; }
+@media (prefers-reduced-motion: reduce) { .aura { animation: none; opacity: 0.6; } }
 /* 0.088 extras */
 .fx-crit { color: #ffd24a; font-size: calc(var(--num, 24px) * 1.5); text-shadow: 0 0 10px rgba(255, 170, 40, 0.9), 0 2px 4px #000; }
 .fx-thorns { color: #c38cff; }
 .fx-miss { color: #d8d0c0; letter-spacing: 0.12em; }
 .fx-heal { color: #6fe07a; }
+.fx-potion { font-size: calc(var(--num, 24px) * 1.35); text-shadow: 0 0 12px rgba(110, 255, 130, 0.9), 0 2px 4px #000; }
+/* potion (0.089): a one-shot green aura behind the knight */
+.heal-aura {
+  position: absolute; left: 50%; bottom: 8%; width: 160%; height: 95%; translate: -50% 0;
+  z-index: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at 50% 55%, rgba(120, 255, 140, 0.6) 0%, rgba(40, 200, 90, 0.28) 45%, rgba(0, 0, 0, 0) 70%);
+}
 .fx-revive { color: #ffd24a; letter-spacing: 0.12em; text-shadow: 0 0 14px rgba(255, 200, 60, 1), 0 2px 4px #000; }
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
@@ -661,9 +688,10 @@ body.debug .sfx-toggle { top: 104px; }
 .bg-view-toggle { top: 168px; }
 .bg-next-toggle { top: 200px; }
 .bg-tune-toggle { top: 232px; }
+.bg-clip-toggle { top: 264px; }
 /* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
 .bg-tuner {
-  position: fixed; top: 266px; right: 12px; z-index: 50; width: 300px;
+  position: fixed; top: 298px; right: 12px; z-index: 50; width: 300px;
   padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);

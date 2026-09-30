@@ -16,6 +16,7 @@
 
 import { DATA } from '../shared/data.js';
 import { bgJolt } from '../core/bg3d.js';
+import { attachParticles, burst, materialOf } from './particles.js';
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
 export function fxFor(ev) {
@@ -53,7 +54,8 @@ export function playFx(fx, ctx) {
   switch (fx.kind) {
     case 'attack': return attack(fx, ctx);
     case 'hit': return hit(ctx.unit(fx.to), fx, 0, ctx);
-    case 'enter': return enter(ctx);
+    case 'enter': attachParticles(ctx.layer); return enter(ctx);
+    case 'die': return spray(ctx.unit(fx.to), 1, 0, true);
     case 'dodge': return dodge(fx, ctx);
     case 'heal': return heal(fx, ctx);
     case 'revive': return revive(ctx);
@@ -115,10 +117,21 @@ function hit(u, fx, delay, ctx, stop = 0) {
       { filter: base },
     ], { duration: 260, delay, easing: 'ease-out' });
   }
+  if (fx.dmg > 0) setTimeout(() => spray(u, away, fx.heavy || fx.crit ? 1.5 : 1), delay);
+  if (fx.dmg > 0) barFlash(u, 'damage', delay);
   if (fx.dmg > 0) {
     const cls = fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
     floatNumber(ctx, u, fx.crit ? `-${fx.dmg}!` : `-${fx.dmg}`, cls, delay);
   }
+}
+
+// Particles out of a struck (or dying) unit, by what it's made of.
+function spray(u, dir, power = 1, big = false) {
+  if (!u?.card?.getBoundingClientRect) return;
+  const r = u.card.getBoundingClientRect();
+  const burstOnce = () => burst(materialOf(u.id), r.left + r.width / 2, r.top + r.height * 0.42, { dir: big ? 0 : dir, size: r.height, big });
+  burstOnce();
+  if (power > 1.2) burstOnce(); // heavy / crit: a second, overlapping burst
 }
 
 // The whole battle line trembles (heavy blows, SMASH, multi-kills).
@@ -157,11 +170,26 @@ function dodge(fx, ctx) {
   floatNumber(ctx, p, 'MISS', 'fx-miss', LUNGE_MS * STRIKE_AT);
 }
 
-// Potions and lifesteal: green number + a soft green glow on the knight.
+// Lifesteal: green number + a soft green glow on the knight. A potion is
+// an EVENT (0.089): a green aura swells out behind the knight, a longer
+// glow, rising sparkles, and the HP bar flares green as it fills.
 function heal(fx, ctx) {
   const p = ctx.unit(fx.to);
-  glow(p, 'sepia(1) saturate(4) hue-rotate(60deg) brightness(1.35)', 420);
-  if (fx.amount > 0) floatNumber(ctx, p, `+${fx.amount}`, 'fx-heal');
+  if (fx.amount > 0) floatNumber(ctx, p, `+${fx.amount}`, fx.potion ? 'fx-heal fx-potion' : 'fx-heal');
+  barFlash(p, 'heal', 0, fx.potion ? 1300 : 700);
+  if (!fx.potion) { glow(p, 'sepia(1) saturate(4) hue-rotate(60deg) brightness(1.35)', 420); return; }
+  glow(p, 'sepia(1) saturate(5) hue-rotate(65deg) brightness(1.6)', 1100);
+  if (!can(p?.card)) return;
+  const aura = document.createElement('div');
+  aura.className = 'heal-aura';
+  p.card.append(aura);
+  aura.animate([
+    { opacity: 0, scale: '0.75' },
+    { opacity: 1, scale: '1.05', offset: 0.3 },
+    { opacity: 0, scale: '1.25' },
+  ], { duration: 1300, easing: 'ease-out' }).finished.then(() => aura.remove(), () => aura.remove());
+  const r = p.card.getBoundingClientRect();
+  burst('heal', r.left + r.width / 2, r.top + r.height * 0.5, { size: r.height });
 }
 
 // The Heart of the Dying Moon: a golden flare and a shake.
@@ -171,6 +199,26 @@ function revive(ctx) {
   floatNumber(ctx, p, 'REVIVED', 'fx-revive');
   shake(ctx, 0.8);
   bgJolt(1);
+}
+
+// HP bar feedback (0.089): flares bright green on a heal, flashes toward
+// red when damage lands. The glow is on the bar, the colour shift on its
+// fill (a gradient, so it's shifted with a filter).
+function barFlash(u, kind, delay = 0, ms = 450) {
+  const bar = u?.card?.querySelector?.('.hp-line .hpbar');
+  const fill = bar?.firstElementChild;
+  if (!can(bar) || !fill) return;
+  const heal = kind === 'heal';
+  const rgb = heal ? '120,255,140' : '255,60,40';
+  bar.animate([
+    { boxShadow: `0 0 0 rgba(${rgb},0)` },
+    { boxShadow: `0 0 ${heal ? 18 : 12}px rgba(${rgb},1), 0 0 ${heal ? 6 : 4}px rgba(${rgb},1)`, offset: 0.2 },
+    { boxShadow: `0 0 0 rgba(${rgb},0)` },
+  ], { duration: ms, delay, easing: 'ease-out' });
+  fill.animate(heal
+    ? [{ filter: 'none' }, { filter: 'brightness(1.9) saturate(1.6)', offset: 0.2 }, { filter: 'none' }]
+    : [{ filter: 'none' }, { filter: 'hue-rotate(-110deg) saturate(2.2) brightness(1.4)', offset: 0.15 }, { filter: 'none' }],
+  { duration: ms, delay, easing: 'ease-out' });
 }
 
 function glow(u, tint, ms) {

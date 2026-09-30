@@ -16,10 +16,10 @@ const ART = (id) => `assets/chars/${id}.webp`;
 // .idle-<family>), keyed by enemy ID — display names differ (golem is
 // "Fellblade", ghoul is "Cinderborn").
 export const IDLE_FAMILY = {
-  rat: 'skitter', crypt_spider: 'skitter',
   bat: 'hover', wraith: 'hover',
   golem: 'heavy', blood_knight: 'heavy', gargoyle: 'heavy',
-  hollow_hound: 'prowl', ghoul: 'prowl', cultist: 'prowl', skeleton: 'prowl',
+  // 0.089: rat + spider moved from a twitchy 'skitter' loop to the sway
+  hollow_hound: 'prowl', ghoul: 'prowl', cultist: 'prowl', skeleton: 'prowl', rat: 'prowl', crypt_spider: 'prowl',
   vampire_lord: 'boss',
 };
 
@@ -43,13 +43,6 @@ function collapse(img, done) {
     { translate: '0 4%', opacity: 1, filter: red, offset: 0.3 },
     { translate: '0 14%', opacity: 0, filter: `${red} brightness(0.2)` },
   ], { duration: COLLAPSE_MS, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
-}
-
-// Right-hand cell of a gear line: the item's defensive stat.
-function armorStat(item) {
-  if (item.armor) return `+${item.armor} ARMOR`;
-  if (item.hp) return `+${item.hp} HP`;
-  return '';
 }
 
 // "Giant Rat LV3" -> ["Giant Rat", "LV3"]; levelless -> ["Giant Rat", "LV1"]
@@ -89,6 +82,10 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const chip = el('div', { class: 'hud-chip' }, hp.line);
   const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
   const img = portrait('player', 'player', 'player');
+  // Total armor (like the weapon line's total damage), plus the Infusion
+  // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
+  const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
+  const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
   const card = el('div', { class: 'char-card player-card' },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, 'THE CURIOUS KNIGHT'),
@@ -101,12 +98,12 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
         ? el('span', { class: rarityClass(weapon) }, weapon.name.toUpperCase() + (weapon.forgeLvl ? ` +${weapon.forgeLvl}` : ''))
         : el('span', {}, 'UNARMED'),
       el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`)),
-    // Armor line: equipped armor piece (rarity-colored) + its defense.
+    // Armor line: equipped armor piece (rarity-colored) + TOTAL armor.
     el('div', { class: 'card-sub weapon-line' },
       armor
         ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : ''))
         : el('span', { class: 'no-item' }, 'NO ARMOR'),
-      armor ? el('span', { class: 'weapon-dmg' }, armorStat(armor)) : null),
+      armorVal),
     img,
     chip,
     potions);
@@ -118,13 +115,14 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     hp.set(s.hp, run.maxHp);
     setClass(chip, 'lowhp', s.hp / run.maxHp <= 0.25);
     potions.textContent = `POTIONS ${run.potions}/${run.potionCap}`;
+    armorVal.textContent = armorText();
     cd.textContent = s.heavyCd > 0 ? ` (${s.heavyCd})` : '';
     setClass(heavyBtn, 'ready', s.heavyReady);
     setDisabled(heavyBtn, !s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
     setDisabled(potionBtn, s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
   };
-  return { el: unit, card, portrait: img, update };
+  return { el: unit, card, portrait: img, id: 'player', update };
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver })
@@ -132,6 +130,8 @@ export function createEnemyUnit(e, i, { onAttack }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
   const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
+  // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
+  const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
   // Portrait and skull both live in the card; the 'dead' class swaps them
   // (styles.css), so the card never has to be rebuilt.
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}` },
@@ -139,6 +139,7 @@ export function createEnemyUnit(e, i, { onAttack }) {
       el('span', { class: 'card-name' }, name,
         isElite(e) ? el('span', { class: 'elite-star', title: 'Elite - can drop crimson relics (room 11+)' }, ' ★') : null),
       el('span', { class: 'lv-badge' }, lv)),
+    aura,
     img,
     el('div', { class: 'skull' }, '☠'),
     hp.line);
@@ -158,7 +159,7 @@ export function createEnemyUnit(e, i, { onAttack }) {
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
   };
-  return { el: unit, card, portrait: img, update };
+  return { el: unit, card, portrait: img, id: e.id, update };
 }
 
 // One-shot builders (tests, previews): a unit in a given state.

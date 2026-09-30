@@ -133,7 +133,11 @@ music beds and SFX (gesture-gated AudioContext).
   `ui/combatFx.js`, driven by `fx` descriptors on playback queue items.
   Loops animate only translate/rotate/scale (never filter); one-shots use
   element.animate so they don't restart the CSS loops. Attack pacing:
-  `difficulty.json combatPacing`.
+  `difficulty.json combatPacing`. Particles (0.089, `ui/particles.js`):
+  material per enemy id (`MATERIAL`: embers/wisps/dust, default blood);
+  the canvas loop only runs while particles live and is off when the 3D
+  background fell back to flat. `?debug` CLIP ENEMIES previews enemies
+  clipped to their card frames (experiment, off by default).
 - Keep files under ~300 lines; one responsibility per file.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
 - The obvious next button gets the **'active'** state: `class: 'active'`

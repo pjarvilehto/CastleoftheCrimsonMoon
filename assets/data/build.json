@@ -1,5 +1,5 @@
 {
-  "version": "0.088",
+  "version": "0.089",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -29,6 +29,7 @@
     "src/ui/deathModal.js",
     "src/ui/fx.js",
     "src/ui/hud.js",
+    "src/ui/particles.js",
     "src/ui/scenes/dungeonScene.js",
     "src/ui/scenes/hubScene.js",
     "src/ui/scenes/runEndScene.js",

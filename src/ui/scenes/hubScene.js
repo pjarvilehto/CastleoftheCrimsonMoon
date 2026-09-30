@@ -17,6 +17,14 @@ import { play } from '../../audio/music.js';
 import { dungeonScene } from './dungeonScene.js';
 import { titleScene } from './titleScene.js';
 
+// Great Hall potion count color (0.089): green when the satchel is full,
+// red when running low (1 or none, or a quarter of the satchel or less).
+export function potionLevel(p) {
+  if (p.potions >= p.potionCap) return 'potions-full';
+  if (p.potions <= Math.max(1, Math.floor(p.potionCap / 4))) return 'potions-low';
+  return 'potions-ok';
+}
+
 export function hubScene() {
   return {
     enter(root) {
@@ -40,7 +48,7 @@ export function hubScene() {
       statBox('Attack', stats.dmg),
       statBox('HP', stats.maxHp),
       statBox('Armor', stats.armor),
-      statBox('Potions', `${p.potions}/${p.potionCap}`, 'stat-potions'));
+      statBox('Potions', `${p.potions}/${p.potionCap}`, `stat-potions ${potionLevel(p)}`));
 
     // ---- TRAIN: five disciplines, XP-only. Breakthrough ★ every 5th level. ----
     const trainSection = el('div', {},

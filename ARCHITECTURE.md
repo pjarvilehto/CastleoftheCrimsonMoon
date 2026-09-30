@@ -80,6 +80,7 @@ src/
     ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
     │                     snapshot plays with its line; owns printing lock)
     ├── combatFx.js       combat effects: event -> fx descriptor, playFx()
+    ├── particles.js      particle bursts by material (0.089), one canvas
     ├── battleLine.js     persistent units (0.086: built once per room,
     │                     update() patches HP/dead/buttons in place;
     │                     card + button row beneath; HP as text+bar line);
