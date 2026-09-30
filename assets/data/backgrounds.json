@@ -29,7 +29,7 @@
   "parallax": {
     "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename.",
     "enabled": true,
-    "depthScale": 0.5,
+    "depthScale": 0.8,
     "pivot": 0.5,
     "yawDeg": 2.5,
     "pitchDeg": 1.2,
@@ -43,6 +43,7 @@
     ],
     "maxFps": 30,
     "fadeMs": 2000,
-    "overrides": {}
+    "overrides": {},
+    "speed": 2.1
   }
 }

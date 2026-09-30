@@ -1,5 +1,5 @@
 {
-  "version": "0.084",
+  "version": "0.085",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
