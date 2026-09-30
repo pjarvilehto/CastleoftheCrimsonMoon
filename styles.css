@@ -614,6 +614,22 @@ body.debug .sfx-toggle { top: 104px; }
 .bg-fg-toggle { top: 136px; }
 .bg-view-toggle { top: 168px; }
 .bg-next-toggle { top: 200px; }
+.bg-tune-toggle { top: 232px; }
+/* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
+.bg-tuner {
+  position: fixed; top: 266px; right: 12px; z-index: 50; width: 300px;
+  padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
+  border: 1px solid var(--gold-dim); border-radius: 6px;
+  font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);
+}
+.bg-tuner-title { color: var(--gold); letter-spacing: 1.5px; margin-bottom: 8px; }
+.bg-tuner-row { display: grid; grid-template-columns: 62px 1fr 44px; align-items: center; gap: 8px; margin: 6px 0; }
+.bg-tuner-row input { width: 100%; accent-color: #c9a227; }
+.bg-tuner-value { text-align: right; color: var(--gold); }
+.bg-tuner-buttons { display: flex; gap: 8px; margin: 10px 0 6px; }
+.bg-tuner-buttons button { padding: 6px 10px; font-size: 0.8rem; }
+.bg-tuner-status { color: #b8a680; line-height: 1.35; }
+.bg-tuner-code { width: 100%; margin-top: 6px; font-size: 0.72rem; background: rgba(0,0,0,0.5); color: var(--parchment); border: 1px solid #4a4234; box-sizing: border-box; }
 
 /* ---- 0.067: YOU DIED dialog ---- */
 .death-overlay {

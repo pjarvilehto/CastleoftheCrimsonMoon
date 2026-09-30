@@ -1,5 +1,5 @@
 {
-  "version": "0.083",
+  "version": "0.084",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -22,6 +22,7 @@
     "src/shared/debug.js",
     "src/shared/preload.js",
     "src/ui/battleLine.js",
+    "src/ui/bgTuner.js",
     "src/ui/buffs.js",
     "src/ui/combatPlayback.js",
     "src/ui/deathModal.js",

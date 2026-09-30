@@ -1132,35 +1132,15 @@ process.on('uncaughtException', (e) => {
   ok('bilinear depth sampling', bg3d.sampleDepth(d, 0, 0) === 0 && bg3d.sampleDepth(d, 1, 1) === 1
     && Math.abs(bg3d.sampleDepth(d, 0.5, 0.5) - 0.75) < 1e-9 && bg3d.sampleDepth(d, -3, 9) === 1);
 
-  // Mirror of the vertex shader: project a skirt-edge vertex.
+  // Shader mirror + coverage math live in core/bg3dMath.js (one copy).
+  const bm = await import('../src/core/bg3dMath.js');
   const cfg = bg3d.tuning('');
   const fov = (cfg.fovDeg * Math.PI) / 180;
-  const project = (m, gx, gy, depth, aspect) => {
-    const tx = Math.tan(fov / 2);
-    const k = 1 + cfg.depthScale * (cfg.pivot - depth);
-    const p = [(gx * 2 - 1) * tx * aspect * k, (1 - gy * 2) * tx * k, -k, 1];
-    const out = [0, 1, 2, 3].map((r) => m[r] * p[0] + m[4 + r] * p[1] + m[8 + r] * p[2] + m[12 + r] * p[3]);
-    return [out[0] / out[3], out[1] / out[3]];
-  };
-  const rest = bg3d.mvp(0, 0, fov, 16 / 9);
-  const [rx, ry] = project(rest, 0.25, 0.75, 0.9, 16 / 9);
+  const [rx, ry] = bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9), 0.25, 0.75, 0.9, 16 / 9, cfg);
   ok('rest pose: depth does not move pixels', Math.abs(rx - -0.5) < 1e-6 && Math.abs(ry - -0.5) < 1e-6);
-  const m = cfg.overscan;
-  let worst = Infinity;
-  for (const aspect of [4 / 3, 16 / 9, 21 / 9]) {
-    for (const ys of [-1, 1]) for (const ps of [-1, 1]) {
-      const M = bg3d.mvp((ys * cfg.yawDeg * Math.PI) / 180, (ps * cfg.pitchDeg * Math.PI) / 180, fov, aspect);
-      for (let i = 0; i <= 40; i++) {
-        const s = -m + ((1 + 2 * m) * i) / 40;
-        for (const depth of [0, 0.25, 0.5, 0.75, 1]) {
-          // the four skirt edges must stay outside the screen (|ndc| > 1)
-          worst = Math.min(worst, -project(M, -m, s, depth, aspect)[0] - 1, project(M, 1 + m, s, depth, aspect)[0] - 1,
-            project(M, s, -m, depth, aspect)[1] - 1, -project(M, s, 1 + m, depth, aspect)[1] - 1);
-        }
-      }
-    }
-  }
+  const worst = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(cfg, a, cfg.overscan)));
   ok('overscan skirt covers the screen at sway extremes', worst > 0, `worst margin ${worst.toFixed(4)} NDC`);
+  ok('coverage check detects a too-small skirt', bm.edgeMargin(cfg, 16 / 9, 0) < 0);
 
   const main = readFileSync('src/main.js', 'utf8');
   ok('bg debug toggles only under ?debug', main.includes('...(debugMode ? bgDebugToggles() : [])')
@@ -1176,6 +1156,35 @@ process.on('uncaughtException', (e) => {
   ok('hotkeys back when shown', handleKey('q') === true && clicked === 1);
   btn.remove();
   ok('3D backgrounds no-op without WebGL', bg3d.initBg3d() === false && bg3d.isBg3dActive() === false);
+}
+
+// T46: 0.084 — ?debug BG TUNING: live values override the data, Save keeps
+// them in localStorage, Reset clears; the skirt grows automatically for
+// whatever sway/depth the sliders allow (up to their maximums).
+{
+  const bg3d = await import('../src/core/bg3d.js');
+  const bm = await import('../src/core/bg3dMath.js');
+  const base = bg3d.tuning('');
+  ok('tunables: depth, speed, sway x/y, focus', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot' && base.speed === 1);
+  bg3d.setLiveTuning({ depthScale: 0.9, speed: 2 });
+  ok('live values override the shipped ones', bg3d.tuning('').depthScale === 0.9 && bg3d.liveTuning().speed === 2
+    && bg3d.tuning('').yawDeg === base.yawDeg);
+  const json = bg3d.saveLiveTuning();
+  const saved = JSON.parse(localStorage.getItem('castle-bg-tuning'));
+  ok('save stores + returns the values', saved.depthScale === 0.9 && saved.speed === 2 && JSON.parse(json).pivot === base.pivot);
+  bg3d.resetLiveTuning();
+  ok('reset restores shipped values and clears storage', bg3d.tuning('').depthScale === base.depthScale && localStorage.getItem('castle-bg-tuning') === null);
+  const extreme = { ...base, depthScale: 1.2, yawDeg: 5, pitchDeg: 3, pivot: 0 }; // the sliders' maximums
+  ok('near-plane floor matches the shader', readFileSync('src/core/bg3d.js', 'utf8').includes('max(0.4, 1.0 + uDepthScale')
+    && readFileSync('src/core/bg3dMath.js', 'utf8').includes('Math.max(0.4, 1 + c.depthScale'));
+  const fov = (base.fovDeg * Math.PI) / 180;
+  ok('no geometry behind the camera at max sliders', bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9), 0.5, 0.5, 1, 16 / 9, extreme).every(Number.isFinite));
+  const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
+  ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
+  const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
+  ok('tuner: 5 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 5
+    && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
+  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

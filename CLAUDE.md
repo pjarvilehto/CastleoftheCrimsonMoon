@@ -121,8 +121,12 @@ music beds and SFX (gesture-gated AudioContext).
   <20fps in the first 4s, context loss, or prefers-reduced-motion. If you
   raise the sway/depth, the smoke suite's coverage check says when
   `overscan` must grow too.
-- `?debug` also adds HIDE FOREGROUND, BG VIEW (3D / FLAT / DEPTH) and
-  NEXT BG for evaluating backgrounds.
+- `?debug` also adds HIDE FOREGROUND, BG VIEW (3D / FLAT / DEPTH),
+  NEXT BG and BG TUNING (0.084: live sliders for depth/speed/sway/focus;
+  "Save Depth Settings" stores them in that browser's localStorage and
+  copies JSON — when the owner sends that JSON, put the values into
+  `backgrounds.json` `parallax` to make them the default for everyone).
+  The skirt (overscan) now grows automatically for larger sway.
 - Keep files under ~300 lines; one responsibility per file.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
 - The obvious next button gets the **'active'** state: `class: 'active'`

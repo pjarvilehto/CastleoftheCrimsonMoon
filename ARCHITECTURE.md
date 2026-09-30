@@ -41,7 +41,10 @@ src/
 │                         -> build tag + INVULNERABLE debug toggle ->
 │                         title scene
 ├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
-│                         slow orbit camera, 2s crossfade, CSS fallback
+│                         slow orbit camera, 2s crossfade, CSS fallback;
+│                         live tuning + localStorage save (0.084)
+├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
+│                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),
 │                         bg crossfader (bg0/bg1 layers), el() helper,
 │                         handleKey()/initHotkeys()
@@ -80,6 +83,7 @@ src/
     │                     adds boss-card + per-id enemy-<id> classes (0.075)
     ├── shrineUI.js       shrine room rendering
     ├── buffs.js          blessing bar (horizontal, beside resources)
+    ├── bgTuner.js        ?debug BG TUNING slider panel (0.084)
     └── scenes/           titleScene, hubScene (two-panel grid),
                           dungeonScene (combat = chromeless card layout,
                           shrine = panel layout), runEndScene

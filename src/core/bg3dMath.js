@@ -73,3 +73,41 @@ export function mvp(yaw, pitch, fovY, aspect) {
   const view = mul(translateZ(-1), mul(rotX(pitch), mul(rotY(yaw), translateZ(1))));
   return mul(perspective(fovY, aspect, 0.05, 10), view);
 }
+
+// JS mirror of the vertex shader (core/bg3d.js VS): where a grid vertex at
+// screen coords (gx, gy) with the given depth lands, in NDC.
+export function projectVertex(M, gx, gy, depth, aspect, c) {
+  const fov = (c.fovDeg * Math.PI) / 180;
+  const tx = Math.tan(fov / 2);
+  const k = Math.max(0.4, 1 + c.depthScale * (c.pivot - depth)); // same floor as the shader
+  const p = [(gx * 2 - 1) * tx * aspect * k, (1 - gy * 2) * tx * k, -k, 1];
+  const o = [0, 1, 2, 3].map((r) => M[r] * p[0] + M[4 + r] * p[1] + M[8 + r] * p[2] + M[12 + r] * p[3]);
+  return [o[0] / o[3], o[1] / o[3]];
+}
+
+// How far the skirt at overscan m stays OUTSIDE the screen at the sway
+// extremes, over all depths (NDC units; negative = a black edge shows).
+export function edgeMargin(c, aspect, m) {
+  const fov = (c.fovDeg * Math.PI) / 180;
+  const rad = Math.PI / 180;
+  let worst = Infinity;
+  for (const ys of [-1, 1]) for (const ps of [-1, 1]) {
+    const M = mvp(ys * c.yawDeg * rad, ps * c.pitchDeg * rad, fov, aspect);
+    for (let i = 0; i <= 20; i++) {
+      const s = -m + ((1 + 2 * m) * i) / 20;
+      for (const d of [0, 0.5, 1]) {
+        worst = Math.min(worst,
+          -projectVertex(M, -m, s, d, aspect, c)[0] - 1, projectVertex(M, 1 + m, s, d, aspect, c)[0] - 1,
+          projectVertex(M, s, -m, d, aspect, c)[1] - 1, -projectVertex(M, s, 1 + m, d, aspect, c)[1] - 1);
+      }
+    }
+  }
+  return worst;
+}
+
+// Smallest skirt that keeps the screen covered for these settings (the
+// ?debug sliders can ask for far more sway than the shipped defaults).
+export function requiredOverscan(c, aspect) {
+  for (let m = 0.02; m < 0.6; m += 0.01) if (edgeMargin(c, aspect, m) > 0.01) return Math.round(m * 100) / 100;
+  return 0.6;
+}

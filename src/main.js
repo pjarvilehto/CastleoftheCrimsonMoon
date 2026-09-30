@@ -5,6 +5,7 @@
 
 import { show, initHotkeys, el, setBackground, onBackgroundChange } from './core/scene.js';
 import { initBg3d, showBackground3d, isBg3dActive, bgView, setBgView } from './core/bg3d.js';
+import { bgTunerToggle } from './ui/bgTuner.js';
 import { loadData, DATA } from './shared/data.js';
 import { preloadAssets } from './shared/preload.js';
 import { titleScene } from './ui/scenes/titleScene.js';
@@ -136,7 +137,7 @@ function bgDebugToggles() {
       e.currentTarget.textContent = `NEXT BG (${i + 1}/${all.length}: ${all[i].replace(/^castle_|\.jpg$/g, '')})`;
     },
   }, 'NEXT BG');
-  return [fg, viewBtn, next];
+  return [fg, viewBtn, next, bgTunerToggle()];
 }
 
 boot();

@@ -13,17 +13,25 @@
 // Tuning: backgrounds.json `parallax` (+ per-file `overrides`).
 
 import { DATA } from '../shared/data.js';
-import { coverScale, sampleDepth, orbit, buildGrid, mvp } from './bg3dMath.js';
+import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan } from './bg3dMath.js';
 
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
-  yawPeriodS: 22, pitchPeriodS: 31, fovDeg: 40, overscan: 0.06,
+  yawPeriodS: 22, pitchPeriodS: 31, speed: 1, fovDeg: 40, overscan: 0.06,
   grid: [160, 90], maxFps: 30, fadeMs: 2000,
 };
 
+// ?debug tuning sliders (ui/bgTuner.js, 0.084) adjust these live; "Save"
+// keeps them in this browser's localStorage (they apply here even without
+// ?debug). The shipped values for everyone stay in backgrounds.json.
+export const TUNABLE = ['depthScale', 'speed', 'yawDeg', 'pitchDeg', 'pivot'];
+const SAVE_KEY = 'castle-bg-tuning';
+let live = {};
+try { live = JSON.parse(globalThis.localStorage?.getItem(SAVE_KEY) || '{}') || {}; } catch { live = {}; }
+
 export function tuning(file) {
   const p = DATA.backgrounds?.parallax ?? {};
-  return { ...DEFAULTS, ...p, ...(p.overrides?.[file] ?? {}) };
+  return { ...DEFAULTS, ...p, ...(p.overrides?.[file] ?? {}), ...live };
 }
 
 export const depthUrl = (file) => `assets/bg/depth/${file.replace(/\.[^.]+$/, '')}.png`;
@@ -40,7 +48,9 @@ void main() {
   // the focal-plane point (distance 1) behind this screen position, pushed
   // along its own ray by depth: no shift at rest, parallax once it sways
   vec3 p = vec3((aGrid.x * 2.0 - 1.0) * uPlane.x, (1.0 - aGrid.y * 2.0) * uPlane.y, -1.0);
-  gl_Position = uMVP * vec4(p * (1.0 + uDepthScale * (uPivot - aDepth)), 1.0);
+  // (floor 0.4: nothing may come nearer than 40% of the focal distance —
+  // strong depth + a far focus otherwise folds geometry past the camera)
+  gl_Position = uMVP * vec4(p * max(0.4, 1.0 + uDepthScale * (uPivot - aDepth)), 1.0);
 }`;
 const FS = `
 precision mediump float;
@@ -55,6 +65,9 @@ let gl = null, canvas = null, loc = null, gridBuf = null, idxBuf = null, grid = 
 let layers = []; // bottom -> top: { file, tex, depthBuf, depth, img, uvScale, born }
 let view = '3d'; // '3d' | 'flat' | 'depth' (debug)
 let t0 = null, lastDraw = 0, wanted = null, cfg = DEFAULTS;
+let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
+                 // speed change never jumps the camera
+let gridM = -1;  // overscan the current grid was built with
 let watchdog = null; // { frames, since } — first seconds' frame rate check
 
 export const isBg3dActive = () => !!gl;
@@ -82,8 +95,8 @@ export function initBg3d({ allowSoftware = false } = {}) {
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth']) loc[n] = gl.getUniformLocation(prog, n);
-  grid = buildGrid(cfg.grid[0], cfg.grid[1], cfg.overscan);
-  gridBuf = buffer(gl.ARRAY_BUFFER, grid.g);
+  gridBuf = gl.createBuffer();
+  refit(); // builds the grid
   idxBuf = buffer(gl.ELEMENT_ARRAY_BUFFER, grid.idx);
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND);
@@ -158,6 +171,8 @@ function frame(now) {
   if (!layers.length || now - lastDraw < 1000 / cfg.maxFps - 2) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; canvas.classList.add('ready'); } // rest pose = the CSS image
+  else tau += ((now - t0) / 1000) * cfg.speed;
+  t0 = now;
   if (watchdog) {
     watchdog.since ??= now;
     watchdog.frames++;
@@ -168,7 +183,7 @@ function frame(now) {
       if (fps < (cfg.minFps ?? 20)) { shutdown(); return; }
     }
   }
-  const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit((now - t0) / 1000, cfg);
+  const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
   gl.uniformMatrix4fv(loc.uMVP, false, mvp(o.yaw, o.pitch, fov, aspect));
@@ -212,7 +227,46 @@ function resize() {
   canvas.width = Math.max(1, Math.round(canvas.clientWidth * s));
   canvas.height = Math.max(1, Math.round(canvas.clientHeight * s));
   gl.viewport(0, 0, canvas.width, canvas.height);
+  refit();
   layers.forEach(fillDepth);
+}
+
+// (Re)build the screen grid when the needed skirt changes: the shipped
+// overscan, or more when the sliders ask for more sway/depth.
+function refit() {
+  const m = Math.max(cfg.overscan, requiredOverscan(cfg, canvas.width / canvas.height || 16 / 9));
+  if (Math.abs(m - gridM) < 0.005) return false;
+  gridM = m;
+  grid = buildGrid(cfg.grid[0], cfg.grid[1], m);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gridBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, grid.g, gl.STATIC_DRAW);
+  return true;
+}
+
+// ---- live tuning (?debug sliders) ----
+export function liveTuning() {
+  return Object.fromEntries(TUNABLE.map((k) => [k, cfg[k]]));
+}
+
+export function setLiveTuning(partial) {
+  live = { ...live, ...partial };
+  cfg = tuning('');
+  layers.forEach((L) => { L.tune = tuning(L.file); });
+  if (gl && refit()) layers.forEach(fillDepth);
+}
+
+// Keep the current values in this browser; returns them as JSON (the
+// sliders copy it to the clipboard so it can be sent over as the default).
+export function saveLiveTuning() {
+  const values = liveTuning();
+  try { globalThis.localStorage?.setItem(SAVE_KEY, JSON.stringify(values)); } catch { /* private mode */ }
+  return JSON.stringify(values);
+}
+
+export function resetLiveTuning() {
+  live = {};
+  try { globalThis.localStorage?.removeItem(SAVE_KEY); } catch { /* private mode */ }
+  setLiveTuning({});
 }
 
 // Context lost (GPU reset, driver hiccup): give up, the CSS layers show.
