@@ -12,7 +12,7 @@ function assetUrls() {
   const chars = ['player', ...Object.keys(DATA.enemies)];
   return [
     ...new Set(bgs.map((f) => `assets/bg/${f}`)),
-    ...chars.map((id) => `assets/chars/${id}.png`),
+    ...chars.map((id) => `assets/chars/${id}.webp`),
   ];
 }
 

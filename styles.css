@@ -274,7 +274,13 @@
    HP line overlaid, and the chrome (title/resources/log/proceed) pins
    to viewport edges via vh/vw. Don't author fixed px in this block —
    px is what broke the layout on the TV. Cards match the source art
-   ratios: card_enemy.png 413x1106, card_player.png 669x1106. */
+   ratios: card_enemy.png 413x1106, card_player.png 669x1106.
+   0.078: card height is --card-h = the SMALLER of 50vh and what fits the
+   row's width (player + --n enemies, set inline by dungeonScene), so a
+   narrow/resized window shrinks the cards instead of wrapping the enemy
+   row (the wrapped row pushed cards off the top of the screen). Sizes
+   inside a card are em of its font-size (4% of --card-h) so they scale
+   with it — author card internals in em, not vh. */
 .room-title {
   position: fixed; top: 3vh; left: 50%; transform: translateX(-50%);
   z-index: 3; margin: 0; white-space: nowrap;
@@ -286,12 +292,18 @@
   position: fixed; inset: 0; z-index: 2;
   display: flex; justify-content: space-between; align-items: flex-end;
   padding: 0 1.6vw 17.5vh; gap: 1vw; box-sizing: border-box;
+  --n: 1;
+  /* width budget: 100vw - side padding (3.2vw) - player gap (1vw) - enemy
+     gaps (0.8vw each) - 2vw slack; card widths are 0.605h (player) and
+     0.3734h (enemy) from the art ratios */
+  --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734)));
+  --card-font: calc(var(--card-h) * 0.04);
 }
-.enemy-row { display: flex; gap: 0.8vw; align-items: flex-end; flex-wrap: wrap; justify-content: flex-end; }
+.enemy-row { display: flex; gap: 0.8vw; align-items: flex-end; flex-wrap: nowrap; justify-content: flex-end; }
 .unit { display: flex; flex-direction: column; align-items: stretch; }
-.unit-actions { display: flex; gap: 0.6vw; width: 100%; margin-top: 1.2vh; }
+.unit-actions { display: flex; gap: 0.3em; width: 100%; margin-top: 0.6em; font-size: var(--card-font); }
 .unit-actions button {
-  flex: 1; min-width: 0; padding: 1.1vh 0.4vw; font-size: 2vh;
+  flex: 1; min-width: 0; padding: 0.55em 0.2em; font-size: 1em;
   background: linear-gradient(180deg, #6b2320, #471514);
   border: 1px solid #8a5a52;
   color: #e8dcc0;
@@ -306,12 +318,12 @@
 .unit-actions .ghost-btn { visibility: hidden; }
 /* cards: aspect-ratio derives shape from the source card art */
 .char-card {
-  height: 50vh; aspect-ratio: 413 / 1106;
-  border-radius: 2vh;
+  height: var(--card-h); aspect-ratio: 413 / 1106;
+  border-radius: 1em;
   position: relative; /* anchor for the ::before card art */
-  padding: 2vh 1vw 1.6vh; box-sizing: border-box;
+  padding: 1em 0.5em 0.8em; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center;
-  font-size: 2vh; /* fluid type base — everything inside the card is em */
+  font-size: var(--card-font); /* fluid type base — everything inside the card is em */
 }
 /* Card art lives on a pseudo-element so it can be slightly transparent
    (room art shows through) without dimming text/portrait/HP (0.074).
@@ -323,18 +335,18 @@
   background: url('assets/chars/card_enemy.png') center/100% 100% no-repeat;
   opacity: 0.85;
 }
-.player-card { height: 50vh; aspect-ratio: 669 / 1106; }
+.player-card { height: var(--card-h); aspect-ratio: 669 / 1106; }
 .player-card::before { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
 .char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.5; }
-.card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.6vw; }
+.card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.3em; }
 /* text rows stay above the overflowing portrait art (0.075) */
 .card-head, .card-sub { position: relative; z-index: 2; }
 .card-name { font-weight: bold; font-size: 1em; letter-spacing: 0.08em; }
 .player-card .card-name { font-size: 1.1em; }
 .lv-badge { color: var(--gold); font-size: 1em; white-space: nowrap; }
-.card-sub { color: #a89468; font-size: 0.85em; margin-top: 0.3vh; text-align: center; }
+.card-sub { color: #a89468; font-size: 0.85em; margin-top: 0.15em; text-align: center; }
 /* 0.075: portraits break out of the card frame — absolutely positioned,
    taller than the card (top edge) and wider (side bleed), bottom-anchored
    so the feet tuck under the hp line. max-width caps wide arts (rat 0.78)
@@ -345,7 +357,7 @@
   width: auto; max-width: 128%;
   object-fit: contain; object-position: bottom center;
   margin: 0; z-index: 1;
-  filter: drop-shadow(0 0.6vh 1vh rgba(0,0,0,0.65));
+  filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65));
 }
 .boss-card .portrait { height: 104%; max-width: 148%; } /* bosses loom */
 .enemy-vampire_lord .portrait { height: 113%; max-width: 171%; } /* figure reads small/dark even capped — extra loom */
@@ -355,15 +367,15 @@
 /* the in-flow portrait used to flex-push the player's HP row to the bottom;
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
-.skull { font-size: 9vh; color: #6b5a4a; margin: auto; text-shadow: 0 2px 8px #000; }
+.skull { font-size: 4.5em; color: #6b5a4a; margin: auto; text-shadow: 0 2px 8px #000; }
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
-.hp-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.6vw; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }
+.hp-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.3em; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }
 .hp-line .hpbar { flex: 1; min-width: 0; margin-top: 0; }
 .hp-text { color: #d8c9a3; white-space: nowrap; font-size: 1em; font-weight: bold; }
-.char-card .hpbar { height: 1.2vh; background: #454545; border: none; outline: none; }
+.char-card .hpbar { height: 0.6em; background: #454545; border: none; outline: none; }
 .char-card .hpbar > div { background: linear-gradient(180deg, #58b04a, #3d8a33); }
-.potions { margin-top: 0.4vh; letter-spacing: 0.08em; }
+.potions { margin-top: 0.2em; letter-spacing: 0.08em; }
 /* bottom-left: XP/coins pinned to the corner, buff bar to their right */
 .resources { position: fixed; left: 1.4vw; bottom: 2.5vh; z-index: 4; }
 .res-row { display: flex; gap: 1vw; align-items: baseline; font-size: 2vh; }

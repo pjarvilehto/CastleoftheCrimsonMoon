@@ -94,7 +94,7 @@ music beds and SFX (gesture-gated AudioContext).
 
 ## Conventions cheat-sheet
 
-- New enemy → `enemies.json` (tier 1–3) + `assets/chars/<id>.png`; room
+- New enemy → `enemies.json` (tier 1–3) + `assets/chars/<id>.webp` (alpha, q85 — 0.078); room
   generation, scaling, LV naming, and the card portrait pick it up.
 - New item → `items.json` with slot + tier; loot/equipment/salvage follow.
 - New shrine boon → `shrines.json` + matching case in `run/shrine.js`.
@@ -107,12 +107,16 @@ music beds and SFX (gesture-gated AudioContext).
   than the card, text z-index above art); per-enemy tweaks via
   `enemy-<id>` classes.
 - Combat layout block in `styles.css` is fluid (vh/vw) on purpose — no
-  fixed px there. Panel scenes stay in px.
+  fixed px there. Panel scenes stay in px. Card size is `--card-h`
+  (min of 50vh and what fits the width for `--n` enemies, 0.078); card
+  internals are authored in `em` so they scale with it.
+- Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
+  only compressed bytes warm and decodes the playing bed on demand.
 
-## Backlog (as of 0.075)
+## Backlog (as of 0.078)
 
-Character-PNG size optimization (~9.3MB, biggest payload) · merchant room
+Merchant room
 (would fix the endgame coin-sink) · boss variety · more room kinds · music
 loop variations · endgame content ceiling (meta saturates past ~60 trained
 runs; needs deeper tiers or prestige/NG+) · orphaned legacy staging site
-cleanup · optional: music.js/sfx.js sharing one AudioContext.
+cleanup · portrait-phone layout.

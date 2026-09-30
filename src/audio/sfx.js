@@ -4,7 +4,10 @@
 // pointerdown/keydown via initSfx() from main.js. Repetitive combat sounds
 // get a random playback-rate jitter so rapid hits don't sound stamped.
 // Mute persists separately from music ('castle-sfx-muted'). Without a Web
-// Audio implementation (tests), everything is a safe no-op.
+// Audio implementation (tests), everything is a safe no-op. Shares one
+// AudioContext with music.js via audioCore.js (0.078).
+
+import { hasAudio, ensureCtx, decode, onFirstGesture } from './audioCore.js';
 
 const CLIPS = {
   click: 'assets/audio/sfx-click.mp3',     // every button press
@@ -26,16 +29,15 @@ const MUTE_KEY = 'castle-sfx-muted';
 // Names that get pitch jitter (±12%) so repeated fires vary.
 const JITTERED = new Set(['attack', 'kill', 'hurt', 'loot']);
 
-const AC = globalThis.AudioContext || globalThis.webkitAudioContext || null;
 let ctx = null;
 let master = null;
-let buffers = {}; // name -> Promise<AudioBuffer> (cached in-flight)
+let buffers = {}; // name -> Promise<AudioBuffer> (clips are tiny; all stay decoded)
 let muted = false;
 try { muted = globalThis.localStorage?.getItem(MUTE_KEY) === '1'; } catch { /* no storage */ }
 
-function ensureCtx() {
-  if (ctx || !AC) return;
-  ctx = new AC();
+function initCtx() {
+  if (ctx || !hasAudio()) return;
+  ctx = ensureCtx();
   master = ctx.createGain();
   master.gain.value = muted ? 0 : VOLUME;
   master.connect(ctx.destination);
@@ -43,11 +45,7 @@ function ensureCtx() {
 
 function bufferFor(name) {
   if (!buffers[name]) {
-    buffers[name] = (async () => {
-      const res = await fetch(CLIPS[name]);
-      const raw = await res.arrayBuffer();
-      return ctx.decodeAudioData(raw);
-    })();
+    buffers[name] = decode(CLIPS[name]);
     buffers[name].catch(() => { delete buffers[name]; }); // allow retry on failure
   }
   return buffers[name];
@@ -63,10 +61,7 @@ export function sfx(name) {
       const src = ctx.createBufferSource();
       src.buffer = buffer;
       if (JITTERED.has(name)) src.playbackRate.value = 0.88 + Math.random() * 0.24;
-      const gain = ctx.createGain();
-      gain.gain.value = 1;
-      src.connect(gain);
-      gain.connect(master);
+      src.connect(master);
       src.start();
     })
     .catch(() => { /* audio must never break gameplay */ });
@@ -84,14 +79,10 @@ export function toggleMuted() {
 // Called once from main.js: the first gesture anywhere unlocks the context
 // and warms the whole clip set so first fires don't wait on a fetch.
 export function initSfx() {
-  if (!AC) return;
-  const unlock = () => {
-    ensureCtx();
+  if (!hasAudio()) return;
+  onFirstGesture(() => {
+    initCtx();
     ctx.resume?.();
     for (const name of Object.keys(CLIPS)) bufferFor(name).catch(() => {});
-    globalThis.removeEventListener?.('pointerdown', unlock);
-    globalThis.removeEventListener?.('keydown', unlock);
-  };
-  globalThis.addEventListener?.('pointerdown', unlock);
-  globalThis.addEventListener?.('keydown', unlock);
+  });
 }

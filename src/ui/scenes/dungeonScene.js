@@ -147,7 +147,9 @@ export function dungeonScene() {
     root.innerHTML = '';
     root.append(
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
-      el('div', { class: 'battle-line' }, pCard, el('div', { class: 'enemy-row' }, ...eCards)),
+      // --n drives the card size (styles.css --card-h): crowded rooms
+      // shrink their cards to fit the width instead of wrapping (0.078).
+      el('div', { class: 'battle-line', style: `--n:${combat.enemies.length}` }, pCard, el('div', { class: 'enemy-row' }, ...eCards)),
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),

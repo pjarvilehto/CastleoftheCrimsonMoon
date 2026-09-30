@@ -2,14 +2,15 @@
 // Player unit anchored left, enemies right (see dungeonScene). Each unit
 // is CARD + ACTIONS-ROW-BELOW. HP is a single line: text left, bar right;
 // player potions sit on the row beneath.
-// Portrait convention: assets/chars/<enemy id>.png, transparent PNGs.
+// Portrait convention: assets/chars/<enemy id>.webp, with alpha (0.078:
+// WebP q85 — 9.6MB of PNGs became 1.5MB).
 
 import { el } from '../core/scene.js';
 import { hpBar, rarityClass } from './hud.js';
 import { getProfile, itemWithForge } from '../meta/profile.js';
 import { isElite } from '../shared/balance.js';
 
-const ART = (id) => `assets/chars/${id}.png`;
+const ART = (id) => `assets/chars/${id}.webp`;
 
 // Right-hand cell of a gear line: the item's defensive stat.
 function armorStat(item) {

@@ -4,6 +4,13 @@
 // is created on the first pointerdown/keydown and the pending track fades
 // in then. Mute state persists in localStorage. Without a Web Audio
 // implementation (tests), everything is a safe no-op.
+//
+// Memory (0.078): a decoded 60s stereo bed is ~23MB of float samples, and
+// all five used to be decoded up front (~115MB). Now only the compressed
+// mp3 bytes are warmed (~5MB total); a bed is decoded when it starts
+// playing, and the previous bed's decode is dropped once it has faded.
+
+import { hasAudio, ensureCtx, fetchBytes, decode, onFirstGesture } from './audioCore.js';
 
 const TRACKS = {
   title: 'assets/audio/music-title.mp3',   // title screen + hub
@@ -16,32 +23,27 @@ const VOLUME = 0.35;
 const FADE_S = 1.6;
 const MUTE_KEY = 'castle-music-muted';
 
-const AC = globalThis.AudioContext || globalThis.webkitAudioContext || null;
 let ctx = null;
 let master = null;
-let buffers = {};        // name -> Promise<AudioBuffer> (cached in-flight)
+let buffers = {};        // name -> Promise<AudioBuffer> — only the playing bed
 let current = null;      // { src, gain } of the audible track
 let currentName = null;
-let pending = TRACKS ? 'title' : null; // title screen is the first scene
+let pending = 'title';   // title screen is the first scene
 let muted = false;
 try { muted = globalThis.localStorage?.getItem(MUTE_KEY) === '1'; } catch { /* no storage */ }
 
-function ensureCtx() {
-  if (ctx || !AC) return;
-  ctx = new AC();
+function initCtx() {
+  if (ctx || !hasAudio()) return;
+  ctx = ensureCtx();
   master = ctx.createGain();
   master.gain.value = muted ? 0 : VOLUME;
   master.connect(ctx.destination);
 }
 
 function bufferFor(name) {
-  // Cache the in-flight promise: concurrent warm/start calls share one fetch.
+  // Cache the in-flight promise: concurrent start calls share one decode.
   if (!buffers[name]) {
-    buffers[name] = (async () => {
-      const res = await fetch(TRACKS[name]);
-      const raw = await res.arrayBuffer();
-      return ctx.decodeAudioData(raw);
-    })();
+    buffers[name] = decode(TRACKS[name]);
     buffers[name].catch(() => { delete buffers[name]; }); // allow retry on failure
   }
   return buffers[name];
@@ -74,6 +76,9 @@ async function startTrack(name) {
     setTimeout(() => { try { old.src.stop(); old.gain.disconnect(); } catch { /* already stopped */ } }, FADE_S * 1000 + 100);
   }
   current = { src, gain };
+  // Drop every other decoded bed: the fading source keeps its own buffer
+  // alive until it stops, then it can be collected (~23MB each).
+  for (const n of Object.keys(buffers)) if (n !== name) delete buffers[n];
 }
 
 // Scene entry points call this. Before the first gesture it only records
@@ -84,25 +89,21 @@ export function play(name) {
   if (ctx && !muted) startTrack(name);
 }
 
-// Warm the remaining tracks in the background so scene switches crossfade
-// instantly instead of waiting on a fetch.
+// Warm the compressed bytes of every track in the background, so a scene
+// switch only waits on a decode (fast), never on the network.
 function warmOthers() {
-  for (const name of Object.keys(TRACKS)) {
-    if (name !== currentName) bufferFor(name).catch(() => {});
-  }
+  for (const name of Object.keys(TRACKS)) fetchBytes(TRACKS[name]).catch(() => {});
 }
 
 // Called once from main.js: the first gesture anywhere unlocks audio.
 export function initMusic() {
-  if (!AC) return;
-  const unlock = () => {
-    ensureCtx();
+  if (!hasAudio()) return;
+  onFirstGesture(() => {
+    initCtx();
     ctx.resume?.();
     if (!muted && pending) startTrack(pending);
     warmOthers();
-  };
-  window.addEventListener('pointerdown', unlock, { once: true });
-  window.addEventListener('keydown', unlock, { once: true });
+  });
 }
 
 export function isMuted() { return muted; }
@@ -113,7 +114,7 @@ export function toggleMuted() {
   if (muted) {
     if (master) master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
   } else {
-    ensureCtx();
+    initCtx();
     if (ctx) {
       ctx.resume?.();
       master.gain.value = VOLUME;

@@ -19,10 +19,15 @@ const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '
 
 // content: plain string, or an array of strings/Nodes (rich line, e.g.
 // rarity-colored item names inside a loot summary).
+// The dungeon log is one element for the whole run — a deep run prints
+// thousands of lines, so only the newest LOG_MAX_LINES stay in the DOM.
+const LOG_MAX_LINES = 200;
+
 export function logLine(logEl, content, cls = 'sys') {
   const parts = Array.isArray(content) ? content : [content];
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
   logEl.append(line);
+  while (logEl.children.length > LOG_MAX_LINES) logEl.children[0].remove();
   logEl.scrollTop = logEl.scrollHeight;
 }
 

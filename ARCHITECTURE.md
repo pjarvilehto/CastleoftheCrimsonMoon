@@ -84,6 +84,7 @@ src/
 ├── audio/
 │   ├── music.js          five ~61s scene-routed loop beds, 1.6s crossfade,
 │   │                     gesture-gated AudioContext, MUSIC toggle
+│   ├── audioCore.js      shared AudioContext + cached compressed bytes (0.078)
 │   └── sfx.js            13 one-shots, ±12% pitch jitter, SOUND toggle,
 │                         combat sfx attach to playback queue items
 
@@ -140,8 +141,8 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 
 - Balance changes: edit `assets/data/*.json` only. Never hardcode numbers
   in `src/`.
-- New enemy: add to `enemies.json` (tier 1–3) + drop `<id>.png` in
-  `assets/chars/`. RoomGen, LV naming, scaling, and the card portrait
+- New enemy: add to `enemies.json` (tier 1–3) + drop `<id>.webp` in
+  `assets/chars/` (WebP with alpha, quality 85 — 0.078). RoomGen, LV naming, scaling, and the card portrait
   pick it up automatically.
 - New item: add to `items.json` with a `slot` and `tier`; `loot.js` and
   `equipment.js` handle the rest. Salvage value per tier: `salvagePerTier`.
@@ -250,4 +251,5 @@ four bullets concern it; GitHub Pages has none of these issues):
 - Backgrounds are JPEG (re-encoded 0.044: 33.5MB → 4.6MB). New room art
   goes in `assets/bg/` as `.jpg` with the entry in `backgrounds.json`
   matching. Original PNGs survive in the old `Game_Build_0.040.zip`.
-- Character portraits keep alpha (PNG) in `assets/chars/`.
+- Character portraits keep alpha as WebP in `assets/chars/` (0.078:
+  9.6MB of PNGs → 1.5MB). Card frames stay PNG.

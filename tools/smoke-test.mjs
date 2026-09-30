@@ -411,7 +411,7 @@ process.on('uncaughtException', (e) => {
 {
   const { readdirSync } = await import('fs');
   const chars = readdirSync(join(ROOT, 'assets/chars'));
-  const enemiesOk = Object.keys(DATA.enemies).every((id) => chars.includes(`${id}.png`));
+  const enemiesOk = Object.keys(DATA.enemies).every((id) => chars.includes(`${id}.webp`));
   const slots = new Set(['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet']);
   const itemsOk = Object.values(DATA.items).every((i) => slots.has(i.slot) && i.tier >= 1 && i.tier <= 4);
   ok('content integrity: enemy portraits + item slots', enemiesOk && itemsOk);
@@ -944,6 +944,20 @@ process.on('uncaughtException', (e) => {
   ok('keys elsewhere still fire hotkeys', clicked === 2 && prevented);
   btn.remove();
   ok('fading scene takes no clicks (CSS)', /#app\.hidden \{[^}]*pointer-events: none/.test(readFileSync('styles.css', 'utf8')));
+}
+
+// T38: 0.078 — the run-long combat log keeps only the newest 200 lines;
+// the battle line carries --n (enemy count) for the fit-to-width card size.
+{
+  const { logLine } = await import('../src/ui/hud.js');
+  const { el: mkEl } = await import('../src/core/scene.js');
+  const log = mkEl('div', {});
+  for (let i = 0; i < 260; i++) logLine(log, `line ${i}`);
+  ok('combat log capped at 200 lines', log.children.length === 200 && log.children[0].textContent.includes('line 60'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
+  ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
+  ok('dungeon sets --n on the battle line', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('--n:${combat.enemies.length}'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
