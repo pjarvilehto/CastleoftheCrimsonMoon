@@ -6,6 +6,7 @@
     {
       "id": "dmg",
       "buff": "+25% DAMAGE",
+      "short": "+25% DMG",
       "costDesc": "-15% MAX HP",
       "icon": "⚔",
       "hpCostPct": 0.15,
@@ -14,6 +15,7 @@
     {
       "id": "crit",
       "buff": "+15% CRIT",
+      "short": "+15% CRIT",
       "costDesc": "-30 COINS",
       "icon": "★",
       "coinCost": 30,
@@ -24,6 +26,7 @@
     {
       "id": "armor",
       "buff": "+25% ARMOR (MIN +30)",
+      "short": "+25% ARMOR",
       "costDesc": "-1 POTION",
       "icon": "🛡",
       "potionCost": 1,
@@ -33,6 +36,7 @@
     {
       "id": "leech",
       "buff": "+100% LIFESTEAL",
+      "short": "+100% LIFESTEAL",
       "costDesc": "-15% MAX HP",
       "icon": "🩸",
       "hpCostPct": 0.15,
@@ -42,6 +46,7 @@
     {
       "id": "bulwark",
       "buff": "+20% ARMOR (MIN +50)",
+      "short": "+20% ARMOR",
       "costDesc": "-10% DMG",
       "icon": "⛨",
       "dmgCostPct": 0.1,
@@ -51,6 +56,7 @@
     {
       "id": "secondwind",
       "buff": "+2 POTIONS & FULL HEAL",
+      "short": "+2 POTIONS",
       "costDesc": "-40 COINS",
       "icon": "✚",
       "coinCost": 40,
@@ -61,6 +67,7 @@
     {
       "id": "quicken",
       "buff": "HEAVY COOLDOWN −1",
+      "short": "HEAVY CD −1",
       "costDesc": "-15% MAX HP",
       "icon": "⚡",
       "hpCostPct": 0.15,
@@ -69,6 +76,7 @@
     {
       "id": "greed",
       "buff": "+40% COINS",
+      "short": "+40% COINS",
       "costDesc": "-10% DMG",
       "icon": "◈",
       "dmgCostPct": 0.1,
@@ -77,6 +85,7 @@
     {
       "id": "glasscannon",
       "buff": "+60% DMG",
+      "short": "+60% DMG",
       "costDesc": "−50% ARMOR",
       "icon": "⚗",
       "armorCostPct": 0.5,

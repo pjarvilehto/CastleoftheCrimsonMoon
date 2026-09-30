@@ -1,5 +1,5 @@
 {
-  "version": "0.095",
+  "version": "0.096",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -39,6 +39,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.096": [
+      "Shrine blessings sit in a tidy compact row (the same blessing twice shows x2)"
+    ],
     "0.095": [
       "Your runs are now recorded (for the testers' play-stats page)",
       "Critical hits show CRIT! above the damage number",

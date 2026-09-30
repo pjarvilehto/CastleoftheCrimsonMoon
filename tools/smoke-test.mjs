@@ -1720,5 +1720,30 @@ process.on('uncaughtException', (e) => {
   ok('crit numbers carry a CRIT! caption', fxSrc.includes("fx.crit ? 'CRIT!' : null") && /\.fx-tag \{[^}]*display: block/.test(readFileSync('styles.css', 'utf8')));
 }
 
+// T58: 0.096 — compact buff bar: short labels from shrines.json (full
+// text as the tooltip), repeated boons merge into one icon with a ×2
+// badge, and in combat the bar is capped to the gap before the log.
+{
+  const { updateBuffs } = await import('../src/ui/buffs.js');
+  ok('every boon has a short label', DATA.shrines.offers.every((o) => typeof o.short === 'string' && o.short.length > 0 && o.short.length <= 16));
+  const run = createRun();
+  run.coins = 1000; run.potions = 3;
+  const crit = DATA.shrines.offers.find((o) => o.id === 'crit');
+  acceptOffer(run, crit);
+  const b0 = run.buffs[0];
+  ok('accepted boons carry short + full text', b0.label === crit.short && b0.full === crit.buff && b0.id === 'crit');
+  acceptOffer(run, crit);
+  acceptOffer(run, DATA.shrines.offers.find((o) => o.id === 'bulwark'));
+  const bar = new El('div');
+  updateBuffs(bar, run.buffs);
+  const cells = bar.all((e) => e.className === 'buff');
+  const badge = bar.all((e) => e.className === 'buff-count');
+  ok('the same boon twice = one icon with a ×2 badge', cells.length === 2 && badge.length === 1 && badge[0].textContent === '×2');
+  ok('cells show the short label, tooltip the full text', cells[0].textContent.includes(crit.short) && cells[0].attrs.title.startsWith(crit.buff) && cells[0].attrs.title.includes('x2'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('combat buff bar: capped before the log, wraps upward, 2-line labels',
+    css.includes('max-width: calc(50vw - max(23vw, 170px) - 13.5vw)') && /#buffs \{[^}]*flex-wrap: wrap-reverse/.test(css) && css.includes('-webkit-line-clamp: 2'));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

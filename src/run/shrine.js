@@ -125,5 +125,6 @@ export function acceptOffer(run, o) {
       run.stats.dmg = Math.round(run.stats.dmg * o.dmgMult);
       break;
   }
-  run.buffs.push({ icon: o.icon, label: o.buff, id: o.id }); // id: run history
+  // label: the compact buff-bar text (0.096); full: the shrine card's text
+  run.buffs.push({ icon: o.icon, label: o.short ?? o.buff, full: o.buff, id: o.id }); // id: run history
 }
