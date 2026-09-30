@@ -8,8 +8,8 @@ export function hpBar(current, max, color) {
   return el('div', { class: 'hpbar' }, el('div', { style: fill }));
 }
 
-export function statBox(label, value) {
-  return el('div', { class: 'stat-box' },
+export function statBox(label, value, cls = '') {
+  return el('div', { class: `stat-box${cls ? ` ${cls}` : ''}` },
     el('div', { class: 'label' }, label),
     el('div', { class: 'value' }, String(value)));
 }

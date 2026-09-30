@@ -31,14 +31,16 @@ export function hubScene() {
     const stats = derivedStats(p);
     const every = DATA.difficulty.breakthroughEvery ?? 5;
 
-    const statsRow = el('div', { class: 'stat-grid' },
+    // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
+    // Potions alone in the middle column (hub-stats in styles.css).
+    const statsRow = el('div', { class: 'stat-grid hub-stats' },
       statBox('Level', playerLevel(p)), // 0.080: same LV as the combat card
       statBox('Coins', p.coins),
       statBox('XP', p.xp),
       statBox('Attack', stats.dmg),
-      statBox('Max HP', stats.maxHp),
+      statBox('HP', stats.maxHp),
       statBox('Armor', stats.armor),
-      statBox('Potions', `${p.potions}/${p.potionCap}`));
+      statBox('Potions', `${p.potions}/${p.potionCap}`, 'stat-potions'));
 
     // ---- TRAIN: five disciplines, XP-only. Breakthrough ★ every 5th level. ----
     const trainSection = el('div', {},

@@ -1099,5 +1099,23 @@ process.on('uncaughtException', (e) => {
   ok('Great Hall shows potions as n/max and the satchel', txt.includes('2/4') && txt.includes('Potion Satchel'));
 }
 
+// T43: 0.081 — Great Hall stat boxes: 3 columns (Level/Coins/XP,
+// Attack/HP/Armor, Potions centered), label top-left, value bottom-right.
+{
+  resetProfile();
+  const root = new El('main');
+  hubScene().enter(root);
+  const grid = root.all((n) => n.className.includes('hub-stats'))[0];
+  const labels = grid ? grid.children.map((b) => b.children[0].textContent) : [];
+  ok('hub stat order', labels.join(',') === 'Level,Coins,XP,Attack,HP,Armor,Potions', labels.join(','));
+  ok('potions box centered', grid && grid.children[6].className.includes('stat-potions'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('hub stats: 3 columns, label top-left, value bottom-right',
+    css.includes('.hub-wrap .stat-grid.hub-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }')
+    && css.includes('.hub-stats .stat-box .label { align-self: flex-start; }')
+    && css.includes('.hub-stats .stat-box .value { align-self: flex-end;')
+    && css.includes('.hub-stats .stat-potions { grid-column: 2; }'));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

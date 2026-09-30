@@ -200,6 +200,17 @@
   }
   .stat-box .label { color: #9a8b6a; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
   .stat-box .value { color: var(--gold); font-size: 1.5rem; font-weight: bold; }
+  /* Great Hall stats (0.081): three fixed columns; each box has its label
+     pinned top-left and the value bottom-right. Potions sits alone in the
+     middle column of the third row. */
+  .hub-wrap .stat-grid.hub-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hub-stats .stat-box {
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 64px; padding: 6px 12px 4px;
+  }
+  .hub-stats .stat-box .label { align-self: flex-start; }
+  .hub-stats .stat-box .value { align-self: flex-end; line-height: 1.1; }
+  .hub-stats .stat-potions { grid-column: 2; }
 
   .item-row {
     display: flex; justify-content: space-between; align-items: center;
