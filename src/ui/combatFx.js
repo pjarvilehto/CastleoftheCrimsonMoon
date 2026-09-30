@@ -134,7 +134,7 @@ function hit(u, fx, delay, ctx, stop = 0) {
   if (fx.dmg > 0) barFlash(u, 'damage', delay);
   if (fx.dmg > 0) {
     const cls = fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
-    floatNumber(ctx, u, fx.crit ? `-${fx.dmg}!` : `-${fx.dmg}`, cls, delay);
+    floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.crit ? 'CRIT!' : null); // 0.095: CRIT! caption
   }
 }
 
@@ -268,13 +268,20 @@ function glow(u, tint, ms) {
 }
 
 // A number that pops out of the card and drifts up. Lives in the fx layer
-// (not the card), positioned from the card's on-screen box.
-export function floatNumber(ctx, u, text, cls, delay = 0) {
+// (not the card), positioned from the card's on-screen box. tag: a small
+// caption above the number ("CRIT!", 0.095).
+export function floatNumber(ctx, u, text, cls, delay = 0, tag = null) {
   if (!ctx.layer || !can(u?.card)) return;
   const r = u.card.getBoundingClientRect();
   const n = document.createElement('div');
   n.className = `fx-num ${cls}`;
   n.textContent = text;
+  if (tag) {
+    const t = document.createElement('span');
+    t.className = 'fx-tag';
+    t.textContent = tag;
+    n.prepend(t);
+  }
   n.style.left = `${r.left + r.width / 2 + (Math.random() - 0.5) * r.width * 0.3}px`;
   n.style.top = `${r.top + r.height * 0.3}px`;
   n.style.setProperty('--num', `${Math.max(16, r.height * 0.09)}px`); // styles scale it (crits 1.5x)

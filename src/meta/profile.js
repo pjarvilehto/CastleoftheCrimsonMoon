@@ -4,6 +4,7 @@
 import { loadProfile, saveProfile, wipeProfile, exportProfile, importProfile } from './storage.js';
 import { DATA } from '../shared/data.js';
 import { emptyEquipment, equippedItemIds, equipItems } from './equipment.js';
+import { newPlayerId } from './history.js';
 
 const DEFAULTS = {
   coins: 0,
@@ -17,6 +18,7 @@ const DEFAULTS = {
   potions: 2,
   potionCap: 4,
   records: { kills: 0, bestRoom: 0, runs: 0, deaths: 0 },
+  history: [], // 0.095: one record per finished run (meta/history.js)
 };
 
 function startingEquipment() {
@@ -43,7 +45,7 @@ export function getProfile() {
 // and APPEND a step — never edit a shipped step (testers' saves have
 // already been through it). saveVersion is deliberately NOT in DEFAULTS:
 // the load merge would stamp it onto old saves and skip their migrations.
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 const MIGRATIONS = [
   // v0 -> v1: everything pre-0.079 builds did on every load.
@@ -75,6 +77,13 @@ const MIGRATIONS = [
     p.potionCap = Math.min(hi, Math.max(lo, had));
     p.potions = Math.min(had, p.potionCap);
     delete p.potionsBought;
+  },
+  // v2 -> v3 (0.095): run history + a stable anonymous player id, so the
+  // /analytics/ dashboard can tell testers' save codes apart (and replace
+  // an older code from the same player). Runs before 0.095 weren't recorded.
+  (p) => {
+    if (!Array.isArray(p.history)) p.history = [];
+    p.playerId ??= newPlayerId();
   },
 ];
 
@@ -117,8 +126,9 @@ export function importSave(code) {
 
 // Wipe the save and reset the in-memory profile to a fresh start.
 export function resetProfile() {
+  const id = profile?.playerId; // same player after a wipe (analytics, 0.095)
   wipeProfile();
-  profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION };
+  profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId: id ?? newPlayerId() };
   profile.equipment = startingEquipment();
   const pc = DATA.difficulty.potions ?? {};
   profile.potions = pc.startCount ?? profile.potions;

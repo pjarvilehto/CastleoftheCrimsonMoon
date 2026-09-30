@@ -18,6 +18,14 @@ alchemy, forge) in the hub between runs.
   environment).
 - Current build number: `assets/data/build.json` (also shown top-left on
   every screen in-game).
+- **Play-stats dashboard:** https://www.castleofthecrimsonmoon.com/analytics/
+  (0.095, `analytics/`, static). Every finished run appends a record to
+  `profile.history` (`src/meta/history.js`, from `settleRun`; newest 250
+  kept; save v3). The page reads this browser's save live, plus testers'
+  save codes pasted in (title screen → Export Save); imported players are
+  kept in that browser only. There is no server: nothing is collected
+  automatically — a collector (e.g. a Cloudflare Worker) would be a new
+  data source for `analytics/stats.js`.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
   Read it before making structural changes.
 
@@ -25,7 +33,7 @@ alchemy, forge) in the hub between runs.
 
 ```bash
 python3 -m http.server 8000     # from the repo root, open http://localhost:8000
-node tools/smoke-test.mjs       # DOM-shim test suite: expect ~308 checks green
+node tools/smoke-test.mjs       # DOM-shim test suite: expect ~340 checks green
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired runs)

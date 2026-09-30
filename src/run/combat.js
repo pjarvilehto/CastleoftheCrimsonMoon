@@ -15,6 +15,7 @@ export function createCombat(run, room) {
   return {
     run,
     roomNumber: room.number, // summons scale to the room
+    isBoss: !!room.isBoss,   // run history counts boss kills (0.095)
     enemies: room.enemies.map((e) => ({ ...e, hp: e.maxHp })),
     turn: 1,
     heavyCd: 0,
@@ -33,6 +34,7 @@ function living(combat) {
 // with the log, animations land on the right beat).
 export function playerAttack(combat, targetIndex, heavy = false) {
   const events = [];
+  combat.run.turns = (combat.run.turns ?? 0) + 1; // run history (0.095)
   const push = (ev) => {
     ev.snap = {
       enemies: combat.enemies.map((e) => e.hp),
@@ -61,7 +63,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     && dmg >= livingEnemies.reduce((s, e) => s + e.hp, 0);
   if (smashed) {
     for (const e of livingEnemies) e.hp = 0; // before the line: its snap shows the wiped room
-    push({ type: 'smash', text: 'SMASH! Everyone dies!', dmg });
+    push({ type: 'smash', text: 'OVERKILL! Everyone dies!', dmg });
     for (const e of livingEnemies) push({ type: 'kill', enemy: e, silent: true });
   }
 
@@ -157,6 +159,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
       }
       combat.over = true;
       combat.victory = false;
+      combat.run.killedBy = enemy.id; // run history (0.095)
       push({ type: 'sys', text: 'You have fallen...' });
       return events;
     }
@@ -167,6 +170,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (living(combat).length === 0) {
     combat.over = true;
     combat.victory = true;
+    if (combat.isBoss) combat.run.bossesBeaten = (combat.run.bossesBeaten ?? 0) + 1;
     push({ type: 'sys', text: 'The room is cleared.' });
   }
 

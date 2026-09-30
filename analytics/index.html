@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Play Stats · Castle of the Crimson Moon</title>
+<link rel="icon" type="image/png" href="../icon.png">
+<style>html, body { margin: 0; background: #0d0808; color: #d8c9a3; }</style>
+</head>
+<body>
+  <main id="dash"><p style="padding:24px;font-family:sans-serif">Loading play stats…</p></main>
+  <script>
+    // Versioned like the game (index.html, 0.082): read build.json
+    // uncached, then load the dashboard's CSS/JS under ?v=<version> so a
+    // deploy never mixes old and new files.
+    (function () {
+      var mods = ['stats.js', 'charts.js', 'dashboard.js'];
+      function boot(version) {
+        var q = version ? '?v=' + encodeURIComponent(version) : '';
+        var map = { imports: {} };
+        mods.forEach(function (m) { map.imports[new URL(m, location.href).href] = new URL(m + q, location.href).href; });
+        var im = document.createElement('script');
+        im.type = 'importmap';
+        im.textContent = JSON.stringify(map);
+        document.head.appendChild(im);
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'dashboard.css' + q;
+        document.head.appendChild(css);
+        var main = document.createElement('script');
+        main.type = 'module';
+        main.src = 'dashboard.js' + q;
+        css.onload = css.onerror = function () { document.body.appendChild(main); };
+      }
+      fetch('../assets/data/build.json', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (b) { boot(b.version); })
+        .catch(function () { boot(''); });
+    })();
+  </script>
+</body>
+</html>

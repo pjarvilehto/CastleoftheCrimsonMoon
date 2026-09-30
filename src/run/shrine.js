@@ -125,5 +125,5 @@ export function acceptOffer(run, o) {
       run.stats.dmg = Math.round(run.stats.dmg * o.dmgMult);
       break;
   }
-  run.buffs.push({ icon: o.icon, label: o.buff });
+  run.buffs.push({ icon: o.icon, label: o.buff, id: o.id }); // id: run history
 }

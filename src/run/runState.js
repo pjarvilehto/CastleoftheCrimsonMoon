@@ -3,7 +3,8 @@
 // via settleRun() when the run ends (death or retreat). This is the
 // single write-path from run state to meta state — keep it that way.
 
-import { getProfile, derivedStats, persist, trainedLevel } from '../meta/profile.js';
+import { getProfile, derivedStats, persist, trainedLevel, playerLevel } from '../meta/profile.js';
+import { recordRun } from '../meta/history.js';
 import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
 import { equipItems, salvageValue } from '../meta/equipment.js';
 import { generateRoom } from './roomGen.js';
@@ -38,6 +39,10 @@ export function createRun() {
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
     shrineRooms: [randomShrineRoom(0)], // one per stretch of bossEvery rooms, added on entry
     revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
+    // run history (0.095, meta/history.js): who went in, and the tallies
+    startedAt: Date.now(),
+    level: playerLevel(),
+    turns: 0, potionsDrunk: 0, bossesBeaten: 0, killedBy: null,
     over: false,
     room: null,
   };
@@ -115,6 +120,7 @@ export function drinkPotion(run) {
   const healed = potionHealAmount(); // potency-trained
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;
+  run.potionsDrunk = (run.potionsDrunk ?? 0) + 1;
   run.hp = Math.min(run.maxHp, run.hp + healed);
   const armor = infusionArmor();
   if (armor > 0) run.tempArmor = (run.tempArmor ?? 0) + armor;
@@ -145,6 +151,7 @@ export function settleRun(run, outcome) {
   run.coinsRetrieved = run.coins - run.coinsLost;
   run.equipSummary = equip;
   p.coins += run.coinsRetrieved;
+  recordRun(p, run, outcome); // 0.095: the run history (analytics)
   persist();
   run.over = true;
   return p;

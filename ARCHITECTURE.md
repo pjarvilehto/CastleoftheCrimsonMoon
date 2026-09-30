@@ -56,6 +56,8 @@ src/
 │   ├── profile.js        coins, xp, stat levels, equipment, records,
 │   │                     resetProfile(); SAVE_VERSION + ordered MIGRATIONS
 │   ├── equipment.js      slot rules + auto-equip/salvage logic
+│   ├── history.js        run history records (0.095; settleRun appends,
+│   │                     the /analytics/ dashboard reads them)
 │   └── leveling.js       training costs, buyStat(), restockPotion()
 ├── run/                  EXISTS only during a dungeon run
 │   ├── runState.js       run object, room progression, settleRun()
@@ -123,8 +125,14 @@ assets/
                         enemies, items, difficulty, backgrounds
                         (incl. roomNames), shrines, build
 styles.css              all styling (split out of index.html in 0.034)
+analytics/              /analytics/ play-stats page (0.095, static):
+├── index.html            versioned boot (like the game's)
+├── stats.js              pure aggregation: save codes -> runs -> stats
+├── charts.js             tiny SVG/HTML charts (labels escaped)
+├── dashboard.js          the page: this browser's save + pasted codes
+└── dashboard.css
 tools/
-├── smoke-test.mjs        DOM-shim suite (~308 checks) - run pre-deploy
+├── smoke-test.mjs        DOM-shim suite (~340 checks) - run pre-deploy
 ├── simCore.mjs           simulator engine: bot, policies, profile snapshots (0.091)
 ├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
 ├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
@@ -240,7 +248,7 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 - Build number lives in `assets/data/build.json`; bump every build; shown
   top-left on every screen (check it when reporting bugs).
 - Run `node tools/smoke-test.mjs` before any release — all checks green
-  (~308; the count legitimately varies by one on RNG).
+  (~340; the count legitimately varies by one on RNG).
 - Historical: up to 0.042 the game shipped as `Game_Build_X.XXX.zip`;
   distribution is web-only since 0.043 (see below).
 

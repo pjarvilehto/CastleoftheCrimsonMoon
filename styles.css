@@ -469,6 +469,8 @@
 @media (prefers-reduced-motion: reduce) { .aura { animation: none; opacity: 0.6; } }
 /* 0.088 extras */
 .fx-crit { color: #ffd24a; font-size: calc(var(--num, 24px) * 1.5); text-shadow: 0 0 10px rgba(255, 170, 40, 0.9), 0 2px 4px #000; }
+/* caption above a number: "CRIT!" (0.095) */
+.fx-tag { display: block; text-align: center; font-size: 0.42em; letter-spacing: 0.2em; line-height: 1; margin-bottom: 0.08em; padding-left: 0.2em; }
 .fx-thorns { color: #c38cff; }
 .fx-miss { color: #d8d0c0; letter-spacing: 0.12em; }
 .fx-heal { color: #6fe07a; }
