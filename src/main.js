@@ -1,5 +1,6 @@
-// main.js — entry point: boot loader (data + fully decoded images),
-// stamp build number, show title. The loader exists because art only
+// main.js — entry point: boot loader (data + the first screens' art,
+// fully decoded), stamp build number, show title, then load the rest of
+// the art in the background (0.098). The loader exists because art only
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
@@ -7,7 +8,7 @@ import { show, initHotkeys, el, setBackground, onBackgroundChange } from './core
 import { initBg3d, showBackground3d, isBg3dActive, bgView, setBgView } from './core/bg3d.js';
 import { bgTunerToggle } from './ui/bgTuner.js';
 import { loadData, DATA } from './shared/data.js';
-import { preloadAssets } from './shared/preload.js';
+import { preloadAssets, preloadRest } from './shared/preload.js';
 import { titleScene } from './ui/scenes/titleScene.js';
 import { DEBUG } from './shared/debug.js';
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
@@ -106,6 +107,7 @@ async function boot() {
   initSfx();
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
   show(titleScene());
+  preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
 }
 
 // ?debug background evaluation (0.083): hide the UI, compare 3D / flat /

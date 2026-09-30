@@ -2,7 +2,8 @@
 // Currency split (0.059): XP trains disciplines; coins buy potions,
 // alchemy tracks, and Forge item enhancements.
 
-import { el, setBackground, show } from '../../core/scene.js';
+import { el, setBackground, show, currentScene } from '../../core/scene.js';
+import { preloadRest, restProgress } from '../../shared/preload.js';
 import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile, derivedStats, itemWithForge, playerLevel } from '../../meta/profile.js';
@@ -46,13 +47,30 @@ export function potionsLow(p) {
 }
 
 export function hubScene() {
-  return {
+  const scene = {
     enter(root) {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
     },
   };
+  return scene;
+
+  // Descend (0.098): the dungeon's art loads in the background after the
+  // title; if the player is quicker, the button waits for it (showing the
+  // progress) rather than letting the first room paint half-drawn.
+  async function descend(btn) {
+    if (!restProgress().ready) {
+      btn.setAttribute('disabled', '');
+      const label = () => { const q = restProgress(); btn.textContent = `Gathering shadows… ${q.total ? Math.round((100 * q.done) / q.total) : 0}%`; };
+      label();
+      const timer = setInterval(label, 200);
+      await preloadRest();
+      clearInterval(timer);
+      if (currentScene() !== scene) return; // left the hall meanwhile
+    }
+    show(dungeonScene());
+  }
 
   function render(root) {
     const p = getProfile();
@@ -166,6 +184,7 @@ export function hubScene() {
       slotRow('Trinket', eq.trinket),
       slotRow('Amulet', eq.amulet));
 
+    const descendBtn = el('button', { class: 'primary', key: 'd', onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     root.innerHTML = '';
     root.append(
       el('div', { class: 'hub-container' },
@@ -189,7 +208,7 @@ export function hubScene() {
             el('div', { class: 'subtitle' }, 'What you carry into the dark — the Forge enhances it for coins'),
             equipSection)),
         el('div', { class: 'btn-row' },
-          el('button', { class: 'primary', key: 'd', onclick: () => show(dungeonScene()) }, 'Descend into the Dungeon'),
+          descendBtn,
           el('button', { key: 'b', onclick: () => show(titleScene()) }, 'Back')))
     );
   }

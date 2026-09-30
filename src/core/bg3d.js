@@ -14,6 +14,7 @@
 
 import { DATA } from '../shared/data.js';
 import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
+import { VS, FS, program, buffer, loadImage, readDepth, makeTexture } from './bg3dGL.js';
 
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
@@ -40,29 +41,6 @@ export const depthUrl = (file) =>
   `assets/bg/depth/${DATA.backgrounds?.parallax?.depthFiles?.[file] ?? `${file.replace(/\.[^.]+$/, '')}.png`}`;
 
 export { coverScale, sampleDepth, orbit, buildGrid, mvp } from './bg3dMath.js';
-
-const VS = `
-attribute vec2 aGrid; attribute float aDepth;
-uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot;
-varying vec2 vUv; varying float vDepth;
-void main() {
-  vUv = vec2(0.5) + (aGrid - 0.5) * uUvScale;
-  vDepth = aDepth;
-  // the focal-plane point (distance 1) behind this screen position, pushed
-  // along its own ray by depth: no shift at rest, parallax once it sways
-  vec3 p = vec3((aGrid.x * 2.0 - 1.0) * uPlane.x, (1.0 - aGrid.y * 2.0) * uPlane.y, -1.0);
-  // (floor 0.4: nothing may come nearer than 40% of the focal distance —
-  // strong depth + a far focus otherwise folds geometry past the camera)
-  gl_Position = uMVP * vec4(p * max(0.4, 1.0 + uDepthScale * (uPivot - aDepth)), 1.0);
-}`;
-const FS = `
-precision mediump float;
-uniform sampler2D uTex; uniform float uAlpha, uShowDepth;
-varying vec2 vUv; varying float vDepth;
-void main() {
-  vec3 c = uShowDepth > 0.5 ? vec3(vDepth) : texture2D(uTex, clamp(vUv, 0.0, 1.0)).rgb;
-  gl_FragColor = vec4(c, uAlpha);
-}`;
 
 let gl = null, canvas = null, loc = null, gridBuf = null, idxBuf = null, grid = null;
 let layers = []; // bottom -> top: { file, tex, depthBuf, depth, img, uvScale, born }
@@ -110,7 +88,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   // Weak devices: if the first seconds can't hold ~20fps, go back to the
   // flat CSS backgrounds rather than make the whole game stutter.
   watchdog = allowSoftware ? null : { frames: 0, since: null };
-  const prog = program(VS, FS);
+  const prog = program(gl, VS, FS);
   if (!prog) { gl = null; return false; }
   gl.useProgram(prog);
   loc = {};
@@ -118,7 +96,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth']) loc[n] = gl.getUniformLocation(prog, n);
   gridBuf = gl.createBuffer();
   refit(); // builds the grid
-  idxBuf = buffer(gl.ELEMENT_ARRAY_BUFFER, grid.idx);
+  idxBuf = buffer(gl, gl.ELEMENT_ARRAY_BUFFER, grid.idx);
   gl.enable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -149,27 +127,8 @@ export async function showBackground3d(file) {
 async function loadLayer(file) {
   const [img, dimg] = await Promise.all([loadImage(`assets/bg/${file}`), loadImage(depthUrl(file)).catch(() => null)]);
   if (!gl) return null;
-  let depth = null;
-  if (dimg) { // read the grayscale map back to CPU: depth goes in per vertex
-    const c = document.createElement('canvas');
-    c.width = dimg.naturalWidth; c.height = dimg.naturalHeight;
-    const cx = c.getContext('2d', { willReadFrequently: true });
-    cx.drawImage(dimg, 0, 0);
-    const px = cx.getImageData(0, 0, c.width, c.height).data;
-    const data = new Uint8Array(c.width * c.height);
-    for (let i = 0; i < data.length; i++) data[i] = px[i * 4];
-    depth = { w: c.width, h: c.height, data };
-  }
-  const tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  const webgl2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
-  if (webgl2) gl.generateMipmap(gl.TEXTURE_2D); // NPOT mips need WebGL2; smoother when the canvas is smaller than the art
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, webgl2 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const depth = dimg ? readDepth(dimg) : null;
+  const tex = makeTexture(gl, img);
   const layer = { file, tex, depth, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune: tuning(file) };
   fillDepth(layer);
   return layer;
@@ -311,33 +270,4 @@ function dropLayer(L) {
   if (!gl || !L) return;
   gl.deleteTexture(L.tex);
   gl.deleteBuffer(L.depthBuf);
-}
-
-function program(vs, fs) {
-  const p = gl.createProgram();
-  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null;
-    gl.attachShader(p, s);
-  }
-  gl.linkProgram(p);
-  return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
-}
-
-function buffer(target, data) {
-  const b = gl.createBuffer();
-  gl.bindBuffer(target, b);
-  gl.bufferData(target, data, gl.STATIC_DRAW);
-  return b;
-}
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => resolve(img));
-    img.onerror = () => reject(new Error(`image ${url}`));
-    img.src = url;
-  });
 }

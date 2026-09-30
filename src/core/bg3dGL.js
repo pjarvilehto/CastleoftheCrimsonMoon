@@ -1,0 +1,85 @@
+// core/bg3dGL.js — WebGL plumbing for the 3D backgrounds (0.098: split out
+// of bg3d.js, which keeps the scene: layers, camera, frame loop, tuning).
+// Shaders, program/buffer helpers, image + depth-map loading, texture upload.
+
+export const VS = `
+attribute vec2 aGrid; attribute float aDepth;
+uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot;
+varying vec2 vUv; varying float vDepth;
+void main() {
+  vUv = vec2(0.5) + (aGrid - 0.5) * uUvScale;
+  vDepth = aDepth;
+  // the focal-plane point (distance 1) behind this screen position, pushed
+  // along its own ray by depth: no shift at rest, parallax once it sways
+  vec3 p = vec3((aGrid.x * 2.0 - 1.0) * uPlane.x, (1.0 - aGrid.y * 2.0) * uPlane.y, -1.0);
+  // (floor 0.4: nothing may come nearer than 40% of the focal distance —
+  // strong depth + a far focus otherwise folds geometry past the camera)
+  gl_Position = uMVP * vec4(p * max(0.4, 1.0 + uDepthScale * (uPivot - aDepth)), 1.0);
+}`;
+
+export const FS = `
+precision mediump float;
+uniform sampler2D uTex; uniform float uAlpha, uShowDepth;
+varying vec2 vUv; varying float vDepth;
+void main() {
+  vec3 c = uShowDepth > 0.5 ? vec3(vDepth) : texture2D(uTex, clamp(vUv, 0.0, 1.0)).rgb;
+  gl_FragColor = vec4(c, uAlpha);
+}`;
+
+export function program(gl, vs, fs) {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null;
+    gl.attachShader(p, s);
+  }
+  gl.linkProgram(p);
+  return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
+}
+
+export function buffer(gl, target, data) {
+  const b = gl.createBuffer();
+  gl.bindBuffer(target, b);
+  gl.bufferData(target, data, gl.STATIC_DRAW);
+  return b;
+}
+
+export function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => resolve(img));
+    img.onerror = () => reject(new Error(`image ${url}`));
+    img.src = url;
+  });
+}
+
+// Read a grayscale depth map back to the CPU (depth goes in per vertex):
+// { w, h, data: Uint8Array } — 0 = far .. 255 = near.
+export function readDepth(img) {
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const cx = c.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(img, 0, 0);
+  const px = cx.getImageData(0, 0, c.width, c.height).data;
+  const data = new Uint8Array(c.width * c.height);
+  for (let i = 0; i < data.length; i++) data[i] = px[i * 4];
+  return { w: c.width, h: c.height, data };
+}
+
+// Upload the art as a texture: mipmapped on WebGL2 (NPOT mips need it;
+// smoother when the canvas is smaller than the art), clamped edges.
+export function makeTexture(gl, img) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  const webgl2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+  if (webgl2) gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, webgl2 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return tex;
+}

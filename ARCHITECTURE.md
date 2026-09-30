@@ -16,13 +16,18 @@ the Terminal window closes. Requires macOS Command Line Tools — `python3`.)
 ## Test it
 
 ```bash
-node tools/smoke-test.mjs
+node tools/smoke-test.mjs          # everything (~360 checks, <1s)
+node tools/smoke-test.mjs combat   # one area
 ```
 
-Headless DOM-shim suite covering transitions, combat, shrine, death path.
-The shim models read-only DOM APIs (`children` is getter-only — an
-assignment that the old shim allowed shipped as a real bug in 0.031).
-**Always run it before packaging a build.**
+Headless DOM-shim suite covering transitions, combat, shrine, death path,
+progression, content integrity, backgrounds, audio, the simulator and the
+analytics data. Tests live in `tools/test/*.test.mjs` by area; the shim,
+shared imports and a virtual clock (timers run instantly, in order) are in
+`tools/test/harness.mjs`. The shim models read-only DOM APIs (`children`
+is getter-only — an assignment that the old shim allowed shipped as a
+real bug in 0.031). **Always run it before packaging a build**; CI runs it
+on every push (`.github/workflows/test-and-deploy.yml`).
 
 ## The one rule that matters
 
@@ -44,6 +49,8 @@ src/
 ├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
 │                         slow orbit camera, 2s crossfade, CSS fallback;
 │                         live tuning + localStorage save (0.084)
+├── core/bg3dGL.js        its WebGL plumbing: shaders, program/buffer,
+│                         image + depth-map loading, texture upload (0.098)
 ├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
 │                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),
@@ -77,9 +84,10 @@ src/
 │   └── loot.js           coin/xp/item rolls, fortune modifier
 ├── shared/
 │   ├── data.js           single async load of all assets/data/*.json
-│   ├── preload.js        fetch+decode ALL art up front (img.decode(),
-│   │                     list derived from data JSONs) so first paints
-│   │                     are instant — without it art half-draws (0.045)
+│   ├── preload.js        fetch+decode art before its first paint
+│   │                     (img.decode(), lists derived from data JSONs):
+│   │                     boot = title + hub only, the rest in the
+│   │                     background after the title (0.098 staged)
 │   ├── debug.js          DEBUG flags (invulnerable), session-only,
 │   │                     default OFF; combat.js reads it, main.js toggle
 │   └── balance.js        enemy scaling (HP/dmg growth, LV naming)
@@ -88,11 +96,15 @@ src/
     ├── fx.js             deathFlash (red build + fade), tickUp (counters)
     ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
     │                     snapshot plays with its line; owns printing lock)
+    ├── combatQueue.js    combat events -> playback queue items (snapshot,
+    │                     fx, hold, sfx; loot routed per kill) (0.098)
     ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
     │                     bg jolts (heavy blows) and directional bg SWAYS
     │                     (0.092/0.093: a rocking rotation about the depth
     │                     centre — crits/SMASH/multi-kills swing the near
     │                     art right, crushing hits on the knight left)
+    ├── fxParts.js        effect building blocks: shake, spray, HP-bar
+    │                     flash, glow, floating numbers (0.098)
     ├── particles.js      particle bursts by material (0.089), one canvas
     ├── battleLine.js     persistent units (0.086: built once per room,
     │                     update() patches HP/dead/buttons in place;
@@ -100,7 +112,7 @@ src/
     │                     adds boss-card + per-id enemy-<id> classes (0.075);
     │                     boss summon bar; summons join mid-fight in front
     │                     of the boss and leave the row when they fall (0.092)
-    ├── shrineUI.js       shrine room rendering
+    ├── shrineUI.js       the shrine room: panel, HUD row, boon cards
     ├── updatePrompt.js   "Build 0.0NN available" + changelist, reload
     │                     (0.094: polls build.json; waits out a run)
     ├── buffs.js          blessing bar (horizontal, beside resources)
@@ -126,7 +138,7 @@ assets/
 └── data/                 ALL balance numbers live here as JSON:
                         enemies, items, difficulty, backgrounds
                         (incl. roomNames), shrines, build
-styles.css              all styling (split out of index.html in 0.034)
+styles.css              all styling, grouped by screen (0.098; index at the top)
 analytics/              /analytics/ play-stats page (0.095, static):
 ├── index.html            versioned boot (like the game's)
 ├── stats.js              pure aggregation: save codes -> runs -> stats
@@ -134,7 +146,9 @@ analytics/              /analytics/ play-stats page (0.095, static):
 ├── dashboard.js          the page: this browser's save + pasted codes
 └── dashboard.css
 tools/
-├── smoke-test.mjs        DOM-shim suite (~340 checks) - run pre-deploy
+├── smoke-test.mjs        test runner (~360 checks, <1s) - run pre-deploy
+├── test/                 harness.mjs (DOM shim, virtual clock) +
+│                         <area>.test.mjs files (0.098)
 ├── simCore.mjs           simulator engine: bot, policies, profile snapshots (0.091)
 ├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
 ├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
@@ -257,7 +271,7 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 - Build number lives in `assets/data/build.json`; bump every build; shown
   top-left on every screen (check it when reporting bugs).
 - Run `node tools/smoke-test.mjs` before any release — all checks green
-  (~340; the count legitimately varies by one on RNG).
+  (~360; the count legitimately varies by one on RNG).
 - Historical: up to 0.042 the game shipped as `Game_Build_X.XXX.zip`;
   distribution is web-only since 0.043 (see below).
 

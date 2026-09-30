@@ -1,6 +1,7 @@
 // ui/scenes/dungeonScene.js — one room at a time: enter, fight, loot, choose.
-// Combat rooms use the chromeless card layout (battle-line.js); shrine
-// rooms keep the panel layout. Playback queue: combatPlayback.js.
+// Combat rooms use the chromeless card layout (battleLine.js); shrine
+// rooms keep the panel layout (shrineUI.js). Combat events become queue
+// items in combatQueue.js; combatPlayback.js prints them.
 //
 // Log line colors (see #combat-log CSS):
 //   atk  — red    (player attacks, enemy attacks, deaths)
@@ -12,16 +13,17 @@
 //   summon — violet (the boss calls a skeleton, 0.092)
 
 import { el, setBackground, show, transitionTo } from '../../core/scene.js';
-import { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } from '../../run/runState.js';
+import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
 import { getProfile } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
-import { logLine, hpBar, itemName } from '../hud.js';
+import { logLine, itemName } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
-import { shrineBody } from '../shrineUI.js';
+import { renderShrineRoom } from '../shrineUI.js';
+import { queueEvents } from '../combatQueue.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
 import { createPlayerUnit, createEnemyUnit } from '../battleLine.js';
-import { fxFor, playFx, holdFor } from '../combatFx.js';
+import { playFx } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
@@ -53,23 +55,6 @@ export function dungeonScene() {
   const fxCtx = {
     unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null),
     get layer() { return ui?.layer ?? null; },
-  };
-
-  // Combat event -> sound effect (attached at enqueue time so each sound
-  // fires when its line PRINTS, not when the button was clicked).
-  // (Above `return` like hpColor — consts below the factory return are TDZ.)
-  const EV_SFX = {
-    atk: 'attack', spill: 'attack', thorns: 'attack',
-    dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
-    kill: 'kill', multi: 'kill', smash: 'kill', revive: 'shrine', summon: 'shrine',
-  };
-
-  // Shared HP color scale: <=25% red, <=75% yellow, above green.
-  // (Declared before `return` — the factory's return exits before any
-  // statement below it would run, which put this in TDZ for render.)
-  const hpColor = (cur, max) => {
-    const pct = cur / max;
-    return pct <= 0.25 ? '#c14b4b' : pct <= 0.75 ? '#d8c95a' : '#7bc98a';
   };
 
   return {
@@ -218,39 +203,15 @@ export function dungeonScene() {
     }
   }
 
-  // ---- shrine: panel layout (same as pre-card builds) ----
+  // ---- shrine: panel layout (shrineUI.js) ----
   function renderShrine(root, room) {
-    const printing = playback.isPrinting();
-    const lowhp = (run.hp / run.maxHp) <= 0.25 ? ' lowhp' : '';
-    const potionColor = run.potions >= 3 ? '#7bc98a' : run.potions >= 1 ? '#d8c95a' : '#c14b4b';
-
-    const header = el('div', { class: 'run-hud' },
-      el('span', {}, 'Room ', el('b', {}, String(room.number))),
-      el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${hpColor(run.hp, run.maxHp)}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, hpColor(run.hp, run.maxHp))),
-      el('span', {}, 'Coins ', el('b', { id: 'hud-coins' }, String(shownCoins))),
-      el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(shownXp))),
-      el('span', {}, 'Potions ', el('b', { style: `color:${potionColor}` }, `${run.potions}/${run.potionCap}`)));
-
-    const proceed = el('div', { class: 'btn-row' });
-    proceed.append(
-      el('button', { class: 'primary', key: 'd', key2: ' ', onclick: () => nextRoom(root) }, 'Push Deeper'));
-    if (room.taken) {
-      proceed.append(
-        el('button', { class: 'danger', key: 'r', onclick: () => endRun(root, 'retreat') }, 'Retreat with Loot'));
-    }
-
-    root.innerHTML = '';
-    root.append(
-      el('div', { class: 'panel' },
-        el('h1', {}, `Room ${room.number} - ${room.name}`, recordTag()),
-        header,
-        shrineBody(run, room, { log: (t) => logLine(logEl, t, 'loot'), refresh: () => render(currentRoot) }),
-        logEl,
-        proceed));
-    logEl.className = '';
-    logEl.scrollTop = logEl.scrollHeight;
-    root.append(buffBar);
-    updateBuffs(buffBar, run.buffs);
+    renderShrineRoom(root, run, room, {
+      title: [`Room ${room.number} - ${room.name}`, recordTag()],
+      logEl, buffBar, coins: shownCoins, xp: shownXp,
+      onDeeper: () => nextRoom(root),
+      onRetreat: () => endRun(root, 'retreat'),
+      refresh: () => render(currentRoot),
+    });
   }
 
   // Execute a combat action. Combat resolves synchronously; the resulting
@@ -260,25 +221,7 @@ export function dungeonScene() {
     if (!canAct()) return;
     // The replay starts from the state BEFORE the action resolves (0.086).
     const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null) };
-    const events = fn();
-    for (const ev of events) {
-      if (ev.type === 'kill' && ev.enemy) {
-        if (ev.silent) {
-          // Smash kill: loot silently — the single SMASH line plus the
-          // room-cleared summary carry the whole event.
-          applyLoot(run, ev.enemy, () => {});
-        } else {
-          // Death line prints on one tick; the card goes down on the next.
-          playback.enqueue({ text: ev.text, cls: 'atk', snap: ev.snap, sink: combat.enemies.indexOf(ev.enemy), sfx: 'kill' });
-          applyLoot(run, ev.enemy, (text, cls) => playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot' }));
-        }
-      } else {
-        const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
-        const sound = ev.type === 'multi' ? 'kill' : EV_SFX[ev.type];
-        const fx = fxFor(ev, { maxHp: run.maxHp });
-        playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx, hold: holdFor(fx), sfx: sound });
-      }
-    }
+    queueEvents(fn(), { run, combat, playback });
     if (combat.over && combat.victory) {
       playback.enqueue({ text: roomSummaryText(), cls: 'move' });
     }

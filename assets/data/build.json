@@ -1,10 +1,11 @@
 {
-  "version": "0.097",
+  "version": "0.098",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
     "src/audio/sfx.js",
     "src/core/bg3d.js",
+    "src/core/bg3dGL.js",
     "src/core/bg3dMath.js",
     "src/core/scene.js",
     "src/main.js",
@@ -27,8 +28,10 @@
     "src/ui/buffs.js",
     "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
+    "src/ui/combatQueue.js",
     "src/ui/deathModal.js",
     "src/ui/fx.js",
+    "src/ui/fxParts.js",
     "src/ui/hud.js",
     "src/ui/particles.js",
     "src/ui/scenes/dungeonScene.js",
@@ -39,6 +42,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.098": [
+      "Faster start: the title appears without waiting for the dungeon art to load"
+    ],
     "0.097": [
       "Run-end screen counts cleared rooms correctly",
       "Smoother menus on slower screens (removed a costly background blur)",

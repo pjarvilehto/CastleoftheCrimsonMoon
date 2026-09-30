@@ -1,0 +1,51 @@
+# Smoke tests on every push and pull request (0.098).
+#
+# Deploying through this workflow (tests first, then publish) is OFF until
+# the repo opts in — today GitHub Pages still deploys straight from the
+# `main` branch. To switch (after the custom-domain HTTPS setup is done):
+#   1. Settings -> Pages -> Build and deployment -> Source: GitHub Actions
+#   2. Settings -> Secrets and variables -> Actions -> Variables:
+#      DEPLOY_VIA_ACTIONS = true
+# From then on a push to main only goes live if the smoke suite passes.
+name: Test and deploy
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/smoke-test.mjs
+
+  deploy:
+    needs: smoke
+    if: vars.DEPLOY_VIA_ACTIONS == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

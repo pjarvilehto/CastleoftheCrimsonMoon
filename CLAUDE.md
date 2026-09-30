@@ -33,7 +33,8 @@ progression (training, alchemy, forge) in the hub between runs.
 
 ```bash
 python3 -m http.server 8000     # from the repo root, open http://localhost:8000
-node tools/smoke-test.mjs       # DOM-shim test suite: expect ~340 checks green
+node tools/smoke-test.mjs       # DOM-shim test suite: ~360 checks, under a second
+node tools/smoke-test.mjs combat   # just the test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired runs)
@@ -100,8 +101,18 @@ static play-stats page.
   `el.listeners.click[0]()` or `handleKey()`.
 - Check count can vary by one run-to-run (one assertion only runs when the
   T4 fixture run dies — RNG). A flake gets one rerun; a repeat is real.
-- The suite takes ~90s: most of it waits on real-time combat playback and
-  the 1s scene fades.
+- Layout (0.098): `tools/smoke-test.mjs` is the runner; the tests live in
+  `tools/test/*.test.mjs` by area (scenes, combat, shrines, progression,
+  content, backgrounds, audio, sim, history), each starting from `fresh()`;
+  `tools/test/harness.mjs` holds the DOM shim, the shared imports and a
+  **virtual clock**: setTimeout/setInterval/Date.now/performance.now run on
+  virtual time and `sleep(ms)` advances it, firing due timers in order —
+  so the game's real pacing (log drip, 1s fades) costs no wall time. Write
+  tests with `sleep()` as if time were real.
+- CI (0.098): `.github/workflows/test-and-deploy.yml` runs the suite on
+  every push and PR. Its deploy job is off until the repo opts in (Pages
+  source "GitHub Actions" + repo variable `DEPLOY_VIA_ACTIONS=true`); until
+  then Pages still deploys `main` directly, tests or not.
 - Balance-sensitive tests use constructed fixtures; per-level stat changes
   require retuning them.
 - Headless screenshots: use a fresh `--user-data-dir` and disable CSS
@@ -141,7 +152,12 @@ static play-stats page.
   `backgrounds.json` (`rooms` and `roomNames`) + its depth map:
   `python3 tools/gen-depth.py <model.onnx> new.jpg` (setup in the script's
   header; the smoke suite fails if a background has no depth map).
-- 3D backgrounds (0.083, `src/core/bg3d.js`): the art sits on a depth-
+- Asset loading (0.098, `shared/preload.js`): the boot loader waits only
+  for the title + Great Hall art; everything else loads in the background
+  after the title shows, and the hub's Descend waits for it if needed.
+  New backgrounds/enemies are picked up from the data automatically.
+- 3D backgrounds (0.083, `src/core/bg3d.js`; WebGL plumbing in
+  `bg3dGL.js`): the art sits on a depth-
   displaced mesh with a slowly swaying camera. Tune in `backgrounds.json`
   `parallax` (per-file `overrides`); `enabled: false` is the kill switch.
   Falls back to the flat CSS backgrounds with no WebGL, software-only GL,
@@ -195,13 +211,10 @@ static play-stats page.
 - Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
   only compressed bytes warm and decodes the playing bed on demand.
 
-## Backlog (as of 0.097)
+## Backlog (as of 0.098)
 
-- Engineering (from the 0.097 review, planned for 0.098): staged asset
-  loading (boot downloads ~6MB before the title), faster + split smoke
-  suite, styles.css reorganised by screen (20 selectors are defined in
-  several places), split the files over ~300 lines (dungeonScene, bg3d,
-  combatFx), run the tests before every deploy (GitHub Actions).
+- Engineering: switch Pages to deploy through the test workflow once the
+  HTTPS setup is settled (see CI above) · font as WOFF2 (212KB TTF).
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; summons since 0.092) · the room-24 boss is a wall (~5% clear in the
   simulator) and meta saturates past ~60 runs — deeper tiers or NG+ ·
@@ -209,4 +222,4 @@ static play-stats page.
   room kinds · music loop variations · portrait-phone layout.
 - Other: automatic play-stats collection (e.g. a Cloudflare Worker) ·
   check the DIN Condensed web-embedding licence (macOS system font) ·
-  font as WOFF2 · orphaned legacy staging site cleanup.
+  orphaned legacy staging site cleanup.
