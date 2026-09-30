@@ -13,11 +13,11 @@
 // Tuning: backgrounds.json `parallax` (+ per-file `overrides`).
 
 import { DATA } from '../shared/data.js';
-import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS } from './bg3dMath.js';
+import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
 
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
-  yawPeriodS: 22, pitchPeriodS: 31, speed: 1, joltDeg: 0.6, fovDeg: 40, overscan: 0.06,
+  yawPeriodS: 22, pitchPeriodS: 31, speed: 1, joltDeg: 0.6, swayPan: 0.04, swayHitShare: 0.15, fovDeg: 40, overscan: 0.14,
   grid: [256, 144], maxFps: 30, fadeMs: 2000,
 };
 
@@ -72,12 +72,20 @@ let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
                  // speed change never jumps the camera
 let gridM = -1;  // overscan the current grid was built with
 let jolts = [];  // active camera kicks: { t0, amp (rad), dir }
+let sways = [];  // active big-hit sways: { t0, amp (pan), dir }
 
 // A big hit kicks the background camera (0.088). strength 1 = joltDeg.
 export function bgJolt(strength = 1) {
   if (!gl || view === 'flat' || !(cfg.joltDeg > 0)) return;
   const amp = (cfg.joltDeg * Math.min(JOLT_MAX, strength) * Math.PI) / 180;
   jolts.push({ t0: performance.now(), amp, dir: Math.random() < 0.5 ? -1 : 1 });
+}
+
+// The heaviest blows shove the background sideways (0.092): dir +1 = the
+// art swings right (the knight's hits), -1 = left (hits on the knight).
+export function bgSway(strength = 1, dir = 1) {
+  if (!gl || view === 'flat' || !(cfg.swayPan > 0)) return;
+  sways.push({ t0: performance.now(), amp: cfg.swayPan * Math.min(SWAY_MAX, strength), dir: dir < 0 ? -1 : 1 });
 }
 let watchdog = null; // { frames, since } — first seconds' frame rate check
 
@@ -180,8 +188,9 @@ function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
   jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
-  // full frame rate while a jolt plays — at 30fps its wobble would stutter
-  if (!layers.length || (!jolts.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
+  sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
+  // full frame rate while a jolt/sway plays — at 30fps it would stutter
+  if (!layers.length || (!jolts.length && !sways.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; canvas.classList.add('ready'); } // rest pose = the CSS image
   else tau += ((now - t0) / 1000) * cfg.speed;
@@ -202,7 +211,7 @@ function frame(now) {
   o.pitch += j.pitch;
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
-  gl.uniformMatrix4fv(loc.uMVP, false, mvp(o.yaw, o.pitch, fov, aspect));
+  gl.uniformMatrix4fv(loc.uMVP, false, mvp(o.yaw, o.pitch, fov, aspect, swayOffset(sways, now)));
   gl.uniform2f(loc.uPlane, Math.tan(fov / 2) * aspect, Math.tan(fov / 2));
   gl.uniform1f(loc.uShowDepth, view === 'depth' ? 1 : 0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

@@ -9,10 +9,12 @@
 
 import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
+import { scaleEnemy } from '../shared/balance.js';
 
 export function createCombat(run, room) {
   return {
     run,
+    roomNumber: room.number, // summons scale to the room
     enemies: room.enemies.map((e) => ({ ...e, hp: e.maxHp })),
     turn: 1,
     heavyCd: 0,
@@ -32,7 +34,11 @@ function living(combat) {
 export function playerAttack(combat, targetIndex, heavy = false) {
   const events = [];
   const push = (ev) => {
-    ev.snap = { enemies: combat.enemies.map((e) => e.hp), hp: combat.run.hp };
+    ev.snap = {
+      enemies: combat.enemies.map((e) => e.hp),
+      hp: combat.run.hp,
+      meters: combat.enemies.map((e) => (e.summonEvery ? e.summonMeter : null)), // 0.092
+    };
     events.push(ev);
   };
   const target = combat.enemies[targetIndex];
@@ -154,6 +160,8 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     }
   }
 
+  summonPhase(combat, push);
+
   if (living(combat).length === 0) {
     combat.over = true;
     combat.victory = true;
@@ -163,6 +171,35 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   combat.turn += 1;
   if (combat.heavyCd > 0) combat.heavyCd -= 1;
   return events;
+}
+
+// Boss summons (0.092): a summoner's meter fills one step per turn; when
+// full it calls a (weakened) enemy that steps in front of it. Summons give
+// no rewards — stalling the boss to farm them is pointless. Capped alive.
+function summonPhase(combat, push) {
+  const cfg = DATA.difficulty.boss?.summon ?? {};
+  for (const [i, e] of combat.enemies.entries()) {
+    if (!e.summonEvery || e.hp <= 0) continue;
+    e.summonMeter = Math.min(e.summonEvery, e.summonMeter + 1);
+    const alive = combat.enemies.filter((x) => x.summoned && x.hp > 0).length;
+    if (e.summonMeter < e.summonEvery || alive >= (cfg.maxAlive ?? 3)) continue; // full: waits for room
+    const s = scaleEnemy(cfg.enemy ?? 'skeleton', (combat.roomNumber ?? 1) + (cfg.depthBonus ?? 0));
+    s.maxHp = Math.max(1, Math.round(s.maxHp * (cfg.hpScale ?? 1)));
+    s.dmg = Math.max(1, Math.round(s.dmg * (cfg.dmgScale ?? 1)));
+    Object.assign(s, { hp: s.maxHp, summoned: true, xp: 0, coins: [0, 0] });
+    combat.enemies.push(s);
+    // Snapshot BEFORE the reset: the bar shows full as the summon lands,
+    // then drains when playback settles on the real state.
+    push({ type: 'summon', text: `${e.name} summons a ${s.name}!`, source: i, target: combat.enemies.length - 1 });
+    e.summonMeter = 0;
+  }
+}
+
+// Heavy Attack's target: the front-most living summon, else the first
+// living enemy (0.092 — summons stand in front of the boss).
+export function heavyTarget(combat) {
+  const s = combat.enemies.findIndex((e) => e.summoned && e.hp > 0);
+  return s >= 0 ? s : combat.enemies.findIndex((e) => e.hp > 0);
 }
 
 export function canHeavy(combat) {

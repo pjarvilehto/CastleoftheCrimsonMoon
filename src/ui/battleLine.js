@@ -45,6 +45,14 @@ function collapse(img, done) {
   ], { duration: COLLAPSE_MS, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
 }
 
+// A fallen summon's whole unit fades out and leaves the row (0.092) —
+// a long boss fight would otherwise fill the line with skulls.
+function vanish(unit, done) {
+  const out = () => { unit.remove(); done?.(); };
+  if (!unit.animate) { out(); return; }
+  unit.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).finished.then(out, out);
+}
+
 // "Giant Rat LV3" -> ["Giant Rat", "LV3"]; levelless -> ["Giant Rat", "LV1"]
 function splitName(full) {
   const m = full.match(/^(.*?) LV(\d+)$/);
@@ -125,11 +133,18 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   return { el: unit, card, portrait: img, id: 'player', update };
 }
 
-// Enemy unit. update({ hp, dead, printing, combatOver })
-export function createEnemyUnit(e, i, { onAttack }) {
+// Enemy unit. update({ hp, dead, printing, combatOver, meter? })
+// onGone: a fallen summon's card has left the row (0.092).
+export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
   const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
+  // Boss summon bar (0.092): fills each turn; full = a summon joins.
+  const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
+  const meterLine = e.summonEvery
+    ? el('div', { class: 'summon-line', title: `Summons a skeleton every ${e.summonEvery} turns` },
+      el('span', { class: 'summon-text' }, 'SUMMON'), el('div', { class: 'summon-bar' }, meterFill))
+    : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
   const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
   // Portrait and skull both live in the card; the 'dead' class swaps them
@@ -142,7 +157,8 @@ export function createEnemyUnit(e, i, { onAttack }) {
     aura,
     img,
     el('div', { class: 'skull' }, '☠'),
-    hp.line);
+    hp.line,
+    meterLine);
   // Dead cards keep their slot: the button row stays mounted with the
   // button hidden (ghost-btn), so the bottom-aligned card can't shift.
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
@@ -150,16 +166,24 @@ export function createEnemyUnit(e, i, { onAttack }) {
   let down = false; // dead state already applied (or collapsing)
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
+    if (meterFill && s.meter != null) {
+      meterFill.style.width = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
+      setClass(meterLine, 'full', s.meter >= e.summonEvery);
+    }
     if (s.dead && !down) {
       down = true;
       setClass(card, 'dying', true);
-      collapse(img, () => { setClass(card, 'dying', false); setClass(card, 'dead', true); });
+      collapse(img, () => {
+        setClass(card, 'dying', false);
+        if (e.summoned) vanish(unit, onGone); // no skull slot: summons crumble away
+        else setClass(card, 'dead', true);
+      });
     }
     setClass(unit, 'dead-unit', s.dead);
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
   };
-  return { el: unit, card, portrait: img, id: e.id, update };
+  return { el: unit, card, portrait: img, id: e.id, summoned: !!e.summoned, update };
 }
 
 // One-shot builders (tests, previews): a unit in a given state.

@@ -79,5 +79,7 @@ function makeBoss(roomNumber) {
   const boss = scaleEnemy('vampire_lord', roomNumber + (b.depthBonus ?? 4));
   boss.maxHp = Math.round(boss.maxHp * (b.hpMult ?? 1.5));
   boss.dmg = Math.round(boss.dmg * (b.dmgMult ?? 1.25));
+  // Summoner (0.092): its meter fills each turn; see combat.js summonPhase.
+  if (b.summon?.every > 0) Object.assign(boss, { summonEvery: b.summon.every, summonMeter: 0 });
   return boss;
 }

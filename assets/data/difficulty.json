@@ -51,15 +51,24 @@
   "combatPacing": {
     "playerAttackMs": 300,
     "heavyAttackMs": 380,
-    "enemyAttackMs": 220
+    "enemyAttackMs": 220,
+    "summonMs": 650
   },
   "t4Chance": 0.02,
   "t4MinRoom": 11,
   "potionDropChance": 0.05,
   "boss": {
     "depthBonus": 4,
-    "hpMult": 1.5,
-    "dmgMult": 1.25
+    "hpMult": 1.2,
+    "dmgMult": 0.7,
+    "summon": {
+      "every": 4,
+      "enemy": "skeleton",
+      "maxAlive": 3,
+      "hpScale": 1,
+      "dmgScale": 3,
+      "depthBonus": 4
+    }
   },
   "player": {
     "baseHp": 40,

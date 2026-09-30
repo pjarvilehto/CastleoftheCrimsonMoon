@@ -9,11 +9,12 @@
 //   loot — gold   (per-kill drops, shrine blessings)
 //   multi— gold bold (multi-kill)
 //   sys  — gray   (deaths, misc)
+//   summon — violet (the boss calls a skeleton, 0.092)
 
 import { el, setBackground, show, transitionTo } from '../../core/scene.js';
 import { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } from '../../run/runState.js';
 import { getProfile } from '../../meta/profile.js';
-import { createCombat, playerAttack, canHeavy, useHeavy } from '../../run/combat.js';
+import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
 import { logLine, hpBar, itemName } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
@@ -60,7 +61,7 @@ export function dungeonScene() {
   const EV_SFX = {
     atk: 'attack', spill: 'attack', thorns: 'attack',
     dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
-    kill: 'kill', multi: 'kill', smash: 'kill', revive: 'shrine',
+    kill: 'kill', multi: 'kill', smash: 'kill', revive: 'shrine', summon: 'shrine',
   };
 
   // Shared HP color scale: <=25% red, <=75% yellow, above green.
@@ -120,7 +121,8 @@ export function dungeonScene() {
 
   function buildCombat(root, room) {
     const player = createPlayerUnit(run, {
-      onHeavy: () => { if (canAct()) { useHeavy(combat); act(() => playerAttack(combat, firstAlive(), true)); } },
+      // Heavy goes to the front: a summon standing before the boss (0.092).
+      onHeavy: () => { if (canAct()) { useHeavy(combat); act(() => playerAttack(combat, heavyTarget(combat), true)); } },
       onPotion: () => {
         // 0.080: potions persist, so topping up between rooms is allowed
         // (after a win) — never while dead or mid-playback.
@@ -134,9 +136,9 @@ export function dungeonScene() {
         updateCombat();
       },
     });
-    const enemies = combat.enemies.map((e, i) => createEnemyUnit(e, i, {
-      onAttack: () => act(() => playerAttack(combat, i, false)),
-    }));
+    const enemies = combat.enemies.map((e, i) => enemyUnit(i));
+    const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
+    const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}` }, player.el, row);
     // Death has no corner button — the fatal blow triggers the blood-red
     // flash and the centered YOU DIED dialog (openDeathModal, 0.067).
     const proceed = el('div', { class: 'combat-proceed' });
@@ -146,7 +148,7 @@ export function dungeonScene() {
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
       // --n drives the card size (styles.css --card-h): crowded rooms
       // shrink their cards to fit the width instead of wrapping (0.078).
-      el('div', { class: 'battle-line', style: `--n:${combat.enemies.length}` }, player.el, el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el))),
+      line,
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
@@ -157,12 +159,39 @@ export function dungeonScene() {
     logEl.scrollTop = logEl.scrollHeight;
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
-    ui = { room, root, player, enemies, proceed, layer };
+    ui = { room, root, player, enemies, row, line, proceed, layer };
     playFx({ kind: 'enter' }, fxCtx);
+  }
+
+  // (Function declarations: consts below the factory's return are TDZ.)
+  function enemyUnit(i) {
+    return createEnemyUnit(combat.enemies[i], i, {
+      onAttack: () => act(() => playerAttack(combat, i, false)),
+      onGone: () => fitRow(), // a fallen summon crumbles away, freeing its slot
+    });
+  }
+  function fitRow() {
+    ui?.line.setAttribute('style', `--n:${Math.max(1, ui.row.children.length)}`);
+  }
+
+  // Summons join mid-fight (0.092): each card appears as its summon line
+  // prints (the playback view says how many enemies exist yet), in front
+  // of — left of — the boss.
+  function syncUnits() {
+    const n = playback.enemyCount(combat.enemies.length);
+    if (ui.enemies.length >= n) return;
+    const boss = ui.enemies.find((u) => !u.summoned);
+    while (ui.enemies.length < n) {
+      const u = enemyUnit(ui.enemies.length);
+      ui.enemies.push(u);
+      ui.row.insertBefore(u.el, boss?.el ?? null);
+    }
+    fitRow();
   }
 
   function updateCombat() {
     const printing = playback.isPrinting();
+    syncUnits();
     ui.player.update({
       hp: playback.playerHpOf(run.hp),
       printing,
@@ -171,8 +200,11 @@ export function dungeonScene() {
       dead: combat.over && !combat.victory,
     });
     ui.enemies.forEach((u, i) => {
-      const real = combat.enemies[i].hp;
-      u.update({ hp: playback.hpOf(i, real), dead: playback.deadOf(i, real), printing, combatOver: combat.over });
+      const e = combat.enemies[i];
+      u.update({
+        hp: playback.hpOf(i, e.hp), dead: playback.deadOf(i, e.hp), printing, combatOver: combat.over,
+        meter: playback.meterOf(i, e.summonMeter ?? null),
+      });
     });
     const showProceed = combat.over && !printing && combat.victory;
     if (showProceed && !ui.proceed.children.length) {
@@ -226,7 +258,7 @@ export function dungeonScene() {
   function act(fn) {
     if (!canAct()) return;
     // The replay starts from the state BEFORE the action resolves (0.086).
-    const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp };
+    const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null) };
     const events = fn();
     for (const ev of events) {
       if (ev.type === 'kill' && ev.enemy) {
@@ -242,7 +274,7 @@ export function dungeonScene() {
       } else {
         const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
         const sound = ev.type === 'multi' ? 'kill' : EV_SFX[ev.type];
-        const fx = fxFor(ev);
+        const fx = fxFor(ev, { maxHp: run.maxHp });
         playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx, hold: holdFor(fx), sfx: sound });
       }
     }
@@ -303,10 +335,6 @@ export function dungeonScene() {
   // while a previous action is still printing.
   function canAct() {
     return !combat.over && !playback.isPrinting();
-  }
-
-  function firstAlive() {
-    return combat.enemies.findIndex((e) => e.hp > 0);
   }
 
   function endRun(root, outcome) {

@@ -487,6 +487,15 @@
 .hp-text { color: #d8c9a3; white-space: nowrap; font-size: 1em; font-weight: bold; }
 .char-card .hpbar { height: 0.6em; background: #454545; border: none; outline: none; }
 .char-card .hpbar > div { background: linear-gradient(180deg, #58b04a, #3d8a33); }
+/* boss summon meter (0.092): a violet bar under the HP line; fills one
+   step per turn, pulses while full (the boss is waiting for room) */
+.summon-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.3em; width: 100%; margin-top: 0.3em; text-shadow: 0 1px 3px #000; }
+.summon-text { color: #b99ae8; white-space: nowrap; font-size: 0.8em; font-weight: bold; letter-spacing: 0.08em; }
+.summon-bar { flex: 1; min-width: 0; height: 0.45em; background: #3a3346; }
+.summon-fill { height: 100%; width: 0; background: linear-gradient(180deg, #a878f0, #6c3fb8); transition: width 0.35s ease-out; }
+.summon-line.full .summon-bar { animation: summon-ready 1.4s ease-in-out infinite; }
+@keyframes summon-ready { 0%, 100% { box-shadow: 0 0 0 rgba(170, 110, 255, 0); } 50% { box-shadow: 0 0 10px rgba(170, 110, 255, 0.95); } }
+#combat-log .summon { color: #b99ae8; font-weight: bold; }
 .potions { margin-top: 0.2em; letter-spacing: 0.08em; }
 /* bottom-left: XP/coins pinned to the corner, buff bar to their right */
 .resources { position: fixed; left: 1.4vw; bottom: 2.5vh; z-index: 4; }
@@ -617,10 +626,19 @@
 #combat-log .smash { color: #ffd700; font-weight: bold; letter-spacing: 0.08em; font-size: 1.05em; }
 
 /* Button label wrapper (el() adds it): keeps the hotkey-underline splice
-   inside one inline context so spaces survive flex. The top offset is
-   measured, not guessed: DIN Condensed's glyphs ride 0.15em above the
-   optical center of the line box (canvas-measured), so nudge down. */
+   inside one inline context so spaces survive flex.
+   Vertical centering (0.092): the CAPITALS are centered; the hotkey
+   underline hangs below and is ignored. text-box trims the label to
+   cap-height..baseline, so the button's flex centering centers the
+   letters themselves — the same on every OS (Mac, Windows and Linux read
+   different vertical metrics from the font, which a fixed nudge can't
+   match). The padding gives back the line height, so buttons keep their
+   size. Fallback (no text-box): DIN Condensed's caps ride 0.144em above
+   the middle of the line box (hhea metrics), so nudge them down. */
 .btn-label { position: relative; top: 0.15em; }
+@supports (text-box: trim-both cap alphabetic) {
+  .btn-label { top: 0; text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
+}
 
 /* Save transfer (title screen): quiet buttons + copy/paste code box */
 .save-transfer { margin-top: 16px; display: flex; gap: 10px; justify-content: center; }
@@ -657,7 +675,10 @@
 
 /* Gold star next to bosses and T3-strength elites — the only enemies
    that can drop T4 crimson relics (same rule as isElite in balance.js). */
-.elite-star { color: var(--gold); text-shadow: 0 0 6px rgba(232, 196, 92, 0.9); }
+/* The star comes from a fallback font whose taller line box pushed elite
+   names below their neighbours' — line-height 0 keeps it out of the line
+   box math, so every name sits on the same baseline (0.092). */
+.elite-star { color: var(--gold); text-shadow: 0 0 6px rgba(232, 196, 92, 0.9); line-height: 0; }
 
 /* ---- 0.062: title dialog docked low, castle stays visible ---- */
 /* #app centers content; an auto top margin overrides that and pins the

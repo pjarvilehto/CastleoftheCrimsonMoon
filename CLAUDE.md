@@ -25,7 +25,7 @@ alchemy, forge) in the hub between runs.
 
 ```bash
 python3 -m http.server 8000     # from the repo root, open http://localhost:8000
-node tools/smoke-test.mjs       # DOM-shim test suite: expect 168–169 checks green
+node tools/smoke-test.mjs       # DOM-shim test suite: expect ~308 checks green
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired runs)
@@ -84,7 +84,7 @@ music beds and SFX (gesture-gated AudioContext).
   limits: no `appendChild`/`querySelector` on elements, `match()` supports
   only hardcoded selectors, `children` is read-only. Click =
   `el.listeners.click[0]()` or `handleKey()`.
-- Check count varies 168/169 run-to-run (one assertion only runs when the
+- Check count can vary by one run-to-run (one assertion only runs when the
   T4 fixture run dies — RNG). A flake gets one rerun; a repeat is real.
 - Balance-sensitive tests use constructed fixtures; per-level stat changes
   require retuning them.
@@ -134,6 +134,13 @@ music beds and SFX (gesture-gated AudioContext).
   copies JSON — when the owner sends that JSON, put the values into
   `backgrounds.json` `parallax` to make them the default for everyone).
   The skirt (overscan) now grows automatically for larger sway.
+- Big-hit sway (0.092): `parallax.swayPan` / `swayHitShare` in
+  backgrounds.json; crits, SMASH and multi-kills shove the art right,
+  hits on the knight worth >= swayHitShare of max HP shove it left.
+- Boss summons (0.092): `difficulty.json boss.summon` (every N turns,
+  enemy, maxAlive, hp/dmg scale, depthBonus). Summons give no rewards.
+  `node tools/simulate.mjs --tactic suggested|boss|summons` compares
+  targeting strategies.
 - Character animation (0.087): idle loops per enemy FAMILY (by id,
   `battleLine.js IDLE_FAMILY` + `.idle-<family>` in styles.css — a new
   enemy needs a family); one-shots (lunge, hit, numbers, entrance) in

@@ -28,7 +28,7 @@ import { loadSim, withSeed, newAgg, STAT_PRIORITY } from './simCore.mjs';
 
 // One campaign: a fresh profile plays `runs` runs, spending in the hub
 // between them. (Engine + policies live in simCore.mjs since 0.091.)
-export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false } = {}) {
+export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false, tactic = 'suggested' } = {}) {
   const sim = await loadSim();
   const agg = newAgg();
   const t4MinRoom = sim.DATA.difficulty.t4MinRoom ?? 11;
@@ -36,7 +36,8 @@ export async function simulate({ runs = 40, seed = 1, verbose = false, retreat =
   return withSeed(seed, () => {
     sim.fresh();
     for (let r = 0; r < runs; r++) {
-      const rec = sim.playRun({ agg, retreat });
+      const rec = sim.playRun({ agg, retreat, tactic });
+      if (rec.bossesBeaten >= 1 && agg.firstBossClearRun == null) agg.firstBossClearRun = r + 1;
       if (verbose) {
         console.log(`run ${String(r + 1).padStart(2)}: depth ${String(rec.depth).padStart(2)}, ${rec.outcome}, kills ${rec.kills}, coins ${rec.coins}, xp ${rec.xp}, relics ${rec.relics}, boon ${rec.boon ?? '-'}`);
       }
@@ -189,10 +190,10 @@ export function renderReport(agg, { runs, seed }) {
 }
 
 // ── Multi-seed summary: independent campaigns, mean ± sd per metric ──
-export async function multiSeed(seeds, { runs = 40, retreat = false } = {}) {
+export async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
   const rows = [];
   for (const seed of seeds) {
-    const agg = await simulate({ runs, seed, retreat });
+    const agg = await simulate({ runs, seed, retreat, tactic });
     const { median, mean } = analyze(agg);
     const rate = (r) => (agg.bossSeen[r] ? (agg.bossBeaten[r] ?? 0) / agg.bossSeen[r] : NaN);
     const early = agg.depths.slice(0, 10);
@@ -204,13 +205,14 @@ export async function multiSeed(seeds, { runs = 40, retreat = false } = {}) {
       coins: agg.runs.reduce((x, r) => x + r.coins, 0) / agg.runs.length,
       banked: agg.runs.reduce((x, r) => x + (r.banked ?? 0), 0) / agg.runs.length,
       turns: agg.turns / Math.max(1, agg.combatRooms),
+      first8: agg.firstBossClearRun ?? runs + 1, // runs until the room-8 boss first falls
     });
   }
   return rows;
 }
 
 export function renderMultiSeed(rows, { runs, retreat }) {
-  const keys = ['median', 'mean', 'early', 'late', 'boss8', 'boss16', 'boss24', 'coins', 'banked', 'turns'];
+  const keys = ['median', 'mean', 'early', 'late', 'first8', 'boss8', 'boss16', 'boss24', 'coins', 'banked', 'turns'];
   const fmt = (k, v) => (Number.isNaN(v) ? '  —  ' : k.startsWith('boss') ? `${Math.round(v * 100)}%` : v.toFixed(1));
   const stat = (k) => {
     const v = rows.map((r) => r[k]).filter((x) => !Number.isNaN(x));
@@ -222,7 +224,8 @@ export function renderMultiSeed(rows, { runs, retreat }) {
     '| seed | ' + keys.join(' | ') + ' |', '|' + '---|'.repeat(keys.length + 1)];
   for (const r of rows) out.push(`| ${r.seed} | ${keys.map((k) => fmt(k, r[k])).join(' | ')} |`);
   out.push(`| **mean ± sd** | ${keys.map(stat).join(' | ')} |`, '',
-    'median/mean = run depth; early/late = avg depth of the first/last 10 runs; bossN = clear rate of the room-N boss;',
+    'median/mean = run depth; early/late = avg depth of the first/last 10 runs; first8 = runs until the room-8 boss first falls;',
+    'bossN = clear rate of the room-N boss;',
     'coins = earned per run; banked = carried home after the death toll; turns = avg player turns per combat room.');
   return out.join('\n');
 }
@@ -238,11 +241,12 @@ if (invokedDirectly) {
   const seed = Number(arg('seed', 1));
   const verbose = process.argv.includes('--verbose');
   const retreat = process.argv.includes('--retreat');
+  const tactic = arg('tactic', 'suggested');
   const seeds = arg('seeds', null); // e.g. 1-8
   if (seeds) {
     const [from, to] = seeds.split('-').map(Number);
     const list = Array.from({ length: (to ?? from) - from + 1 }, (_, i) => from + i);
-    console.log(renderMultiSeed(await multiSeed(list, { runs, retreat }), { runs, retreat }));
+    console.log(renderMultiSeed(await multiSeed(list, { runs, retreat, tactic }), { runs, retreat }));
   } else {
     const agg = await simulate({ runs, seed, verbose, retreat });
     console.log(renderReport(agg, { runs, seed }));

@@ -53,6 +53,8 @@ export function enterNextRoom(run) {
 }
 
 export function applyLoot(run, enemy, log) {
+  // Boss summons (0.092) count as kills but carry nothing.
+  if (enemy.summoned) { run.kills += 1; return { itemId: null, kept: false }; }
   const fortune = trainedLevel(getProfile(), 'fortune');
   const loot = rollLoot(enemy, fortune, run.roomNumber, run.relicFound);
   // Greed shrine boon multiplies kill coins (run.coinMult, default 1).

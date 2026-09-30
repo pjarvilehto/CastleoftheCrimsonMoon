@@ -26,7 +26,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
   let queue = [];
   let printing = false;
   let pendingSink = null; // enemy index whose card goes down on the next tick
-  let view = null;        // { hp: [], php, dead: [] } while printing; null = show real state
+  let view = null;        // { hp: [], php, dead: [], meters: [] } while printing; null = show real state
   let timer = null;       // pending drain tick — cancelled on reset()
 
   // Single pending timer: starting a new chain cancels the old one, so a
@@ -42,6 +42,10 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
   const hpOf = (i, realHp) => (view ? view.hp[i] : realHp);
   const deadOf = (i, realHp) => (view ? view.dead[i] : realHp <= 0);
   const playerHpOf = (realHp) => (view ? view.php : realHp);
+  // Boss summon meters, and how many enemies exist yet (summons join
+  // mid-fight — their card appears when the summon line prints; 0.092).
+  const meterOf = (i, real) => (view ? view.meters[i] ?? null : real);
+  const enemyCount = (real) => (view ? view.hp.length : real);
 
   // New combat (room): tear down any in-flight chain so stale ticks can't
   // touch the new room's state.
@@ -60,7 +64,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
   // Drain: one item per tick. pre = the state BEFORE the action resolved
   // ({ enemies: [hp...], hp }) — the replay starts from there.
   function begin(pre) {
-    view = { hp: [...pre.enemies], php: pre.hp, dead: pre.enemies.map((h) => h <= 0) };
+    view = { hp: [...pre.enemies], php: pre.hp, dead: pre.enemies.map((h) => h <= 0), meters: [...(pre.meters ?? [])] };
     printing = true;
     onTick();
     const delay = DATA.difficulty.logDelayMs ?? 100;
@@ -86,6 +90,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
       if (item.snap && view) {
         view.hp = [...item.snap.enemies];
         view.php = item.snap.hp;
+        if (item.snap.meters) view.meters = [...item.snap.meters];
       }
       if (item.text) {
         if (item.sfx) sfx(item.sfx); // synced to the printed line, not the click
@@ -93,13 +98,13 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
         logLine(log, item.text, item.cls);
         log.scrollTop = log.scrollHeight;
       }
-      if (item.fx) onFx(item.fx);
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
-      onTick();
+      onTick(); // before the effect: a summon's card must exist to animate in
+      if (item.fx) onFx(item.fx);
       schedule(step, item.hold ?? delay);
     };
     step();
   }
 
-  return { enqueue, begin, reset, isPrinting, hpOf, deadOf, playerHpOf };
+  return { enqueue, begin, reset, isPrinting, hpOf, deadOf, playerHpOf, meterOf, enemyCount };
 }

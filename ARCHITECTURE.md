@@ -60,10 +60,15 @@ src/
 ├── run/                  EXISTS only during a dungeon run
 │   ├── runState.js       run object, room progression, settleRun()
 │   ├── roomGen.js        threat-budget combat rooms, boss every 8,
-│   │                     ONE shrine guaranteed in rooms 2-7, room kinds
+│   │                     ONE shrine in every 8-room stretch (2-7,
+│   │                     10-15, ...: run.shrineRooms), room kinds
 │   ├── combat.js         combat core: attacks, crits, lifesteal,
 │   │                     MULTI-KILL damage spill — HEAVY attacks only
-│   │                     (>= 2x target HP; basic attacks never spill)
+│   │                     (>= 2x target HP; basic attacks never spill);
+│   │                     boss SUMMONS (0.092): the meter fills a step a
+│   │                     turn, full = a skeleton joins (difficulty.json
+│   │                     boss.summon; no rewards, capped alive);
+│   │                     heavyTarget() = the front summon, else first
 │   ├── shrine.js         boon costs/effects (ids map to apply logic)
 │   └── loot.js           coin/xp/item rolls, fortune modifier
 ├── shared/
@@ -79,12 +84,17 @@ src/
     ├── fx.js             flashRed (death vignette), tickUp (counters)
     ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
     │                     snapshot plays with its line; owns printing lock)
-    ├── combatFx.js       combat effects: event -> fx descriptor, playFx()
+    ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
+    │                     bg jolts (heavy blows) and directional bg SWAYS
+    │                     (0.092: crits/SMASH/multi-kills swing the art
+    │                     right, crushing hits on the knight swing it left)
     ├── particles.js      particle bursts by material (0.089), one canvas
     ├── battleLine.js     persistent units (0.086: built once per room,
     │                     update() patches HP/dead/buttons in place;
     │                     card + button row beneath; HP as text+bar line);
-    │                     adds boss-card + per-id enemy-<id> classes (0.075)
+    │                     adds boss-card + per-id enemy-<id> classes (0.075);
+    │                     boss summon bar; summons join mid-fight in front
+    │                     of the boss and leave the row when they fall (0.092)
     ├── shrineUI.js       shrine room rendering
     ├── buffs.js          blessing bar (horizontal, beside resources)
     ├── bgTuner.js        ?debug BG TUNING slider panel (0.084)
@@ -111,7 +121,7 @@ assets/
                         (incl. roomNames), shrines, build
 styles.css              all styling (split out of index.html in 0.034)
 tools/
-├── smoke-test.mjs        DOM-shim suite (168-169 checks) - run pre-deploy
+├── smoke-test.mjs        DOM-shim suite (~308 checks) - run pre-deploy
 ├── simCore.mjs           simulator engine: bot, policies, profile snapshots (0.091)
 ├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
 ├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
@@ -211,6 +221,13 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
   max-height 67% keeps the head clear of the 4 gear-text rows) and
   `.player-card .hud-chip` needs margin-top:auto to re-pin the HP row
   (the in-flow portrait's flex used to push it down).
+- Text centering (0.092): button labels center their CAPITALS (the hotkey
+  underline hangs below, ignored) with `text-box: trim-both cap
+  alphabetic` + padding back to 1lh, so it holds on every OS — Mac,
+  Windows and Linux read different vertical metrics from the font. The
+  `top: 0.15em` nudge remains as the fallback. Fallback-font glyphs in
+  text rows (the elite ★) get `line-height: 0`, or their taller line box
+  shifts the row.
 - Asset cache rule: NEVER replace an asset file in place (edge caches hold
   ~4h) — new content gets a new filename.
 
@@ -219,7 +236,7 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 - Build number lives in `assets/data/build.json`; bump every build; shown
   top-left on every screen (check it when reporting bugs).
 - Run `node tools/smoke-test.mjs` before any release — all checks green
-  (168–169; the count legitimately varies by one on RNG).
+  (~308; the count legitimately varies by one on RNG).
 - Historical: up to 0.042 the game shipped as `Game_Build_X.XXX.zip`;
   distribution is web-only since 0.043 (see below).
 

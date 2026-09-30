@@ -10,6 +10,9 @@
 //   shrine:  'priority' (default: best affordable boon, SHRINE_PRIORITY)
 //            | 'none' (always walk away) | '<boon id>' (FORCE that boon:
 //            it's taken whenever affordable, as if the shrine offered it)
+//   tactic:  boss rooms with summons (0.092): 'suggested' (default: heavy on
+//            the front summon, regular attacks on the boss) | 'boss' (ignore
+//            summons) | 'summons' (clear summons first)
 //   retreat: false (default: push until death — measures survival)
 //            | true (bank the run after a cleared room when it's risky:
 //              HP < 35% with no potions, or right after a boss at < 60%)
@@ -106,7 +109,17 @@ export async function loadSim() {
     return pick?.id ?? null;
   }
 
-  function playRun({ agg = newAgg(), shrine = 'priority', retreat = false } = {}) {
+  // Who the bot hits this turn.
+  function target(combat, heavy, tactic) {
+    const alive = (f) => combat.enemies.findIndex((e) => e.hp > 0 && f(e));
+    const summon = alive((e) => e.summoned);
+    const main = alive((e) => !e.summoned);
+    if (tactic === 'summons' && summon >= 0) return summon;
+    if (tactic === 'suggested' && heavy) return cb.heavyTarget(combat);
+    return main >= 0 ? main : summon;
+  }
+
+  function playRun({ agg = newAgg(), shrine = 'priority', retreat = false, tactic = 'suggested' } = {}) {
     const t4MinRoom = DATA.difficulty.t4MinRoom ?? 11;
     const run = rs.createRun();
     const rec = { depth: 0, kills: 0, coins: 0, xp: 0, relics: 0, outcome: 'death', boon: null, shrineRoom: null, bossesBeaten: 0, killedBy: null };
@@ -124,8 +137,8 @@ export async function loadSim() {
       if (room.isBoss) agg.bossSeen[room.number] = (agg.bossSeen[room.number] ?? 0) + 1;
       while (!combat.over) {
         if (run.potions > 0 && run.hp / run.maxHp < 0.4 && rs.drinkPotion(run)) agg.potionsDrunk += 1;
-        const idx = combat.enemies.findIndex((e) => e.hp > 0);
         const heavy = cb.canHeavy(combat);
+        const idx = target(combat, heavy, tactic);
         if (heavy) { cb.useHeavy(combat); agg.heavyUses += 1; }
         agg.attacks += 1;
         agg.turns += 1;
@@ -144,6 +157,8 @@ export async function loadSim() {
                 if (run.roomNumber < t4MinRoom) agg.relicGateViolations += 1;
               }
             }
+          } else if (ev.type === 'summon') {
+            agg.summons = (agg.summons ?? 0) + 1;
           } else if (ev.type === 'dmg') {
             lastHitter = combat.enemies[ev.source]?.id ?? null;
             const b = (agg.dmgTakenByBand[band(run.roomNumber)] ||= { taken: 0, hits: 0, zeroHits: 0 });

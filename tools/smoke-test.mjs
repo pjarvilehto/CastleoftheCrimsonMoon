@@ -49,6 +49,12 @@ class El {
     }
   }
   remove() { if (this.parent) { const i = this.parent.children.indexOf(this); if (i >= 0) this.parent.children.splice(i, 1); } }
+  insertBefore(n, ref) {
+    if (n.remove) n.remove();
+    n.parent = this;
+    const i = ref ? this.children.indexOf(ref) : -1;
+    this.children.splice(i < 0 ? this.children.length : i, 0, n);
+  }
   getBoundingClientRect() { return { left: 50, top: 50, width: 100, height: 20 }; }
   set innerHTML(v) { if (v === '') this.children.length = 0; }
   get innerHTML() { return ''; }
@@ -459,10 +465,12 @@ process.on('uncaughtException', (e) => {
   const { applyLoot } = await import('../src/run/runState.js');
   const gr = createRun();
   acceptOffer(gr, DATA.shrines.offers.find((o) => o.id === 'greed'));
-  const c0 = gr.coins;
-  applyLoot(gr, { ...DATA.enemies.rat, hp: 14 }, () => {});
-  const gained = gr.coins - c0;
-  ok('greed boon: kill coins x1.4', gained >= Math.round(3 * 1.4) && gained <= Math.round(7 * 1.4));
+  // Read the kill-coins line: a junk drop salvaged on the spot (0.091) or a
+  // sold potion adds its own coins on top — that's not the boon's doing.
+  const lines = [];
+  applyLoot(gr, { ...DATA.enemies.rat, hp: 14 }, (text) => lines.push(text));
+  const gained = Number(String(lines[0]).match(/^\+(\d+) coins/)?.[1] ?? -1);
+  ok('greed boon: kill coins x1.4', gained >= Math.round(3 * 1.4) && gained <= Math.round(7 * 1.4), gained);
 }
 
 // T17: alchemy tracks — escalating costs, potency drives heal, legacy save migrates
@@ -962,7 +970,7 @@ process.on('uncaughtException', (e) => {
   const css = readFileSync('styles.css', 'utf8');
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
-  ok('dungeon sets --n on the battle line', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('--n:${combat.enemies.length}'));
+  ok('dungeon sets --n on the battle line', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('--n:${enemies.length}'));
 }
 
 // T39: 0.079 — tuning lives in data: shrine card text agrees with the
@@ -1467,6 +1475,113 @@ process.on('uncaughtException', (e) => {
   Math.random = origR;
   ok('upgrade (empty ring slot) still drops as an item', r2.kept && run.itemsFound.includes(ring));
   ok('relic cap tracks salvaged relics too', readFileSync('src/run/runState.js', 'utf8').includes('rollLoot(enemy, fortune, run.roomNumber, run.relicFound)'));
+  resetProfile();
+}
+
+// T55: 0.092 — boss summons: the meter fills one step a turn, a full
+// meter calls a skeleton (scaled deeper, no rewards) that stands in front
+// of the boss, capped alive; Heavy goes to the front summon; the card
+// appears as its line prints; fallen summons leave the row. Plus the
+// big-hit sway, and the two text-alignment fixes.
+{
+  const cfg = DATA.difficulty.boss.summon;
+  const boss = generateRoom(8, createRun()).enemies[0];
+  ok('boss is a summoner (difficulty.json boss.summon)', boss.summonEvery === cfg.every && boss.summonMeter === 0 && cfg.every >= 3 && cfg.every <= 4);
+  const run = createRun();
+  run.hp = run.maxHp = 100000; run.stats.dmg = 1; run.stats.crit = 0; run.stats.dodge = 0; run.stats.lifesteal = 0;
+  const tough = { ...boss, maxHp: 100000 };
+  const cb = createCombat(run, { number: 8, kind: 'boss', isBoss: true, enemies: [tough] });
+  const turn = () => playerAttack(cb, 0, false);
+  for (let i = 1; i < cfg.every; i++) turn();
+  ok('meter fills one step per turn, no summon before full', cb.enemies.length === 1 && cb.enemies[0].summonMeter === cfg.every - 1);
+  const evs = turn();
+  const sev = evs.find((e) => e.type === 'summon');
+  const sk = cb.enemies[1];
+  ok('full meter summons a skeleton', !!sev && sev.source === 0 && sev.target === 1 && sk?.id === cfg.enemy && sk.summoned && /summons/.test(sev.text));
+  ok('summon line shows the full meter and the new card; meter then resets',
+    sev.snap.enemies.length === 2 && sev.snap.meters[0] === cfg.every && cb.enemies[0].summonMeter === 0);
+  const ref = scaleEnemy(cfg.enemy, 8 + cfg.depthBonus);
+  ok('summons scale to the room (+depthBonus, dmgScale, hpScale)', sk.dmg === Math.max(1, Math.round(ref.dmg * cfg.dmgScale)) && sk.maxHp === Math.max(1, Math.round(ref.maxHp * cfg.hpScale)) && sk.hp === sk.maxHp);
+  ok('summons give no rewards', sk.xp === 0 && sk.coins[0] === 0 && sk.coins[1] === 0);
+  const { applyLoot } = await import('../src/run/runState.js');
+  const k0 = run.kills, c0 = run.coins, x0 = run.xp;
+  const drop = applyLoot(run, sk, () => {});
+  ok('...and no loot, but count as kills', drop.itemId === null && run.kills === k0 + 1 && run.coins === c0 && run.xp === x0);
+  for (let i = 0; i < cfg.every * (cfg.maxAlive + 2); i++) turn();
+  const alive = cb.enemies.filter((e) => e.summoned && e.hp > 0).length;
+  ok('summons capped alive; meter waits full', alive === cfg.maxAlive && cb.enemies[0].summonMeter === cfg.every);
+  const { heavyTarget } = await import('../src/run/combat.js');
+  ok('Heavy targets the front summon, else the boss', heavyTarget(cb) === 1
+    && heavyTarget({ enemies: [{ hp: 5 }, { hp: 0, summoned: true }] }) === 0);
+  ok('regular rooms have no summoners', generateRoom(3, createRun()).enemies.every((e) => !e.summonEvery));
+
+  const { fxFor, holdFor } = await import('../src/ui/combatFx.js');
+  const sfx = fxFor(sev);
+  ok('summon fx + pacing hold', sfx.kind === 'summon' && sfx.from === 0 && sfx.to === 1 && holdFor(sfx) === DATA.difficulty.combatPacing.summonMs);
+
+  // Cards: the boss has a summon bar; a fallen summon's unit leaves the row.
+  const { createEnemyUnit } = await import('../src/ui/battleLine.js');
+  const bu = createEnemyUnit(boss, 0, { onAttack() {} });
+  bu.update({ hp: boss.maxHp, dead: false, printing: false, combatOver: false, meter: 2 });
+  const fill = bu.el.all((e) => e.className === 'summon-fill')[0];
+  ok('boss card has a summon bar that fills', !!fill && fill.style.width === `${Math.round((200) / cfg.every)}%`);
+  ok('regular cards have no summon bar', createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack() {} }).el.all((e) => e.className === 'summon-line').length === 0);
+  let gone = 0;
+  const row = new El('div');
+  const su = createEnemyUnit(sk, 1, { onAttack() {}, onGone: () => gone++ });
+  row.append(su.el);
+  su.update({ hp: 0, dead: true, printing: false, combatOver: false });
+  ok('a fallen summon leaves the row', row.children.length === 0 && gone === 1);
+
+  // Scene: a boss room (bossEvery 1 for the test) — the summon card appears
+  // as its line prints, in front of (left of) the boss; --n follows.
+  const every = DATA.difficulty.bossEvery;
+  DATA.difficulty.bossEvery = 1;
+  registry.app.innerHTML = '';
+  resetProfile();
+  Object.assign(getProfile(), { stats: { power: 0, vitality: 90, fortune: 0, precision: 0, endurance: 30 } });
+  const scene = dungeonScene();
+  scene.enter(registry.app);
+  await sleep(50);
+  const enemyRow = () => registry.app.all((e) => e.className === 'enemy-row')[0];
+  const lineStyle = () => registry.app.all((e) => e.className === 'battle-line')[0].attrs.style;
+  let early = null;
+  for (let i = 0; i < cfg.every; i++) {
+    handleKey('a');
+    if (i === cfg.every - 1) early = enemyRow().children.length; // playback has only begun
+    await sleep(2600);
+  }
+  const kids = enemyRow().children;
+  ok('summon card appears with its log line, not before', early === 1 && kids.length === 2, `${early} -> ${kids.length}`);
+  ok('...in front of the boss, and --n follows', kids[1].all((e) => e.className && e.className.includes('boss-card')).length === 1
+    && kids[0].all((e) => e.className && e.className.includes('enemy-skeleton')).length === 1 && lineStyle() === '--n:2');
+  ok('summon line printed in violet', registry.app.all((e) => e.className === 'summon').length === 1);
+  DATA.difficulty.bossEvery = every;
+  for (let g = 0; g < 3; g++) { handleKey('a'); await sleep(900); } // let timers settle
+
+  // Big-hit sway (0.092): directional, damped, ends; pan shoves the art.
+  const bm = await import('../src/core/bg3dMath.js');
+  const bg3d = await import('../src/core/bg3d.js');
+  const sw = (dir, ms) => bm.swayOffset([{ t0: 0, amp: 0.04, dir }], ms);
+  ok('sway starts at rest and goes WITH the blow', sw(1, 0) === 0 && sw(1, 100) > 0.02 && sw(-1, 100) < -0.02);
+  ok('sway rebounds smaller, then ends', sw(1, 450) < 0 && Math.abs(sw(1, 450)) < sw(1, 120) * 0.5 && sw(1, bm.SWAY_LIFE_MS + 1) === 0);
+  const pc = bg3d.tuning('');
+  const aspect = 16 / 9, fov = (pc.fovDeg * Math.PI) / 180;
+  const shift = (d) => bm.projectVertex(bm.mvp(0, 0, fov, aspect, 0.03), 0.5, 0.5, d, aspect, pc)[0];
+  ok('positive pan moves the art right, near more than far', shift(0) > 0 && shift(1) > shift(0));
+  ok('bgSway is a no-op without WebGL', bg3d.bgSway(1, 1) === undefined);
+  ok('enemy hits carry their share of max HP', fxFor({ type: 'dmg', source: 0, taken: 30 }, { maxHp: 120 }).share === 0.25);
+  const fxSrc = readFileSync('src/ui/combatFx.js', 'utf8');
+  ok('crits / SMASH / multi-kills sway right, big hits on the knight sway left',
+    fxSrc.includes("case 'smash': shake(ctx, 1.6); return bgSway(1.5, 1);") && fxSrc.includes('if (fx.crit) bgSway(')
+    && fxSrc.includes("fx.to === 'player' && fx.share >= big") && fxSrc.includes('/ big, -1)'));
+
+  // Alignment (0.092): caps centered in buttons (underline ignored), and
+  // the elite star no longer drops its name below the others.
+  const css = readFileSync('styles.css', 'utf8');
+  ok('button caps centered via text-box trim (with fallback nudge)', /@supports \(text-box: trim-both cap alphabetic\) \{\s*\.btn-label \{ top: 0; text-box: trim-both cap alphabetic; padding-block: calc\(\(1lh - 1cap\) \/ 2\); \}/.test(css)
+    && css.includes('.btn-label { position: relative; top: 0.15em; }'));
+  ok('elite star stays out of the name line box', /\.elite-star \{[^}]*line-height: 0;/.test(css));
   resetProfile();
 }
 

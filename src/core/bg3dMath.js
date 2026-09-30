@@ -60,7 +60,8 @@ const mul = (a, b) => {
   }
   return o;
 };
-const translateZ = (z) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, z, 1]);
+const translate = (x, z) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, 0, z, 1]);
+const translateZ = (z) => translate(0, z);
 const rotX = (a) => { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]); };
 const rotY = (a) => { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]); };
 function perspective(fovY, aspect, near, far) {
@@ -68,9 +69,11 @@ function perspective(fovY, aspect, near, far) {
   return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
 }
 // Rotate the scene about the pivot plane's centre (0,0,-1) = the camera
-// orbiting it; at yaw = pitch = 0 this is the plain projection.
-export function mvp(yaw, pitch, fovY, aspect) {
-  const view = mul(translateZ(-1), mul(rotX(pitch), mul(rotY(yaw), translateZ(1))));
+// orbiting it; at yaw = pitch = 0 this is the plain projection. pan
+// (0.092) shoves the whole scene sideways (+ = right), near art further
+// than far — the big-hit sway.
+export function mvp(yaw, pitch, fovY, aspect, pan = 0) {
+  const view = mul(translate(pan, -1), mul(rotX(pitch), mul(rotY(yaw), translateZ(1))));
   return mul(perspective(fovY, aspect, 0.05, 10), view);
 }
 
@@ -91,8 +94,8 @@ export function edgeMargin(c, aspect, m) {
   const fov = (c.fovDeg * Math.PI) / 180;
   const rad = Math.PI / 180;
   let worst = Infinity;
-  for (const ys of [-1, 1]) for (const ps of [-1, 1]) {
-    const M = mvp(ys * c.yawDeg * rad, ps * c.pitchDeg * rad, fov, aspect);
+  for (const ys of [-1, 1]) for (const ps of [-1, 1]) for (const xs of c.panMax ? [-1, 1] : [0]) {
+    const M = mvp(ys * c.yawDeg * rad, ps * c.pitchDeg * rad, fov, aspect, xs * (c.panMax ?? 0));
     for (let i = 0; i <= 20; i++) {
       const s = -m + ((1 + 2 * m) * i) / 20;
       for (const d of [0, 0.5, 1]) {
@@ -131,8 +134,27 @@ export function joltOffset(jolts, now) {
   return { yaw, pitch };
 }
 
-// The sway settings plus the largest possible jolt, for overscan sizing.
+// ---- big-hit sways (0.092): the heaviest blows shove the camera ----
+// Directional, unlike a jolt: dir +1 swings the art right (the knight's
+// blows travel left -> right), -1 left (a crushing hit on the knight).
+// A damped swing, amp * e^(-t/0.3s) * sin(2πt/0.6s): starts at rest, goes
+// with the blow (peak ~0.64 amp at 0.12s), rebounds a third as far, settles.
+export const SWAY_MAX = 1.5;
+export const SWAY_LIFE_MS = 1200;
+
+export function swayOffset(sways, now) {
+  let pan = 0;
+  for (const s of sways) {
+    const t = (now - s.t0) / 1000;
+    if (t < 0 || t * 1000 > SWAY_LIFE_MS) continue;
+    pan += s.amp * s.dir * Math.exp(-t / 0.3) * Math.sin((2 * Math.PI * t) / 0.6);
+  }
+  return pan;
+}
+
+// The sway settings plus the largest possible jolt and sway, for overscan
+// sizing (panMax is generous: two overlapping sways still fit).
 export function withJoltReserve(c) {
   const extra = (c.joltDeg ?? 0) * JOLT_MAX;
-  return { ...c, yawDeg: c.yawDeg + extra, pitchDeg: c.pitchDeg + extra * 0.5 };
+  return { ...c, yawDeg: c.yawDeg + extra, pitchDeg: c.pitchDeg + extra * 0.5, panMax: (c.swayPan ?? 0) * SWAY_MAX };
 }
