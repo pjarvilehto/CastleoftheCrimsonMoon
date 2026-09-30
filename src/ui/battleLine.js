@@ -76,7 +76,7 @@ export function playerCard(run, { printing, heavyReady, heavyCd, onHeavy, onPoti
 export function enemyCard(e, i, hp, { printing, combatOver, onAttack }) {
   const dead = hp <= 0;
   const [name, lv] = splitName(e.name);
-  const card = el('div', { class: `char-card enemy-char${dead ? ' dead' : ''}`, id: `enemy-${i}` },
+  const card = el('div', { class: `char-card enemy-char enemy-${e.id}${dead ? ' dead' : ''}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}` },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
         isElite(e) ? el('span', { class: 'elite-star', title: 'Elite - can drop crimson relics (room 11+)' }, ' ★') : null),

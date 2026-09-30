@@ -328,20 +328,36 @@
    stays partially visible through them */
 .char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.5; }
 .card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.6vw; }
+/* text rows stay above the overflowing portrait art (0.075) */
+.card-head, .card-sub { position: relative; z-index: 2; }
 .card-name { font-weight: bold; font-size: 1em; letter-spacing: 0.08em; }
 .player-card .card-name { font-size: 1.1em; }
 .lv-badge { color: var(--gold); font-size: 1em; white-space: nowrap; }
 .card-sub { color: #a89468; font-size: 0.85em; margin-top: 0.3vh; text-align: center; }
+/* 0.075: portraits break out of the card frame — absolutely positioned,
+   taller than the card (top edge) and wider (side bleed), bottom-anchored
+   so the feet tuck under the hp line. max-width caps wide arts (rat 0.78)
+   before they sprawl across neighbors; text rows paint above via z-index. */
 .portrait {
-  width: 100%; flex: 1 1 auto; min-height: 0;
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 9%; height: 108%;
+  width: auto; max-width: 142%;
   object-fit: contain; object-position: bottom center;
-  margin: 1vh 0 -1.2vh; /* figure slides under the hp line */
+  margin: 0; z-index: 1;
   filter: drop-shadow(0 0.6vh 1vh rgba(0,0,0,0.65));
 }
+.boss-card .portrait { height: 116%; max-width: 165%; } /* bosses loom */
+.enemy-vampire_lord .portrait { height: 126%; max-width: 190%; } /* figure reads small/dark even capped — extra loom */
+/* player.png is WIDE (aspect 1.11): bleed past the sides, not the top —
+   the card carries 4 text rows (name/weapon/armor) that must stay clear */
+.player-card .portrait { bottom: 13%; width: 135%; height: auto; max-width: none; max-height: 67%; }
+/* the in-flow portrait used to flex-push the player's HP row to the bottom;
+   with the portrait out of flow the wrapper must pin itself */
+.player-card .hud-chip { margin-top: auto; }
 .skull { font-size: 9vh; color: #6b5a4a; margin: auto; text-shadow: 0 2px 8px #000; }
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
-.hp-line { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.6vw; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }
+.hp-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.6vw; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }
 .hp-line .hpbar { flex: 1; min-width: 0; margin-top: 0; }
 .hp-text { color: #d8c9a3; white-space: nowrap; font-size: 1em; font-weight: bold; }
 .char-card .hpbar { height: 1.2vh; background: #454545; border: none; outline: none; }
