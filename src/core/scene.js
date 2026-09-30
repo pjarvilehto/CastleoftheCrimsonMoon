@@ -14,6 +14,8 @@ let current = null;
 let activeBg = null;   // the bg-layer element currently opaque
 let transitioning = false; // re-entry guard (rapid keys during a fade)
 let bgListener = null;     // the 3D background renderer, when running (0.083)
+let sceneListener = null;  // the update check (0.094): told after every scene switch
+let keyTrap = null;        // an open dialog that owns the keyboard (0.094)
 
 // Tell a listener (core/bg3d.js) about every background change; it is
 // told the current one immediately.
@@ -28,8 +30,19 @@ export function show(scene) {
     el.innerHTML = '';
     current = scene;
     scene.enter(el);
+    sceneListener?.(scene);
   });
 }
+
+// The scene on screen, and a listener for scene switches (0.094: the
+// update prompt waits for a run to end — scenes mid-run set inRun).
+export const currentScene = () => current;
+export function onSceneChange(fn) { sceneListener = fn; }
+
+// A dialog layered over the scene takes the keyboard while it's open
+// (0.094): fn(key) handles every key, so the scene's hotkeys underneath
+// can't fire. null releases it.
+export function setKeyTrap(fn) { keyTrap = fn; }
 
 // Fade the windows out, run `work()` (swap content and/or background),
 // then fade the windows back in. Ignored if a transition is already
@@ -136,6 +149,7 @@ export function handleKey(key) {
   // must not click unseen buttons.
   if (document.body?.classList?.contains('fg-hidden')) return false;
   const k = key.toLowerCase();
+  if (keyTrap) return keyTrap(k);
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');
     if (primary) { primary.click(); return true; }

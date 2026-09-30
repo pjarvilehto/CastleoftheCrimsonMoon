@@ -97,6 +97,8 @@ src/
     │                     boss summon bar; summons join mid-fight in front
     │                     of the boss and leave the row when they fall (0.092)
     ├── shrineUI.js       shrine room rendering
+    ├── updatePrompt.js   "Build 0.0NN available" + changelist, reload
+    │                     (0.094: polls build.json; waits out a run)
     ├── buffs.js          blessing bar (horizontal, beside resources)
     ├── bgTuner.js        ?debug BG TUNING slider panel (0.084)
     └── scenes/           titleScene, hubScene (two-panel grid),
@@ -127,6 +129,7 @@ tools/
 ├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
 ├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
 ├── bump.mjs              sets build.json version + module manifest (0.082)
+│                         + changelog notes (--note, 0.094)
 └── gen-depth.py          depth maps for backgrounds (Depth Anything V2 Small, ONNX)
 ```
 

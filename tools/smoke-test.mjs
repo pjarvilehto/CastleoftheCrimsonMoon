@@ -1590,5 +1590,59 @@ process.on('uncaughtException', (e) => {
   resetProfile();
 }
 
+// T56: 0.094 — update prompt: version compare, changelist since this
+// build, never mid-run (waits for the next scene), owns the keyboard
+// while open, "Later" silences that version; bump.mjs keeps the changelog.
+{
+  const up = await import('../src/ui/updatePrompt.js');
+  const { nextBuild } = await import('./bump.mjs');
+  const { currentScene } = await import('../src/core/scene.js');
+  ok('version compare is numeric', up.isNewer('0.100', '0.099') && up.isNewer('0.095', '0.094') && !up.isNewer('0.094', '0.094') && !up.isNewer('0.093', '0.094'));
+  const log = { '0.097': ['c1'], '0.096': ['b1', 'b2'], '0.095': ['a1'], '0.094': ['old'] };
+  ok('changelist = builds since mine, newest first', JSON.stringify(up.notesSince(log, '0.094', '0.096')) === '["b1","b2","a1"]');
+  const many = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`0.1${String(i).padStart(2, '0')}`, [`n${i}`]]));
+  const capped = up.notesSince(many, '0.099', '0.111');
+  ok('changelist is capped', capped.length === 8 && capped[7].includes('more') && capped[0] === 'n11');
+  const nb = nextBuild({ version: '0.093', changelog: { '0.093': ['x'] } }, '0.094', ['a'], ['m.js']);
+  ok('bump.mjs adds notes and keeps history', nb.version === '0.094' && nb.changelog['0.094'][0] === 'a' && nb.changelog['0.093'][0] === 'x');
+  const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
+  ok('this build has changelist notes', Array.isArray(b.changelog?.[b.version]) && b.changelog[b.version].length > 0);
+
+  // Live behaviour against stubbed fetch/location/body.
+  const realFetch = globalThis.fetch, realBody = globalThis.document.body, realLoc = globalThis.location;
+  const body = new El('body');
+  globalThis.document.body = body;
+  let reloaded = 0;
+  globalThis.location = { reload: () => { reloaded++; } };
+  let served = { version: '9.001', changelog: { '9.001': ['Bosses dance'] } };
+  globalThis.fetch = async (url) => (String(url).includes('build.json')
+    ? { ok: true, json: async () => served }
+    : realFetch(url));
+  up.initUpdateCheck(0);
+  const prompt = () => body.children.find((c) => c.className === 'update-overlay');
+  show({ inRun: true, enter() {} }); // mid-run
+  await sleep(1100);
+  const found = await up.checkForUpdate();
+  ok('mid-run: the update is noticed but not shown', found?.version === '9.001' && !prompt() && currentScene().inRun);
+  show(hubScene());
+  await sleep(1100);
+  ok('after the run: the prompt appears with version + changelist', !!prompt() && prompt().textContent.includes('9.001') && prompt().textContent.includes('Bosses dance'));
+  const hubText = t();
+  handleKey('e'); handleKey('1');
+  ok('the prompt owns the keyboard', !!prompt() && t() === hubText && reloaded === 0);
+  handleKey('n');
+  ok('N puts it off', !prompt() && reloaded === 0);
+  await up.checkForUpdate();
+  ok('...and that version stays quiet this session', !prompt());
+  served = { version: '9.002', changelog: { '9.002': ['More'], '9.001': ['Bosses dance'] } };
+  await up.checkForUpdate();
+  ok('a newer build asks again, listing both', !!prompt() && prompt().textContent.includes('More') && prompt().textContent.includes('Bosses dance'));
+  handleKey('y');
+  ok('Y reloads', reloaded === 1);
+  handleKey('escape');
+  ok('Esc closes; the keyboard is released', !prompt() && handleKey('zz') === false);
+  globalThis.fetch = realFetch; globalThis.document.body = realBody; globalThis.location = realLoc;
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

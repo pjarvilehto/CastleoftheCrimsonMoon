@@ -1,5 +1,5 @@
 {
-  "version": "0.093",
+  "version": "0.094",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -34,6 +34,22 @@
     "src/ui/scenes/hubScene.js",
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
-    "src/ui/shrineUI.js"
-  ]
+    "src/ui/shrineUI.js",
+    "src/ui/updatePrompt.js"
+  ],
+  "changelog": {
+    "0.094": [
+      "The game now tells you when a new build is out, with what changed"
+    ],
+    "0.093": [
+      "HP, armor and enemy damage numbers are 10x bigger (same difficulty)",
+      "Lifesteal percentages 10x too (they heal from the damage you deal)",
+      "Big hits now gently rock the background"
+    ],
+    "0.092": [
+      "Bosses summon skeletons: watch the violet bar under the boss HP",
+      "Heavy Attack strikes the summon standing in front of the boss",
+      "Button text and elite enemy names line up properly"
+    ]
+  }
 }

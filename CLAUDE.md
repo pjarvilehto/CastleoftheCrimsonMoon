@@ -57,9 +57,11 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    go through `runState.addPotion()` (sold when the satchel is full).
    **`run.stats` is a snapshot** taken at run start. Mid-run loot does
    nothing until `settleRun()` auto-equips it into the profile.
-4. **Bump the build with `node tools/bump.mjs 0.0NN`** for every
-   player-facing change (writes version + module list into
-   `assets/data/build.json`), and run the smoke suite before pushing.
+4. **Bump the build with `node tools/bump.mjs 0.0NN --note "..."`** for
+   every player-facing change (writes version + module list + changelog
+   into `assets/data/build.json`), and run the smoke suite before pushing.
+   The notes are what players see in the in-game "Build 0.0NN available"
+   prompt (0.094): short, player-facing, one `--note` per change.
    index.html loads CSS/JS under `?v=<version>` from that list (0.082), so
    a deploy can't leave players on a mix of old and new files.
 5. **Never replace an asset file in place** (edge caches hold ~4 hours) —

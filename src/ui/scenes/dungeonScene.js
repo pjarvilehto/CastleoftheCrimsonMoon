@@ -73,6 +73,7 @@ export function dungeonScene() {
   };
 
   return {
+    inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
     enter(root) {
       logEl = el('div', { id: 'combat-log' });
       buffBar = createBuffBar();

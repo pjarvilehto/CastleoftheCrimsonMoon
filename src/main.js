@@ -12,6 +12,7 @@ import { titleScene } from './ui/scenes/titleScene.js';
 import { DEBUG } from './shared/debug.js';
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
 import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
+import { initUpdateCheck } from './ui/updatePrompt.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -103,6 +104,7 @@ async function boot() {
   });
   initMusic();
   initSfx();
+  initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
   show(titleScene());
 }
 

@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 // tools/bump.mjs — set the build number AND the module manifest in
 // assets/data/build.json. Run for every player-facing build:
-//   node tools/bump.mjs 0.083
+//   node tools/bump.mjs 0.083 --note "Bosses summon skeletons" --note "..."
+//
+// --note lines (0.094) go into build.json `changelog` under that version:
+// the in-game update prompt (ui/updatePrompt.js) shows players the notes
+// of every build since theirs. Short, player-facing, one change per note.
+// The newest CHANGELOG_KEEP versions are kept.
 //
 // Why the manifest (0.082): GitHub Pages lets browsers reuse files for
 // ~10 minutes, so right after a deploy a player could get the NEW
@@ -31,11 +36,28 @@ export function listModules() {
   return out;
 }
 
+const CHANGELOG_KEEP = 15;
+const num = (v) => v.split('.').map(Number).reduce((a, x) => a * 10000 + x, 0);
+
+// The next build.json: new version + module list; the changelog keeps its
+// history, and `notes` (if any) replace that version's entry.
+export function nextBuild(current, version, notes = [], modules = listModules()) {
+  const changelog = { ...(current.changelog ?? {}) };
+  if (notes.length) changelog[version] = notes;
+  const kept = Object.keys(changelog).sort((a, b) => num(b) - num(a)).slice(0, CHANGELOG_KEEP);
+  return { version, modules, changelog: Object.fromEntries(kept.map((v) => [v, changelog[v]])) };
+}
+
 const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (invokedDirectly) {
   const current = JSON.parse(readFileSync(FILE, 'utf8'));
-  const version = process.argv[2] ?? current.version;
+  const args = process.argv.slice(2);
+  const notes = [];
+  for (let i = args.indexOf('--note'); i >= 0; i = args.indexOf('--note', i + 1)) notes.push(args[i + 1]);
+  const version = args[0] && !args[0].startsWith('--') ? args[0] : current.version;
   if (!/^\d+\.\d{3}$/.test(version)) { console.error(`bad version: ${version} (expected e.g. 0.083)`); process.exit(1); }
-  writeFileSync(FILE, JSON.stringify({ version, modules: listModules() }, null, 2) + '\n');
-  console.log(`build.json -> ${version} (${listModules().length} modules)`);
+  if (notes.some((n) => !n)) { console.error('--note needs a text'); process.exit(1); }
+  const next = nextBuild(current, version, notes);
+  writeFileSync(FILE, JSON.stringify(next, null, 2) + '\n');
+  console.log(`build.json -> ${version} (${next.modules.length} modules, ${(next.changelog[version] ?? []).length} notes)`);
 }

@@ -755,3 +755,24 @@ body.debug .sfx-toggle { top: 104px; }
   0%, 100% { text-shadow: 0 0 10px rgba(224, 48, 48, 0.6); }
   50% { text-shadow: 0 0 22px rgba(224, 48, 48, 1), 0 0 60px rgba(224, 48, 48, 0.55); }
 }
+
+/* "Build 0.0NN available" prompt (0.094, ui/updatePrompt.js): above
+   everything, the game dims behind it */
+.update-overlay {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(8, 6, 4, 0.6);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  animation: death-fade 0.25s ease-out;
+}
+.update-modal {
+  width: 100%; max-width: 520px; box-sizing: border-box;
+  padding: 30px 36px 26px; text-align: center;
+  background: #14100a; border: 1px solid var(--gold); border-radius: 8px;
+  box-shadow: 0 0 40px rgba(201, 162, 39, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.6);
+}
+.update-title { margin: 0 0 18px; color: var(--gold); font-size: 1.9rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.update-label { color: #9a8b6a; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.9rem; text-align: left; }
+.update-notes { text-align: left; color: var(--parchment); margin: 8px 0 18px; padding-left: 1.2em; line-height: 1.45; }
+.update-notes li::marker { color: var(--gold-dim); }
+.update-ask { color: var(--parchment); letter-spacing: 0.08em; margin: 0 0 16px; }
+.update-modal .btn-row { justify-content: center; }
