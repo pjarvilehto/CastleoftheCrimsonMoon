@@ -1,5 +1,5 @@
 {
-  "version": "0.105",
+  "version": "0.106",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -50,6 +50,10 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.106": [
+      "OVERKILL now gets a huge banner and a red-hot flash when one blow wipes the room",
+      "Mega crits are twice as common (one crit in five)"
+    ],
     "0.105": [
       "Testing: ?debug toggles to force crits and mega crits"
     ],

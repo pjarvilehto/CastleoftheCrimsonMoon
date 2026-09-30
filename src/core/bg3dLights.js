@@ -14,6 +14,7 @@ export const LIGHT_DEFAULTS = {
   enabled: true, dist: 0.8, radius: 0.45,
   crit: { color: [1, 0.72, 0.35], strength: 1, fade: 0.3, life: 1.2 },
   megacrit: { color: [1, 0.6, 0.25], strength: 1.8, fade: 0.45, life: 1.6 },
+  overkill: { color: [1, 0.35, 0.15], strength: 2.4, fade: 0.6, life: 2 },
   potion: { color: [0.4, 1, 0.5], strength: 0.9, fade: 0.55, life: 2 },
   revive: { color: [1, 0.88, 0.55], strength: 1.6, fade: 0.8, life: 2.8 },
 };

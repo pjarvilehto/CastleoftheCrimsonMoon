@@ -20,7 +20,7 @@
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, shake, barFlash, glow, floatNumber } from './fxParts.js';
+import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner } from './fxParts.js';
 
 export { floatNumber }; // (defined here before 0.098)
 
@@ -66,11 +66,27 @@ export function playFx(fx, ctx) {
     case 'dodge': return dodge(fx, ctx);
     case 'heal': return heal(fx, ctx);
     case 'revive': return revive(ctx);
-    case 'smash': shake(ctx, 1.6); return bgSway(1.5, 1);
+    case 'smash': return overkill(fx, ctx);
     case 'multi': shake(ctx, 1.1); return bgSway(1.2, 1);
     case 'summon': return summon(fx, ctx);
     default: return undefined;
   }
+}
+
+// OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
+// the whole enemy line: a huge number + caption, a hard shake, the widest
+// sway, and a red-hot flash lighting the scene where they stood.
+function overkill(fx, ctx) {
+  shake(ctx, 2);
+  bgSway(2, 1);
+  const rects = [];
+  for (let i = 0; ctx.unit(i); i++) { const r = ctx.unit(i).card?.getBoundingClientRect?.(); if (r) rects.push(r); }
+  if (!rects.length) return;
+  const left = Math.min(...rects.map((r) => r.left)), right = Math.max(...rects.map((r) => r.right));
+  const top = Math.min(...rects.map((r) => r.top)), bottom = Math.max(...rects.map((r) => r.bottom));
+  const area = { left, top, width: right - left, height: bottom - top };
+  bgLight('overkill', area);
+  floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
 }
 
 function attack(fx, ctx) {

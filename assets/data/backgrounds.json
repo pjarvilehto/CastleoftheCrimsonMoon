@@ -71,6 +71,12 @@
         "fade": 0.45,
         "life": 1.6
       },
+      "overkill": {
+        "color": [1.0, 0.35, 0.15],
+        "strength": 2.4,
+        "fade": 0.6,
+        "life": 2.0
+      },
       "potion": {
         "color": [0.4, 1.0, 0.5],
         "strength": 0.9,

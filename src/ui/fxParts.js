@@ -94,3 +94,29 @@ export function floatNumber(ctx, u, text, cls, delay = 0, tag = null) {
     { opacity: 0, transform: `translate(-50%, ${-rise}px) scale(0.95)` },
   ], { duration: 900, delay, easing: 'ease-out' }).finished.then(() => n.remove(), () => n.remove());
 }
+
+// A big number with a caption over a whole area (0.106: OVERKILL! across
+// the enemy line) — the mega-crit look, bigger, held a beat longer.
+export function floatBanner(ctx, r, text, cls, tag) {
+  if (!ctx.layer || !r || !can(ctx.layer)) return;
+  const n = document.createElement('div');
+  n.className = `fx-num ${cls}`;
+  n.textContent = text;
+  const t = document.createElement('span');
+  t.className = 'fx-tag';
+  t.textContent = tag;
+  n.prepend(t);
+  n.style.left = `${r.left + r.width / 2}px`;
+  n.style.top = `${r.top + r.height * 0.25}px`;
+  n.style.setProperty('--num', `${Math.max(16, r.height * 0.09)}px`);
+  n.style.opacity = '0';
+  ctx.layer.append(n);
+  const rise = r.height * 0.18;
+  n.animate([
+    { opacity: 0, transform: 'translate(-50%, 0) scale(0.4)' },
+    { opacity: 1, transform: `translate(-50%, ${-rise * 0.2}px) scale(1.25)`, offset: 0.12 },
+    { opacity: 1, transform: `translate(-50%, ${-rise * 0.5}px) scale(1)`, offset: 0.7 },
+    { opacity: 0, transform: `translate(-50%, ${-rise}px) scale(1.05)` },
+  ], { duration: 1500, easing: 'ease-out' }).finished.then(() => n.remove(), () => n.remove());
+}
+

@@ -435,7 +435,7 @@ fresh();
   ok('enemy hits carry their share of max HP', fxFor({ type: 'dmg', source: 0, taken: 30 }, { maxHp: 120 }).share === 0.25);
   const fxSrc = readFileSync('src/ui/combatFx.js', 'utf8');
   ok('crits / SMASH / multi-kills sway right, big hits on the knight sway left',
-    fxSrc.includes("case 'smash': shake(ctx, 1.6); return bgSway(1.5, 1);") && /if \(fx\.crit\) \{?\s*bgSway\(/.test(fxSrc)
+    fxSrc.includes("shake(ctx, 2);\n  bgSway(2, 1);") && /if \(fx\.crit\) \{?\s*bgSway\(/.test(fxSrc)
     && fxSrc.includes("fx.to === 'player' && fx.share >= big") && fxSrc.includes('/ big, -1)'));
 
   // Alignment (0.092): caps centered in buttons (underline ignored), and
@@ -492,4 +492,14 @@ fresh();
   ok('FORCE MEGA CRITS: every attack mega crits', b.every((e) => e.crit && e.megaCrit && e.text.includes('MEGA CRIT!')));
   const main = readFileSync('src/main.js', 'utf8');
   ok('crit toggles only under ?debug', main.includes("toggle('forceCrit', 'FORCE CRITS'") && main.includes("...critToggles()") && main.includes('...(debugMode ? bgDebugToggles() : [])'));
+}
+
+// T68: 0.106 — OVERKILL gets the mega-crit treatment across the enemy line.
+{
+  const fx = readFileSync('src/ui/combatFx.js', 'utf8');
+  ok('OVERKILL: banner over the whole enemy line, red-hot flash, big sway', fx.includes("case 'smash': return overkill(fx, ctx);")
+    && fx.includes("floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!')") && fx.includes("bgLight('overkill', area)")
+    && /\.fx-crit\.fx-mega\.fx-overkill \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8'))
+    && DATA.backgrounds.parallax.lights.overkill.strength > DATA.backgrounds.parallax.lights.megacrit.strength);
+  ok('mega crits: one crit in five (0.106)', DATA.difficulty.combat.megaCritChance === 0.2);
 }

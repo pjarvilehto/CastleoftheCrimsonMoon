@@ -660,6 +660,8 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 }
 .fx-dmg { color: #ff5a4a; }
 .fx-crit { color: #ffd24a; font-size: calc(var(--num, 24px) * 1.5); text-shadow: 0 0 10px rgba(255, 170, 40, 0.9), 0 2px 4px #000; }
+/* OVERKILL (0.106): the mega-crit look, bigger and redder, across the enemy line */
+.fx-crit.fx-mega.fx-overkill { color: #ffe2c8; font-size: calc(var(--num, 24px) * 2.8); text-shadow: 0 0 16px rgba(255, 70, 20, 1), 0 0 40px rgba(220, 20, 0, 0.8), 0 2px 4px #000; }
 /* MEGA CRIT (0.104): bigger, hotter */
 .fx-crit.fx-mega { color: #fff1b8; font-size: calc(var(--num, 24px) * 2.1); text-shadow: 0 0 14px rgba(255, 120, 20, 1), 0 0 30px rgba(255, 60, 0, 0.7), 0 2px 4px #000; }
 /* caption above a number: "CRIT!" (0.095) */
