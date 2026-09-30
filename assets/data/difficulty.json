@@ -14,8 +14,15 @@
   "bossEvery": 8,
   "dropChance": 0.22,
   "potionHeal": 30,
-  "potionBasePrice": 20,
-  "potionPriceStep": 20,
+  "potions": {
+    "startCount": 2,
+    "startCap": 4,
+    "maxCap": 10,
+    "price": 30,
+    "capUpgradeBase": 300,
+    "capUpgradeGrowth": 2,
+    "fullSatchelSellCoins": 10
+  },
   "statTrainXpBase": 15,
   "breakthroughEvery": 5,
   "alchemyTracks": {

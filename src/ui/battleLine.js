@@ -7,7 +7,7 @@
 
 import { el } from '../core/scene.js';
 import { hpBar, rarityClass } from './hud.js';
-import { getProfile, itemWithForge } from '../meta/profile.js';
+import { getProfile, itemWithForge, playerLevel } from '../meta/profile.js';
 import { isElite } from '../shared/balance.js';
 
 const ART = (id) => `assets/chars/${id}.webp`;
@@ -32,12 +32,11 @@ function hpLine(cur, max) {
     hpBar(cur, max));
 }
 
-export function playerCard(run, { printing, heavyReady, heavyCd, onHeavy, onPotion, lowhp }) {
+export function playerCard(run, { printing, heavyReady, heavyCd, onHeavy, onPotion, lowhp, dead }) {
   const p = getProfile();
   const weapon = p.equipment.weapon ? itemWithForge(p.equipment.weapon, p) : null;
   const armor = p.equipment.armor ? itemWithForge(p.equipment.armor, p) : null;
-  const s = p.stats;
-  const level = 1 + Math.floor((s.power + s.vitality + s.fortune + (s.precision ?? 0) + (s.endurance ?? 0)) / 5);
+  const level = playerLevel(p);
   const card = el('div', { class: 'char-card player-card' },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, 'THE CURIOUS KNIGHT'),
@@ -58,7 +57,7 @@ export function playerCard(run, { printing, heavyReady, heavyCd, onHeavy, onPoti
       armor ? el('span', { class: 'weapon-dmg' }, armorStat(armor)) : null),
     el('img', { class: 'portrait', src: ART('player'), alt: 'player' }),
     el('div', { class: `hud-chip${lowhp}` }, hpLine(run.hp, run.maxHp)),
-    el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}`));
+    el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`));
   const actions = el('div', { class: 'unit-actions' },
     el('button', {
       class: heavyReady ? 'ready' : '',
@@ -67,7 +66,8 @@ export function playerCard(run, { printing, heavyReady, heavyCd, onHeavy, onPoti
       onclick: onHeavy,
     }, `Heavy Attack${heavyCd > 0 ? ` (${heavyCd})` : ''}`),
     el('button', {
-      disabled: printing || run.potions <= 0 || run.hp >= run.maxHp,
+      // Drinkable after a cleared room too (0.080) — just not once dead.
+      disabled: dead || printing || run.potions <= 0 || run.hp >= run.maxHp,
       key: 'p',
       onclick: onPotion,
     }, 'Drink Potion'));

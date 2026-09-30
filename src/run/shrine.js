@@ -5,6 +5,7 @@
 // All buffs are run-scoped: they die with the run.
 
 import { DATA } from '../shared/data.js';
+import { addPotion } from './runState.js';
 
 export function shrineOffers() {
   return DATA.shrines.offers;
@@ -93,7 +94,8 @@ export function acceptOffer(run, o) {
       break;
     case 'secondwind':
       payCoins(run, o);
-      run.potions += o.potionsAdd;
+      // Satchel cap applies (0.080): a potion that doesn't fit is sold.
+      for (let i = 0; i < o.potionsAdd; i++) addPotion(run);
       run.hp = run.maxHp;
       break;
     case 'quicken':

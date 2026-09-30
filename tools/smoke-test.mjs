@@ -349,20 +349,25 @@ process.on('uncaughtException', (e) => {
     && t().includes('THE CURIOUS KNIGHT'));
 }
 
-// T12: potion price escalates per purchase (20, 40, 60, ...)
+// T12: 0.080 — potions: flat price, capped by the satchel; the satchel
+// upgrade doubles in price and stops at the max cap.
 {
-  const { restockPotion, potionCost } = await import('../src/meta/leveling.js');
+  const { restockPotion, potionCost, satchelCost, expandSatchel, satchelMaxed } = await import('../src/meta/leveling.js');
+  const pc = DATA.difficulty.potions;
   resetProfile();
   const p = getProfile();
+  ok('fresh profile: 2/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
   p.coins = 1000;
   const c0 = potionCost();
-  restockPotion();
-  const c1 = potionCost();
-  restockPotion();
-  const c2 = potionCost();
-  // Two purchases made: 20 + 40 spent, third would cost 60.
-  ok('potion price scales 20/40/60 per purchase', c0 === 20 && c1 === 40 && c2 === 60
-    && p.potions === 4 && p.potionsBought === 2 && p.coins === 940);
+  restockPotion(); restockPotion();
+  ok('potion price is flat', c0 === pc.price && potionCost() === pc.price && p.potions === 4 && p.coins === 1000 - 2 * pc.price);
+  ok('cannot buy past the cap', restockPotion() === false && p.potions === 4);
+  const s0 = satchelCost();
+  expandSatchel();
+  ok('satchel +1 cap, price doubles', s0 === pc.capUpgradeBase && p.potionCap === 5 && satchelCost() === pc.capUpgradeBase * pc.capUpgradeGrowth);
+  p.coins = 1e9;
+  for (let i = 0; i < 20; i++) expandSatchel();
+  ok('satchel stops at max cap', p.potionCap === pc.maxCap && satchelMaxed() && expandSatchel() === false);
 }
 
 // T13: SMASH — heavy hit covering ALL living HP wipes the room in one line
@@ -1027,6 +1032,7 @@ process.on('uncaughtException', (e) => {
 {
   const css = readFileSync('styles.css', 'utf8');
   ok('active state styles exist', css.includes('button.active {') && css.includes('button.active.active-red'));
+  ok('active glow breathes slowly (7s cycle = 3.5s each way, 0.080)', css.includes('animation: active-glow 7s ease-in-out infinite'));
   const d = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8');
   ok('Push Deeper is active after combat', /class: 'primary active', key: 'd'/.test(d));
   const { showDeathModal } = await import('../src/ui/deathModal.js');
@@ -1044,6 +1050,53 @@ process.on('uncaughtException', (e) => {
     && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
   const m = readFileSync('src/main.js', 'utf8');
   ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('const inv = debugMode && el('));
+}
+
+// T42: 0.080 — potions persist between runs: unused ones come home (retreat
+// and death), pickups past the cap are sold, the save migrates v1 -> v2,
+// and the Great Hall shows the player level.
+{
+  const { settleRun, addPotion, drinkPotion } = await import('../src/run/runState.js');
+  resetProfile();
+  const p = getProfile();
+  const r1 = createRun();
+  ok('run draws the stock and cap', r1.potions === 2 && r1.potionCap === 4);
+  r1.hp = 1; drinkPotion(r1);
+  settleRun(r1, 'retreat');
+  ok('unused potions come home (retreat)', p.potions === 1);
+  const r2 = createRun(); r2.potions = 3;
+  settleRun(r2, 'death');
+  ok('unused potions come home (death)', p.potions === 3);
+  const r3 = createRun(); r3.potions = 4; r3.coins = 0;
+  ok('pickup at the cap is sold', addPotion(r3) === false && r3.potions === 4 && r3.coins === DATA.difficulty.potions.fullSatchelSellCoins);
+  const r4 = createRun(); r4.potions = 1;
+  ok('pickup under the cap is kept', addPotion(r4) === true && r4.potions === 2);
+  const sw = DATA.shrines.offers.find((o) => o.id === 'secondwind');
+  const r5 = createRun(); r5.potions = 4; r5.coins = 1000; r5.roomNumber = 2; r5.hp = 1;
+  acceptOffer(r5, sw);
+  ok('secondwind respects the cap', r5.potions === 4 && r5.hp === r5.maxHp);
+
+  // v1 save (pre-0.080) with a big permanent potion count
+  const { importSave } = await import('../src/meta/profile.js');
+  const v1 = { ...JSON.parse(JSON.stringify(p)), saveVersion: 1, potions: 7, potionsBought: 5 };
+  delete v1.potionCap;
+  ok('v1 save migrates: count becomes a full satchel', importSave(Buffer.from(JSON.stringify(v1)).toString('base64'))
+    && getProfile().potionCap === 7 && getProfile().potions === 7 && getProfile().potionsBought === undefined
+    && getProfile().saveVersion === 2);
+  const v1small = { ...v1, potions: 2 };
+  importSave(Buffer.from(JSON.stringify(v1small)).toString('base64'));
+  ok('small v1 stock keeps its potions, cap starts at 4', getProfile().potionCap === 4 && getProfile().potions === 2);
+  const v1huge = { ...v1, potions: 25 };
+  importSave(Buffer.from(JSON.stringify(v1huge)).toString('base64'));
+  ok('huge v1 stock clamps to max cap', getProfile().potionCap === 10 && getProfile().potions === 10);
+
+  resetProfile();
+  const hub = hubScene();
+  const root = new El('main');
+  hub.enter(root);
+  const txt = root.textContent;
+  ok('Great Hall shows Level before Coins', txt.indexOf('Level') !== -1 && txt.indexOf('Level') < txt.indexOf('Coins'));
+  ok('Great Hall shows potions as n/max and the satchel', txt.includes('2/4') && txt.includes('Potion Satchel'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

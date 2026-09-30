@@ -5,10 +5,10 @@
 import { el, setBackground, show } from '../../core/scene.js';
 import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
-import { getProfile, derivedStats, itemWithForge } from '../../meta/profile.js';
+import { getProfile, derivedStats, itemWithForge, playerLevel } from '../../meta/profile.js';
 import {
   STAT_DEFS, statDesc, statCost, canAfford, buyStat,
-  restockPotion, potionCost,
+  restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, trainAlchemy, potionHealAmount, efficiencyChance, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
@@ -32,12 +32,13 @@ export function hubScene() {
     const every = DATA.difficulty.breakthroughEvery ?? 5;
 
     const statsRow = el('div', { class: 'stat-grid' },
+      statBox('Level', playerLevel(p)), // 0.080: same LV as the combat card
       statBox('Coins', p.coins),
       statBox('XP', p.xp),
       statBox('Attack', stats.dmg),
       statBox('Max HP', stats.maxHp),
       statBox('Armor', stats.armor),
-      statBox('Potions', p.potions));
+      statBox('Potions', `${p.potions}/${p.potionCap}`));
 
     // ---- TRAIN: five disciplines, XP-only. Breakthrough ★ every 5th level. ----
     const trainSection = el('div', {},
@@ -66,13 +67,25 @@ export function hubScene() {
     };
     const alchemySection = el('div', {},
       el('h2', {}, 'Alchemy (coins)'),
+      // 0.080: potions are a persistent stock; the satchel caps it.
       el('div', { class: 'item-row' },
-        el('div', {}, el('b', {}, 'Healing Potion '), el('span', {}, '+1 potion for your next run')),
+        el('div', {}, el('b', {}, 'Healing Potion '),
+          el('span', {}, `${p.potions}/${p.potionCap} carried — unused potions come home after a run`)),
         el('button', {
-          disabled: p.coins < potionCost(),
+          disabled: p.coins < potionCost() || satchelFull(p),
           key: 'u', // b-u-y
           onclick: () => { restockPotion(); render(root); },
-        }, `Buy (${potionCost()}c)`)),
+        }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
+      el('div', { class: 'item-row' },
+        el('div', {}, el('b', {}, 'Potion Satchel '),
+          el('span', {}, satchelMaxed(p) ? `carries ${p.potionCap} potions (max)` : `+1 potion capacity (now ${p.potionCap})`)),
+        satchelMaxed(p)
+          ? el('span', { class: 'forge-max' }, 'MAX')
+          : el('button', {
+              disabled: p.coins < satchelCost(p),
+              key: 'x', // e-x-pand
+              onclick: () => { sfx('levelup'); expandSatchel(); render(root); },
+            }, `Expand (${satchelCost(p)}c)`)),
       ...Object.entries(ALCHEMY_DEFS).map(([track, def]) => {
         const lvl = p.alchemy[track] ?? 0;
         return el('div', { class: 'item-row' },

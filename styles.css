@@ -124,7 +124,8 @@
      state in blood red (Accept Your Fate). */
   button.active {
     border-color: #e8c45c; color: #fff4d0;
-    animation: active-glow 1.3s ease-in-out infinite;
+    /* slow breathe (0.080): 3.5s dim -> max, 3.5s max -> dim — a glow, not a blink */
+    animation: active-glow 7s ease-in-out infinite;
   }
   @keyframes active-glow {
     0%, 100% { box-shadow: 0 0 6px rgba(232,196,92,0.35), inset 0 0 4px rgba(232,196,92,0.15); }

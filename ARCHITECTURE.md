@@ -110,14 +110,15 @@ tools/
 |---|---|---|
 | `A` | dungeon | Attack first living enemy |
 | `H` | dungeon | Heavy Attack (2x dmg, 3-turn cd) |
-| `P` | dungeon | Drink Potion |
+| `P` | dungeon | Drink Potion (also after a room is cleared, 0.080) |
 | `D` | dungeon/hub | Push Deeper / Descend |
 | `R` | dungeon | Retreat with Loot (after clear) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `1` `2` `3` | shrine | Accept boon |
 | `E` / `N` | title | Enter Castle / New Game |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
-| `U` | hub | Buy potion |
+| `U` | hub | Buy potion (up to the satchel cap) |
+| `X` | hub | Expand potion satchel (+1 cap) |
 | `A` `Y` `N` | hub | Alchemy tracks: Potency / Efficiency / Infusion (coins) |
 | `D` / `B` | hub | Descend into the Dungeon / Back |
 | `G` | run-end | Return to Great Hall |
@@ -136,6 +137,10 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 4. Dungeon scene drives `run/combat.js`; kills route loot through
    `runState.applyLoot()` into the run object.
 5. Run end (death OR retreat) → `settleRun()` → profile → persist → hub.
+   Potions are a persistent stock (0.080): the run draws `profile.potions`,
+   and whatever is left comes back at settle (both outcomes), capped by
+   `profile.potionCap` (the satchel). Pickups past the cap sell for coins
+   (`runState.addPotion`).
 
 ## Editing conventions (for humans and AI assistants)
 

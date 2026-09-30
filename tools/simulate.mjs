@@ -16,7 +16,8 @@
 //            every run — this measures the survival curve, not retreat play)
 //   shrine:  take the best affordable boon (priority order below)
 //   hub XP:  round-robin vitality > power > endurance > precision > fortune
-//   hub coins: restock potions to 3, then alchemy round-robin, then forge
+//   hub coins: restock potions to the satchel cap, expand the satchel when
+//              it has 2x the price, then alchemy round-robin, then forge
 //            equipped T2+ gear (keeps a 2x reserve so one buy never bankrupts)
 
 import { readFileSync } from 'node:fs';
@@ -82,7 +83,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
   try {
     const { getProfile, resetProfile, derivedStats } = await import('../src/meta/profile.js');
     const {
-      canAfford, buyStat, restockPotion, potionCost,
+      canAfford, buyStat, restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
       alchemyCost, trainAlchemy, forgeCost, forgeMaxed, forgeItem,
     } = await import('../src/meta/leveling.js');
     const { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } = await import('../src/run/runState.js');
@@ -109,7 +110,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
       attacks: 0,
       dmgTakenByBand: {},        // depth band -> { taken, zeroHits, hits }
       xpSpent: {},               // stat -> levels bought
-      coinsSpent: { potions: 0, alchemy: 0, forge: 0 },
+      coinsSpent: { potions: 0, satchel: 0, alchemy: 0, forge: 0 },
       bankedByRun: [],
       statLevelsByRun: [],
     };
@@ -194,11 +195,21 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
         buyStat(stat);
         agg.xpSpent[stat] = (agg.xpSpent[stat] ?? 0) + 1;
       }
-      // Coins: potions to 3, alchemy round-robin, forge equipped T2+ gear.
-      while (p.potions < 3 && p.coins >= potionCost()) {
+      // Coins: potions to the cap (persistent stock since 0.080), satchel
+      // upgrades at 2x price, alchemy round-robin, forge equipped T2+ gear.
+      while (!satchelFull(p) && p.coins >= potionCost()) {
         const c = potionCost();
         restockPotion();
         agg.coinsSpent.potions += c;
+      }
+      while (!satchelMaxed(p) && p.coins >= satchelCost(p) * 2) {
+        const c = satchelCost(p);
+        expandSatchel();
+        agg.coinsSpent.satchel += c;
+        while (!satchelFull(p) && p.coins >= potionCost()) {
+          agg.coinsSpent.potions += potionCost();
+          restockPotion();
+        }
       }
       for (let guard = 0; guard < 60; guard++) {
         const track = ALCHEMY_PRIORITY.find((t) => p.coins >= alchemyCost(t) * 2);
@@ -232,6 +243,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
     agg.finalDerived = derivedStats(p);
     agg.t4MinRoom = t4MinRoom;
     agg.alchemy = { ...p.alchemy };
+    agg.potionCap = p.potionCap;
     return agg;
   } finally {
     Math.random = origRandom;
@@ -340,9 +352,10 @@ export function renderReport(agg, { runs, seed }) {
   push();
   push(`## Hub allocation over ${runs} runs`);
   push(`- XP → disciplines: ${Object.entries(agg.xpSpent).sort((a, b) => b[1] - a[1]).map(([s, n]) => `${s} +${n}`).join(', ') || 'none'}`);
-  push(`- coins → potions ${agg.coinsSpent.potions}c, alchemy ${agg.coinsSpent.alchemy}c, forge ${agg.coinsSpent.forge}c; banked at end: ${agg.bankedByRun.at(-1)}c`);
+  push(`- coins → potions ${agg.coinsSpent.potions}c, satchel ${agg.coinsSpent.satchel}c, alchemy ${agg.coinsSpent.alchemy}c, forge ${agg.coinsSpent.forge}c; banked at end: ${agg.bankedByRun.at(-1)}c`);
   push(`- final disciplines: ${Object.entries(agg.finalStats).map(([s, l]) => `${s} ${l}`).join(', ')}`);
   push(`- final alchemy: ${Object.entries(agg.alchemy).map(([t, l]) => `${t} ${l}`).join(', ')}`);
+  push(`- final satchel: ${agg.potionCap} potion cap`);
   const d = agg.finalDerived;
   push(`- final derived: ${d.maxHp} HP, ${d.dmg} dmg, ${d.armor} armor, ${(d.crit * 100).toFixed(1)}% crit`);
   // Progression pacing: stat totals + banked coins at quarter marks.

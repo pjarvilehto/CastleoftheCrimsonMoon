@@ -45,7 +45,10 @@ node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 6. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
    0.079): bump it and append a step to `MIGRATIONS` — never edit a
    shipped step.
-3. **`run.stats` is a snapshot** taken at run start. Mid-run loot does
+3. **Potions persist** (0.080): a run draws the profile's stock and
+   `settleRun()` writes back what's left, capped by `potionCap`; pickups
+   go through `runState.addPotion()` (sold when the satchel is full).
+   **`run.stats` is a snapshot** taken at run start. Mid-run loot does
    nothing until `settleRun()` auto-equips it into the profile.
 4. **Bump `assets/data/build.json` with every player-facing change** and
    run the smoke suite before pushing.

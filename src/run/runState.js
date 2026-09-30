@@ -25,7 +25,8 @@ export function createRun() {
     coins: 0,
     xp: 0,
     itemsFound: [],              // item ids picked up this run
-    potions: stats.potions,
+    potions: stats.potions,      // drawn from the persistent stock (0.080)
+    potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
     shrineRoom: randomShrineRoom(), // one shrine in rooms 2-7 (shrineRoomRange)
@@ -62,9 +63,25 @@ export function applyLoot(run, enemy, log) {
     else log(`Found: ${found.name}!`, 'loot');
   }
   if (potionDrop()) {
-    run.potions += 1;
-    log('Found a healing potion!', 'loot');
+    if (addPotion(run)) log('Found a healing potion!', 'loot');
+    else log(`Found a healing potion — satchel full, sold for ${satchelSellCoins()} coins.`, 'loot');
   }
+}
+
+function satchelSellCoins() {
+  return DATA.difficulty.potions?.fullSatchelSellCoins ?? 10;
+}
+
+// Put one potion in the satchel. At the cap it's sold on the spot instead
+// (coins into the run purse), so a full satchel never wastes a pickup.
+// Returns true when the potion was kept.
+export function addPotion(run) {
+  if (run.potions < (run.potionCap ?? Infinity)) {
+    run.potions += 1;
+    return true;
+  }
+  run.coins += satchelSellCoins();
+  return false;
 }
 
 // Returns { healed, free, armor } on success, false when undrinkable.
@@ -92,6 +109,9 @@ export function settleRun(run, outcome) {
   p.records.runs += 1;
   p.records.bestRoom = Math.max(p.records.bestRoom, run.roomNumber);
   if (outcome === 'death') p.records.deaths += 1;
+  // Potions are a persistent stock (0.080): what you didn't drink comes
+  // home — on retreat AND on death (the toll only takes coins).
+  p.potions = Math.max(0, Math.min(run.potions, p.potionCap));
   // Items auto-equip into their slots at run end (kept even on death);
   // replaced/weaker items are salvaged for coins.
   const equip = equipItems(p, run.itemsFound);

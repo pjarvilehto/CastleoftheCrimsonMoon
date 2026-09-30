@@ -65,21 +65,47 @@ export function buyStat(stat) {
 
 // ---- Potions (coins) ----
 
-// Potion price escalates per potion BOUGHT (profile.potionsBought):
-// first 20c, then 40c, 60c, ... — base + step * bought, from difficulty.json.
+// 0.080: potions are a persistent stock capped by the satchel
+// (profile.potionCap). They're consumables now, so the price is flat — the
+// old escalating price only made sense when a purchase was permanent.
+const POT = () => DATA.difficulty.potions ?? {};
+
 export function potionCost() {
-  const p = getProfile();
-  const d = DATA.difficulty;
-  return (d.potionBasePrice ?? 20) + (d.potionPriceStep ?? 20) * (p.potionsBought ?? 0);
+  return POT().price ?? 30;
+}
+
+export function satchelFull(p = getProfile()) {
+  return p.potions >= p.potionCap;
 }
 
 export function restockPotion() {
   const p = getProfile();
   const cost = potionCost();
-  if (p.coins < cost) return false;
+  if (p.coins < cost || satchelFull(p)) return false;
   p.coins -= cost;
   p.potions += 1;
-  p.potionsBought = (p.potionsBought ?? 0) + 1;
+  persist();
+  return true;
+}
+
+// Satchel upgrades: +1 potion cap each, priced base * growth^upgradesSoFar
+// (300, 600, 1200, ...) — a deliberately expensive long-term coin sink.
+export function satchelCost(p = getProfile()) {
+  const pc = POT();
+  const upgrades = p.potionCap - (pc.startCap ?? 4);
+  return Math.round((pc.capUpgradeBase ?? 300) * Math.pow(pc.capUpgradeGrowth ?? 2, Math.max(0, upgrades)));
+}
+
+export function satchelMaxed(p = getProfile()) {
+  return p.potionCap >= (POT().maxCap ?? 10);
+}
+
+export function expandSatchel() {
+  const p = getProfile();
+  const cost = satchelCost(p);
+  if (satchelMaxed(p) || p.coins < cost) return false;
+  p.coins -= cost;
+  p.potionCap += 1;
   persist();
   return true;
 }

@@ -118,7 +118,9 @@ export function dungeonScene() {
       heavyCd: combat.heavyCd,
       onHeavy: () => { useHeavy(combat); act(() => playerAttack(combat, firstAlive(), true)); },
       onPotion: () => {
-        if (combat.over || playback.isPrinting()) return;
+        // 0.080: potions persist, so topping up between rooms is allowed
+        // (after a win) — never while dead or mid-playback.
+        if ((combat.over && !combat.victory) || playback.isPrinting()) return;
         const sip = drinkPotion(run);
         if (sip) {
           sfx('heal');
@@ -127,6 +129,7 @@ export function dungeonScene() {
         render(root);
       },
       lowhp,
+      dead: combat.over && !combat.victory,
     });
 
     const eCards = enemyStates.map(({ e, i, hp }) => enemyCard(e, i, hp, {
@@ -173,7 +176,7 @@ export function dungeonScene() {
       el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${hpColor(run.hp, run.maxHp)}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, hpColor(run.hp, run.maxHp))),
       el('span', {}, 'Coins ', el('b', { id: 'hud-coins' }, String(shownCoins))),
       el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(shownXp))),
-      el('span', {}, 'Potions ', el('b', { style: `color:${potionColor}` }, String(run.potions))));
+      el('span', {}, 'Potions ', el('b', { style: `color:${potionColor}` }, `${run.potions}/${run.potionCap}`)));
 
     const proceed = el('div', { class: 'btn-row' });
     proceed.append(

@@ -12,8 +12,10 @@ const DEFAULTS = {
   alchemy: { potency: 0, efficiency: 0, infusion: 0 },
   forged: {}, // itemId -> enhancement level (The Forge)
   equipment: null, // filled below; one item per slot (see meta/equipment.js)
+  // 0.080: potions persist between runs (unused ones come home at run end)
+  // and are capped by the satchel; alchemy sells potions and satchel room.
   potions: 2,
-  potionsBought: 0, // lifetime purchases — drives the escalating potion price
+  potionCap: 4,
   records: { kills: 0, bestRoom: 0, runs: 0, deaths: 0 },
 };
 
@@ -41,7 +43,7 @@ export function getProfile() {
 // and APPEND a step — never edit a shipped step (testers' saves have
 // already been through it). saveVersion is deliberately NOT in DEFAULTS:
 // the load merge would stamp it onto old saves and skip their migrations.
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 const MIGRATIONS = [
   // v0 -> v1: everything pre-0.079 builds did on every load.
@@ -60,6 +62,19 @@ const MIGRATIONS = [
       p.coins += res.coins;
       delete p.inventory;
     }
+  },
+  // v1 -> v2 (0.080): potions became a persistent, capped stock. Old saves
+  // held a permanent per-run count (bought at escalating prices) — it
+  // becomes the satchel size (clamped to the cap range) and fills it, so
+  // no one loses what they paid for. The old price counter is gone.
+  (p) => {
+    const pc = DATA.difficulty.potions ?? {};
+    const lo = pc.startCap ?? 4;
+    const hi = pc.maxCap ?? 10;
+    const had = Number.isFinite(p.potions) ? p.potions : (pc.startCount ?? 2);
+    p.potionCap = Math.min(hi, Math.max(lo, had));
+    p.potions = Math.min(had, p.potionCap);
+    delete p.potionsBought;
   },
 ];
 
@@ -105,7 +120,18 @@ export function resetProfile() {
   wipeProfile();
   profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION };
   profile.equipment = startingEquipment();
+  const pc = DATA.difficulty.potions ?? {};
+  profile.potions = pc.startCount ?? profile.potions;
+  profile.potionCap = pc.startCap ?? profile.potionCap;
   persist();
+}
+
+// Character level: one per five trained discipline levels (shown on the
+// combat card and in the Great Hall, 0.080).
+export function playerLevel(p = getProfile()) {
+  const s = p.stats;
+  return 1 + Math.floor(((s.power ?? 0) + (s.vitality ?? 0) + (s.fortune ?? 0)
+    + (s.precision ?? 0) + (s.endurance ?? 0)) / 5);
 }
 
 // ---- derived combat stats (base + permanent levels + gear) ----
@@ -177,5 +203,6 @@ export function derivedStats(p = getProfile()) {
     heavyCdMax,
     revive,
     potions: p.potions,
+    potionCap: p.potionCap,
   };
 }
