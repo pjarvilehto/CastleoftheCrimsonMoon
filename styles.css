@@ -807,9 +807,12 @@ body.debug .sfx-toggle { top: 104px; }
 .bg-view-toggle { top: 168px; }
 .bg-next-toggle { top: 200px; }
 .bg-tune-toggle { top: 232px; }
+/* ?debug crit testing (0.105) */
+.crit-toggle { top: 264px; }
+.megacrit-toggle { top: 296px; }
 /* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
 .bg-tuner {
-  position: fixed; top: 266px; right: 12px; z-index: 50; width: 300px;
+  position: fixed; top: 330px; right: 12px; z-index: 50; width: 300px;
   padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);

@@ -95,7 +95,7 @@ fresh();
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
   ok('tuner: 7 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 7
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
-  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
+  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle(), ...critToggles()]'));
   ok('clip-enemies experiment fully removed (0.090)', !readFileSync('src/main.js', 'utf8').includes('clip')
     && !readFileSync('styles.css', 'utf8').includes('clip-enemies'));
 }

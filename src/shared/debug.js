@@ -3,4 +3,5 @@
 // toggle button (main.js) share. Default everything OFF so the smoke
 // test and real players always get honest combat.
 
-export const DEBUG = { invulnerable: false };
+// forceCrit / forceMegaCrit (0.105): every player attack crits / mega crits.
+export const DEBUG = { invulnerable: false, forceCrit: false, forceMegaCrit: false };

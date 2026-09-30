@@ -54,10 +54,10 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (!target || target.hp <= 0 || combat.over) return events;
 
   const tune = DATA.difficulty.combat ?? {};
-  const crit = Math.random() < combat.run.stats.crit;
+  const crit = DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < combat.run.stats.crit;
   // 0.104: a crit's multiplier varies ±critJitter, and a rare crit
   // (megaCritChance of crits) is a MEGA CRIT for megaCritMult more.
-  const megaCrit = crit && Math.random() < (tune.megaCritChance ?? 0);
+  const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < (tune.megaCritChance ?? 0));
   const mult = heavy ? (tune.heavyMult ?? 2) : 1;
   let dmg = combat.run.stats.dmg * mult;
   if (crit) dmg = Math.round(dmg * critMultiplier(tune, megaCrit));
@@ -100,7 +100,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     if (n === 0) {
       push({
         type: 'atk',
-        text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : ''}.`,
+        text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : '.'}`,
         target: idx,
         dmg,
         crit,

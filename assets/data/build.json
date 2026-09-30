@@ -1,5 +1,5 @@
 {
-  "version": "0.104",
+  "version": "0.105",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -50,6 +50,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.105": [
+      "Testing: ?debug toggles to force crits and mega crits"
+    ],
     "0.104": [
       "Critical hits now vary in damage",
       "New: rare MEGA CRITS that hit 1.5x harder than a normal crit"

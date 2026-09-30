@@ -471,3 +471,25 @@ fresh();
   ok('mega crit: caption, bigger number, brighter flash', fx.includes("fx.mega ? 'MEGA CRIT!'") && fx.includes("'megacrit'")
     && /\.fx-crit\.fx-mega \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8')) && DATA.backgrounds.parallax.lights.megacrit.strength > DATA.backgrounds.parallax.lights.crit.strength);
 }
+
+// T67: 0.105 — ?debug FORCE CRITS / FORCE MEGA CRITS toggles.
+{
+  const { DEBUG } = await import('../../src/shared/debug.js');
+  ok('crit toggles are off by default', DEBUG.forceCrit === false && DEBUG.forceMegaCrit === false);
+  const hit = () => {
+    const run = createRun(); run.stats.dmg = 100; run.stats.crit = 0; run.stats.lifesteal = 0;
+    const c = createCombat(run, generateRoom(1, run));
+    c.enemies[0].hp = 100000;
+    return playerAttack(c, 0, false).find((e) => e.type === 'atk');
+  };
+  DEBUG.forceCrit = true;
+  const a = [hit(), hit(), hit()];
+  DEBUG.forceCrit = false; DEBUG.forceMegaCrit = true;
+  const b = [hit(), hit(), hit()];
+  DEBUG.forceMegaCrit = false;
+  const c0 = hit();
+  ok('FORCE CRITS: every attack crits (0% crit chance)', a.every((e) => e.crit) && !c0.crit);
+  ok('FORCE MEGA CRITS: every attack mega crits', b.every((e) => e.crit && e.megaCrit && e.text.includes('MEGA CRIT!')));
+  const main = readFileSync('src/main.js', 'utf8');
+  ok('crit toggles only under ?debug', main.includes("toggle('forceCrit', 'FORCE CRITS'") && main.includes("...critToggles()") && main.includes('...(debugMode ? bgDebugToggles() : [])'));
+}

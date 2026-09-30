@@ -144,7 +144,20 @@ function bgDebugToggles() {
       e.currentTarget.textContent = `NEXT BG (${i + 1}/${all.length}: ${all[i].replace(/^castle_|\.jpg$/g, '')})`;
     },
   }, 'NEXT BG');
-  return [fg, viewBtn, next, bgTunerToggle()];
+  return [fg, viewBtn, next, bgTunerToggle(), ...critToggles()];
+}
+
+// ?debug crit testing (0.105): every player attack crits / mega crits.
+function critToggles() {
+  const toggle = (flag, label, cls) => el('button', {
+    class: `debug-toggle ${cls}`,
+    onclick: (e) => {
+      DEBUG[flag] = !DEBUG[flag];
+      e.currentTarget.classList.toggle('on', DEBUG[flag]);
+      e.currentTarget.textContent = `${label}: ${DEBUG[flag] ? 'ON' : 'OFF'}`;
+    },
+  }, `${label}: OFF`);
+  return [toggle('forceCrit', 'FORCE CRITS', 'crit-toggle'), toggle('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle')];
 }
 
 boot();
