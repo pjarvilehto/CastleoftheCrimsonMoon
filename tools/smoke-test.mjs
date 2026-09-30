@@ -1165,7 +1165,8 @@ process.on('uncaughtException', (e) => {
   const bg3d = await import('../src/core/bg3d.js');
   const bm = await import('../src/core/bg3dMath.js');
   const base = bg3d.tuning('');
-  ok('tunables: depth, speed, sway x/y, focus', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot' && base.speed === 1);
+  ok('tunables: depth, speed, sway x/y, focus', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot'
+    && base.speed === (DATA.backgrounds.parallax.speed ?? 1)); // shipped value comes from the data
   bg3d.setLiveTuning({ depthScale: 0.9, speed: 2 });
   ok('live values override the shipped ones', bg3d.tuning('').depthScale === 0.9 && bg3d.liveTuning().speed === 2
     && bg3d.tuning('').yawDeg === base.yawDeg);
