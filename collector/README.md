@@ -12,7 +12,7 @@ From this folder, logged in to the Cloudflare account that has the domain:
 ```bash
 npx wrangler login
 npx wrangler kv namespace create STATS        # prints an id
-#  -> paste that id into wrangler.toml (replace REPLACE_WITH_KV_NAMESPACE_ID)
+#  -> its id goes in wrangler.toml (already set for the live namespace)
 npx wrangler secret put READ_KEY              # any passphrase; the dashboard asks for it once
 npx wrangler deploy                           # prints https://castle-stats.<you>.workers.dev
 ```
