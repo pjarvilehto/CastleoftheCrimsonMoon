@@ -94,7 +94,11 @@ fresh();
   globalThis.fetch = async (url, opts) => { sent.push({ url, opts }); return { ok: true }; };
   const p = getProfile();
   p.history = [{ at: 5, build: '0.102', outcome: 'death', room: 4 }];
-  ok('telemetry ships off (empty endpoint) and never sends from tests', ep === '' && tm.shareStats(p) === false && sent.length === 0);
+  ok('telemetry points at the collector and never sends from tests (no location)', /^https:\/\/castle-stats\.[\w-]+\.workers\.dev$/.test(ep)
+    && tm.shareStats(p) === false && sent.length === 0);
+  DATA.telemetry.endpoint = '';
+  globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
+  ok('empty endpoint = off', tm.shareStats(p) === false && sent.length === 0);
   DATA.telemetry.endpoint = 'https://stats.example/';
   globalThis.location = { hostname: 'localhost' };
   ok('no stats from a local dev server', tm.shareStats(p) === false && sent.length === 0);

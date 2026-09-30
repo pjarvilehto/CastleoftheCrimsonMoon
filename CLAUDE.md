@@ -25,8 +25,11 @@ progression (training, alchemy, forge) in the hub between runs.
   POSTs the save's history (anonymous random `playerId`, no IPs/personal
   data) after every run and once per session to the Cloudflare Worker in
   `collector/` (KV, merges history by timestamp; setup in
-  `collector/README.md`), whose URL goes in `assets/data/telemetry.json`
-  `endpoint` (empty = off; never sends from localhost or Node). The
+  `collector/README.md`; live since 0.103 at
+  https://castle-stats.petri-jarvilehto.workers.dev, deployed from the
+  Cloudflare dashboard — paste `collector/worker.js` into Edit code to
+  update it), whose URL is `assets/data/telemetry.json` `endpoint`
+  (empty = off; never sends from localhost or Node). The
   dashboard reads it back (`GET /players?key=READ_KEY`) plus this
   browser's save and pasted save codes, deduped by playerId.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
@@ -248,6 +251,6 @@ static play-stats page.
   simulator) and meta saturates past ~60 runs — deeper tiers or NG+ ·
   thorns relic is a flat 4 damage, weak against scaled enemy HP · more
   room kinds · music loop variations · portrait-phone layout.
-- Other: deploy the play-stats collector (collector/README.md) ·
+- Other:
   check the DIN Condensed web-embedding licence (macOS system font) ·
   orphaned legacy staging site cleanup.

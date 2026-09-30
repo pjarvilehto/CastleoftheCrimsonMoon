@@ -1,5 +1,5 @@
 {
-  "version": "0.102",
+  "version": "0.103",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -50,6 +50,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.103": [
+      "Play stats now reach the developer automatically"
+    ],
     "0.102": [
       "Descending with XP or coins still to spend now asks first",
       "Play stats are shared automatically (anonymous) so the developer sees every tester's runs"
