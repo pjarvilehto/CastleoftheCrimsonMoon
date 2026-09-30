@@ -7,7 +7,7 @@
   <link rel="preload" href="assets/fonts/DINCondensedBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="icon" type="image/png" href="icon.png">
   <meta name="theme-color" content="#1a0e0e">
-  <link rel="stylesheet" href="styles.css">
+  <style>html, body { margin: 0; height: 100%; background: #0d0808; }</style>
 </head>
 <body>
   <div id="bg-stack">
@@ -17,6 +17,41 @@
   <div id="vignette"></div>
   <div id="flash"></div>
   <main id="app" class="hidden"></main>
-  <script type="module" src="src/main.js"></script>
+  <script>
+    // Versioned boot (0.082). GitHub Pages lets browsers reuse files for
+    // ~10 minutes, so after a deploy a player could run the new build.json
+    // against old cached CSS/JS. Instead: read build.json uncached, then
+    // load styles.css and EVERY module (via an import map over the list in
+    // build.json, kept current by tools/bump.mjs) under ?v=<version> —
+    // a new build changes every URL, so all files update together.
+    (function () {
+      function boot(version, modules) {
+        var q = version ? '?v=' + encodeURIComponent(version) : '';
+        if (q && modules && modules.length) {
+          var map = { imports: {} };
+          modules.forEach(function (m) {
+            map.imports[new URL(m, location.href).href] = new URL(m + q, location.href).href;
+          });
+          var im = document.createElement('script');
+          im.type = 'importmap';
+          im.textContent = JSON.stringify(map);
+          document.head.appendChild(im);
+        }
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'styles.css' + q;
+        document.head.appendChild(css);
+        var main = document.createElement('script');
+        main.type = 'module';
+        main.src = 'src/main.js' + q;
+        // Start the game once the stylesheet is in (no unstyled flash).
+        css.onload = css.onerror = function () { document.body.appendChild(main); };
+      }
+      fetch('assets/data/build.json', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (b) { boot(b.version, b.modules); })
+        .catch(function () { boot('', null); }); // never block the game
+    })();
+  </script>
 </body>
 </html>

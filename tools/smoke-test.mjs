@@ -5,9 +5,7 @@
 // missed — `children` is getter-only (assigning to it threw on real DOM
 // and shipped broken in 0.031), style lives behind setAttribute, etc.
 
-import { readFileSync, readdirSync, mkdirSync, cpSync, mkdtempSync, rmSync, statSync } from 'fs';
-import { tmpdir } from 'os';
-import { execFileSync } from 'child_process';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -511,33 +509,8 @@ process.on('uncaughtException', (e) => {
   ok('hub records line', t().includes('9 runs, 126 kills, deepest room 6.'));
 }
 
-// T20: cachebust stamping — every asset ref in the deploy tree gets ?v=<version>,
-// and re-running is idempotent (platform caches assets 4h; query strings bust it)
-{
-  const tmp = mkdtempSync(join(tmpdir(), 'cb-'));
-  cpSync(join(ROOT, 'index.html'), join(tmp, 'index.html'));
-  cpSync(join(ROOT, 'src'), join(tmp, 'src'), { recursive: true });
-  mkdirSync(join(tmp, 'assets/data'), { recursive: true });
-  cpSync(join(ROOT, 'assets/data/build.json'), join(tmp, 'assets/data/build.json'));
-  const run = () => execFileSync(process.execPath, [join(ROOT, 'tools/cachebust.mjs'), tmp], { encoding: 'utf8' });
-  const out1 = run();
-  const version = JSON.parse(readFileSync(join(ROOT, 'assets/data/build.json'), 'utf8')).version;
-  const idx = readFileSync(join(tmp, 'index.html'), 'utf8');
-  ok('index refs stamped', idx.includes(`href="styles.css?v=${version}"`) && idx.includes(`src="src/main.js?v=${version}"`));
-  const dataJs = readFileSync(join(tmp, 'src/shared/data.js'), 'utf8');
-  ok('data fetch stamped', dataJs.includes(`\${name}.json?v=${version}`));
-  let unstamped = 0;
-  for (const f of readdirSync(join(tmp, 'src/ui/scenes'))) {
-    const src = readFileSync(join(tmp, 'src/ui/scenes', f), 'utf8');
-    const m = src.match(/(?:from|import)\s*['"]\.\.?\/[^'"]+?\.js['"]/g);
-    if (m) unstamped += m.length;
-  }
-  ok('no unstamped relative imports', unstamped === 0);
-  run(); // second pass must change nothing
-  ok('stamping idempotent', readFileSync(join(tmp, 'index.html'), 'utf8') === idx && !/\?v=[0-9.]+\?v=/.test(dataJs));
-  rmSync(tmp, { recursive: true, force: true });
-  ok('cachebust ran clean', out1.includes('cachebust: stamped'));
-}
+// T20: (retired 0.082) cachebust.mjs stamping — superseded by the versioned
+// boot in index.html (see T44), which busts caches on every host.
 
 // T22: disciplines — XP-only training, new stats feed derived, breakthroughs double
 {
@@ -1032,7 +1005,7 @@ process.on('uncaughtException', (e) => {
 {
   const css = readFileSync('styles.css', 'utf8');
   ok('active state styles exist', css.includes('button.active {') && css.includes('button.active.active-red'));
-  ok('active glow breathes slowly (7s cycle = 3.5s each way, 0.080)', css.includes('animation: active-glow 7s ease-in-out infinite'));
+  ok('active glow slides linearly (8s cycle = 4s each way, 0.082)', css.includes('animation: active-glow 8s linear infinite'));
   const d = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8');
   ok('Push Deeper is active after combat', /class: 'primary active', key: 'd'/.test(d));
   const { showDeathModal } = await import('../src/ui/deathModal.js');
@@ -1115,6 +1088,25 @@ process.on('uncaughtException', (e) => {
     && css.includes('.hub-stats .stat-box .label { align-self: flex-start; }')
     && css.includes('.hub-stats .stat-box .value { align-self: flex-end;')
     && css.includes('.hub-stats .stat-potions { grid-column: 2; }'));
+}
+
+// T44: 0.082 — versioned boot: build.json lists every module (bump.mjs),
+// index.html loads CSS/JS under ?v=<version>; glow keyframes blendable.
+{
+  const { listModules } = await import('./bump.mjs');
+  const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
+  ok('build.json module list matches src/ (run tools/bump.mjs)', JSON.stringify(b.modules) === JSON.stringify(listModules()));
+  const html = readFileSync('index.html', 'utf8');
+  ok('index.html boots versioned', html.includes("fetch('assets/data/build.json', { cache: 'no-store' })")
+    && html.includes("im.type = 'importmap'") && html.includes("'styles.css' + q") && html.includes("'src/main.js' + q")
+    && !html.includes('<script type="module" src="src/main.js">'));
+  const css = readFileSync('styles.css', 'utf8');
+  const layers = (name) => {
+    const block = css.slice(css.indexOf(`@keyframes ${name} {`)).split('}')[0] + '}' + css.slice(css.indexOf(`@keyframes ${name} {`)).split('}')[1];
+    return [...block.matchAll(/box-shadow:([^;]*);/g)].map((m) => m[1].split(/,(?![^(]*\))/).length);
+  };
+  const y = layers('active-glow'), r = layers('active-glow-red');
+  ok('glow keyframes have matching shadow counts (smooth fade)', y.length === 2 && y[0] === y[1] && r.length === 2 && r[0] === r[1], `${y} / ${r}`);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

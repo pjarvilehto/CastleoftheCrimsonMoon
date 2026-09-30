@@ -50,8 +50,11 @@ node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
    go through `runState.addPotion()` (sold when the satchel is full).
    **`run.stats` is a snapshot** taken at run start. Mid-run loot does
    nothing until `settleRun()` auto-equips it into the profile.
-4. **Bump `assets/data/build.json` with every player-facing change** and
-   run the smoke suite before pushing.
+4. **Bump the build with `node tools/bump.mjs 0.0NN`** for every
+   player-facing change (writes version + module list into
+   `assets/data/build.json`), and run the smoke suite before pushing.
+   index.html loads CSS/JS under `?v=<version>` from that list (0.082), so
+   a deploy can't leave players on a mix of old and new files.
 5. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content = new filename.
 

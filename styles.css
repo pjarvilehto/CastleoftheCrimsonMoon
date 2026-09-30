@@ -124,11 +124,17 @@
      state in blood red (Accept Your Fate). */
   button.active {
     border-color: #e8c45c; color: #fff4d0;
-    /* slow breathe (0.080): 3.5s dim -> max, 3.5s max -> dim — a glow, not a blink */
-    animation: active-glow 7s ease-in-out infinite;
+    /* slow breathe (0.082): a steady 4s slide dim -> max and 4s back.
+       LINEAR on purpose — ease-in-out bunched each change into ~1s and
+       then held at the extremes, which read as blink-wait-blink. */
+    animation: active-glow 8s linear infinite;
   }
+  /* Both keyframes MUST list the same number of shadows (0.082): browsers
+     can't blend shadow lists of different lengths, so a 2-vs-3 mismatch
+     made the glow SNAP at the midpoint instead of fading. The dim state's
+     middle layer is a zero-size transparent placeholder. */
   @keyframes active-glow {
-    0%, 100% { box-shadow: 0 0 6px rgba(232,196,92,0.35), inset 0 0 4px rgba(232,196,92,0.15); }
+    0%, 100% { box-shadow: 0 0 6px rgba(232,196,92,0.35), 0 0 0 rgba(232,196,92,0), inset 0 0 4px rgba(232,196,92,0.15); }
     50%      { box-shadow: 0 0 24px rgba(232,196,92,0.95), 0 0 46px rgba(232,196,92,0.35), inset 0 0 10px rgba(232,196,92,0.3); }
   }
   button.active.active-red {
@@ -136,7 +142,7 @@
     animation-name: active-glow-red;
   }
   @keyframes active-glow-red {
-    0%, 100% { box-shadow: 0 0 6px rgba(224,48,48,0.4), inset 0 0 4px rgba(224,48,48,0.15); }
+    0%, 100% { box-shadow: 0 0 6px rgba(224,48,48,0.4), 0 0 0 rgba(224,48,48,0), inset 0 0 4px rgba(224,48,48,0.15); }
     50%      { box-shadow: 0 0 24px rgba(224,48,48,1), 0 0 46px rgba(224,48,48,0.4), inset 0 0 10px rgba(224,48,48,0.3); }
   }
   button:disabled { opacity: 0.35; cursor: not-allowed; }

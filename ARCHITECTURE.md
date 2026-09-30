@@ -101,7 +101,7 @@ styles.css              all styling (split out of index.html in 0.034)
 tools/
 ├── smoke-test.mjs        DOM-shim suite (168-169 checks) - run pre-deploy
 ├── simulate.mjs          headless balance bot (seeded; analyze() flags smells)
-└── cachebust.mjs         stamps ?v=<version> onto 23 files in the DEPLOY tree
+└── bump.mjs              sets build.json version + module manifest (0.082)
 ```
 
 ## Keyboard map

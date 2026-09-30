@@ -1,1 +1,34 @@
-{"version": "0.081"}
+{
+  "version": "0.082",
+  "modules": [
+    "src/audio/audioCore.js",
+    "src/audio/music.js",
+    "src/audio/sfx.js",
+    "src/core/scene.js",
+    "src/main.js",
+    "src/meta/equipment.js",
+    "src/meta/leveling.js",
+    "src/meta/profile.js",
+    "src/meta/storage.js",
+    "src/run/combat.js",
+    "src/run/loot.js",
+    "src/run/roomGen.js",
+    "src/run/runState.js",
+    "src/run/shrine.js",
+    "src/shared/balance.js",
+    "src/shared/data.js",
+    "src/shared/debug.js",
+    "src/shared/preload.js",
+    "src/ui/battleLine.js",
+    "src/ui/buffs.js",
+    "src/ui/combatPlayback.js",
+    "src/ui/deathModal.js",
+    "src/ui/fx.js",
+    "src/ui/hud.js",
+    "src/ui/scenes/dungeonScene.js",
+    "src/ui/scenes/hubScene.js",
+    "src/ui/scenes/runEndScene.js",
+    "src/ui/scenes/titleScene.js",
+    "src/ui/shrineUI.js"
+  ]
+}
