@@ -44,7 +44,7 @@ export function costText(offer, roomNumber) {
   return offer.costDesc;
 }
 
-const hpFloorOk = (run) => run.maxHp > (DATA.shrines.minMaxHp ?? 5); // keep a sane HP floor
+const hpFloorOk = (run) => run.maxHp > (DATA.shrines.minMaxHp ?? 50); // keep a sane HP floor
 const dmgFloorOk = (run) => run.stats.dmg > (DATA.shrines.minDmg ?? 5);
 const coinsOk = (run, o) => run.coins >= offerCoinCost(o, run.roomNumber);
 
@@ -58,7 +58,7 @@ export function canAffordOffer(run, o) {
     case 'secondwind': return coinsOk(run, o);
     case 'quicken': return hpFloorOk(run) && (run.stats.heavyCdMax ?? 3) > 1;
     case 'greed': return dmgFloorOk(run);
-    case 'glasscannon': return run.stats.armor >= (o.minArmor ?? 2);
+    case 'glasscannon': return run.stats.armor >= (o.minArmor ?? 20);
     default: return false;
   }
 }
@@ -88,8 +88,8 @@ export function acceptOffer(run, o) {
       break;
     case 'armor':
       run.potions = Math.max(0, run.potions - o.potionCost);
-      // Percentage of CURRENT armor, with a floor (armorMin, 0.091): 25% of a
-      // starting 3 armor was +1 — not worth the potion it costs.
+      // Percentage of CURRENT armor, with a floor (armorMin, 0.091): 25% of
+      // a starting armor was next to nothing — not worth the potion it costs.
       run.stats.armor = Math.max(run.stats.armor + (o.armorMin ?? 0), Math.round(run.stats.armor * o.armorMult));
       break;
     case 'leech':
@@ -98,8 +98,8 @@ export function acceptOffer(run, o) {
       break;
     case 'bulwark':
       payDmg(run, o.dmgCostPct);
-      // Flat +5 or a share of current armor, whichever is more (0.091): a
-      // flat +5 stopped mattering late while -10% damage kept hurting.
+      // Flat armorAdd or a share of current armor, whichever is more (0.091):
+      // a flat bonus stopped mattering late while -10% damage kept hurting.
       run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * (o.armorPct ?? 0)));
       break;
     case 'secondwind':

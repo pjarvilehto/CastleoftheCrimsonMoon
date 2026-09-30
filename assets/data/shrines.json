@@ -1,6 +1,6 @@
 {
   "coinCostGrowthPerRoom": 0.5,
-  "minMaxHp": 5,
+  "minMaxHp": 50,
   "minDmg": 5,
   "offers": [
     {
@@ -23,29 +23,29 @@
     },
     {
       "id": "armor",
-      "buff": "+25% ARMOR (MIN +3)",
+      "buff": "+25% ARMOR (MIN +30)",
       "costDesc": "-1 POTION",
       "icon": "🛡",
       "potionCost": 1,
       "armorMult": 1.25,
-      "armorMin": 3
+      "armorMin": 30
     },
     {
       "id": "leech",
-      "buff": "+10% LIFESTEAL",
+      "buff": "+100% LIFESTEAL",
       "costDesc": "-15% MAX HP",
       "icon": "🩸",
       "hpCostPct": 0.15,
-      "lifestealAdd": 0.1,
-      "lifestealCap": 0.6
+      "lifestealAdd": 1,
+      "lifestealCap": 6
     },
     {
       "id": "bulwark",
-      "buff": "+20% ARMOR (MIN +5)",
+      "buff": "+20% ARMOR (MIN +50)",
       "costDesc": "-10% DMG",
       "icon": "⛨",
       "dmgCostPct": 0.1,
-      "armorAdd": 5,
+      "armorAdd": 50,
       "armorPct": 0.2
     },
     {
@@ -81,7 +81,7 @@
       "icon": "⚗",
       "armorCostPct": 0.5,
       "dmgMult": 1.6,
-      "minArmor": 2
+      "minArmor": 20
     }
   ]
 }

@@ -214,20 +214,20 @@ ok('dungeon renders after Descend', t().includes('Room 1') && !registry.app.clas
   run.coins = 100; run.roomNumber = 6; const c0 = run.stats.crit;
   acceptOffer(run, crit);
   ok('crit boon (0.091): flat -30c at any depth, +15% crit', run.coins === 70 && Math.abs(run.stats.crit - (c0 + 0.15)) < 1e-9);
-  run.potions = 2; run.stats.armor = 8;
+  run.potions = 2; run.stats.armor = 80;
   acceptOffer(run, armor);
-  ok('armor boon: +25% of current, at least +3 (8 -> 11)', run.potions === 1 && run.stats.armor === 11);
-  run.potions = 2; run.stats.armor = 40;
+  ok('armor boon: +25% of current, at least +30 (80 -> 110)', run.potions === 1 && run.stats.armor === 110);
+  run.potions = 2; run.stats.armor = 400;
   acceptOffer(run, armor);
-  ok('armor boon: +25% when that is more (40 -> 50)', run.stats.armor === 50);
+  ok('armor boon: +25% when that is more (400 -> 500)', run.stats.armor === 500);
   const leech = shrineOffers().find((o) => o.id === 'leech');
   const ls0 = run.stats.lifesteal || 0; const lh0 = run.maxHp;
   acceptOffer(run, leech);
-  ok('leech boon: -15% HP, +10% lifesteal', run.stats.lifesteal === Math.min(0.6, ls0 + 0.10) && run.maxHp < lh0);
+  ok('leech boon: -15% HP, +100% lifesteal (0.093: x10 with HP)', leech.lifestealAdd === 1 && run.stats.lifesteal === Math.min(leech.lifestealCap, ls0 + 1) && run.maxHp < lh0);
   const bulwark = shrineOffers().find((o) => o.id === 'bulwark');
   const bd0 = run.stats.dmg; const ba0 = run.stats.armor;
   acceptOffer(run, bulwark);
-  ok('bulwark boon: +20% armor (min +5), -10% dmg', run.stats.armor === ba0 + Math.max(5, Math.round(ba0 * 0.2)) && run.stats.dmg === Math.round(bd0 * 0.9));
+  ok('bulwark boon: +20% armor (min +50), -10% dmg', run.stats.armor === ba0 + Math.max(50, Math.round(ba0 * 0.2)) && run.stats.dmg === Math.round(bd0 * 0.9));
   const secondwind = shrineOffers().find((o) => o.id === 'secondwind');
   run.coins = 100; run.hp = 1; const pw0 = run.potions;
   acceptOffer(run, secondwind);
@@ -485,10 +485,10 @@ process.on('uncaughtException', (e) => {
   trainAlchemy('potency');
   const ac1 = alchemyCost('potency');
   const run = createRun();
-  run.hp = 10; run.maxHp = 100; run.potions = 1;
+  run.hp = 100; run.maxHp = 1000; run.potions = 1;
   drinkPotion(run);
-  ok('alchemy: potency cost 60 -> 120, heal +5, applied on drink', h0 === 30 && ac0 === 60 && ac1 === 120
-    && potionHealAmount() === 35 && run.hp === 45 && p.coins === 940);
+  ok('alchemy: potency cost 60 -> 120, heal +50, applied on drink', h0 === 300 && ac0 === 60 && ac1 === 120
+    && potionHealAmount() === 350 && run.hp === 450 && p.coins === 940);
   // Legacy save with stats.alchemy = 3 migrates to alchemy.potency = 3
   const { importSave } = await import('../src/meta/profile.js');
   const old = JSON.parse(JSON.stringify(p));
@@ -551,8 +551,8 @@ process.on('uncaughtException', (e) => {
   ok('breakthrough doubles every 5th level', r === 'breakthrough' && trainedLevel(p, 'power') === 6);
   p.stats.precision = 5; p.stats.endurance = 7; p.stats.vitality = 0;
   const d = derivedStats(p);
-  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - 0.11) < 1e-9 && d.armor === 8
-    && d.dmg === 24 && d.maxHp === 40);
+  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - 0.11) < 1e-9 && d.armor === 80
+    && d.dmg === 24 && d.maxHp === 400);
 }
 
 // T23: alchemy tracks — base costs, efficiency free drinks, infusion temp armor
@@ -566,15 +566,15 @@ process.on('uncaughtException', (e) => {
   getProfile().alchemy.efficiency = 5; // 5 x 0.08 hits the 0.4 cap
   ok('efficiency caps at 40%', Math.abs(efficiencyChance() - 0.4) < 1e-9);
   getProfile().alchemy.infusion = 3;
-  ok('infusion armor = lvl x 2', infusionArmor() === 6);
+  ok('infusion armor = lvl x 20', infusionArmor() === 60);
   const run = createRun();
-  run.hp = 10; run.maxHp = 100; run.potions = 2;
+  run.hp = 100; run.maxHp = 1000; run.potions = 2;
   const origRandom = Math.random;
   Math.random = () => 0.0; // force the efficiency roll to succeed
   const sip = drinkPotion(run);
   Math.random = origRandom;
-  ok('efficiency: potion not consumed', sip.free === true && run.potions === 2 && run.hp === 40);
-  ok('infusion: temp armor applied', sip.armor === 6 && run.tempArmor === 6);
+  ok('efficiency: potion not consumed', sip.free === true && run.potions === 2 && run.hp === 400);
+  ok('infusion: temp armor applied', sip.armor === 60 && run.tempArmor === 60);
   enterNextRoom(run);
   ok('infusion: temp armor clears next room', run.tempArmor === 0);
 }
@@ -674,13 +674,13 @@ process.on('uncaughtException', (e) => {
 
   // Combat: the Heart revives once at half health
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: 'heart_of_the_dying_moon', amulet: null };
-  const run3 = createRun(); // maxHp 50, armor 5, revive true
+  const run3 = createRun(); // maxHp 500, armor 50, revive true
   run3.stats.dmg = 1;
-  const cb3 = createCombat(run3, { enemies: [{ id: 'golem', name: 'Fellblade', maxHp: 500, dmg: 100, xp: 1, coins: [1, 1] }] });
+  const cb3 = createCombat(run3, { enemies: [{ id: 'golem', name: 'Fellblade', maxHp: 500, dmg: 1000, xp: 1, coins: [1, 1] }] });
   Math.random = () => 0.5;
   evs = playerAttack(cb3, 0, false);
   Math.random = origRandom;
-  ok('heart revives at half health, once', run3.revive === false && run3.hp === 25
+  ok('heart revives at half health, once', run3.revive === false && run3.hp === Math.ceil(run3.maxHp / 2)
     && evs.some((e) => e.type === 'revive') && !cb3.over);
 }
 
@@ -753,14 +753,15 @@ process.on('uncaughtException', (e) => {
 
   // Armor floor: a blow always lands at least 15% of its raw damage
   const run = createRun();
-  run.stats.dmg = 1; run.stats.armor = 500;
-  const cb = createCombat(run, { enemies: [{ id: 'golem', name: 'Fellblade', maxHp: 500, dmg: 20, xp: 1, coins: [1, 1] }] });
+  run.stats.dmg = 1; run.stats.armor = 5000;
+  const cb = createCombat(run, { enemies: [{ id: 'golem', name: 'Fellblade', maxHp: 500, dmg: 200, xp: 1, coins: [1, 1] }] });
   const origRandom = Math.random;
-  Math.random = () => 0.5; // raw = 21; floor = ceil(3.15) = 4 beats 21-500
+  Math.random = () => 0.5; // raw = 200 + floor(0.5 x 21) = 210; the floor share of it beats 210-5000
   const evs = playerAttack(cb, 0, false);
   Math.random = origRandom;
   const hit = evs.find((e) => e.type === 'dmg');
-  ok('armor soaks at most 85% of a blow', hit && hit.taken === 4);
+  const floorPct = DATA.difficulty.combat.armorMinTakenPct;
+  ok('armor soaks at most 83% of a blow (floor 17%, 0.093)', floorPct === 0.17 && hit && hit.taken === Math.ceil(210 * floorPct), hit?.taken);
 
   titleScene().enter(registry.app);
   ok('title dialog carries the low-dock class',
@@ -1559,16 +1560,20 @@ process.on('uncaughtException', (e) => {
   DATA.difficulty.bossEvery = every;
   for (let g = 0; g < 3; g++) { handleKey('a'); await sleep(900); } // let timers settle
 
-  // Big-hit sway (0.092): directional, damped, ends; pan shoves the art.
+  // Big-hit sway (0.092; a rotation about the depth centre since 0.093):
+  // directional, damped, ends, and subtle.
   const bm = await import('../src/core/bg3dMath.js');
   const bg3d = await import('../src/core/bg3d.js');
-  const sw = (dir, ms) => bm.swayOffset([{ t0: 0, amp: 0.04, dir }], ms);
-  ok('sway starts at rest and goes WITH the blow', sw(1, 0) === 0 && sw(1, 100) > 0.02 && sw(-1, 100) < -0.02);
+  const sw = (dir, ms) => bm.swayOffset([{ t0: 0, amp: 0.03, dir }], ms);
+  ok('sway starts at rest and goes WITH the blow', sw(1, 0) === 0 && sw(1, 100) > 0.015 && sw(-1, 100) < -0.015);
   ok('sway rebounds smaller, then ends', sw(1, 450) < 0 && Math.abs(sw(1, 450)) < sw(1, 120) * 0.5 && sw(1, bm.SWAY_LIFE_MS + 1) === 0);
   const pc = bg3d.tuning('');
   const aspect = 16 / 9, fov = (pc.fovDeg * Math.PI) / 180;
-  const shift = (d) => bm.projectVertex(bm.mvp(0, 0, fov, aspect, 0.03), 0.5, 0.5, d, aspect, pc)[0];
-  ok('positive pan moves the art right, near more than far', shift(0) > 0 && shift(1) > shift(0));
+  const peak = (pc.swayDeg * Math.PI) / 180 * 0.64; // strength-1 peak
+  const shift = (d) => bm.projectVertex(bm.mvp(peak, 0, fov, aspect), 0.5, 0.5, d, aspect, pc)[0];
+  ok('+ sway rotates about the depth centre: near art right, far left, pivot still',
+    shift(1) > 0 && shift(0) < 0 && Math.abs(shift(pc.pivot)) < 1e-6);
+  ok('...and stays subtle (near art moves < 1.5% of the screen)', shift(1) * 50 < 1.5, `${(shift(1) * 50).toFixed(2)}%`);
   ok('bgSway is a no-op without WebGL', bg3d.bgSway(1, 1) === undefined);
   ok('enemy hits carry their share of max HP', fxFor({ type: 'dmg', source: 0, taken: 30 }, { maxHp: 120 }).share === 0.25);
   const fxSrc = readFileSync('src/ui/combatFx.js', 'utf8');

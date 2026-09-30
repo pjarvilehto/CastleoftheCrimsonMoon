@@ -27,7 +27,7 @@
     "castle_throne_room.jpg": "The Throne Room"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayPan = the sideways shove on the biggest blows (0.092; crits, SMASH, multi-kills swing it right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite).",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite).",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -36,10 +36,10 @@
     "yawPeriodS": 22,
     "pitchPeriodS": 31,
     "joltDeg": 0.6,
-    "swayPan": 0.04,
+    "swayDeg": 1.6,
     "swayHitShare": 0.15,
     "fovDeg": 40,
-    "overscan": 0.14,
+    "overscan": 0.09,
     "grid": [
       256,
       144

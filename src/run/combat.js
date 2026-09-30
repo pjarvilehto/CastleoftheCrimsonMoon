@@ -124,7 +124,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   // enemy phase
   for (const enemy of living(combat)) {
     const source = combat.enemies.indexOf(enemy); // who acts, for the UI
-    const raw = enemy.dmg + Math.floor(Math.random() * ((tune.enemyDmgJitter ?? 2) + 1));
+    const raw = enemy.dmg + Math.floor(Math.random() * ((tune.enemyDmgJitter ?? 20) + 1));
     // T4 relic: dodge — the blow misses entirely.
     if (!DEBUG.invulnerable && (combat.run.stats.dodge ?? 0) > 0 && Math.random() < combat.run.stats.dodge) {
       push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
@@ -132,10 +132,12 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     }
     // Testing switch (corner toggle): player shrugs off all damage.
     const armor = combat.run.stats.armor + (combat.run.tempArmor ?? 0); // Infusion potions
-    // Armor soaks at most 85% of a blow (0.062): stacked Endurance + relic
-    // plates used to reduce deep-room enemies to 0-1 dmg, removing all
-    // pressure. The floor scales with the hit, so deep foes stay dangerous.
-    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * (tune.armorMinTakenPct ?? 0.15)), raw - armor);
+    // Armor soaks at most 83% of a blow (0.062; 85% until 0.093): stacked
+    // Endurance + relic plates used to reduce deep-room enemies to 0-1 dmg,
+    // removing all pressure. The floor scales with the hit, so deep foes
+    // stay dangerous. (0.093: the x10 HP scale made the floor's ceil() much
+    // finer — 17% keeps the old effective floor.)
+    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * (tune.armorMinTakenPct ?? 0.17)), raw - armor);
     combat.run.hp = Math.max(0, combat.run.hp - taken);
     push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
     // T4 relic: thorns wound the attacker — but never finish it (kill/loot

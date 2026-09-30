@@ -113,6 +113,10 @@ music beds and SFX (gesture-gated AudioContext).
 
 ## Conventions cheat-sheet
 
+- HP scale (0.093): player HP, enemy damage, armor, potion heals and
+  lifesteal % are 10x their pre-0.093 values (so hits read like the
+  player's damage); enemy HP and player damage were not scaled. Keep new
+  numbers on the same scale (e.g. a +3 armor idea is +30 now).
 - New enemy → `enemies.json` (tier 1–3) + `assets/chars/<id>.webp` (alpha, q85 — 0.078); room
   generation, scaling, LV naming, and the card portrait pick it up.
 - New item → `items.json` with slot + tier; loot/equipment/salvage follow.
@@ -134,9 +138,10 @@ music beds and SFX (gesture-gated AudioContext).
   copies JSON — when the owner sends that JSON, put the values into
   `backgrounds.json` `parallax` to make them the default for everyone).
   The skirt (overscan) now grows automatically for larger sway.
-- Big-hit sway (0.092): `parallax.swayPan` / `swayHitShare` in
-  backgrounds.json; crits, SMASH and multi-kills shove the art right,
-  hits on the knight worth >= swayHitShare of max HP shove it left.
+- Big-hit sway (0.092; a rotation about the depth centre since 0.093):
+  `parallax.swayDeg` / `swayHitShare` in backgrounds.json; crits, SMASH
+  and multi-kills rock the near art right, hits on the knight worth
+  >= swayHitShare of max HP rock it left.
 - Boss summons (0.092): `difficulty.json boss.summon` (every N turns,
   enemy, maxAlive, hp/dmg scale, depthBonus). Summons give no rewards.
   `node tools/simulate.mjs --tactic suggested|boss|summons` compares

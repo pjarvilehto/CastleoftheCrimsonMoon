@@ -86,8 +86,9 @@ src/
     │                     snapshot plays with its line; owns printing lock)
     ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
     │                     bg jolts (heavy blows) and directional bg SWAYS
-    │                     (0.092: crits/SMASH/multi-kills swing the art
-    │                     right, crushing hits on the knight swing it left)
+    │                     (0.092/0.093: a rocking rotation about the depth
+    │                     centre — crits/SMASH/multi-kills swing the near
+    │                     art right, crushing hits on the knight left)
     ├── particles.js      particle bursts by material (0.089), one canvas
     ├── battleLine.js     persistent units (0.086: built once per room,
     │                     update() patches HP/dead/buttons in place;

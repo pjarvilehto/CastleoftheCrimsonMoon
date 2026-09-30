@@ -19,16 +19,18 @@ export function equippedItemIds(eq) {
   return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet].filter(Boolean);
 }
 
-// Rough "is this an upgrade" ordering: tier first, then total stat value.
+// Rough "is this an upgrade" ordering: tier first, then total stat value
+// (weights in difficulty.json itemValue since 0.093).
 export function itemValue(id) {
   const it = DATA.items[id];
   if (!it) return -1;
-  return it.tier * 100
-    + (it.dmg || 0) * 4
-    + (it.armor || 0) * 4
-    + (it.hp || 0) * 0.5
-    + (it.lifesteal || 0) * 200
-    + (it.crit || 0) * 100;
+  const w = DATA.difficulty.itemValue ?? {};
+  return it.tier * (w.tier ?? 100)
+    + (it.dmg || 0) * (w.dmg ?? 4)
+    + (it.armor || 0) * (w.armor ?? 0.4)
+    + (it.hp || 0) * (w.hp ?? 0.05)
+    + (it.lifesteal || 0) * (w.lifesteal ?? 20)
+    + (it.crit || 0) * (w.crit ?? 100);
 }
 
 export function salvageValue(id) {

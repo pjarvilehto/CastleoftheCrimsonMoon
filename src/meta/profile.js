@@ -193,9 +193,9 @@ export function derivedStats(p = getProfile()) {
 
   return {
     // 0.072: hpPerVitality was 12 — HP stacking out-scaled everything
-    maxHp: (pl.baseHp ?? 40) + trainedLevel(p, 'vitality') * (pl.hpPerVitality ?? 9) + gearHp,
+    maxHp: (pl.baseHp ?? 400) + trainedLevel(p, 'vitality') * (pl.hpPerVitality ?? 90) + gearHp,
     dmg: (pl.baseDmg ?? 6) + trainedLevel(p, 'power') * (pl.dmgPerPower ?? 3) + gearDmg,
-    armor: trainedLevel(p, 'endurance') * (pl.armorPerEndurance ?? 1) + gearArmor,
+    armor: trainedLevel(p, 'endurance') * (pl.armorPerEndurance ?? 10) + gearArmor,
     crit: Math.min(pl.critCap ?? 0.6, crit),
     lifesteal,
     dodge,

@@ -3,7 +3,7 @@
     "name": "Giant Rat",
     "tier": 1,
     "hp": 14,
-    "dmg": 4,
+    "dmg": 40,
     "xp": 6,
     "coins": [
       3,
@@ -14,7 +14,7 @@
     "name": "Cave Shrieker",
     "tier": 1,
     "hp": 10,
-    "dmg": 3,
+    "dmg": 30,
     "xp": 5,
     "coins": [
       2,
@@ -25,7 +25,7 @@
     "name": "Skeleton",
     "tier": 1,
     "hp": 22,
-    "dmg": 6,
+    "dmg": 60,
     "xp": 10,
     "coins": [
       6,
@@ -36,7 +36,7 @@
     "name": "Cinderborn",
     "tier": 2,
     "hp": 34,
-    "dmg": 9,
+    "dmg": 90,
     "xp": 16,
     "coins": [
       10,
@@ -47,7 +47,7 @@
     "name": "Cult Acolyte",
     "tier": 2,
     "hp": 28,
-    "dmg": 12,
+    "dmg": 120,
     "xp": 18,
     "coins": [
       12,
@@ -58,7 +58,7 @@
     "name": "Fellblade",
     "tier": 3,
     "hp": 70,
-    "dmg": 14,
+    "dmg": 140,
     "xp": 30,
     "coins": [
       20,
@@ -69,7 +69,7 @@
     "name": "Wraith",
     "tier": 3,
     "hp": 46,
-    "dmg": 17,
+    "dmg": 170,
     "xp": 34,
     "coins": [
       22,
@@ -80,7 +80,7 @@
     "name": "Gargoyle",
     "tier": 3,
     "hp": 58,
-    "dmg": 15,
+    "dmg": 150,
     "xp": 32,
     "coins": [
       18,
@@ -91,7 +91,7 @@
     "name": "Vampire Lord",
     "tier": 3,
     "hp": 140,
-    "dmg": 19,
+    "dmg": 190,
     "xp": 90,
     "coins": [
       70,
@@ -103,7 +103,7 @@
     "name": "Crypt Spider",
     "tier": 1,
     "hp": 12,
-    "dmg": 5,
+    "dmg": 50,
     "xp": 7,
     "coins": [
       3,
@@ -114,7 +114,7 @@
     "name": "Hollow Hound",
     "tier": 2,
     "hp": 30,
-    "dmg": 11,
+    "dmg": 110,
     "xp": 17,
     "coins": [
       11,
@@ -125,7 +125,7 @@
     "name": "Blood Knight",
     "tier": 3,
     "hp": 64,
-    "dmg": 16,
+    "dmg": 160,
     "xp": 33,
     "coins": [
       20,

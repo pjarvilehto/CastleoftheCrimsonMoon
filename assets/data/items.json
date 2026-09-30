@@ -21,32 +21,32 @@
     "name": "Oak Shield",
     "slot": "armor",
     "tier": 1,
-    "armor": 3
+    "armor": 30
   },
   "plate_armor": {
     "name": "Plate Armor",
     "slot": "armor",
     "tier": 2,
-    "armor": 8
+    "armor": 80
   },
   "dragonscale_mail": {
     "name": "Dragonscale Mail",
     "slot": "armor",
     "tier": 3,
-    "armor": 14
+    "armor": 140
   },
   "traveler_boots": {
     "name": "Traveler's Boots",
     "slot": "boots",
     "tier": 1,
-    "hp": 8
+    "hp": 80
   },
   "knights_greaves": {
     "name": "Knight's Greaves",
     "slot": "boots",
     "tier": 2,
-    "armor": 3,
-    "hp": 10
+    "armor": 30,
+    "hp": 100
   },
   "ring_of_might": {
     "name": "Ring of Might",
@@ -58,13 +58,13 @@
     "name": "Vampiric Ring",
     "slot": "ring",
     "tier": 2,
-    "lifesteal": 0.1
+    "lifesteal": 1
   },
   "ring_of_protection": {
     "name": "Ring of Protection",
     "slot": "ring",
     "tier": 2,
-    "armor": 4
+    "armor": 40
   },
   "lucky_charm": {
     "name": "Lucky Charm",
@@ -83,28 +83,28 @@
     "name": "Moonstriders",
     "slot": "boots",
     "tier": 3,
-    "armor": 4,
-    "hp": 14
+    "armor": 40,
+    "hp": 140
   },
   "fang_of_the_crimson_moon": {
     "name": "Fang of the Crimson Moon",
     "slot": "trinket",
     "tier": 3,
     "crit": 0.1,
-    "lifesteal": 0.06
+    "lifesteal": 0.6
   },
   "amulet_of_vigor": {
     "name": "Amulet of Vigor",
     "slot": "amulet",
     "tier": 1,
-    "hp": 15
+    "hp": 150
   },
   "amulet_of_the_crimson_moon": {
     "name": "Amulet of the Crimson Moon",
     "slot": "amulet",
     "tier": 3,
     "dmg": 6,
-    "lifesteal": 0.05
+    "lifesteal": 0.5
   },
   "ritual_dagger": {
     "name": "Ritual Dagger",
@@ -118,14 +118,14 @@
     "slot": "weapon",
     "tier": 3,
     "dmg": 12,
-    "lifesteal": 0.08
+    "lifesteal": 0.8
   },
   "boneplate": {
     "name": "Boneplate",
     "slot": "armor",
     "tier": 2,
-    "armor": 6,
-    "hp": 10
+    "armor": 60,
+    "hp": 100
   },
   "ring_of_the_blood_moon": {
     "name": "Ring of the Blood Moon",
@@ -138,8 +138,8 @@
     "name": "Amulet of the Leech",
     "slot": "amulet",
     "tier": 2,
-    "lifesteal": 0.08,
-    "hp": 8
+    "lifesteal": 0.8,
+    "hp": 80
   },
   "moonbrand": {
     "name": "Moonbrand",
@@ -152,21 +152,21 @@
     "name": "Crimson Plate",
     "slot": "armor",
     "tier": 3,
-    "armor": 11,
-    "hp": 20
+    "armor": 110,
+    "hp": 200
   },
   "wraithwalkers": {
     "name": "Wraithwalkers",
     "slot": "boots",
     "tier": 3,
-    "armor": 2,
-    "hp": 22
+    "armor": 20,
+    "hp": 220
   },
   "ring_of_the_eclipse": {
     "name": "Ring of the Eclipse",
     "slot": "ring",
     "tier": 3,
-    "lifesteal": 0.12,
+    "lifesteal": 1.2,
     "crit": 0.05
   },
   "bloodstone_band": {
@@ -174,22 +174,22 @@
     "slot": "ring",
     "tier": 3,
     "dmg": 7,
-    "hp": 10
+    "hp": 100
   },
   "relic_of_the_first_knight": {
     "name": "Relic of the First Knight",
     "slot": "trinket",
     "tier": 3,
     "dmg": 4,
-    "armor": 4,
-    "hp": 10
+    "armor": 40,
+    "hp": 100
   },
   "amulet_of_the_blood_moon": {
     "name": "Amulet of the Blood Moon",
     "slot": "amulet",
     "tier": 3,
-    "lifesteal": 0.12,
-    "hp": 10
+    "lifesteal": 1.2,
+    "hp": 100
   },
   "fang_of_the_eclipse": {
     "name": "Fang of the Eclipse",
@@ -203,16 +203,16 @@
     "name": "Bloodmoon Aegis",
     "slot": "armor",
     "tier": 4,
-    "armor": 16,
-    "hp": 20,
+    "armor": 160,
+    "hp": 200,
     "thorns": 4
   },
   "umbral_treads": {
     "name": "Umbral Treads",
     "slot": "boots",
     "tier": 4,
-    "armor": 6,
-    "hp": 16,
+    "armor": 60,
+    "hp": 160,
     "dodge": 0.08
   },
   "ring_of_the_red_veil": {
@@ -227,23 +227,23 @@
     "slot": "ring",
     "tier": 4,
     "dmg": 6,
-    "hp": 8,
-    "lifesteal": 0.08
+    "hp": 80,
+    "lifesteal": 0.8
   },
   "heart_of_the_dying_moon": {
     "name": "Heart of the Dying Moon",
     "slot": "trinket",
     "tier": 4,
-    "hp": 10,
-    "armor": 5,
+    "hp": 100,
+    "armor": 50,
     "revive": 1
   },
   "amulet_of_the_blood_eclipse": {
     "name": "Amulet of the Blood Eclipse",
     "slot": "amulet",
     "tier": 4,
-    "hp": 12,
-    "armor": 4,
-    "lifesteal": 0.1
+    "hp": 120,
+    "armor": 40,
+    "lifesteal": 1
   }
 }

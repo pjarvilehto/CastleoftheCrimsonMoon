@@ -91,7 +91,7 @@ export function hubScene() {
 
     // ---- ALCHEMY: potions + three coin tracks. ----
     const alchemyDesc = {
-      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel ?? 5} potion healing per level (now ${potionHealAmount()} HP)`,
+      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel ?? 50} potion healing per level (now ${potionHealAmount()} HP)`,
       efficiency: () => `chance a potion is not consumed (now ${Math.round(efficiencyChance() * 100)}%)`,
       infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
     };

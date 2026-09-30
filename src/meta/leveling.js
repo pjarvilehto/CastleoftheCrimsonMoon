@@ -23,8 +23,8 @@ export function statDesc(stat, currentLevel) {
   const pl = DATA.difficulty.player ?? {};
   switch (stat) {
     case 'power': return `+${pl.dmgPerPower ?? 3} damage per level`;
-    case 'vitality': return `+${pl.hpPerVitality ?? 9} max HP per level`;
-    case 'endurance': return `+${pl.armorPerEndurance ?? 1} armor per level`;
+    case 'vitality': return `+${pl.hpPerVitality ?? 90} max HP per level`;
+    case 'endurance': return `+${pl.armorPerEndurance ?? 10} armor per level`;
     case 'precision': return precisionDesc(currentLevel);
     default: return 'Better loot drops';
   }
@@ -139,8 +139,8 @@ export function trainAlchemy(track) {
 
 export function potionHealAmount() {
   const p = getProfile();
-  return (DATA.difficulty.potionHeal ?? 30)
-    + (p.alchemy.potency ?? 0) * (trackData('potency').healPerLevel ?? 5);
+  return (DATA.difficulty.potionHeal ?? 300)
+    + (p.alchemy.potency ?? 0) * (trackData('potency').healPerLevel ?? 50);
 }
 
 // Chance a drunk potion is not consumed.
@@ -153,7 +153,7 @@ export function efficiencyChance() {
 // Temporary armor granted per potion (lasts until the room ends).
 export function infusionArmor() {
   const p = getProfile();
-  return (p.alchemy.infusion ?? 0) * (trackData('infusion').armorPerLevel ?? 2);
+  return (p.alchemy.infusion ?? 0) * (trackData('infusion').armorPerLevel ?? 20);
 }
 
 // ---- The Forge (coins): enhance equipped items ----
