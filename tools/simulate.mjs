@@ -9,6 +9,9 @@
 //   node tools/simulate.mjs                 # 40 runs, seed 1
 //   node tools/simulate.mjs --runs 100 --seed 7
 //   node tools/simulate.mjs --verbose       # per-run lines
+//   node tools/simulate.mjs --retreat       # bot banks the run when it's risky
+//   node tools/simulate.mjs --seeds 1-8     # 8 independent campaigns, mean ± sd
+//   (per-boon shrine balance: node tools/shrine-study.mjs)
 //
 // The bot policy (a competent, greedy player):
 //   combat:  potion below 40% HP, heavy attack whenever off cooldown,
@@ -20,234 +23,34 @@
 //              it has 2x the price, then alchemy round-robin, then forge
 //            equipped T2+ gear (keeps a 2x reserve so one buy never bankrupts)
 
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { loadSim, withSeed, newAgg, STAT_PRIORITY } from './simCore.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-// ── Standalone shims (the smoke suite provides its own richer versions) ──
-if (!globalThis.localStorage) {
-  const s = {};
-  globalThis.localStorage = {
-    getItem: (k) => s[k] ?? null,
-    setItem: (k, v) => { s[k] = v; },
-    removeItem: (k) => { delete s[k]; },
-  };
-}
-if (!globalThis.document) {
-  // itemName() builds a span for relic log lines; the sim throws logs away.
-  // el() type-checks with `instanceof Node`, so the stub must BE Node.
-  class StubEl {
-    constructor(tag) {
-      this.tagName = tag; this.className = ''; this.textContent = '';
-      this.children = []; this.attrs = {}; this.style = {};
-    }
-    setAttribute(k, v) { this.attrs[k] = v; }
-    addEventListener() {}
-    append(...kids) { this.children.push(...kids); }
-  }
-  globalThis.Node = StubEl;
-  globalThis.document = {
-    createElement: (tag) => new StubEl(tag),
-    createTextNode: (t) => ({ text: t }),
-  };
-}
-// Node 20+ has a global fetch (undici) that rejects the game's relative
-// asset URLs — always replace it with a file loader rooted at the repo.
-globalThis.fetch = async (url) => ({
-  ok: true,
-  json: async () => JSON.parse(readFileSync(join(ROOT, String(url)), 'utf8')),
-});
-
-// ── Deterministic RNG (mulberry32) ──
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'crit', 'armor', 'greed', 'glasscannon'];
-const STAT_PRIORITY = ['vitality', 'power', 'endurance', 'precision', 'fortune'];
-const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
-
-export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
-  const { loadData, DATA } = await import('../src/shared/data.js');
-  if (!DATA.difficulty) await loadData();
-
-  const origRandom = Math.random;
-  Math.random = mulberry32(seed);
-  try {
-    const { getProfile, resetProfile, derivedStats } = await import('../src/meta/profile.js');
-    const {
-      canAfford, buyStat, restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-      alchemyCost, trainAlchemy, forgeCost, forgeMaxed, forgeItem,
-    } = await import('../src/meta/leveling.js');
-    const { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } = await import('../src/run/runState.js');
-    const { createCombat, playerAttack, canHeavy, useHeavy } = await import('../src/run/combat.js');
-    const { dealOffers, canAffordOffer, acceptOffer } = await import('../src/run/shrine.js');
-
-    resetProfile();
-    const p = getProfile();
-    const noop = () => {};
-
-    const agg = {
-      runs: [],
-      depths: [],
-      deathRooms: {},            // room number -> deaths
-      deathKinds: {},            // room kind -> deaths
-      itemsByTier: { 1: 0, 2: 0, 3: 0, 4: 0 },
-      relicRooms: [],            // room where each T4 dropped
-      relicGateViolations: 0,    // T4 before t4MinRoom — must stay 0
-      potionsDrunk: 0,
-      potionsFound: 0,
-      shrinesTaken: 0,
-      shrineRoomsSeen: 0,
-      heavyUses: 0,
-      attacks: 0,
-      dmgTakenByBand: {},        // depth band -> { taken, zeroHits, hits }
-      xpSpent: {},               // stat -> levels bought
-      coinsSpent: { potions: 0, satchel: 0, alchemy: 0, forge: 0 },
-      bankedByRun: [],
-      statLevelsByRun: [],
-    };
-    const t4MinRoom = DATA.difficulty.t4MinRoom ?? 11;
-    agg.potionDropChance = DATA.difficulty.potionDropChance ?? 0.05;
-
-    function band(roomNumber) {
-      return roomNumber <= 5 ? '1-5' : roomNumber <= 10 ? '6-10' : roomNumber <= 15 ? '11-15' : roomNumber <= 20 ? '16-20' : '21+';
-    }
-
-    function playOneRun() {
-      const run = createRun();
-      const rec = { depth: 0, kills: 0, coins: 0, xp: 0, relics: 0, outcome: 'death' };
-      while (!run.over) {
-        const room = enterNextRoom(run);
-        if (room.kind === 'shrine') {
-          agg.shrineRoomsSeen += 1;
-          const dealt = dealOffers(); // the game's own deal (run/shrine.js)
-          const pick = SHRINE_PRIORITY.map((id) => dealt.find((o) => o.id === id))
-            .find((o) => o && canAffordOffer(run, o));
-          if (pick) { acceptOffer(run, pick); agg.shrinesTaken += 1; }
-          continue;
-        }
-        // combat / boss room
-        const combat = createCombat(run, room);
-        while (!combat.over) {
-          if (run.potions > 0 && run.hp / run.maxHp < 0.4) {
-            if (drinkPotion(run)) agg.potionsDrunk += 1;
-          }
-          const idx = combat.enemies.findIndex((e) => e.hp > 0);
-          if (idx === -1) break;
-          const heavy = canHeavy(combat);
-          if (heavy) { useHeavy(combat); agg.heavyUses += 1; }
-          agg.attacks += 1;
-          const events = playerAttack(combat, idx, heavy);
-          for (const ev of events) {
-            if (ev.type === 'kill' && ev.enemy) {
-              const before = run.itemsFound.length;
-              const potionsBefore = run.potions;
-              applyLoot(run, ev.enemy, noop);
-              if (run.potions > potionsBefore) agg.potionsFound += 1;
-              for (const id of run.itemsFound.slice(before)) {
-                const tier = DATA.items[id].tier;
-                agg.itemsByTier[tier] += 1;
-                if (tier === 4) {
-                  rec.relics += 1;
-                  agg.relicRooms.push(run.roomNumber);
-                  if (run.roomNumber < t4MinRoom) agg.relicGateViolations += 1;
-                }
-              }
-            } else if (ev.type === 'dmg') {
-              const b = agg.dmgTakenByBand[band(run.roomNumber)] ||= { taken: 0, hits: 0, zeroHits: 0 };
-              b.taken += ev.taken; b.hits += 1;
-              if (ev.taken === 0) b.zeroHits += 1;
-            }
-          }
-        }
-        rec.depth = run.roomNumber;
-        if (!combat.victory) break; // died — run.over set at settle
-      }
-      rec.kills = run.kills;
-      rec.coins = run.coins;
-      rec.xp = run.xp;
-      const dead = !run.room || run.hp <= 0;
-      settleRun(run, dead ? 'death' : 'retreat');
-      agg.runs.push(rec);
-      agg.depths.push(rec.depth);
-      if (dead) {
-        const rn = run.roomNumber;
-        agg.deathRooms[rn] = (agg.deathRooms[rn] ?? 0) + 1;
-        const kind = run.room?.kind ?? 'unknown';
-        agg.deathKinds[kind] = (agg.deathKinds[kind] ?? 0) + 1;
-      }
-      return rec;
-    }
-
-    function spendInHub() {
-      // XP disciplines: round-robin by priority until nothing is affordable.
-      for (let guard = 0; guard < 200; guard++) {
-        const stat = STAT_PRIORITY.find((s) => canAfford(s));
-        if (!stat) break;
-        buyStat(stat);
-        agg.xpSpent[stat] = (agg.xpSpent[stat] ?? 0) + 1;
-      }
-      // Coins: potions to the cap (persistent stock since 0.080), satchel
-      // upgrades at 2x price, alchemy round-robin, forge equipped T2+ gear.
-      while (!satchelFull(p) && p.coins >= potionCost()) {
-        const c = potionCost();
-        restockPotion();
-        agg.coinsSpent.potions += c;
-      }
-      while (!satchelMaxed(p) && p.coins >= satchelCost(p) * 2) {
-        const c = satchelCost(p);
-        expandSatchel();
-        agg.coinsSpent.satchel += c;
-        while (!satchelFull(p) && p.coins >= potionCost()) {
-          agg.coinsSpent.potions += potionCost();
-          restockPotion();
-        }
-      }
-      for (let guard = 0; guard < 60; guard++) {
-        const track = ALCHEMY_PRIORITY.find((t) => p.coins >= alchemyCost(t) * 2);
-        if (!track) break;
-        const c = alchemyCost(track);
-        trainAlchemy(track);
-        agg.coinsSpent.alchemy += c;
-      }
-      const eq = p.equipment;
-      const equipped = [eq.weapon, eq.armor, eq.boots, ...(eq.rings ?? []), eq.trinket, eq.amulet].filter(Boolean);
-      for (const id of equipped) {
-        if ((DATA.items[id]?.tier ?? 1) >= 2 && !forgeMaxed(id) && p.coins >= forgeCost(id) * 2) {
-          const c = forgeCost(id);
-          forgeItem(id);
-          agg.coinsSpent.forge += c;
-        }
-      }
-      agg.bankedByRun.push(p.coins);
-      agg.statLevelsByRun.push({ ...p.stats });
-    }
-
+// One campaign: a fresh profile plays `runs` runs, spending in the hub
+// between them. (Engine + policies live in simCore.mjs since 0.091.)
+export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false } = {}) {
+  const sim = await loadSim();
+  const agg = newAgg();
+  const t4MinRoom = sim.DATA.difficulty.t4MinRoom ?? 11;
+  agg.potionDropChance = sim.DATA.difficulty.potionDropChance ?? 0.05;
+  return withSeed(seed, () => {
+    sim.fresh();
     for (let r = 0; r < runs; r++) {
-      const rec = playOneRun();
+      const rec = sim.playRun({ agg, retreat });
       if (verbose) {
-        console.log(`run ${String(r + 1).padStart(2)}: depth ${String(rec.depth).padStart(2)}, kills ${rec.kills}, coins ${rec.coins}, xp ${rec.xp}, relics ${rec.relics}`);
+        console.log(`run ${String(r + 1).padStart(2)}: depth ${String(rec.depth).padStart(2)}, ${rec.outcome}, kills ${rec.kills}, coins ${rec.coins}, xp ${rec.xp}, relics ${rec.relics}, boon ${rec.boon ?? '-'}`);
       }
-      spendInHub();
+      sim.spendInHub(agg);
     }
+    const p = sim.getProfile();
     agg.finalStats = { ...p.stats };
     agg.finalCoins = p.coins;
-    agg.finalDerived = derivedStats(p);
+    agg.finalDerived = sim.derivedStats(p);
     agg.t4MinRoom = t4MinRoom;
     agg.alchemy = { ...p.alchemy };
     agg.potionCap = p.potionCap;
     return agg;
-  } finally {
-    Math.random = origRandom;
-  }
+  });
 }
 
 // ── Balance smell detector ──
@@ -343,6 +146,11 @@ export function renderReport(agg, { runs, seed }) {
   const killers = Object.entries(agg.deathRooms).sort((a, b) => b[1] - a[1]).slice(0, 6);
   push(`- top killer rooms: ${killers.map(([r, n]) => `room ${r} ×${n}`).join(', ') || '—'}`);
   push(`- deaths by room kind: ${Object.entries(agg.deathKinds).map(([k, n]) => `${k} ×${n}`).join(', ') || '—'}`);
+  const killersBy = Object.entries(agg.deathBy).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  push(`- deadliest enemies (final blow): ${killersBy.map(([id, n]) => `${id} ×${n}`).join(', ') || '—'}`);
+  const bosses = Object.keys(agg.bossSeen).map(Number).sort((a, b) => a - b);
+  push(`- boss clear rate: ${bosses.map((r) => `room ${r} ${agg.bossBeaten[r] ?? 0}/${agg.bossSeen[r]} (${Math.round(100 * (agg.bossBeaten[r] ?? 0) / agg.bossSeen[r])}%)`).join(' | ') || '—'}`);
+  if (agg.retreats) push(`- retreats: ${agg.retreats}/${agg.runs.length} runs banked their purse`);
   push();
   push(`## Earnings (per run)`);
   const avg = (f) => (agg.runs.reduce((s, r) => s + f(r), 0) / agg.runs.length).toFixed(1);
@@ -367,9 +175,9 @@ export function renderReport(agg, { runs, seed }) {
   }).join(' | ')}`);
   push();
   push(`## Combat texture`);
-  push(`- attacks: ${agg.attacks} (heavy ${agg.heavyUses}, ${(100 * agg.heavyUses / Math.max(1, agg.attacks)).toFixed(0)}%)`);
+  push(`- attacks: ${agg.attacks} (heavy ${agg.heavyUses}, ${(100 * agg.heavyUses / Math.max(1, agg.attacks)).toFixed(0)}%), avg ${(agg.turns / Math.max(1, agg.combatRooms)).toFixed(1)} turns per combat room`);
   push(`- potions: drunk ${agg.potionsDrunk}, found ${agg.potionsFound}, bought ${agg.coinsSpent.potions > 0 ? 'yes (see coins)' : 'no'}`);
-  push(`- shrines: ${agg.shrinesTaken}/${agg.shrineRoomsSeen} taken`);
+  push(`- shrines: ${agg.shrinesTaken}/${agg.shrineRoomsSeen} taken (${Object.entries(agg.boonsTaken).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${id} ${n}`).join(', ') || '—'})`);
   for (const [b, x] of Object.entries(agg.dmgTakenByBand)) {
     push(`- depth ${b}: avg ${(x.taken / Math.max(1, x.hits)).toFixed(1)} dmg/hit over ${x.hits} hits (${(100 * x.zeroHits / Math.max(1, x.hits)).toFixed(0)}% zero-damage)`);
   }
@@ -378,6 +186,45 @@ export function renderReport(agg, { runs, seed }) {
   if (!flags.length) push('- none — no obvious smells');
   for (const f of flags) push(`- [${f.level}] ${f.text}`);
   return lines.join('\n');
+}
+
+// ── Multi-seed summary: independent campaigns, mean ± sd per metric ──
+export async function multiSeed(seeds, { runs = 40, retreat = false } = {}) {
+  const rows = [];
+  for (const seed of seeds) {
+    const agg = await simulate({ runs, seed, retreat });
+    const { median, mean } = analyze(agg);
+    const rate = (r) => (agg.bossSeen[r] ? (agg.bossBeaten[r] ?? 0) / agg.bossSeen[r] : NaN);
+    const early = agg.depths.slice(0, 10);
+    rows.push({
+      seed, median, mean,
+      early: early.reduce((x, y) => x + y, 0) / early.length,
+      late: agg.depths.slice(-10).reduce((x, y) => x + y, 0) / Math.min(10, agg.depths.length),
+      boss8: rate(8), boss16: rate(16), boss24: rate(24),
+      coins: agg.runs.reduce((x, r) => x + r.coins, 0) / agg.runs.length,
+      banked: agg.runs.reduce((x, r) => x + (r.banked ?? 0), 0) / agg.runs.length,
+      turns: agg.turns / Math.max(1, agg.combatRooms),
+    });
+  }
+  return rows;
+}
+
+export function renderMultiSeed(rows, { runs, retreat }) {
+  const keys = ['median', 'mean', 'early', 'late', 'boss8', 'boss16', 'boss24', 'coins', 'banked', 'turns'];
+  const fmt = (k, v) => (Number.isNaN(v) ? '  —  ' : k.startsWith('boss') ? `${Math.round(v * 100)}%` : v.toFixed(1));
+  const stat = (k) => {
+    const v = rows.map((r) => r[k]).filter((x) => !Number.isNaN(x));
+    const m = v.reduce((a, b) => a + b, 0) / v.length;
+    const sd = Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, v.length - 1));
+    return k.startsWith('boss') ? `${Math.round(m * 100)}% ± ${Math.round(sd * 100)}` : `${m.toFixed(1)} ± ${sd.toFixed(1)}`;
+  };
+  const out = [`# Balance — ${rows.length} campaigns × ${runs} runs${retreat ? ' (bot retreats when risky)' : ' (bot pushes until death)'}`, '',
+    '| seed | ' + keys.join(' | ') + ' |', '|' + '---|'.repeat(keys.length + 1)];
+  for (const r of rows) out.push(`| ${r.seed} | ${keys.map((k) => fmt(k, r[k])).join(' | ')} |`);
+  out.push(`| **mean ± sd** | ${keys.map(stat).join(' | ')} |`, '',
+    'median/mean = run depth; early/late = avg depth of the first/last 10 runs; bossN = clear rate of the room-N boss;',
+    'coins = earned per run; banked = carried home after the death toll; turns = avg player turns per combat room.');
+  return out.join('\n');
 }
 
 // ── CLI ──
@@ -390,6 +237,14 @@ if (invokedDirectly) {
   const runs = Number(arg('runs', 40));
   const seed = Number(arg('seed', 1));
   const verbose = process.argv.includes('--verbose');
-  const agg = await simulate({ runs, seed, verbose });
-  console.log(renderReport(agg, { runs, seed }));
+  const retreat = process.argv.includes('--retreat');
+  const seeds = arg('seeds', null); // e.g. 1-8
+  if (seeds) {
+    const [from, to] = seeds.split('-').map(Number);
+    const list = Array.from({ length: (to ?? from) - from + 1 }, (_, i) => from + i);
+    console.log(renderMultiSeed(await multiSeed(list, { runs, retreat }), { runs, retreat }));
+  } else {
+    const agg = await simulate({ runs, seed, verbose, retreat });
+    console.log(renderReport(agg, { runs, seed }));
+  }
 }

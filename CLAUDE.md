@@ -26,7 +26,9 @@ alchemy, forge) in the hub between runs.
 ```bash
 python3 -m http.server 8000     # from the repo root, open http://localhost:8000
 node tools/smoke-test.mjs       # DOM-shim test suite: expect 168–169 checks green
-node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
+node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
+node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
+node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired runs)
 ```
 
 ## The rules that matter

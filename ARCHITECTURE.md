@@ -112,7 +112,9 @@ assets/
 styles.css              all styling (split out of index.html in 0.034)
 tools/
 ├── smoke-test.mjs        DOM-shim suite (168-169 checks) - run pre-deploy
-├── simulate.mjs          headless balance bot (seeded; analyze() flags smells)
+├── simCore.mjs           simulator engine: bot, policies, profile snapshots (0.091)
+├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
+├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
 ├── bump.mjs              sets build.json version + module manifest (0.082)
 └── gen-depth.py          depth maps for backgrounds (Depth Anything V2 Small, ONNX)
 ```

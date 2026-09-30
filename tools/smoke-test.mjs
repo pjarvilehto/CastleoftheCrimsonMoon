@@ -1386,5 +1386,36 @@ process.on('uncaughtException', (e) => {
     && readFileSync('src/ui/particles.js', 'utf8').includes('x: x + (r() - 0.5) * 36 * u'));
 }
 
+// T53: 0.091 — simulator engine (simCore) policies + the shrine study.
+{
+  const { loadSim, withSeed, newAgg } = await import('./simCore.mjs');
+  const sim = await loadSim();
+  const snap = sim.snapshot();
+  let forced = null, none = null;
+  for (let s = 1; s < 60 && (!forced || !none); s++) { // find a seed whose run reaches the shrine
+    sim.restore(snap);
+    const f = withSeed(s, () => sim.playRun({ shrine: 'dmg' }));
+    sim.restore(snap);
+    const n = withSeed(s, () => sim.playRun({ shrine: 'none' }));
+    if (f.shrineRoom !== null) { forced = f; none = n; }
+  }
+  sim.restore(snap);
+  ok('forced boon is taken; walking away takes nothing', forced && forced.boon === 'dmg' && none.boon === null && none.shrineRoom === forced.shrineRoom);
+  const agg = newAgg();
+  withSeed(3, () => { sim.fresh(); for (let i = 0; i < 6; i++) { sim.playRun({ agg, retreat: true }); sim.spendInHub(agg); } });
+  sim.restore(snap);
+  ok('retreat policy banks runs and tracks bosses/turns', agg.runs.length === 6 && agg.turns > 0 && agg.combatRooms > 0
+    && agg.runs.every((r) => r.outcome === 'death' || r.outcome === 'retreat'));
+  const { shrineStudy, verdict } = await import('./shrine-study.mjs');
+  const st = await shrineStudy({ n: 12, seed: 5, stages: [3] });
+  const rows = st.results[0].rows;
+  ok('shrine study: one row per boon + walk away', rows.length === DATA.shrines.offers.length + 1 && rows[0].policy === 'none');
+  ok('study verdicts', verdict({ policy: 'x', afford: 0.1, dDepth: 0, seDepth: 0.1, dCoins: 0 }) === 'DEAD'
+    && verdict({ policy: 'x', afford: 1, dDepth: -1, seDepth: 0.1, dCoins: 300 }) === 'TRADE'
+    && verdict({ policy: 'x', afford: 1, dDepth: -1, seDepth: 0.1, dCoins: 0 }) === 'TRAP'
+    && verdict({ policy: 'x', afford: 1, dDepth: 3, seDepth: 0.2, dCoins: 0 }) === 'OP');
+  resetProfile();
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
