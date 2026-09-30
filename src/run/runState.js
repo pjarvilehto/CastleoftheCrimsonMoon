@@ -75,7 +75,7 @@ export function drinkPotion(run) {
   return { healed, free, armor };
 }
 
-// Single transaction: run earnings -> profile. Idempotent (0.076): the old
+// Single transaction: run earnings -> profile. Idempotent (0.077): the old
 // screen stays clickable during its 1s fade-out, and a double-clicked
 // Retreat used to bank the whole run twice. run.over latches here.
 export function settleRun(run, outcome) {

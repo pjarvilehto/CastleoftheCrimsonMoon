@@ -911,7 +911,7 @@ process.on('uncaughtException', (e) => {
   ok('report renders', renderReport(agg, { runs: 3, seed: 7 }).includes('Balance Simulation'));
 }
 
-// T37: 0.076 — double Retreat must not bank the run twice, the fading-out
+// T37: 0.077 — double Retreat must not bank the run twice, the fading-out
 // scene ignores hotkeys, and typing in a text field is not a hotkey.
 {
   const { settleRun } = await import('../src/run/runState.js');
