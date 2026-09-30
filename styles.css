@@ -307,12 +307,23 @@
 .char-card {
   height: 50vh; aspect-ratio: 413 / 1106;
   border-radius: 2vh;
-  background: url('assets/chars/card_enemy.png') center/100% 100% no-repeat;
+  position: relative; /* anchor for the ::before card art */
   padding: 2vh 1vw 1.6vh; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center;
   font-size: 2vh; /* fluid type base — everything inside the card is em */
 }
-.player-card { height: 50vh; aspect-ratio: 669 / 1106; background-image: url('assets/chars/card_player.png'); }
+/* Card art lives on a pseudo-element so it can be slightly transparent
+   (room art shows through) without dimming text/portrait/HP (0.074).
+   z-index:-1 is safe: .battle-line is the stacking context, and it has
+   no background of its own to hide behind. */
+.char-card::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: url('assets/chars/card_enemy.png') center/100% 100% no-repeat;
+  opacity: 0.85;
+}
+.player-card { height: 50vh; aspect-ratio: 669 / 1106; }
+.player-card::before { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
 .char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.5; }
