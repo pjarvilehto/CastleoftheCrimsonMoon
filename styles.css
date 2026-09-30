@@ -416,6 +416,41 @@
 .char-card .skull { display: none; }
 .char-card.dead .skull { display: block; }
 .char-card.dead .portrait { display: none; }
+.char-card.dead .skull { animation: skull-in 0.45s ease-out; }
+@keyframes skull-in { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
+
+/* ---- character animation (0.087) ----
+   Idle loops animate the INDEPENDENT translate/rotate/scale properties,
+   which compose with the portrait's centering transform instead of
+   replacing it. transform-origin 0 100% = the figure's feet: the box is
+   shifted left by half its width, so its visible bottom-centre sits at
+   local x = 0. Transform/opacity only — never filter — in loops. */
+.portrait { transform-origin: 0 100%; }
+.idle-skitter { animation: idle-skitter 1.9s linear infinite; }
+.idle-hover   { animation: idle-hover 4.2s ease-in-out infinite; }
+.idle-heavy   { animation: idle-heavy 5.2s ease-in-out infinite; }
+.idle-prowl   { animation: idle-prowl 3.6s ease-in-out infinite; }
+.idle-boss    { animation: idle-boss 6.5s ease-in-out infinite; }
+.idle-player  { animation: idle-player 4.6s ease-in-out infinite; }
+@keyframes idle-skitter { /* rats, spiders: still, then a quick twitch */
+  0%, 18%, 55%, 100% { translate: 0 0; }
+  10% { translate: 0.4% -0.3%; } 14% { translate: -0.3% 0; }
+  60% { translate: -0.4% -0.3%; } 64% { translate: 0.3% 0; }
+}
+@keyframes idle-hover { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2.2%; } }            /* wraith, shrieker */
+@keyframes idle-heavy { 0%, 100% { scale: 1; } 50% { scale: 1.008 1.016; } }                 /* slow breathing */
+@keyframes idle-prowl { 0%, 100% { rotate: -0.5deg; translate: 0 0; } 50% { rotate: 0.5deg; translate: 0.4% 0; } }
+@keyframes idle-boss  { 0%, 100% { rotate: -0.9deg; scale: 1; } 50% { rotate: 0.9deg; scale: 1.015; } }
+@keyframes idle-player { 0%, 100% { scale: 1; } 50% { scale: 1.006 1.012; } }
+@media (prefers-reduced-motion: reduce) { .portrait { animation: none !important; } }
+/* floating combat numbers: a layer over the battle line (not inside the
+   cards), so they survive any card update */
+.fx-layer { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+.fx-num {
+  position: absolute; font-weight: bold; letter-spacing: 0.04em; white-space: nowrap;
+  text-shadow: 0 0 6px #000, 0 2px 4px #000; will-change: transform, opacity;
+}
+.fx-dmg { color: #ff5a4a; }
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
 .hp-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.3em; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }

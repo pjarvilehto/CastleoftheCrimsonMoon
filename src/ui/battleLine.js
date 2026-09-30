@@ -12,6 +12,39 @@ import { isElite } from '../shared/balance.js';
 
 const ART = (id) => `assets/chars/${id}.webp`;
 
+// Idle motion families (0.087): one CSS loop per family (styles.css
+// .idle-<family>), keyed by enemy ID — display names differ (golem is
+// "Fellblade", ghoul is "Cinderborn").
+export const IDLE_FAMILY = {
+  rat: 'skitter', crypt_spider: 'skitter',
+  bat: 'hover', wraith: 'hover',
+  golem: 'heavy', blood_knight: 'heavy', gargoyle: 'heavy',
+  hollow_hound: 'prowl', ghoul: 'prowl', cultist: 'prowl', skeleton: 'prowl',
+  vampire_lord: 'boss',
+};
+
+// A portrait with its idle loop, started at a random phase so a room of
+// identical skeletons doesn't breathe in unison.
+function portrait(id, alt, family) {
+  const img = el('img', { class: `portrait idle-${family}`, src: ART(id), alt });
+  img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
+  return img;
+}
+
+// Death collapse (0.087): sink, flash red, fade — then the card turns
+// into the skull. Without the Web Animations API (tests) it's instant.
+const COLLAPSE_MS = 700;
+function collapse(img, done) {
+  if (!img.animate || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+  const base = getComputedStyle(img).filter;
+  const red = `${base === 'none' ? '' : base} sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)`;
+  img.animate([
+    { translate: '0 0', opacity: 1, filter: base },
+    { translate: '0 4%', opacity: 1, filter: red, offset: 0.3 },
+    { translate: '0 14%', opacity: 0, filter: `${red} brightness(0.2)` },
+  ], { duration: COLLAPSE_MS, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
+}
+
 // Right-hand cell of a gear line: the item's defensive stat.
 function armorStat(item) {
   if (item.armor) return `+${item.armor} ARMOR`;
@@ -55,6 +88,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const hp = hpLine(run.hp, run.maxHp);
   const chip = el('div', { class: 'hud-chip' }, hp.line);
   const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
+  const img = portrait('player', 'player', 'player');
   const card = el('div', { class: 'char-card player-card' },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, 'THE CURIOUS KNIGHT'),
@@ -73,7 +107,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
         ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : ''))
         : el('span', { class: 'no-item' }, 'NO ARMOR'),
       armor ? el('span', { class: 'weapon-dmg' }, armorStat(armor)) : null),
-    el('img', { class: 'portrait', src: ART('player'), alt: 'player' }),
+    img,
     chip,
     potions);
   const cd = el('span', { class: 'heavy-cd' }, '');
@@ -90,13 +124,14 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     // Drinkable after a cleared room too (0.080) — just not once dead.
     setDisabled(potionBtn, s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
   };
-  return { el: unit, card, update };
+  return { el: unit, card, portrait: img, update };
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver })
 export function createEnemyUnit(e, i, { onAttack }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
+  const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
   // Portrait and skull both live in the card; the 'dead' class swaps them
   // (styles.css), so the card never has to be rebuilt.
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}` },
@@ -104,21 +139,26 @@ export function createEnemyUnit(e, i, { onAttack }) {
       el('span', { class: 'card-name' }, name,
         isElite(e) ? el('span', { class: 'elite-star', title: 'Elite - can drop crimson relics (room 11+)' }, ' ★') : null),
       el('span', { class: 'lv-badge' }, lv)),
-    el('img', { class: 'portrait', src: ART(e.id), alt: e.name }),
+    img,
     el('div', { class: 'skull' }, '☠'),
     hp.line);
   // Dead cards keep their slot: the button row stays mounted with the
   // button hidden (ghost-btn), so the bottom-aligned card can't shift.
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit' }, card, el('div', { class: 'unit-actions' }, atk));
+  let down = false; // dead state already applied (or collapsing)
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
-    setClass(card, 'dead', s.dead);
+    if (s.dead && !down) {
+      down = true;
+      setClass(card, 'dying', true);
+      collapse(img, () => { setClass(card, 'dying', false); setClass(card, 'dead', true); });
+    }
     setClass(unit, 'dead-unit', s.dead);
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
   };
-  return { el: unit, card, update };
+  return { el: unit, card, portrait: img, update };
 }
 
 // One-shot builders (tests, previews): a unit in a given state.

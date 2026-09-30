@@ -20,7 +20,7 @@ import { createPlayback } from '../combatPlayback.js';
 import { shrineBody } from '../shrineUI.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
 import { createPlayerUnit, createEnemyUnit } from '../battleLine.js';
-import { fxFor, playFx } from '../combatFx.js';
+import { fxFor, playFx, holdFor } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
@@ -49,7 +49,10 @@ export function dungeonScene() {
     onFx: (fx) => fx && playFx(fx, fxCtx),
   });
   // What effects can touch: the live units of the battle line.
-  const fxCtx = { unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null) };
+  const fxCtx = {
+    unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null),
+    get layer() { return ui?.layer ?? null; },
+  };
 
   // Combat event -> sound effect (attached at enqueue time so each sound
   // fires when its line PRINTS, not when the button was clicked).
@@ -137,6 +140,7 @@ export function dungeonScene() {
     // Death has no corner button — the fatal blow triggers the blood-red
     // flash and the centered YOU DIED dialog (openDeathModal, 0.067).
     const proceed = el('div', { class: 'combat-proceed' });
+    const layer = el('div', { class: 'fx-layer' }); // floating numbers (0.087)
     root.innerHTML = '';
     root.append(
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
@@ -146,13 +150,14 @@ export function dungeonScene() {
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
+      layer,
       logEl,
       proceed);
     logEl.className = 'docked';
     logEl.scrollTop = logEl.scrollHeight;
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
-    ui = { room, root, player, enemies, proceed };
+    ui = { room, root, player, enemies, proceed, layer };
     playFx({ kind: 'enter' }, fxCtx);
   }
 
@@ -237,7 +242,8 @@ export function dungeonScene() {
       } else {
         const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
         const sound = ev.type === 'multi' ? 'kill' : EV_SFX[ev.type];
-        playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx: fxFor(ev), sfx: sound });
+        const fx = fxFor(ev);
+        playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx, hold: holdFor(fx), sfx: sound });
       }
     }
     if (combat.over && combat.victory) {

@@ -127,6 +127,13 @@ music beds and SFX (gesture-gated AudioContext).
   copies JSON — when the owner sends that JSON, put the values into
   `backgrounds.json` `parallax` to make them the default for everyone).
   The skirt (overscan) now grows automatically for larger sway.
+- Character animation (0.087): idle loops per enemy FAMILY (by id,
+  `battleLine.js IDLE_FAMILY` + `.idle-<family>` in styles.css — a new
+  enemy needs a family); one-shots (lunge, hit, numbers, entrance) in
+  `ui/combatFx.js`, driven by `fx` descriptors on playback queue items.
+  Loops animate only translate/rotate/scale (never filter); one-shots use
+  element.animate so they don't restart the CSS loops. Attack pacing:
+  `difficulty.json combatPacing`.
 - Keep files under ~300 lines; one responsibility per file.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
 - The obvious next button gets the **'active'** state: `class: 'active'`

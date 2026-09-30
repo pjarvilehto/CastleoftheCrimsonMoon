@@ -1243,5 +1243,47 @@ process.on('uncaughtException', (e) => {
   for (let g = 0; g < 40 && !t().includes('Push Deeper') && !t().includes('YOU DIED'); g++) { handleKey('a'); await sleep(900); }
 }
 
+// T48: 0.087 — character animation: every enemy has an idle family with a
+// CSS loop (independent-property transforms only, pivot at the feet);
+// attack lines hold the log long enough to read; floating numbers get a
+// layer; reduced motion stops the loops.
+{
+  const { IDLE_FAMILY } = await import('../src/ui/battleLine.js');
+  const { holdFor } = await import('../src/ui/combatFx.js');
+  const css = readFileSync('styles.css', 'utf8');
+  const missing = Object.keys(DATA.enemies).filter((id) => !IDLE_FAMILY[id]);
+  ok('every enemy has an idle family', missing.length === 0, missing.join(','));
+  const fams = [...new Set([...Object.values(IDLE_FAMILY), 'player'])];
+  const noLoop = fams.filter((f) => !css.includes(`.idle-${f} `) || !css.includes(`@keyframes idle-${f} `));
+  ok('every idle family has a CSS loop', noLoop.length === 0, noLoop.join(','));
+  // the full text of an @keyframes block (brace-matched)
+  const block = (name) => {
+    const start = css.indexOf(`@keyframes ${name} `);
+    let depth = 0;
+    for (let i = css.indexOf('{', start); i < css.length; i++) {
+      if (css[i] === '{') depth++;
+      if (css[i] === '}' && --depth === 0) return css.slice(start, i + 1);
+    }
+    return '';
+  };
+  const loops = fams.map((f) => block(`idle-${f}`));
+  ok('idle loops never animate filter (repaint cost)', loops.every((k) => k.length > 30 && !k.includes('filter')));
+  ok('brace matcher sanity', block('idle-hover').includes('translate: 0 -2.2%') && block('idle-hover').endsWith('}'));
+  ok('portrait pivots at the feet (0 100%, see comment)', css.includes('.portrait { transform-origin: 0 100%; }'));
+  ok('reduced motion stops idle loops', css.includes('@media (prefers-reduced-motion: reduce) { .portrait { animation: none !important; } }'));
+  const pc = DATA.difficulty.combatPacing;
+  ok('attack pacing: player/heavy/enemy holds, others default',
+    holdFor({ kind: 'attack', from: 'player' }) === pc.playerAttackMs && holdFor({ kind: 'attack', from: 'player', heavy: true }) === pc.heavyAttackMs
+    && holdFor({ kind: 'attack', from: 2, to: 'player' }) === pc.enemyAttackMs && holdFor({ kind: 'hit' }) === undefined && holdFor(null) === undefined);
+  registry.app.innerHTML = '';
+  resetProfile();
+  const scene = dungeonScene();
+  scene.enter(registry.app);
+  await sleep(50);
+  ok('combat room has the fx layer', registry.app.all((e) => e.className === 'fx-layer').length === 1);
+  const portraits = registry.app.all((e) => e.tagName === 'img' && /\bidle-/.test(e.className));
+  ok('portraits carry idle classes + random phase', portraits.length >= 2 && portraits.every((p) => /^-\d/.test(p.style.animationDelay)));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -48,6 +48,11 @@
   },
   "salvagePerTier": 8,
   "logDelayMs": 100,
+  "combatPacing": {
+    "playerAttackMs": 300,
+    "heavyAttackMs": 380,
+    "enemyAttackMs": 220
+  },
   "t4Chance": 0.02,
   "t4MinRoom": 11,
   "potionDropChance": 0.05,
