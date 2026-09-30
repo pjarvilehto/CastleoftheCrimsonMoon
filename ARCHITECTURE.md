@@ -54,6 +54,8 @@ src/
 ├── core/bg3dFog.js       fog math (0.099): camera position for the wisp
 │                         rays, tileable noise, scene-hued mist colour,
 │                         wrapped drift (the fog itself is in the shader)
+├── core/bg3dLights.js    flash-light math (0.100): screen point -> scene
+│                         point, rise/fade envelope, brightest-2 uniforms
 ├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
 │                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),

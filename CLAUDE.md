@@ -178,6 +178,12 @@ static play-stats page.
   silhouette); colour = the scene's own far hue at a fixed brightness
   (`fogColor: [r,g,b]` overrides). `?debug` BG TUNING has a Fog slider.
   Weak devices lose the fog first (<26fps), then the 3D (<20fps).
+- Flash lights (0.100, `core/bg3dLights.js` + the shader): a crit (on the
+  struck card), a potion or a revive (on the knight) puts a short light
+  into the 3D scene; surfaces and mist near it glow by true depth
+  distance. Colour/strength/fade/life per kind and the reach (`radius`)
+  in `backgrounds.json` `parallax.lights`; `enabled: false` switches them
+  off. Trigger from UI code with `bgLight(kind, cardRect)` (bg3d.js).
 - Big-hit sway (0.092; a rotation about the depth centre since 0.093):
   `parallax.swayDeg` / `swayHitShare` in backgrounds.json; crits, SMASH
   and multi-kills rock the near art right, hits on the knight worth

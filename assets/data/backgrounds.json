@@ -27,7 +27,7 @@
     "castle_throne_room.jpg": "The Throne Room"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099, core/bg3dFog.js) = depth-embedded mist: distance haze + three drifting wisp sheets, amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it); fogSpeed = drift speed.",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099, core/bg3dFog.js) = depth-embedded mist: distance haze + three drifting wisp sheets, amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it); fogSpeed = drift speed. lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -40,6 +40,41 @@
     "swayHitShare": 0.15,
     "fog": 0.36,
     "fogSpeed": 1,
+    "lights": {
+      "enabled": true,
+      "dist": 0.8,
+      "radius": 0.45,
+      "crit": {
+        "color": [
+          1.0,
+          0.72,
+          0.35
+        ],
+        "strength": 1.0,
+        "fade": 0.3,
+        "life": 1.2
+      },
+      "potion": {
+        "color": [
+          0.4,
+          1.0,
+          0.5
+        ],
+        "strength": 0.9,
+        "fade": 0.55,
+        "life": 2.0
+      },
+      "revive": {
+        "color": [
+          1.0,
+          0.88,
+          0.55
+        ],
+        "strength": 1.6,
+        "fade": 0.8,
+        "life": 2.8
+      }
+    },
     "fovDeg": 40,
     "overscan": 0.09,
     "grid": [

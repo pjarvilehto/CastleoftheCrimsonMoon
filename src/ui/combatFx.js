@@ -18,7 +18,7 @@
 // test shim, very old TVs) simply get no one-shots.
 
 import { DATA } from '../shared/data.js';
-import { bgJolt, bgSway } from '../core/bg3d.js';
+import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
 import { reduced, can, spray, shake, barFlash, glow, floatNumber } from './fxParts.js';
 
@@ -100,8 +100,10 @@ function attack(fx, ctx) {
   if (fx.from === 'player' && (fx.heavy || fx.crit)) {
     setTimeout(() => {
       if (fx.heavy) shake(ctx, 1);
-      if (fx.crit) bgSway(fx.heavy ? 1.4 : 1, 1);
-      else bgJolt(1);
+      if (fx.crit) {
+        bgSway(fx.heavy ? 1.4 : 1, 1);
+        bgLight('crit', d?.card?.getBoundingClientRect?.()); // the blow lights the scene (0.100)
+      } else bgJolt(1);
     }, strike);
   }
   // A crushing hit on the knight swings it back, right -> left.
@@ -171,6 +173,7 @@ function heal(fx, ctx) {
   barFlash(p, 'heal', 0, fx.potion ? 1300 : 700);
   if (!fx.potion) { glow(p, 'sepia(1) saturate(4) hue-rotate(60deg) brightness(1.35)', 420); return; }
   glow(p, 'sepia(1) saturate(5) hue-rotate(65deg) brightness(1.6)', 1100);
+  bgLight('potion', p?.card?.getBoundingClientRect?.()); // green light in the scene (0.100)
   if (!can(p?.card)) return;
   const aura = document.createElement('div');
   aura.className = 'heal-aura';
@@ -210,6 +213,7 @@ function revive(ctx) {
   floatNumber(ctx, p, 'REVIVED', 'fx-revive');
   shake(ctx, 0.8);
   bgJolt(1);
+  bgLight('revive', p?.card?.getBoundingClientRect?.()); // golden light in the scene (0.100)
 }
 
 // Room entrance: enemies slide in from the right, staggered; the player

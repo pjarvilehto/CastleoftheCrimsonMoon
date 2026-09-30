@@ -161,3 +161,41 @@ fresh();
   const src = readFileSync('src/core/bg3d.js', 'utf8');
   ok('weak devices drop the fog before the 3D', src.includes('if (fogOn && fps < cfg.fogMinFps)') && src.includes('if (fps < cfg.minFps) { shutdown(); return; }'));
 }
+
+// T61: 0.100 — flash lights: a screen point maps to the scene point that
+// projects back onto it; the envelope rises, fades and ends; only the two
+// brightest live lights draw (dark slots otherwise); crits, potions and
+// revives trigger them; data can switch them off.
+{
+  const L = await import('../../src/core/bg3dLights.js');
+  const bm = await import('../../src/core/bg3dMath.js');
+  const gl = await import('../../src/core/bg3dGL.js');
+  const W = 1600, H = 900, fov = 40, M = bm.mvp(0, 0, (fov * Math.PI) / 180, W / H);
+  const back = [[800, 450], [1200, 300], [100, 850]].every(([x, y]) => {
+    const p = L.screenToWorld(x, y, W, H, fov, 0.8);
+    const o = [0, 1, 2, 3].map((r) => M[r] * p[0] + M[4 + r] * p[1] + M[8 + r] * p[2] + M[12 + r]);
+    const sx = ((o[0] / o[3]) + 1) / 2 * W, sy = (1 - o[1] / o[3]) / 2 * H;
+    return Math.abs(sx - x) < 0.5 && Math.abs(sy - y) < 0.5 && Math.abs(p[2] + 0.8) < 1e-9;
+  });
+  ok('a flash sits in the scene right behind its card (screenToWorld inverts the projection)', back);
+  const e = (t) => L.envelope(t, { rise: 0.1, fade: 0.3, life: 1 });
+  ok('flash envelope: rises, peaks, fades, ends', e(-0.01) === 0 && e(0.05) > 0.4 && e(0.05) < 0.6 && Math.abs(e(0.1) - 1) < 1e-9
+    && e(0.4) < e(0.2) && e(0.4) > 0 && e(1.01) === 0);
+  const mk = (t0, strength, pos) => ({ t0, pos, color: [1, 0.5, 0], strength, rise: 0.08, fade: 0.5, life: 2 });
+  const none = L.activeLights([], 1000);
+  ok('no flashes: every light slot dark', none.count === 0 && none.col.every((v) => v === 0) && none.col.length === L.MAX_LIGHTS * 3);
+  const three = L.activeLights([mk(900, 0.5, [1, 1, -1]), mk(900, 2, [2, 2, -2]), mk(900, 1, [3, 3, -3]), mk(-5000, 9, [4, 4, -4])], 1000);
+  ok('only the brightest live flashes draw', three.count === 2 && three.pos[0] === 2 && three.pos[3] === 3 && three.col[0] > three.col[3] && three.col[2] === 0);
+  ok('shader lights the art and the mist by 3D distance', gl.FS.includes(`uniform vec3 uLightPos[${L.MAX_LIGHTS}]`) && gl.FS.includes('vec3 lit = lightAt(vWorld);')
+    && gl.FS.includes('uFogColor + lit * 0.7'));
+  const fx = readFileSync('src/ui/combatFx.js', 'utf8');
+  ok('crits, potions and revives light the scene', ["bgLight('crit'", "bgLight('potion'", "bgLight('revive'"].every((s) => fx.includes(s)));
+  const lights = DATA.backgrounds.parallax.lights;
+  ok('flash lights are tunable in data (colour, strength, life per kind)', lights && typeof lights.enabled === 'boolean'
+    && ['crit', 'potion', 'revive'].every((k) => lights[k]?.color?.length === 3 && lights[k].strength > 0 && lights[k].life > lights[k].fade));
+  const rect = { left: 1000, top: 200, width: 300, height: 450 };
+  const flash = L.flashAt('crit', rect, W, H, fov, L.LIGHT_DEFAULTS, 5);
+  ok('a crit flash lands in front of its card, on the card\'s side', flash && flash.t0 === 5 && flash.pos[0] > 0 && flash.color === L.LIGHT_DEFAULTS.crit.color);
+  ok('lights off (enabled: false) or unknown kind = no flash', L.flashAt('crit', rect, W, H, fov, { ...lights, enabled: false }, 5) === null
+    && L.flashAt('nope', rect, W, H, fov, lights, 5) === null && L.flashAt('potion', null, W, H, fov, lights, 5) === null);
+}

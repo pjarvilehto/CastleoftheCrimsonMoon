@@ -435,7 +435,7 @@ fresh();
   ok('enemy hits carry their share of max HP', fxFor({ type: 'dmg', source: 0, taken: 30 }, { maxHp: 120 }).share === 0.25);
   const fxSrc = readFileSync('src/ui/combatFx.js', 'utf8');
   ok('crits / SMASH / multi-kills sway right, big hits on the knight sway left',
-    fxSrc.includes("case 'smash': shake(ctx, 1.6); return bgSway(1.5, 1);") && fxSrc.includes('if (fx.crit) bgSway(')
+    fxSrc.includes("case 'smash': shake(ctx, 1.6); return bgSway(1.5, 1);") && /if \(fx\.crit\) \{?\s*bgSway\(/.test(fxSrc)
     && fxSrc.includes("fx.to === 'player' && fx.share >= big") && fxSrc.includes('/ big, -1)'));
 
   // Alignment (0.092): caps centered in buttons (underline ignored), and

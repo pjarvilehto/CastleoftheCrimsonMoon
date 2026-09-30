@@ -3,6 +3,7 @@
 // Shaders, program/buffer helpers, image + depth-map loading, texture upload.
 
 import { WISPS, fogNoise } from './bg3dFog.js';
+import { MAX_LIGHTS } from './bg3dLights.js';
 
 export const VS = `
 attribute vec2 aGrid; attribute float aDepth;
@@ -31,6 +32,7 @@ export const FS = `
 precision mediump float;
 uniform sampler2D uTex, uNoise; uniform float uAlpha, uShowDepth, uFog;
 uniform vec3 uFogColor, uCam; uniform vec2 uDrift[${WISPS.length * 2}];
+uniform vec3 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}]; uniform float uLightR2;
 varying vec2 vUv; varying float vDepth; varying vec3 vWorld;
 // mist hangs low: full near the ground, gone by the top of the frame
 float low(float y) { return clamp(0.55 - y * 1.1, 0.0, 1.0); }
@@ -42,14 +44,23 @@ float wisp(float dist, float scale, vec2 drift, vec2 drift2) {
   float n = texture2D(uNoise, q * scale + drift).r * 0.6 + texture2D(uNoise, q * scale * 1.9 + drift2).r * 0.4;
   return smoothstep(0.48, 0.78, n) * mix(0.35, 1.0, low(q.y)) * clamp((1.0 - t) * 6.0, 0.0, 1.0);
 }
+// Flash lights (0.100, core/bg3dLights.js): by true 3D distance from the
+// depth map — surfaces near the light flare, the far wall barely catches it.
+vec3 lightAt(vec3 p) {
+  vec3 l = vec3(0.0);
+  for (int i = 0; i < ${MAX_LIGHTS}; i++) { vec3 d = p - uLightPos[i]; l += uLightCol[i] * exp(-dot(d, d) / uLightR2); }
+  return l;
+}
 void main() {
   vec3 c = uShowDepth > 0.5 ? vec3(vDepth) : texture2D(uTex, clamp(vUv, 0.0, 1.0)).rgb;
+  vec3 lit = lightAt(vWorld);
+  c += c * lit * 2.2 + lit * 0.05; // the art brightens where lit (keeps its texture) + a faint glow
   if (uFog > 0.0) {
     // haze: air thickens with distance (exponential, like real air), a bit
     // less high up; then the drifting wisp sheets
     float fog = (1.0 - exp(-2.2 * pow(1.0 - vDepth, 1.3))) * mix(0.6, 1.0, low(vWorld.y)) * 0.9;
 ${wispCalls}
-    c = mix(c, uFogColor, clamp(fog * 0.6 * uFog, 0.0, 0.85));
+    c = mix(c, uFogColor + lit * 0.7, clamp(fog * 0.6 * uFog, 0.0, 0.85)); // lit mist glows
   }
   gl_FragColor = vec4(c, uAlpha);
 }`;

@@ -1,5 +1,5 @@
 {
-  "version": "0.099",
+  "version": "0.100",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -7,6 +7,7 @@
     "src/core/bg3d.js",
     "src/core/bg3dFog.js",
     "src/core/bg3dGL.js",
+    "src/core/bg3dLights.js",
     "src/core/bg3dMath.js",
     "src/core/scene.js",
     "src/main.js",
@@ -43,6 +44,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.100": [
+      "Critical hits, potions and revives now light up the scene around the fighter — walls and mist nearby catch the glow"
+    ],
     "0.099": [
       "Drifting mist in the backgrounds: thicker over long views, a light haze indoors"
     ],
