@@ -3,7 +3,8 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { show, initHotkeys, el } from './core/scene.js';
+import { show, initHotkeys, el, setBackground, onBackgroundChange } from './core/scene.js';
+import { initBg3d, showBackground3d, isBg3dActive, bgView, setBgView } from './core/bg3d.js';
 import { loadData, DATA } from './shared/data.js';
 import { preloadAssets } from './shared/preload.js';
 import { titleScene } from './ui/scenes/titleScene.js';
@@ -89,7 +90,11 @@ async function boot() {
       e.currentTarget.textContent = `SOUND: ${m ? 'OFF' : 'ON'}`;
     },
   }, `SOUND: ${sfxMuted() ? 'OFF' : 'ON'}`);
-  document.body.append(...[tag, inv, music, fsBtn, snd].filter(Boolean));
+  document.body.append(...[tag, inv, music, fsBtn, snd, ...(debugMode ? bgDebugToggles() : [])].filter(Boolean));
+  // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
+  // under ?debug (headless testing); real players on a GPU-less machine,
+  // or with reduced motion requested, keep the flat CSS backgrounds.
+  if (initBg3d({ allowSoftware: debugMode })) onBackgroundChange(showBackground3d);
   // Every button in the game clicks (delegated, so dynamically rendered
   // scenes need no per-button wiring).
   document.addEventListener?.('click', (e) => {
@@ -98,6 +103,40 @@ async function boot() {
   initMusic();
   initSfx();
   show(titleScene());
+}
+
+// ?debug background evaluation (0.083): hide the UI, compare 3D / flat /
+// the depth map itself, and step through every background without playing.
+function bgDebugToggles() {
+  const fg = el('button', {
+    class: 'debug-toggle bg-fg-toggle',
+    onclick: (e) => {
+      const hidden = document.body.classList.toggle('fg-hidden');
+      e.currentTarget.classList.toggle('on', hidden);
+      e.currentTarget.textContent = `HIDE FOREGROUND: ${hidden ? 'ON' : 'OFF'}`;
+    },
+  }, 'HIDE FOREGROUND: OFF');
+  const modes = ['3d', 'flat', 'depth'];
+  const viewBtn = el('button', {
+    class: 'debug-toggle bg-view-toggle',
+    onclick: (e) => {
+      if (!isBg3dActive()) { e.currentTarget.textContent = 'BG VIEW: NO WEBGL'; return; }
+      setBgView(modes[(modes.indexOf(bgView()) + 1) % modes.length]);
+      e.currentTarget.textContent = `BG VIEW: ${bgView().toUpperCase()}`;
+    },
+  }, 'BG VIEW: 3D');
+  const b = DATA.backgrounds;
+  const all = [...new Set([b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms])];
+  let i = -1;
+  const next = el('button', {
+    class: 'debug-toggle bg-next-toggle',
+    onclick: (e) => {
+      i = (i + 1) % all.length;
+      setBackground(all[i]);
+      e.currentTarget.textContent = `NEXT BG (${i + 1}/${all.length}: ${all[i].replace(/^castle_|\.jpg$/g, '')})`;
+    },
+  }, 'NEXT BG');
+  return [fg, viewBtn, next];
 }
 
 boot();

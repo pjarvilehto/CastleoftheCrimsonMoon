@@ -111,7 +111,18 @@ music beds and SFX (gesture-gated AudioContext).
 - New item → `items.json` with slot + tier; loot/equipment/salvage follow.
 - New shrine boon → `shrines.json` + matching case in `run/shrine.js`.
 - New room background → JPEG into `assets/bg/` + entries in
-  `backgrounds.json` (`rooms` and `roomNames`).
+  `backgrounds.json` (`rooms` and `roomNames`) + its depth map:
+  `python3 tools/gen-depth.py <model.onnx> new.jpg` (setup in the script's
+  header; the smoke suite fails if a background has no depth map).
+- 3D backgrounds (0.083, `src/core/bg3d.js`): the art sits on a depth-
+  displaced mesh with a slowly swaying camera. Tune in `backgrounds.json`
+  `parallax` (per-file `overrides`); `enabled: false` is the kill switch.
+  Falls back to the flat CSS backgrounds with no WebGL, software-only GL,
+  <20fps in the first 4s, context loss, or prefers-reduced-motion. If you
+  raise the sway/depth, the smoke suite's coverage check says when
+  `overscan` must grow too.
+- `?debug` also adds HIDE FOREGROUND, BG VIEW (3D / FLAT / DEPTH) and
+  NEXT BG for evaluating backgrounds.
 - Keep files under ~300 lines; one responsibility per file.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
 - The obvious next button gets the **'active'** state: `class: 'active'`

@@ -1,9 +1,11 @@
 {
-  "version": "0.082",
+  "version": "0.083",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
     "src/audio/sfx.js",
+    "src/core/bg3d.js",
+    "src/core/bg3dMath.js",
     "src/core/scene.js",
     "src/main.js",
     "src/meta/equipment.js",

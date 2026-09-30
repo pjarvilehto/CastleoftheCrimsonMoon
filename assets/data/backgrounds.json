@@ -25,5 +25,24 @@
     "castle_ramparts.jpg": "The Ramparts",
     "castle_great_hall.jpg": "The Feast Hall",
     "castle_throne_room.jpg": "The Throne Room"
+  },
+  "parallax": {
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename.",
+    "enabled": true,
+    "depthScale": 0.5,
+    "pivot": 0.5,
+    "yawDeg": 2.5,
+    "pitchDeg": 1.2,
+    "yawPeriodS": 22,
+    "pitchPeriodS": 31,
+    "fovDeg": 40,
+    "overscan": 0.06,
+    "grid": [
+      160,
+      90
+    ],
+    "maxFps": 30,
+    "fadeMs": 2000,
+    "overrides": {}
   }
 }

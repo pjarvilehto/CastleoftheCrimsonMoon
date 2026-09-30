@@ -40,6 +40,8 @@ src/
 │                         loadData() -> preloadAssets() -> initHotkeys()
 │                         -> build tag + INVULNERABLE debug toggle ->
 │                         title scene
+├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
+│                         slow orbit camera, 2s crossfade, CSS fallback
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),
 │                         bg crossfader (bg0/bg1 layers), el() helper,
 │                         handleKey()/initHotkeys()
@@ -90,6 +92,8 @@ src/
 
 assets/
 ├── bg/                   painted backgrounds (JPEG) + shrine art
+│   └── depth/            per-background depth maps (PNG, white = near;
+│                         Depth Anything V2 Small via tools/gen-depth.py)
 ├── chars/                character portraits (PNG, keep alpha) +
 │                         card_enemy/card_player frame art
 ├── audio/                music-*.mp3 beds + sfx-*.mp3 one-shots
@@ -101,7 +105,8 @@ styles.css              all styling (split out of index.html in 0.034)
 tools/
 ├── smoke-test.mjs        DOM-shim suite (168-169 checks) - run pre-deploy
 ├── simulate.mjs          headless balance bot (seeded; analyze() flags smells)
-└── bump.mjs              sets build.json version + module manifest (0.082)
+├── bump.mjs              sets build.json version + module manifest (0.082)
+└── gen-depth.py          depth maps for backgrounds (Depth Anything V2 Small, ONNX)
 ```
 
 ## Keyboard map

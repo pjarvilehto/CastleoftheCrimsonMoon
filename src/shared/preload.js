@@ -5,13 +5,16 @@
 // are picked up automatically. A missing file must never block the game.
 
 import { DATA } from './data.js';
+import { depthUrl } from '../core/bg3d.js';
 
 function assetUrls() {
   const b = DATA.backgrounds;
   const bgs = [b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms];
   const chars = ['player', ...Object.keys(DATA.enemies)];
+  const unique = [...new Set(bgs)];
   return [
-    ...new Set(bgs.map((f) => `assets/bg/${f}`)),
+    ...unique.map((f) => `assets/bg/${f}`),
+    ...unique.map(depthUrl), // 3D background depth maps (0.083), ~20KB each
     ...chars.map((id) => `assets/chars/${id}.webp`),
   ];
 }

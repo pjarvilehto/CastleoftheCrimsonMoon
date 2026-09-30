@@ -1109,5 +1109,74 @@ process.on('uncaughtException', (e) => {
   ok('glow keyframes have matching shadow counts (smooth fade)', y.length === 2 && y[0] === y[1] && r.length === 2 && r[0] === r[1], `${y} / ${r}`);
 }
 
+// T45: 0.083 — 3D backgrounds: every background ships a depth map; the
+// camera starts at the rest pose (= the flat CSS image); the overscan
+// skirt covers the screen at the sway extremes for every depth and common
+// aspect ratios (no black edges); the math mirrors CSS "cover".
+{
+  const bg3d = await import('../src/core/bg3d.js');
+  const b = DATA.backgrounds;
+  const all = [...new Set([b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms])];
+  const missing = all.filter((f) => { try { return !statSync(bg3d.depthUrl(f)).isFile(); } catch { return true; } });
+  ok('every background has a depth map', missing.length === 0, missing.join(','));
+  const png = readFileSync(bg3d.depthUrl(b.title));
+  ok('depth maps are 8-bit grayscale PNGs', png.readUInt32BE(16) === 512 && png[24] === 8 && png[25] === 0);
+  const { preloadAssets } = await import('../src/shared/preload.js');
+  ok('depth maps are preloaded', readFileSync('src/shared/preload.js', 'utf8').includes('unique.map(depthUrl)') && typeof preloadAssets === 'function');
+
+  const cs = (w, h) => bg3d.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
+  ok('cover mapping matches CSS cover', cs(1920, 1080) === '1,1' && cs(1024, 768) === '0.75,1' && cs(2560, 1080) === '1,0.75');
+  const o0 = bg3d.orbit(0, bg3d.tuning(''));
+  ok('sway starts at the rest pose', o0.yaw === 0 && o0.pitch === 0);
+  const d = { w: 2, h: 2, data: new Uint8Array([0, 255, 255, 255]) };
+  ok('bilinear depth sampling', bg3d.sampleDepth(d, 0, 0) === 0 && bg3d.sampleDepth(d, 1, 1) === 1
+    && Math.abs(bg3d.sampleDepth(d, 0.5, 0.5) - 0.75) < 1e-9 && bg3d.sampleDepth(d, -3, 9) === 1);
+
+  // Mirror of the vertex shader: project a skirt-edge vertex.
+  const cfg = bg3d.tuning('');
+  const fov = (cfg.fovDeg * Math.PI) / 180;
+  const project = (m, gx, gy, depth, aspect) => {
+    const tx = Math.tan(fov / 2);
+    const k = 1 + cfg.depthScale * (cfg.pivot - depth);
+    const p = [(gx * 2 - 1) * tx * aspect * k, (1 - gy * 2) * tx * k, -k, 1];
+    const out = [0, 1, 2, 3].map((r) => m[r] * p[0] + m[4 + r] * p[1] + m[8 + r] * p[2] + m[12 + r] * p[3]);
+    return [out[0] / out[3], out[1] / out[3]];
+  };
+  const rest = bg3d.mvp(0, 0, fov, 16 / 9);
+  const [rx, ry] = project(rest, 0.25, 0.75, 0.9, 16 / 9);
+  ok('rest pose: depth does not move pixels', Math.abs(rx - -0.5) < 1e-6 && Math.abs(ry - -0.5) < 1e-6);
+  const m = cfg.overscan;
+  let worst = Infinity;
+  for (const aspect of [4 / 3, 16 / 9, 21 / 9]) {
+    for (const ys of [-1, 1]) for (const ps of [-1, 1]) {
+      const M = bg3d.mvp((ys * cfg.yawDeg * Math.PI) / 180, (ps * cfg.pitchDeg * Math.PI) / 180, fov, aspect);
+      for (let i = 0; i <= 40; i++) {
+        const s = -m + ((1 + 2 * m) * i) / 40;
+        for (const depth of [0, 0.25, 0.5, 0.75, 1]) {
+          // the four skirt edges must stay outside the screen (|ndc| > 1)
+          worst = Math.min(worst, -project(M, -m, s, depth, aspect)[0] - 1, project(M, 1 + m, s, depth, aspect)[0] - 1,
+            project(M, s, -m, depth, aspect)[1] - 1, -project(M, s, 1 + m, depth, aspect)[1] - 1);
+        }
+      }
+    }
+  }
+  ok('overscan skirt covers the screen at sway extremes', worst > 0, `worst margin ${worst.toFixed(4)} NDC`);
+
+  const main = readFileSync('src/main.js', 'utf8');
+  ok('bg debug toggles only under ?debug', main.includes('...(debugMode ? bgDebugToggles() : [])')
+    && main.includes("'HIDE FOREGROUND: OFF'") && main.includes("['3d', 'flat', 'depth']"));
+  const body = globalThis.document.body;
+  globalThis.document.body = { classList: { contains: (c) => c === 'fg-hidden' } };
+  let clicked = 0;
+  const { el: mkEl } = await import('../src/core/scene.js');
+  const btn = mkEl('button', { key: 'q', onclick: () => clicked++ }, 'Q');
+  registry.app.append(btn);
+  ok('hotkeys off while the foreground is hidden', handleKey('q') === false && clicked === 0);
+  globalThis.document.body = body;
+  ok('hotkeys back when shown', handleKey('q') === true && clicked === 1);
+  btn.remove();
+  ok('3D backgrounds no-op without WebGL', bg3d.initBg3d() === false && bg3d.isBg3dActive() === false);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

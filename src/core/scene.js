@@ -13,6 +13,14 @@ const app = () => document.getElementById('app');
 let current = null;
 let activeBg = null;   // the bg-layer element currently opaque
 let transitioning = false; // re-entry guard (rapid keys during a fade)
+let bgListener = null;     // the 3D background renderer, when running (0.083)
+
+// Tell a listener (core/bg3d.js) about every background change; it is
+// told the current one immediately.
+export function onBackgroundChange(fn) {
+  bgListener = fn;
+  if (activeBg) fn(activeBg.dataset.file);
+}
 
 export function show(scene) {
   transitionTo(() => {
@@ -65,6 +73,7 @@ export function setBackground(file) {
     activeBg.style.opacity = '0';
   }
   activeBg = next;
+  bgListener?.(file);
 }
 
 export function el(tag, attrs = {}, ...children) {
@@ -123,6 +132,9 @@ export function handleKey(key) {
   // The outgoing scene is still in the DOM while it fades — its buttons
   // must not fire (0.077: a second R during the fade re-banked the run).
   if (transitioning) return false;
+  // Debug "hide foreground" (0.083): the UI is invisible, so its hotkeys
+  // must not click unseen buttons.
+  if (document.body?.classList?.contains('fg-hidden')) return false;
   const k = key.toLowerCase();
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');

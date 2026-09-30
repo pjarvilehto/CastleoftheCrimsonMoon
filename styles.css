@@ -34,6 +34,13 @@
     opacity: 0;
     transition: opacity 2s ease-in-out; /* background crossfade length */
   }
+  /* 3D background canvas (0.083, core/bg3d.js): sits over the CSS layers
+     once its first frame is drawn — that frame is the rest pose, identical
+     to the CSS image, so the handover is invisible. */
+  #bg3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; }
+  #bg3d.ready { opacity: 1; }
+  /* ?debug "hide foreground": backgrounds only, for evaluating them */
+  body.fg-hidden #app { visibility: hidden; }
   #vignette {
     position: fixed; inset: 0;
     pointer-events: none;
@@ -603,6 +610,10 @@
 body.debug .music-toggle { top: 40px; }
 body.debug .fs-toggle { top: 72px; }
 body.debug .sfx-toggle { top: 104px; }
+/* ?debug background evaluation toggles (0.083) */
+.bg-fg-toggle { top: 136px; }
+.bg-view-toggle { top: 168px; }
+.bg-next-toggle { top: 200px; }
 
 /* ---- 0.067: YOU DIED dialog ---- */
 .death-overlay {
