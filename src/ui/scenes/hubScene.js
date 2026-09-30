@@ -7,7 +7,7 @@ import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile, derivedStats, itemWithForge } from '../../meta/profile.js';
 import {
-  STAT_DEFS, statCost, canAfford, buyStat, precisionDesc,
+  STAT_DEFS, statDesc, statCost, canAfford, buyStat,
   restockPotion, potionCost,
   ALCHEMY_DEFS, alchemyCost, trainAlchemy, potionHealAmount, efficiencyChance, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
@@ -46,7 +46,7 @@ export function hubScene() {
       ...Object.entries(STAT_DEFS).map(([key, def]) => {
         const lvl = p.stats[key];
         const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
-        const desc = key === 'precision' ? precisionDesc(lvl) : def.desc;
+        const desc = statDesc(key, lvl);
         return el('div', { class: 'item-row' },
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),

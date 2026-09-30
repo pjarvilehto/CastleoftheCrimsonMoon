@@ -17,7 +17,7 @@ export function scaleEnemy(enemyId, roomNumber) {
     boss: !!base.boss,
     maxHp: Math.round(base.hp * Math.pow(diff.hpGrowth, depth)),
     dmg: Math.round(base.dmg * Math.pow(diff.dmgGrowth, depth)),
-    xp: Math.round(base.xp * Math.pow(1.06, depth)),
+    xp: Math.round(base.xp * Math.pow(diff.xpGrowth ?? 1.06, depth)),
     coins: base.coins,
   };
 }
@@ -34,7 +34,7 @@ function randInt([min, max]) {
 // T3-strength elites and bosses — marked with a gold star in battle and
 // the only enemies that can drop T4 crimson relics (loot.js).
 export function isElite(enemy) {
-  return !!(enemy.boss || enemy.maxHp >= 60);
+  return !!(enemy.boss || enemy.maxHp >= (DATA.difficulty.eliteMinHp ?? 60));
 }
 
 export function rollCoins(enemy) {

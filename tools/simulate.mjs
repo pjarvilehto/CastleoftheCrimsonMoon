@@ -87,7 +87,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
     } = await import('../src/meta/leveling.js');
     const { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } = await import('../src/run/runState.js');
     const { createCombat, playerAttack, canHeavy, useHeavy } = await import('../src/run/combat.js');
-    const { shrineOffers, canAffordOffer, acceptOffer } = await import('../src/run/shrine.js');
+    const { dealOffers, canAffordOffer, acceptOffer } = await import('../src/run/shrine.js');
 
     resetProfile();
     const p = getProfile();
@@ -127,13 +127,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false } = {}) {
         const room = enterNextRoom(run);
         if (room.kind === 'shrine') {
           agg.shrineRoomsSeen += 1;
-          // Mirror shrineUI.dealOffers: shuffle 3 from the pool.
-          const pool = [...shrineOffers()];
-          for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-          }
-          const dealt = pool.slice(0, 3);
+          const dealt = dealOffers(); // the game's own deal (run/shrine.js)
           const pick = SHRINE_PRIORITY.map((id) => dealt.find((o) => o.id === id))
             .find((o) => o && canAffordOffer(run, o));
           if (pick) { acceptOffer(run, pick); agg.shrinesTaken += 1; }

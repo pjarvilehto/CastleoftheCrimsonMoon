@@ -43,8 +43,11 @@ async function boot() {
   const tag = document.createElement('div');
   tag.className = 'build-tag';
   tag.textContent = `build v${DATA.build.version}`;
-  // Testing aid (upper right): invulnerability toggle, session-only.
-  const inv = el('button', {
+  // Testing aid (upper right): invulnerability toggle, session-only. Only
+  // with ?debug in the URL (0.079) — players never see it.
+  const debugMode = new URLSearchParams(globalThis.location?.search ?? '').has('debug');
+  if (debugMode) document.body.classList.add('debug');
+  const inv = debugMode && el('button', {
     class: 'debug-toggle',
     onclick: (e) => {
       DEBUG.invulnerable = !DEBUG.invulnerable;
@@ -86,7 +89,7 @@ async function boot() {
       e.currentTarget.textContent = `SOUND: ${m ? 'OFF' : 'ON'}`;
     },
   }, `SOUND: ${sfxMuted() ? 'OFF' : 'ON'}`);
-  document.body.append(tag, inv, music, fsBtn, snd);
+  document.body.append(...[tag, inv, music, fsBtn, snd].filter(Boolean));
   // Every button in the game clicks (delegated, so dynamically rendered
   // scenes need no per-button wiring).
   document.addEventListener?.('click', (e) => {

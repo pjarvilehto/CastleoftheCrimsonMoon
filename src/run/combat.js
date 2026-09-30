@@ -31,10 +31,11 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   const target = combat.enemies[targetIndex];
   if (!target || target.hp <= 0 || combat.over) return events;
 
+  const tune = DATA.difficulty.combat ?? {};
   const crit = Math.random() < combat.run.stats.crit;
-  const mult = heavy ? 2 : 1;
+  const mult = heavy ? (tune.heavyMult ?? 2) : 1;
   let dmg = combat.run.stats.dmg * mult;
-  if (crit) dmg = Math.round(dmg * 1.5);
+  if (crit) dmg = Math.round(dmg * (tune.critMult ?? 1.5));
   dmg = Math.max(1, dmg);
 
   // --- SMASH: a heavy hit whose damage covers EVERY living enemy's
@@ -110,7 +111,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 
   // enemy phase
   for (const enemy of living(combat)) {
-    const raw = enemy.dmg + Math.floor(Math.random() * 3);
+    const raw = enemy.dmg + Math.floor(Math.random() * ((tune.enemyDmgJitter ?? 2) + 1));
     // T4 relic: dodge — the blow misses entirely.
     if (!DEBUG.invulnerable && (combat.run.stats.dodge ?? 0) > 0 && Math.random() < combat.run.stats.dodge) {
       events.push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!` });
@@ -121,7 +122,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     // Armor soaks at most 85% of a blow (0.062): stacked Endurance + relic
     // plates used to reduce deep-room enemies to 0-1 dmg, removing all
     // pressure. The floor scales with the hit, so deep foes stay dangerous.
-    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * 0.15), raw - armor);
+    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * (tune.armorMinTakenPct ?? 0.15)), raw - armor);
     combat.run.hp = Math.max(0, combat.run.hp - taken);
     events.push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken });
     // T4 relic: thorns wound the attacker — but never finish it (kill/loot
@@ -135,7 +136,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
       // T4 relic: the Heart of the Dying Moon beats again — once per run.
       if (combat.run.revive) {
         combat.run.revive = false;
-        combat.run.hp = Math.ceil(combat.run.maxHp / 2);
+        combat.run.hp = Math.ceil(combat.run.maxHp * (DATA.difficulty.player?.reviveHpPct ?? 0.5));
         events.push({ type: 'revive', text: 'The Heart of the Dying Moon beats again! You rise at half health.' });
         continue;
       }
@@ -162,6 +163,6 @@ export function canHeavy(combat) {
 }
 
 export function useHeavy(combat) {
-  // Cooldown is 3 by default; the quicken shrine boon lowers it (floor 1).
-  combat.heavyCd = combat.run.stats.heavyCdMax ?? 3;
+  // Cooldown is player.baseHeavyCd (3); relics and the quicken boon lower it (floor 1).
+  combat.heavyCd = combat.run.stats.heavyCdMax ?? DATA.difficulty.player?.baseHeavyCd ?? 3;
 }

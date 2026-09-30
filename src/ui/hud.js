@@ -17,14 +17,16 @@ export function statBox(label, value) {
 // Small glyph per line type, for faster log scanning.
 const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '★ ', sys: '' };
 
-// content: plain string, or an array of strings/Nodes (rich line, e.g.
-// rarity-colored item names inside a loot summary).
+// content: plain string, or an array of strings/Nodes/{ item } parts (rich
+// line, e.g. rarity-colored item names inside a loot summary). An { item }
+// part renders via itemName(), so game logic can name items without DOM.
 // The dungeon log is one element for the whole run — a deep run prints
 // thousands of lines, so only the newest LOG_MAX_LINES stay in the DOM.
 const LOG_MAX_LINES = 200;
 
 export function logLine(logEl, content, cls = 'sys') {
-  const parts = Array.isArray(content) ? content : [content];
+  const parts = (Array.isArray(content) ? content : [content])
+    .map((p) => (p && typeof p === 'object' && p.item ? itemName(p.item) : p));
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
   logEl.append(line);
   while (logEl.children.length > LOG_MAX_LINES) logEl.children[0].remove();

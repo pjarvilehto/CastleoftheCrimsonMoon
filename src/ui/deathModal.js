@@ -1,6 +1,7 @@
 // deathModal.js — the YOU DIED dialog. Death is THE event of a roguelite run,
-// so it gets a centered blood-red modal (not a corner button): the fatal blow
-// already fired the red flash; this fades in on top and is the only way out.
+// so it gets a centered blood-red modal (not a corner button). It flashes in
+// at the peak of the red death flash (fx.js deathFlash) and stays up, its
+// button pulsing in the 'active' red state — the only way out.
 
 import { el } from '../core/scene.js';
 
@@ -18,7 +19,7 @@ export function showDeathModal(run, onAccept) {
       { class: 'death-modal' },
       el('h1', { class: 'death-title' }, 'YOU DIED!'),
       el('p', { class: 'death-sub' }, `The castle claims another soul on room ${run.roomNumber}.`),
-      el('button', { class: 'danger death-accept', key: 'f', onclick: accept }, 'Accept Your Fate')
+      el('button', { class: 'danger death-accept active active-red', key: 'f', onclick: accept }, 'Accept Your Fate')
     )
   );
   document.getElementById('app').append(overlay);

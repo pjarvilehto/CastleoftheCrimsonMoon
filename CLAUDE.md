@@ -38,7 +38,13 @@ node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
    through the run object.
 2. **All balance numbers live in `assets/data/*.json`** (enemies, items,
    difficulty, shrines). Never hardcode tuning in `src/` — add a knob to
-   `difficulty.json` instead.
+   `difficulty.json` instead. Since 0.079 that includes player base stats
+   (`player`), combat multipliers (`combat`), and every shrine boon's
+   numbers (per-offer fields in `shrines.json`; a smoke check keeps the
+   card text in sync with them).
+6. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
+   0.079): bump it and append a step to `MIGRATIONS` — never edit a
+   shipped step.
 3. **`run.stats` is a snapshot** taken at run start. Mid-run loot does
    nothing until `settleRun()` auto-equips it into the profile.
 4. **Bump `assets/data/build.json` with every player-facing change** and
@@ -102,6 +108,9 @@ music beds and SFX (gesture-gated AudioContext).
   `backgrounds.json` (`rooms` and `roomNames`).
 - Keep files under ~300 lines; one responsibility per file.
 - Every keyboard-reachable button gets `key: 'x'` in `el()`.
+- The obvious next button gets the **'active'** state: `class: 'active'`
+  (pulsing yellow) or `'active active-red'` (pulsing red) — 0.079.
+- `?debug` in the URL shows the INVULNERABLE toggle (hidden otherwise).
 - Combat cards: frame art on `.char-card::before` (opacity 0.85);
   portraits overflow the frame (absolute, bottom-anchored, taller/wider
   than the card, text z-index above art); per-enemy tweaks via

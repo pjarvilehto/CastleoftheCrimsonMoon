@@ -9,7 +9,11 @@ import { equipItems } from '../meta/equipment.js';
 import { generateRoom } from './roomGen.js';
 import { rollLoot, potionDrop } from './loot.js';
 import { DATA } from '../shared/data.js';
-import { itemName } from '../ui/hud.js';
+
+function randomShrineRoom() {
+  const [lo, hi] = DATA.difficulty.shrineRoomRange ?? [2, 7];
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
+}
 
 export function createRun() {
   const stats = derivedStats();
@@ -24,7 +28,7 @@ export function createRun() {
     potions: stats.potions,
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
-    shrineRoom: 2 + Math.floor(Math.random() * 6), // one shrine in rooms 2-7
+    shrineRoom: randomShrineRoom(), // one shrine in rooms 2-7 (shrineRoomRange)
     revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
     over: false,
     room: null,
@@ -52,7 +56,9 @@ export function applyLoot(run, enemy, log) {
     run.itemsFound.push(loot.itemId);
     const found = DATA.items[loot.itemId];
     // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
-    if (found.tier === 4) log(['✦ EPIC ITEM ✦  You found ', itemName(found), '!'], 'relic');
+    // { item } parts are rendered rarity-colored by hud.logLine — run/ stays
+    // free of UI imports (0.079).
+    if (found.tier === 4) log(['✦ EPIC ITEM ✦  You found ', { item: found }, '!'], 'relic');
     else log(`Found: ${found.name}!`, 'loot');
   }
   if (potionDrop()) {

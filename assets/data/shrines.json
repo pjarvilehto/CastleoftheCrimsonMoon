@@ -1,58 +1,82 @@
 {
+  "coinCostGrowthPerRoom": 0.5,
+  "minMaxHp": 5,
+  "minDmg": 5,
   "offers": [
     {
       "id": "dmg",
       "buff": "+25% DAMAGE",
       "costDesc": "-15% MAX HP",
-      "icon": "⚔"
+      "icon": "⚔",
+      "hpCostPct": 0.15,
+      "dmgMult": 1.25
     },
     {
       "id": "crit",
       "buff": "+10% CRIT",
       "costDesc": "-50 COINS",
-      "icon": "★"
+      "icon": "★",
+      "coinCost": 50,
+      "critAdd": 0.1,
+      "critCap": 0.95
     },
     {
       "id": "armor",
       "buff": "+25% ARMOR",
       "costDesc": "-1 POTION",
-      "icon": "🛡"
+      "icon": "🛡",
+      "potionCost": 1,
+      "armorMult": 1.25
     },
     {
       "id": "leech",
       "buff": "+10% LIFESTEAL",
       "costDesc": "-15% MAX HP",
-      "icon": "🩸"
+      "icon": "🩸",
+      "hpCostPct": 0.15,
+      "lifestealAdd": 0.1,
+      "lifestealCap": 0.6
     },
     {
       "id": "bulwark",
       "buff": "+5 ARMOR",
       "costDesc": "-10% DMG",
-      "icon": "⛨"
+      "icon": "⛨",
+      "dmgCostPct": 0.1,
+      "armorAdd": 5
     },
     {
       "id": "secondwind",
       "buff": "+1 POTION & FULL HEAL",
       "costDesc": "-75 COINS",
-      "icon": "✚"
+      "icon": "✚",
+      "coinCost": 75,
+      "potionsAdd": 1
     },
     {
       "id": "quicken",
       "buff": "HEAVY COOLDOWN −1",
       "costDesc": "-15% MAX HP",
-      "icon": "⚡"
+      "icon": "⚡",
+      "hpCostPct": 0.15,
+      "cdReduce": 1
     },
     {
       "id": "greed",
       "buff": "+40% COINS",
       "costDesc": "-10% DMG",
-      "icon": "◈"
+      "icon": "◈",
+      "dmgCostPct": 0.1,
+      "coinMultAdd": 0.4
     },
     {
       "id": "glasscannon",
       "buff": "+50% DMG",
       "costDesc": "−50% ARMOR",
-      "icon": "⚗"
+      "icon": "⚗",
+      "armorCostPct": 0.5,
+      "dmgMult": 1.5,
+      "minArmor": 2
     }
   ]
 }

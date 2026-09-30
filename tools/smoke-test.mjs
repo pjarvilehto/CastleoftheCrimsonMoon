@@ -467,6 +467,7 @@ process.on('uncaughtException', (e) => {
   const { importSave } = await import('../src/meta/profile.js');
   const old = JSON.parse(JSON.stringify(p));
   delete old.alchemy; delete old.forged;
+  delete old.saveVersion; // real pre-0.079 saves are unversioned (0.079)
   old.stats.alchemy = 3;
   const code = btoa(unescape(encodeURIComponent(JSON.stringify(old))));
   importSave(code);
@@ -711,7 +712,16 @@ process.on('uncaughtException', (e) => {
   const epic = lines.find((l) => l.cls === 'relic');
   ok('T4 drop logs a burning EPIC ITEM line', !!epic && Array.isArray(epic.text)
     && epic.text.some((s) => typeof s === 'string' && s.includes('EPIC ITEM'))
-    && epic.text.some((n) => n && n.className === 'rarity-4'));
+    && epic.text.some((n) => n && n.item && n.item.tier === 4));
+  {
+    // 0.079: run/ emits a DOM-free { item } part; hud.logLine renders it
+    // as the rarity-4 span.
+    const { logLine } = await import('../src/ui/hud.js');
+    const { el: mkEl } = await import('../src/core/scene.js');
+    const logBox = mkEl('div', {});
+    logLine(logBox, epic.text, 'relic');
+    ok('relic line renders rarity-colored name', logBox.all((n) => n.className === 'rarity-4').length === 1);
+  }
   const lines2 = [];
   applyLoot(runL, scaleEnemy('rat', 1), (text, cls) => lines2.push({ text, cls }));
   Math.random = origR;
@@ -895,7 +905,9 @@ process.on('uncaughtException', (e) => {
   ok('run end: escape fanfare', read('../src/ui/scenes/runEndScene.js').includes("sfx('victory')"));
   const m = read('../src/main.js');
   ok('main: SOUND toggle + global clicks', m.includes('sfx-toggle') && m.includes("closest?.('button')") && m.includes('initSfx()'));
-  ok('sfx toggle positioned under fullscreen', read('../styles.css').includes('.sfx-toggle { top: 104px; }'));
+  // 0.079: one slot higher without ?debug (no INVULNERABLE toggle above it)
+  ok('sfx toggle positioned under fullscreen', read('../styles.css').includes('.sfx-toggle { top: 72px; }')
+    && read('../styles.css').includes('body.debug .sfx-toggle { top: 104px; }'));
 }
 
 // T36: 0.072 — the headless balance simulator drives the real run math and
@@ -958,6 +970,80 @@ process.on('uncaughtException', (e) => {
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
   ok('dungeon sets --n on the battle line', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('--n:${combat.enemies.length}'));
+}
+
+// T39: 0.079 — tuning lives in data: shrine card text agrees with the
+// boon's numbers, and hub discipline text is generated from player knobs.
+{
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const expect = {
+    dmg: (o) => [pct(o.dmgMult - 1), pct(o.hpCostPct)],
+    crit: (o) => [pct(o.critAdd), String(o.coinCost)],
+    armor: (o) => [pct(o.armorMult - 1), `${o.potionCost} POTION`],
+    leech: (o) => [pct(o.lifestealAdd), pct(o.hpCostPct)],
+    bulwark: (o) => [`${o.armorAdd} ARMOR`, pct(o.dmgCostPct)],
+    secondwind: (o) => [`${o.potionsAdd} POTION`, String(o.coinCost)],
+    quicken: (o) => [String(o.cdReduce), pct(o.hpCostPct)],
+    greed: (o) => [pct(o.coinMultAdd), pct(o.dmgCostPct)],
+    glasscannon: (o) => [pct(o.dmgMult - 1), pct(o.armorCostPct)],
+  };
+  const bad = DATA.shrines.offers.filter((o) => {
+    const [buff, cost] = expect[o.id](o);
+    return !o.buff.includes(buff) || !o.costDesc.includes(cost);
+  }).map((o) => o.id);
+  ok('shrine text matches shrine numbers', bad.length === 0, bad.join(','));
+  const { statDesc } = await import('../src/meta/leveling.js');
+  const pl = DATA.difficulty.player;
+  ok('hub stat text generated from data', statDesc('power', 0).includes(`+${pl.dmgPerPower} `)
+    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('increase Crit'));
+}
+
+// T40: 0.079 — save schema versioning: old unversioned saves migrate once
+// to SAVE_VERSION; fresh and imported saves carry the version.
+{
+  const { SAVE_VERSION, exportSave, importSave } = await import('../src/meta/profile.js');
+  ok('save version defined', Number.isInteger(SAVE_VERSION) && SAVE_VERSION >= 1);
+  resetProfile();
+  ok('fresh profile carries saveVersion', getProfile().saveVersion === SAVE_VERSION);
+  // A pre-0.079 save: no version, old single alchemy stat, flat inventory.
+  const legacy = { coins: 5, xp: 1, stats: { power: 2, alchemy: 3 }, records: { runs: 4 },
+    inventory: ['rusty_sword', 'rusty_sword'] };
+  const code = Buffer.from(JSON.stringify({ ...legacy, equipment: {} })).toString('base64');
+  // importSave requires equipment/records; build the legacy case directly too.
+  localStorage.setItem('castle-roguelike-profile-v1', JSON.stringify(legacy));
+  const mod = await import('../src/meta/profile.js?legacy');
+  const p = mod.getProfile();
+  ok('legacy save migrates to current version', p.saveVersion === SAVE_VERSION
+    && p.alchemy.potency === 3 && p.stats.alchemy === undefined
+    && p.equipment && p.equipment.weapon === 'rusty_sword' && p.inventory === undefined
+    && p.records.kills === 0 && p.records.runs === 4);
+  ok('import stamps saveVersion', importSave(code) === true && getProfile().saveVersion === SAVE_VERSION);
+  resetProfile();
+}
+
+// T41: 0.079 — 'active' pulse on Push Deeper after a won fight, the death
+// sequence (slow red build -> dialog at the peak -> 2s fade), the dialog's
+// button in active red, and INVULNERABLE only under ?debug.
+{
+  const css = readFileSync('styles.css', 'utf8');
+  ok('active state styles exist', css.includes('button.active {') && css.includes('button.active.active-red'));
+  const d = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8');
+  ok('Push Deeper is active after combat', /class: 'primary active', key: 'd'/.test(d));
+  const { showDeathModal } = await import('../src/ui/deathModal.js');
+  const ov = showDeathModal({ roomNumber: 3 }, () => {});
+  const acc = ov.all((n) => n.tagName === 'button')[0];
+  ok('death button pulses active red', acc && /\bactive\b/.test(acc.className) && acc.className.includes('active-red'));
+  ov.remove();
+  const { deathFlash } = await import('../src/ui/fx.js');
+  let peaked = false;
+  deathFlash(() => { peaked = true; });
+  ok('death flash builds red before the dialog', registry.flash.classList.contains('death-in') && !peaked);
+  await sleep(1000);
+  ok('dialog at the peak, then red fades out', peaked && registry.flash.classList.contains('death-out') && !registry.flash.classList.contains('death-in'));
+  ok('flash timings: 0.9s build, 2s fade to 75%', css.includes('#flash.death-in  { opacity: 0.75; transition: opacity 0.9s')
+    && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
+  const m = readFileSync('src/main.js', 'utf8');
+  ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('const inv = debugMode && el('));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

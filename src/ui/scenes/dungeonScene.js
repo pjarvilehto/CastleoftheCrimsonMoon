@@ -15,7 +15,7 @@ import { createRun, enterNextRoom, applyLoot, drinkPotion, settleRun } from '../
 import { getProfile } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy } from '../../run/combat.js';
 import { logLine, hpBar, itemName } from '../hud.js';
-import { flashRed, tickUp } from '../fx.js';
+import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { shrineBody } from '../shrineUI.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
@@ -42,7 +42,7 @@ export function dungeonScene() {
     renderNow: () => render(currentRoot),
     onEmpty: () => {
       tickUpChips();
-      if (combat.over && !combat.victory) { flashRed(); openDeathModal(); }
+      if (combat.over && !combat.victory) openDeathModal();
     },
   });
 
@@ -140,7 +140,8 @@ export function dungeonScene() {
     const proceed = el('div', { class: 'combat-proceed' });
     if (combat.over && !printing && combat.victory) {
       proceed.append(
-        el('button', { class: 'primary', key: 'd', key2: ' ', onclick: () => nextRoom(root) }, 'Push Deeper'),
+        // 'active' (0.079): pulsing yellow — the obvious next step.
+        el('button', { class: 'primary active', key: 'd', key2: ' ', onclick: () => nextRoom(root) }, 'Push Deeper'),
         el('button', { class: 'danger', key: 'r', onclick: () => endRun(root, 'retreat') }, 'Retreat with Loot'));
     }
 
@@ -265,13 +266,14 @@ export function dungeonScene() {
       : null;
   }
 
-  // Death is an event: after the fatal blow finishes printing, the red
-  // flash fires and a centered YOU DIED dialog carries the moment.
+  // Death is an event: after the fatal blow finishes printing, the screen
+  // bleeds slowly to red, the YOU DIED dialog flashes in at the peak, and
+  // the red fades back out behind it (fx.js deathFlash, 0.079).
   function openDeathModal() {
     if (deathShown) return;
     deathShown = true;
     sfx('death');
-    showDeathModal(run, () => endRun(currentRoot, 'death'));
+    deathFlash(() => showDeathModal(run, () => endRun(currentRoot, 'death')));
   }
 
   function firstAlive() {

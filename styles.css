@@ -119,6 +119,25 @@
     0%, 100% { box-shadow: 0 0 5px rgba(201,162,39,0.25); }
     50%      { box-shadow: 0 0 18px rgba(201,162,39,0.65); }
   }
+  /* 'active' state (0.079): THE button to press next — pulsating yellow
+     glow (e.g. Push Deeper once a room is cleared). .active-red is the same
+     state in blood red (Accept Your Fate). */
+  button.active {
+    border-color: #e8c45c; color: #fff4d0;
+    animation: active-glow 1.3s ease-in-out infinite;
+  }
+  @keyframes active-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(232,196,92,0.35), inset 0 0 4px rgba(232,196,92,0.15); }
+    50%      { box-shadow: 0 0 24px rgba(232,196,92,0.95), 0 0 46px rgba(232,196,92,0.35), inset 0 0 10px rgba(232,196,92,0.3); }
+  }
+  button.active.active-red {
+    border-color: #e03030; color: #ffe0e0;
+    animation-name: active-glow-red;
+  }
+  @keyframes active-glow-red {
+    0%, 100% { box-shadow: 0 0 6px rgba(224,48,48,0.4), inset 0 0 4px rgba(224,48,48,0.15); }
+    50%      { box-shadow: 0 0 24px rgba(224,48,48,1), 0 0 46px rgba(224,48,48,0.4), inset 0 0 10px rgba(224,48,48,0.3); }
+  }
   button:disabled { opacity: 0.35; cursor: not-allowed; }
   button.danger { border-color: var(--blood); }
   button.danger:hover:not(:disabled) { border-color: #c14b4b; box-shadow: 0 0 12px rgba(142,35,35,0.4); }
@@ -238,7 +257,10 @@
     position: fixed; inset: 0; pointer-events: none; z-index: 7; opacity: 0;
     background: radial-gradient(ellipse at center, rgba(150,10,10,0.4) 0%, rgba(185,18,18,0.82) 100%);
   }
-  #flash.on { animation: redflash 1.7s ease-out; }
+  /* Death sequence (0.079, fx.js deathFlash): slow build to 75% red, the
+     YOU DIED dialog flashes in at the peak, then a slow 2s fade back. */
+  #flash.death-in  { opacity: 0.75; transition: opacity 0.9s ease-in; }
+  #flash.death-out { opacity: 0;    transition: opacity 2s ease-out; }
   /* Active shrine blessings — bottom-left buff bar. */
   #buffs { position: fixed; left: 1.4vw; bottom: 2.5vh; display: flex; flex-direction: column; gap: 1vh; z-index: 5; }
   .buff { display: flex; flex-direction: column; align-items: center; width: 5vh; }
@@ -251,10 +273,6 @@
     box-shadow: 0 0 10px rgba(201,162,39,0.25);
   }
   .buff-label { margin-top: 0.4vh; font-size: 1.3vh; color: var(--gold); text-align: center; letter-spacing: 0.15vh; }
-  /* Death flash (0.067): hard hit, brief dip, second surge, long fade. */
-  @keyframes redflash {
-    0% { opacity: 1; } 22% { opacity: 0.3; } 42% { opacity: 0.9; } 100% { opacity: 0; }
-  }
   .lowhp { animation: lowhp-pulse 1.1s ease-in-out infinite; }
   @keyframes lowhp-pulse {
     0%, 100% { text-shadow: 0 0 4px rgba(193,75,75,0.4); }
@@ -476,7 +494,9 @@
 #combat-log .revive { color: var(--gold); font-weight: bold; }
 
 /* Debug toggle (main.js): session-only testing switch, upper right.
-   Dimmed when off so it never distracts players; lit gold when on. */
+   Dimmed when off so it never distracts players; lit gold when on.
+   0.079: INVULNERABLE only exists with ?debug in the URL (body.debug);
+   without it the other toggles move up one slot. */
 .debug-toggle {
   position: fixed; top: 8px; right: 12px; z-index: 50;
   padding: 4px 12px; font-size: 0.7rem; letter-spacing: 1px;
@@ -559,16 +579,20 @@
 
 /* ---- 0.066: background music ---- */
 /* Music on/off sits under the INVULNERABLE debug toggle (same base style). */
-.music-toggle { top: 40px; }
-.fs-toggle { top: 72px; }
-.sfx-toggle { top: 104px; }
+.music-toggle { top: 8px; }
+.fs-toggle { top: 40px; }
+.sfx-toggle { top: 72px; }
+body.debug .music-toggle { top: 40px; }
+body.debug .fs-toggle { top: 72px; }
+body.debug .sfx-toggle { top: 104px; }
 
 /* ---- 0.067: YOU DIED dialog ---- */
 .death-overlay {
   position: fixed; inset: 0; z-index: 60;
-  background: rgba(12, 0, 0, 0.78);
+  /* light dim only: the room shows through once the red has faded (0.079) */
+  background: rgba(12, 0, 0, 0.35);
   display: flex; align-items: center; justify-content: center;
-  animation: death-fade 0.5s ease-out;
+  animation: death-fade 0.25s ease-out;
 }
 .death-modal {
   min-width: 460px; max-width: 560px;
@@ -576,7 +600,7 @@
   background: #160a0c;
   border: 2px solid #a01818; border-radius: 10px;
   box-shadow: 0 0 54px rgba(193, 30, 30, 0.5), 0 0 120px rgba(193, 30, 30, 0.2), inset 0 0 34px rgba(0, 0, 0, 0.7);
-  animation: death-rise 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+  animation: death-flash-in 0.5s ease-out;
 }
 .death-title {
   margin: 0 0 10px; font-size: 46px; letter-spacing: 0.22em;
@@ -586,7 +610,12 @@
 .death-sub { color: #b89a8a; font-size: 1.05rem; margin-bottom: 28px; }
 .death-accept { min-width: 230px; margin: 0 auto; }
 @keyframes death-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes death-rise { from { transform: translateY(26px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+/* the dialog FLASHES in: a white-hot pop that settles (0.079) */
+@keyframes death-flash-in {
+  0%   { opacity: 0; transform: scale(1.12); filter: brightness(3) saturate(0.4); }
+  25%  { opacity: 1; }
+  100% { opacity: 1; transform: none; filter: none; }
+}
 @keyframes death-pulse {
   0%, 100% { text-shadow: 0 0 10px rgba(224, 48, 48, 0.6); }
   50% { text-shadow: 0 0 22px rgba(224, 48, 48, 1), 0 0 60px rgba(224, 48, 48, 0.55); }

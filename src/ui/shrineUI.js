@@ -5,16 +5,7 @@
 
 import { el } from '../core/scene.js';
 import { sfx } from '../audio/sfx.js';
-import { shrineOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
-
-function dealOffers() {
-  const pool = [...shrineOffers()];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, 3);
-}
+import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 
 // Hooks: log(text) prints to the combat log; refresh() re-renders the scene.
 export function shrineBody(run, room, { log, refresh }) {

@@ -34,27 +34,48 @@ export function getProfile() {
   return profile;
 }
 
-// Migrate old saves forward.
+// ---- save schema versioning (0.079) ----
+// Every save carries `saveVersion`. Saves from before 0.079 have none and
+// count as version 0. On load, MIGRATIONS[v] upgrades a v save to v+1, in
+// order, until SAVE_VERSION. To change the save format: bump SAVE_VERSION
+// and APPEND a step — never edit a shipped step (testers' saves have
+// already been through it). saveVersion is deliberately NOT in DEFAULTS:
+// the load merge would stamp it onto old saves and skip their migrations.
+export const SAVE_VERSION = 1;
+
+const MIGRATIONS = [
+  // v0 -> v1: everything pre-0.079 builds did on every load.
+  (p) => {
+    // 0.059: stats.alchemy (single track) -> alchemy.potency; the Scribe's
+    // xpExchange is gone.
+    if (typeof p.stats.alchemy === 'number') {
+      p.alchemy.potency = Math.max(p.alchemy.potency, p.stats.alchemy);
+      delete p.stats.alchemy;
+    }
+    // Pre-equipment saves carried a flat inventory: equip the best of it.
+    if (!p.equipment) {
+      const oldInventory = p.inventory || [];
+      p.equipment = startingEquipment();
+      const res = equipItems(p, oldInventory); // dupes/weaker gear salvage into coins
+      p.coins += res.coins;
+      delete p.inventory;
+    }
+  },
+];
+
 function migrateProfile(p) {
-  // Forward-compat: new stats get defaults — the top-level load merge is
-  // shallow, so an old save's `stats` object would otherwise shadow
-  // DEFAULTS.stats entirely and lack new keys.
+  // Forward-compat, every load: the top-level merge is shallow, so an old
+  // save's nested objects would otherwise shadow DEFAULTS entirely and lack
+  // keys added since (new stats, alchemy tracks, records).
   p.stats = { ...structuredClone(DEFAULTS.stats), ...(p.stats || {}) };
-  // 0.059: stats.alchemy (single track) -> alchemy.potency; precision and
-  // endurance arrive via the merge above; the Scribe's xpExchange is gone.
   p.alchemy = { ...structuredClone(DEFAULTS.alchemy), ...(p.alchemy || {}) };
-  if (typeof p.stats.alchemy === 'number') {
-    p.alchemy.potency = Math.max(p.alchemy.potency, p.stats.alchemy);
-    delete p.stats.alchemy;
-  }
+  p.records = { ...structuredClone(DEFAULTS.records), ...(p.records || {}) };
   p.forged = { ...(p.forged || {}) };
-  if (!p.equipment) {
-    const oldInventory = p.inventory || [];
-    p.equipment = startingEquipment();
-    const res = equipItems(p, oldInventory); // dupes/weaker gear salvage into coins
-    p.coins += res.coins;
-    delete p.inventory;
-  }
+  // Versioned, one-time steps. A save from a NEWER build (imported code)
+  // is left as-is rather than downgraded.
+  let v = Number.isInteger(p.saveVersion) ? p.saveVersion : 0;
+  while (v < SAVE_VERSION) MIGRATIONS[v++](p);
+  p.saveVersion = Math.max(v, SAVE_VERSION);
 }
 
 export function persist() {
@@ -82,7 +103,7 @@ export function importSave(code) {
 // Wipe the save and reset the in-memory profile to a fresh start.
 export function resetProfile() {
   wipeProfile();
-  profile = { ...structuredClone(DEFAULTS) };
+  profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION };
   profile.equipment = startingEquipment();
   persist();
 }
@@ -110,14 +131,23 @@ export function itemWithForge(id, p = getProfile()) {
   return boosted;
 }
 
+// Player base stats + per-level gains (difficulty.json `player`, 0.078).
+const P = () => DATA.difficulty.player ?? {};
+
 // Precision crit curve (0.062): +1% per level for 1-10, +0.5% for 11-20,
 // +0.2% for 21-30, +0.1% beyond. Diminishing returns; total crit is still
-// capped at 60% in derivedStats.
+// capped in derivedStats. Bands live in difficulty.json player.precisionBands
+// as [levels, critPerLevel] — a null width is the open-ended last band.
 export function precisionCrit(lvl) {
-  return 0.01 * Math.min(lvl, 10)
-       + 0.005 * Math.min(Math.max(lvl - 10, 0), 10)
-       + 0.002 * Math.min(Math.max(lvl - 20, 0), 10)
-       + 0.001 * Math.max(lvl - 30, 0);
+  const bands = P().precisionBands ?? [[10, 0.01], [10, 0.005], [10, 0.002], [null, 0.001]];
+  let left = Math.max(0, lvl);
+  let total = 0;
+  for (const [width, per] of bands) {
+    const n = width == null ? left : Math.min(left, width);
+    total += per * n;
+    left -= n;
+  }
+  return total;
 }
 
 export function derivedStats(p = getProfile()) {
@@ -126,19 +156,21 @@ export function derivedStats(p = getProfile()) {
   const gearArmor = gear.reduce((s, g) => s + (g.armor || 0), 0);
   const gearHp = gear.reduce((s, g) => s + (g.hp || 0), 0);
   const lifesteal = gear.reduce((s, g) => s + (g.lifesteal || 0), 0);
-  const crit = 0.05 + precisionCrit(trainedLevel(p, 'precision')) + gear.reduce((s, g) => s + (g.crit || 0), 0);
+  const pl = P();
+  const crit = (pl.baseCrit ?? 0.05) + precisionCrit(trainedLevel(p, 'precision')) + gear.reduce((s, g) => s + (g.crit || 0), 0);
 
   // T4 relic powers
-  const dodge = Math.min(0.35, gear.reduce((s, g) => s + (g.dodge || 0), 0));
+  const dodge = Math.min(pl.dodgeCap ?? 0.35, gear.reduce((s, g) => s + (g.dodge || 0), 0));
   const thorns = gear.reduce((s, g) => s + (g.thorns || 0), 0);
-  const heavyCdMax = Math.max(1, 3 - gear.reduce((s, g) => s + (g.heavyCd || 0), 0));
+  const heavyCdMax = Math.max(1, (pl.baseHeavyCd ?? 3) - gear.reduce((s, g) => s + (g.heavyCd || 0), 0));
   const revive = gear.some((g) => g.revive);
 
   return {
-    maxHp: 40 + trainedLevel(p, 'vitality') * 9 + gearHp, // 0.072: was 12 — HP stacking out-scaled everything
-    dmg: 6 + trainedLevel(p, 'power') * 3 + gearDmg,
-    armor: trainedLevel(p, 'endurance') + gearArmor,
-    crit: Math.min(0.6, crit),
+    // 0.072: hpPerVitality was 12 — HP stacking out-scaled everything
+    maxHp: (pl.baseHp ?? 40) + trainedLevel(p, 'vitality') * (pl.hpPerVitality ?? 9) + gearHp,
+    dmg: (pl.baseDmg ?? 6) + trainedLevel(p, 'power') * (pl.dmgPerPower ?? 3) + gearDmg,
+    armor: trainedLevel(p, 'endurance') * (pl.armorPerEndurance ?? 1) + gearArmor,
+    crit: Math.min(pl.critCap ?? 0.6, crit),
     lifesteal,
     dodge,
     thorns,

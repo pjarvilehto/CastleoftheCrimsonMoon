@@ -49,7 +49,7 @@ src/
 │   │                     codes for cross-origin transfer (new URL = new
 │   │                     localStorage, so saves must be carried by hand)
 │   ├── profile.js        coins, xp, stat levels, equipment, records,
-│   │                     resetProfile(); save schema v1 + migration
+│   │                     resetProfile(); SAVE_VERSION + ordered MIGRATIONS
 │   ├── equipment.js      slot rules + auto-equip/salvage logic
 │   └── leveling.js       training costs, buyStat(), restockPotion()
 ├── run/                  EXISTS only during a dungeon run
@@ -146,10 +146,11 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
   pick it up automatically.
 - New item: add to `items.json` with a `slot` and `tier`; `loot.js` and
   `equipment.js` handle the rest. Salvage value per tier: `salvagePerTier`.
-- New shrine boon: add to `shrines.json` AND the matching case in
-  `run/shrine.js` (ids are code-mapped). The shrine deals 3 random
-  offers from the pool (Fisher-Yates in `shrineUI.js :: dealOffers`,
-  stored on `room.dealtOffers` so re-renders are stable).
+- New shrine boon: add to `shrines.json` (text + its numbers) AND the
+  matching case in `run/shrine.js` (ids are code-mapped). The shrine deals
+  3 random offers from the pool (Fisher-Yates in `run/shrine.js ::
+  dealOffers`, shared with the simulator; stored on `room.dealtOffers` so
+  re-renders are stable).
 - New room background: drop the file in `assets/bg/`, add to `rooms` and
   `roomNames` in `backgrounds.json`.
 - New scene: create `ui/scenes/xScene.js` exporting `enter(root)`,

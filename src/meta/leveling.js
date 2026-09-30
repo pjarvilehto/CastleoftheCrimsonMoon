@@ -4,18 +4,31 @@
 // Currency split (0.059): XP buys character disciplines only; coins buy
 // potions, alchemy tracks, and Forge item enhancements. The two never mix.
 
-import { getProfile, derivedStats, persist, precisionCrit } from './profile.js';
+import { getProfile, persist, precisionCrit } from './profile.js';
 import { DATA } from '../shared/data.js';
 
 // ---- Disciplines (XP-only) ----
 
 export const STAT_DEFS = {
-  power:     { name: 'Power',     desc: '+3 damage per level',        key: 'p' },
-  vitality:  { name: 'Vitality',  desc: '+9 max HP per level',        key: 'v' },
-  fortune:   { name: 'Fortune',   desc: 'Better loot drops',          key: 'f' },
-  precision: { name: 'Precision', desc: '+1% crit chance per level, then +0.5%, +0.2%, +0.1%', key: 'r' },
-  endurance: { name: 'Endurance', desc: '+1 armor per level',         key: 'e' },
+  power:     { name: 'Power',     key: 'p' },
+  vitality:  { name: 'Vitality',  key: 'v' },
+  fortune:   { name: 'Fortune',   key: 'f' },
+  precision: { name: 'Precision', key: 'r' },
+  endurance: { name: 'Endurance', key: 'e' },
 };
+
+// Hub line for a discipline, built from difficulty.json `player` (0.079) —
+// hand-typed "+3 damage" text went stale the moment the numbers were tuned.
+export function statDesc(stat, currentLevel) {
+  const pl = DATA.difficulty.player ?? {};
+  switch (stat) {
+    case 'power': return `+${pl.dmgPerPower ?? 3} damage per level`;
+    case 'vitality': return `+${pl.hpPerVitality ?? 9} max HP per level`;
+    case 'endurance': return `+${pl.armorPerEndurance ?? 1} armor per level`;
+    case 'precision': return precisionDesc(currentLevel);
+    default: return 'Better loot drops';
+  }
+}
 
 // Precision's hub line shows the ACTUAL gain of the next click: the taper
 // bands (precisionCrit in profile.js) including ★ breakthrough doubles,
@@ -143,5 +156,3 @@ export function forgeItem(itemId) {
   persist();
   return true;
 }
-
-export { derivedStats };

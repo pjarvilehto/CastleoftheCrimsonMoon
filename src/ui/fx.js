@@ -1,12 +1,20 @@
 // ui/fx.js — combat feedback effects.
 
-// Red vignette flash — the death moment.
-export function flashRed() {
+// Death sequence (0.079): a slow build to 75% red; at the peak, onPeak()
+// (the YOU DIED dialog flashes in); then a slow 2s fade back to normal.
+// Timings pair with #flash.death-in / .death-out in styles.css.
+export function deathFlash(onPeak) {
   const f = document.getElementById('flash');
-  if (!f) return;
-  f.classList.remove('on');
-  void f.offsetWidth; // restart the animation if already flashing
-  f.classList.add('on');
+  if (!f) { onPeak(); return; }
+  f.classList.remove('on', 'death-out');
+  void f.offsetWidth;
+  f.classList.add('death-in');
+  setTimeout(() => {
+    onPeak();
+    f.classList.remove('death-in');
+    f.classList.add('death-out');
+    setTimeout(() => f.classList.remove('death-out'), 2100);
+  }, 900);
 }
 
 // Roll a number counter up from `from` to `to` over `ms`.

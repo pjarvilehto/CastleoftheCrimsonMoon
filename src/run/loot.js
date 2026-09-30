@@ -3,24 +3,20 @@
 import { DATA } from '../shared/data.js';
 import { rollCoins, isElite } from '../shared/balance.js';
 
-function randInt([min, max]) {
-  return min + Math.floor(Math.random() * (max - min + 1));
-}
-
 // Returns { coins, xp, itemId|null } for one killed enemy.
 // roomNumber gates T4 relics by depth (0.071); direct calls default deep.
 // hasRelic caps relics at ONE per run (0.072) — they're build-defining
 // drops, not a per-room income stream.
 export function rollLoot(enemy, fortuneLevel, roomNumber = Infinity, hasRelic = false) {
   const diff = DATA.difficulty;
-  const fortuneBonus = fortuneLevel * 0.02;
+  const fortuneBonus = fortuneLevel * (diff.fortuneLootBonus ?? 0.02);
 
   const coins = Math.round(rollCoins(enemy) * (1 + fortuneBonus));
   const xp = enemy.xp;
 
   let itemId = null;
   // T4 crimson relics: their own rare roll, and only bosses and T3-strength
-  // elites (maxHp >= 60) can carry one — and only from room 11 on (0.071),
+  // elites (maxHp >= eliteMinHp) can carry one — and only from room 11 on (0.071),
   // so early elites can't hand out top-tier gear.
   const relicEligible = isElite(enemy) && roomNumber >= (diff.t4MinRoom ?? 11) && !hasRelic;
   if (relicEligible && Math.random() < (diff.t4Chance ?? 0.05) + fortuneBonus) {
@@ -38,7 +34,7 @@ export function rollLoot(enemy, fortuneLevel, roomNumber = Infinity, hasRelic = 
 
 function maxTierFor(enemy) {
   if (isElite(enemy)) return 3;
-  if (enemy.maxHp >= 28) return 2;
+  if (enemy.maxHp >= (DATA.difficulty.tier2LootMinHp ?? 28)) return 2;
   return 1;
 }
 
