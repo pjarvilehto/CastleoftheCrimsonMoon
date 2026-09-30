@@ -77,8 +77,11 @@ src/
 └── ui/
     ├── hud.js            hpBar, statBox, logLine (glyphs)
     ├── fx.js             flashRed (death vignette), tickUp (counters)
-    ├── combatPlayback.js log drip queue + replay-HP (owns printing lock)
-    ├── battleLine.js     card components: playerCard + enemyCard (units =
+    ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
+    │                     snapshot plays with its line; owns printing lock)
+    ├── combatFx.js       combat effects: event -> fx descriptor, playFx()
+    ├── battleLine.js     persistent units (0.086: built once per room,
+    │                     update() patches HP/dead/buttons in place;
     │                     card + button row beneath; HP as text+bar line);
     │                     adds boss-card + per-id enemy-<id> classes (0.075)
     ├── shrineUI.js       shrine room rendering

@@ -411,6 +411,11 @@
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
 .skull { font-size: 4.5em; color: #6b5a4a; margin: auto; text-shadow: 0 2px 8px #000; }
+/* persistent cards (0.086): portrait and skull both live in the card; the
+   'dead' class swaps them instead of rebuilding the card */
+.char-card .skull { display: none; }
+.char-card.dead .skull { display: block; }
+.char-card.dead .portrait { display: none; }
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
 .hp-line { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.3em; width: 100%; margin-top: auto; text-shadow: 0 1px 3px #000; }

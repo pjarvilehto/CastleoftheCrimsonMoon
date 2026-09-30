@@ -26,8 +26,15 @@ function living(combat) {
 }
 
 // Player basic attack on enemy index. Returns events for logging.
+// Every event carries `snap` (0.086): enemy HPs + player HP right after
+// it happened, so the UI can replay the fight line by line (HP bars move
+// with the log, animations land on the right beat).
 export function playerAttack(combat, targetIndex, heavy = false) {
   const events = [];
+  const push = (ev) => {
+    ev.snap = { enemies: combat.enemies.map((e) => e.hp), hp: combat.run.hp };
+    events.push(ev);
+  };
   const target = combat.enemies[targetIndex];
   if (!target || target.hp <= 0 || combat.over) return events;
 
@@ -47,11 +54,9 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   const smashed = heavy && livingEnemies.length >= 2
     && dmg >= livingEnemies.reduce((s, e) => s + e.hp, 0);
   if (smashed) {
-    events.push({ type: 'smash', text: 'SMASH! Everyone dies!', dmg });
-    for (const e of livingEnemies) {
-      e.hp = 0;
-      events.push({ type: 'kill', enemy: e, silent: true });
-    }
+    for (const e of livingEnemies) e.hp = 0; // before the line: its snap shows the wiped room
+    push({ type: 'smash', text: 'SMASH! Everyone dies!', dmg });
+    for (const e of livingEnemies) push({ type: 'kill', enemy: e, silent: true });
   }
 
   // --- hit chain (damage spill) ---
@@ -75,15 +80,16 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     t.hp -= applied;
     remaining -= applied;
     if (n === 0) {
-      events.push({
+      push({
         type: 'atk',
         text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${crit ? ' — CRITICAL!' : ''}.`,
         target: idx,
         dmg,
         crit,
+        heavy,
       });
     } else {
-      events.push({
+      push({
         type: 'spill',
         text: `...the blow strikes through into ${t.name} for ${applied} dmg!`,
         target: idx,
@@ -92,11 +98,11 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     }
     if (t.hp === 0) {
       kills += 1;
-      events.push({ type: 'kill', text: `${t.name} died!`, enemy: t });
+      push({ type: 'kill', text: `${t.name} died!`, enemy: t });
     }
   });
   if (kills >= 2) {
-    events.push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+    push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
   }
 
   // lifesteal (once, off the full rolled damage)
@@ -105,16 +111,17 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     const healed = Math.min(combat.run.maxHp - combat.run.hp, Math.round(dmg * ls));
     if (healed > 0) {
       combat.run.hp += healed;
-      events.push({ type: 'heal', text: `You drain ${healed} HP.`, healed });
+      push({ type: 'heal', text: `You drain ${healed} HP.`, healed });
     }
   }
 
   // enemy phase
   for (const enemy of living(combat)) {
+    const source = combat.enemies.indexOf(enemy); // who acts, for the UI
     const raw = enemy.dmg + Math.floor(Math.random() * ((tune.enemyDmgJitter ?? 2) + 1));
     // T4 relic: dodge — the blow misses entirely.
     if (!DEBUG.invulnerable && (combat.run.stats.dodge ?? 0) > 0 && Math.random() < combat.run.stats.dodge) {
-      events.push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!` });
+      push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
       continue;
     }
     // Testing switch (corner toggle): player shrugs off all damage.
@@ -124,25 +131,25 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     // pressure. The floor scales with the hit, so deep foes stay dangerous.
     const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * (tune.armorMinTakenPct ?? 0.15)), raw - armor);
     combat.run.hp = Math.max(0, combat.run.hp - taken);
-    events.push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken });
+    push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
     // T4 relic: thorns wound the attacker — but never finish it (kill/loot
     // flow stays on the player's own blows).
     const thorns = combat.run.stats.thorns ?? 0;
     if (thorns > 0 && taken > 0 && enemy.hp > 1) {
       enemy.hp = Math.max(1, enemy.hp - thorns);
-      events.push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${thorns}.` });
+      push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${thorns}.`, target: source, dmg: thorns });
     }
     if (combat.run.hp <= 0) {
       // T4 relic: the Heart of the Dying Moon beats again — once per run.
       if (combat.run.revive) {
         combat.run.revive = false;
         combat.run.hp = Math.ceil(combat.run.maxHp * (DATA.difficulty.player?.reviveHpPct ?? 0.5));
-        events.push({ type: 'revive', text: 'The Heart of the Dying Moon beats again! You rise at half health.' });
+        push({ type: 'revive', text: 'The Heart of the Dying Moon beats again! You rise at half health.' });
         continue;
       }
       combat.over = true;
       combat.victory = false;
-      events.push({ type: 'sys', text: 'You have fallen...' });
+      push({ type: 'sys', text: 'You have fallen...' });
       return events;
     }
   }
@@ -150,7 +157,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (living(combat).length === 0) {
     combat.over = true;
     combat.victory = true;
-    events.push({ type: 'sys', text: 'The room is cleared.' });
+    push({ type: 'sys', text: 'The room is cleared.' });
   }
 
   combat.turn += 1;

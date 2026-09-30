@@ -38,6 +38,7 @@ class El {
   set className(v) { this._cls = v; String(v).split(' ').filter(Boolean).forEach((c) => this.classList.add(c)); }
   get className() { return this._cls || ''; }
   setAttribute(k, v) { this.attrs[k] = v; }
+  removeAttribute(k) { delete this.attrs[k]; }
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); }
   append(...nodes) {
     for (const n of nodes) {
@@ -53,7 +54,9 @@ class El {
   get innerHTML() { return ''; }
   get scrollHeight() { return 100; }
   get offsetWidth() { return 0; }
-  set textContent(v) { this._text = String(v); }
+  // Like real DOM: setting textContent replaces the children (0.086 — the
+  // persistent battle line patches text in place).
+  set textContent(v) { this.children.length = 0; this._text = String(v); }
   get textContent() { return this._text + this.children.map((c) => c.textContent ?? '').join(''); }
   click() { for (const fn of this.listeners.click || []) fn({}); }
   walk(fn) { fn(this); for (const c of this.children) if (c.walk) c.walk(fn); }
@@ -1186,6 +1189,58 @@ process.on('uncaughtException', (e) => {
   ok('tuner: 5 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 5
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
   ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
+}
+
+// T47: 0.086 — replayable combat: events carry state snapshots; the battle
+// line is built once per room and patched in place; HP on screen follows
+// the log line by line (the player's too); effects ride on queue items.
+{
+  const rat = (n) => ({ id: 'rat', name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 3, xp: 1, coins: [1, 1] });
+  const run = createRun();
+  run.stats.dmg = 6; run.stats.crit = 0; run.stats.dodge = 0;
+  const cb = createCombat(run, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
+  const evs = playerAttack(cb, 0, false);
+  const atk = evs.find((e) => e.type === 'atk');
+  ok('atk event snapshot = state after the hit', atk.snap.enemies[0] === 10 && atk.snap.enemies[1] === 16 && atk.heavy === false);
+  const hits = evs.filter((e) => e.type === 'dmg');
+  ok('enemy hits carry their source and the player HP after each hit',
+    hits.length === 2 && hits[0].source === 0 && hits[1].source === 1
+    && hits[1].snap.hp === run.hp && hits[0].snap.hp === run.hp + hits[1].taken);
+  const big = createRun(); big.stats.dmg = 500; big.stats.crit = 0;
+  const cb2 = createCombat(big, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
+  const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'smash');
+  ok('SMASH snapshot shows the wiped room', sm && sm.snap.enemies.every((h) => h === 0));
+  const { fxFor } = await import('../src/ui/combatFx.js');
+  const fa = fxFor(atk), fd = fxFor(hits[1]);
+  ok('fx mapping: player attack / enemy attack', fa.kind === 'attack' && fa.from === 'player' && fa.to === 0 && fa.dmg === 6
+    && fd.kind === 'attack' && fd.from === 1 && fd.to === 'player' && fxFor({ type: 'sys' }) === null);
+
+  // Scene integration: persistent nodes + line-by-line HP
+  registry.app.innerHTML = '';
+  resetProfile();
+  Object.assign(getProfile(), { stats: { power: 0, vitality: 30, fortune: 0, precision: 0, endurance: 0 } });
+  const scene = dungeonScene();
+  scene.enter(registry.app);
+  await sleep(50);
+  const line = registry.app.all((e) => e.className === 'battle-line')[0];
+  const firstEnemyCard = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0];
+  const playerHpText = () => registry.app.all((e) => e.className === 'hp-text')[0].textContent;
+  const before = playerHpText();
+  handleKey('a');
+  const duringFirstLine = playerHpText();
+  await sleep(3000); // drain
+  const after = playerHpText();
+  const lineAfter = registry.app.all((e) => e.className === 'battle-line')[0];
+  ok('battle line is not rebuilt during playback', line === lineAfter
+    && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0] === firstEnemyCard);
+  ok('player HP holds until the enemy hit prints', duringFirstLine === before, `${before} / ${duringFirstLine} / ${after}`);
+  ok('HP settles on the real value after playback', after.startsWith('HP ') && after.includes(`/`));
+  const deadCards = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char') && e.classList.contains('dead'));
+  ok('dead cards keep their portrait node (CSS swaps in the skull)', deadCards.every((c) => c.children.some((k) => k.tagName === 'img')));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('portrait/skull swap is CSS-driven', css.includes('.char-card.dead .skull { display: block; }') && css.includes('.char-card.dead .portrait { display: none; }'));
+  // Drain the fight so no timers leak into later tests.
+  for (let g = 0; g < 40 && !t().includes('Push Deeper') && !t().includes('YOU DIED'); g++) { handleKey('a'); await sleep(900); }
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

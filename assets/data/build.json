@@ -1,5 +1,5 @@
 {
-  "version": "0.085",
+  "version": "0.086",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -24,6 +24,7 @@
     "src/ui/battleLine.js",
     "src/ui/bgTuner.js",
     "src/ui/buffs.js",
+    "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
     "src/ui/deathModal.js",
     "src/ui/fx.js",

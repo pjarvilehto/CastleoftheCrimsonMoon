@@ -19,7 +19,8 @@ import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { shrineBody } from '../shrineUI.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
-import { playerCard, enemyCard } from '../battleLine.js';
+import { createPlayerUnit, createEnemyUnit } from '../battleLine.js';
+import { fxFor, playFx } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
@@ -36,15 +37,19 @@ export function dungeonScene() {
   let shownXp = 0;
   let buffBar = null;    // bottom-left shrine blessing bar
   let deathShown = false; // death modal fired for the fatal blow
+  let ui = null;         // the persistent battle line of the current combat room (0.086)
 
   const playback = createPlayback({
     logEl: () => logEl,
-    renderNow: () => render(currentRoot),
+    onTick: () => { if (ui) updateCombat(); },
     onEmpty: () => {
       tickUpChips();
       if (combat.over && !combat.victory) openDeathModal();
     },
+    onFx: (fx) => fx && playFx(fx, fxCtx),
   });
+  // What effects can touch: the live units of the battle line.
+  const fxCtx = { unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null) };
 
   // Combat event -> sound effect (attached at enqueue time so each sound
   // fires when its line PRINTS, not when the button was clicked).
@@ -80,7 +85,8 @@ export function dungeonScene() {
       play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
       combat = createCombat(run, room);
       deathShown = false;
-      playback.reset(combat);
+      ui = null; // the new room builds its own battle line
+      playback.reset();
       setBackground(room.background);
       roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
       shownCoins = run.coins; // reset counters per room (no tick-up anim)
@@ -102,21 +108,16 @@ export function dungeonScene() {
   }
 
   // ---- combat: chromeless card battle line ----
+  // Built ONCE per room (0.086) and patched in place on every playback
+  // tick — a full rebuild every 100ms restarted any CSS animation.
   function renderCombat(root, room) {
-    const printing = playback.isPrinting();
-    const lowhp = (run.hp / run.maxHp) <= 0.25 ? ' lowhp' : '';
+    if (!ui || ui.room !== room || ui.root !== root) buildCombat(root, room);
+    updateCombat();
+  }
 
-    // Cards keep their combat slot even when dead — only the attack
-    // button goes away (battleLine mounts an invisible placeholder row
-    // so a dead card can't shift vertically either).
-    const enemyStates = combat.enemies
-      .map((e, i) => ({ e, i, hp: playback.hpOf(i, e.hp) }));
-
-    const pCard = playerCard(run, {
-      printing,
-      heavyReady: canHeavy(combat) && !printing && !combat.over,
-      heavyCd: combat.heavyCd,
-      onHeavy: () => { useHeavy(combat); act(() => playerAttack(combat, firstAlive(), true)); },
+  function buildCombat(root, room) {
+    const player = createPlayerUnit(run, {
+      onHeavy: () => { if (canAct()) { useHeavy(combat); act(() => playerAttack(combat, firstAlive(), true)); } },
       onPotion: () => {
         // 0.080: potions persist, so topping up between rooms is allowed
         // (after a win) — never while dead or mid-playback.
@@ -125,35 +126,23 @@ export function dungeonScene() {
         if (sip) {
           sfx('heal');
           logLine(logEl, `You drink a potion. (+${sip.healed} HP)${sip.free ? ' The elixir is not spent!' : ''}${sip.armor ? ` (+${sip.armor} armor until the room ends)` : ''}`, 'heal');
+          playFx({ kind: 'heal', to: 'player', amount: sip.healed, potion: true }, fxCtx);
         }
-        render(root);
+        updateCombat();
       },
-      lowhp,
-      dead: combat.over && !combat.victory,
     });
-
-    const eCards = enemyStates.map(({ e, i, hp }) => enemyCard(e, i, hp, {
-      printing,
-      combatOver: combat.over,
+    const enemies = combat.enemies.map((e, i) => createEnemyUnit(e, i, {
       onAttack: () => act(() => playerAttack(combat, i, false)),
     }));
-
     // Death has no corner button — the fatal blow triggers the blood-red
     // flash and the centered YOU DIED dialog (openDeathModal, 0.067).
     const proceed = el('div', { class: 'combat-proceed' });
-    if (combat.over && !printing && combat.victory) {
-      proceed.append(
-        // 'active' (0.079): pulsing yellow — the obvious next step.
-        el('button', { class: 'primary active', key: 'd', key2: ' ', onclick: () => nextRoom(root) }, 'Push Deeper'),
-        el('button', { class: 'danger', key: 'r', onclick: () => endRun(root, 'retreat') }, 'Retreat with Loot'));
-    }
-
     root.innerHTML = '';
     root.append(
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
       // --n drives the card size (styles.css --card-h): crowded rooms
       // shrink their cards to fit the width instead of wrapping (0.078).
-      el('div', { class: 'battle-line', style: `--n:${combat.enemies.length}` }, pCard, el('div', { class: 'enemy-row' }, ...eCards)),
+      el('div', { class: 'battle-line', style: `--n:${combat.enemies.length}` }, player.el, el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el))),
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
@@ -163,6 +152,32 @@ export function dungeonScene() {
     logEl.scrollTop = logEl.scrollHeight;
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
+    ui = { room, root, player, enemies, proceed };
+    playFx({ kind: 'enter' }, fxCtx);
+  }
+
+  function updateCombat() {
+    const printing = playback.isPrinting();
+    ui.player.update({
+      hp: playback.playerHpOf(run.hp),
+      printing,
+      heavyReady: canHeavy(combat) && !printing && !combat.over,
+      heavyCd: combat.heavyCd,
+      dead: combat.over && !combat.victory,
+    });
+    ui.enemies.forEach((u, i) => {
+      const real = combat.enemies[i].hp;
+      u.update({ hp: playback.hpOf(i, real), dead: playback.deadOf(i, real), printing, combatOver: combat.over });
+    });
+    const showProceed = combat.over && !printing && combat.victory;
+    if (showProceed && !ui.proceed.children.length) {
+      ui.proceed.append(
+        // 'active' (0.079): pulsing yellow — the obvious next step.
+        el('button', { class: 'primary active', key: 'd', key2: ' ', onclick: () => nextRoom(ui.root) }, 'Push Deeper'),
+        el('button', { class: 'danger', key: 'r', onclick: () => endRun(ui.root, 'retreat') }, 'Retreat with Loot'));
+    } else if (!showProceed && ui.proceed.children.length) {
+      ui.proceed.innerHTML = '';
+    }
   }
 
   // ---- shrine: panel layout (same as pre-card builds) ----
@@ -204,10 +219,9 @@ export function dungeonScene() {
   // log lines are queued and printed one by one (logDelayMs apart) so the
   // fight reads as it happens. Input is locked while the queue drains.
   function act(fn) {
-    // Ghost-click guard: Safari still fires click events on buttons that
-    // were disabled/replaced mid-gesture. Ignore clicks after combat ends
-    // or while a previous action is still printing.
-    if (combat.over || playback.isPrinting()) return;
+    if (!canAct()) return;
+    // The replay starts from the state BEFORE the action resolves (0.086).
+    const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp };
     const events = fn();
     for (const ev of events) {
       if (ev.type === 'kill' && ev.enemy) {
@@ -216,21 +230,20 @@ export function dungeonScene() {
           // room-cleared summary carry the whole event.
           applyLoot(run, ev.enemy, () => {});
         } else {
-          // Death line prints on one tick; the card sinks on the next.
-          playback.enqueue({ text: ev.text, cls: 'atk', sink: combat.enemies.indexOf(ev.enemy), sfx: 'kill' });
+          // Death line prints on one tick; the card goes down on the next.
+          playback.enqueue({ text: ev.text, cls: 'atk', snap: ev.snap, sink: combat.enemies.indexOf(ev.enemy), sfx: 'kill' });
           applyLoot(run, ev.enemy, (text, cls) => playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot' }));
         }
-      } else if (ev.type === 'multi') {
-        playback.enqueue({ text: ev.text, cls: 'multi', sfx: 'kill' });
       } else {
-        const cls = (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
-        playback.enqueue({ text: ev.text, cls, sfx: EV_SFX[ev.type] });
+        const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
+        const sound = ev.type === 'multi' ? 'kill' : EV_SFX[ev.type];
+        playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx: fxFor(ev), sfx: sound });
       }
     }
     if (combat.over && combat.victory) {
       playback.enqueue({ text: roomSummaryText(), cls: 'move' });
     }
-    playback.begin();
+    playback.begin(pre);
   }
 
   // Roll the coin/XP HUD counters up to their true values after each
@@ -277,6 +290,13 @@ export function dungeonScene() {
     deathShown = true;
     sfx('death');
     deathFlash(() => showDeathModal(run, () => endRun(currentRoot, 'death')));
+  }
+
+  // Ghost-click guard: Safari still fires click events on buttons that
+  // were disabled/replaced mid-gesture — no action once combat is over or
+  // while a previous action is still printing.
+  function canAct() {
+    return !combat.over && !playback.isPrinting();
   }
 
   function firstAlive() {
