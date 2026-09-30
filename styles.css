@@ -340,14 +340,14 @@
    before they sprawl across neighbors; text rows paint above via z-index. */
 .portrait {
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: 9%; height: 108%;
-  width: auto; max-width: 142%;
+  bottom: 9%; height: 97%;
+  width: auto; max-width: 128%;
   object-fit: contain; object-position: bottom center;
   margin: 0; z-index: 1;
   filter: drop-shadow(0 0.6vh 1vh rgba(0,0,0,0.65));
 }
-.boss-card .portrait { height: 116%; max-width: 165%; } /* bosses loom */
-.enemy-vampire_lord .portrait { height: 126%; max-width: 190%; } /* figure reads small/dark even capped — extra loom */
+.boss-card .portrait { height: 104%; max-width: 148%; } /* bosses loom */
+.enemy-vampire_lord .portrait { height: 113%; max-width: 171%; } /* figure reads small/dark even capped — extra loom */
 /* player.png is WIDE (aspect 1.11): bleed past the sides, not the top —
    the card carries 4 text rows (name/weapon/armor) that must stay clear */
 .player-card .portrait { bottom: 13%; width: 135%; height: auto; max-width: none; max-height: 67%; }
