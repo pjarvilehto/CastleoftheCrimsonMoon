@@ -28,7 +28,7 @@ export { floatNumber }; // (defined here before 0.098)
 // who: { maxHp } of the knight — sizes hits on him (big-hit sway).
 export function fxFor(ev, who = {}) {
   switch (ev.type) {
-    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, heavy: !!ev.heavy };
+    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy };
     case 'spill': return { kind: 'hit', to: ev.target, dmg: ev.dmg };
     case 'thorns': return { kind: 'hit', to: ev.target, dmg: ev.dmg, thorns: true };
     case 'dmg': return { kind: 'attack', from: ev.source, to: 'player', dmg: ev.taken, share: who.maxHp ? ev.taken / who.maxHp : 0 };
@@ -101,8 +101,8 @@ function attack(fx, ctx) {
     setTimeout(() => {
       if (fx.heavy) shake(ctx, 1);
       if (fx.crit) {
-        bgSway(fx.heavy ? 1.4 : 1, 1);
-        bgLight('crit', d?.card?.getBoundingClientRect?.()); // the blow lights the scene (0.100)
+        bgSway((fx.heavy ? 1.4 : 1) * (fx.mega ? 1.5 : 1), 1);
+        bgLight(fx.mega ? 'megacrit' : 'crit', d?.card?.getBoundingClientRect?.()); // the blow lights the scene (0.100)
       } else bgJolt(1);
     }, strike);
   }
@@ -138,8 +138,8 @@ function hit(u, fx, delay, ctx, stop = 0) {
   if (fx.dmg > 0) setTimeout(() => spray(u, away, fx.heavy || fx.crit ? 1.5 : 1), delay);
   if (fx.dmg > 0) barFlash(u, 'damage', delay);
   if (fx.dmg > 0) {
-    const cls = fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
-    floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.crit ? 'CRIT!' : null); // 0.095: CRIT! caption
+    const cls = fx.mega ? 'fx-crit fx-mega' : fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
+    floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.mega ? 'MEGA CRIT!' : fx.crit ? 'CRIT!' : null); // 0.095: CRIT! caption
   }
 }
 

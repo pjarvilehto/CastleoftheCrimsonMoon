@@ -1,5 +1,5 @@
 {
-  "version": "0.103",
+  "version": "0.104",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
@@ -50,6 +50,10 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.104": [
+      "Critical hits now vary in damage",
+      "New: rare MEGA CRITS that hit 1.5x harder than a normal crit"
+    ],
     "0.103": [
       "Play stats now reach the developer automatically"
     ],

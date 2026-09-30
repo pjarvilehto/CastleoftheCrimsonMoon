@@ -11,6 +11,13 @@ import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
 
+// Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
+// multiplies it by megaCritMult. difficulty.json `combat`.
+export function critMultiplier(tune, mega = false, r = Math.random()) {
+  const m = (tune.critMult ?? 1.5) * (1 + (r * 2 - 1) * (tune.critJitter ?? 0));
+  return mega ? m * (tune.megaCritMult ?? 1.5) : m;
+}
+
 export function createCombat(run, room) {
   return {
     run,
@@ -48,9 +55,12 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 
   const tune = DATA.difficulty.combat ?? {};
   const crit = Math.random() < combat.run.stats.crit;
+  // 0.104: a crit's multiplier varies ±critJitter, and a rare crit
+  // (megaCritChance of crits) is a MEGA CRIT for megaCritMult more.
+  const megaCrit = crit && Math.random() < (tune.megaCritChance ?? 0);
   const mult = heavy ? (tune.heavyMult ?? 2) : 1;
   let dmg = combat.run.stats.dmg * mult;
-  if (crit) dmg = Math.round(dmg * (tune.critMult ?? 1.5));
+  if (crit) dmg = Math.round(dmg * critMultiplier(tune, megaCrit));
   dmg = Math.max(1, dmg);
 
   // --- SMASH: a heavy hit whose damage covers EVERY living enemy's
@@ -90,10 +100,11 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     if (n === 0) {
       push({
         type: 'atk',
-        text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${crit ? ' — CRITICAL!' : ''}.`,
+        text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : ''}.`,
         target: idx,
         dmg,
         crit,
+        megaCrit,
         heavy,
       });
     } else {

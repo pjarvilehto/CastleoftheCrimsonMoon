@@ -446,3 +446,28 @@ fresh();
   ok('elite star stays out of the name line box', /\.elite-star \{[^}]*line-height: 0;/.test(css));
   resetProfile();
 }
+
+// T66: 0.104 — crit damage varies ±critJitter around critMult; a rare MEGA
+// CRIT (megaCritChance of crits) does megaCritMult more, with its own
+// caption, bigger number and brighter flash.
+{
+  const { critMultiplier } = await import('../../src/run/combat.js');
+  const tune = DATA.difficulty.combat;
+  const lo = critMultiplier(tune, false, 0), hi = critMultiplier(tune, false, 0.999999), mid = critMultiplier(tune, false, 0.5);
+  ok('crit damage varies around critMult', tune.critJitter > 0 && lo < mid && mid < hi && Math.abs(mid - tune.critMult) < 1e-9
+    && Math.abs(lo - tune.critMult * (1 - tune.critJitter)) < 1e-9);
+  ok('mega crit = megaCritMult x a crit, and rare', Math.abs(critMultiplier(tune, true, 0.5) - tune.critMult * tune.megaCritMult) < 1e-9
+    && tune.megaCritMult >= 1.5 && tune.megaCritChance > 0 && tune.megaCritChance <= 0.2);
+  const run = createRun(); run.stats.dmg = 100; run.stats.crit = 1; run.stats.lifesteal = 0;
+  const c = createCombat(run, generateRoom(1, run));
+  c.enemies[0].hp = 100000;
+  const real = Math.random;
+  const seq = [0, 0, 0.5]; // crit roll, mega roll, jitter
+  Math.random = () => (seq.length ? seq.shift() : 0.5);
+  const ev = playerAttack(c, 0, false).find((e) => e.type === 'atk');
+  Math.random = real;
+  ok('a mega crit hits 1.5x a crit and says so', ev.megaCrit && ev.crit && ev.dmg === Math.round(100 * tune.critMult * tune.megaCritMult) && ev.text.includes('MEGA CRIT!'));
+  const fx = readFileSync('src/ui/combatFx.js', 'utf8');
+  ok('mega crit: caption, bigger number, brighter flash', fx.includes("fx.mega ? 'MEGA CRIT!'") && fx.includes("'megacrit'")
+    && /\.fx-crit\.fx-mega \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8')) && DATA.backgrounds.parallax.lights.megacrit.strength > DATA.backgrounds.parallax.lights.crit.strength);
+}

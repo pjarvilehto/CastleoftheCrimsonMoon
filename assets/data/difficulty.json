@@ -104,6 +104,9 @@
   "combat": {
     "heavyMult": 2,
     "critMult": 1.5,
+    "critJitter": 0.15,
+    "megaCritChance": 0.1,
+    "megaCritMult": 1.5,
     "armorMinTakenPct": 0.17,
     "enemyDmgJitter": 20
   },

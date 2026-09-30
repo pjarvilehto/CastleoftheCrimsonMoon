@@ -179,7 +179,7 @@ fresh();
   ok('shader lights the art and the mist by 3D distance', gl.VS.includes(`uniform vec3 uLightPos[${L.MAX_LIGHTS}]`) && gl.VS.includes('vLit = lightAt(w);')
     && gl.FS.includes('uFogColor + vLit * 0.7') && readFileSync('src/core/bg3dPuffGL.js', 'utf8').includes('vLit = lightAt(aPos)'));
   const fx = readFileSync('src/ui/combatFx.js', 'utf8');
-  ok('crits, potions and revives light the scene', ["bgLight('crit'", "bgLight('potion'", "bgLight('revive'"].every((s) => fx.includes(s)));
+  ok('crits, potions and revives light the scene', ["'megacrit' : 'crit'", "bgLight('potion'", "bgLight('revive'"].every((s) => fx.includes(s)));
   const lights = DATA.backgrounds.parallax.lights;
   ok('flash lights are tunable in data (colour, strength, life per kind)', lights && typeof lights.enabled === 'boolean'
     && ['crit', 'potion', 'revive'].every((k) => lights[k]?.color?.length === 3 && lights[k].strength > 0 && lights[k].life > lights[k].fade));
