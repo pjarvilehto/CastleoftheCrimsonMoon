@@ -14,18 +14,23 @@
 
 import { DATA } from '../shared/data.js';
 import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
-import { VS, FS, program, buffer, loadImage, readDepth, makeTexture } from './bg3dGL.js';
+import { VS, FS, program, buffer, loadImage, readDepth, makeTexture, makeNoiseTexture, smallPixels } from './bg3dGL.js';
+import { cameraPos, driftOffsets, fogColor } from './bg3dFog.js';
 
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
   yawPeriodS: 22, pitchPeriodS: 31, speed: 1, joltDeg: 0.6, swayDeg: 1.6, swayHitShare: 0.15, fovDeg: 40, overscan: 0.09,
   grid: [256, 144], maxFps: 30, fadeMs: 2000,
+  // fog (0.099, core/bg3dFog.js): amount per background (overrides), a
+  // global multiplier (the ?debug slider), drift speed, fade-in on handover
+  fog: 0.36, fogScale: 1, fogSpeed: 1, fogFadeMs: 2500,
+  minFps: 20, fogMinFps: 26, // weak devices: drop the fog below fogMinFps, then the 3D below minFps
 };
 
 // ?debug tuning sliders (ui/bgTuner.js, 0.084) adjust these live; "Save"
 // keeps them in this browser's localStorage (they apply here even without
 // ?debug). The shipped values for everyone stay in backgrounds.json.
-export const TUNABLE = ['depthScale', 'speed', 'yawDeg', 'pitchDeg', 'pivot'];
+export const TUNABLE = ['depthScale', 'speed', 'yawDeg', 'pitchDeg', 'pivot', 'fogScale'];
 const SAVE_KEY = 'castle-bg-tuning';
 let live = {};
 try { live = JSON.parse(globalThis.localStorage?.getItem(SAVE_KEY) || '{}') || {}; } catch { live = {}; }
@@ -51,6 +56,10 @@ let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
 let gridM = -1;  // overscan the current grid was built with
 let jolts = [];  // active camera kicks: { t0, amp (rad), dir }
 let sways = [];  // active big-hit sways: { t0, amp (rad), dir }
+let noiseTex = null;  // the fog wisps' tileable noise (0.099)
+let fogIn = 0;        // 0..1 fog fade-in after the handover from the CSS image
+let fogOn = true;     // false once the watchdog gave the fog up on a weak device
+let firstFrame = null;
 
 // A big hit kicks the background camera (0.088). strength 1 = joltDeg.
 export function bgJolt(strength = 1) {
@@ -93,7 +102,9 @@ export function initBg3d({ allowSoftware = false } = {}) {
   gl.useProgram(prog);
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
-  for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth']) loc[n] = gl.getUniformLocation(prog, n);
+  for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth',
+    'uNoise', 'uFog', 'uFogColor', 'uCam', 'uDrift']) loc[n] = gl.getUniformLocation(prog, n);
+  noiseTex = makeNoiseTexture(gl);
   gridBuf = gl.createBuffer();
   refit(); // builds the grid
   idxBuf = buffer(gl, gl.ELEMENT_ARRAY_BUFFER, grid.idx);
@@ -128,8 +139,11 @@ async function loadLayer(file) {
   const [img, dimg] = await Promise.all([loadImage(`assets/bg/${file}`), loadImage(depthUrl(file)).catch(() => null)]);
   if (!gl) return null;
   const depth = dimg ? readDepth(dimg) : null;
+  const tune = tuning(file);
+  // the mist takes the colour of the scene's own distance (0.099)
+  const mist = tune.fogColor ?? fogColor(smallPixels(img), 64, 36, (u, v) => (depth ? sampleDepth(depth, u, v) : 0.5));
   const tex = makeTexture(gl, img);
-  const layer = { file, tex, depth, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune: tuning(file) };
+  const layer = { file, tex, depth, mist, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune };
   fillDepth(layer);
   return layer;
 }
@@ -156,7 +170,7 @@ function frame(now) {
   // full frame rate while a jolt/sway plays — at 30fps it would stutter
   if (!layers.length || (!jolts.length && !sways.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
   lastDraw = now;
-  if (t0 === null) { t0 = now; canvas.classList.add('ready'); } // rest pose = the CSS image
+  if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); } // rest pose = the CSS image
   else tau += ((now - t0) / 1000) * cfg.speed;
   t0 = now;
   if (watchdog) {
@@ -165,8 +179,13 @@ function frame(now) {
     const elapsed = now - watchdog.since;
     if (elapsed > 4000) {
       const fps = ((watchdog.frames - 1) * 1000) / elapsed;
-      watchdog = null;
-      if (fps < (cfg.minFps ?? 20)) { shutdown(); return; }
+      if (fogOn && fps < cfg.fogMinFps) {
+        fogOn = false; // first give up the mist (0.099) and measure again
+        watchdog = { frames: 0, since: null };
+      } else {
+        watchdog = null;
+        if (fps < cfg.minFps) { shutdown(); return; }
+      }
     }
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
@@ -178,6 +197,14 @@ function frame(now) {
   gl.uniformMatrix4fv(loc.uMVP, false, mvp(o.yaw, o.pitch, fov, aspect));
   gl.uniform2f(loc.uPlane, Math.tan(fov / 2) * aspect, Math.tan(fov / 2));
   gl.uniform1f(loc.uShowDepth, view === 'depth' ? 1 : 0);
+  // fog: the camera for the wisps' rays, their drift, and a fade-in so the
+  // mist rises after the handover instead of popping in
+  gl.uniform3fv(loc.uCam, cameraPos(o.yaw, o.pitch));
+  gl.uniform2fv(loc.uDrift, new Float32Array(driftOffsets((now / 1000) * cfg.fogSpeed).flat()));
+  fogIn = Math.min(1, (now - firstFrame) / cfg.fogFadeMs);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+  gl.uniform1i(loc.uNoise, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   layers.forEach((L, i) => {
     // crossfade like the CSS layers (2s ease-in-out): new layer over old
@@ -195,6 +222,8 @@ function draw(L, alpha) {
   gl.uniform1f(loc.uDepthScale, view === 'flat' ? 0 : L.tune.depthScale);
   gl.uniform1f(loc.uPivot, L.tune.pivot);
   gl.uniform1f(loc.uAlpha, alpha);
+  gl.uniform1f(loc.uFog, fogOn && view === '3d' ? L.tune.fog * cfg.fogScale * fogIn : 0);
+  gl.uniform3fv(loc.uFogColor, L.mist);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, L.tex);
   gl.uniform1i(loc.uTex, 0);

@@ -170,6 +170,14 @@ static play-stats page.
   copies JSON — when the owner sends that JSON, put the values into
   `backgrounds.json` `parallax` to make them the default for everyone).
   The skirt (overscan) now grows automatically for larger sway.
+- Background fog (0.099, `core/bg3dFog.js` + the shader in `bg3dGL.js`):
+  depth-embedded mist — exponential distance haze plus three drifting
+  wisp sheets that nearer objects hide. Amount per background in
+  `backgrounds.json` `parallax.overrides.<file>.fog` (long exterior views
+  ~0.8-1.1, rooms ~0.3-0.4; the title is held at 0.6 to keep its
+  silhouette); colour = the scene's own far hue at a fixed brightness
+  (`fogColor: [r,g,b]` overrides). `?debug` BG TUNING has a Fog slider.
+  Weak devices lose the fog first (<26fps), then the 3D (<20fps).
 - Big-hit sway (0.092; a rotation about the depth centre since 0.093):
   `parallax.swayDeg` / `swayHitShare` in backgrounds.json; crits, SMASH
   and multi-kills rock the near art right, hits on the knight worth

@@ -1,10 +1,11 @@
 {
-  "version": "0.098",
+  "version": "0.099",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/music.js",
     "src/audio/sfx.js",
     "src/core/bg3d.js",
+    "src/core/bg3dFog.js",
     "src/core/bg3dGL.js",
     "src/core/bg3dMath.js",
     "src/core/scene.js",
@@ -42,6 +43,9 @@
     "src/ui/updatePrompt.js"
   ],
   "changelog": {
+    "0.099": [
+      "Drifting mist in the backgrounds: thicker over long views, a light haze indoors"
+    ],
     "0.098": [
       "Faster start: the title appears without waiting for the dungeon art to load"
     ],

@@ -51,6 +51,9 @@ src/
 │                         live tuning + localStorage save (0.084)
 ├── core/bg3dGL.js        its WebGL plumbing: shaders, program/buffer,
 │                         image + depth-map loading, texture upload (0.098)
+├── core/bg3dFog.js       fog math (0.099): camera position for the wisp
+│                         rays, tileable noise, scene-hued mist colour,
+│                         wrapped drift (the fog itself is in the shader)
 ├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
 │                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),

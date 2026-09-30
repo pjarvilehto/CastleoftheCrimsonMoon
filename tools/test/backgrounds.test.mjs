@@ -74,7 +74,7 @@ fresh();
   const bg3d = await import('../../src/core/bg3d.js');
   const bm = await import('../../src/core/bg3dMath.js');
   const base = bg3d.tuning('');
-  ok('tunables: depth, speed, sway x/y, focus', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot'
+  ok('tunables: depth, speed, sway x/y, focus, fog (0.099)', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot,fogScale'
     && base.speed === (DATA.backgrounds.parallax.speed ?? 1)); // shipped value comes from the data
   bg3d.setLiveTuning({ depthScale: 0.9, speed: 2 });
   ok('live values override the shipped ones', bg3d.tuning('').depthScale === 0.9 && bg3d.liveTuning().speed === 2
@@ -92,7 +92,7 @@ fresh();
   const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
   ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
-  ok('tuner: 5 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 5
+  ok('tuner: 6 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 6
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
   ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
   ok('clip-enemies experiment fully removed (0.090)', !readFileSync('src/main.js', 'utf8').includes('clip')
@@ -124,4 +124,40 @@ fresh();
   ok('Buy Potion glows when low and affordable', buy && /\bactive\b/.test(buy.className));
   ok('particle bursts start at a random point on the figure', readFileSync('src/ui/fxParts.js', 'utf8').includes('r.width * (0.5 + (Math.random() - 0.5) * 0.5)')
     && readFileSync('src/ui/particles.js', 'utf8').includes('x: x + (r() - 0.5) * 36 * u'));
+}
+
+// T60: 0.099 — depth-embedded fog: the wisps' rays start at the real
+// camera, the noise tiles seamlessly, drift stays wrapped (shader
+// precision), the mist takes each scene's hue at a readable brightness,
+// every background has an amount (long exterior views more than rooms),
+// and weak devices drop the fog before the 3D.
+{
+  const fog = await import('../../src/core/bg3dFog.js');
+  const bm = await import('../../src/core/bg3dMath.js');
+  const gl = await import('../../src/core/bg3dGL.js');
+  const camOk = [[0, 0], [0.04, -0.02], [-0.05, 0.03]].every(([y, p]) => {
+    const M = bm.mvp(y, p, 0.7, 16 / 9), c = fog.cameraPos(y, p);
+    return Math.abs(M[3] * c[0] + M[7] * c[1] + M[11] * c[2] + M[15]) < 1e-6; // the camera projects to w = 0
+  });
+  ok('fog rays start at the camera (cameraPos inverts the view)', camOk && fog.cameraPos(0, 0).every((v) => Math.abs(v) < 1e-12));
+  const n = fog.fogNoise(64, 3), at = (x, y) => n[y * 64 + x];
+  let seam = 0, inside = 0;
+  for (let i = 0; i < 64; i++) { seam = Math.max(seam, Math.abs(at(63, i) - at(0, i)), Math.abs(at(i, 63) - at(i, 0))); inside = Math.max(inside, Math.abs(at(32, i) - at(31, i))); }
+  ok('fog noise tiles seamlessly (wrap seam no rougher than inside)', seam <= inside + 1 && Math.max(...n) > Math.min(...n) + 100);
+  const d = fog.driftOffsets(123456.7);
+  ok('two drifts per wisp sheet, wrapped to [0, 1)', d.length === fog.WISPS.length * 2 && d.flat().every((v) => v >= 0 && v < 1));
+  // a dark teal scene: far half teal, near half black
+  const w = 8, h = 4, px = new Uint8Array(w * h * 4);
+  for (let i = 0; i < w * h; i++) { const far = i < w * h / 2; px.set(far ? [10, 40, 36, 255] : [0, 0, 0, 255], i * 4); }
+  const col = fog.fogColor(px, w, h, (u, v) => (v < 0.5 ? 0.1 : 0.9));
+  const lum = 0.2126 * col[0] + 0.7152 * col[1] + 0.0722 * col[2];
+  ok('mist keeps the scene hue at a readable brightness', col[1] > col[0] && col[2] > col[0] && lum > 0.3 && lum < 0.55);
+  ok('shader: haze + one wisp call per sheet + fog uniforms', gl.FS.includes('uniform vec3 uFogColor, uCam') && (gl.FS.match(/fog \+= wisp\(/g) || []).length === fog.WISPS.length
+    && gl.VS.includes('vWorld = w;'));
+  const P = DATA.backgrounds.parallax, amt = (f) => P.overrides?.[f]?.fog ?? P.fog;
+  const all = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
+  ok('every background has a fog amount', all.every((f) => amt(f) > 0 && amt(f) <= 1.5));
+  ok('long exterior views are foggier than rooms', amt('castle_ramparts.jpg') > 2 * amt('castle_great_hall.jpg') && amt('castle_courtyard.jpg') > 2 * amt('castle_alchemy_lab.jpg'));
+  const src = readFileSync('src/core/bg3d.js', 'utf8');
+  ok('weak devices drop the fog before the 3D', src.includes('if (fogOn && fps < cfg.fogMinFps)') && src.includes('if (fps < cfg.minFps) { shutdown(); return; }'));
 }

@@ -13,6 +13,7 @@ const SLIDERS = [
   ['yawDeg', 'Sway X', 0, 5, 0.1, '°'],
   ['pitchDeg', 'Sway Y', 0, 3, 0.1, '°'],
   ['pivot', 'Focus', 0, 1, 0.05, ''],
+  ['fogScale', 'Fog', 0, 2, 0.05, '×'],
 ];
 const HINTS = {
   depthScale: 'how strongly depth separates near from far',
@@ -20,6 +21,7 @@ const HINTS = {
   yawDeg: 'side-to-side camera swing',
   pitchDeg: 'up-and-down camera swing',
   pivot: 'which depth stays still: 0 = far wall, 1 = nearest things',
+  fogScale: 'mist amount, × each background\'s own (0.099)',
 };
 
 const fmt = (v, step) => Number(v).toFixed(step < 0.1 ? 2 : 1);

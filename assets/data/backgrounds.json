@@ -27,7 +27,7 @@
     "castle_throne_room.jpg": "The Throne Room"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite).",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099, core/bg3dFog.js) = depth-embedded mist: distance haze + three drifting wisp sheets, amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it); fogSpeed = drift speed.",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -38,6 +38,8 @@
     "joltDeg": 0.6,
     "swayDeg": 1.6,
     "swayHitShare": 0.15,
+    "fog": 0.36,
+    "fogSpeed": 1,
     "fovDeg": 40,
     "overscan": 0.09,
     "grid": [
@@ -46,7 +48,44 @@
     ],
     "maxFps": 30,
     "fadeMs": 2000,
-    "overrides": {},
+    "overrides": {
+      "medieval_castle.jpg": {
+        "fog": 0.6
+      },
+      "castle_chapel_exterior.jpg": {
+        "fog": 0.84
+      },
+      "castle_courtyard.jpg": {
+        "fog": 0.9
+      },
+      "castle_entrance.jpg": {
+        "fog": 0.78
+      },
+      "castle_ramparts.jpg": {
+        "fog": 1.08
+      },
+      "castle_great_hall.jpg": {
+        "fog": 0.36
+      },
+      "castle_throne_room.jpg": {
+        "fog": 0.36
+      },
+      "castle_chapel_interior.jpg": {
+        "fog": 0.42
+      },
+      "castle_library.jpg": {
+        "fog": 0.36
+      },
+      "castle_shrine_gold.jpg": {
+        "fog": 0.36
+      },
+      "castle_alchemy_lab.jpg": {
+        "fog": 0.3
+      },
+      "castle_dungeon.jpg": {
+        "fog": 0.42
+      }
+    },
     "speed": 2.1,
     "depthFiles": {
       "castle_great_hall.jpg": "castle_great_hall_v2.png"
