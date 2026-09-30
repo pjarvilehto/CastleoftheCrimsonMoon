@@ -31,7 +31,7 @@ export function itemValue(id) {
     + (it.crit || 0) * 100;
 }
 
-function salvageValue(id) {
+export function salvageValue(id) {
   return DATA.items[id].tier * DATA.difficulty.salvagePerTier;
 }
 

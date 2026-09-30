@@ -5,14 +5,17 @@
 
 import { getProfile, derivedStats, persist, trainedLevel } from '../meta/profile.js';
 import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
-import { equipItems } from '../meta/equipment.js';
+import { equipItems, salvageValue } from '../meta/equipment.js';
 import { generateRoom } from './roomGen.js';
 import { rollLoot, potionDrop } from './loot.js';
 import { DATA } from '../shared/data.js';
 
-function randomShrineRoom() {
+// One shrine in every stretch of bossEvery rooms (0.091 — it used to be
+// once per run): shrineRoomRange is the room range WITHIN a stretch, so
+// rooms 2-7, 10-15, 18-23, ... Each stretch picks its room on entry.
+function randomShrineRoom(stretch = 0) {
   const [lo, hi] = DATA.difficulty.shrineRoomRange ?? [2, 7];
-  return lo + Math.floor(Math.random() * (hi - lo + 1));
+  return stretch * DATA.difficulty.bossEvery + lo + Math.floor(Math.random() * (hi - lo + 1));
 }
 
 export function createRun() {
@@ -24,12 +27,16 @@ export function createRun() {
     stats,                       // snapshot of dmg/armor/crit at run start
     coins: 0,
     xp: 0,
-    itemsFound: [],              // item ids picked up this run
+    itemsFound: [],              // item ids picked up this run (upgrades only, 0.091)
+    // What the gear will look like after settleRun equips this run's finds:
+    // a drop that can't beat it is salvaged on the spot (0.091).
+    gearPreview: structuredClone(getProfile().equipment),
+    relicFound: false,           // per-run relic cap, even if the relic was salvaged
     potions: stats.potions,      // drawn from the persistent stock (0.080)
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
-    shrineRoom: randomShrineRoom(), // one shrine in rooms 2-7 (shrineRoomRange)
+    shrineRooms: [randomShrineRoom(0)], // one per stretch of bossEvery rooms, added on entry
     revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
     over: false,
     room: null,
@@ -38,6 +45,8 @@ export function createRun() {
 
 export function enterNextRoom(run) {
   run.roomNumber += 1;
+  const stretch = Math.floor((run.roomNumber - 1) / DATA.difficulty.bossEvery);
+  run.shrineRooms[stretch] ??= randomShrineRoom(stretch);
   run.tempArmor = 0; // Infusion armor dies with the room
   run.room = generateRoom(run.roomNumber, run);
   return run.room;
@@ -45,27 +54,39 @@ export function enterNextRoom(run) {
 
 export function applyLoot(run, enemy, log) {
   const fortune = trainedLevel(getProfile(), 'fortune');
-  const hasRelic = run.itemsFound.some((id) => DATA.items[id]?.tier === 4);
-  const loot = rollLoot(enemy, fortune, run.roomNumber, hasRelic);
+  const loot = rollLoot(enemy, fortune, run.roomNumber, run.relicFound);
   // Greed shrine boon multiplies kill coins (run.coinMult, default 1).
   const coins = Math.round(loot.coins * (run.coinMult ?? 1));
   run.coins += coins;
   run.xp += loot.xp;
   run.kills += 1;
   log(`+${coins} coins, +${loot.xp} XP`, 'loot');
+  let kept = false;
   if (loot.itemId) {
-    run.itemsFound.push(loot.itemId);
     const found = DATA.items[loot.itemId];
-    // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
-    // { item } parts are rendered rarity-colored by hud.logLine — run/ stays
-    // free of UI imports (0.079).
-    if (found.tier === 4) log(['✦ EPIC ITEM ✦  You found ', { item: found }, '!'], 'relic');
-    else log(`Found: ${found.name}!`, 'loot');
+    if (found.tier === 4) run.relicFound = true;
+    // Would it be equipped at settle? (Same rules, run against the preview.)
+    kept = equipItems({ equipment: run.gearPreview }, [loot.itemId]).equipped.length > 0;
+    if (kept) {
+      run.itemsFound.push(loot.itemId);
+      // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
+      // { item } parts are rendered rarity-colored by hud.logLine — run/ stays
+      // free of UI imports (0.079).
+      if (found.tier === 4) log(['✦ EPIC ITEM ✦  You found ', { item: found }, '!'], 'relic');
+      else log(['Found: ', { item: found }, '!'], 'loot');
+    } else {
+      // Not an upgrade: it would only be salvaged at the end — take the
+      // coins now instead of piling up junk (0.091). Same value, same toll.
+      const value = salvageValue(loot.itemId);
+      run.coins += value;
+      log(`+${value} coins (salvaged ${found.name})`, 'loot');
+    }
   }
   if (potionDrop()) {
     if (addPotion(run)) log('Found a healing potion!', 'loot');
     else log(`Found a healing potion — satchel full, sold for ${satchelSellCoins()} coins.`, 'loot');
   }
+  return { itemId: loot.itemId, kept };
 }
 
 function satchelSellCoins() {

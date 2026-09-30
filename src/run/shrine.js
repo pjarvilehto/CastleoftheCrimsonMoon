@@ -30,16 +30,23 @@ export function coinCost(base, roomNumber) {
   return Math.round(base * (1 + growth * Math.max(0, roomNumber - 1)));
 }
 
+// What a coin-priced offer costs here: depth-scaled, unless the offer has
+// a flat price (flatCost, 0.091 — scaled prices tripled by room 5 and made
+// Crit / Second Wind unaffordable in the rooms where shrines appear).
+export function offerCoinCost(o, roomNumber) {
+  return o.flatCost ? o.coinCost : coinCost(o.coinCost, roomNumber);
+}
+
 // Display text for an offer's cost — dynamic for coin-priced boons so the
 // card shows what will ACTUALLY be charged at this depth.
 export function costText(offer, roomNumber) {
-  if (offer.coinCost) return `-${coinCost(offer.coinCost, roomNumber)} COINS`;
+  if (offer.coinCost) return `-${offerCoinCost(offer, roomNumber)} COINS`;
   return offer.costDesc;
 }
 
 const hpFloorOk = (run) => run.maxHp > (DATA.shrines.minMaxHp ?? 5); // keep a sane HP floor
 const dmgFloorOk = (run) => run.stats.dmg > (DATA.shrines.minDmg ?? 5);
-const coinsOk = (run, o) => run.coins >= coinCost(o.coinCost, run.roomNumber);
+const coinsOk = (run, o) => run.coins >= offerCoinCost(o, run.roomNumber);
 
 export function canAffordOffer(run, o) {
   switch (o.id) {
@@ -65,7 +72,7 @@ function payDmg(run, pct) {
   run.stats.dmg = Math.max(1, Math.round(run.stats.dmg * (1 - pct)));
 }
 function payCoins(run, o) {
-  run.coins = Math.max(0, run.coins - coinCost(o.coinCost, run.roomNumber));
+  run.coins = Math.max(0, run.coins - offerCoinCost(o, run.roomNumber));
 }
 
 // Apply the cost AND the buff. Caller re-renders.
@@ -81,8 +88,9 @@ export function acceptOffer(run, o) {
       break;
     case 'armor':
       run.potions = Math.max(0, run.potions - o.potionCost);
-      // Percentage of CURRENT armor, not a flat point grant.
-      run.stats.armor = Math.round(run.stats.armor * o.armorMult);
+      // Percentage of CURRENT armor, with a floor (armorMin, 0.091): 25% of a
+      // starting 3 armor was +1 — not worth the potion it costs.
+      run.stats.armor = Math.max(run.stats.armor + (o.armorMin ?? 0), Math.round(run.stats.armor * o.armorMult));
       break;
     case 'leech':
       payHp(run, o.hpCostPct);
@@ -90,12 +98,16 @@ export function acceptOffer(run, o) {
       break;
     case 'bulwark':
       payDmg(run, o.dmgCostPct);
-      run.stats.armor += o.armorAdd;
+      // Flat +5 or a share of current armor, whichever is more (0.091): a
+      // flat +5 stopped mattering late while -10% damage kept hurting.
+      run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * (o.armorPct ?? 0)));
       break;
     case 'secondwind':
       payCoins(run, o);
-      // Satchel cap applies (0.080): a potion that doesn't fit is sold.
-      for (let i = 0; i < o.potionsAdd; i++) addPotion(run);
+      // overCap (0.091): these potions ignore the satchel for this run (any
+      // left over are capped at settle); otherwise a full satchel sells them.
+      if (o.overCap) run.potions += o.potionsAdd;
+      else for (let i = 0; i < o.potionsAdd; i++) addPotion(run);
       run.hp = run.maxHp;
       break;
     case 'quicken':

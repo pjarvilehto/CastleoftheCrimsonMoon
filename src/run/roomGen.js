@@ -1,8 +1,8 @@
 // run/roomGen.js — procedural room generation via threat budget.
 // Each combat room has a budget; we spend it on scaled enemies whose
 // tier matches the room's depth. Boss rooms every bossEvery rooms.
-// Exactly one shrine is guaranteed in rooms 2..7 (run.shrineRoom),
-// so you always see one before the first boss at room 8.
+// One shrine in every stretch of bossEvery rooms (run.shrineRooms: rooms
+// 2-7, 10-15, ...), so there's always one before each boss (0.091).
 
 import { DATA } from '../shared/data.js';
 import { scaleEnemy, roomTier } from '../shared/balance.js';
@@ -31,7 +31,7 @@ export function generateRoom(roomNumber, run = {}) {
   }
 
   // The guaranteed pre-boss shrine.
-  if (roomNumber === run.shrineRoom) {
+  if (run.shrineRooms?.includes(roomNumber)) {
     return {
       number: roomNumber,
       kind: 'shrine',

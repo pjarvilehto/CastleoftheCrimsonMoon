@@ -47,6 +47,11 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
 6. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
    0.079): bump it and append a step to `MIGRATIONS` — never edit a
    shipped step.
+7. **Loot (0.091):** a drop that can't beat the gear (as it will be after
+   this run's finds, `run.gearPreview`) is salvaged on the spot for its
+   salvage value; only upgrades land in `run.itemsFound`. One shrine per
+   stretch of `bossEvery` rooms (`run.shrineRooms`: 2-7, 10-15, ...).
+   Coin boons can have a flat price (`flatCost` in shrines.json).
 3. **Potions persist** (0.080): a run draws the profile's stock and
    `settleRun()` writes back what's left, capped by `potionCap`; pickups
    go through `runState.addPotion()` (sold when the satchel is full).

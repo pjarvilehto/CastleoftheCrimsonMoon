@@ -114,8 +114,8 @@ export async function loadSim() {
     for (;;) {
       const room = rs.enterNextRoom(run);
       if (room.kind === 'shrine') {
-        rec.shrineRoom = room.number;
-        rec.boon = takeShrine(run, shrine, agg);
+        const boon = takeShrine(run, shrine, agg);
+        if (rec.shrineRoom === null) { rec.shrineRoom = room.number; rec.boon = boon; } // the run's FIRST shrine
         rec.depth = run.roomNumber;
         continue;
       }
@@ -131,11 +131,11 @@ export async function loadSim() {
         agg.turns += 1;
         for (const ev of cb.playerAttack(combat, idx, heavy)) {
           if (ev.type === 'kill' && ev.enemy) {
-            const before = run.itemsFound.length;
             const potionsBefore = run.potions;
-            rs.applyLoot(run, ev.enemy, noop);
+            const drop = rs.applyLoot(run, ev.enemy, noop);
             if (run.potions > potionsBefore) agg.potionsFound += 1;
-            for (const id of run.itemsFound.slice(before)) {
+            if (drop.itemId && !drop.kept) agg.salvagedOnSpot = (agg.salvagedOnSpot ?? 0) + 1;
+            for (const id of drop.itemId ? [drop.itemId] : []) {
               const tier = DATA.items[id].tier;
               agg.itemsByTier[tier] += 1;
               if (tier === 4) {

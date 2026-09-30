@@ -13,20 +13,22 @@
     },
     {
       "id": "crit",
-      "buff": "+10% CRIT",
-      "costDesc": "-50 COINS",
+      "buff": "+15% CRIT",
+      "costDesc": "-30 COINS",
       "icon": "★",
-      "coinCost": 50,
-      "critAdd": 0.1,
-      "critCap": 0.95
+      "coinCost": 30,
+      "critAdd": 0.15,
+      "critCap": 0.95,
+      "flatCost": true
     },
     {
       "id": "armor",
-      "buff": "+25% ARMOR",
+      "buff": "+25% ARMOR (MIN +3)",
       "costDesc": "-1 POTION",
       "icon": "🛡",
       "potionCost": 1,
-      "armorMult": 1.25
+      "armorMult": 1.25,
+      "armorMin": 3
     },
     {
       "id": "leech",
@@ -39,19 +41,22 @@
     },
     {
       "id": "bulwark",
-      "buff": "+5 ARMOR",
+      "buff": "+20% ARMOR (MIN +5)",
       "costDesc": "-10% DMG",
       "icon": "⛨",
       "dmgCostPct": 0.1,
-      "armorAdd": 5
+      "armorAdd": 5,
+      "armorPct": 0.2
     },
     {
       "id": "secondwind",
-      "buff": "+1 POTION & FULL HEAL",
-      "costDesc": "-75 COINS",
+      "buff": "+2 POTIONS & FULL HEAL",
+      "costDesc": "-40 COINS",
       "icon": "✚",
-      "coinCost": 75,
-      "potionsAdd": 1
+      "coinCost": 40,
+      "potionsAdd": 2,
+      "flatCost": true,
+      "overCap": true
     },
     {
       "id": "quicken",
@@ -71,11 +76,11 @@
     },
     {
       "id": "glasscannon",
-      "buff": "+50% DMG",
+      "buff": "+60% DMG",
       "costDesc": "−50% ARMOR",
       "icon": "⚗",
       "armorCostPct": 0.5,
-      "dmgMult": 1.5,
+      "dmgMult": 1.6,
       "minArmor": 2
     }
   ]

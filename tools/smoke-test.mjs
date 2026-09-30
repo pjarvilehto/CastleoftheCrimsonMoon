@@ -182,26 +182,38 @@ ok('dungeon renders after Descend', t().includes('Room 1') && !registry.app.clas
   }
 }
 
-// T5: shrine guaranteed in rooms 2-7; boon math
+// T5: a shrine in every 8-room stretch (rooms 2-7, 10-15, ... — 0.091;
+// it used to be only once per run); boon math
 {
+  const { enterNextRoom } = await import('../src/run/runState.js');
   let placement = true;
   for (let i = 0; i < 40; i++) {
     const r = createRun();
-    if (r.shrineRoom < 2 || r.shrineRoom > 7) placement = false;
-    if (generateRoom(r.shrineRoom, r).kind !== 'shrine') placement = false;
+    if (r.shrineRooms[0] < 2 || r.shrineRooms[0] > 7) placement = false;
+    if (generateRoom(r.shrineRooms[0], r).kind !== 'shrine') placement = false;
+    const kinds = [];
+    for (let n = 0; n < 24; n++) kinds.push(enterNextRoom(r).kind);
+    for (let s = 0; s < 3; s++) {
+      const stretch = kinds.slice(s * 8, s * 8 + 8);
+      const at = stretch.indexOf('shrine');
+      if (stretch.filter((k) => k === 'shrine').length !== 1 || at < 1 || at > 6 || stretch[7] !== 'boss') placement = false;
+    }
   }
-  ok('shrine guaranteed in rooms 2-7', placement);
+  ok('one shrine in every 8-room stretch (2-7, 10-15, 18-23), boss at 8/16/24', placement);
   const run = createRun();
   const [dmg, crit, armor] = shrineOffers();
   const hp0 = run.maxHp, d0 = run.stats.dmg;
   acceptOffer(run, dmg);
   ok('dmg boon: -15% HP, +25% dmg, logged', run.stats.dmg === Math.round(d0 * 1.25) && run.maxHp < hp0 && run.buffs.length === 1);
-  run.coins = 100; const c0 = run.stats.crit;
+  run.coins = 100; run.roomNumber = 6; const c0 = run.stats.crit;
   acceptOffer(run, crit);
-  ok('crit boon: -50c, +10% crit', run.coins === 50 && Math.abs(run.stats.crit - (c0 + 0.10)) < 1e-9);
+  ok('crit boon (0.091): flat -30c at any depth, +15% crit', run.coins === 70 && Math.abs(run.stats.crit - (c0 + 0.15)) < 1e-9);
   run.potions = 2; run.stats.armor = 8;
   acceptOffer(run, armor);
-  ok('armor boon: percentage of current (8 -> 10)', run.potions === 1 && run.stats.armor === 10);
+  ok('armor boon: +25% of current, at least +3 (8 -> 11)', run.potions === 1 && run.stats.armor === 11);
+  run.potions = 2; run.stats.armor = 40;
+  acceptOffer(run, armor);
+  ok('armor boon: +25% when that is more (40 -> 50)', run.stats.armor === 50);
   const leech = shrineOffers().find((o) => o.id === 'leech');
   const ls0 = run.stats.lifesteal || 0; const lh0 = run.maxHp;
   acceptOffer(run, leech);
@@ -209,11 +221,11 @@ ok('dungeon renders after Descend', t().includes('Room 1') && !registry.app.clas
   const bulwark = shrineOffers().find((o) => o.id === 'bulwark');
   const bd0 = run.stats.dmg; const ba0 = run.stats.armor;
   acceptOffer(run, bulwark);
-  ok('bulwark boon: +5 armor, -10% dmg', run.stats.armor === ba0 + 5 && run.stats.dmg === Math.round(bd0 * 0.9));
+  ok('bulwark boon: +20% armor (min +5), -10% dmg', run.stats.armor === ba0 + Math.max(5, Math.round(ba0 * 0.2)) && run.stats.dmg === Math.round(bd0 * 0.9));
   const secondwind = shrineOffers().find((o) => o.id === 'secondwind');
   run.coins = 100; run.hp = 1; const pw0 = run.potions;
   acceptOffer(run, secondwind);
-  ok('secondwind boon: -75c, +1 potion, full heal', run.coins === 25 && run.potions === pw0 + 1 && run.hp === run.maxHp);
+  ok('secondwind boon (0.091): flat -40c, +2 potions, full heal', run.coins === 60 && run.potions === pw0 + 2 && run.hp === run.maxHp);
   const poor = createRun(); poor.coins = 10; poor.potions = 0;
   ok('affordability gates', !canAffordOffer(poor, crit) && !canAffordOffer(poor, armor) && canAffordOffer(poor, dmg) && !canAffordOffer(poor, secondwind) && canAffordOffer(poor, leech));
 }
@@ -706,8 +718,8 @@ process.on('uncaughtException', (e) => {
   const lines2 = [];
   applyLoot(runL, scaleEnemy('rat', 1), (text, cls) => lines2.push({ text, cls }));
   Math.random = origR;
-  ok('normal drops keep the plain loot line', lines2.some((l) => l.cls === 'loot'
-    && typeof l.text === 'string' && l.text.startsWith('Found:')));
+  ok('normal drops log a loot line (upgrade found, or salvaged on the spot — 0.091)', lines2.some((l) => l.cls === 'loot'
+    && ((Array.isArray(l.text) && l.text[0] === 'Found: ') || (typeof l.text === 'string' && /\(salvaged /.test(l.text)))));
   ok('relic modal module is gone', await import('../src/ui/relicModal.js').then(() => false, () => true));
 
   // loot.js and battleLine.js share one elite rule: starred enemies carry relics
@@ -960,9 +972,9 @@ process.on('uncaughtException', (e) => {
   const expect = {
     dmg: (o) => [pct(o.dmgMult - 1), pct(o.hpCostPct)],
     crit: (o) => [pct(o.critAdd), String(o.coinCost)],
-    armor: (o) => [pct(o.armorMult - 1), `${o.potionCost} POTION`],
+    armor: (o) => [`${pct(o.armorMult - 1)} ARMOR (MIN +${o.armorMin})`, `${o.potionCost} POTION`],
     leech: (o) => [pct(o.lifestealAdd), pct(o.hpCostPct)],
-    bulwark: (o) => [`${o.armorAdd} ARMOR`, pct(o.dmgCostPct)],
+    bulwark: (o) => [`${pct(o.armorPct)} ARMOR (MIN +${o.armorAdd})`, pct(o.dmgCostPct)],
     secondwind: (o) => [`${o.potionsAdd} POTION`, String(o.coinCost)],
     quicken: (o) => [String(o.cdReduce), pct(o.hpCostPct)],
     greed: (o) => [pct(o.coinMultAdd), pct(o.dmgCostPct)],
@@ -1050,7 +1062,9 @@ process.on('uncaughtException', (e) => {
   const sw = DATA.shrines.offers.find((o) => o.id === 'secondwind');
   const r5 = createRun(); r5.potions = 4; r5.coins = 1000; r5.roomNumber = 2; r5.hp = 1;
   acceptOffer(r5, sw);
-  ok('secondwind respects the cap', r5.potions === 4 && r5.hp === r5.maxHp);
+  ok('secondwind goes over the satchel cap by design (0.091)', r5.potions === 6 && r5.hp === r5.maxHp);
+  settleRun(r5, 'retreat');
+  ok('...and leftovers are capped at settle', p.potions === p.potionCap);
 
   // v1 save (pre-0.080) with a big permanent potion count
   const { importSave } = await import('../src/meta/profile.js');
@@ -1414,6 +1428,45 @@ process.on('uncaughtException', (e) => {
     && verdict({ policy: 'x', afford: 1, dDepth: -1, seDepth: 0.1, dCoins: 300 }) === 'TRADE'
     && verdict({ policy: 'x', afford: 1, dDepth: -1, seDepth: 0.1, dCoins: 0 }) === 'TRAP'
     && verdict({ policy: 'x', afford: 1, dDepth: 3, seDepth: 0.2, dCoins: 0 }) === 'OP');
+  resetProfile();
+}
+
+// T54: 0.091 — drops that can't beat the gear (as it will be after this
+// run's finds) are salvaged on the spot for their salvage value; upgrades
+// still drop; the per-run relic cap counts salvaged relics too.
+{
+  const { applyLoot } = await import('../src/run/runState.js');
+  const { salvageValue } = await import('../src/meta/equipment.js');
+  resetProfile();
+  const p = getProfile();
+  p.equipment.weapon = 'crimson_reaver'; // a T4 weapon: any other weapon is junk
+  const run = createRun();
+  const origR = Math.random;
+  const items = DATA.items;
+  const weaker = Object.keys(items).find((id) => items[id].slot === 'weapon' && items[id].tier === 1);
+  const ring = Object.keys(items).find((id) => items[id].slot === 'ring' && items[id].tier === 1);
+  // drive a rat's drop (tier-1 pool) to a chosen item: keep every higher
+  // tier (equipped gear must resolve) plus only that one tier-1 item
+  const only = (id) => {
+    const keep = DATA.items;
+    DATA.items = Object.fromEntries(Object.entries(keep).filter(([k, v]) => v.tier > 1 || k === id));
+    return () => { DATA.items = keep; };
+  };
+  Math.random = () => 0.001;
+  let undo = only(weaker);
+  const lines = [];
+  const c0 = run.coins;
+  const r1 = applyLoot(run, scaleEnemy('rat', 1), (t, c) => lines.push(t));
+  undo();
+  ok('non-upgrade salvaged on the spot', r1.itemId === weaker && !r1.kept && !run.itemsFound.includes(weaker)
+    && lines.some((l) => typeof l === 'string' && l.includes(`salvaged ${items[weaker].name}`)));
+  ok('...for its salvage value', run.coins - c0 >= salvageValue(weaker));
+  undo = only(ring);
+  const r2 = applyLoot(run, scaleEnemy('rat', 1), () => {});
+  undo();
+  Math.random = origR;
+  ok('upgrade (empty ring slot) still drops as an item', r2.kept && run.itemsFound.includes(ring));
+  ok('relic cap tracks salvaged relics too', readFileSync('src/run/runState.js', 'utf8').includes('rollLoot(enemy, fortune, run.roomNumber, run.relicFound)'));
   resetProfile();
 }
 
