@@ -1285,5 +1285,35 @@ process.on('uncaughtException', (e) => {
   ok('portraits carry idle classes + random phase', portraits.length >= 2 && portraits.every((p) => /^-\d/.test(p.style.animationDelay)));
 }
 
+// T49: 0.088 — combat extras: camera jolts decay and end, the edge skirt
+// covers the strongest jolt on top of the sway, every effect has its
+// number style, and every effect kind is safe without Web Animations.
+{
+  const bm = await import('../src/core/bg3dMath.js');
+  const bg3d = await import('../src/core/bg3d.js');
+  const j = [{ t0: 0, amp: 0.01, dir: 1 }];
+  const at = (ms) => Math.abs(bm.joltOffset(j, ms).yaw);
+  ok('jolt kicks, decays, and ends', at(0) > 0.0099 && at(200) < at(0) * 0.3 && at(bm.JOLT_LIFE_MS + 1) === 0);
+  const cfg = bg3d.tuning('');
+  const worst = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(bm.withJoltReserve(cfg), a, cfg.overscan)));
+  ok('edge skirt covers sway + strongest jolt', cfg.joltDeg > 0 && worst > 0, worst.toFixed(4));
+  ok('renderer sizes the skirt with the jolt reserve', readFileSync('src/core/bg3d.js', 'utf8').includes('requiredOverscan(withJoltReserve(cfg)'));
+  const css = readFileSync('styles.css', 'utf8');
+  const missing = ['fx-dmg', 'fx-crit', 'fx-thorns', 'fx-miss', 'fx-heal', 'fx-revive'].filter((c) => !css.includes(`.${c} {`));
+  ok('every floating-number style exists', missing.length === 0, missing.join(','));
+  ok('crit numbers are 1.5x', css.includes('.fx-crit { color: #ffd24a; font-size: calc(var(--num, 24px) * 1.5);'));
+  const { playFx } = await import('../src/ui/combatFx.js');
+  const u = { el: new El('div'), card: new El('div'), portrait: new El('img') };
+  const ctx = { unit: (w) => (w === 'player' || w === 0 ? u : null), layer: new El('div') };
+  let threw = null;
+  try {
+    for (const fx of [{ kind: 'attack', from: 'player', to: 0, dmg: 9, crit: true, heavy: true }, { kind: 'attack', from: 0, to: 'player', dmg: 3 },
+      { kind: 'hit', to: 0, dmg: 2, thorns: true }, { kind: 'dodge', from: 0, to: 'player' }, { kind: 'heal', to: 'player', amount: 5 },
+      { kind: 'revive', to: 'player' }, { kind: 'smash', dmg: 99 }, { kind: 'multi' }, { kind: 'enter' }, { kind: 'die', to: 0 }]) playFx(fx, ctx);
+  } catch (e) { threw = e.message; }
+  ok('every effect kind is safe without Web Animations', threw === null, threw ?? '');
+  ok('bgJolt is a no-op without WebGL', bg3d.bgJolt(1) === undefined);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -35,6 +35,7 @@
     "pitchDeg": 1.2,
     "yawPeriodS": 22,
     "pitchPeriodS": 31,
+    "joltDeg": 0.6,
     "fovDeg": 40,
     "overscan": 0.06,
     "grid": [

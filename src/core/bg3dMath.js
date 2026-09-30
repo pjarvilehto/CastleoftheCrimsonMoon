@@ -111,3 +111,28 @@ export function requiredOverscan(c, aspect) {
   for (let m = 0.02; m < 0.6; m += 0.01) if (edgeMargin(c, aspect, m) > 0.01) return Math.round(m * 100) / 100;
   return 0.6;
 }
+
+// ---- camera jolts (0.088): big hits kick the background camera ----
+// Each jolt is a fast damped wobble: amp * e^(-t/0.15s) * cos(2πt/0.16s),
+// gone after ~0.6s. Strength is capped at JOLT_MAX, and the edge skirt
+// reserves room for that much extra swing (withJoltReserve).
+export const JOLT_MAX = 1.5;
+export const JOLT_LIFE_MS = 600;
+
+export function joltOffset(jolts, now) {
+  let yaw = 0, pitch = 0;
+  for (const j of jolts) {
+    const t = (now - j.t0) / 1000;
+    if (t < 0 || t * 1000 > JOLT_LIFE_MS) continue;
+    const v = j.amp * Math.exp(-t / 0.15) * Math.cos((2 * Math.PI * t) / 0.16);
+    yaw += v * j.dir;
+    pitch += v * 0.5;
+  }
+  return { yaw, pitch };
+}
+
+// The sway settings plus the largest possible jolt, for overscan sizing.
+export function withJoltReserve(c) {
+  const extra = (c.joltDeg ?? 0) * JOLT_MAX;
+  return { ...c, yawDeg: c.yawDeg + extra, pitchDeg: c.pitchDeg + extra * 0.5 };
+}

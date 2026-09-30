@@ -15,6 +15,7 @@
 // test shim, very old TVs) simply get no one-shots.
 
 import { DATA } from '../shared/data.js';
+import { bgJolt } from '../core/bg3d.js';
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
 export function fxFor(ev) {
@@ -45,6 +46,7 @@ const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce
 const can = (node) => !!node?.animate;
 const LUNGE_MS = 280;
 const STRIKE_AT = 0.45; // share of the lunge where the blow lands
+const HITSTOP_MS = 70;  // crits and heavies freeze for a beat at impact (0.088)
 
 // Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer }
 export function playFx(fx, ctx) {
@@ -52,7 +54,12 @@ export function playFx(fx, ctx) {
     case 'attack': return attack(fx, ctx);
     case 'hit': return hit(ctx.unit(fx.to), fx, 0, ctx);
     case 'enter': return enter(ctx);
-    default: return undefined; // dodge/heal/smash/multi/revive: 0.088
+    case 'dodge': return dodge(fx, ctx);
+    case 'heal': return heal(fx, ctx);
+    case 'revive': return revive(ctx);
+    case 'smash': shake(ctx, 1.6); return bgJolt(1.5);
+    case 'multi': shake(ctx, 1.1); return bgJolt(1.1);
+    default: return undefined;
   }
 }
 
@@ -60,25 +67,33 @@ function attack(fx, ctx) {
   const a = ctx.unit(fx.from);
   const d = ctx.unit(fx.to);
   const dur = fx.heavy ? LUNGE_MS * 1.3 : LUNGE_MS;
+  const strike = dur * STRIKE_AT;
+  const stop = fx.crit || fx.heavy ? HITSTOP_MS : 0;
   if (can(a?.el) && can(d?.el) && !reduced()) {
     // Lunge a slice of the way toward the target: anticipation (pull
     // back) -> strike -> recover.
     const ra = a.el.getBoundingClientRect(), rd = d.el.getBoundingClientRect();
     const toward = (rd.left + rd.width / 2) - (ra.left + ra.width / 2);
     const reach = Math.sign(toward) * Math.min(Math.abs(toward) * 0.14, ra.width * (fx.heavy ? 0.5 : 0.35));
-    a.el.animate([
+    const lunge = a.el.animate([
       { transform: 'translateX(0)' },
       { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25, easing: 'ease-in' },
       { transform: `translateX(${reach}px)`, offset: STRIKE_AT, easing: 'ease-out' },
       { transform: 'translateX(0)' },
     ], { duration: dur, easing: 'ease-in-out' });
+    // Hit-stop: freeze the attacker at the moment of impact.
+    if (stop) setTimeout(() => { lunge.pause(); setTimeout(() => lunge.play(), stop); }, strike);
   }
-  hit(d, fx, dur * STRIKE_AT, ctx);
+  hit(d, fx, strike, ctx, stop);
+  // The player's big blows shake the fighters and kick the camera.
+  if (fx.from === 'player' && (fx.heavy || fx.crit)) {
+    setTimeout(() => { if (fx.heavy) shake(ctx, 1); bgJolt(fx.heavy ? 1 : 0.7); }, strike);
+  }
 }
 
 // Defender: knockback shake + flash + floating number, after `delay` ms
-// (the lunge's strike moment).
-function hit(u, fx, delay, ctx) {
+// (the lunge's strike moment); the knockback waits out any hit-stop.
+function hit(u, fx, delay, ctx, stop = 0) {
   if (!u) return;
   const away = u === ctx.unit('player') ? -1 : 1; // knocked back, away from the attacker's side
   if (can(u.el) && !reduced()) {
@@ -89,7 +104,7 @@ function hit(u, fx, delay, ctx) {
       { transform: `translateX(${-away * k * 0.45}px)` },
       { transform: `translateX(${away * k * 0.2}px)` },
       { transform: 'translateX(0)' },
-    ], { duration: 240, delay, easing: 'ease-out' });
+    ], { duration: 240, delay: delay + stop, easing: 'ease-out' });
   }
   if (can(u.portrait)) {
     const base = getComputedStyle(u.portrait).filter;
@@ -100,7 +115,72 @@ function hit(u, fx, delay, ctx) {
       { filter: base },
     ], { duration: 260, delay, easing: 'ease-out' });
   }
-  if (fx.dmg > 0) floatNumber(ctx, u, `-${fx.dmg}`, 'fx-dmg', delay);
+  if (fx.dmg > 0) {
+    const cls = fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
+    floatNumber(ctx, u, fx.crit ? `-${fx.dmg}!` : `-${fx.dmg}`, cls, delay);
+  }
+}
+
+// The whole battle line trembles (heavy blows, SMASH, multi-kills).
+function shake(ctx, power) {
+  const line = ctx.unit('player')?.el?.parentElement;
+  if (!can(line) || reduced()) return;
+  const k = 0.55 * power; // vh
+  line.animate([
+    { transform: 'translate(0, 0)' },
+    { transform: `translate(${k}vh, ${-k * 0.6}vh)` },
+    { transform: `translate(${-k * 0.8}vh, ${k * 0.4}vh)` },
+    { transform: `translate(${k * 0.5}vh, ${k * 0.3}vh)` },
+    { transform: `translate(${-k * 0.25}vh, 0)` },
+    { transform: 'translate(0, 0)' },
+  ], { duration: 320, easing: 'ease-out' });
+}
+
+// Enemy swings and misses: the lunge still happens, the knight side-steps.
+function dodge(fx, ctx) {
+  const a = ctx.unit(fx.from), p = ctx.unit('player');
+  if (can(a?.el) && can(p?.el) && !reduced()) {
+    const ra = a.el.getBoundingClientRect(), rp = p.el.getBoundingClientRect();
+    const reach = -Math.min(Math.abs((ra.left + ra.width / 2) - (rp.left + rp.width / 2)) * 0.14, ra.width * 0.35);
+    a.el.animate([
+      { transform: 'translateX(0)' },
+      { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25 },
+      { transform: `translateX(${reach * 1.15}px)`, offset: STRIKE_AT },
+      { transform: 'translateX(0)' },
+    ], { duration: LUNGE_MS, easing: 'ease-in-out' });
+    p.el.animate([
+      { transform: 'translate(0, 0)' },
+      { transform: `translate(${-rp.width * 0.08}px, ${-rp.height * 0.015}px)`, offset: 0.4 },
+      { transform: 'translate(0, 0)' },
+    ], { duration: 320, delay: LUNGE_MS * STRIKE_AT * 0.6, easing: 'ease-out' });
+  }
+  floatNumber(ctx, p, 'MISS', 'fx-miss', LUNGE_MS * STRIKE_AT);
+}
+
+// Potions and lifesteal: green number + a soft green glow on the knight.
+function heal(fx, ctx) {
+  const p = ctx.unit(fx.to);
+  glow(p, 'sepia(1) saturate(4) hue-rotate(60deg) brightness(1.35)', 420);
+  if (fx.amount > 0) floatNumber(ctx, p, `+${fx.amount}`, 'fx-heal');
+}
+
+// The Heart of the Dying Moon: a golden flare and a shake.
+function revive(ctx) {
+  const p = ctx.unit('player');
+  glow(p, 'sepia(1) saturate(5) hue-rotate(5deg) brightness(1.9)', 900);
+  floatNumber(ctx, p, 'REVIVED', 'fx-revive');
+  shake(ctx, 0.8);
+  bgJolt(1);
+}
+
+function glow(u, tint, ms) {
+  if (!can(u?.portrait)) return;
+  const base = getComputedStyle(u.portrait).filter;
+  u.portrait.animate([
+    { filter: base },
+    { filter: `${base === 'none' ? '' : base} ${tint}`, offset: 0.3 },
+    { filter: base },
+  ], { duration: ms, easing: 'ease-out' });
 }
 
 // A number that pops out of the card and drifts up. Lives in the fx layer
@@ -113,7 +193,7 @@ export function floatNumber(ctx, u, text, cls, delay = 0) {
   n.textContent = text;
   n.style.left = `${r.left + r.width / 2 + (Math.random() - 0.5) * r.width * 0.3}px`;
   n.style.top = `${r.top + r.height * 0.3}px`;
-  n.style.fontSize = `${Math.max(16, r.height * 0.09)}px`;
+  n.style.setProperty('--num', `${Math.max(16, r.height * 0.09)}px`); // styles scale it (crits 1.5x)
   n.style.opacity = '0';
   ctx.layer.append(n);
   const rise = r.height * 0.22;

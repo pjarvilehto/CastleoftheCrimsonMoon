@@ -13,11 +13,11 @@
 // Tuning: backgrounds.json `parallax` (+ per-file `overrides`).
 
 import { DATA } from '../shared/data.js';
-import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan } from './bg3dMath.js';
+import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS } from './bg3dMath.js';
 
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
-  yawPeriodS: 22, pitchPeriodS: 31, speed: 1, fovDeg: 40, overscan: 0.06,
+  yawPeriodS: 22, pitchPeriodS: 31, speed: 1, joltDeg: 0.6, fovDeg: 40, overscan: 0.06,
   grid: [160, 90], maxFps: 30, fadeMs: 2000,
 };
 
@@ -68,6 +68,14 @@ let t0 = null, lastDraw = 0, wanted = null, cfg = DEFAULTS;
 let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
                  // speed change never jumps the camera
 let gridM = -1;  // overscan the current grid was built with
+let jolts = [];  // active camera kicks: { t0, amp (rad), dir }
+
+// A big hit kicks the background camera (0.088). strength 1 = joltDeg.
+export function bgJolt(strength = 1) {
+  if (!gl || view === 'flat' || !(cfg.joltDeg > 0)) return;
+  const amp = (cfg.joltDeg * Math.min(JOLT_MAX, strength) * Math.PI) / 180;
+  jolts.push({ t0: performance.now(), amp, dir: Math.random() < 0.5 ? -1 : 1 });
+}
 let watchdog = null; // { frames, since } — first seconds' frame rate check
 
 export const isBg3dActive = () => !!gl;
@@ -168,7 +176,9 @@ function fillDepth(L) {
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
-  if (!layers.length || now - lastDraw < 1000 / cfg.maxFps - 2) return;
+  jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
+  // full frame rate while a jolt plays — at 30fps its wobble would stutter
+  if (!layers.length || (!jolts.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; canvas.classList.add('ready'); } // rest pose = the CSS image
   else tau += ((now - t0) / 1000) * cfg.speed;
@@ -184,6 +194,9 @@ function frame(now) {
     }
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
+  const j = joltOffset(jolts, now);
+  o.yaw += j.yaw;
+  o.pitch += j.pitch;
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
   gl.uniformMatrix4fv(loc.uMVP, false, mvp(o.yaw, o.pitch, fov, aspect));
@@ -234,7 +247,7 @@ function resize() {
 // (Re)build the screen grid when the needed skirt changes: the shipped
 // overscan, or more when the sliders ask for more sway/depth.
 function refit() {
-  const m = Math.max(cfg.overscan, requiredOverscan(cfg, canvas.width / canvas.height || 16 / 9));
+  const m = Math.max(cfg.overscan, requiredOverscan(withJoltReserve(cfg), canvas.width / canvas.height || 16 / 9));
   if (Math.abs(m - gridM) < 0.005) return false;
   gridM = m;
   grid = buildGrid(cfg.grid[0], cfg.grid[1], m);
