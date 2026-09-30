@@ -52,6 +52,7 @@
   }
   #app.hidden {
     opacity: 0;
+    pointer-events: none; /* fading-out scene must not take clicks (0.076) */
     transition: opacity 1s ease-in-out; /* window fade-out length */
   }
 

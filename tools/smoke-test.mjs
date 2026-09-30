@@ -79,7 +79,8 @@ globalThis.document = {
   getElementById: (id) => registry[id] || findById(registry.app, id),
   createElement: (t) => new El(t),
   createTextNode: (t) => ({ text: t, textContent: t, walk() {} }),
-  addEventListener() {},
+  listeners: {},
+  addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); },
   querySelector: (sel) => { let hit = null; registry.app.walk((e) => { if (!hit && match(e, sel)) hit = e; }); return hit; },
   querySelectorAll: (sel) => { const out = []; registry.app.walk((e) => { if (match(e, sel)) out.push(e); }); return out; },
 };
@@ -908,6 +909,41 @@ process.on('uncaughtException', (e) => {
   const { flags } = analyze(agg);
   ok('analyze returns flags', Array.isArray(flags));
   ok('report renders', renderReport(agg, { runs: 3, seed: 7 }).includes('Balance Simulation'));
+}
+
+// T37: 0.076 — double Retreat must not bank the run twice, the fading-out
+// scene ignores hotkeys, and typing in a text field is not a hotkey.
+{
+  const { settleRun } = await import('../src/run/runState.js');
+  resetProfile();
+  const r = createRun(); r.coins = 100; r.xp = 40; r.roomNumber = 3;
+  settleRun(r, 'retreat');
+  const p = getProfile();
+  const snap = { coins: p.coins, xp: p.xp, runs: p.records.runs };
+  settleRun(r, 'retreat');
+  ok('settleRun is idempotent (double retreat banks once)',
+    p.coins === snap.coins && p.xp === snap.xp && p.records.runs === snap.runs && snap.coins === 100 && snap.runs === 1);
+
+  let clicked = 0;
+  const { el: mkEl, initHotkeys } = await import('../src/core/scene.js');
+  const btn = mkEl('button', { key: 'r', onclick: () => clicked++ }, 'Retreat');
+  registry.app.append(btn);
+  transitionTo(() => {}, 50);
+  ok('hotkeys ignored during a transition', handleKey('r') === false && clicked === 0);
+  await sleep(100);
+  ok('hotkeys work again after the transition', handleKey('r') === true && clicked === 1);
+
+  initHotkeys();
+  const kd = document.listeners.keydown.at(-1);
+  let prevented = false;
+  const ev = (tagName, key) => ({ key, target: { tagName }, preventDefault: () => { prevented = true; } });
+  kd(ev('TEXTAREA', 'r'));
+  kd(ev('INPUT', 'r'));
+  ok('keys typed into a text field are not hotkeys', clicked === 1 && !prevented);
+  kd(ev('BODY', 'r'));
+  ok('keys elsewhere still fire hotkeys', clicked === 2 && prevented);
+  btn.remove();
+  ok('fading scene takes no clicks (CSS)', /#app\.hidden \{[^}]*pointer-events: none/.test(readFileSync('styles.css', 'utf8')));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

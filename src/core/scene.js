@@ -120,6 +120,9 @@ export function el(tag, attrs = {}, ...children) {
 // Registered once from main.js.
 
 export function handleKey(key) {
+  // The outgoing scene is still in the DOM while it fades — its buttons
+  // must not fire (0.076: a second R during the fade re-banked the run).
+  if (transitioning) return false;
   const k = key.toLowerCase();
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');
@@ -143,6 +146,10 @@ export function handleKey(key) {
 export function initHotkeys() {
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Typing into a text field (the Import Save box) is text, not hotkeys —
+    // 'e'/'n'/Enter used to fire title-screen buttons mid-paste (0.076).
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;
     if (handleKey(e.key)) e.preventDefault();
   });
 }
