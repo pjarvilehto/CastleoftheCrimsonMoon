@@ -1,0 +1,52 @@
+{
+  "hpGrowth": 1.15,
+  "dmgGrowth": 1.12,
+  "tierRooms": 3,
+  "budgetBase": 3.0,
+  "budgetPerRoom": 1.5,
+  "enemyCost": {
+    "1": 1.0,
+    "2": 2.2,
+    "3": 4.5
+  },
+  "maxEnemies": 6,
+  "spillThreshold": 2.0,
+  "bossEvery": 8,
+  "dropChance": 0.22,
+  "potionHeal": 30,
+  "potionBasePrice": 20,
+  "potionPriceStep": 20,
+  "statTrainXpBase": 15,
+  "breakthroughEvery": 5,
+  "alchemyTracks": {
+    "potency": {
+      "base": 60,
+      "healPerLevel": 5
+    },
+    "efficiency": {
+      "base": 80,
+      "chancePerLevel": 0.08,
+      "cap": 0.4
+    },
+    "infusion": {
+      "base": 100,
+      "armorPerLevel": 2
+    }
+  },
+  "forge": {
+    "baseCost": 50,
+    "costPerTier": 50,
+    "statBoostPerLevel": 0.2,
+    "maxLevel": 3
+  },
+  "salvagePerTier": 8,
+  "logDelayMs": 100,
+  "t4Chance": 0.02,
+  "t4MinRoom": 11,
+  "potionDropChance": 0.05,
+  "boss": {
+    "depthBonus": 4,
+    "hpMult": 1.5,
+    "dmgMult": 1.25
+  }
+}

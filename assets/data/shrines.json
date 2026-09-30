@@ -1,0 +1,58 @@
+{
+  "offers": [
+    {
+      "id": "dmg",
+      "buff": "+25% DAMAGE",
+      "costDesc": "-15% MAX HP",
+      "icon": "⚔"
+    },
+    {
+      "id": "crit",
+      "buff": "+10% CRIT",
+      "costDesc": "-50 COINS",
+      "icon": "★"
+    },
+    {
+      "id": "armor",
+      "buff": "+25% ARMOR",
+      "costDesc": "-1 POTION",
+      "icon": "🛡"
+    },
+    {
+      "id": "leech",
+      "buff": "+10% LIFESTEAL",
+      "costDesc": "-15% MAX HP",
+      "icon": "🩸"
+    },
+    {
+      "id": "bulwark",
+      "buff": "+5 ARMOR",
+      "costDesc": "-10% DMG",
+      "icon": "⛨"
+    },
+    {
+      "id": "secondwind",
+      "buff": "+1 POTION & FULL HEAL",
+      "costDesc": "-75 COINS",
+      "icon": "✚"
+    },
+    {
+      "id": "quicken",
+      "buff": "HEAVY COOLDOWN −1",
+      "costDesc": "-15% MAX HP",
+      "icon": "⚡"
+    },
+    {
+      "id": "greed",
+      "buff": "+40% COINS",
+      "costDesc": "-10% DMG",
+      "icon": "◈"
+    },
+    {
+      "id": "glasscannon",
+      "buff": "+50% DMG",
+      "costDesc": "−50% ARMOR",
+      "icon": "⚗"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "rat": {
+    "name": "Giant Rat",
+    "tier": 1,
+    "hp": 14,
+    "dmg": 4,
+    "xp": 6,
+    "coins": [
+      3,
+      7
+    ]
+  },
+  "bat": {
+    "name": "Cave Shrieker",
+    "tier": 1,
+    "hp": 10,
+    "dmg": 3,
+    "xp": 5,
+    "coins": [
+      2,
+      6
+    ]
+  },
+  "skeleton": {
+    "name": "Skeleton",
+    "tier": 1,
+    "hp": 22,
+    "dmg": 6,
+    "xp": 10,
+    "coins": [
+      6,
+      12
+    ]
+  },
+  "ghoul": {
+    "name": "Cinderborn",
+    "tier": 2,
+    "hp": 34,
+    "dmg": 9,
+    "xp": 16,
+    "coins": [
+      10,
+      18
+    ]
+  },
+  "cultist": {
+    "name": "Cult Acolyte",
+    "tier": 2,
+    "hp": 28,
+    "dmg": 12,
+    "xp": 18,
+    "coins": [
+      12,
+      22
+    ]
+  },
+  "golem": {
+    "name": "Fellblade",
+    "tier": 3,
+    "hp": 70,
+    "dmg": 14,
+    "xp": 30,
+    "coins": [
+      20,
+      35
+    ]
+  },
+  "wraith": {
+    "name": "Wraith",
+    "tier": 3,
+    "hp": 46,
+    "dmg": 17,
+    "xp": 34,
+    "coins": [
+      22,
+      38
+    ]
+  },
+  "gargoyle": {
+    "name": "Gargoyle",
+    "tier": 3,
+    "hp": 58,
+    "dmg": 15,
+    "xp": 32,
+    "coins": [
+      18,
+      32
+    ]
+  },
+  "vampire_lord": {
+    "name": "Vampire Lord",
+    "tier": 3,
+    "hp": 140,
+    "dmg": 19,
+    "xp": 90,
+    "coins": [
+      70,
+      110
+    ],
+    "boss": true
+  },
+  "crypt_spider": {
+    "name": "Crypt Spider",
+    "tier": 1,
+    "hp": 12,
+    "dmg": 5,
+    "xp": 7,
+    "coins": [
+      3,
+      8
+    ]
+  },
+  "hollow_hound": {
+    "name": "Hollow Hound",
+    "tier": 2,
+    "hp": 30,
+    "dmg": 11,
+    "xp": 17,
+    "coins": [
+      11,
+      20
+    ]
+  },
+  "blood_knight": {
+    "name": "Blood Knight",
+    "tier": 3,
+    "hp": 64,
+    "dmg": 16,
+    "xp": 33,
+    "coins": [
+      20,
+      36
+    ]
+  }
+}

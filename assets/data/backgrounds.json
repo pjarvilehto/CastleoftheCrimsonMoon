@@ -1,0 +1,29 @@
+{
+  "title": "medieval_castle.jpg",
+  "hub": "castle_great_hall.jpg",
+  "rooms": [
+    "castle_entrance.jpg",
+    "castle_courtyard.jpg",
+    "castle_dungeon.jpg",
+    "castle_library.jpg",
+    "castle_alchemy_lab.jpg",
+    "castle_chapel_interior.jpg",
+    "castle_ramparts.jpg",
+    "castle_great_hall.jpg"
+  ],
+  "boss": "castle_throne_room.jpg",
+  "death": "castle_chapel_exterior.jpg",
+  "shrine": "castle_shrine_gold.jpg",
+  "shrineName": "The Shrine",
+  "roomNames": {
+    "castle_entrance.jpg": "The Gatehouse",
+    "castle_courtyard.jpg": "The Courtyard",
+    "castle_dungeon.jpg": "The Cells",
+    "castle_library.jpg": "The Library",
+    "castle_alchemy_lab.jpg": "The Alchemy Lab",
+    "castle_chapel_interior.jpg": "The Chapel",
+    "castle_ramparts.jpg": "The Ramparts",
+    "castle_great_hall.jpg": "The Feast Hall",
+    "castle_throne_room.jpg": "The Throne Room"
+  }
+}
