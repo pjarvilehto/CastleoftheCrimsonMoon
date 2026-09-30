@@ -129,7 +129,11 @@ function hit(u, fx, delay, ctx, stop = 0) {
 function spray(u, dir, power = 1, big = false) {
   if (!u?.card?.getBoundingClientRect) return;
   const r = u.card.getBoundingClientRect();
-  const burstOnce = () => burst(materialOf(u.id), r.left + r.width / 2, r.top + r.height * 0.42, { dir: big ? 0 : dir, size: r.height, big });
+  // a random point on the figure each burst (0.090) — not always dead centre
+  const burstOnce = () => burst(materialOf(u.id),
+    r.left + r.width * (0.5 + (Math.random() - 0.5) * 0.5),
+    r.top + r.height * (0.3 + Math.random() * 0.3),
+    { dir: big ? 0 : dir, size: r.height, big });
   burstOnce();
   if (power > 1.2) burstOnce(); // heavy / crit: a second, overlapping burst
 }

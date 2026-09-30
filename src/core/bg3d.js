@@ -18,7 +18,7 @@ import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltO
 const DEFAULTS = {
   enabled: true, depthScale: 0.5, pivot: 0.5, yawDeg: 2.5, pitchDeg: 1.2,
   yawPeriodS: 22, pitchPeriodS: 31, speed: 1, joltDeg: 0.6, fovDeg: 40, overscan: 0.06,
-  grid: [160, 90], maxFps: 30, fadeMs: 2000,
+  grid: [256, 144], maxFps: 30, fadeMs: 2000,
 };
 
 // ?debug tuning sliders (ui/bgTuner.js, 0.084) adjust these live; "Save"
@@ -34,7 +34,10 @@ export function tuning(file) {
   return { ...DEFAULTS, ...p, ...(p.overrides?.[file] ?? {}), ...live };
 }
 
-export const depthUrl = (file) => `assets/bg/depth/${file.replace(/\.[^.]+$/, '')}.png`;
+// Depth map by naming convention, unless backgrounds.json parallax.depthFiles
+// names a newer file (a regenerated map gets a NEW name — asset cache rule).
+export const depthUrl = (file) =>
+  `assets/bg/depth/${DATA.backgrounds?.parallax?.depthFiles?.[file] ?? `${file.replace(/\.[^.]+$/, '')}.png`}`;
 
 export { coverScale, sampleDepth, orbit, buildGrid, mvp } from './bg3dMath.js';
 

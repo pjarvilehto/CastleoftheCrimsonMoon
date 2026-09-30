@@ -137,16 +137,7 @@ function bgDebugToggles() {
       e.currentTarget.textContent = `NEXT BG (${i + 1}/${all.length}: ${all[i].replace(/^castle_|\.jpg$/g, '')})`;
     },
   }, 'NEXT BG');
-  // 0.089 experiment: keep enemy figures inside their card frames.
-  const clip = el('button', {
-    class: 'debug-toggle bg-clip-toggle',
-    onclick: (e) => {
-      const on = document.body.classList.toggle('clip-enemies');
-      e.currentTarget.classList.toggle('on', on);
-      e.currentTarget.textContent = `CLIP ENEMIES: ${on ? 'ON' : 'OFF'}`;
-    },
-  }, 'CLIP ENEMIES: OFF');
-  return [fg, viewBtn, next, bgTunerToggle(), clip];
+  return [fg, viewBtn, next, bgTunerToggle()];
 }
 
 boot();

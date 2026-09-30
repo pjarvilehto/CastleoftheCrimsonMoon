@@ -27,7 +27,7 @@
     "castle_throne_room.jpg": "The Throne Room"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename.",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. depthFiles = per-background depth map filename when regenerated (new name, never overwrite).",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -39,12 +39,15 @@
     "fovDeg": 40,
     "overscan": 0.06,
     "grid": [
-      160,
-      90
+      256,
+      144
     ],
     "maxFps": 30,
     "fadeMs": 2000,
     "overrides": {},
-    "speed": 2.1
+    "speed": 2.1,
+    "depthFiles": {
+      "castle_great_hall.jpg": "castle_great_hall_v2.png"
+    }
   }
 }

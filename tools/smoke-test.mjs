@@ -1188,8 +1188,9 @@ process.on('uncaughtException', (e) => {
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
   ok('tuner: 5 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 5
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
-  ok('tuner + clip toggle only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle(), clip]')
-    && readFileSync('styles.css', 'utf8').includes('body.clip-enemies .enemy-char { clip-path: inset(0 round 1em); }'));
+  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle()]'));
+  ok('clip-enemies experiment fully removed (0.090)', !readFileSync('src/main.js', 'utf8').includes('clip')
+    && !readFileSync('styles.css', 'utf8').includes('clip-enemies'));
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
@@ -1356,6 +1357,33 @@ process.on('uncaughtException', (e) => {
   const plain = u.el.textContent;
   r.tempArmor = 2; u.update(st);
   ok('armor line: total, then total+potion bonus', plain.includes('14 ARMOR') && !plain.includes('14+') && u.el.textContent.includes('14+2 ARMOR'));
+}
+
+// T52: 0.090 — Feast Hall depth fix (grounded map under a new filename),
+// denser mesh, clip experiment gone; Great Hall spend hints + potion glow;
+// randomized particle origins.
+{
+  const bg3d = await import('../src/core/bg3d.js');
+  ok('feast hall uses the regenerated depth map', bg3d.depthUrl('castle_great_hall.jpg') === 'assets/bg/depth/castle_great_hall_v2.png'
+    && bg3d.depthUrl('castle_library.jpg') === 'assets/bg/depth/castle_library.png');
+  ok('mesh dense enough for thin objects (256x144, under the 16-bit index limit)', bg3d.tuning('').grid.join('x') === '256x144' && 257 * 145 < 65536);
+  ok('generator has the grounding pass', readFileSync('tools/gen-depth.py', 'utf8').includes('def ground(') && readFileSync('tools/gen-depth.py', 'utf8').includes('--ground'));
+  const hub = await import('../src/ui/scenes/hubScene.js');
+  resetProfile();
+  const p = getProfile();
+  p.xp = 0; p.coins = 0;
+  ok('nothing to spend: no green', !hub.canSpendXp(p) && !hub.canSpendCoins(p));
+  p.xp = 1000; p.coins = DATA.difficulty.potions.price;
+  ok('XP/coins green when something is affordable', hub.canSpendXp(p) && hub.canSpendCoins(p));
+  ok('potion glow below 30% of the satchel', hub.potionsLow({ potions: 1, potionCap: 4 }) && !hub.potionsLow({ potions: 2, potionCap: 4 })
+    && hub.potionsLow({ potions: 2, potionCap: 8 }) && !hub.potionsLow({ potions: 3, potionCap: 8 }));
+  p.potions = 1; p.potionCap = 4;
+  const root = new El('main');
+  hub.hubScene().enter(root);
+  const buy = root.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'u')[0];
+  ok('Buy Potion glows when low and affordable', buy && /\bactive\b/.test(buy.className));
+  ok('particle bursts start at a random point on the figure', readFileSync('src/ui/combatFx.js', 'utf8').includes('r.width * (0.5 + (Math.random() - 0.5) * 0.5)')
+    && readFileSync('src/ui/particles.js', 'utf8').includes('x: x + (r() - 0.5) * 36 * u'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

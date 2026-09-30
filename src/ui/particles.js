@@ -51,7 +51,8 @@ function spawn(material, x, y, dir, u, big) {
   const spread = dir === 0 ? Math.PI * 2 : Math.PI * 0.9;
   const base = dir === 0 ? 0 : dir > 0 ? 0 : Math.PI;
   const a = base + (r() - 0.5) * spread;
-  const p = { x, y, age: 0, material };
+  // each particle starts a little off the burst point (0.090): a spray, not a pinhole
+  const p = { x: x + (r() - 0.5) * 36 * u, y: y + (r() - 0.5) * 36 * u, age: 0, material };
   switch (material) {
     case 'embers': {
       const s = (60 + r() * 160) * u;

@@ -25,6 +25,26 @@ export function potionLevel(p) {
   return 'potions-ok';
 }
 
+// XP / Coins turn green when there's something to spend them on (0.090),
+// so a returning player remembers to train before descending again.
+export function canSpendXp(p) {
+  return Object.keys(STAT_DEFS).some((k) => canAfford(k));
+}
+
+export function canSpendCoins(p) {
+  if (!satchelFull(p) && p.coins >= potionCost()) return true;
+  if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
+  if (Object.keys(ALCHEMY_DEFS).some((t) => p.coins >= alchemyCost(t))) return true;
+  const eq = p.equipment;
+  return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet]
+    .some((id) => id && (DATA.items[id]?.tier ?? 1) > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
+}
+
+// Buy Potion gets the pulsing 'active' glow below 30% of the satchel.
+export function potionsLow(p) {
+  return p.potions < p.potionCap * 0.3;
+}
+
 export function hubScene() {
   return {
     enter(root) {
@@ -43,8 +63,8 @@ export function hubScene() {
     // Potions alone in the middle column (hub-stats in styles.css).
     const statsRow = el('div', { class: 'stat-grid hub-stats' },
       statBox('Level', playerLevel(p)), // 0.080: same LV as the combat card
-      statBox('Coins', p.coins),
-      statBox('XP', p.xp),
+      statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
+      statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
       statBox('Attack', stats.dmg),
       statBox('HP', stats.maxHp),
       statBox('Armor', stats.armor),
@@ -83,6 +103,8 @@ export function hubScene() {
           el('span', {}, `${p.potions}/${p.potionCap} carried — unused potions come home after a run`)),
         el('button', {
           disabled: p.coins < potionCost() || satchelFull(p),
+          // running low and able to buy: the obvious next step (0.090)
+          class: potionsLow(p) && p.coins >= potionCost() && !satchelFull(p) ? 'active' : '',
           key: 'u', // b-u-y
           onclick: () => { restockPotion(); render(root); },
         }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
