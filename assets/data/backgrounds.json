@@ -103,7 +103,7 @@
     "throne_rose_queen.jpg": "The Rose Throne"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). 0.166: every painting has its own fog and fogWind (outdoors and the large halls a notch windier); the base is the Fog Lab's Rolling Mist with the owner's drift 3.5, haze 0.38 / curve 1.55. fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. 0.164 (the Fog Lab, fog-lab/): drift = per-puff wind speed spread, rock = rocking amplitude range (rad), period = the rock/breathe cycle range (s), bob = vertical bob (world units), breathe = size pulse share, shadeVar / alphaVar = per-puff brightness and opacity spread, turbulence = how far each puff wanders on its own (world units) over turbulencePeriod s, pulse = how much each puff fades in and out over pulsePeriod s, flow = how fast the mist churns inside each puff (noise uv/s) at flowScale, thinning by flowAmount. mist = the puffs' lighting: shade = how strong the baked self-shadow reads, litTint / shadeTint = colour multipliers for the lit and shaded sides, sceneLight = how much the painting's own bright pixels (torches, windows) light the mist, nearBright = extra brightness for near puffs. haze = the distance haze on the art: density, curve (power on the far share), high = how much survives high up, strength, max. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). 0.167: toned down to the owner's reference (drift spread 0.7-1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse 0.3; winds x0.7). 0.166: every painting has its own fog and fogWind (outdoors and the large halls a notch windier); the base is the Fog Lab's Rolling Mist with the owner's drift 3.5, haze 0.38 / curve 1.55. fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. 0.164 (the Fog Lab, fog-lab/): drift = per-puff wind speed spread, rock = rocking amplitude range (rad), period = the rock/breathe cycle range (s), bob = vertical bob (world units), breathe = size pulse share, shadeVar / alphaVar = per-puff brightness and opacity spread, turbulence = how far each puff wanders on its own (world units) over turbulencePeriod s, pulse = how much each puff fades in and out over pulsePeriod s, flow = how fast the mist churns inside each puff (noise uv/s) at flowScale, thinning by flowAmount. mist = the puffs' lighting: shade = how strong the baked self-shadow reads, litTint / shadeTint = colour multipliers for the lit and shaded sides, sceneLight = how much the painting's own bright pixels (torches, windows) light the mist, nearBright = extra brightness for near puffs. haze = the distance haze on the art: density, curve (power on the far share), high = how much survives high up, strength, max. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -119,9 +119,9 @@
     "fogScale": 1,
     "fogFadeMs": 2500,
     "fogWind": [
-      0.014,
+      0.01,
       0.001,
-      0.003
+      0.002
     ],
     "puffs": {
       "count": 40,
@@ -142,7 +142,7 @@
       "opacity": 0.4,
       "drift": [
         0.7,
-        1.3
+        1.0
       ],
       "rock": [
         0.1,
@@ -152,8 +152,8 @@
         10,
         24
       ],
-      "bob": 0.03,
-      "breathe": 0.14,
+      "bob": 0.006,
+      "breathe": 0.04,
       "shadeVar": [
         0.88,
         1.1
@@ -162,9 +162,9 @@
         0.6,
         1
       ],
-      "turbulence": 0.08,
-      "turbulencePeriod": 24,
-      "pulse": 0.35,
+      "turbulence": 0.015,
+      "turbulencePeriod": 12,
+      "pulse": 0.3,
       "pulsePeriod": 30,
       "flow": 0.02,
       "flowScale": 1.6,
@@ -259,387 +259,387 @@
     "fadeMs": 2000,
     "overrides": {
       "medieval_castle.jpg": {
-        "fog": 0.7,
+        "fog": 0.64,
         "fogWind": [
-          0.016,
-          0.002,
-          0
+          0.011,
+          0.001,
+          0.0
         ]
       },
       "castle_chapel_exterior.jpg": {
-        "fog": 0.9,
+        "fog": 0.83,
         "fogWind": [
-          -0.022,
-          0.002,
-          0.006
+          -0.015,
+          0.001,
+          0.004
         ]
       },
       "castle_courtyard.jpg": {
-        "fog": 0.95,
+        "fog": 0.87,
         "fogWind": [
-          0.014,
-          0.002,
-          0.01
+          0.01,
+          0.001,
+          0.007
         ]
       },
       "castle_entrance.jpg": {
-        "fog": 0.85,
+        "fog": 0.78,
         "fogWind": [
-          0.004,
-          0,
-          0.02
+          0.003,
+          0.0,
+          0.014
         ]
       },
       "castle_ramparts.jpg": {
-        "fog": 1.1,
+        "fog": 1.01,
         "fogWind": [
-          0.045,
-          0.004,
-          0
+          0.032,
+          0.003,
+          0.0
         ]
       },
       "castle_great_hall.jpg": {
         "fog": 0.42,
         "fogWind": [
-          0.008,
+          0.006,
           0.001,
-          -0.008
+          -0.006
         ]
       },
       "castle_throne_room.jpg": {
         "fog": 0.42,
         "fogWind": [
-          -0.009,
-          0,
-          0.006
+          -0.006,
+          0.0,
+          0.004
         ]
       },
       "castle_chapel_interior.jpg": {
         "fog": 0.42,
         "fogWind": [
-          0.004,
-          0.002,
-          -0.01
+          0.003,
+          0.001,
+          -0.007
         ]
       },
       "castle_library.jpg": {
         "fog": 0.36,
         "fogWind": [
-          0.007,
-          0,
-          0
+          0.005,
+          0.0,
+          0.0
         ]
       },
       "castle_shrine_gold.jpg": {
         "fog": 0.4,
         "fogWind": [
-          0,
-          0.004,
-          0.008
+          0.0,
+          0.003,
+          0.006
         ]
       },
       "castle_alchemy_lab.jpg": {
         "fog": 0.34,
         "fogWind": [
-          -0.008,
-          0.004,
-          0
+          -0.006,
+          0.003,
+          0.0
         ]
       },
       "castle_dungeon.jpg": {
         "fog": 0.45,
         "fogWind": [
-          0,
-          0,
-          0.015
+          0.0,
+          0.0,
+          0.01
         ]
       },
       "dungeon_bell_tower.jpg": {
-        "fog": 0.6,
+        "fog": 0.55,
         "fogWind": [
-          0.025,
-          0.003,
-          0
+          0.017,
+          0.002,
+          0.0
         ]
       },
       "dungeon_observatory.jpg": {
         "fog": 0.45,
-        "fogWind": [
-          0.012,
-          0.002,
-          -0.004
-        ]
-      },
-      "dungeon_conservatory.jpg": {
-        "fog": 0.55,
-        "fogWind": [
-          0.01,
-          0.003,
-          0.004
-        ]
-      },
-      "corridor_cavern_chasm.jpg": {
-        "fog": 0.75,
-        "fogWind": [
-          0.02,
-          0.006,
-          0.006
-        ]
-      },
-      "corridor_gothic_vault.jpg": {
-        "fog": 0.6,
-        "fogWind": [
-          0.03,
-          0.004,
-          0.004
-        ]
-      },
-      "corridor_sewer_aqueduct.jpg": {
-        "fog": 0.6,
-        "fogWind": [
-          0.018,
-          0,
-          0.006
-        ]
-      },
-      "corridor_flooded_hall.jpg": {
-        "fog": 0.55,
-        "fogWind": [
-          0.008,
-          0.002,
-          0.008
-        ]
-      },
-      "dungeon_cistern.jpg": {
-        "fog": 0.6,
-        "fogWind": [
-          0.006,
-          0.004,
-          0.008
-        ]
-      },
-      "dungeon_cathedral_nave.jpg": {
-        "fog": 0.45,
-        "fogWind": [
-          0.008,
-          0.002,
-          -0.006
-        ]
-      },
-      "throne_ember_warlord.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.01,
-          0.004,
-          0.004
-        ]
-      },
-      "throne_obsidian_sovereign.jpg": {
-        "fog": 0.45,
-        "fogWind": [
-          -0.008,
-          0.002,
-          0.005
-        ]
-      },
-      "throne_rose_queen.jpg": {
-        "fog": 0.42,
-        "fogWind": [
-          0.008,
-          0.002,
-          0.003
-        ]
-      },
-      "dungeon_sewer_passage.jpg": {
-        "fog": 0.55,
-        "fogWind": [
-          0.006,
-          0.003,
-          0.01
-        ]
-      },
-      "dungeon_ossuary.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.004,
-          0.001,
-          0.008
-        ]
-      },
-      "dungeon_tomb_vault.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.004,
-          0.001,
-          0.008
-        ]
-      },
-      "corridor_crypt_walkway.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.005,
-          0.001,
-          0.008
-        ]
-      },
-      "corridor_bone_passage.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.004,
-          0.001,
-          0.008
-        ]
-      },
-      "treasure_sunken_vault.jpg": {
-        "fog": 0.6,
-        "fogWind": [
-          0.005,
-          0.003,
-          0.008
-        ]
-      },
-      "treasure_frozen_tribute.jpg": {
-        "fog": 0.6,
-        "fogWind": [
-          0.012,
-          0.002,
-          0.004
-        ]
-      },
-      "treasure_dragon_hoard.jpg": {
-        "fog": 0.45,
-        "fogWind": [
-          0.008,
-          0.004,
-          0
-        ]
-      },
-      "treasure_cursed_reliquary.jpg": {
-        "fog": 0.5,
-        "fogWind": [
-          0.004,
-          0.002,
-          0.008
-        ]
-      },
-      "treasure_regalia_chamber.jpg": {
-        "fog": 0.36,
-        "fogWind": [
-          0.008,
-          0.001,
-          0.002
-        ]
-      },
-      "treasure_smugglers_cache.jpg": {
-        "fog": 0.45,
-        "fogWind": [
-          0.008,
-          0,
-          0.006
-        ]
-      },
-      "dungeon_antechamber.jpg": {
-        "fog": 0.38,
-        "fogWind": [
-          0.01,
-          0.001,
-          0.003
-        ]
-      },
-      "dungeon_arcane_library.jpg": {
-        "fog": 0.36,
-        "fogWind": [
-          0.006,
-          0.001,
-          0
-        ]
-      },
-      "dungeon_armory.jpg": {
-        "fog": 0.34,
-        "fogWind": [
-          0.008,
-          0,
-          0.002
-        ]
-      },
-      "dungeon_kitchen.jpg": {
-        "fog": 0.4,
-        "fogWind": [
-          0.006,
-          0.005,
-          0
-        ]
-      },
-      "dungeon_portrait_gallery.jpg": {
-        "fog": 0.36,
-        "fogWind": [
-          0.008,
-          0.001,
-          0
-        ]
-      },
-      "dungeon_prison_corridor.jpg": {
-        "fog": 0.42,
-        "fogWind": [
-          0.003,
-          0,
-          0.012
-        ]
-      },
-      "dungeon_royal_bedroom.jpg": {
-        "fog": 0.3,
-        "fogWind": [
-          0.006,
-          0.002,
-          0
-        ]
-      },
-      "dungeon_servants_quarters.jpg": {
-        "fog": 0.34,
-        "fogWind": [
-          0.008,
-          0.001,
-          0
-        ]
-      },
-      "dungeon_torch_corridor.jpg": {
-        "fog": 0.4,
-        "fogWind": [
-          0.006,
-          0.002,
-          -0.008
-        ]
-      },
-      "dungeon_treasury.jpg": {
-        "fog": 0.36,
-        "fogWind": [
-          0.008,
-          0.002,
-          0.002
-        ]
-      },
-      "dungeon_war_room.jpg": {
-        "fog": 0.36,
         "fogWind": [
           0.008,
           0.001,
           -0.003
         ]
       },
-      "dungeon_wine_cellar.jpg": {
+      "dungeon_conservatory.jpg": {
+        "fog": 0.51,
+        "fogWind": [
+          0.007,
+          0.002,
+          0.003
+        ]
+      },
+      "corridor_cavern_chasm.jpg": {
+        "fog": 0.69,
+        "fogWind": [
+          0.014,
+          0.004,
+          0.004
+        ]
+      },
+      "corridor_gothic_vault.jpg": {
+        "fog": 0.55,
+        "fogWind": [
+          0.021,
+          0.003,
+          0.003
+        ]
+      },
+      "corridor_sewer_aqueduct.jpg": {
+        "fog": 0.55,
+        "fogWind": [
+          0.013,
+          0.0,
+          0.004
+        ]
+      },
+      "corridor_flooded_hall.jpg": {
+        "fog": 0.51,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.006
+        ]
+      },
+      "dungeon_cistern.jpg": {
+        "fog": 0.55,
+        "fogWind": [
+          0.004,
+          0.003,
+          0.006
+        ]
+      },
+      "dungeon_cathedral_nave.jpg": {
+        "fog": 0.45,
+        "fogWind": [
+          0.006,
+          0.001,
+          -0.004
+        ]
+      },
+      "throne_ember_warlord.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.007,
+          0.003,
+          0.003
+        ]
+      },
+      "throne_obsidian_sovereign.jpg": {
+        "fog": 0.45,
+        "fogWind": [
+          -0.006,
+          0.001,
+          0.003
+        ]
+      },
+      "throne_rose_queen.jpg": {
         "fog": 0.42,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.002
+        ]
+      },
+      "dungeon_sewer_passage.jpg": {
+        "fog": 0.51,
+        "fogWind": [
+          0.004,
+          0.002,
+          0.007
+        ]
+      },
+      "dungeon_ossuary.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.003,
+          0.001,
+          0.006
+        ]
+      },
+      "dungeon_tomb_vault.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.003,
+          0.001,
+          0.006
+        ]
+      },
+      "corridor_crypt_walkway.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.003,
+          0.001,
+          0.006
+        ]
+      },
+      "corridor_bone_passage.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.003,
+          0.001,
+          0.006
+        ]
+      },
+      "treasure_sunken_vault.jpg": {
+        "fog": 0.55,
         "fogWind": [
           0.003,
           0.002,
           0.006
         ]
       },
+      "treasure_frozen_tribute.jpg": {
+        "fog": 0.55,
+        "fogWind": [
+          0.008,
+          0.001,
+          0.003
+        ]
+      },
+      "treasure_dragon_hoard.jpg": {
+        "fog": 0.45,
+        "fogWind": [
+          0.006,
+          0.003,
+          0.0
+        ]
+      },
+      "treasure_cursed_reliquary.jpg": {
+        "fog": 0.46,
+        "fogWind": [
+          0.003,
+          0.001,
+          0.006
+        ]
+      },
+      "treasure_regalia_chamber.jpg": {
+        "fog": 0.36,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.001
+        ]
+      },
+      "treasure_smugglers_cache.jpg": {
+        "fog": 0.45,
+        "fogWind": [
+          0.006,
+          0.0,
+          0.004
+        ]
+      },
+      "dungeon_antechamber.jpg": {
+        "fog": 0.38,
+        "fogWind": [
+          0.007,
+          0.001,
+          0.002
+        ]
+      },
+      "dungeon_arcane_library.jpg": {
+        "fog": 0.36,
+        "fogWind": [
+          0.004,
+          0.001,
+          0.0
+        ]
+      },
+      "dungeon_armory.jpg": {
+        "fog": 0.34,
+        "fogWind": [
+          0.006,
+          0.0,
+          0.001
+        ]
+      },
+      "dungeon_kitchen.jpg": {
+        "fog": 0.4,
+        "fogWind": [
+          0.004,
+          0.003,
+          0.0
+        ]
+      },
+      "dungeon_portrait_gallery.jpg": {
+        "fog": 0.36,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.0
+        ]
+      },
+      "dungeon_prison_corridor.jpg": {
+        "fog": 0.42,
+        "fogWind": [
+          0.002,
+          0.0,
+          0.008
+        ]
+      },
+      "dungeon_royal_bedroom.jpg": {
+        "fog": 0.3,
+        "fogWind": [
+          0.004,
+          0.001,
+          0.0
+        ]
+      },
+      "dungeon_servants_quarters.jpg": {
+        "fog": 0.34,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.0
+        ]
+      },
+      "dungeon_torch_corridor.jpg": {
+        "fog": 0.4,
+        "fogWind": [
+          0.004,
+          0.001,
+          -0.006
+        ]
+      },
+      "dungeon_treasury.jpg": {
+        "fog": 0.36,
+        "fogWind": [
+          0.006,
+          0.001,
+          0.001
+        ]
+      },
+      "dungeon_war_room.jpg": {
+        "fog": 0.36,
+        "fogWind": [
+          0.006,
+          0.001,
+          -0.002
+        ]
+      },
+      "dungeon_wine_cellar.jpg": {
+        "fog": 0.42,
+        "fogWind": [
+          0.002,
+          0.001,
+          0.004
+        ]
+      },
       "corridor_torch_hall.jpg": {
         "fog": 0.4,
         "fogWind": [
-          0.008,
-          0.002,
-          -0.006
+          0.006,
+          0.001,
+          -0.004
         ]
       }
     },
