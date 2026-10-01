@@ -19,7 +19,7 @@ export function showDeathModal(run, onAccept) {
       { class: 'death-modal' },
       el('h1', { class: 'death-title' }, 'YOU DIED!'),
       el('p', { class: 'death-sub' }, `The castle claims another soul on room ${run.roomNumber}.`),
-      el('button', { class: 'danger death-accept active active-red', key: 'f', onclick: accept }, 'Accept Your Fate')
+      el('button', { class: 'danger death-accept active active-red', key: 'f', proceed: true, onclick: accept }, 'Accept Your Fate')
     )
   );
   document.getElementById('app').append(overlay);

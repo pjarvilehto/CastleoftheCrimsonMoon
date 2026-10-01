@@ -51,7 +51,7 @@ export function runEndScene(run, outcome) {
             : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },
-            el('button', { class: 'primary', key: 'g', onclick: () => go('hub') }, 'Return to the Great Hall'))
+            el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub') }, 'Return to the Great Hall'))
         )
       );
     },

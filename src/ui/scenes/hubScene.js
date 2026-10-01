@@ -203,7 +203,7 @@ export function hubScene() {
       slotRow('Trinket', eq.trinket),
       slotRow('Amulet', eq.amulet));
 
-    const descendBtn = el('button', { class: 'primary', key: 'd', onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
+    const descendBtn = el('button', { class: 'primary', key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     root.innerHTML = '';
     root.append(
       el('div', { class: 'hub-container' },

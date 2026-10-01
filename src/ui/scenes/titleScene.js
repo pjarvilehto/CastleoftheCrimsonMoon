@@ -63,7 +63,7 @@ export function titleScene() {
               `${p.records.kills} kills, deepest room ${p.records.bestRoom}.`)
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
-          el('button', { class: 'primary', key: 'e', onclick: () => go('hub') }, 'Enter the Castle'),
+          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => go('hub') }, 'Enter the Castle'),
           // Shown only when a save with progress exists: offer to wipe.
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)
             ? el('button', {

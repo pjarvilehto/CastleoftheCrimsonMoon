@@ -45,15 +45,16 @@ process.on('uncaughtException', (e) => {
   ok('transitionTo try/finally recovery', !registry.app.classList.contains('hidden'));
 }
 
-// T14: space = secondary binding (data-key2, Push Deeper in the dungeon).
+// T14: space = "proceed further" (el() proceed: true; 0.124 everywhere).
 // Built via el() ON PURPOSE — 0.051 shipped with the el() key2 branch
 // silently dropped, so buttons never got data-key2 and space did nothing.
 // A synthetic setAttribute button can't catch that class of break.
 {
   const { el: mkEl } = await import('../../src/core/dom.js');
   let clicked = 0;
-  const btn = mkEl('button', { key: 'd', key2: ' ', onclick: () => clicked++ }, 'Push Deeper');
-  ok('el() wires key2 to data-key2', btn.attrs['data-key2'] === ' ' && btn.attrs.key2 === undefined);
+  const btn = mkEl('button', { key: 'd', proceed: true, onclick: () => clicked++ }, 'Push Deeper');
+  ok('el() proceed: Space binding + [space] under the label', btn.attrs['data-key2'] === ' ' && btn.attrs.proceed === undefined
+    && btn.className.includes('proceed') && btn.textContent.includes('[space]'));
   registry.app.append(btn);
   handleKey(' ');
   ok('space clicks data-key2 button', clicked === 1);
@@ -369,4 +370,44 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && readFileSync('src/core/dom.js', 'utf8').includes('export function el(') && readFileSync('src/core/hotkeys.js', 'utf8').includes('export function handleKey('));
   go('title');
   await sleep(1100);
+}
+
+// T85: 0.124 — Space is "proceed further" on every screen, each showing
+// [space] under its way forward: title -> Great Hall -> dungeon, and the
+// run end back to the hall; the death and victory dialogs too.
+{
+  const { showDeathModal } = await import('../../src/ui/deathModal.js');
+  const { showVictoryModal } = await import('../../src/ui/victoryModal.js');
+  const { runEndScene } = await import('../../src/ui/scenes/runEndScene.js');
+  fresh();
+  show(titleScene());
+  await sleep(1100);
+  ok('title: [space] under Enter the Castle', /Enter the Castle\s*\[space\]/i.test(t()));
+  handleKey(' ');
+  await sleep(1300);
+  ok('Space enters the Great Hall', t().includes('GREAT HALL') && /Descend into the Dungeon\s*\[space\]/i.test(t()));
+  handleKey(' ');
+  await sleep(1300);
+  ok('Space descends into the dungeon', t().includes('Room 1'));
+  let accepted = 0;
+  const ov = showDeathModal({ roomNumber: 4 }, () => { accepted++; });
+  ok('death dialog: [space] under Accept Your Fate', ov.textContent.includes('[space]'));
+  handleKey(' ');
+  ok('Space accepts your fate', accepted === 1);
+  const r = createRun(); r.roomNumber = 4;
+  show(runEndScene(r, 'retreat'));
+  await sleep(1300);
+  ok('run end: [space] under Return to the Great Hall', /Return to the Great Hall\s*\[space\]/i.test(t()));
+  handleKey(' ');
+  await sleep(1300);
+  ok('Space returns to the Great Hall', t().includes('GREAT HALL'));
+  const realBody = globalThis.document.body;
+  globalThis.document.body = new El('body');
+  const dlg = showVictoryModal({ roomNumber: 24 });
+  ok('victory dialog: [space] under Onward', dlg.el.textContent.includes('[space]'));
+  handleKey(' ');
+  ok('Space closes the victory dialog', !dlg.isOpen());
+  globalThis.document.body = realBody;
+  const hk = readFileSync('src/core/hotkeys.js', 'utf8');
+  ok('a held Space (auto-repeat) steps only once', hk.includes("if (e.repeat && e.key === ' ')"));
 }

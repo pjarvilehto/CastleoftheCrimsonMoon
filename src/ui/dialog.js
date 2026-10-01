@@ -5,7 +5,7 @@
 // it back to whatever was below, even another dialog.
 //
 // openDialog({ label, children, onKey(k, close), backdropCloses,
-//              overlayClass, modalClass }) -> { el, close, isOpen }
+//              overlayClass, modalClass, proceed }) -> { el, close, isOpen }
 // onKey gets every key (lowercased: 'enter', 'escape', 'y', ...); keys it
 // ignores are still swallowed. close() is safe to call twice.
 
@@ -14,10 +14,16 @@ import { pushKeyTrap, releaseKeyTrap } from '../core/hotkeys.js';
 
 export function openDialog({
   label, children = [], onKey = null, backdropCloses = false,
-  overlayClass = 'update-overlay', modalClass = 'update-modal', onClose = null,
+  overlayClass = 'update-overlay', modalClass = 'update-modal', onClose = null, proceed = null,
 }) {
   let open = true;
-  const trap = (k) => { onKey?.(k, close); return true; };
+  // proceed (0.124): the dialog's way forward (an el() button built with
+  // proceed: true) — Space clicks it, like on the scenes.
+  const trap = (k) => {
+    if (k === ' ' && proceed && !proceed.disabled) proceed.click();
+    else onKey?.(k, close);
+    return true;
+  };
   const overlay = el('div', {
     class: overlayClass, role: 'dialog', 'aria-label': label,
     onclick: backdropCloses ? (e) => { if (e?.target === overlay) close(); } : null,

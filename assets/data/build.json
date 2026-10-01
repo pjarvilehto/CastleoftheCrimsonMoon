@@ -1,5 +1,5 @@
 {
-  "version": "0.123",
+  "version": "0.124",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -73,6 +73,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.124": [
+      "Space now moves you forward on every screen — Enter the Castle, Descend, Push Deeper, Accept Your Fate, Return to the Great Hall — with a small [space] under the button it presses."
+    ],
     "0.123": [
       "Play stats: the Depth per run chart marks every run that won the game (beat the room 24 boss) with a gold star."
     ],
@@ -124,10 +127,6 @@
     "0.110": [
       "Sword strikes and hits on the knight sound different every time (metal glints, thuds, armour clanks)",
       "The coin jingle is a touch quieter"
-    ],
-    "0.109": [
-      "Enter your name when you first open the game (change it any time on the title screen)",
-      "Fallen enemies fade almost completely away"
     ]
   }
 }

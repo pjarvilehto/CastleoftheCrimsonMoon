@@ -234,7 +234,8 @@ tools/
 | `D` / `B` | hub | Descend into the Dungeon / Back |
 | `G` | run-end | Return to Great Hall |
 | `Y` / `Enter`, `N` / `Esc` | update prompt | Reload to the new build / later (the prompt owns the keyboard while open) |
-| `D` / `Space` | dungeon | Push Deeper (key2) |
+| `Space` | every screen | Proceed further (0.124, `el()` `proceed: true`, `[space]` under the label): Enter the Castle, Descend, Push Deeper (combat + shrine), Accept Your Fate, Return to the Great Hall, Onward (victory). A held Space steps once. |
+| `D` | dungeon | Push Deeper |
 | `Enter` | anywhere | Primary button |
 
 MUSIC/SOUND toggles are click-only buttons (persist to localStorage).

@@ -28,7 +28,7 @@ export function renderShrineRoom(root, run, room, h) {
     el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(h.xp))),
     el('span', {}, 'Potions ', el('b', { style: `color:${potionColor}` }, `${run.potions}/${run.potionCap}`)));
   const proceed = el('div', { class: 'btn-row' },
-    el('button', { class: 'primary', key: 'd', key2: ' ', onclick: h.onDeeper }, 'Push Deeper'),
+    el('button', { class: 'primary', key: 'd', proceed: true, onclick: h.onDeeper }, 'Push Deeper'),
     room.taken ? el('button', { class: 'danger', key: 'r', onclick: h.onRetreat }, 'Retreat with Loot') : null);
   root.innerHTML = '';
   root.append(

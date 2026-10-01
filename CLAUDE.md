@@ -260,7 +260,10 @@ static play-stats page.
   run, so the update prompt waits for the next scene).
 - Save data from other browsers (the dashboard's pasted codes) is
   untrusted: `analytics/stats.js sanitizeProfile()` before rendering.
-- Every keyboard-reachable button gets `key: 'x'` in `el()`.
+- Every keyboard-reachable button gets `key: 'x'` in `el()`. A screen's
+  way forward also gets `proceed: true` (0.124): Space clicks it and a
+  tiny `[space]` prints under its label; in a dialog, pass that button as
+  `openDialog({ proceed })`. Yes/no prompts and text fields don't get one.
 - The obvious next button gets the **'active'** state: `class: 'active'`
   (pulsing yellow) or `'active active-red'` (pulsing red) — 0.079.
 - `?debug` in the URL shows the INVULNERABLE toggle (hidden otherwise).

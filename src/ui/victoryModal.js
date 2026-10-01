@@ -14,10 +14,11 @@ import { getProfile } from '../meta/profile.js';
 export function showVictoryModal(run, onClose = null) {
   sfx('victory');
   const who = getProfile().name;
+  const onward = el('button', { class: 'primary active victory-accept', key: 'o', proceed: true, onclick: () => dlg.close() }, 'Onward');
   const dlg = openDialog({
     label: 'Victory',
     overlayClass: 'update-overlay victory-overlay', modalClass: 'update-modal victory-modal',
-    onClose,
+    onClose, proceed: onward,
     children: [
       el('h1', { class: 'victory-title' }, 'Victory!'),
       el('p', { class: 'victory-lead' },
@@ -27,10 +28,9 @@ export function showVictoryModal(run, onClose = null) {
         'you may push deeper, but there is little new to find beyond this room.'),
       el('p', { class: 'victory-text' },
         'To play it all again from the beginning, choose Start a New Game on the main menu.'),
-      el('div', { class: 'btn-row' },
-        el('button', { class: 'primary active victory-accept', key: 'o', onclick: () => dlg.close() }, 'Onward')),
+      el('div', { class: 'btn-row' }, onward),
     ],
-    onKey: (k, close) => { if (['o', 'enter', 'escape', ' '].includes(k)) close(); },
+    onKey: (k, close) => { if (['o', 'enter', 'escape'].includes(k)) close(); },
   });
   return dlg;
 }

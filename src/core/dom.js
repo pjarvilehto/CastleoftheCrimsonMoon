@@ -1,6 +1,6 @@
 // core/dom.js — el(tag, attrs, ...children), the one DOM builder every
 // screen uses (0.117: moved out of core/scene.js). attrs: class, on<event>
-// handlers, key / key2 hotkeys (core/hotkeys.js clicks the button), and any
+// handlers, key hotkeys + `proceed: true` (core/hotkeys.js clicks the button), and any
 // other attribute; false/null/undefined attrs and children are skipped.
 
 export function el(tag, attrs = {}, ...children) {
@@ -10,9 +10,9 @@ export function el(tag, attrs = {}, ...children) {
     if (k === 'class') node.className = v;
     else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
     else if (k === 'key') node.setAttribute('data-key', String(v).toLowerCase());
-    // Secondary hotkey (e.g. Space for Push Deeper). No label underline —
-    // it's a hidden convenience binding, not advertised on the button.
-    else if (k === 'key2') node.setAttribute('data-key2', String(v).toLowerCase());
+    // The screen's "proceed further" button (0.124): Space clicks it, and
+    // a small [space] prints under its label (below).
+    else if (k === 'proceed') node.setAttribute('data-key2', ' ');
     else node.setAttribute(k, v === true ? '' : v);
   }
   // Hotkey affordance: underline the first occurrence of the key letter
@@ -41,6 +41,10 @@ export function el(tag, attrs = {}, ...children) {
     // ("DRINKPOTION", 0.050). A span wrapper keeps the label one inline
     // context where the space survives.
     node.append(el('span', { class: 'btn-label' }, ...content));
+    if (attrs.proceed) {
+      node.className = `${node.className} proceed`.trim();
+      node.append(el('span', { class: 'key-hint' }, '[space]'));
+    }
     return node;
   }
   for (const child of content) {

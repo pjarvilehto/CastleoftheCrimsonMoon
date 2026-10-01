@@ -201,7 +201,7 @@ export function dungeonScene() {
     if (showProceed && !ui.proceed.children.length) {
       ui.proceed.append(
         // 'active' (0.079): pulsing yellow — the obvious next step.
-        el('button', { class: 'primary active', key: 'd', key2: ' ', onclick: () => nextRoom(ui.root) }, 'Push Deeper'),
+        el('button', { class: 'primary active', key: 'd', proceed: true, onclick: () => nextRoom(ui.root) }, 'Push Deeper'),
         el('button', { class: 'danger', key: 'r', onclick: () => endRun(ui.root, 'retreat') }, 'Retreat with Loot'));
     } else if (!showProceed && ui.proceed.children.length) {
       ui.proceed.innerHTML = '';

@@ -32,9 +32,10 @@ export function handleKey(key) {
     if (primary) { primary.click(); return true; }
     return false;
   }
-  // Space is a secondary binding (data-key2) — currently Push Deeper in
-  // the dungeon. Deliberately NOT a primary key: space does nothing in
-  // the hub, so an idle tap can't start a run.
+  // Space = "proceed further" (0.124): every screen's way forward is built
+  // with el(..., { proceed: true }) and shows [space] under its label —
+  // Enter the Castle, Descend, Push Deeper, Accept Your Fate, Return to
+  // the Great Hall; dialogs pass theirs to openDialog({ proceed }).
   if (k === ' ') {
     const btns = document.querySelectorAll('button[data-key2=" "]:not([disabled])');
     if (btns.length) { btns[0].click(); return true; }
@@ -53,6 +54,9 @@ export function initHotkeys() {
     // 'e'/'n'/Enter used to fire title-screen buttons mid-paste (0.077).
     const t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;
+    // A held Space auto-repeats: it must not race on through the next
+    // screens' proceed buttons (0.124) — one press, one step.
+    if (e.repeat && e.key === ' ') { e.preventDefault(); return; }
     if (handleKey(e.key)) e.preventDefault();
   });
 }

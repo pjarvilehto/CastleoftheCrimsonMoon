@@ -197,6 +197,16 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 button.danger { border-color: var(--blood); }
 button.danger:hover:not(:disabled) { border-color: #c14b4b; box-shadow: 0 0 12px rgba(142,35,35,0.4); }
 button.primary { border-color: var(--gold); font-weight: bold; }
+/* The screen's way forward (0.124, el() proceed: true): Space clicks it,
+   and a tiny [space] sits in the button's bottom padding — out of the
+   flow, so the label stays centred exactly as on every other button. */
+button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); padding-top: calc(10px + 0.25em); }
+.combat-proceed button.proceed { padding-block: calc(1.1vh + 0.25em); }
+.key-hint {
+  position: absolute; left: 0; right: 0; bottom: 3px; text-align: center;
+  font-size: 0.42em; font-weight: normal; letter-spacing: 0.16em;
+  text-transform: lowercase; line-height: 1; opacity: 0.55; pointer-events: none;
+}
 
 /* Button label wrapper (el() adds it): keeps the hotkey-underline splice
    inside one inline context so spaces survive flex.
