@@ -1,5 +1,5 @@
 {
-  "version": "0.124",
+  "version": "0.125",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -40,6 +40,7 @@
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
     "src/shared/level.js",
+    "src/shared/platform.js",
     "src/shared/prefs.js",
     "src/shared/preload.js",
     "src/shared/version.js",
@@ -73,6 +74,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.125": [
+      "Phones and tablets now see a 'Mobile platforms not supported yet' notice instead of the game — please play on a desktop or laptop."
+    ],
     "0.124": [
       "Space now moves you forward on every screen — Enter the Castle, Descend, Push Deeper, Accept Your Fate, Return to the Great Hall — with a small [space] under the button it presses."
     ],
@@ -123,10 +127,6 @@
     ],
     "0.111": [
       "The name field's text is centred properly (and no more specks above the letters)"
-    ],
-    "0.110": [
-      "Sword strikes and hits on the knight sound different every time (metal glints, thuds, armour clanks)",
-      "The coin jingle is a touch quieter"
     ]
   }
 }

@@ -4,7 +4,7 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { onBackgroundChange, go } from './core/scene.js';
+import { onBackgroundChange, go, setBackground } from './core/scene.js';
 import { el } from './core/dom.js';
 import { initHotkeys } from './core/hotkeys.js';
 import { initBg3d, showBackground3d } from './core/bg3d.js';
@@ -20,6 +20,7 @@ import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './a
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
+import { isMobile } from './shared/platform.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -33,6 +34,16 @@ async function boot() {
   // fade out from yet, and #app starts hidden in index.html.
   const app = document.getElementById('app');
   app.classList.remove('hidden');
+  // Phones and tablets (0.125): no keyboard, no landscape layout yet — a
+  // notice over the title art instead of the game (and no stats sent).
+  if (isMobile()) {
+    app.append(el('div', { class: 'panel mobile-notice' },
+      el('h1', {}, 'CASTLE OF THE CRIMSON MOON'),
+      el('div', { class: 'subtitle' }, 'Mobile platforms not supported yet'),
+      el('p', { class: 'mobile-sub' }, 'Please visit on a desktop or laptop computer.')));
+    loadData().then(() => setBackground(DATA.backgrounds.title)).catch(() => {});
+    return;
+  }
   const fill = el('div', { class: 'loader-fill' });
   const pct = el('div', { class: 'subtitle loader-pct' }, '0%');
   app.append(el('div', { class: 'panel loader' },

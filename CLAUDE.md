@@ -253,6 +253,10 @@ static play-stats page.
   add a button with `onOffToggle(label, { get, flip })` or
   `panelToggle(label, cls, buildPanel)` in main.js's `cornerBar([...])`
   (?debug tools: `ui/debugToggles.js`). No pixel offsets.
+- Mobile (0.125, `shared/platform.js isMobile`): phones, tablets and
+  iPadOS get a "Mobile platforms not supported yet" card over the title
+  art and the boot stops there (no game, no stats sent); `?desktop` in the
+  URL skips the check. Remove it when the portrait-phone layout lands.
 - Shared helpers (0.115): `shared/version.js` (compareVersions — never
   compare build numbers as strings), `shared/level.js` (character level),
   `shared/prefs.js` (per-browser settings, never throws). A scene that is mid-run

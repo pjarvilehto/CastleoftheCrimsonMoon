@@ -307,6 +307,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 
 /* Boot loader (main.js) — after .panel: the loader IS a panel */
 .loader { max-width: 460px; text-align: center; }
+/* "Mobile platforms not supported yet" (0.125, main.js): the boot stops at
+   this card over the title art on phones and tablets */
+.mobile-notice { width: min(460px, calc(100vw - 32px)); box-sizing: border-box; text-align: center; }
+.mobile-notice h1 { font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; }
+.mobile-sub { color: #b8a888; margin: 14px 0 0; text-transform: none; letter-spacing: 0.04em; }
 .loader-track {
   height: 10px; margin: 18px 0 8px;
   background: #14100c; border: 1px solid var(--gold-dim); border-radius: 6px;

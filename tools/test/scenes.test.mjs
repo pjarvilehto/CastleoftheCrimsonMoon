@@ -411,3 +411,20 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const hk = readFileSync('src/core/hotkeys.js', 'utf8');
   ok('a held Space (auto-repeat) steps only once', hk.includes("if (e.repeat && e.key === ' ')"));
 }
+
+// T86: 0.125 — phones and tablets get the "not supported yet" notice
+// instead of the game; ?desktop skips the check.
+{
+  const { isMobile } = await import('../../src/shared/platform.js');
+  const iphone = { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', maxTouchPoints: 5 };
+  const android = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36' };
+  const ipad = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 5 };
+  const mac = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 0 };
+  const win = { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36', maxTouchPoints: 10 };
+  const hinted = { userAgent: 'Mozilla/5.0 (Linux) Chrome/120', userAgentData: { mobile: true } };
+  ok('phones, tablets and iPadOS count as mobile', [iphone, android, ipad, hinted].every((n) => isMobile(n, '')));
+  ok('desktops (a touch-screen Windows laptop too) do not', !isMobile(mac, '') && !isMobile(win, ''));
+  ok('?desktop skips the check', !isMobile(iphone, '?desktop'));
+  const m = readFileSync('src/main.js', 'utf8');
+  ok('boot stops at the notice on mobile', /if \(isMobile\(\)\) \{[\s\S]*Mobile platforms not supported yet[\s\S]*return;\s*\}/.test(m));
+}
