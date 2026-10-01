@@ -1,5 +1,5 @@
 {
-  "version": "0.167",
+  "version": "0.169",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,11 +82,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.169": [
+      "The mist toned down: a gentler drift and wander, smaller breathing, every room's wind eased by a third"
+    ],
     "0.168": [
       "Testing tools: one LABS button in the debug column opens a menu of the labs (Fog, VO, Particle), now all at /labs/"
-    ],
-    "0.167": [
-      "The mist toned down: a gentler drift and wander, smaller breathing, every room's wind eased by a third"
     ],
     "0.166": [
       "The mist is alive: it drifts three times faster, every puff wanders, breathes and churns on its own, and it is lit warm above and cool below — every room has its own amount and wind, the courtyards, ramparts and great halls windier than the cells and cellars"

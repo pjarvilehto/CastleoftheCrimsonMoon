@@ -220,9 +220,10 @@ fresh();
   ok('drifting puffs wrap inside the box (any session length)', long.every((q) => Math.abs(q.pos[0]) <= P.width && -q.pos[2] >= P.near && -q.pos[2] <= P.far));
   const edge = pf.puffFrame([{ ...one[0], x: P.width - 0.001 }, { ...one[0], d: P.near + 0.001 }], 0, calm, [0, 0, 0]);
   ok('puffs fade out at the box edges (wrapping never pops)', edge.length === 0);
-  const windy = { ...P, turbulence: 0.12 }, tWrap = P.width / 0.02; // a puff from x = 0 reaches the edge at tWrap
-  const around = [-0.3, -0.1, 0.1, 0.3].map((dt) => pf.puffFrame(one, tWrap + dt, windy, [0.02, 0, 0])[0]?.alpha ?? 0);
-  ok('with turbulence on, a wrap is still a fade, not a pop', around.every((v) => v < 0.25));
+  const windy = { ...P, turbulence: 0.12, turbulencePeriod: 10 }, tWrap = P.width / 0.02; // a puff from x = 0 reaches the edge at tWrap
+  const trace = Array.from({ length: 61 }, (_, i) => pf.puffFrame(one, tWrap - 0.6 + i * 0.02, windy, [0.02, 0, 0])[0]?.alpha ?? 0);
+  const jump = Math.max(...trace.map((v, i) => (i ? Math.abs(v - trace[i - 1]) : 0)));
+  ok('with turbulence on, a wrap is still a fade, not a pop (alpha continuous through it)', jump < 0.05, String(jump));
   const fr = pf.puffFrame(a, 12, P, [0.01, 0, 0.01]);
   ok('puffs draw back to front', fr.length > P.count / 2 && fr.every((q, i) => !i || q.pos[2] >= fr[i - 1].pos[2]));
   // 0.164 (the Fog Lab): the shipped values are the old slide; turbulence, pulse and flow are off until tuned
