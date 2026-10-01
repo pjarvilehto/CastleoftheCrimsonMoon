@@ -20,15 +20,15 @@ import { createMinimap } from './minimap.js';
 import { createEncounters } from './encounterLayer.js';
 import { createMist } from './mist.js';
 import { createStairs } from './stairs.js';
+import { createLights, shadowAll } from './lights.js';
+import { themeRooms } from './themes.js';
+import { createQuality } from './quality.js';
 import { el } from '../core/dom.js';
 import { seeded } from './grid.js';
 import { loadData, DATA } from '../shared/data.js';
 import { initHotkeys } from '../core/hotkeys.js';
 import { initMusic } from '../audio/music.js';
 import { initSfx } from '../audio/sfx.js';
-
-// a cheap, smooth flicker: three detuned sines
-const flicker = (t, phase, amount) => 1 - amount * 0.5 + amount * 0.5 * (Math.sin(t * 7.3 + phase) * 0.5 + Math.sin(t * 13.1 + phase * 1.7) * 0.3 + Math.sin(t * 23.7 + phase * 0.3) * 0.2);
 
 export async function startLab({ canvas, hud }) {
   await loadData();
@@ -46,15 +46,7 @@ export async function startLab({ canvas, hud }) {
   const amb = cfg.light.ambient;
   const hemi = new THREE.HemisphereLight(amb.sky, amb.ground, amb.intensity);
   scene.add(hemi);
-  const L = cfg.light;
-  const party = new THREE.PointLight(L.party.color, L.party.intensity, L.party.distance, L.party.decay);
-  party.position.set(0.35, -0.15, -0.3); // the torch in the right hand
-  camera.add(party);
-  const pool = Array.from({ length: L.pool }, () => {
-    const l = new THREE.PointLight(L.torch.color, 0, L.torch.distance, L.torch.decay);
-    scene.add(l);
-    return l;
-  });
+  const lights = createLights(scene, camera, renderer, cfg); // (0.145: lights.js — the pool, shadows, flicker)
 
   const player = createPlayer(cfg, camera, canvas);
   const paint = createPaintPass(renderer, camera, cfg);
@@ -84,21 +76,28 @@ export async function startLab({ canvas, hud }) {
     scene.background.set(T.fog); scene.fog.color.set(T.fog);
     hemi.color.set(T.sky); hemi.groundColor.set(T.ground);
     paint.setShadow(T.shadow);
-    lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.floor.rooms, shrine: lab.floor.shrine, stairs: lab.floor.stairs, tier: lab.tier });
+    lab.rooms = themeRooms(lab.floor, depth, cfg, seeded(seed * 7 + depth)); // (0.146: each room its theme)
+    lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.rooms, shrine: lab.floor.shrine, stairs: lab.floor.stairs, tier: lab.tier });
     stairs.place(lab.floor, cfg.tiers[Math.min(depth + 1, cfg.tiers.length) - 1].glow); // the next depth's colour
     lab.grid.posts = lab.level.posts;
+    lab.grid.boxes = lab.level.boxes;
     lab.mist = createMist(lab.grid, cfg, T.mist, seeded(seed * 31));
+    shadowAll(lab.level.group);
     scene.add(lab.level.group, lab.mist.group);
+    lights.reset();
     player.place(lab.grid, lab.floor.start);
     minimap.setFloor(lab.floor, lab.grid);
     encounters.setFloor(lab.floor, depth);
     try { history.replaceState(null, '', `dungeon-lab/?seed=${seed}&depth=${depth}`); } catch { /* (file://) */ }
   }
   const q = new URLSearchParams(location.search), num = (k) => (Number.isInteger(Number(q.get(k))) && Number(q.get(k)) > 0 ? Number(q.get(k)) : null);
+  const hold = q.has('hold');
   newFloor(num('seed') ?? cfg.gen.seed, num('depth') ?? 1);
 
+  let scale = 1; // the quality ladder's resolution step
+  const quality = createQuality(cfg, { lights, setScale: (k) => { scale = k; resize(); } });
   function resize() {
-    const pr = Math.min(devicePixelRatio || 1, cfg.render.maxPixelRatio);
+    const pr = Math.min(devicePixelRatio || 1, cfg.render.maxPixelRatio) * scale;
     renderer.setPixelRatio(pr);
     renderer.setSize(innerWidth, innerHeight, false);
     paint.setSize(Math.round(innerWidth * pr), Math.round(innerHeight * pr));
@@ -117,7 +116,6 @@ export async function startLab({ canvas, hud }) {
   });
 
   let frames = 0, fpsT = 0, t = 0, last = null;
-  const near = new THREE.Vector3();
   function frame(now) {
     const dt = last === null ? 0 : Math.min(0.1, (now - last) / 1000); // (a long stall is not a teleport)
     last = now;
@@ -149,36 +147,15 @@ export async function startLab({ canvas, hud }) {
     hud.minimap.classList.toggle('hidden', !walking || !mapOn);
     const c = player.cell();
     minimap.look(c.x, c.z);
-    // the pool lights go to the nearest torches; every flame flickers
-    near.copy(camera.position);
     const torches = lab.level.torches;
-    const byDist = [...torches].sort((a, b) => a.position.distanceToSquared(near) - b.position.distanceToSquared(near));
-    pool.forEach((l, i) => {
-      const tr = byDist[i];
-      if (!tr) { l.intensity = 0; return; }
-      l.position.copy(tr.position);
-      l.intensity = L.torch.intensity * tr.power * flicker(t, tr.phase, L.flicker);
-    });
-    for (const tr of torches) {
-      const f = flicker(t, tr.phase, L.flicker * 1.6);
-      for (const s of tr.flames) {
-        const [w, h] = s.userData.base;
-        s.scale.set(w * (0.9 + 0.1 * f), h * f, 1);
-        s.material.opacity = 0.75 + 0.25 * f;
-      }
-      for (const s of tr.halos) {
-        const [w, h] = s.userData.base;
-        s.scale.set(w * (0.95 + 0.05 * f), h * (0.95 + 0.05 * f), 1);
-        s.material.opacity = cfg.decor.haloOpacity * (0.75 + 0.25 * f);
-      }
-    }
-    party.intensity = L.party.intensity * flicker(t, 3.1, L.flicker);
+    paint.setHaze(lights.update(t, torches)); // the nearest lights: pool, shadows, flicker, haze
     lab.mist.update(t);
     paint.render(scene);
     frames++; fpsT += dt;
+    if (walking && !hold) quality.tick(dt); // (fights are DOM: they don't count; ?hold keeps full quality)
     if (fpsT >= 0.5) {
       const r = encounters.run, left = encounters.spots.filter((sp) => !sp.cleared).length;
-      hud.status.textContent = `${Math.round(frames / fpsT)} fps · depth ${lab.depth}: ${cfg.tiers[lab.tier].name} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;
+      hud.status.textContent = `${Math.round(frames / fpsT)} fps${quality.level() ? ` (quality -${quality.level()})` : ''} · depth ${lab.depth}: ${cfg.tiers[lab.tier].name} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;
       frames = 0; fpsT = 0;
     }
     if (walking && mapOn) minimap.draw(player, torches, cfg.cell, encounters.cleared());

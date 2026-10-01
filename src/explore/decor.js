@@ -65,8 +65,9 @@ export function buildDecor(grid, cfg, { rooms, shrine, top, inRoom, isStairs, rn
 
   for (const r of rooms) {
     const T = top(r.x, r.z);
-    // pillars, one cell in from each corner of a big room
-    if (r.w >= 4 && r.h >= 4) {
+    const theme = cfg.themes[r.theme] ?? {};
+    // pillars, one cell in from each corner of a big room (themes that want them)
+    if (theme.pillars && r.w >= 4 && r.h >= 4) {
       for (const [px, pz] of [[r.x + 1, r.z + 1], [r.x + r.w - 1, r.z + 1], [r.x + 1, r.z + r.h - 1], [r.x + r.w - 1, r.z + r.h - 1]]) {
         const wx = px * C, wz = pz * C;
         box(0.7, T, 0.7, wx, T / 2, wz);
@@ -76,7 +77,7 @@ export function buildDecor(grid, cfg, { rooms, shrine, top, inRoom, isStairs, rn
       }
     }
     // chains from the ceiling, away from the walls and the room's middle
-    for (let k = 0, n = Math.floor(between(1, D.chainsPerRoom + 1)); k < n; k++) {
+    for (let k = 0, n = Math.floor(between(0, (theme.chains ?? D.chainsPerRoom) + 1)); k < n; k++) {
       const cx = (r.x + between(0.3, r.w - 0.3)) * C, cz = (r.z + between(0.3, r.h - 0.3)) * C;
       if (Math.hypot(cx - (r.x + r.w / 2) * C, cz - (r.z + r.h / 2) * C) < 1.2) continue;
       const len = between(0.8, Math.min(2.2, T - 2.1)), step = 0.11;

@@ -33,7 +33,8 @@ export function corridorAxis(g, x, z) {
 // A circle (radius r, in cells) at (px, pz) pushed out of every wall cell it
 // overlaps — closest point on the cell's square, out along the gap — and
 // out of every post (g.posts: pillars and the like, circles {x, z, r} in
-// cells, 0.142). Two passes settle corners. Returns the corrected position.
+// cells, 0.142) and every box (g.boxes: furniture, {x0, z0, x1, z1} in
+// cells, 0.146). Two passes settle corners. Returns the corrected position.
 export function collide(g, px, pz, r) {
   let x = px, z = pz;
   for (let pass = 0; pass < 2; pass++) {
@@ -53,6 +54,16 @@ export function collide(g, px, pz, r) {
             .sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]))[0];
           x += out[0]; z += out[1];
         }
+      }
+    }
+    for (const b of g.boxes ?? []) {
+      const nx = Math.max(b.x0, Math.min(x, b.x1)), nz = Math.max(b.z0, Math.min(z, b.z1));
+      const ox = x - nx, oz = z - nz, d2 = ox * ox + oz * oz;
+      if (d2 >= r * r) continue;
+      if (d2 > 1e-12) { const d = Math.sqrt(d2), push = (r - d) / d; x += ox * push; z += oz * push; }
+      else { // centre inside: out the nearest side
+        const out = [[b.x0 - r - x, 0], [b.x1 + r - x, 0], [0, b.z0 - r - z], [0, b.z1 + r - z]].sort((a, c) => Math.abs(a[0] + a[1]) - Math.abs(c[0] + c[1]))[0];
+        x += out[0]; z += out[1];
       }
     }
     for (const p of g.posts ?? []) {

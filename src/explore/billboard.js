@@ -53,6 +53,7 @@ export function createBillboard(id, size, at, tear, glow) {
   const geo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0); // pivot at the feet
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(at.x, 0, at.z);
+  mesh.castShadow = true; // (alpha-cut: the figure, not its card, darkens the wall behind)
   mesh.visible = false; // until its art is in
   let gone = false;
   portrait(id, tear).then((t) => {

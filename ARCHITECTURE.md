@@ -119,6 +119,11 @@ src/
     decor.js  mist.js   props (arches, pillars, chains, rubble, puddles,
                         altar), ground mist
     stairs.js           the way down: its glow, the walk into the dark
+    lights.js  quality.js   the light pool + shadows + flicker; fps ladder
+    themes.js           each room's theme and its clear way through (pure)
+    furnish.js  rooms.js  corridors.js  vault.js   dressing the rooms
+                        (one function per theme) and corridors; vaults
+    propTextures.js  propMaterials.js   painted prop textures, materials
     geom.js             merging and world-size UVs
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass

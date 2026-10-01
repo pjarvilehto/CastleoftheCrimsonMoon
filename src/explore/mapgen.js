@@ -16,7 +16,7 @@ const HEADINGS = Object.values(DIRS);
 
 export function generateFloor(seed, gen) {
   const rnd = seeded(seed);
-  for (let attempt = 0; attempt < 200; attempt++) {
+  for (let attempt = 0; attempt < 600; attempt++) {
     const floor = tryFloor(rnd, gen);
     if (floor) return { seed, ...floor };
   }
@@ -58,6 +58,7 @@ function tryFloor(rnd, gen) {
   for (const r of rooms) for (let z = r.z; z < r.z + r.h; z++) for (let x = r.x; x < r.x + r.w; x++) g[z][x] = O;
 
   // corridors: each room to the next only, by an L that touches no other room
+  const trail = new Set(); // every cell a corridor runs through, rooms included (the way through them)
   for (let i = 1; i < rooms.length; i++) {
     const a = centre(rooms[i - 1]), b = centre(rooms[i]);
     const others = rooms.filter((_, j) => j !== i && j !== i - 1);
@@ -72,7 +73,7 @@ function tryFloor(rnd, gen) {
     if (rnd() < 0.5) corners.reverse();
     const c = corners.find((k) => clear(a, k) && clear(k, b));
     if (!c) return null; // the only ways there cut through another room
-    dig(g, a, c); dig(g, c, b);
+    dig(g, a, c, trail); dig(g, c, b, trail);
   }
 
   // dead ends: short spurs off a corridor into solid rock
@@ -117,15 +118,17 @@ function tryFloor(rnd, gen) {
   // face down the longest open line from the start
   const run = ([dx, dz]) => { let n = 0; while (g[start.z + dz * (n + 1)][start.x + dx * (n + 1)] !== W) n++; return n; };
   const facing = Object.keys(DIRS).reduce((a, b) => (run(DIRS[b]) > run(DIRS[a]) ? b : a));
-  return { rows: g.map((r) => r.join('')), rooms: rooms.slice(0, -1), start: { ...start, facing }, encounters, shrine, boss,
+  return { rows: g.map((r) => r.join('')), rooms: rooms.slice(0, -1), trail: [...trail], start: { ...start, facing }, encounters, shrine, boss,
     stairs: { x: stairsAt.x, z: stairsAt.z, down } };
 }
 
-// a straight line of floor from a to b (one of the axes is shared)
-function dig(g, a, b) {
+// a straight line of floor from a to b (one of the axes is shared), its
+// cells noted in the trail
+function dig(g, a, b, trail) {
   const dx = Math.sign(b.x - a.x), dz = Math.sign(b.z - a.z);
   for (let x = a.x, z = a.z; ; x += dx, z += dz) {
     if (g[z][x] === W) g[z][x] = O;
+    trail.add(`${x},${z}`);
     if (x === b.x && z === b.z) break;
   }
 }

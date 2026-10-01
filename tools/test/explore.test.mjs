@@ -7,6 +7,7 @@ import { parseMap, isOpen, corridorAxis, collide, seeded, DIRS } from '../../src
 import { generateFloor } from '../../src/explore/mapgen.js';
 import { planFloor, roomFor, leaderOf, inRect } from '../../src/explore/encounters.js';
 import { startFight } from '../../src/explore/fight.js';
+import { themeRooms } from '../../src/explore/themes.js';
 
 const exists = (f) => { try { return statSync(f).isFile(); } catch { return false; } };
 
@@ -198,7 +199,7 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
 
   const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
   const hex = (v) => /^#[0-9a-f]{6}$/i.test(v ?? '');
-  const nums = [cfg.roomHeight, ...['haloSize', 'haloOpacity', 'rubble', 'puddles', 'chainsPerRoom', 'altarLight'].map((k) => cfg.decor[k]),
+  const nums = [...['haloSize', 'haloOpacity', 'rubble', 'puddles', 'chainsPerRoom', 'altarLight'].map((k) => cfg.decor[k]),
     ...['perCell', 'size', 'height', 'opacity', 'drift'].map((k) => cfg.mist[k])];
   const tierBad = cfg.tiers.flatMap((t, i) => {
     const P = t.palette, bad = [];
@@ -208,7 +209,41 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
     return bad;
   });
   const stairNums = ['depth', 'steps', 'light', 'lightDistance', 'pulse', 'glowSize', 'glowOpacity', 'walkSecs'].map((k) => cfg.stairs[k]);
-  ok('explore.json: room height, props, mist, stairs and a palette (and stair glow) per depth tier', nums.every(Number.isFinite) && cfg.roomHeight > cfg.wallHeight
+  ok('explore.json: props, mist, stairs and a palette (and stair glow) per depth tier', nums.every(Number.isFinite)
     && stairNums.every(Number.isFinite) && cfg.stairs.depth < cfg.wallHeight + 0.5 && cfg.tiers.every((t) => hex(t.glow))
     && cfg.tiers.length >= 3 && tierBad.length === 0, tierBad.join(', '));
+}
+
+// T103: 0.145 / 0.146 — light and themed rooms: every room has a theme
+// (start, shrine and boss their own), furniture only off the way through
+// (centre row and column, and every cell a corridor runs through), and
+// every knob the lighting, the rooms and the corridors read is there
+{
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const g = parseMap(['#######', '#.....#', '#.....#', '#######']);
+  g.boxes = [{ x0: 2, z0: 1, x1: 3, z1: 2 }];
+  let x = 1.5, z = 1.5;
+  for (let i = 0; i < 40; i++) ({ x, z } = collide(g, x + 0.05, z, 0.14));
+  ok('collide: furniture (boxes) stops the body one radius off', Math.abs(x - (2 - 0.14)) < 1e-9, String(x));
+  const bad = [], seen = new Set();
+  for (let seed = 1; seed <= 40; seed++) for (let depth = 1; depth <= 3; depth++) {
+    const f = generateFloor(seed, cfg.gen), rooms = themeRooms(f, depth, cfg, seeded(seed * 7 + depth)), trail = new Set(f.trail);
+    rooms.forEach((r) => seen.add(r.theme));
+    const at = (p) => rooms.find((r) => inRect(r, p.x, p.z));
+    if (rooms[0].theme !== 'antechamber' || at(f.shrine).theme !== 'sanctum' || at(f.boss).theme !== 'throne') bad.push(`seed ${seed}/${depth}: fixed themes`);
+    for (const r of rooms) {
+      const T = cfg.themes[r.theme];
+      if (!T || r.height !== T.height || r.doors.length < 1) bad.push(`seed ${seed}/${depth}: ${r.theme} shape`);
+      if (r.free.some((c) => c.x === r.centre.x || c.z === r.centre.z || trail.has(`${c.x},${c.z}`))) bad.push(`seed ${seed}/${depth}: ${r.theme} furniture on the way`);
+      if (r.walls.some((w) => !inRect(r, w.x, w.z))) bad.push(`seed ${seed}/${depth}: wall face outside`);
+    }
+    if (!f.trail.includes(`${f.boss.x},${f.boss.z}`) || !f.encounters.every((e) => trail.has(`${e.x},${e.z}`))) bad.push(`seed ${seed}/${depth}: trail misses a room`);
+  }
+  ok('themed rooms: start / shrine / boss themed, furniture never on the way through, every room a doorway', bad.length === 0, bad.slice(0, 4).join('; '));
+  ok('themed rooms: across 40 floors every theme turns up', Object.keys(cfg.themes).every((t) => seen.has(t)), [...seen].join(','));
+  const themeBad = Object.entries(cfg.themes).filter(([, t]) => !(t.height >= cfg.wallHeight) || (t.vault && !(t.rise > 0))).map(([n]) => n);
+  const weightBad = cfg.tiers.filter((t) => !Object.keys(t.themes).length || Object.keys(t.themes).some((n) => !cfg.themes[n] || ['antechamber', 'sanctum', 'throne'].includes(n)));
+  const knobs = [...Object.values(cfg.sources), ...Object.values(cfg.corridor), ...Object.values(cfg.quality), cfg.shadows.count, cfg.shadows.mapSize, cfg.shadows.bias, cfg.shadows.everyFrames, cfg.paint.haze, cfg.paint.hazeReach];
+  ok('explore.json: themes (heights, vaults), tier theme weights, light sources, corridor chances, shadows, haze, quality ladder', themeBad.length === 0 && weightBad.length === 0
+    && knobs.every(Number.isFinite) && cfg.shadows.count <= cfg.light.pool, themeBad.join(','));
 }

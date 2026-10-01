@@ -1,5 +1,5 @@
 {
-  "version": "0.144",
+  "version": "0.145",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -23,20 +23,29 @@
     "src/core/scene.js",
     "src/explore/billboard.js",
     "src/explore/build.js",
+    "src/explore/corridors.js",
     "src/explore/decor.js",
     "src/explore/encounterLayer.js",
     "src/explore/encounters.js",
     "src/explore/fight.js",
+    "src/explore/furnish.js",
     "src/explore/geom.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
+    "src/explore/lights.js",
     "src/explore/mapgen.js",
     "src/explore/minimap.js",
     "src/explore/mist.js",
     "src/explore/player.js",
     "src/explore/post.js",
+    "src/explore/propMaterials.js",
+    "src/explore/propTextures.js",
+    "src/explore/quality.js",
+    "src/explore/rooms.js",
     "src/explore/stairs.js",
     "src/explore/textures.js",
+    "src/explore/themes.js",
+    "src/explore/vault.js",
     "src/main.js",
     "src/meta/equipment.js",
     "src/meta/history.js",
@@ -95,6 +104,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.145": [
+      "Testing tools: the Dungeon Lab's rooms each have a theme now — chapels with stained glass and light shafts, libraries, banquet halls, prisons, alchemy labs, crypts, a throne hall for the boss.",
+      "Testing tools: in the Dungeon Lab, torches and other lights cast shadows and glow in the air, and the corridors gain banners, cell doors, skull niches, bones and puddles."
+    ],
     "0.144": [
       "Testing tools: in the Dungeon Lab, stairs past the boss lead down (glowing with the next depth's colour), the shrine works, you can Return to the Great Hall between fights, and floors are more linear."
     ],
@@ -133,12 +146,6 @@
     ],
     "0.132": [
       "Fixed: blood splatters on the floor no longer flicker as they fade."
-    ],
-    "0.131": [
-      "Testing tools: a BENCHMARK button in debug mode measures how smoothly the game runs on this computer."
-    ],
-    "0.130": [
-      "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
     ]
   }
 }

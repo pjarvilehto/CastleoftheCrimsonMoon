@@ -289,6 +289,25 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   palette, fog / hemisphere / mist colours and the paint pass's shadow
   tint (`paint.setShadow`). Prop UVs come from world size (`geom.js
   worldUV`). Keep the draw calls down (~80 a frame): merge, don't add meshes.
+- Light and rooms (0.145, the DD2-style polish): `lights.js` runs the
+  knight's torch and a pool of `light.pool` point lights over every light
+  source (wall torches, candles, braziers, hearths, windows, cauldrons:
+  entries with their own colour / power / reach), the nearest
+  `shadows.count` casting shadows (cube maps redrawn only when the pool
+  moves or every `everyFrames`; `shadowAll` marks the casters); post.js
+  adds `haze` — each pool light's in-scatter along the view ray, in
+  closed form. Rooms are themed (`themes.js`, pure: antechamber start,
+  sanctum shrine, throne boss, the rest by the tier's `themes` weights;
+  `path` = centre row/column + `floor.trail`, the corridor cells — keep
+  furniture off it, the suite checks; a bend can fall inside a room) and
+  furnished (`furnish.js` kit: pieces merged per material from
+  `propMaterials.js` / `propTextures.js`, light sources, collision
+  `boxes`; `rooms.js` = one function per theme, after the assets/bg
+  paintings; `vault.js` = the chapel / throne pointed vaults, light shafts
+  are cone beams with a view-facing fade). `corridors.js` dresses the
+  corridors (`explore.json corridor` chances). `quality.js`: under
+  `quality.minFps` for a while, shadows go, then resolution; `?hold`
+  keeps full quality (screenshots on software GL).
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of

@@ -1,4 +1,8 @@
 {
+  "0.145": [
+    "Testing tools: the Dungeon Lab's rooms each have a theme now — chapels with stained glass and light shafts, libraries, banquet halls, prisons, alchemy labs, crypts, a throne hall for the boss.",
+    "Testing tools: in the Dungeon Lab, torches and other lights cast shadows and glow in the air, and the corridors gain banners, cell doors, skull niches, bones and puddles."
+  ],
   "0.144": [
     "Testing tools: in the Dungeon Lab, stairs past the boss lead down (glowing with the next depth's colour), the shrine works, you can Return to the Great Hall between fights, and floors are more linear."
   ],
