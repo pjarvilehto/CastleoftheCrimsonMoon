@@ -10,7 +10,7 @@ import { getProfile, derivedStats, itemWithForge, playerLevel } from '../../meta
 import {
   STAT_DEFS, statDesc, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-  ALCHEMY_DEFS, alchemyCost, trainAlchemy, potionHealAmount, efficiencyChance, infusionArmor,
+  ALCHEMY_DEFS, alchemyCost, trainAlchemy, potionHealAmount, efficiencyDesc, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName } from '../hud.js';
@@ -126,7 +126,7 @@ export function hubScene() {
     // ---- ALCHEMY: potions + three coin tracks. ----
     const alchemyDesc = {
       potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel ?? 50} potion healing per level (now ${potionHealAmount()} HP)`,
-      efficiency: () => `chance a potion is not consumed (now ${Math.round(efficiencyChance() * 100)}%)`,
+      efficiency: () => efficiencyDesc(), // 0.112: tapering — shows the next level's gain
       infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
     };
     const alchemySection = el('div', {},

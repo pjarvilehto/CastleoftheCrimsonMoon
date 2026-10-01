@@ -1,5 +1,5 @@
 {
-  "version": "0.111",
+  "version": "0.112",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -57,6 +57,12 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.112": [
+      "Efficiency never stops paying off: every level adds a little less (no more 40% wall)",
+      "Precision is worth training: +3% crit per level for 10 levels, then tapering — and crit chance past the max turns into crit damage",
+      "The Great Hall shows what the next Precision / Efficiency level actually adds",
+      "Fallen enemies stay faintly visible (20%)"
+    ],
     "0.111": [
       "The name field's text is centred properly (and no more specks above the letters)"
     ],
@@ -109,11 +115,6 @@
     ],
     "0.098": [
       "Faster start: the title appears without waiting for the dungeon art to load"
-    ],
-    "0.097": [
-      "Run-end screen counts cleared rooms correctly",
-      "Smoother menus on slower screens (removed a costly background blur)",
-      "Loot summary no longer lists replaced items as equipped"
     ]
   }
 }

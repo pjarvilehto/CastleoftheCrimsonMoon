@@ -455,7 +455,7 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .player-card::before { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
-.char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.1; } /* 0.109: nearly gone (was 0.5) */
+.char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.2; } /* 0.112: faint (0.109: 0.1, was 0.5) */
 
 .card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.3em; }
 /* text rows stay above the overflowing portrait art (0.075) */

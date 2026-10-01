@@ -32,8 +32,9 @@
     },
     "efficiency": {
       "base": 80,
-      "chancePerLevel": 0.08,
-      "cap": 0.4
+      "perLevel": 0.08,
+      "linear": 3,
+      "max": 0.6
     },
     "infusion": {
       "base": 100,
@@ -79,27 +80,15 @@
     "armorPerEndurance": 10,
     "baseCrit": 0.05,
     "critCap": 0.6,
+    "critOverflowDamage": 1.5,
     "dodgeCap": 0.35,
     "baseHeavyCd": 3,
     "reviveHpPct": 0.5,
-    "precisionBands": [
-      [
-        10,
-        0.01
-      ],
-      [
-        10,
-        0.005
-      ],
-      [
-        10,
-        0.002
-      ],
-      [
-        null,
-        0.001
-      ]
-    ]
+    "precisionTaper": {
+      "perLevel": 0.03,
+      "linear": 10,
+      "max": 0.5
+    }
   },
   "combat": {
     "heavyMult": 2,

@@ -4,7 +4,7 @@
 // Currency split (0.059): XP buys character disciplines only; coins buy
 // potions, alchemy tracks, and Forge item enhancements. The two never mix.
 
-import { getProfile, persist, precisionCrit } from './profile.js';
+import { getProfile, persist, precisionCrit, taper } from './profile.js';
 import { DATA } from '../shared/data.js';
 
 // ---- Disciplines (XP-only) ----
@@ -31,15 +31,31 @@ export function statDesc(stat, currentLevel) {
 }
 
 // Precision's hub line shows the ACTUAL gain of the next click: the taper
-// bands (precisionCrit in profile.js) including ★ breakthrough doubles,
-// so a breakthrough click reads "+2%". The taper is self-evident as the
-// number changes: +1%, then +0.5%, +0.2%, +0.1%.
+// (precisionCrit in profile.js) including ★ breakthrough doubles, so a
+// breakthrough click reads double. Once crit chance (with gear) is at the
+// cap, the next click shows the crit DAMAGE it adds instead (0.112).
+const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
 export function precisionDesc(currentLevel) {
   const every = DATA.difficulty.breakthroughEvery ?? 5;
   const now = currentLevel + Math.floor(currentLevel / every);
   const after = (currentLevel + 1) + Math.floor((currentLevel + 1) / every);
-  const gain = (precisionCrit(after) - precisionCrit(now)) * 100;
-  return `increase Crit Chance +${Number(gain.toFixed(1))}%`;
+  const pl = DATA.difficulty.player ?? {};
+  const gain = precisionCrit(after) - precisionCrit(now);
+  const room = Math.max(0, (pl.critCap ?? 0.6) - critBeforePrecision() - precisionCrit(now)); // chance left under the cap
+  if (gain <= room + 1e-9) return `increase Crit Chance +${pct(gain)}`;
+  const dmg = (gain - room) * (pl.critOverflowDamage ?? 1.5);
+  return room > 1e-9 ? `Crit Chance +${pct(room)} (to max), crit damage +${pct(dmg)}` : `crit chance maxed: crit damage +${pct(dmg)}`;
+}
+
+// Base crit + gear crit (what Precision adds on top of).
+function critBeforePrecision(p = getProfile()) {
+  const gear = Object.values(p.equipment ?? {}).flat().filter(Boolean);
+  return (DATA.difficulty.player?.baseCrit ?? 0.05) + gear.reduce((s, id) => s + critOf(id, p), 0);
+}
+function critOf(id, p) {
+  const it = DATA.items[id];
+  if (!it?.crit) return 0;
+  return it.crit * (1 + (DATA.difficulty.forge?.statBoostPerLevel ?? 0.2) * (p.forged?.[id] ?? 0));
 }
 
 export function statCost(currentLevel) {
@@ -143,11 +159,19 @@ export function potionHealAmount() {
     + (p.alchemy.potency ?? 0) * (trackData('potency').healPerLevel ?? 50);
 }
 
-// Chance a drunk potion is not consumed.
-export function efficiencyChance() {
-  const p = getProfile();
+// Chance a drunk potion is not consumed. 0.112: tapers (profile.taper:
+// +8% for the first 3 levels, then smaller and smaller steps toward the
+// track's max) — it used to stop dead at 40% while the price kept rising.
+export function efficiencyChance(level = getProfile().alchemy.efficiency ?? 0) {
   const t = trackData('efficiency');
-  return Math.min(t.cap ?? 0.4, (p.alchemy.efficiency ?? 0) * (t.chancePerLevel ?? 0.08));
+  return taper(level, { perLevel: t.perLevel ?? 0.08, linear: t.linear ?? 3, max: t.max ?? 0.6, rate: t.rate });
+}
+
+// Hub line: now and what the next level adds.
+export function efficiencyDesc() {
+  const lvl = getProfile().alchemy.efficiency ?? 0;
+  const now = efficiencyChance(lvl);
+  return `chance a potion is not consumed (now ${Math.round(now * 100)}%, next +${pct(efficiencyChance(lvl + 1) - now)})`;
 }
 
 // Temporary armor granted per potion (lasts until the room ends).

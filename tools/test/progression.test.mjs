@@ -124,7 +124,7 @@ fresh();
   ok('breakthrough doubles every 5th level', r === 'breakthrough' && trainedLevel(p, 'power') === 6);
   p.stats.precision = 5; p.stats.endurance = 7; p.stats.vitality = 0;
   const d = derivedStats(p);
-  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - 0.11) < 1e-9 && d.armor === 80
+  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 80
     && d.dmg === 24 && d.maxHp === 400);
 }
 
@@ -136,8 +136,8 @@ fresh();
   getProfile().coins = 10000;
   ok('three track base costs 60/80/100', alchemyCost('potency') === 60
     && alchemyCost('efficiency') === 80 && alchemyCost('infusion') === 100);
-  getProfile().alchemy.efficiency = 5; // 5 x 0.08 hits the 0.4 cap
-  ok('efficiency caps at 40%', Math.abs(efficiencyChance() - 0.4) < 1e-9);
+  getProfile().alchemy.efficiency = 3; // 3 x 0.08, then the smooth taper (0.112)
+  ok('efficiency: +8%/level to 24% at level 3, still growing after (0.112)', Math.abs(efficiencyChance() - 0.24) < 1e-9 && efficiencyChance(5) > 0.38 && efficiencyChance(20) < 0.6);
   getProfile().alchemy.infusion = 3;
   ok('infusion armor = lvl x 20', infusionArmor() === 60);
   const run = createRun();
@@ -191,13 +191,15 @@ fresh();
 // T28: 0.062 — precision taper, armor floor, title panel docked low
 {
   const { precisionCrit, derivedStats } = await import('../../src/meta/profile.js');
-  const pts = [[0, 0], [5, 0.05], [10, 0.10], [15, 0.125], [20, 0.15], [25, 0.16], [30, 0.17], [45, 0.185]];
-  ok('precision taper: +1%/.5%/.2%/.1% per 10-level band', pts.every(([l, c]) => Math.abs(precisionCrit(l) - c) < 1e-9));
+  const T = DATA.difficulty.player.precisionTaper; // 0.112: +3%/level for 10 levels, then tapering to 40%
+  const steps = Array.from({ length: 80 }, (_, l) => precisionCrit(l + 1) - precisionCrit(l));
+  ok('precision taper: +3% for the first 10, then every level adds less, never nothing', Math.abs(precisionCrit(10) - T.perLevel * 10) < 1e-9
+    && steps.every((g) => g > 0) && steps.slice(10).every((g, i, a) => !i || g < a[i - 1]) && precisionCrit(500) <= T.max + 1e-9);
 
   resetProfile();
   const p = getProfile();
-  p.stats.precision = 10; // trained 12 -> 0.10 + 0.01
-  ok('derived crit uses the taper (0.05 base + 0.11)', Math.abs(derivedStats(p).crit - 0.16) < 1e-9);
+  p.stats.precision = 10; // trained 12
+  ok('derived crit uses the taper (0.05 base + precision)', Math.abs(derivedStats(p).crit - (0.05 + precisionCrit(12))) < 1e-9);
 
   // Armor floor: a blow always lands at least 15% of its raw damage
   const run = createRun();
@@ -220,16 +222,25 @@ fresh();
 // including ★ breakthrough doubles: lvl 4→5 counts double, hence '+2%').
 {
   const { precisionDesc } = await import('../../src/meta/leveling.js');
-  const bands = [[0, '+1%'], [4, '+2%'], [9, '+1%'], [10, '+0.5%'], [19, '+0.4%'], [20, '+0.2%'], [29, '+0.2%'], [30, '+0.1%'], [45, '+0.1%']];
-  for (const [l, t] of bands) {
-    ok(`precisionDesc lv${l} shows ${t}`, precisionDesc(l) === `increase Crit Chance ${t}`);
-  }
-
+  const { precisionCrit, trainedLevel } = await import('../../src/meta/profile.js');
+  const eff = (l) => l + Math.floor(l / 5);
+  const want = (l) => `increase Crit Chance +${Number(((precisionCrit(eff(l + 1)) - precisionCrit(eff(l))) * 100).toFixed(1))}%`;
   resetProfile();
+  ok('precisionDesc shows the next click\'s actual gain (breakthroughs count double)', [0, 4, 9, 10, 19, 20, 30, 45].every((l) => precisionDesc(l) === want(l))
+    && precisionDesc(0) === 'increase Crit Chance +3%' && precisionDesc(4) === 'increase Crit Chance +6%');
   getProfile().stats.precision = 12;
   hubScene().enter(registry.app);
-  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes('Lv 12 — increase Crit Chance +0.5%'));
-  getProfile().stats.precision = 0;
+  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12 — ${want(12)}`));
+  // at the crit cap (crit gear), precision turns into crit damage instead
+  const eq = getProfile().equipment;
+  eq.trinket = 'fang_of_the_crimson_moon'; eq.weapon = 'moonbrand'; eq.rings = ['ring_of_the_blood_moon', 'ring_of_the_blood_moon'];
+  getProfile().stats.precision = 30;
+  const { derivedStats } = await import('../../src/meta/profile.js');
+  const ds = derivedStats(getProfile());
+  ok('crit past the cap becomes crit damage (0.112)', ds.crit === DATA.difficulty.player.critCap && ds.critBonus > 0
+    && Math.abs(ds.critBonus - (0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5) < 1e-9
+    && precisionDesc(30).startsWith('crit chance maxed: crit damage +'));
+  resetProfile();
 }
 
 // T40: 0.079 — save schema versioning: old unversioned saves migrate once
@@ -436,4 +447,28 @@ fresh();
   ok('small favicon', html.includes('href="icon-64.png"') && statSync('icon-64.png').size < 20000 && !html.includes('href="icon.png"'));
   const bl = await import('../../src/ui/battleLine.js');
   ok('dead code removed', bl.playerCard === undefined && !readFileSync('src/meta/equipment.js', 'utf8').includes('SINGLE_SLOTS'));
+}
+
+// T75: 0.112 — the stat review: no upgrade charges for nothing. Every
+// level of every coin/XP track adds something; the shared taper; crit
+// overflow reaches combat; the hub lines show the next level's gain.
+{
+  const { taper } = await import('../../src/meta/profile.js');
+  const lv = await import('../../src/meta/leveling.js');
+  const cfg = { perLevel: 0.08, linear: 3, max: 0.6 };
+  ok('taper: linear, then a smooth fall (first step = perLevel), toward max', Math.abs(taper(3, cfg) - 0.24) < 1e-9 && Math.abs(taper(4, cfg) - 0.32) < 1e-9
+    && taper(5, cfg) - taper(4, cfg) < 0.08 && taper(1000, cfg) <= 0.6 + 1e-9 && taper(-3, cfg) === 0
+    && Math.abs(taper(6, { perLevel: 0.08, linear: 5, max: 0.6, rate: 0.12 }) - (0.4 + 0.2 * 0.12)) < 1e-9);
+  const effSteps = Array.from({ length: 40 }, (_, l) => lv.efficiencyChance(l + 1) - lv.efficiencyChance(l));
+  ok('efficiency: every level adds (none wasted), each a little less after 4', effSteps.every((g) => g > 0) && effSteps.slice(4).every((g, i, a) => !i || g < a[i - 1])
+    && lv.efficiencyChance(20) > 0.58 && lv.efficiencyChance(20) < 0.6);
+  resetProfile();
+  getProfile().alchemy.efficiency = 20;
+  ok('efficiency hub line: now and next', /now 59%, next \+0\.\d+%/.test(lv.efficiencyDesc()), lv.efficiencyDesc());
+  const { critMultiplier } = await import('../../src/run/combat.js');
+  const src = readFileSync('src/run/combat.js', 'utf8');
+  ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: (tune.critMult ?? 1.5) + (combat.run.stats.critBonus ?? 0)')
+    && critMultiplier({ critMult: 1.8, critJitter: 0 }, false) === 1.8);
+  ok('stat study tool exists', readFileSync('tools/stat-study.mjs', 'utf8').includes('export async function statStudy'));
+  resetProfile();
 }

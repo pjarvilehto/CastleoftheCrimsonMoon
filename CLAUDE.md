@@ -207,6 +207,14 @@ static play-stats page.
   `parallax.swayDeg` / `swayHitShare` in backgrounds.json; crits, SMASH
   and multi-kills rock the near art right, hits on the knight worth
   >= swayHitShare of max HP rock it left.
+- Upgrades never charge for nothing (0.112): capped effects use
+  `profile.taper` (linear `perLevel` for `linear` levels, then each level
+  closes a share of the gap to `max`; smooth by default: the first tapered
+  step equals perLevel) — Precision (`player.precisionTaper`)
+  and Efficiency (`alchemyTracks.efficiency`); crit chance past `critCap`
+  becomes crit damage (`critOverflowDamage`). Hub lines show the next
+  level's real gain. `node tools/stat-study.mjs [--set path=json]` measures
+  what each upgrade is worth (paired seeds, like the shrine study).
 - Boss summons (0.092): `difficulty.json boss.summon` (every N turns,
   enemy, maxAlive, hp/dmg scale, depthBonus). Summons give no rewards.
   `node tools/simulate.mjs --tactic suggested|boss|summons` compares

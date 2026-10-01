@@ -60,7 +60,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < (tune.megaCritChance ?? 0));
   const mult = heavy ? (tune.heavyMult ?? 2) : 1;
   let dmg = combat.run.stats.dmg * mult;
-  if (crit) dmg = Math.round(dmg * critMultiplier(tune, megaCrit));
+  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: (tune.critMult ?? 1.5) + (combat.run.stats.critBonus ?? 0) }, megaCrit));
   dmg = Math.max(1, dmg);
 
   // --- SMASH: a heavy hit whose damage covers EVERY living enemy's

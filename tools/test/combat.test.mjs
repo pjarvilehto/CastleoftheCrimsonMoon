@@ -505,4 +505,4 @@ fresh();
 }
 
 // T72: 0.109 — dead enemy cards fade almost away (10%).
-ok('dead enemy cards at 10% opacity', /\n\.char-card\.dead \{[^}]*opacity: 0\.1;/.test(readFileSync('styles.css', 'utf8')));
+ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacity: 0\.2;/.test(readFileSync('styles.css', 'utf8')));

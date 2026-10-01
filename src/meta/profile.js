@@ -191,20 +191,27 @@ export function itemWithForge(id, p = getProfile()) {
 // Player base stats + per-level gains (difficulty.json `player`, 0.078).
 const P = () => DATA.difficulty.player ?? {};
 
-// Precision crit curve (0.062): +1% per level for 1-10, +0.5% for 11-20,
-// +0.2% for 21-30, +0.1% beyond. Diminishing returns; total crit is still
-// capped in derivedStats. Bands live in difficulty.json player.precisionBands
-// as [levels, critPerLevel] — a null width is the open-ended last band.
+// Diminishing returns (0.112): `perLevel` for each of the first `linear`
+// levels, then every further level closes a share of the remaining gap to
+// `max` — each level still adds something, a little less than the one
+// before, and the total never passes `max`. (Efficiency used to hit a hard
+// cap at level 5 and keep charging for nothing.)
+// Without a `rate`, the taper is smooth: its first step equals `perLevel`
+// and every later one shrinks by the same ratio (no cliff after `linear`).
+export function taper(level, { perLevel = 0, linear = 0, max = 0, rate } = {}) {
+  const L = Math.max(0, level);
+  const head = perLevel * Math.min(L, linear);
+  if (L <= linear) return head;
+  const gap = Math.max(0, max - perLevel * linear);
+  const r = rate ?? Math.min(1, gap > 0 ? perLevel / gap : 1);
+  return head + gap * (1 - (1 - r) ** (L - linear));
+}
+
+// Precision -> crit chance (0.062 bands; 0.112 a taper in difficulty.json
+// player.precisionTaper — the bands fell to +0.1%/level after 30 levels,
+// worth ~1/5 of Power for the same XP in tools/stat-study.mjs).
 export function precisionCrit(lvl) {
-  const bands = P().precisionBands ?? [[10, 0.01], [10, 0.005], [10, 0.002], [null, 0.001]];
-  let left = Math.max(0, lvl);
-  let total = 0;
-  for (const [width, per] of bands) {
-    const n = width == null ? left : Math.min(left, width);
-    total += per * n;
-    left -= n;
-  }
-  return total;
+  return taper(lvl, P().precisionTaper ?? { perLevel: 0.03, linear: 10, max: 0.5 });
 }
 
 export function derivedStats(p = getProfile()) {
@@ -215,6 +222,7 @@ export function derivedStats(p = getProfile()) {
   const lifesteal = gear.reduce((s, g) => s + (g.lifesteal || 0), 0);
   const pl = P();
   const crit = (pl.baseCrit ?? 0.05) + precisionCrit(trainedLevel(p, 'precision')) + gear.reduce((s, g) => s + (g.crit || 0), 0);
+  const critCap = pl.critCap ?? 0.6;
 
   // T4 relic powers
   const dodge = Math.min(pl.dodgeCap ?? 0.35, gear.reduce((s, g) => s + (g.dodge || 0), 0));
@@ -227,7 +235,10 @@ export function derivedStats(p = getProfile()) {
     maxHp: (pl.baseHp ?? 400) + trainedLevel(p, 'vitality') * (pl.hpPerVitality ?? 90) + gearHp,
     dmg: (pl.baseDmg ?? 6) + trainedLevel(p, 'power') * (pl.dmgPerPower ?? 3) + gearDmg,
     armor: trainedLevel(p, 'endurance') * (pl.armorPerEndurance ?? 10) + gearArmor,
-    crit: Math.min(pl.critCap ?? 0.6, crit),
+    crit: Math.min(critCap, crit),
+    // 0.112: crit chance past the cap isn't lost — it becomes crit damage
+    // (critOverflowDamage x the excess, added to the crit multiplier)
+    critBonus: Math.max(0, crit - critCap) * (pl.critOverflowDamage ?? 1.5),
     lifesteal,
     dodge,
     thorns,
