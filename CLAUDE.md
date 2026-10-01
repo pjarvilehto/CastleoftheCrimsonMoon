@@ -192,9 +192,11 @@ constants — `drift` (per-puff wind speed spread), `rock`, `period`,
 read); `parallax.mist` = the puffs' lighting (`shade` self-shadow
 strength, `litTint` / `shadeTint`, `sceneLight` = the painting's own
 bright pixels glow through the mist, read with a mip bias, `nearBright`);
-`parallax.haze` = the distance haze's shape. 0.166: the shipped base is
-the lab's Rolling Mist with the owner's drift 3.5 and haze 0.38 / curve
-1.55, and every painting has its own `fog` + `fogWind` override
+`parallax.haze` = the distance haze's shape. 0.166–0.169: the shipped base
+is the lab's Rolling Mist toned down to the owner's reference (drift
+spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
+0.3; drift 3.5, haze 0.38 / curve 1.55), and every painting has its own
+`fog` + `fogWind` override
 (outdoors and the large halls a notch windier; the wander goes in before
 the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
@@ -446,7 +448,7 @@ sometimes — fetch all branches to find it.
   not done here); the nine test files share one long copy-pasted import
   line; the shipped v1→v2 migration keeps its `?? N` copies (rule 3).
 
-## Backlog (as of 0.161)
+## Backlog (as of 0.170)
 
 - Voice-over: a few more takes per frequent line (OVERKILL, room cleared)
   so the wizard repeats less on long sessions · a NARRATOR volume slider if
