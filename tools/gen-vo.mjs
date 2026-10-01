@@ -203,6 +203,7 @@ async function main() {
     if (was.rendered) entry.rendered = was.rendered;
     if (j.rendered && redo[file]) { entry.approved = false; entry.rendered = stamp; } // a redo waits for the lab's verdict, stamped (the lab and the game fetch it afresh)
     else if (approved.has(file) || was.approved) entry.approved = true;
+    else if (was.approved === false) entry.approved = false; // still awaiting the lab's verdict
     (reg.lines[j.id] ??= []).push(entry);
   }
   writeFileSync(REGISTRY, JSON.stringify(reg, null, 2) + '\n');

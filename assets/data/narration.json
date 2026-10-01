@@ -304,7 +304,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "rendered": "2026-10-01T17:32:25Z"
+        "rendered": "2026-10-01T17:32:25Z",
+        "approved": false
       },
       {
         "take": 4,
@@ -451,7 +452,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "rendered": "2026-10-01T17:32:25Z"
+        "rendered": "2026-10-01T17:32:25Z",
+        "approved": false
       },
       {
         "take": 2,
@@ -627,7 +629,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "rendered": "2026-10-01T17:32:25Z"
+        "rendered": "2026-10-01T17:32:25Z",
+        "approved": false
       },
       {
         "take": 2,
@@ -1140,7 +1143,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "rendered": "2026-10-01T17:32:25Z"
+        "rendered": "2026-10-01T17:32:25Z",
+        "approved": false
       }
     ],
     "boss_slain": [
@@ -1599,7 +1603,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "rendered": "2026-10-01T17:32:25Z"
+        "rendered": "2026-10-01T17:32:25Z",
+        "approved": false
       },
       {
         "take": 3,
