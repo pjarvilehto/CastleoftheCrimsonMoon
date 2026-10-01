@@ -94,11 +94,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         view.php = item.snap.hp;
         if (item.snap.meters) view.meters = [...item.snap.meters];
       }
-      if (item.text) {
-        const log = logEl();
-        logLine(log, item.text, item.cls);
-        log.scrollTop = log.scrollHeight;
-      }
+      if (item.text) logLine(logEl(), item.text, item.cls); // (scrolls the log)
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
       onTick(); // before the effect: a summon's card must exist to animate in
       if (item.text && item.sfx) onSfx(item); // synced to the printed line, not the click

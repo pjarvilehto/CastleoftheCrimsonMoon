@@ -119,7 +119,7 @@ export class El {
   all(pred) { const out = []; this.walk((e) => { if (pred(e)) out.push(e); }); return out; }
 }
 
-export const registry = { app: new El('main'), bg0: new El('div'), bg1: new El('div'), flash: new El('div') };
+export const registry = { app: new El('main'), bg0: new El('div'), bg1: new El('div'), flash: new El('div'), body: new El('body') };
 function findById(root, id) { let hit = null; root.walk((e) => { if (!hit && e.attrs && e.attrs.id === id) hit = e; }); return hit; }
 function match(el, sel) {
   if (sel === 'button.primary:not([disabled])')
@@ -138,8 +138,10 @@ globalThis.document = {
   createTextNode: (t) => ({ text: t, textContent: t, walk() {} }),
   listeners: {},
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); },
-  querySelector: (sel) => { let hit = null; registry.app.walk((e) => { if (!hit && match(e, sel)) hit = e; }); return hit; },
-  querySelectorAll: (sel) => { const out = []; registry.app.walk((e) => { if (match(e, sel)) out.push(e); }); return out; },
+  // the scene (#app), then the dialogs on body (0.157: the death dialog is one)
+  querySelector: (sel) => { let hit = null; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (!hit && match(e, sel)) hit = e; }); return hit; },
+  querySelectorAll: (sel) => { const out = []; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (match(e, sel)) out.push(e); }); return out; },
+  body: registry.body,
 };
 globalThis.Node = El;
 globalThis.performance = { now: () => clock };
@@ -159,6 +161,7 @@ export const { loadData, DATA } = await import('../../src/shared/data.js');
 export const { show, setBackground, transitionTo } = await import('../../src/core/scene.js');
 export const { handleKey } = await import('../../src/core/hotkeys.js');
 export const { createRun } = await import('../../src/run/runState.js');
+const { closeAllDialogs } = await import('../../src/ui/dialog.js');
 export const { generateRoom } = await import('../../src/run/roomGen.js');
 export const { scaleEnemy } = await import('../../src/shared/balance.js');
 export const { createCombat, playerAttack } = await import('../../src/run/combat.js');
@@ -174,4 +177,5 @@ export function fresh() {
   resetProfile();
   getProfile().name ||= 'Tester'; // 0.109: unnamed saves get the name prompt on the title screen
   registry.app.innerHTML = '';
+  closeAllDialogs();
 }

@@ -10,6 +10,7 @@ import { hpBar, rarityClass, isLowHp } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
+import { DATA } from '../shared/data.js';
 
 const ART = (id) => `assets/chars/${id}.webp`;
 
@@ -150,7 +151,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
-    ? el('div', { class: 'summon-line', title: `Summons a skeleton every ${e.summonEvery} turns` },
+    ? el('div', { class: 'summon-line', title: `Summons a ${DATA.enemies[DATA.difficulty.boss.summon.enemy].name.toLowerCase()} every ${e.summonEvery} turns` },
       el('span', { class: 'summon-text' }, 'SUMMON'), el('div', { class: 'summon-bar' }, meterFill))
     : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
@@ -162,7 +163,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
-        isElite(e) ? el('span', { class: 'elite-star', title: 'Elite - can drop crimson relics (room 11+)' }, ' ★') : null),
+        isElite(e) ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,

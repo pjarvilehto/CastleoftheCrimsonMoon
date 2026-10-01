@@ -33,7 +33,7 @@ const NUM = {
     'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS',
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
-    'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
+    'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.ringRate', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
   ],
   backgrounds: ['parallax.swayHitShare', 'parallax.lights.radius'],
   telemetry: ['benchmarkPromptRoom'],

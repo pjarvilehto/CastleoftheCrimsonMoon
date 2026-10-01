@@ -73,6 +73,7 @@
     },
     "mega": {
       "ringDb": -10,
+      "ringRate": 0.8,
       "deepDb": -5,
       "deepRate": 0.72
     },

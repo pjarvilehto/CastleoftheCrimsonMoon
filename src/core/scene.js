@@ -1,12 +1,14 @@
 // core/scene.js — scene manager, transitions, background crossfader, and
-// the scene router (0.117). Scenes are objects with enter(el) and optional
-// leave(). 0.117: the el() DOM builder lives in core/dom.js and hotkeys +
-// dialog key traps in core/hotkeys.js.
+// the scene router (0.117). Scenes are objects with enter(el). 0.117: the
+// el() DOM builder lives in core/dom.js and hotkeys + dialog key traps in
+// core/hotkeys.js.
 //
-// Transition model:
+// Transition model (timings in styles.css, #app / .bg-layer):
 //   - Scene switches and room changes go through transitionTo(): windows
-//     fade OUT (0.3s), content/background swap, windows fade IN (0.7s).
-//   - Background changes crossfade between two stacked layers (0.3s).
+//     fade OUT (1s), content/background swap, the new painting fully in
+//     (0.154), windows fade IN (1s).
+//   - Background changes crossfade between two stacked layers (2s), or
+//     through the 3D renderer's own crossfade when it runs.
 //   - The very first background appears instantly (windows fade in over it).
 //   - Re-renders WITHIN a scene (combat updates, hub training) stay instant.
 

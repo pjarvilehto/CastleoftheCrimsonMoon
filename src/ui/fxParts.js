@@ -7,6 +7,10 @@ import { burst, materialOf } from './particles.js';
 
 export const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 export const can = (node) => !!node?.animate;
+// The portrait's CSS filter (its drop shadow), which every flash layers a
+// tint on. Read once per unit: getComputedStyle on an animating element is
+// a forced style resolution, and it happened on every blow (0.157).
+export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
 
 // Particles out of a struck (or dying) unit, by what it's made of.
 export function spray(u, dir, power = 1, big = false) {
@@ -59,7 +63,7 @@ export function barFlash(u, kind, delay = 0, ms = 450) {
 
 export function glow(u, tint, ms) {
   if (!can(u?.portrait)) return;
-  const base = getComputedStyle(u.portrait).filter;
+  const base = baseFilter(u);
   u.portrait.animate([
     { filter: base },
     { filter: `${base === 'none' ? '' : base} ${tint}`, offset: 0.3 },

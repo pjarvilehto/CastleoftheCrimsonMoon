@@ -16,24 +16,16 @@ import {
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
-import { statBox, describeItem, itemName } from '../hud.js';
+import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
 import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 
-// Great Hall potion count color (0.089): green when the satchel is full,
-// red when running low (1 or none, or a quarter of the satchel or less).
-export function potionLevel(p) {
-  if (p.potions >= p.potionCap) return 'potions-full';
-  if (p.potions <= Math.max(1, Math.floor(p.potionCap / 4))) return 'potions-low';
-  return 'potions-ok';
-}
-
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
 export function canSpendXp(p) {
-  return Object.keys(STAT_DEFS).some((k) => canAfford(k));
+  return Object.keys(STAT_DEFS).some((k) => p.xp >= statCost(p.stats[k]).xp);
 }
 
 export function canSpendCoins(p) {

@@ -39,8 +39,8 @@ export function renderTreasureRoom(root, run, room, h) {
               const got = openChest(run, room, kind, log);
               room.taken = true;
               if (!got.died) sfx(DATA.items[got.itemId]?.tier === 4 ? 'rare' : got.itemId ? 'loot' : 'ring');
-              if (got.died) { h.onDeath(); return; }
-              h.refresh();
+              h.refresh(); // the chests close (and a dead knight gets no way on) before the death dialog
+              if (got.died) h.onDeath();
             },
           }, 'Open'));
       })));

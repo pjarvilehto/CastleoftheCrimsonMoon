@@ -10,6 +10,18 @@
 import { el } from '../core/dom.js';
 import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
 
+// What effects can touch — the live units of the current battle line.
+// ui(): the scene's current { player, enemies, layer } (null between rooms).
+export const fxContext = (ui) => ({
+  unit: (who) => { const u = ui(); return !u ? null : who === 'player' ? u.player : u.enemies[who] ?? null; },
+  get layer() { return ui()?.layer ?? null; },
+});
+
+// The state BEFORE an action resolves: the replay starts from there (0.086).
+export const snapshot = (combat) => ({
+  enemies: combat.enemies.map((e) => e.hp), hp: combat.run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null),
+});
+
 export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
   const unit = (i) => createEnemyUnit(combat.enemies[i], i, {

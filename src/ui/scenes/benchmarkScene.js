@@ -21,7 +21,7 @@ import { DEBUG } from '../../shared/debug.js';
 import { DATA } from '../../shared/data.js';
 import { createPlayback } from '../combatPlayback.js';
 import { queueEvents } from '../combatQueue.js';
-import { mountBattle } from '../battleRoom.js';
+import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { combatSfx } from '../combatSfx.js';
 import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
@@ -30,7 +30,6 @@ import { recordBenchmark } from '../../meta/profile.js';
 import { showBenchmarkResult, PHASES } from '../benchmark.js';
 import { closeAllDialogs } from '../dialog.js';
 
-export { PHASES }; // the script lives in ui/benchmark.js (the prompt quotes its length)
 
 const ROOM = 3;          // enemy scaling depth: a few hits each
 const BEAT_MS = 150;     // the bot's pause after a turn finishes printing
@@ -57,10 +56,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx),
   });
-  const fxCtx = {
-    unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null),
-    get layer() { return ui?.layer ?? null; },
-  };
+  const fxCtx = fxContext(() => ui);
 
   return {
     inRun: true, // no update prompt mid-measurement
@@ -124,7 +120,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
   }
 
   function act(fn) {
-    const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp, meters: combat.enemies.map(() => null) };
+    const pre = snapshot(combat);
     queueEvents(fn(), { run, combat, playback });
     playback.begin(pre);
   }

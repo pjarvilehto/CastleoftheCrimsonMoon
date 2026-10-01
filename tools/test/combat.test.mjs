@@ -22,11 +22,12 @@ fresh();
   // fight leaks playback timers into later tests — a dying run mounts a
   // stale YOU DIED overlay mid-T6 (the long-standing T6 flake, root-caused).
   let drainGuard = 0;
-  while (!t().includes('Push Deeper') && !t().includes('YOU DIED') && drainGuard++ < 30) {
+  const shown = () => t() + document.body.textContent; // the room, plus the death dialog (on body since 0.157)
+  while (!shown().includes('Push Deeper') && !shown().includes('YOU DIED') && drainGuard++ < 30) {
     handleKey('a');
-    for (let j = 0; j < 12; j++) { await sleep(300); if (t().includes('Push Deeper') || t().includes('YOU DIED')) break; }
+    for (let j = 0; j < 12; j++) { await sleep(300); if (shown().includes('Push Deeper') || shown().includes('YOU DIED')) break; }
   }
-  ok('T4 combat fully drained (no timer leak)', t().includes('Push Deeper') || t().includes('YOU DIED'));
+  ok('T4 combat fully drained (no timer leak)', shown().includes('Push Deeper') || shown().includes('YOU DIED'));
   // If the run died, dismissing the modal is NOT enough on its own (0.072c):
   // accept → endRun → show(runEndScene) mounts through a 1000ms transitionTo
   // timer, and the dying run's playback chain can fire further late timers
@@ -34,7 +35,7 @@ fresh();
   // test wipes #app clobbers that test's scene — the residual T6 flake.
   // So: click accept, then wait until the end screen is mounted and stays
   // quiet for a full transition window, re-dismissing any late modal.
-  if (t().includes('YOU DIED')) {
+  if (shown().includes('YOU DIED')) {
     let settled = false;
     for (let i = 0; i < 30 && !settled; i++) {
       const btn = document.querySelector('.death-accept');
@@ -118,15 +119,15 @@ fresh();
 {
   const { showDeathModal } = await import('../../src/ui/deathModal.js');
   let accepted = false;
-  const overlay = showDeathModal({ roomNumber: 12 }, () => { accepted = true; });
-  const inApp = document.getElementById('app').textContent;
-  ok('death modal shows YOU DIED!', inApp.includes('YOU DIED!'));
-  ok('death modal mentions the room', inApp.includes('room 12'));
+  const dlg = showDeathModal({ roomNumber: 12 }, () => { accepted = true; });
+  const shown = () => document.body.textContent;
+  ok('death modal shows YOU DIED!', shown().includes('YOU DIED!'));
+  ok('death modal mentions the room', shown().includes('room 12'));
   const btn = document.querySelector('.death-accept');
   ok('death modal accept button labelled', btn.textContent.includes('Accept Your Fate'));
   btn.listeners.click[0]();
   ok('death modal accept fires callback', accepted);
-  ok('death modal removed after accept', !document.getElementById('app').textContent.includes('YOU DIED'));
+  ok('death modal removed after accept', !dlg.isOpen() && !shown().includes('YOU DIED'));
 }
 
 // T38: 0.078 — the run-long combat log keeps only the newest 200 lines;
@@ -154,9 +155,9 @@ fresh();
   ok('Push Deeper is active after combat', /class: 'primary active', key: 'd'/.test(d));
   const { showDeathModal } = await import('../../src/ui/deathModal.js');
   const ov = showDeathModal({ roomNumber: 3 }, () => {});
-  const acc = ov.all((n) => n.tagName === 'button')[0];
+  const acc = ov.el.all((n) => n.tagName === 'button')[0];
   ok('death button pulses active red', acc && /\bactive\b/.test(acc.className) && acc.className.includes('active-red'));
-  ov.remove();
+  ov.close();
   const { deathFlash } = await import('../../src/ui/fx.js');
   let peaked = false;
   deathFlash(() => { peaked = true; });
@@ -314,12 +315,12 @@ fresh();
   ok('aura animates only opacity/scale', auraKf.includes('opacity') && auraKf.includes('scale') && !auraKf.includes('filter') && !auraKf.includes('transform'));
   ok('potion is an event (aura, bar flare, sparkles)', readFileSync('src/ui/combatFx.js', 'utf8').includes("aura.className = 'heal-aura'")
     && css.includes('.heal-aura {') && readFileSync('src/ui/particleLooks.js', 'utf8').includes("if (material === 'heal') return heal("));
-  const { potionLevel } = await import('../../src/ui/scenes/hubScene.js');
+  const { potionLevel } = await import('../../src/ui/hud.js');
   ok('Great Hall potions: green full, red low',
     potionLevel({ potions: 4, potionCap: 4 }) === 'potions-full' && potionLevel({ potions: 1, potionCap: 4 }) === 'potions-low'
     && potionLevel({ potions: 0, potionCap: 4 }) === 'potions-low' && potionLevel({ potions: 2, potionCap: 4 }) === 'potions-ok'
     && potionLevel({ potions: 2, potionCap: 8 }) === 'potions-low' && potionLevel({ potions: 3, potionCap: 8 }) === 'potions-ok'
-    && css.includes('.hub-stats .potions-full .value { color: #6fe07a; }') && css.includes('.hub-stats .potions-low .value { color: #e05a4a; }'));
+    && css.includes('.hub-stats .potions-full .value, .run-hud .potions-full { color: #6fe07a; }') && css.includes('.hub-stats .potions-low .value, .run-hud .potions-low { color: #e05a4a; }'));
 }
 
 // T51: 0.089 — the player card shows TOTAL armor, plus the Infusion

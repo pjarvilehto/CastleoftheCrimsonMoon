@@ -395,8 +395,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .hub-stats .stat-box .label { align-self: flex-start; }
 .hub-stats .stat-box .value { align-self: flex-end; line-height: 1.1; }
 .hub-stats .stat-potions { grid-column: 2; }
-.hub-stats .potions-full .value { color: #6fe07a; }
-.hub-stats .potions-low .value { color: #e05a4a; }
+.hub-stats .potions-full .value, .run-hud .potions-full { color: #6fe07a; }
+.hub-stats .potions-low .value, .run-hud .potions-low { color: #e05a4a; }
+.run-hud .potions-ok { color: #d8c95a; }
 /* XP / Coins: green while there's something to spend them on (0.090) */
 .hub-stats .spendable .value { color: #6fe07a; text-shadow: 0 0 10px rgba(111, 224, 122, 0.45); }
 
@@ -751,7 +752,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 /* ================= 13 Dialogs ================= */
 /* YOU DIED (0.067) */
 .death-overlay {
-  position: fixed; inset: 0; z-index: 60;
+  position: fixed; inset: 0; z-index: 70; /* with the other dialogs (0.157), over the room */
   /* light dim only: the room shows through once the red has faded (0.079) */
   background: rgba(12, 0, 0, 0.35);
   display: flex; align-items: center; justify-content: center;

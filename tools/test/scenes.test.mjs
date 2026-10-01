@@ -124,7 +124,8 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   const up = await import('../../src/ui/updatePrompt.js');
   const { nextBuild } = await import('../bump.mjs');
   const { currentScene } = await import('../../src/core/scene.js');
-  ok('version compare is numeric', up.isNewer('0.100', '0.099') && up.isNewer('0.095', '0.094') && !up.isNewer('0.094', '0.094') && !up.isNewer('0.093', '0.094'));
+  const { isNewer } = await import('../../src/shared/version.js');
+  ok('version compare is numeric', isNewer('0.100', '0.099') && isNewer('0.095', '0.094') && !isNewer('0.094', '0.094') && !isNewer('0.093', '0.094'));
   const log = { '0.097': ['c1'], '0.096': ['b1', 'b2'], '0.095': ['a1'], '0.094': ['old'] };
   ok('changelist = builds since mine, newest first', JSON.stringify(up.notesSince(log, '0.094', '0.096')) === '["b1","b2","a1"]');
   const many = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`0.1${String(i).padStart(2, '0')}`, [`n${i}`]]));
@@ -402,7 +403,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('Space descends into the dungeon', t().includes('Room 1'));
   let accepted = 0;
   const ov = showDeathModal({ roomNumber: 4 }, () => { accepted++; });
-  ok('death dialog: [space] under Accept Your Fate', ov.textContent.includes('[space]'));
+  ok('death dialog: [space] under Accept Your Fate', ov.el.textContent.includes('[space]'));
   handleKey(' ');
   ok('Space accepts your fate', accepted === 1);
   const r = createRun(); r.roomNumber = 4;
