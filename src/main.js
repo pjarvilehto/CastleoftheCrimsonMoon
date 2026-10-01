@@ -17,6 +17,7 @@ import { preloadAssets, preloadRest } from './shared/preload.js';
 import './ui/scenes/index.js'; // registers the scenes with the router
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
 import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
+import { initNarrator, isNarratorMuted, toggleNarrator } from './audio/narrator.js';
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
@@ -73,6 +74,7 @@ async function boot() {
     onOffToggle('MUSIC', { cls: 'music-toggle', get: () => !isMuted(), flip: () => !toggleMuted() }),
     fullscreenToggle(),
     onOffToggle('SOUND', { cls: 'sfx-toggle', get: () => !sfxMuted(), flip: () => !toggleSfx() }),
+    onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.157)
     volumeToggle(),
     changelogToggle(),
     ...(debugMode ? debugToggles() : []),
@@ -88,6 +90,7 @@ async function boot() {
   });
   initMusic();
   initSfx();
+  initNarrator();
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
   go('title');
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)

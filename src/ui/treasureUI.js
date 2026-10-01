@@ -5,6 +5,7 @@
 
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
+import { narrate } from '../audio/narrator.js';
 import { CHESTS, openChest, reliquaryCost } from '../run/treasure.js';
 import { renderPanelRoom } from './shrineUI.js';
 import { logLine } from './hud.js';
@@ -39,7 +40,9 @@ export function renderTreasureRoom(root, run, room, h) {
               const got = openChest(run, room, kind, log);
               room.taken = true;
               if (!got.died) sfx(DATA.items[got.itemId]?.tier === 4 ? 'rare' : got.itemId ? 'loot' : 'ring');
-              if (got.died) { h.onDeath(); return; }
+              if (got.died) { h.onDeath(); return; } // the death modal narrates the reliquary's price
+              narrate(`chest_${kind}`);
+              if (DATA.items[got.itemId]?.tier === 4) narrate('relic_found'); // follows the chest line
               h.refresh();
             },
           }, 'Open'));

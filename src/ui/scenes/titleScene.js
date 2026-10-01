@@ -7,6 +7,7 @@ import { getProfile, resetProfile, exportSave, importSave } from '../../meta/pro
 import { loadProfile } from '../../meta/storage.js';
 import { play } from '../../audio/music.js';
 import { namePrompt } from '../namePrompt.js';
+import { armOnGesture } from '../../audio/narrator.js';
 
 export function titleScene() {
   let transfer = null;      // null | 'export' | 'import'
@@ -15,6 +16,7 @@ export function titleScene() {
   return {
     enter(root) {
       play('title');
+      armOnGesture('title_welcome'); // the narrator greets on the session's first click or key (0.157)
       render(root);
       // 0.109: a new player is asked their name first (analytics shows it)
       if (!getProfile().name) namePrompt(() => render(root));

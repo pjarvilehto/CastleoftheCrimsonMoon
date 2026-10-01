@@ -20,6 +20,7 @@ import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
+import { narrate } from '../../audio/narrator.js';
 
 // Great Hall potion count color (0.089): green when the satchel is full,
 // red when running low (1 or none, or a quarter of the satchel or less).
@@ -49,13 +50,15 @@ export function potionsLow(p) {
   return p.potions < p.potionCap * 0.3;
 }
 
-export function hubScene() {
+// opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.157)
+export function hubScene(opts = {}) {
   let leaving = false;
   const scene = {
     enter(root) {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
+      if (opts.fromRun) narrate('hall_return');
       // 0.133: the one-time benchmark request, once the hall has faded in;
       // 0.134: never over another dialog — it waits its turn
       // 0.136: …and never once a descent has started ("Gathering shadows…"
@@ -129,7 +132,13 @@ export function hubScene() {
           el('button', {
             disabled: !canAfford(key),
             key: def.key,
-            onclick: () => { sfx('levelup'); buyStat(key); render(root); },
+            onclick: () => {
+              sfx('levelup');
+              const lv = playerLevel(getProfile());
+              buyStat(key);
+              if (playerLevel(getProfile()) > lv) narrate('level_up'); // a character level (every 5 trained levels)
+              render(root);
+            },
           }, `Train (${statCost(lvl).xp}xp)`));
       }));
 
@@ -199,7 +208,7 @@ export function hubScene() {
                 : el('button', {
                     class: 'forge-btn',
                     disabled: p.coins < forgeCost(id),
-                    onclick: () => { sfx('forge'); forgeItem(id); render(root); },
+                    onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); render(root); },
                   }, `+${forgeCost(id)}c`))
           : el('span', { style: 'color:#4a4234' }, '— empty —'));
     };

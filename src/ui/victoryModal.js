@@ -9,10 +9,12 @@
 import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { sfx } from '../audio/sfx.js';
+import { narrate } from '../audio/narrator.js';
 import { getProfile } from '../meta/profile.js';
 
 export function showVictoryModal(run, onClose = null) {
   sfx('victory');
+  narrate('victory'); // once per save, like the dialog
   const who = getProfile().name;
   const onward = el('button', { class: 'primary active victory-accept', key: 'o', proceed: true, onclick: () => dlg.close() }, 'Onward');
   const dlg = openDialog({

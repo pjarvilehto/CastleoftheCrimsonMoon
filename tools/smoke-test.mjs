@@ -11,7 +11,7 @@
 
 import { counts } from './test/harness.mjs';
 
-const FILES = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history'];
+const FILES = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'narration', 'sim', 'history'];
 const filter = process.argv.slice(2);
 const t0 = process.hrtime.bigint();
 for (const name of FILES.filter((f) => !filter.length || filter.some((q) => f.includes(q)))) {

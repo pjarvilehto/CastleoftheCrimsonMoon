@@ -1,5 +1,15 @@
 # Narration script: the Old Wizard
 
+> **In the game since 0.157.** `node tools/gen-vo.mjs` renders this file's
+> tables (the Old Wizard voice from the ElevenLabs library, stability 0.5,
+> style 0.1, speed 0.9; the earliest takes at 0.4 / 0.2) into
+> `assets/audio/vo/` and `assets/data/narration.json`; the "How often"
+> column lives as rules in `assets/data/audio.json narration.lines`, and
+> `src/audio/narrator.js` plays them. The tool sends "!" as "." and drops
+> stage directions and a leading "…" (the voice shouted the one and
+> mumbled the other). Change a line here, delete its files, run the tool.
+> "SMASH" is the game's multi-kill line; OVERKILL is the one-blow room wipe.
+
 ## Voice direction
 
 An old wizard: a chronicler who has watched the castle swallow knights for

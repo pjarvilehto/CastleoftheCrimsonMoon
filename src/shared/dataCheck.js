@@ -33,6 +33,7 @@ const NUM = {
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
     'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
+    ...['targetDb', 'gapS', 'maxWaitS', 'roomEntryDelayMs', 'combatDelayMs'].map((k) => `narration.${k}`),
   ],
   backgrounds: ['parallax.swayHitShare'],
   telemetry: ['benchmarkPromptRoom'],
@@ -60,6 +61,19 @@ export function checkData(data) {
   }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
+  }
+  // the voice-over (0.157): every line in narration.json has a rule with a
+  // chance, every rule a line with measured takes on disk
+  const rules = data.audio?.narration?.lines ?? {};
+  const lines = data.narration?.lines ?? {};
+  for (const [id, r] of Object.entries(rules)) {
+    if (!isNum(r?.chance)) out.push(`audio.json: narration.lines.${id}.chance`);
+    if (r?.cooldownMs !== undefined && !isNum(r.cooldownMs)) out.push(`audio.json: narration.lines.${id}.cooldownMs`);
+    if (!lines[id]?.length) out.push(`narration.json: no takes for ${id} (audio.json names it)`);
+  }
+  for (const [id, takes] of Object.entries(lines)) {
+    if (!rules[id]) out.push(`audio.json: narration.lines.${id} missing (narration.json has takes)`);
+    for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb)) out.push(`narration.json: ${id} take ${t?.take} needs file + measuredDb`);
   }
   const NEEDS = { armor: ['potionCost', 'armorMin', 'armorMult'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'] };
   for (const o of data.shrines?.offers ?? []) {

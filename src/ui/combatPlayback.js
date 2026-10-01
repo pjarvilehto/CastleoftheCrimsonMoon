@@ -11,6 +11,7 @@
 //   fx    — effect descriptor handed to onFx as the line prints (ui/combatFx.js)
 //   hold  — ms to wait after this item instead of logDelayMs (animations)
 //   sfx   — sound, synced to the printed line
+//   vo    — a narrator line id (audio/narrator.js), said as the line prints (0.157)
 //
 // Hooks (injected by the scene):
 //   logEl()   — the persistent log element
@@ -19,12 +20,14 @@
 //   onFx(fx)  — play an effect (no-op until effects exist)
 //   onSfx(item) — play the line's sound (0.107: the scene places it in
 //                 stereo and times it to the blow — ui/combatSfx.js)
+//   onVo(id)  — say the line's narration (default: the narrator, undelayed)
 
 import { DATA } from '../shared/data.js';
 import { sfx } from '../audio/sfx.js';
+import { narrate } from '../audio/narrator.js';
 import { logLine } from './hud.js';
 
-export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx) }) {
+export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx), onVo = (id) => narrate(id) }) {
   let queue = [];
   let printing = false;
   let pendingSink = null; // enemy index whose card goes down on the next tick
@@ -102,6 +105,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
       onTick(); // before the effect: a summon's card must exist to animate in
       if (item.text && item.sfx) onSfx(item); // synced to the printed line, not the click
+      if (item.vo) onVo(item.vo);
       if (item.fx) onFx(item.fx);
       schedule(step, item.hold ?? delay);
     };

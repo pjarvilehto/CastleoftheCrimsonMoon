@@ -92,6 +92,8 @@ src/
     music.js  musicLoop.js   five beds, seamless exact loops
     sfx.js  synth.js  audioMath.js   clip registry (audio.json clips), voices,
                         generated sweeteners, pure helpers
+    narrator.js         the Old Wizard voice-over (0.157): rules (audio.json
+                        narration), takes (data/narration.json), one line at a time
   ui/
     scenes/             title, hub (Great Hall), dungeon, runEnd, benchmark;
                         registered in scenes/index.js, never import each other
@@ -115,10 +117,10 @@ src/
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha) + card frames (PNG)
-  audio/  fonts/
+  audio/  fonts/        (audio/vo/: the narrator's 122 takes, tools/gen-vo.mjs)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog
+                        changelog; narration (generated: the takes)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
@@ -131,6 +133,7 @@ tools/
   bump.mjs              build number + module list + changelist notes
   audio-check.mjs       clip loudness + loops measured in Chromium
   gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
+  gen-vo.mjs            the voice-over: docs/narration-script.md -> ElevenLabs -> assets/audio/vo
 ```
 
 ## Data flow
@@ -175,7 +178,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
 
-Corner toggles (MUSIC, SOUND, VOLUME, CHANGELIST, ?debug tools) are mouse-only.
+Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mouse-only.
 
 ## Editing conventions
 

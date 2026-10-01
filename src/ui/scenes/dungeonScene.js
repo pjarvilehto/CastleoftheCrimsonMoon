@@ -34,6 +34,8 @@ import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
+import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
+import { isElite } from '../../shared/balance.js';
 
 export function dungeonScene() {
   const run = createRun();
@@ -53,10 +55,12 @@ export function dungeonScene() {
     onEmpty: () => {
       tickUpChips();
       if (combat.over && !combat.victory) openDeathModal();
-      if (combat.over && combat.victory) maybeShowVictory();
+      // a boss falls: the win dialog the first time, else the narrator's word (0.157)
+      if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
+    onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.157)
   });
   // What effects can touch: the live units of the battle line.
   const fxCtx = {
@@ -68,6 +72,7 @@ export function dungeonScene() {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
     enter(root) {
       startPerf(); // the run's frame rate, for the play stats (0.130)
+      narratorRun();
       logEl = el('div', { id: 'combat-log' });
       buffBar = createBuffBar();
       // First room enters inline — show()'s own transition is already
@@ -93,9 +98,28 @@ export function dungeonScene() {
         ? `You enter the castle: ${room.name} (room ${room.number}).`
         : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
       render(root);
+      narrateRoom(room, firstRoom);
     };
     if (instant) setup();
     else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
+  }
+
+  // The narrator on a room's threshold (0.157): one line at most, the first
+  // of these that its rule lets through — the boss, the shrine, the chests;
+  // else the descent, the start of a deeper stretch (room 9: stretch_2,
+  // 17: stretch_3...), the first room past the save's best, an elite.
+  function narrateRoom(room, firstRoom) {
+    narratorRoom();
+    const rec = getProfile().records;
+    const stretch = Math.floor((room.number - 1) / DATA.difficulty.bossEvery);
+    const ids = room.kind === 'boss' ? ['boss_enter'] : room.kind === 'shrine' ? ['shrine_enter'] : room.kind === 'treasure' ? ['treasure_enter'] : [
+      firstRoom && 'descent_begin',
+      stretch > 0 && room.number % DATA.difficulty.bossEvery === 1 && `stretch_${stretch + 1}`,
+      rec.runs > 0 && room.number > rec.bestRoom && 'new_record',
+      room.enemies.some(isElite) && 'elite',
+    ].filter(Boolean);
+    const opts = { delayMs: DATA.audio.narration.roomEntryDelayMs };
+    for (const id of ids) if (narrate(id, opts)) break;
   }
 
   function render(root) {
@@ -125,6 +149,7 @@ export function dungeonScene() {
         const sip = drinkPotion(run);
         if (sip) {
           combatSfx({ sfx: 'heal', fx: { kind: 'heal', to: 'player' } }, fxCtx);
+          narrate('potion');
           logLine(logEl, `You drink a potion. (+${sip.healed} HP)${sip.free ? ' The elixir is not spent!' : ''}${sip.armor ? ` (+${sip.armor} armor until the room ends)` : ''}`, 'heal');
           playFx({ kind: 'heal', to: 'player', amount: sip.healed, potion: true }, fxCtx);
         }
@@ -248,17 +273,21 @@ export function dungeonScene() {
     if (deathShown) return;
     deathShown = true;
     sfx('death');
+    // the narrator on a death (0.157): the reliquary's or the boss's own line, then the save's first death
+    narrate(run.killedBy === 'reliquary' ? 'death_reliquary' : DATA.enemies[run.killedBy]?.boss ? 'death_boss' : 'death');
+    if (getProfile().records.deaths === 0) narrate('first_death');
     deathFlash(() => showDeathModal(run, () => endRun(currentRoot, 'death')));
   }
 
   // The final boss falls (0.121): the first time a save beats the boss of
   // finalBossRoom, a one-off "you've won" dialog celebrates it before the
-  // usual Push Deeper / Retreat choice.
+  // usual Push Deeper / Retreat choice. True when it showed.
   function maybeShowVictory() {
     const room = run.room;
-    if (!room.isBoss || room.number < DATA.difficulty.finalBossRoom || getProfile().victorySeen) return;
+    if (!room.isBoss || room.number < DATA.difficulty.finalBossRoom || getProfile().victorySeen) return false;
     markVictorySeen();
     showVictoryModal(run);
+    return true;
   }
 
   // Ghost-click guard: Safari still fires click events on buttons that

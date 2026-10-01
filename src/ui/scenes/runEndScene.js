@@ -6,6 +6,7 @@ import { DATA } from '../../shared/data.js';
 import { statBox, itemName } from '../hud.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
+import { narrate } from '../../audio/narrator.js';
 
 // Join rendered item names with plain separators: [a, ', ', b, ', ', c]
 function joinItems(list, render) {
@@ -16,7 +17,7 @@ export function runEndScene(run, outcome) {
   return {
     enter(root) {
       play('end');
-      if (outcome !== 'death') sfx('victory');
+      if (outcome !== 'death') { sfx('victory'); narrate('retreat'); }
       setBackground(DATA.backgrounds.death);
       root.append(
         el('div', { class: 'panel' },
@@ -51,7 +52,7 @@ export function runEndScene(run, outcome) {
             : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },
-            el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub') }, 'Return to the Great Hall'))
+            el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub', { fromRun: true }) }, 'Return to the Great Hall'))
         )
       );
     },

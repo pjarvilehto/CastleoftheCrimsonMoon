@@ -5,6 +5,7 @@
 
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
+import { narrate } from '../audio/narrator.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 import { hpBar, logLine, isLowHp } from './hud.js';
 import { updateBuffs } from './buffs.js';
@@ -70,6 +71,7 @@ export function shrineBody(run, room, { log, refresh }) {
           key: String(i + 1),
           onclick: () => {
             sfx('shrine');
+            narrate('shrine_take');
             acceptOffer(run, o);
             room.taken = true;
             log(`The shrine takes its price. ${o.buff} is yours.`);

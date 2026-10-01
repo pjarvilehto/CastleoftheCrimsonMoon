@@ -35,6 +35,7 @@ node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaig
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500          # per-boon shrine balance (paired runs)
 node tools/stat-study.mjs [--set path=json]  # what each upgrade is worth
+node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (ElevenLabs; needs ELEVENLABS_API_KEY)
 ```
 
 ## The rules that matter
@@ -179,6 +180,29 @@ generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
+**Voice-over** (0.157, `audio/narrator.js`): the Old Wizard, a chronicler
+who never shouts — the script is `docs/narration-script.md` (32 lines,
+four takes each), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+"Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
+sends "!" as "." and drops a leading "…", never overwrites a take — delete
+the file to re-render it, `--stability/--style/--speed` for a steadier
+one) into `assets/audio/vo/vo_<id>_<take>.mp3` and listed in
+`assets/data/narration.json` (generated: file, text, `measuredDb` = the
+loudest 50 ms). **When** a line plays is `audio.json narration.lines`
+(`chance` per event, `firstInRoom`, `oncePerRoom` / `oncePerRun` /
+`oncePerSession`, `cooldownMs`); the scenes only call `narrate('overkill')`,
+the dungeon marks rooms and runs (`narratorRoom()` / `narratorRun()`), and
+`combatQueue.js voFor()` maps combat events (OVERKILL, a multi-kill = the
+script's SMASH, mega crit, revive, summon, room cleared, low HP) to items'
+`vo`, said as the line prints (+ `combatDelayMs`). A room's threshold says
+one line at most (boss / shrine / treasure, else descent, `stretch_N`,
+new record, elite; `roomEntryDelayMs` so it lands with the painting). One
+line at a time: a second waits (`gapS`) or is dropped past `maxWaitS`;
+every take levelled to `targetDb` through the effects bus, the music
+ducking under it; no take twice in a row; NARRATOR: ON/OFF in the corner
+column. Once-per-save lines (victory, first death) are gated by their
+callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
+audio.json, a `narrate()` call — the suite checks the three agree.
 
 **UI conventions.**
 - Every dialog: `ui/dialog.js openDialog({ label, children, onKey, proceed })`
@@ -330,17 +354,24 @@ sometimes — fetch all branches to find it.
 - Ship as before: bump, suite green, push to `main` and to the session's
   working branch. No PRs unless the owner asks.
 
-## State at handover (0.156)
+## State at handover (0.157)
 
-- Live: treasure rooms (0.155), click-to-attack, 35 fight paintings + 4
-  throne rooms + 6 treasure rooms, no repeats in a run, ordered transitions.
+- Live: the Old Wizard voice-over (0.157, 122 takes), treasure rooms
+  (0.155), click-to-attack, 35 fight paintings + 4 throne rooms + 6
+  treasure rooms, no repeats in a run, ordered transitions.
+- Not yet heard in a real browser session: the narrator's level against the
+  music and hits (`audio.json narration.targetDb`, -11: just over the hits)
+  and the room-entry delay against the painting's fade — tune by ear.
 - Not yet browser-checked: a boss fight in the new throne rooms (tests cover
   the pick). Treasure rooms aren't in the play stats yet (no history field —
   a candidate: which chest, what it gave; the collector would need it too).
 - Open ideas the owner floated: a mimic chest (needs enemy art).
 
-## Backlog (as of 0.156)
+## Backlog (as of 0.157)
 
+- Voice-over: a few more takes per frequent line (OVERKILL, room cleared)
+  so the wizard repeats less on long sessions · a NARRATOR volume slider if
+  players ask · the ElevenLabs key is the owner's (quota per key).
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord) · the room-24 boss is a wall (~5% clear in the simulator) and meta
   saturates past ~60 runs — deeper tiers or NG+ (then move `finalBossRoom`)
