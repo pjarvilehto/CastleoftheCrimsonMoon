@@ -801,20 +801,34 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .music-toggle { top: 8px; }
 .fs-toggle { top: 40px; }
 .sfx-toggle { top: 72px; }
+.volume-toggle { top: 104px; }
 body.debug .music-toggle { top: 40px; }
 body.debug .fs-toggle { top: 72px; }
 body.debug .sfx-toggle { top: 104px; }
+body.debug .volume-toggle { top: 136px; }
 /* ?debug background evaluation toggles (0.083) */
-.bg-fg-toggle { top: 136px; }
-.bg-view-toggle { top: 168px; }
-.bg-next-toggle { top: 200px; }
-.bg-tune-toggle { top: 232px; }
+.bg-fg-toggle { top: 168px; }
+.bg-view-toggle { top: 200px; }
+.bg-next-toggle { top: 232px; }
+.bg-tune-toggle { top: 264px; }
 /* ?debug crit testing (0.105) */
-.crit-toggle { top: 264px; }
-.megacrit-toggle { top: 296px; }
+.crit-toggle { top: 296px; }
+.megacrit-toggle { top: 328px; }
+/* VOLUME sliders (0.107, ui/volumePanel.js): just under the VOLUME toggle */
+.volume-panel {
+  position: fixed; top: 138px; right: 12px; z-index: 51; width: 250px;
+  padding: 10px 14px; background: rgba(14, 9, 8, 0.94);
+  border: 1px solid var(--gold-dim); border-radius: 6px;
+  font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);
+}
+body.debug .volume-panel { top: 170px; }
+.volume-title { color: var(--gold); letter-spacing: 1.5px; margin-bottom: 6px; }
+.volume-row { display: grid; grid-template-columns: 62px 1fr 40px; align-items: center; gap: 8px; margin: 6px 0; }
+.volume-row input { width: 100%; accent-color: #c9a227; }
+.volume-value { text-align: right; color: var(--gold); }
 /* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
 .bg-tuner {
-  position: fixed; top: 330px; right: 12px; z-index: 50; width: 300px;
+  position: fixed; top: 362px; right: 12px; z-index: 50; width: 300px;
   padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);

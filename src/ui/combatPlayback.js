@@ -17,12 +17,14 @@
 //   onTick()  — patch the battle line from the current view
 //   onEmpty() — queue drained: victory counters, death flash, etc.
 //   onFx(fx)  — play an effect (no-op until effects exist)
+//   onSfx(item) — play the line's sound (0.107: the scene places it in
+//                 stereo and times it to the blow — ui/combatSfx.js)
 
 import { DATA } from '../shared/data.js';
 import { sfx } from '../audio/sfx.js';
 import { logLine } from './hud.js';
 
-export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
+export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx) }) {
   let queue = [];
   let printing = false;
   let pendingSink = null; // enemy index whose card goes down on the next tick
@@ -93,13 +95,13 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {} }) {
         if (item.snap.meters) view.meters = [...item.snap.meters];
       }
       if (item.text) {
-        if (item.sfx) sfx(item.sfx); // synced to the printed line, not the click
         const log = logEl();
         logLine(log, item.text, item.cls);
         log.scrollTop = log.scrollHeight;
       }
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
       onTick(); // before the effect: a summon's card must exist to animate in
+      if (item.text && item.sfx) onSfx(item); // synced to the printed line, not the click
       if (item.fx) onFx(item.fx);
       schedule(step, item.hold ?? delay);
     };

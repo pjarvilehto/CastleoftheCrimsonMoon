@@ -241,8 +241,18 @@ static play-stats page.
   internals are authored in `em` so they scale with it.
 - Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
   only compressed bytes warm and decodes the playing bed on demand.
+  Mix (0.107): every sound goes music/effects bus -> master -> limiter
+  (`audio/mixer.js`); levels, per-clip loudness trims (`measuredDb` +
+  `gainDb`), voice caps, stereo width, ducking and the music crossfade
+  live in `assets/data/audio.json`. A new clip needs a trim there (measure
+  its loudest 50ms). `sfx(name, { pan, delayMs, rate, gainDb })`; combat
+  lines go through `ui/combatSfx.js` (stereo from the card, timed to the
+  strike, crit/mega/overkill sweeteners from `audio/synth.js`). Music beds
+  are ~20s pieces with fades: `audioMath.findSections` + `musicLoop.js`
+  chain them without the dips. VOLUME sliders: `ui/volumePanel.js`;
+  audio suspends in a hidden tab.
 
-## Backlog (as of 0.102)
+## Backlog (as of 0.107)
 
 - Engineering: switch Pages to deploy through the test workflow once the
   HTTPS setup is settled (see CI above) · font as WOFF2 (212KB TTF).

@@ -56,6 +56,10 @@ const LUNGE_MS = 280;
 const STRIKE_AT = 0.45; // share of the lunge where the blow lands
 const HITSTOP_MS = 70;  // crits and heavies freeze for a beat at impact (0.088)
 
+// When an attack's blow lands, ms after its line prints — its sound is
+// scheduled for this moment (ui/combatSfx.js, 0.107).
+export const strikeMs = (fx) => (fx?.heavy ? LUNGE_MS * 1.3 : LUNGE_MS) * STRIKE_AT;
+
 // Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer }
 export function playFx(fx, ctx) {
   switch (fx.kind) {
@@ -93,7 +97,7 @@ function attack(fx, ctx) {
   const a = ctx.unit(fx.from);
   const d = ctx.unit(fx.to);
   const dur = fx.heavy ? LUNGE_MS * 1.3 : LUNGE_MS;
-  const strike = dur * STRIKE_AT;
+  const strike = strikeMs(fx);
   const stop = fx.crit || fx.heavy ? HITSTOP_MS : 0;
   if (can(a?.el) && can(d?.el) && !reduced()) {
     // Lunge a slice of the way toward the target: anticipation (pull

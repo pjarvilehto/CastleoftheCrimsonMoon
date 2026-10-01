@@ -113,6 +113,9 @@ src/
     │                     snapshot plays with its line; owns printing lock)
     ├── combatQueue.js    combat events -> playback queue items (snapshot,
     │                     fx, hold, sfx; loot routed per kill) (0.098)
+    ├── combatSfx.js      combat line -> sound: stereo from the card, timed
+    │                     to the strike, crit/mega/overkill layers (0.107)
+    ├── volumePanel.js    VOLUME corner toggle: master/music/effects (0.107)
     ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
     │                     bg jolts (heavy blows) and directional bg SWAYS
     │                     (0.092/0.093: a rocking rotation about the depth
@@ -137,11 +140,16 @@ src/
                           dungeonScene (combat = chromeless card layout,
                           shrine = panel layout), runEndScene
 ├── audio/
-│   ├── music.js          five ~61s scene-routed loop beds, 1.6s crossfade,
+│   ├── music.js          five ~61s scene-routed beds, 1.6s crossfade,
 │   │                     gesture-gated AudioContext, MUSIC toggle
+│   ├── musicLoop.js      seamless beds: section chain + crossfades (0.107)
 │   ├── audioCore.js      shared AudioContext + cached compressed bytes (0.078)
-│   └── sfx.js            13 one-shots, ±12% pitch jitter, SOUND toggle,
-│                         combat sfx attach to playback queue items
+│   ├── mixer.js          buses -> master -> limiter, volume sliders,
+│   │                     music ducking, hidden-tab pause (0.107)
+│   ├── audioMath.js      pure: music sections, voice planning, pan, curves
+│   ├── synth.js          generated sweeteners: crit ring, overkill boom
+│   └── sfx.js            13 one-shots + voice management, pan, scheduling,
+│                         loudness trims (audio.json), SOUND toggle
 
 assets/
 ├── bg/                   painted backgrounds (JPEG) + shrine art
@@ -153,7 +161,8 @@ assets/
 ├── fonts/                DINCondensedBold.ttf (user-supplied)
 └── data/                 ALL balance numbers live here as JSON:
                         enemies, items, difficulty, backgrounds
-                        (incl. roomNames), shrines, build
+                        (incl. roomNames), shrines, build, telemetry
+                        (0.102), audio (0.107: the mix)
 styles.css              all styling, grouped by screen (0.098; index at the top)
 analytics/              /analytics/ play-stats page (0.095, static):
 ├── index.html            versioned boot (like the game's)

@@ -20,6 +20,7 @@ import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../
 import { logLine, itemName } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
+import { combatSfx } from '../combatSfx.js';
 import { renderShrineRoom } from '../shrineUI.js';
 import { queueEvents } from '../combatQueue.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
@@ -51,6 +52,7 @@ export function dungeonScene() {
       if (combat.over && !combat.victory) openDeathModal();
     },
     onFx: (fx) => fx && playFx(fx, fxCtx),
+    onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
   });
   // What effects can touch: the live units of the battle line.
   const fxCtx = {
@@ -116,7 +118,7 @@ export function dungeonScene() {
         if ((combat.over && !combat.victory) || playback.isPrinting()) return;
         const sip = drinkPotion(run);
         if (sip) {
-          sfx('heal');
+          combatSfx({ sfx: 'heal', fx: { kind: 'heal', to: 'player' } }, fxCtx);
           logLine(logEl, `You drink a potion. (+${sip.healed} HP)${sip.free ? ' The elixir is not spent!' : ''}${sip.armor ? ` (+${sip.armor} armor until the room ends)` : ''}`, 'heal');
           playFx({ kind: 'heal', to: 'player', amount: sip.healed, potion: true }, fxCtx);
         }

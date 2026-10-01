@@ -1,9 +1,13 @@
 {
-  "version": "0.106",
+  "version": "0.107",
   "modules": [
     "src/audio/audioCore.js",
+    "src/audio/audioMath.js",
+    "src/audio/mixer.js",
     "src/audio/music.js",
+    "src/audio/musicLoop.js",
     "src/audio/sfx.js",
+    "src/audio/synth.js",
     "src/core/bg3d.js",
     "src/core/bg3dFog.js",
     "src/core/bg3dGL.js",
@@ -36,6 +40,7 @@
     "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
     "src/ui/combatQueue.js",
+    "src/ui/combatSfx.js",
     "src/ui/confirmPrompt.js",
     "src/ui/deathModal.js",
     "src/ui/fx.js",
@@ -47,9 +52,17 @@
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
-    "src/ui/updatePrompt.js"
+    "src/ui/updatePrompt.js",
+    "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.107": [
+      "Cleaner combat audio: fewer sounds piled on top of each other, a rebalanced mix (rare finds and loot are audible now) and a limiter as a safety net",
+      "Music no longer dips into silence every ~20 seconds",
+      "Sounds come from where they happen (the knight on the left, enemies on the right) and land with the blow",
+      "Crits ring, mega crits hit deeper, OVERKILL booms; the music dips under the big moments",
+      "New VOLUME sliders (master, music, effects) in the top-right corner"
+    ],
     "0.106": [
       "OVERKILL now gets a huge banner and a red-hot flash when one blow wipes the room",
       "Mega crits are twice as common (one crit in five)"
@@ -101,11 +114,6 @@
       "HP, armor and enemy damage numbers are 10x bigger (same difficulty)",
       "Lifesteal percentages 10x too (they heal from the damage you deal)",
       "Big hits now gently rock the background"
-    ],
-    "0.092": [
-      "Bosses summon skeletons: watch the violet bar under the boss HP",
-      "Heavy Attack strikes the summon standing in front of the boss",
-      "Button text and elite enemy names line up properly"
     ]
   }
 }
