@@ -1,4 +1,7 @@
 {
+  "0.168": [
+    "Testing tools: one LABS button in the debug column opens a menu of the labs (Fog, VO, Particle), now all at /labs/"
+  ],
   "0.167": [
     "The Old Wizard, third pass: 24 more lines approved, 5 re-recorded softer again"
   ],

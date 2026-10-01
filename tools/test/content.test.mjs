@@ -214,29 +214,42 @@ fresh();
   ok('no fallback copies of data numbers in src (the shipped migration step and run records aside)', copies.length === 0, copies.join('; '));
 }
 
-// 0.164: the Fog Lab runs the game's own renderer from fog-lab/ (a base
-// href keeps the game's asset paths), opened from the ?debug column
+// 0.168: the labs live under labs/, one folder each, behind a menu page
+// (labs/index.html) that the ?debug column's LABS button opens; every lab
+// links back to the menu, and the menu has a card for every lab folder.
 {
-  const lab = readFileSync('fog-lab/index.html', 'utf8'), js = readFileSync('fog-lab/lab.js', 'utf8');
-  ok('FOG LAB is a ?debug corner button; the page is not indexed and resolves from the site root',
-    readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('fog-lab/'") && lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../">')
-    && lab.includes('id="bg0"') && lab.includes('id="bg1"') && lab.includes('src="fog-lab/lab.js"'));
-  ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
-    js.includes("from '../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
+  const menu = readFileSync('labs/index.html', 'utf8');
+  const dirs = readdirSync('labs', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
+  const cards = [...menu.matchAll(/class="lab" href="(\w+)\/"/g)].map((m) => m[1]).sort();
+  ok('LABS is one ?debug corner button opening the menu page', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('labs/'")
+    && menu.includes('name="robots" content="noindex"') && menu.includes('href="../?debug"'));
+  ok('the labs menu has a card for every lab folder, and every lab links back to it', cards.join() === dirs.join() && dirs.length >= 3
+    && dirs.every((d) => /class="labs-link" href="(\.\.\/|labs\/)"/.test(readFileSync(`labs/${d}/index.html`, 'utf8'))), `${cards} vs ${dirs}`);
 }
 
-// T88: the Particle Lab lives at particle-lab/, opened from the ?debug
-// corner column; it loads the game's real art, not copies.
+// 0.164: the Fog Lab runs the game's own renderer from labs/fog/ (a base
+// href keeps the game's asset paths)
 {
-  const lab = readFileSync('particle-lab/index.html', 'utf8');
+  const lab = readFileSync('labs/fog/index.html', 'utf8'), js = readFileSync('labs/fog/lab.js', 'utf8');
+  ok('fog lab: not indexed, resolves from the site root',
+    lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../../">')
+    && lab.includes('id="bg0"') && lab.includes('id="bg1"') && lab.includes('src="labs/fog/lab.js"'));
+  ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
+    js.includes("from '../../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
+}
+
+// T88: the Particle Lab lives at labs/particles/; it loads the game's real
+// art, not copies.
+{
+  const lab = readFileSync('labs/particles/index.html', 'utf8');
   const idx = readFileSync('index.html', 'utf8');
-  ok('PARTICLE LAB is a ?debug corner button (no URL forward)', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('particle-lab/'") && !/particle_lab/i.test(idx));
-  const refs = [...lab.matchAll(/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(3));
+  ok('particle lab: no URL forward from the game', !/particle_lab/i.test(idx));
+  const refs = [...lab.matchAll(/\.\.\/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(6));
   ok('particle lab: every asset it loads exists', refs.length >= 6 && refs.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }), refs.join(', '));
   // the VO Lab (0.163): every take, its text, when and how often; verdicts -> tools/gen-vo.mjs --rerender
-  const vo = readFileSync('vo-lab/index.html', 'utf8'), voJs = readFileSync('vo-lab/lab.js', 'utf8');
-  ok('VO LAB is a ?debug corner button, a standalone page on the registry and the rules', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('vo-lab/'")
-    && vo.includes('src="lab.js"') && voJs.includes("['narration', 'audio'].map((f) => fetch(`../assets/data/${f}.json`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]'));
+  const vo = readFileSync('labs/vo/index.html', 'utf8'), voJs = readFileSync('labs/vo/lab.js', 'utf8');
+  ok('VO lab: a standalone page on the registry and the rules',
+    vo.includes('src="lab.js"') && voJs.includes("['narration', 'audio'].map((f) => fetch(`../../assets/data/${f}.json`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]'));
   ok('VO lab: plays a take levelled like the game, approve / disapprove, volatility and shouty nudges, re-render JSON', voJs.includes('10 ** ((N.targetDb - t.measuredDb) / 20)')
     && voJs.includes("setVerdict(k, 'ok')") && voJs.includes("setVerdict(k, 'no')") && voJs.includes("nb('Less', 'volatility', -1)") && voJs.includes("nb('More', 'shouty', 1)")
     && voJs.includes('out.rerender.push({ file: t.file, id: t.id, take: t.take, volatility:') && readFileSync('tools/gen-vo.mjs', 'utf8').includes("args.indexOf('--rerender')"));

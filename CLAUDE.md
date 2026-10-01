@@ -20,16 +20,20 @@ before structural changes. This file is the rules and the per-system notes.
 - **Play stats:** https://www.castleofthecrimsonmoon.com/analytics/
   (`analytics/`), fed by the collector Worker in `collector/`
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
-- **Particle Lab:** `particle-lab/`, opened from the `?debug` corner column —
-  a standalone page for trying particle looks (see "Effects").
-- **Fog Lab (0.164):** `fog-lab/`, from the `?debug` column — the game's real
-  3D renderer on every painting with every fog knob as a live slider,
-  presets, the flash lights on demand, and COPY JSON for a `parallax`
-  patch (see "3D backgrounds").
-- **VO Lab:** `vo-lab/`, same column (VO LAB) — every narrator take with its
-  text, when it plays and how often; Play / Approve / Disapprove (+
-  volatility and shouty nudges); RE-RENDER gives a JSON for
-  `node tools/gen-vo.mjs --rerender` (see "Audio").
+- **Labs (0.168):** https://www.castleofthecrimsonmoon.com/labs/ — the
+  menu of the testing pages, opened from the `?debug` corner column (LABS).
+  Each lab is a folder `labs/<name>/` with a card on `labs/index.html` and a
+  "‹ Labs" link back (a smoke check keeps cards, folders and links in step);
+  the old `particle-lab/`, `fog-lab/`, `vo-lab/` are forwarding stubs.
+  - **Fog Lab (0.164):** `labs/fog/` — the game's real 3D renderer on every
+    painting with every fog knob as a live slider, presets, the flash lights
+    on demand, and COPY JSON for a `parallax` patch (see "3D backgrounds").
+  - **VO Lab:** `labs/vo/` — every narrator take with its text, when it
+    plays and how often; Play / Approve / Disapprove (+ volatility and shouty
+    nudges); RE-RENDER gives a JSON for `node tools/gen-vo.mjs --rerender`
+    (see "Audio").
+  - **Particle Lab:** `labs/particles/` — trying particle looks (see
+    "Effects").
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -234,7 +238,7 @@ ducking under it; no take twice in a row; NARRATOR: ON/OFF in the corner
 column. Once-per-save lines (victory, first death) are gated by their
 callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
 audio.json, a `narrate()` call — the suite checks the three agree.
-**Reviewing takes** (0.163): the VO Lab (`vo-lab/`) plays each take as the
+**Reviewing takes** (0.163): the VO Lab (`labs/vo/`) plays each take as the
 game levels it; the owner approves or disapproves (volatility less/more =
 stability, shouty less/more = style and speed; `gen-vo.mjs NUDGE`), and
 RE-RENDER downloads `vo-rerender.json` (also to the clipboard). Then
@@ -262,7 +266,7 @@ may hear the old one for ~4 hours.
   `'active active-red'`.
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
-  (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB, FOG LAB,
+  (INVULNERABLE, background views and tuning, FORCE CRITS, LABS (the menu page),
   BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Transitions go strictly in order (0.154, the owner's call):

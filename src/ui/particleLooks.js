@@ -5,7 +5,7 @@
 //
 // What comes out depends on what the target is made of (MATERIAL, by enemy
 // id), and each material has its look (STYLE_OF, picked in the Particle
-// Lab, particle-lab/):
+// Lab, labs/particles/):
 //   blood (flesh, the knight) — Ink & Gore: few heavy dark blobs stretched
 //     along their flight, an ink slash across the target, drops that land
 //     on the card floor as splats and fade slowly.

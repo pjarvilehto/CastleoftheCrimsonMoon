@@ -131,11 +131,13 @@ analytics/              /analytics/ play-stats page (static, versioned boot):
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
-particle-lab/           standalone particle-look experiments (?debug button)
-fog-lab/                the mist on every painting, every fog knob live, on the
-                        game's own renderer (base href = the site root; ?debug button)
-vo-lab/                 review the narrator's takes: play, approve, disapprove ->
-                        vo-rerender.json for tools/gen-vo.mjs --rerender (?debug button)
+labs/                   the testing pages (?debug LABS button): index.html is the menu,
+  fog/                  the mist on every painting, every fog knob live, on the
+                        game's own renderer (base href = the site root)
+  vo/                   review the narrator's takes: play, approve, disapprove ->
+                        vo-rerender.json for tools/gen-vo.mjs --rerender
+  particles/            standalone particle-look experiments
+particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots

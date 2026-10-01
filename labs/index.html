@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Labs</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../icon-64.png">
+<!-- labs/: the menu of the testing tools, opened from the game's ?debug
+     corner column (LABS). One card per lab; every lab lives in its own
+     folder here (labs/<name>/) and links back to this page. A new lab gets
+     a card (a smoke check keeps the cards and the folders in step). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Single dark look on purpose: it is the game's own world. */
+@font-face { font-family: "DIN Condensed"; src: url("../assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+:root {
+  --bg: #0d0808; --panel: #161009; --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a;
+  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--parchment); }
+body { margin: 0; font-family: var(--body); font-size: 16px; line-height: 1.5; min-height: 100vh;
+  background: linear-gradient(180deg, rgba(13, 8, 8, 0.72), var(--bg) 70%), url("../assets/bg/castle_chapel_interior.jpg") center top / cover no-repeat fixed; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--display); letter-spacing: 0.22em; color: var(--muted); font-size: 0.95rem; text-transform: uppercase; }
+h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: clamp(2.4rem, 6vw, 3.6rem); letter-spacing: 0.08em; text-transform: uppercase; margin: 0; line-height: 1; text-wrap: balance; }
+.lede { margin: 4px 0 0; max-width: 62ch; }
+.labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.lab { display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; padding: 18px 18px 16px; border: 1px solid var(--line); border-radius: 6px; background: rgba(22, 16, 9, 0.88); color: inherit; text-decoration: none; min-width: 0; }
+.lab:hover, .lab:focus-visible { border-color: var(--gold); outline: none; }
+.lab:hover h2, .lab:focus-visible h2 { color: #fff; }
+.lab .kind { font-family: var(--display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-size: 0.85rem; }
+.lab h2 { font-family: var(--display); font-weight: 700; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; font-size: 1.7rem; margin: 0; line-height: 1; }
+.lab p { margin: 0; }
+.lab .go { font-family: var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); font-size: 0.95rem; }
+.lab kbd { font: 0.85em var(--display); letter-spacing: 0.06em; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; color: var(--gold); }
+footer { color: var(--muted); font-size: 0.92rem; }
+footer a { color: var(--gold); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Castle of the Crimson Moon &middot; testing tools</div>
+    <h1>Labs</h1>
+    <p class="lede">Workbenches for trying looks and sounds before they ship. Nothing here changes the game or your save: each lab hands its result back as a file or JSON to commit.</p>
+  </header>
+  <nav class="labs" aria-label="Labs">
+    <a class="lab" href="fog/" data-lab="fog">
+      <span class="kind">Backgrounds &middot; <kbd>1</kbd></span>
+      <h2>Fog Lab</h2>
+      <p>The mist on the painted rooms, on the game's real 3D renderer: amount, wind, the puffs' motion, shape and lighting, the distance haze. COPY JSON gives the values back.</p>
+      <span class="go">Enter &rsaquo;</span>
+    </a>
+    <a class="lab" href="vo/" data-lab="vo">
+      <span class="kind">Voice-over &middot; <kbd>2</kbd></span>
+      <h2>VO Lab</h2>
+      <p>Every take of the Old Wizard as the game plays it. Approve the keepers, flag the rest; RE-RENDER packs the verdicts for the generator.</p>
+      <span class="go">Enter &rsaquo;</span>
+    </a>
+    <a class="lab" href="particles/" data-lab="particles">
+      <span class="kind">Combat effects &middot; <kbd>3</kbd></span>
+      <h2>Particle Lab</h2>
+      <p>Hit, crit and kill bursts side by side on the same blows: the shipped looks per material and the alternatives tried along the way.</p>
+      <span class="go">Enter &rsaquo;</span>
+    </a>
+  </nav>
+  <footer><a href="../?debug">Back to the game</a> &middot; The game's in-place tools (backgrounds, forced crits, the benchmark) stay in its <code>?debug</code> corner column.</footer>
+</main>
+<script>
+// 1-9 open the lab on that card.
+const labs = [...document.querySelectorAll('.lab')];
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const n = Number(e.key);
+  if (n >= 1 && n <= labs.length) location.href = labs[n - 1].href;
+});
+</script>
+</body>
+</html>

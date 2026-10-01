@@ -1,13 +1,13 @@
-// fog-lab/lab.js — the Fog Lab (0.164): the game's own 3D background
+// labs/fog/lab.js — the Fog Lab (0.164): the game's own 3D background
 // renderer, every fog knob of backgrounds.json `parallax` as a live slider,
 // presets, the flash lights and jolts on demand, and COPY JSON to bring the
 // values back into the data. Nothing here is saved into the game's own
 // tuning (bg3d's "castle-bg-tuning"): the lab keeps its values under its
 // own key, and the game keeps playing the shipped ones.
 
-import { loadData, DATA } from '../src/shared/data.js';
-import { onBackgroundChange, setBackground } from '../src/core/scene.js';
-import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgJolt, bgSway, isBg3dActive } from '../src/core/bg3d.js';
+import { loadData, DATA } from '../../src/shared/data.js';
+import { onBackgroundChange, setBackground } from '../../src/core/scene.js';
+import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgJolt, bgSway, isBg3dActive } from '../../src/core/bg3d.js';
 
 const KEY = 'castle-fog-lab';
 const $ = (id) => document.getElementById(id);
