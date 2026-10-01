@@ -15,7 +15,7 @@
     // uncached, then load the dashboard's CSS/JS under ?v=<version> so a
     // deploy never mixes old and new files.
     (function () {
-      var mods = ['../src/shared/version.js', '../src/shared/level.js', 'stats.js', 'charts.js', 'perf.js', 'dashboard.js'];
+      var mods = ['../src/shared/version.js', '../src/shared/level.js', 'stats.js', 'charts.js', 'perf.js', 'tables.js', 'dashboard.js'];
       function boot(version) {
         var q = version ? '?v=' + encodeURIComponent(version) : '';
         var map = { imports: {} };

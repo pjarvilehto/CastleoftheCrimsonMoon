@@ -10,10 +10,11 @@ import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summa
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 import { perfTable, benchTable, sanitizeDevice } from './perf.js';
-import { levelFromStats } from '../src/shared/level.js';
+import { buildTable, playersTable, runsTable, pct, ago } from './tables.js';
 
 const STORE = 'castle-analytics-players-v1';
-const NAMES = 'castle-analytics-names-v1';   // playerId -> name (collected players)
+const TESTERS = 'castle-analytics-testers-v1'; // playerId -> tester name (0.136)
+const NAMES = 'castle-analytics-names-v1';   // pre-0.136 renames: folded into TESTERS once
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
 const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24 };
 const server = { status: 'off', records: [], at: 0, version: null, busy: false, delta: null }; // off | loading | ok | key | error
@@ -24,7 +25,21 @@ let message = '';
 const read = (k) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null'); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
 
-const names = () => read(NAMES) ?? {};
+// Tester names (0.136): who is behind a player, set here by the owner and
+// kept in this browser — "Aki" for the player who calls themselves
+// "Demon" shows as "Aki · Demon" everywhere on the page. The renames of
+// 0.102-0.135 (for players without a typed name) become tester names.
+function testers() {
+  const t = read(TESTERS) ?? {};
+  const legacy = read(NAMES);
+  if (legacy) {
+    for (const [id, n] of Object.entries(legacy)) t[id] ??= String(n).slice(0, 30);
+    write(TESTERS, t);
+    try { localStorage.removeItem(NAMES); } catch { /* blocked storage: fold again next time */ }
+  }
+  return t;
+}
+const testerKey = (pl) => pl.profile.playerId ?? pl.key;
 const country = (c) => (/^[A-Z]{2}$/.test(c ?? '') ? c : '');
 
 function loadPlayers() {
@@ -32,27 +47,29 @@ function loadPlayers() {
   const mineP = local?.records ? sanitizeProfile(local) : null;
   // this browser's own save has no device; its collected copy does (0.135)
   const ownDevice = mineP && sanitizeDevice(server.records.find((r) => r.playerId === mineP.playerId)?.device);
-  const mine = mineP ? [{ key: 'local', label: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP, device: ownDevice }] : [];
-  const nm = names();
+  const mine = mineP ? [{ key: 'local', base: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP, device: ownDevice }] : [];
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';
     return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0, device: sanitizeDevice(r.device),
-      // The name the player typed wins over a rename made here (0.122);
-      // renames only label players who never entered one.
-      label: String((profile.name ? null : nm[id]) ?? `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
+      // the name the player typed (0.109), else their id
+      base: `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`.slice(0, 40) };
   });
   // stored players are re-sanitised too: codes imported before 0.097 were kept as-is
   const stored = Array.isArray(read(STORE)) ? read(STORE) : [];
   const imported = stored.map((s) => ({
     key: String(s.key), importedAt: Number(s.importedAt) || 0, source: 'code', profile: sanitizeProfile(s.profile) }))
-    .map((pl, i) => ({ ...pl, label: (pl.profile.name || String(stored[i].label ?? 'Player')).slice(0, 40) }));
+    .map((pl, i) => ({ ...pl, base: (pl.profile.name || String(stored[i].label ?? 'Player')).slice(0, 40) }));
   const seen = new Set();
+  const t = testers();
   players = [...mine, ...collected, ...imported].filter((pl) => {
     const id = pl.profile.playerId;
     if (!id) return true;
     if (seen.has(id)) return false;
     seen.add(id);
     return true;
+  }).map((pl) => {
+    const key = testerKey(pl), tester = t[key] ?? '';
+    return { ...pl, testerKey: key, tester, label: tester ? `${tester} · ${pl.base}` : pl.base };
   });
 }
 
@@ -113,7 +130,7 @@ function serverCard() {
     ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>` : '';
   return `<section class="card add">
     <h2>Testers</h2>${stale}
-    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game — that always wins. Players who haven't entered one (saves from before 0.109 until their next visit) show an id; you can rename those in the Players table (your names stay in this browser).</p>
+    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game. To see who is who, give them a tester name in the Players table (e.g. Aki for "Demon" shows as "Aki · Demon"); tester names stay in this browser.</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
       ${data.endpoint ? `<button data-act="refresh"${server.busy ? ' disabled' : ''}>${server.busy ? 'Refreshing…' : 'Refresh'}</button>` : ''}
@@ -123,7 +140,7 @@ function serverCard() {
 
 function saveImported() {
   const ok = write(STORE, players.filter((p) => p.source === 'code')
-    .map(({ key, label, profile, importedAt }) => ({ key, label, profile, importedAt })));
+    .map(({ key, base, profile, importedAt }) => ({ key, label: base, profile, importedAt }))); // the code's own label, never the tester name
   if (!ok) message = 'Could not save the imported players in this browser (storage full or blocked).';
 }
 
@@ -135,23 +152,18 @@ function addCode(code, label) {
   const id = profile.playerId;
   if (id && players.some((p) => p.source === 'local' && p.profile.playerId === id)) return 'That is this browser’s own save — it is already shown.';
   const same = id && players.find((p) => p.source === 'code' && p.profile.playerId === id);
-  if (same) Object.assign(same, { profile, importedAt: Date.now(), label: profile.name || label || same.label });
-  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), label: profile.name || label || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
+  if (same) Object.assign(same, { profile, importedAt: Date.now(), base: profile.name || label || same.base });
+  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), base: profile.name || label || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
   saveImported();
-  return `${same ? 'Updated' : 'Added'} ${profile.name || label || same?.label || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
+  return `${same ? 'Updated' : 'Added'} ${profile.name || label || same?.base || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
 }
 
 const enemyName = (id) => data.enemies[id]?.name ?? id;
 const itemName = (id) => (id ? data.items[id]?.name ?? id : '—');
 const boonName = (id) => (data.offers[id] ? `${data.offers[id].icon} ${data.offers[id].buff}` : id);
 const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
-const pct = (x) => `${Math.round(x * 100)}%`;
-const level = levelFromStats;
-function ago(t) {
-  if (!t) return '—';
-  const m = Math.round((Date.now() - t) / 60000);
-  return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 48 * 60 ? `${Math.round(m / 60)}h ago` : new Date(t).toLocaleDateString();
-}
+// what the tables need to name things (analytics/tables.js)
+const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers };
 
 function render() {
   const runsAll = allRuns(players);
@@ -204,51 +216,8 @@ function render() {
   </div>
   ${card('Performance', perfTable(shown, runs), true)}
   ${card('Benchmarks', benchTable(shown), true)}
-  ${card('Players', playersTable(shown), true)}
-  ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs), true)}`;
-}
-
-function buildTable(rows) {
-  if (!rows.length) return '<p class="empty">No runs recorded yet.</p>';
-  return `<table><tr><th>Build</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th></tr>${rows.map((r) =>
-    `<tr><td>${esc(r.build)}</td><td>${r.runs}</td><td>${r.avgRoom.toFixed(1)}</td><td>${r.bestRoom}</td><td>${pct(r.deathRate)}</td></tr>`).join('')}</table>`;
-}
-
-function playersTable(list) {
-  if (!list.length) return '<p class="empty">No players yet — play a run in this browser, or add a tester’s save code above.</p>';
-  const rows = list.map((pl) => {
-    const p = pl.profile, h = p.history ?? [], st = p.stats ?? {}, eq = p.equipment ?? {}, rec = p.records ?? {};
-    const last = h[h.length - 1];
-    const recent = h.slice(-10);
-    return `<tr>
-      <td>${pl.source === 'local' || p.name ? `<b>${esc(pl.label)}</b>` : `<input data-label="${esc(pl.key)}" value="${esc(pl.label)}" maxlength="40">`}<small>${esc(p.playerId ?? 'pre-0.095 save')}${pl.source === 'server' ? ' · collected' : pl.source === 'code' ? ' · save code' : ''}</small></td>
-      <td>${level(st)}</td>
-      <td>${h.length}<small>of ${rec.runs ?? 0}</small></td>
-      <td>${rec.bestRoom ?? 0}</td>
-      <td>${recent.length ? (recent.reduce((a, r) => a + r.room, 0) / recent.length).toFixed(1) : '—'}</td>
-      <td>${rec.deaths ?? 0}</td>
-      <td>P${st.power ?? 0} V${st.vitality ?? 0} F${st.fortune ?? 0} Pr${st.precision ?? 0} E${st.endurance ?? 0}</td>
-      <td>${esc(itemName(eq.weapon))}<small>${esc(itemName(eq.armor))}</small></td>
-      <td>${p.coins ?? 0}c<small>${p.xp ?? 0} xp · ${p.potions ?? 0}/${p.potionCap ?? 0} potions</small></td>
-      <td>${ago(last?.at)}<small>${esc(last?.build ?? '')}</small></td>
-      <td>${pl.source === 'code' ? `<button class="small" data-act="remove" data-key="${esc(pl.key)}">Remove</button>` : ''}</td>
-    </tr>`;
-  }).join('');
-  return `<div class="scroll"><table><tr><th>Player</th><th>Lvl</th><th>Runs</th><th>Best room</th><th>Avg (last 10)</th><th>Deaths</th><th>Disciplines</th><th>Gear</th><th>Purse</th><th>Last played</th><th></th></tr>${rows}</table></div>`;
-}
-
-function runsTable(runs) {
-  if (!runs.length) return '<p class="empty">No runs recorded yet.</p>';
-  const latest = [...runs].sort((a, b) => b.at - a.at).slice(0, 60);
-  return `<div class="scroll"><table><tr><th>When</th><th>Player</th><th>Build</th><th>Result</th><th>Room</th><th>Kills</th><th>Banked</th><th>Killed by</th><th>Boons</th><th>Bosses</th><th>Potions</th><th>Time</th><th>Lvl / HP / Dmg / Armor</th></tr>${latest.map((r) => `
-    <tr class="${r.outcome}">
-      <td>${ago(r.at)}</td><td>${esc(labelOf(r.player))}</td><td>${esc(r.build)}</td>
-      <td>${r.outcome === 'death' ? 'died' : 'retreated'}</td><td>${r.room}</td><td>${r.kills}</td><td>${r.banked}</td>
-      <td>${esc(r.killedBy ? enemyName(r.killedBy) : '')}</td>
-      <td>${(r.boons ?? []).map((b) => `<span title="${esc(boonName(b))}">${esc(data.offers[b]?.icon ?? b)}</span>`).join(' ')}</td>
-      <td>${r.bosses}</td><td>${r.potions}</td><td>${fmtDuration(r.ms)}</td>
-      <td>${r.level} / ${r.maxHp} / ${r.dmg} / ${r.armor}</td>
-    </tr>`).join('')}</table></div>`;
+  ${card('Players', playersTable(shown, names), true)}
+  ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs, names), true)}`;
 }
 
 function download(name, text) {
@@ -266,6 +235,7 @@ function wire() {
     const act = btn?.dataset.act;
     if (act === 'add') {
       message = addCode(document.getElementById('add-code').value, document.getElementById('add-label').value.trim());
+      loadPlayers(); // labels (tester names) for the new player
       render();
     } else if (act === 'remove') {
       const key = btn.dataset.key;
@@ -285,18 +255,16 @@ function wire() {
   root.addEventListener('change', (e) => {
     const t = e.target;
     if (t.dataset.view) { view[t.dataset.view] = t.value; render(); }
-    if (t.dataset.label) {
-      const pl = players.find((p) => p.key === t.dataset.label);
-      if (pl) {
-        pl.label = t.value.trim() || pl.label;
-        if (pl.source === 'server') write(NAMES, { ...names(), [pl.profile.playerId]: pl.label });
-        else saveImported();
-        render();
-      }
+    if (t.dataset.tester) {
+      const all = testers(), v = t.value.trim().slice(0, 30);
+      if (v) all[t.dataset.tester] = v; else delete all[t.dataset.tester];
+      if (!write(TESTERS, all)) message = 'Could not save tester names in this browser (storage full or blocked).';
+      loadPlayers();
+      render();
     }
   });
   // The game saving in another tab of this site updates "This browser".
-  addEventListener('storage', (e) => { if (e.key === LOCAL_SAVE_KEY || e.key === STORE) { loadPlayers(); render(); } });
+  addEventListener('storage', (e) => { if ([LOCAL_SAVE_KEY, STORE, TESTERS].includes(e.key)) { loadPlayers(); render(); } });
 }
 
 async function boot() {

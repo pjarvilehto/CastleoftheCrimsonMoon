@@ -163,9 +163,10 @@ fresh();
   const ver = await (await wk.default.fetch(new Request('https://w/version'), env)).json();
   ok('GET /version names the deployed collector, matching what the dashboard expects', ver.version === wk.VERSION && DATA.telemetry.collectorVersion === wk.VERSION);
   const dash = readFileSync('analytics/dashboard.js', 'utf8');
-  ok('dashboard: collected players, deduped by player id, names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes("write(NAMES,"));
-  ok('dashboard: the typed name beats a local rename (0.122)', dash.includes('(profile.name ? null : nm[id])')
-    && dash.includes('pl.profile.name || String(stored[i].label') && dash.includes("pl.source === 'local' || p.name ?"));
+  ok('dashboard: collected players, deduped by player id, tester names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes('write(TESTERS, all)'));
+  ok('dashboard: tester names (0.136) show beside the typed name, never replace it; old renames fold in; codes keep their own label',
+    dash.includes("label: tester ? `${tester} · ${pl.base}` : pl.base") && dash.includes('base: `${profile.name ||') && dash.includes('t[id] ??= String(n)')
+    && dash.includes('({ key, label: base, profile, importedAt })') && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
   ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
