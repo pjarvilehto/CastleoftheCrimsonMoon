@@ -62,6 +62,9 @@ figcaption { display: grid; gap: 6px; min-width: 0; }
 figcaption h2 { font-family: var(--display); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--parchment); font-size: 1.45rem; margin: 0; line-height: 1.1; }
 figcaption h2 span { color: var(--muted); font-size: 1rem; letter-spacing: 0.12em; margin-left: 8px; }
 figcaption p { margin: 0; max-width: 62ch; }
+.sec { font-family: var(--display); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-size: 1.5rem; margin: 10px 0 -6px; border-top: 1px solid var(--line); padding-top: 18px; }
+.sec small { color: var(--muted); font-size: 0.95rem; letter-spacing: 0.12em; margin-left: 10px; font-weight: 700; }
+button.use { justify-self: start; margin-top: 4px; }
 dl { margin: 2px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 0.95rem; }
 dt { font-family: var(--display); letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; padding-top: 2px; }
 dd { margin: 0; min-width: 0; }
@@ -79,7 +82,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <header>
     <div class="eyebrow">Castle of the Crimson Moon &middot; combat effects</div>
     <h1>Particle Lab</h1>
-    <p class="lede">The same hits, four ways: what the game does today, and three looks recreated from reference games. Every stage fires at the same moment, so you can compare them directly. Switch the material to see how each look handles blood, bone, fire and spirit.
+    <p class="lede">Every stage fires the same hits at the same moment. Up top: today's look beside the mix picked so far, with Ink &amp; Gore for blood, Spark &amp; Streak for bone, and a yellower, fiery Spark &amp; Streak for embers. The wraith is still open, so four spirit options follow, each of which can be dropped into the mix. The three original reference looks are kept at the bottom.
       <small>These are recreations of each game's look made in our engine, on our own room art and portraits. They are not footage from those games.</small></p>
   </header>
 
@@ -99,6 +102,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     <div class="group"><span>Room</span><select id="room" aria-label="Room background"></select></div>
   </div>
 
+  <h2 class="sec">Your picks</h2>
   <div class="wall">
     <figure data-style="current">
       <div class="stage"><div class="tag">Today &middot; <b>0.126</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
@@ -109,6 +113,58 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       </figcaption>
     </figure>
 
+    <figure data-style="mix">
+      <div class="stage"><div class="tag">Mix &middot; <b id="mix-tag">wraith: today's wisps</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Chosen mix<span>per material</span></h2>
+        <p>Blood uses Ink &amp; Gore. Bone uses Spark &amp; Streak. Embers use Spark &amp; Streak on a fire ramp: yellow-white cores, amber tails, sparks that rise, and a few cinders that float up after the hit. The wraith uses whichever option below is set to "Use in mix".</p>
+        <dl><dt>Next</dt><dd>Once the wraith is settled, this mix is what gets ported into the game.</dd></dl>
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">Wraith options <small>always the wraith, whatever material is selected</small></h2>
+  <div class="wall">
+    <figure data-style="shreds" data-mat="wisps">
+      <div class="stage"><div class="tag">W1 &middot; <b>Soul shreds</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Soul Shreds<span>after Hollow Knight</span></h2>
+        <p>The hit tears pale ribbons out of the wraith. Each one curls and drifts upward with a long fading tail, like soul essence escaping.</p>
+        <dl><dt>Feel</dt><dd>Elegant and eerie; reads as "spirit" at once. Quiet on hits, a whirl of ribbons on a kill.</dd></dl>
+        <button class="use" data-use="shreds" aria-pressed="false">Use in mix</button>
+      </figcaption>
+    </figure>
+    <figure data-style="ecto" data-mat="wisps">
+      <div class="stage"><div class="tag">W2 &middot; <b>Ectoplasm</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Ectoplasm<span>after Luigi's Mansion</span></h2>
+        <p>Glowing sea-green goo: heavy, stretchy globs that sag and drip, each with a soft glow. The spirit's version of blood, so it pairs naturally with the ink style.</p>
+        <dl><dt>Feel</dt><dd>Gross and physical. The only option where the wraith clearly bleeds something.</dd></dl>
+        <button class="use" data-use="ecto" aria-pressed="false">Use in mix</button>
+      </figcaption>
+    </figure>
+    <figure data-style="void" data-mat="wisps">
+      <div class="stage"><div class="tag">W3 &middot; <b>Void smoke</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Void Smoke<span>after Hollow Knight's Shade</span></h2>
+        <p>Black-violet smoke bursts out and swirls, with a few cold white glints inside it. Dark where every other effect is bright, as if the hit opened a hole.</p>
+        <dl><dt>Feel</dt><dd>The most menacing. Needs the glints to read on the darker rooms.</dd></dl>
+        <button class="use" data-use="void" aria-pressed="false">Use in mix</button>
+      </figcaption>
+    </figure>
+    <figure data-style="coldflame" data-mat="wisps">
+      <div class="stage"><div class="tag">W4 &middot; <b>Spirit flame</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Spirit Flame<span>after Dark Souls</span></h2>
+        <p>Cold blue flame licks up from the wound: tongues that rise fast, shrink and cool from white to deep blue. A kill sets the whole figure briefly ablaze.</p>
+        <dl><dt>Feel</dt><dd>A cold mirror of the ember fire, so the two read as a family.</dd></dl>
+        <button class="use" data-use="coldflame" aria-pressed="false">Use in mix</button>
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">Reference looks <small>the first round</small></h2>
+  <div class="wall">
     <figure data-style="ink">
       <div class="stage"><div class="tag">A &middot; <b>Ink &amp; gore</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
       <figcaption>
@@ -119,6 +175,8 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       </figcaption>
     </figure>
 
+  </div>
+  <div class="wall">
     <figure data-style="spark">
       <div class="stage"><div class="tag">B &middot; <b>Spark &amp; streak</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
       <figcaption>
@@ -151,10 +209,13 @@ const PAL = {
   dust:   { dark: '62,54,42',  mid: '190,178,155', hot: '255,244,215', fall: 1 },
   embers: { dark: '110,30,0',  mid: '255,122,32', hot: '255,232,150', fall: -1 },
   wisps:  { dark: '20,60,80',  mid: '150,220,255', hot: '235,252,255', fall: -1 },
+  // the ember spark ramp: yellow-white core, amber tail (more yellow than the embers ramp)
+  fire:   { dark: '130,44,0',  mid: '255,178,40', hot: '255,247,196', fall: -1 },
 };
 const R = Math.random, rr = (a, b) => a + R() * (b - a);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let material = 'blood';
+let mixWraith = 'current'; // which wraith option the mix uses ("Use in mix")
 
 // ---------- the four styles: spawn(hit) -> particles; each particle draws itself ----------
 const STYLES = {
@@ -186,7 +247,11 @@ const STYLES = {
   },
   // B — Hades: additive speed streaks + impact ring, very short
   spark(h) {
-    const out = [], P = PAL[h.mat], u = h.u;
+    const fire = h.mat === 'embers', out = [], P = PAL[fire ? 'fire' : h.mat], u = h.u;
+    if (fire) { // cinders: a few small sparks that float up and flicker after the hit
+      const n = Math.round(8 * h.mult);
+      for (let i = 0; i < n; i++) out.push({ kind: 'dot', x: h.x + rr(-30, 30) * u, y: h.y + rr(-20, 30) * u, vx: rr(-40, 40) * u, vy: -rr(60, 160) * u, g: -40 * u, drag: 0.9, age: 0, life: rr(0.7, 1.4), size: rr(1.2, 2.4) * u, color: R() < 0.5 ? P.hot : P.mid, glow: true, wobble: R() * 6, flicker: true });
+    }
     out.push({ kind: 'ring', x: h.x, y: h.y, age: 0, life: 0.28, r0: 10 * u, r1: (h.kind === 'hit' ? 70 : 115) * u, color: P.hot });
     if (h.kind !== 'hit') out.push({ kind: 'ring', x: h.x, y: h.y, age: -0.06, life: 0.34, r0: 6 * u, r1: 165 * u, color: P.mid });
     out.push({ kind: 'flash', x: h.x, y: h.y, age: 0, life: 0.12, size: (h.kind === 'hit' ? 46 : 80) * u, color: P.hot });
@@ -194,6 +259,54 @@ const STYLES = {
     for (let i = 0; i < n; i++) {
       const a = R() * Math.PI * 2, s = rr(380, 980) * u;
       out.push({ kind: 'streak', x: h.x, y: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 600 * u * P.fall * 0.5, drag: 6, age: 0, life: rr(0.22, 0.42), size: rr(1.6, 3) * u, P });
+    }
+    return out;
+  },
+  // the picked mix: per material
+  mix(h) {
+    if (h.mat === 'blood') return STYLES.ink(h);
+    if (h.mat === 'wisps') return STYLES[mixWraith](h);
+    return STYLES.spark(h); // bone, and embers on the fire ramp
+  },
+  // W1 — soul shreds: curling ribbons with long fading tails
+  shreds(h) {
+    const out = [], u = h.u, n = Math.round(7 * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = rr(-Math.PI, 0), s = rr(90, 220) * u;
+      out.push({ kind: 'ribbon', x: h.x + rr(-16, 16) * u, y: h.y + rr(-16, 16) * u, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: -50 * u, drag: 1.1, age: 0, life: rr(1.1, 1.8), size: rr(2.2, 4.2) * u, curl: rr(2.5, 5) * (R() < 0.5 ? -1 : 1), trail: [], color: R() < 0.6 ? '200,240,255' : '150,210,255' });
+    }
+    out.push({ kind: 'flash', x: h.x, y: h.y, age: 0, life: 0.18, size: 40 * u * Math.min(h.mult, 2), color: '190,235,255' });
+    return out;
+  },
+  // W2 — ectoplasm: glowing green goo that sags and drips
+  ecto(h) {
+    const out = [], u = h.u, n = Math.round(11 * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = rr(-1.0, 0.4), s = rr(140, 340) * u;
+      out.push({ kind: 'goo', x: h.x + rr(-10, 10) * u, y: h.y + rr(-10, 10) * u, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 90 * u, g: 520 * u, drag: 1.6, age: 0, life: rr(0.9, 1.5), size: rr(3, 7) * u * (h.kind === 'kill' ? 1.2 : 1), floor: h.floor });
+    }
+    return out;
+  },
+  // W3 — void smoke: dark violet puffs that swirl out, with cold glints
+  void(h) {
+    const out = [], u = h.u, n = Math.round(7 * Math.min(h.mult, 2.2));
+    for (let i = 0; i < n; i++) {
+      const a = R() * Math.PI * 2, s = rr(50, 150) * u;
+      out.push({ kind: 'smoke', x: h.x, y: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 20 * u, g: -25 * u, drag: 1.8, age: 0, life: rr(0.9, 1.5), size: rr(26, 48) * u * (h.kind === 'kill' ? 1.35 : 1), swirl: rr(-2, 2) });
+    }
+    const g = Math.round(9 * h.mult);
+    for (let i = 0; i < g; i++) {
+      const a = R() * Math.PI * 2, s = rr(120, 300) * u;
+      out.push({ kind: 'dot', x: h.x, y: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 0, drag: 3, age: 0, life: rr(0.4, 0.9), size: rr(1, 2.2) * u, color: '225,235,255', glow: true, flicker: true });
+    }
+    return out;
+  },
+  // W4 — spirit flame: cold blue tongues rising from the wound (the whole figure on a kill)
+  coldflame(h) {
+    const out = [], u = h.u, kill = h.kind === 'kill', n = Math.round(26 * h.mult);
+    for (let i = 0; i < n; i++) {
+      const spreadX = kill ? 70 : 26, spreadY = kill ? 110 : 22;
+      out.push({ kind: 'tongue', x: h.x + rr(-spreadX, spreadX) * u, y: h.y + rr(-spreadY * 0.4, spreadY) * u, vx: rr(-25, 25) * u, vy: -rr(90, 210) * u, g: -120 * u, drag: 1.2, age: -R() * (kill ? 0.35 : 0.12), life: rr(0.5, 0.9), size: rr(8, 15) * u, wobble: R() * 6 });
     }
     return out;
   },
@@ -227,6 +340,15 @@ function step(p, dt) {
   p.x += p.vx * dt + (p.wobble ? Math.sin(p.age * 5 + p.wobble) * 0.6 : 0);
   p.y += p.vy * dt;
   if (p.rot !== undefined) p.rot += (p.spin ?? 0) * dt;
+  if (p.kind === 'ribbon') { // the ribbon curls: its heading turns steadily
+    const sp = Math.hypot(p.vx, p.vy), ang = Math.atan2(p.vy, p.vx) + p.curl * dt;
+    p.vx = Math.cos(ang) * sp; p.vy = Math.sin(ang) * sp;
+    p.trail.push(p.x, p.y); if (p.trail.length > 44) p.trail.splice(0, 2);
+  }
+  if (p.kind === 'smoke') { const c = Math.cos(p.swirl * dt), sn = Math.sin(p.swirl * dt); const vx = p.vx * c - p.vy * sn; p.vy = p.vx * sn + p.vy * c; p.vx = vx; }
+  if (p.floor && p.y > p.floor && p.kind === 'goo') { // goo lands and spreads as a glowing puddle
+    Object.assign(p, { kind: 'puddle', y: p.floor + rr(-2, 2), vx: 0, vy: 0, g: 0, age: 0, life: rr(1.2, 1.8), w: p.size * rr(2, 3) });
+  }
   if (p.floor && p.y > p.floor && p.kind === 'blob') { // lands: becomes a splat that fades slowly
     Object.assign(p, { kind: 'splat', y: p.floor + rr(-3, 3), vx: 0, vy: 0, g: 0, age: 0, life: rr(1.4, 2.2), w: p.size * rr(2.2, 3.4) });
   }
@@ -238,7 +360,7 @@ function draw(c, p) {
   switch (p.kind) {
     case 'dot':
       c.globalCompositeOperation = p.glow ? 'lighter' : 'source-over';
-      c.fillStyle = `rgba(${p.color},${(p.glow ? 0.55 : 0.9) * k})`;
+      c.fillStyle = `rgba(${p.color},${(p.glow ? 0.55 : 0.9) * k * (p.flicker ? 0.55 + 0.45 * Math.sin(p.age * 38 + (p.wobble ?? 0) * 9) : 1)})`;
       c.beginPath(); c.arc(p.x, p.y, Math.max(0.5, p.size * (p.glow ? 0.6 + k * 0.4 : 1)), 0, 7); c.fill(); break;
     case 'blob': {
       const sp = Math.hypot(p.vx, p.vy), st = Math.min(3.2, 1 + sp / 260);
@@ -296,6 +418,41 @@ function draw(c, p) {
       c.globalCompositeOperation = 'source-over';
       c.strokeStyle = `rgba(${p.color},${0.95 * k})`; c.lineWidth = p.size; c.lineCap = 'round';
       c.beginPath(); c.moveTo(p.px - (p.x - p.px) * 2.5, p.py - (p.y - p.py) * 2.5); c.lineTo(p.x, p.y); c.stroke(); break;
+    case 'ribbon': {
+      c.globalCompositeOperation = 'lighter'; c.lineCap = 'round'; c.lineJoin = 'round';
+      const t = p.trail, m = t.length / 2;
+      for (let i = 1; i < m; i++) {
+        const f = i / m;
+        c.strokeStyle = `rgba(${p.color},${0.75 * k * f})`; c.lineWidth = p.size * (0.25 + 0.75 * f);
+        c.beginPath(); c.moveTo(t[2 * i - 2], t[2 * i - 1]); c.lineTo(t[2 * i], t[2 * i + 1]); c.stroke();
+      }
+      break;
+    }
+    case 'goo': {
+      const sp = Math.hypot(p.vx, p.vy), st = Math.min(2.6, 1 + sp / 300), a = Math.min(1, k * 1.5);
+      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(p.vy, p.vx));
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = `rgba(90,255,190,${0.22 * a})`;
+      c.beginPath(); c.ellipse(0, 0, p.size * st * 2.1, p.size * 1.8, 0, 0, 7); c.fill();
+      c.globalCompositeOperation = 'source-over'; c.fillStyle = `rgba(150,255,205,${0.9 * a})`;
+      c.beginPath(); c.ellipse(0, 0, p.size * st, p.size / Math.sqrt(st), 0, 0, 7); c.fill(); c.restore(); break;
+    }
+    case 'puddle':
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = `rgba(90,255,190,${0.45 * k})`;
+      c.beginPath(); c.ellipse(p.x, p.y, p.w, p.w * 0.25, 0, 0, 7); c.fill(); break;
+    case 'smoke': {
+      const s = p.size * (0.5 + 0.9 * (p.age / p.life)), a = 0.62 * Math.sin(Math.PI * Math.min(1, p.age / p.life));
+      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, s);
+      g.addColorStop(0, `rgba(18,6,28,${a})`); g.addColorStop(0.6, `rgba(40,14,64,${a * 0.6})`); g.addColorStop(1, 'rgba(40,14,64,0)');
+      c.globalCompositeOperation = 'source-over'; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, s, 0, 7); c.fill(); break;
+    }
+    case 'tongue': {
+      const t = p.age / p.life, s = p.size * (1 - t * 0.8);
+      const col = t < 0.25 ? '235,248,255' : t < 0.6 ? '110,180,255' : '40,70,200';
+      c.globalCompositeOperation = 'lighter';
+      c.fillStyle = `rgba(${col},${0.7 * k})`;
+      c.save(); c.translate(p.x + Math.sin(p.age * 14 + p.wobble) * 2, p.y);
+      c.beginPath(); c.moveTo(0, -s * 2.2); c.quadraticCurveTo(s, -s * 0.2, 0, s * 0.6); c.quadraticCurveTo(-s, -s * 0.2, 0, -s * 2.2); c.fill(); c.restore(); break;
+    }
     case 'chunk':
       c.globalCompositeOperation = 'source-over';
       c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.fillStyle = `rgba(${p.color},${Math.min(1, k * 1.5)})`;
@@ -306,11 +463,11 @@ function draw(c, p) {
 // ---------- stages ----------
 const stages = [...document.querySelectorAll('figure')].map((fig) => {
   const canvas = fig.querySelector('canvas'), card = fig.querySelector('.card'), img = card.querySelector('img');
-  return { style: fig.dataset.style, canvas, c: canvas.getContext('2d'), card, img, parts: [] };
+  return { style: fig.dataset.style, mat: fig.dataset.mat ?? null, canvas, c: canvas.getContext('2d'), card, img, parts: [] };
 });
 function setMaterial(m) {
   material = m;
-  for (const s of stages) s.img.src = IMG[m];
+  for (const s of stages) s.img.src = IMG[s.mat ?? m];
   for (const b of document.querySelectorAll('#mat button')) b.setAttribute('aria-pressed', String(b.dataset.mat === m));
 }
 function fire(kind) {
@@ -320,7 +477,7 @@ function fire(kind) {
     const cr = s.card.getBoundingClientRect(), sr = s.canvas.getBoundingClientRect();
     const x = cr.left - sr.left + cr.width * 0.5, y = cr.top - sr.top + cr.height * 0.42;
     const mult = { hit: 1, crit: 1.8, kill: 2.4 }[kind];
-    s.parts.push(...STYLES[s.style]({ x, y, u, mat: material, kind, mult, floor: cr.bottom - sr.top - 4 }));
+    s.parts.push(...STYLES[s.style]({ x, y, u, mat: s.mat ?? material, kind, mult, floor: cr.bottom - sr.top - 4 }));
     if (s.parts.length > 700) s.parts.splice(0, s.parts.length - 700);
     s.card.classList.remove('hit'); void s.card.offsetWidth; s.card.classList.add('hit');
   }
@@ -339,6 +496,13 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 document.querySelectorAll('#mat button').forEach((b) => b.addEventListener('click', () => setMaterial(b.dataset.mat)));
+const WRAITH_NAMES = { current: "today's wisps", shreds: 'soul shreds', ecto: 'ectoplasm', void: 'void smoke', coldflame: 'spirit flame' };
+document.querySelectorAll('.use').forEach((b) => b.addEventListener('click', () => {
+  mixWraith = mixWraith === b.dataset.use ? 'current' : b.dataset.use; // click again to go back to today's wisps
+  document.querySelectorAll('.use').forEach((x) => { const on = x.dataset.use === mixWraith; x.setAttribute('aria-pressed', String(on)); x.textContent = on ? 'In the mix' : 'Use in mix'; });
+  document.getElementById('mix-tag').textContent = `wraith: ${WRAITH_NAMES[mixWraith]}`;
+  setMaterial('wisps'); fire('hit');
+}));
 document.querySelectorAll('.fire').forEach((b) => b.addEventListener('click', () => fire(b.dataset.kind)));
 let auto = !reduced, beat = 0;
 const autoBtn = document.getElementById('auto');

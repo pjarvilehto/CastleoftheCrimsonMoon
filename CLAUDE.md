@@ -43,7 +43,10 @@ progression (training, alchemy, forge) in the hub between runs.
   (a standalone page using `../assets`). Today's look
   (a copy of `ui/particles.js`) beside three reference styles: Ink & Gore
   (Darkest Dungeon), Spark & Streak (Hades), Visceral Mist (Diablo IV).
-  Whatever look wins gets ported into `ui/particles.js`.
+  Picked so far (the lab's "Chosen mix"): blood = Ink & Gore, bone =
+  Spark & Streak, embers = Spark & Streak on a yellower fire ramp; the
+  wraith is still open (options W1-W4: soul shreds, ectoplasm, void
+  smoke, spirit flame). The final mix gets ported into `ui/particles.js`.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
   Read it before making structural changes.
 
