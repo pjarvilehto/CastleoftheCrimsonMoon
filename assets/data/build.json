@@ -1,5 +1,5 @@
 {
-  "version": "0.166",
+  "version": "0.167",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.167": [
+      "The Old Wizard, third pass: 24 more lines approved, 5 re-recorded softer again"
+    ],
     "0.166": [
       "The mist is alive: it drifts three times faster, every puff wanders, breathes and churns on its own, and it is lit warm above and cool below — every room has its own amount and wind, the courtyards, ramparts and great halls windier than the cells and cellars"
     ],
@@ -133,9 +136,6 @@
     "0.153": [
       "26 new rooms to fight in — the Bell Tower, the Drowned Cistern, the Dragon's Hoard, the Frozen Tribute and many more, each with its own depth and mist",
       "Descending no longer waits for every room's painting to load"
-    ],
-    "0.152": [
-      "Removed the 3D dungeon experiments (the Dungeon Lab and the 3D corridors test mode) — the game is back to its painted rooms"
     ]
   }
 }

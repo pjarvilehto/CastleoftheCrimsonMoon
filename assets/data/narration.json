@@ -199,8 +199,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "hall_return": [
@@ -216,8 +216,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -231,8 +231,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 3,
@@ -296,16 +296,15 @@
         "take": 3,
         "file": "assets/audio/vo/vo_descent_begin_3.mp3",
         "text": "Only forward now.",
-        "measuredDb": -6.4,
+        "measuredDb": -6.9,
         "settings": {
-          "stability": 0.6,
+          "stability": 0.8,
           "similarity_boost": 0.75,
-          "style": 0.1,
-          "speed": 0.85,
+          "style": 0,
+          "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:32:25Z"
       },
       {
         "take": 4,
@@ -421,8 +420,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -444,16 +443,15 @@
         "take": 1,
         "file": "assets/audio/vo/vo_stretch_3_1.mp3",
         "text": "Few knights have walked this far…",
-        "measuredDb": -8.5,
+        "measuredDb": -6.2,
         "settings": {
-          "stability": 0.6,
+          "stability": 0.8,
           "similarity_boost": 0.75,
-          "style": 0.1,
-          "speed": 0.85,
+          "style": 0,
+          "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:32:25Z"
       },
       {
         "take": 2,
@@ -481,8 +479,8 @@
           "speed": 0.9,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -540,8 +538,8 @@
           "speed": 0.9,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -621,16 +619,15 @@
         "take": 1,
         "file": "assets/audio/vo/vo_smash_1.mp3",
         "text": "Smash.",
-        "measuredDb": -6.7,
+        "measuredDb": -8.6,
         "settings": {
-          "stability": 0.5,
+          "stability": 0.7,
           "similarity_boost": 0.75,
           "style": 0,
-          "speed": 0.85,
+          "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:32:25Z"
       },
       {
         "take": 2,
@@ -688,8 +685,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -717,8 +714,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -820,8 +817,8 @@
           "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 3,
@@ -965,8 +962,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "elite": [
@@ -982,8 +979,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -1041,8 +1038,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -1100,8 +1097,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -1135,16 +1132,15 @@
         "take": 4,
         "file": "assets/audio/vo/vo_boss_summon_4.mp3",
         "text": "They answer his call…",
-        "measuredDb": -9.8,
+        "measuredDb": -9.5,
         "settings": {
-          "stability": 0.9,
+          "stability": 1,
           "similarity_boost": 0.75,
           "style": 0,
-          "speed": 0.85,
+          "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:32:25Z"
       }
     ],
     "boss_slain": [
@@ -1188,8 +1184,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -1263,8 +1259,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 4,
@@ -1278,8 +1274,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "shrine_take": [
@@ -1309,8 +1305,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 3,
@@ -1354,8 +1350,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -1397,8 +1393,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "chest_coffer": [
@@ -1572,8 +1568,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "relic_found": [
@@ -1595,16 +1591,15 @@
         "take": 2,
         "file": "assets/audio/vo/vo_relic_found_2.mp3",
         "text": "Hold it close…",
-        "measuredDb": -8.8,
+        "measuredDb": -9.5,
         "settings": {
-          "stability": 0.5,
+          "stability": 0.7,
           "similarity_boost": 0.75,
           "style": 0,
-          "speed": 0.85,
+          "speed": 0.8,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:32:25Z"
       },
       {
         "take": 3,
@@ -1690,8 +1685,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "death_reliquary": [
@@ -1779,8 +1774,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 3,
@@ -1824,8 +1819,8 @@
           "speed": 0.85,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       },
       {
         "take": 2,
@@ -1867,8 +1862,8 @@
           "speed": 0.9,
           "use_speaker_boost": true
         },
-        "approved": false,
-        "rendered": "2026-10-01T17:21:19Z"
+        "rendered": "2026-10-01T17:21:19Z",
+        "approved": true
       }
     ],
     "forge": [

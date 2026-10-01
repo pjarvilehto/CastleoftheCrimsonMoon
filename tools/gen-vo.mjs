@@ -200,8 +200,8 @@ async function main() {
     const measuredDb = (j.rendered || !Number.isFinite(was.measuredDb) ? measureDb(join(OUT, j.file)) : null) ?? was.measuredDb ?? null;
     if (measuredDb == null) unmeasured++;
     const entry = { take: j.take, file, text: j.text, measuredDb, settings: j.rendered ?? was.settings ?? settings };
+    if (was.rendered) entry.rendered = was.rendered;
     if (j.rendered && redo[file]) { entry.approved = false; entry.rendered = stamp; } // a redo waits for the lab's verdict, stamped (the lab and the game fetch it afresh)
-    else if (was.rendered) entry.rendered = was.rendered;
     else if (approved.has(file) || was.approved) entry.approved = true;
     (reg.lines[j.id] ??= []).push(entry);
   }
