@@ -13,7 +13,7 @@
 
 import { el } from '../core/dom.js';
 import { go } from '../core/scene.js';
-import { openDialog } from './dialog.js';
+import { openDialog, anyDialogOpen } from './dialog.js';
 import { confirmPrompt } from './confirmPrompt.js';
 import { shareStats } from '../meta/telemetry.js';
 import { getProfile } from '../meta/profile.js';
@@ -41,9 +41,13 @@ export function benchmarkDue(p) {
   return !!DATA.telemetry?.endpoint && !(p.bench?.length > 0) && p.records.bestRoom >= DATA.telemetry.benchmarkPromptRoom;
 }
 
+// true = asked; 'wait' = due, but another dialog is up (0.134: it opened on
+// top of "Descend Now?", which then stayed up over the benchmark) — the
+// Great Hall tries again shortly; false = not due.
 let asking = false;
 export function maybeAskBenchmark() {
   if (asking || !benchmarkDue(getProfile())) return false;
+  if (anyDialogOpen()) return 'wait';
   asking = true;
   const start = el('button', { class: 'primary active', key: 'c', proceed: true, onclick: () => { dlg.close(); go('benchmark', { returnTo: 'hub' }); } }, 'Continue');
   const dlg = openDialog({

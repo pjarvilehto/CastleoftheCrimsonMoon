@@ -55,8 +55,10 @@ export function hubScene() {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
-      // 0.133: the one-time benchmark request, once the hall has faded in
-      setTimeout(() => { if (currentScene() === scene) maybeAskBenchmark(); }, 1200);
+      // 0.133: the one-time benchmark request, once the hall has faded in;
+      // 0.134: never over another dialog — it waits its turn
+      const ask = () => { if (currentScene() === scene && maybeAskBenchmark() === 'wait') setTimeout(ask, 1000); };
+      setTimeout(ask, 1200);
     },
   };
   return scene;

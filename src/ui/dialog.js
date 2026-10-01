@@ -12,6 +12,13 @@
 import { el } from '../core/dom.js';
 import { pushKeyTrap, releaseKeyTrap } from '../core/hotkeys.js';
 
+// Every open dialog's close() (0.134): a dialog lives on document.body,
+// above the scenes, so switching scenes does not close it — the benchmark
+// clears them before it takes the screen, and its prompt waits its turn.
+const openDialogs = new Set();
+export const anyDialogOpen = () => openDialogs.size > 0;
+export function closeAllDialogs() { for (const close of [...openDialogs]) close(); }
+
 export function openDialog({
   label, children = [], onKey = null, backdropCloses = false,
   overlayClass = 'update-overlay', modalClass = 'update-modal', onClose = null, proceed = null,
@@ -31,11 +38,13 @@ export function openDialog({
   function close() {
     if (!open) return;
     open = false;
+    openDialogs.delete(close);
     overlay.remove();
     releaseKeyTrap(trap);
     onClose?.();
   }
   document.body.append(overlay);
+  openDialogs.add(close);
   pushKeyTrap(trap);
   return { el: overlay, close, isOpen: () => open };
 }

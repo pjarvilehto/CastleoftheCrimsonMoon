@@ -1,5 +1,5 @@
 {
-  "version": "0.133",
+  "version": "0.134",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -77,6 +77,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.134": [
+      "Fixed: a dialog left open in the Great Hall (like Descend Now?) could stay on screen over the benchmark."
+    ],
     "0.133": [
       "Players who have reached room 10 are asked once to run a short (about 40 second) benchmark, which helps make the game run smoothly on every computer."
     ],
@@ -120,9 +123,6 @@
     ],
     "0.120": [
       "Stats page: Refresh shows that it worked (time of the update, new runs)"
-    ],
-    "0.119": [
-      "Under the hood: the play-stats collector stores only what the stats page shows and turns away spam"
     ]
   }
 }

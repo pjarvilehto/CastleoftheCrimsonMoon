@@ -28,6 +28,7 @@ import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.
 import { holdQuality, isBg3dActive, bgQualityLevel } from '../../core/bg3d.js';
 import { recordBenchmark } from '../../meta/profile.js';
 import { showBenchmarkResult, PHASES } from '../benchmark.js';
+import { closeAllDialogs } from '../dialog.js';
 
 export { PHASES }; // the script lives in ui/benchmark.js (the prompt quotes its length)
 
@@ -62,6 +63,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     inRun: true, // no update prompt mid-measurement
     enter(r) {
       root = r;
+      closeAllDialogs(); // 0.134: nothing left over from the last scene may stay up (or act) over the fight
       Math.random = seeded(20261001);
       DEBUG.invulnerable = true;
       holdQuality(true); // measure at this machine's current quality; never step it down here

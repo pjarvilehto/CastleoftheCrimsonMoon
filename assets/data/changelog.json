@@ -1,4 +1,7 @@
 {
+  "0.134": [
+    "Fixed: a dialog left open in the Great Hall (like Descend Now?) could stay on screen over the benchmark."
+  ],
   "0.133": [
     "Players who have reached room 10 are asked once to run a short (about 40 second) benchmark, which helps make the game run smoothly on every computer."
   ],

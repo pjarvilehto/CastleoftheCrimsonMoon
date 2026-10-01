@@ -307,3 +307,39 @@ fresh();
   DATA.telemetry.endpoint = ep;
   fresh();
 }
+
+// T95: 0.134 — the benchmark prompt never opens over another dialog (it
+// opened over "Descend Now?", which then stayed up over the benchmark and
+// kept its hotkeys); the benchmark clears any dialog left on screen.
+{
+  const ep = DATA.telemetry.endpoint;
+  DATA.telemetry.endpoint = 'https://stats.example';
+  fresh();
+  const p = getProfile();
+  p.records.bestRoom = 12; p.coins = 522; // unspent coins: Descend asks first
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const dialogs = () => body.children.filter((c) => /update-overlay/.test(c.className ?? ''));
+  show(hubScene());
+  await sleep(1100);
+  handleKey('d'); // the player is quicker than the prompt: "Descend Now?"
+  await sleep(2500);
+  ok('the benchmark prompt waits while "Descend Now?" is up', dialogs().length === 1 && dialogs()[0].textContent.includes('Descend Now?'));
+  handleKey('n'); // Stay and Spend
+  await sleep(1100);
+  ok('…and asks once it has closed', dialogs().length === 1 && dialogs()[0].textContent.includes('A quick benchmark'));
+  const { confirmPrompt } = await import('../../src/ui/confirmPrompt.js');
+  confirmPrompt({ title: 'Stray', lines: [], yes: ['Yes', 'y'], no: ['No', 'n'] }); // e.g. one opened just before Continue
+  handleKey('escape'); // closes the stray on top
+  handleKey(' '); // Continue
+  confirmPrompt({ title: 'Left over', lines: [], yes: ['Yes', 'y'], no: ['No', 'n'], onYes: () => { throw new Error('acted under the benchmark'); } });
+  await sleep(1300);
+  ok('the benchmark clears dialogs left on screen', t().includes('Benchmark') && dialogs().length === 0);
+  await sleep(45000);
+  handleKey(' ');
+  await sleep(1100);
+  globalThis.document.body = realBody;
+  DATA.telemetry.endpoint = ep;
+  fresh();
+}
