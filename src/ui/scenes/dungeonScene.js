@@ -23,6 +23,7 @@ import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
 import { renderShrineRoom } from '../shrineUI.js';
+import { renderTreasureRoom } from '../treasureUI.js';
 import { queueEvents } from '../combatQueue.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
 import { mountBattle } from '../battleRoom.js';
@@ -79,7 +80,7 @@ export function dungeonScene() {
     const setup = () => {
       const firstRoom = run.roomNumber === 0;
       const room = enterNextRoom(run);
-      play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
+      play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' || room.kind === 'treasure' ? 'shrine' : 'combat');
       combat = createCombat(run, room);
       deathShown = false;
       ui = null; // the new room builds its own battle line
@@ -101,6 +102,7 @@ export function dungeonScene() {
     currentRoot = root;
     const room = run.room;
     if (room.kind === 'shrine') renderShrine(root, room);
+    else if (room.kind === 'treasure') renderTreasure(root, room);
     else renderCombat(root, room);
   }
 
@@ -167,6 +169,18 @@ export function dungeonScene() {
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----
+  // ---- treasure (0.155): the shrine's panel, three chests ----
+  function renderTreasure(root, room) {
+    renderTreasureRoom(root, run, room, {
+      title: [`Room ${room.number} - ${room.name}`, recordTag()],
+      logEl, buffBar, coins: shownCoins, xp: shownXp,
+      onDeeper: () => nextRoom(root),
+      onRetreat: () => endRun(root, 'retreat'),
+      onDeath: () => openDeathModal(),
+      refresh: () => { render(currentRoot); tickUpChips(); },
+    });
+  }
+
   function renderShrine(root, room) {
     renderShrineRoom(root, run, room, {
       title: [`Room ${room.number} - ${room.name}`, recordTag()],

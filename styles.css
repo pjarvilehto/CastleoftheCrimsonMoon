@@ -454,6 +454,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
 /* dead cards keep their actions-row slot; the placeholder button is
    layout-only — invisible but occupying the same height */
 .unit-actions .ghost-btn { visibility: hidden; }
+/* 0.155: an enemy card attacks on a click too, while its Attack button could */
+.enemy-char.targetable { cursor: pointer; }
+.enemy-char.targetable:hover { box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.55), 0 0 1.4em rgba(193, 75, 75, 0.35); }
 
 /* cards: aspect-ratio derives shape from the source card art */
 .char-card {
@@ -733,6 +736,10 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .shrine-cost { text-align: center; color: #9a8b6a; margin-top: auto; }
 .shrine-cost-label { color: var(--parchment); letter-spacing: 2px; margin-bottom: 2px; }
 .shrine-card button { width: 100%; padding: 10px 0; font-size: 1.1rem; letter-spacing: 2px; }
+/* treasure rooms (0.155, ui/treasureUI.js): the shrine's cards, a hint
+   instead of a boon, the reliquary's blood price in red when it would kill */
+.treasure-hint { text-align: center; color: #b8a888; font-style: italic; margin: 6px 0 10px; }
+.treasure-lethal { color: #e05a4a; font-weight: bold; }
 
 /* ================= 12 Run end ================= */
 /* loot lists: rarity-colored item names; salvaged stays muted */

@@ -213,6 +213,19 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
   Hall art only; the hub's Descend waits only for the essentials (boss /
   shrine / death art, portraits); the 34 room paintings (0.153, ~13MB) keep
   loading behind — a room whose painting isn't in yet keeps the last one up.
+- Treasure rooms (0.155, `run/treasure.js` + `ui/treasureUI.js`, tuning
+  `difficulty.json treasure`): a run gets one with `chance` (30%) once the
+  save's best room reaches `unlockRoom` (5; silent), at a room in reach
+  (`minRoom`..best room, no boss rooms; the stretch's shrine steps aside);
+  painted from `backgrounds.json treasure`. Three chests, open one: Iron
+  Coffer (coins worth `coffer.fights` fights at that depth), Gilded Chest
+  (one item of the depth's tier, made for a slot it improves, else
+  salvaged), Sealed Reliquary (`hpCost` 20% of max HP as damage — it can
+  kill, `killedBy: 'reliquary'`; inside, a relic with `relicChance` from
+  t4MinRoom, one per run, else a tier-3 item). Shares the shrine's panel
+  (`shrineUI.js renderPanelRoom`); the sim's bot opens the gilded chest.
+- Enemy cards (0.155) attack on a click, exactly as their Attack button
+  would and only while it could (`.targetable`).
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
   `treasure_*`, names in `backgrounds.json roomNames`) join the 8 castle
   rooms in the random pick. Source PNGs → 2048x1152 JPEG q86 (~370KB);

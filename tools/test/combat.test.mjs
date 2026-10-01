@@ -647,3 +647,19 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const hub = readFileSync('src/ui/scenes/hubScene.js', 'utf8');
   ok('no benchmark ask once a descent has started (it can wait for the art)', hub.includes('leaving = true;') && hub.includes('!leaving && maybeAskBenchmark()'));
 }
+
+// 0.155 — the whole enemy card is a target: a click attacks exactly as the
+// Attack button would, and only when it could
+{
+  const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
+  let hits = 0;
+  const u = createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack: () => hits++, onGone: () => {} });
+  u.update({ hp: 10, dead: false, printing: false, combatOver: false });
+  u.card.listeners.click[0]();
+  const live = hits === 1 && u.card.classList.contains('targetable');
+  u.update({ hp: 10, dead: false, printing: true, combatOver: false });
+  u.card.listeners.click[0]();
+  u.update({ hp: 0, dead: true, printing: false, combatOver: false });
+  u.card.listeners.click[0]();
+  ok('enemy card: a click attacks while the Attack button could, not mid-replay or once dead', live && hits === 1 && !u.card.classList.contains('targetable'), String(hits));
+}

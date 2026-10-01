@@ -19,6 +19,12 @@ const hpColor = (cur, max) => {
 // (h1 content), logEl, buffBar, coins, xp (the HUD counters' shown
 // values), onDeeper, onRetreat, refresh }.
 export function renderShrineRoom(root, run, room, h) {
+  renderPanelRoom(root, run, room, h, shrineBody(run, room, { log: (t) => logLine(h.logEl, t, 'loot'), refresh: h.refresh }));
+}
+
+// A panel room (the shrine; 0.155: the treasure room too): title, the run's
+// HUD, the room's own body, the log, and the way on — Retreat once taken.
+export function renderPanelRoom(root, run, room, h, body) {
   const lowhp = isLowHp(run.hp, run.maxHp) ? ' lowhp' : '';
   const potionColor = run.potions >= 3 ? '#7bc98a' : run.potions >= 1 ? '#d8c95a' : '#c14b4b';
   const header = el('div', { class: 'run-hud' },
@@ -35,7 +41,7 @@ export function renderShrineRoom(root, run, room, h) {
     el('div', { class: 'panel' },
       el('h1', {}, ...h.title),
       header,
-      shrineBody(run, room, { log: (t) => logLine(h.logEl, t, 'loot'), refresh: h.refresh }),
+      body,
       h.logEl,
       proceed));
   h.logEl.className = '';

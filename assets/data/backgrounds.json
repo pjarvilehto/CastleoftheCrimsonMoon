@@ -29,7 +29,9 @@
     "dungeon_torch_corridor.jpg",
     "dungeon_treasury.jpg",
     "dungeon_war_room.jpg",
-    "dungeon_wine_cellar.jpg",
+    "dungeon_wine_cellar.jpg"
+  ],
+  "treasure": [
     "treasure_cursed_reliquary.jpg",
     "treasure_dragon_hoard.jpg",
     "treasure_frozen_tribute.jpg",

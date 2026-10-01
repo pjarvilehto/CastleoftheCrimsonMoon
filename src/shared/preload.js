@@ -37,7 +37,7 @@ export function essentialUrls() {
 // The room paintings (and their depth maps) not already loaded above.
 export function roomUrls() {
   const b = DATA.backgrounds, seen = new Set([b.title, b.hub, b.boss, b.death, b.shrine]);
-  const rooms = [...new Set(b.rooms)].filter((f) => !seen.has(f));
+  const rooms = [...new Set([...b.rooms, ...b.treasure])].filter((f) => !seen.has(f));
   return [...rooms.map(bgUrl), ...rooms.map(depthUrl)];
 }
 

@@ -88,6 +88,7 @@ export async function loadSim() {
   const rs = await import('../src/run/runState.js');
   const cb = await import('../src/run/combat.js');
   const sh = await import('../src/run/shrine.js');
+  const tr = await import('../src/run/treasure.js');
   const noop = () => {};
   const P = () => profile.getProfile();
 
@@ -127,6 +128,12 @@ export async function loadSim() {
     let lastHitter = null;
     for (;;) {
       const room = rs.enterNextRoom(run);
+      if (room.kind === 'treasure') { // (0.155) the bot opens the gilded chest — safe gear
+        agg.treasureRooms = (agg.treasureRooms ?? 0) + 1;
+        tr.openChest(run, room, 'gilded', noop);
+        rec.depth = run.roomNumber;
+        continue;
+      }
       if (room.kind === 'shrine') {
         const boon = takeShrine(run, shrine, agg);
         if (rec.shrineRoom === null) { rec.shrineRoom = room.number; rec.boon = boon; } // the run's FIRST shrine

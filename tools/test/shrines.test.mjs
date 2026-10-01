@@ -164,3 +164,57 @@ fresh();
   ok('combat buff bar: capped before the log, wraps upward, 2-line labels',
     css.includes('max-width: calc(50vw - max(23vw, 170px) - 13.5vw)') && /#buffs \{[^}]*flex-wrap: wrap-reverse/.test(css) && css.includes('-webkit-line-clamp: 2'));
 }
+
+// 0.155 — treasure rooms: one per run at most, with `chance`, once the
+// save's best room reaches unlockRoom (silently), never a boss room, the
+// shrine stepping aside; three chests: coins, gear made to be an upgrade,
+// the reliquary's blood price (it can kill) and its rare relic
+{
+  const T = DATA.difficulty.treasure;
+  const tr = await import('../../src/run/treasure.js');
+  const rs = await import('../../src/run/runState.js');
+  const { generateRoom } = await import('../../src/run/roomGen.js');
+  const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const real = Math.random;
+  Math.random = seeded(11);
+  let locked = 0, seen = 0, bad = 0;
+  for (let i = 0; i < 2000; i++) {
+    if (tr.rollTreasureRoom(T.unlockRoom - 1) !== null) locked++;
+    const n = tr.rollTreasureRoom(20);
+    if (n !== null) { seen++; if (n < T.minRoom || n > 20 || n % DATA.difficulty.bossEvery === 0) bad++; }
+  }
+  ok('treasure: locked until the best room reaches unlockRoom; then about `chance` of runs get one, in reach and never a boss room',
+    locked === 0 && Math.abs(seen / 2000 - T.chance) < 0.04 && bad === 0, `${locked} ${seen} ${bad}`);
+  fresh();
+  getProfile().records.bestRoom = 20;
+  let clash = 0, made = 0;
+  for (let i = 0; i < 300; i++) {
+    const run = rs.createRun();
+    if (run.treasureRoom === null) continue;
+    made++;
+    for (let r = 0; r < run.treasureRoom; r++) rs.enterNextRoom(run);
+    if (run.shrineRooms.includes(run.treasureRoom) || run.room.kind !== 'treasure') clash++;
+  }
+  ok('treasure: the room is a treasure room (its own painting), the stretch\'s shrine steps aside', made > 50 && clash === 0, `${made} ${clash}`);
+  const room = () => ({ ...generateRoom(12, { treasureRoom: 12 }) });
+  ok('treasure: a treasure room has no enemies and a treasure painting', room().kind === 'treasure' && room().enemies.length === 0 && DATA.backgrounds.treasure.includes(room().background));
+  const run1 = rs.createRun(), log = () => {};
+  const c0 = run1.coins, got1 = tr.openChest(run1, room(), 'coffer', log);
+  ok('treasure: the coffer pays coins into the run', got1.coins > 0 && run1.coins === c0 + got1.coins);
+  const run2 = rs.createRun(), got2 = tr.openChest(run2, room(), 'gilded', log);
+  ok('treasure: the gilded chest\'s gear is an upgrade (kept) while one exists, of the depth\'s tier',
+    got2.kept && run2.itemsFound.includes(got2.itemId) && DATA.items[got2.itemId].tier === (12 >= T.gilded.tier3Room ? 3 : 2));
+  const run3 = rs.createRun(), max3 = run3.maxHp, cost = tr.reliquaryCost(run3);
+  const got3 = tr.openChest(run3, room(), 'reliquary', log);
+  ok('treasure: the reliquary costs hpCost of max HP as damage, max HP untouched', run3.hp === max3 - cost && run3.maxHp === max3 && !got3.died && got3.itemId);
+  const run4 = rs.createRun(); run4.hp = cost; run4.revive = false;
+  const got4 = tr.openChest(run4, room(), 'reliquary', log);
+  ok('treasure: the reliquary can kill (no loot then, killed by the reliquary)', got4.died && run4.hp === 0 && run4.killedBy === 'reliquary' && !got4.itemId);
+  let relics = 0;
+  for (let i = 0; i < 400; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, room(), 'reliquary', log).itemId]?.tier === 4) relics++; }
+  let early = 0;
+  for (let i = 0; i < 200; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, { ...generateRoom(6, { treasureRoom: 6 }) }, 'reliquary', log).itemId]?.tier === 4) early++; }
+  ok('treasure: the reliquary\'s relic is rare (about relicChance), and never before t4MinRoom', Math.abs(relics / 400 - T.reliquary.relicChance) < 0.06 && early === 0, `${relics} ${early}`);
+  Math.random = real;
+  fresh();
+}

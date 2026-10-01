@@ -10,18 +10,23 @@ import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/level
 import { equipItems, salvageValue } from '../meta/equipment.js';
 import { generateRoom } from './roomGen.js';
 import { rollLoot, potionDrop } from './loot.js';
+import { rollTreasureRoom } from './treasure.js';
 import { DATA } from '../shared/data.js';
 
 // One shrine in every stretch of bossEvery rooms (0.091 — it used to be
 // once per run): shrineRoomRange is the room range WITHIN a stretch, so
-// rooms 2-7, 10-15, 18-23, ... Each stretch picks its room on entry.
-function randomShrineRoom(stretch = 0) {
+// rooms 2-7, 10-15, 18-23, ... Each stretch picks its room on entry —
+// never the run's treasure room (0.155).
+function randomShrineRoom(stretch = 0, treasureRoom = null) {
   const [lo, hi] = DATA.difficulty.shrineRoomRange ?? [2, 7];
-  return stretch * DATA.difficulty.bossEvery + lo + Math.floor(Math.random() * (hi - lo + 1));
+  const rooms = [];
+  for (let n = lo; n <= hi; n++) if (stretch * DATA.difficulty.bossEvery + n !== treasureRoom) rooms.push(stretch * DATA.difficulty.bossEvery + n);
+  return rooms[Math.floor(Math.random() * rooms.length)];
 }
 
 export function createRun() {
   const stats = derivedStats();
+  const treasureRoom = rollTreasureRoom(); // (0.155: one in a while, room number or null)
   return {
     roomNumber: 0,
     hp: stats.maxHp,
@@ -38,7 +43,8 @@ export function createRun() {
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
-    shrineRooms: [randomShrineRoom(0)], // one per stretch of bossEvery rooms, added on entry
+    shrineRooms: [randomShrineRoom(0, treasureRoom)], // one per stretch of bossEvery rooms, added on entry
+    treasureRoom,                // the run's treasure room (run/treasure.js), or null
     revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
     // run history (0.095, meta/history.js): who went in, and the tallies
     startedAt: Date.now(),
@@ -57,7 +63,7 @@ export function createRun() {
 export function enterNextRoom(run) {
   run.roomNumber += 1;
   const stretch = Math.floor((run.roomNumber - 1) / DATA.difficulty.bossEvery);
-  run.shrineRooms[stretch] ??= randomShrineRoom(stretch);
+  run.shrineRooms[stretch] ??= randomShrineRoom(stretch, run.treasureRoom);
   run.tempArmor = 0; // Infusion armor dies with the room
   run.room = generateRoom(run.roomNumber, run);
   return run.room;

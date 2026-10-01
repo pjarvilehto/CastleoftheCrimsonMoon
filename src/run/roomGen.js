@@ -43,6 +43,12 @@ export function generateRoom(roomNumber, run = {}) {
     };
   }
 
+  // A treasure room (0.155, run/treasure.js): three chests, no fight.
+  if (run.treasureRoom === roomNumber) {
+    const bg = pickRandom(DATA.backgrounds.treasure);
+    return { number: roomNumber, kind: 'treasure', isBoss: false, opened: null, name: roomNameFor(bg), enemies: [], background: bg };
+  }
+
   const budget = diff.budgetBase + roomNumber * diff.budgetPerRoom;
   const tier = roomTier(roomNumber);
   const pool = Object.keys(DATA.enemies).filter(

@@ -1,4 +1,8 @@
 {
+  "0.155": [
+    "Treasure rooms: now and then a room holds three chests — open one: an Iron Coffer of coins, a Gilded Chest with gear made for you, or a Sealed Reliquary that drinks your blood and may hold a crimson relic",
+    "Tap an enemy's card to attack it (the Attack button still works)"
+  ],
   "0.154": [
     "Room changes go in order: the fight fades out, the next room's painting fades in fully, and only then do the knight and the enemies (or the shrine) appear"
   ],

@@ -1,5 +1,5 @@
 {
-  "version": "0.154",
+  "version": "0.155",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -36,6 +36,7 @@
     "src/run/roomGen.js",
     "src/run/runState.js",
     "src/run/shrine.js",
+    "src/run/treasure.js",
     "src/shared/balance.js",
     "src/shared/data.js",
     "src/shared/dataCheck.js",
@@ -74,11 +75,16 @@
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
+    "src/ui/treasureUI.js",
     "src/ui/updatePrompt.js",
     "src/ui/victoryModal.js",
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.155": [
+      "Treasure rooms: now and then a room holds three chests — open one: an Iron Coffer of coins, a Gilded Chest with gear made for you, or a Sealed Reliquary that drinks your blood and may hold a crimson relic",
+      "Tap an enemy's card to attack it (the Attack button still works)"
+    ],
     "0.154": [
       "Room changes go in order: the fight fades out, the next room's painting fades in fully, and only then do the knight and the enemies (or the shrine) appear"
     ],
@@ -126,9 +132,6 @@
     ],
     "0.141": [
       "Testing tools: in the Dungeon Lab, enemies now stand in the rooms; walking in starts the real fight, and the boss leads down to the next floor."
-    ],
-    "0.140": [
-      "Testing tools: the Dungeon Lab now generates its floors (rooms, corridors, dead ends; N for a new one) and maps only what you have seen."
     ]
   }
 }

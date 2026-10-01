@@ -157,7 +157,9 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
   // Portrait and skull both live in the card; the 'dead' class swaps them
   // (styles.css), so the card never has to be rebuilt.
-  const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}` },
+  // 0.155: the whole card is a target too — a click attacks, exactly as its
+  // Attack button would (and only when that button could)
+  const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
         isElite(e) ? el('span', { class: 'elite-star', title: 'Elite - can drop crimson relics (room 11+)' }, ' ★') : null),
@@ -172,6 +174,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit' }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
+  let canHit = false; // the Attack button is live (the card clicks through to it)
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
     if (meterFill && s.meter != null) {
@@ -190,6 +193,8 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     setClass(unit, 'dead-unit', s.dead);
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
+    canHit = !(s.dead || s.combatOver || s.printing);
+    setClass(card, 'targetable', canHit);
   };
   return { el: unit, card, portrait: img, id: e.id, summoned: !!e.summoned, update };
 }
