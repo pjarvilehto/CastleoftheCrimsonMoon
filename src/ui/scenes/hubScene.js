@@ -10,7 +10,7 @@ import { getProfile, derivedStats, itemWithForge, playerLevel } from '../../meta
 import {
   STAT_DEFS, statDesc, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-  ALCHEMY_DEFS, alchemyCost, trainAlchemy, potionHealAmount, efficiencyDesc, infusionArmor,
+  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, efficiencyDesc, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName } from '../hud.js';
@@ -36,7 +36,7 @@ export function canSpendXp(p) {
 export function canSpendCoins(p) {
   if (!satchelFull(p) && p.coins >= potionCost()) return true;
   if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
-  if (Object.keys(ALCHEMY_DEFS).some((t) => p.coins >= alchemyCost(t))) return true;
+  if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
   const eq = p.equipment;
   return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet]
     .some((id) => id && (DATA.items[id]?.tier ?? 1) > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
@@ -158,11 +158,13 @@ export function hubScene() {
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
             el('span', {}, `Lv ${lvl} — ${alchemyDesc[track]()}`)),
-          el('button', {
-            disabled: p.coins < alchemyCost(track),
-            key: def.key,
-            onclick: () => { sfx('levelup'); trainAlchemy(track); render(root); },
-          }, `Train (${alchemyCost(track)}c)`));
+          alchemyMaxed(track)
+            ? el('span', { class: 'forge-max' }, 'MAX')
+            : el('button', {
+              disabled: p.coins < alchemyCost(track),
+              key: def.key,
+              onclick: () => { sfx('levelup'); trainAlchemy(track); render(root); },
+            }, `Train (${alchemyCost(track)}c)`));
       }));
 
     // ---- EQUIPMENT with per-item Forge enhancement. ----

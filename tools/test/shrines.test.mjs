@@ -137,7 +137,7 @@ fresh();
   const { statDesc } = await import('../../src/meta/leveling.js');
   const pl = DATA.difficulty.player;
   ok('hub stat text generated from data', statDesc('power', 0).includes(`+${pl.dmgPerPower} `)
-    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('increase Crit'));
+    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('Crit Chance +'));
 }
 
 // T58: 0.096 — compact buff bar: short labels from shrines.json (full

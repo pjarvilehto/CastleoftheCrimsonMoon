@@ -136,8 +136,8 @@ fresh();
   getProfile().coins = 10000;
   ok('three track base costs 60/80/100', alchemyCost('potency') === 60
     && alchemyCost('efficiency') === 80 && alchemyCost('infusion') === 100);
-  getProfile().alchemy.efficiency = 3; // 3 x 0.08, then the smooth taper (0.112)
-  ok('efficiency: +8%/level to 24% at level 3, still growing after (0.112)', Math.abs(efficiencyChance() - 0.24) < 1e-9 && efficiencyChance(5) > 0.38 && efficiencyChance(20) < 0.6);
+  getProfile().alchemy.efficiency = 3; // 3 x 0.08, then the long tail (0.113)
+  ok('efficiency: +8%/level to 24% at level 3, still growing after (0.113)', Math.abs(efficiencyChance() - 0.24) < 1e-9 && efficiencyChance(5) > 0.3 && efficiencyChance(20) < 0.55);
   getProfile().alchemy.infusion = 3;
   ok('infusion armor = lvl x 20', infusionArmor() === 60);
   const run = createRun();
@@ -224,10 +224,17 @@ fresh();
   const { precisionDesc } = await import('../../src/meta/leveling.js');
   const { precisionCrit, trainedLevel } = await import('../../src/meta/profile.js');
   const eff = (l) => l + Math.floor(l / 5);
-  const want = (l) => `increase Crit Chance +${Number(((precisionCrit(eff(l + 1)) - precisionCrit(eff(l))) * 100).toFixed(1))}%`;
+  const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
+  const want = (l) => { // 0.113: every level also adds crit damage, so none reads +0%
+    const gain = precisionCrit(eff(l + 1)) - precisionCrit(eff(l));
+    const dmg = pct((eff(l + 1) - eff(l)) * DATA.difficulty.player.critDamagePerPrecision);
+    return gain >= 0.0005 ? `Crit Chance +${pct(gain)}, crit damage +${dmg}` : `crit chance maxed: crit damage +${dmg}`;
+  };
   resetProfile();
   ok('precisionDesc shows the next click\'s actual gain (breakthroughs count double)', [0, 4, 9, 10, 19, 20, 30, 45].every((l) => precisionDesc(l) === want(l))
-    && precisionDesc(0) === 'increase Crit Chance +3%' && precisionDesc(4) === 'increase Crit Chance +6%');
+    && precisionDesc(0) === 'Crit Chance +3%, crit damage +1%' && precisionDesc(4) === 'Crit Chance +6%, crit damage +2%',
+    [0, 4, 30].map(precisionDesc).join(' | '));
+  ok('late precision never reads +0% (0.113)', [30, 46, 60, 99].every((l) => !precisionDesc(l).includes('+0%')), precisionDesc(46));
   getProfile().stats.precision = 12;
   hubScene().enter(registry.app);
   ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12 — ${want(12)}`));
@@ -238,7 +245,8 @@ fresh();
   const { derivedStats } = await import('../../src/meta/profile.js');
   const ds = derivedStats(getProfile());
   ok('crit past the cap becomes crit damage (0.112)', ds.crit === DATA.difficulty.player.critCap && ds.critBonus > 0
-    && Math.abs(ds.critBonus - (0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5) < 1e-9
+    && Math.abs(ds.critBonus - ((0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5
+      + trainedLevel(getProfile(), 'precision') * DATA.difficulty.player.critDamagePerPrecision)) < 1e-9
     && precisionDesc(30).startsWith('crit chance maxed: crit damage +'));
   resetProfile();
 }
@@ -461,10 +469,18 @@ fresh();
     && Math.abs(taper(6, { perLevel: 0.08, linear: 5, max: 0.6, rate: 0.12 }) - (0.4 + 0.2 * 0.12)) < 1e-9);
   const effSteps = Array.from({ length: 40 }, (_, l) => lv.efficiencyChance(l + 1) - lv.efficiencyChance(l));
   ok('efficiency: every level adds (none wasted), each a little less after 4', effSteps.every((g) => g > 0) && effSteps.slice(4).every((g, i, a) => !i || g < a[i - 1])
-    && lv.efficiencyChance(20) > 0.58 && lv.efficiencyChance(20) < 0.6);
+    && lv.efficiencyChance(20) > 0.49 && lv.efficiencyChance(20) < 0.51 && lv.efficiencyChance(40) - lv.efficiencyChance(20) > 0.04);
   resetProfile();
   getProfile().alchemy.efficiency = 20;
-  ok('efficiency hub line: now and next', /now 59%, next \+0\.\d+%/.test(lv.efficiencyDesc()), lv.efficiencyDesc());
+  ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test(lv.efficiencyDesc()), lv.efficiencyDesc());
+  // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
+  getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
+  const { canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
+  hubScene().enter(registry.app);
+  ok('maxed efficiency: MAX, not trainable, not counted as spendable', lv.alchemyMaxed('efficiency') && !lv.trainAlchemy('efficiency')
+    && getProfile().coins === 1e6 && lv.efficiencyDesc().includes('max') && registry.app.textContent.includes('MAX')
+    && !lv.alchemyMaxed('potency') && !lv.alchemyMaxed('infusion'));
+  ok('canSpendCoins skips maxed tracks', canSpendCoins.toString().includes('!alchemyMaxed(t) && p.coins >= alchemyCost(t)'));
   const { critMultiplier } = await import('../../src/run/combat.js');
   const src = readFileSync('src/run/combat.js', 'utf8');
   ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: (tune.critMult ?? 1.5) + (combat.run.stats.critBonus ?? 0)')

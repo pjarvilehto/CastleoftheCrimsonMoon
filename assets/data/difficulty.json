@@ -34,7 +34,8 @@
       "base": 80,
       "perLevel": 0.08,
       "linear": 3,
-      "max": 0.6
+      "tail": 1.5,
+      "minStep": 0.0005
     },
     "infusion": {
       "base": 100,
@@ -81,6 +82,7 @@
     "baseCrit": 0.05,
     "critCap": 0.6,
     "critOverflowDamage": 1.5,
+    "critDamagePerPrecision": 0.01,
     "dodgeCap": 0.35,
     "baseHeavyCd": 3,
     "reviveHpPct": 0.5,

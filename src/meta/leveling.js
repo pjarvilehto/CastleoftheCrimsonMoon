@@ -42,9 +42,11 @@ export function precisionDesc(currentLevel) {
   const pl = DATA.difficulty.player ?? {};
   const gain = precisionCrit(after) - precisionCrit(now);
   const room = Math.max(0, (pl.critCap ?? 0.6) - critBeforePrecision() - precisionCrit(now)); // chance left under the cap
-  if (gain <= room + 1e-9) return `increase Crit Chance +${pct(gain)}`;
-  const dmg = (gain - room) * (pl.critOverflowDamage ?? 1.5);
-  return room > 1e-9 ? `Crit Chance +${pct(room)} (to max), crit damage +${pct(dmg)}` : `crit chance maxed: crit damage +${pct(dmg)}`;
+  const chance = Math.min(gain, room);
+  // crit damage: Precision's own per level (0.113) + any chance past the cap
+  const dmg = (after - now) * (pl.critDamagePerPrecision ?? 0.01) + Math.max(0, gain - room) * (pl.critOverflowDamage ?? 1.5);
+  if (chance >= 0.0005) return `Crit Chance +${pct(chance)}, crit damage +${pct(dmg)}`;
+  return `crit chance maxed: crit damage +${pct(dmg)}`;
 }
 
 // Base crit + gear crit (what Precision adds on top of).
@@ -146,7 +148,7 @@ export function alchemyCost(track) {
 export function trainAlchemy(track) {
   const p = getProfile();
   const cost = alchemyCost(track);
-  if (p.coins < cost) return false;
+  if (p.coins < cost || alchemyMaxed(track)) return false;
   p.coins -= cost;
   p.alchemy[track] = (p.alchemy[track] ?? 0) + 1;
   persist();
@@ -164,14 +166,23 @@ export function potionHealAmount() {
 // track's max) — it used to stop dead at 40% while the price kept rising.
 export function efficiencyChance(level = getProfile().alchemy.efficiency ?? 0) {
   const t = trackData('efficiency');
-  return taper(level, { perLevel: t.perLevel ?? 0.08, linear: t.linear ?? 3, max: t.max ?? 0.6, rate: t.rate });
+  return taper(level, { perLevel: t.perLevel ?? 0.08, linear: t.linear ?? 3, tail: t.tail ?? 1.5, max: t.max });
 }
 
 // Hub line: now and what the next level adds.
 export function efficiencyDesc() {
   const lvl = getProfile().alchemy.efficiency ?? 0;
   const now = efficiencyChance(lvl);
+  if (alchemyMaxed('efficiency')) return `chance a potion is not consumed (${Math.round(now * 100)}%, max)`;
   return `chance a potion is not consumed (now ${Math.round(now * 100)}%, next +${pct(efficiencyChance(lvl + 1) - now)})`;
+}
+
+// A track whose next level would add (almost) nothing shows MAX instead of
+// taking coins for it (0.113; potency/infusion are linear and never max).
+export function alchemyMaxed(track) {
+  if (track !== 'efficiency') return false;
+  const lvl = getProfile().alchemy.efficiency ?? 0;
+  return efficiencyChance(lvl + 1) - efficiencyChance(lvl) < (trackData('efficiency').minStep ?? 0.0005);
 }
 
 // Temporary armor granted per potion (lasts until the room ends).

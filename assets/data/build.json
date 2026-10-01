@@ -1,5 +1,5 @@
 {
-  "version": "0.112",
+  "version": "0.113",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -37,6 +37,7 @@
     "src/ui/battleLine.js",
     "src/ui/bgTuner.js",
     "src/ui/buffs.js",
+    "src/ui/changelog.js",
     "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
     "src/ui/combatQueue.js",
@@ -57,6 +58,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.113": [
+      "New CHANGELIST button (upper right): every build's release notes in one place",
+      "Precision never stops paying off: every level adds +1% crit damage on top of its crit chance (no more +0%)",
+      "Efficiency keeps growing in ever smaller steps, and shows MAX once there's nothing left to gain"
+    ],
     "0.112": [
       "Efficiency never stops paying off: every level adds a little less (no more 40% wall)",
       "Precision is worth training: +3% crit per level for 10 levels, then tapering — and crit chance past the max turns into crit damage",
@@ -112,9 +118,6 @@
     ],
     "0.099": [
       "Drifting mist in the backgrounds: thicker over long views, a light haze indoors"
-    ],
-    "0.098": [
-      "Faster start: the title appears without waiting for the dungeon art to load"
     ]
   }
 }

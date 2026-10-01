@@ -169,6 +169,58 @@ process.on('uncaughtException', (e) => {
   globalThis.fetch = realFetch; globalThis.document.body = realBody; globalThis.location = realLoc;
 }
 
+const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').map(Number); return pa[0] > pb[0] || (pa[0] === pb[0] && pa[1] > pb[1]); };
+// T76: 0.113 — CHANGELIST corner button: the full history (changelog.json,
+// kept by bump.mjs) newest first in a dialog that owns the keyboard, and
+// gives back the key trap of a dialog it was opened over.
+{
+  const cl = await import('../../src/ui/changelog.js');
+  const { nextChangelog } = await import('../bump.mjs');
+  const { setKeyTrap, currentKeyTrap } = await import('../../src/core/scene.js');
+  const full = JSON.parse(readFileSync('assets/data/changelog.json', 'utf8'));
+  const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
+  const vs = Object.keys(full);
+  ok('changelog.json: every build back to 0.073, newest first, superset of build.json', vs[0] === b.version && vs.at(-1) === '0.073'
+    && vs.every((v, i) => !i || up2(vs[i - 1], v)) && Object.keys(b.changelog).every((v) => JSON.stringify(full[v]) === JSON.stringify(b.changelog[v]))
+    && vs.every((v) => Array.isArray(full[v]) && full[v].length > 0 && full[v].every((n) => typeof n === 'string' && n.length > 0)));
+  const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
+  ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
+  ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
+  ok('CHANGELIST sits in the corner column, under VOLUME', readFileSync('src/main.js', 'utf8').includes('volumeToggle(), changelogToggle(),')
+    && readFileSync('styles.css', 'utf8').includes('.changelog-toggle { top: 136px; }') && readFileSync('styles.css', 'utf8').includes('body.debug .changelog-toggle { top: 168px; }'));
+
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  show(hubScene());
+  await sleep(1100);
+  const btn = cl.changelogToggle();
+  ok('corner button reads CHANGELIST', btn.textContent === 'CHANGELIST' && btn.className.includes('debug-toggle'));
+  const dlg = () => body.children.find((c) => c.className.includes('changelog-overlay'));
+  btn.listeners.click[0]();
+  await sleep(10);
+  const text = dlg()?.textContent ?? '';
+  ok('the dialog lists every build, newest first, current one marked', !!dlg() && text.includes(`Build ${b.version} — this build`) && text.includes('Build 0.073')
+    && text.indexOf(`Build ${b.version}`) < text.indexOf('Build 0.073') && text.includes(full['0.094'][0]));
+  const hubText = t();
+  handleKey('e'); handleKey('1');
+  ok('it owns the keyboard', !!dlg() && t() === hubText);
+  handleKey('escape');
+  ok('Esc closes and releases the keyboard', !dlg() && !cl.changelogOpen() && currentKeyTrap() === null);
+  // opened over another dialog: its key trap comes back on close
+  const other = () => true;
+  setKeyTrap(other);
+  await cl.openChangelog(async () => ({ '9.001': ['Bosses dance'], '9.000': ['Bats'] }));
+  ok('custom log renders', dlg().textContent.includes('Bosses dance') && dlg().textContent.indexOf('9.001') < dlg().textContent.indexOf('9.000'));
+  handleKey('c');
+  ok('closing gives back the trap underneath', !dlg() && currentKeyTrap() === other);
+  setKeyTrap(null);
+  await cl.openChangelog(async () => ({}));
+  ok('an empty log says so', dlg().textContent.includes('No release notes'));
+  cl.closeChangelog();
+  globalThis.document.body = realBody;
+}
+
 // T64: 0.102 — Descend with XP / coins still to spend asks first; the
 // default answer is to stay. Nothing to spend: straight down.
 {

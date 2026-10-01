@@ -198,10 +198,19 @@ const P = () => DATA.difficulty.player ?? {};
 // cap at level 5 and keep charging for nothing.)
 // Without a `rate`, the taper is smooth: its first step equals `perLevel`
 // and every later one shrinks by the same ratio (no cliff after `linear`).
-export function taper(level, { perLevel = 0, linear = 0, max = 0, rate } = {}) {
-  const L = Math.max(0, level);
+// With `tail` (0.113) the steps instead shrink like a power law —
+// perLevel * (linear / L)^tail — a long tail that still adds visibly at
+// level 80 (the geometric fall was ~0 by level 40); `max` (optional) is then
+// a hard ceiling.
+export function taper(level, { perLevel = 0, linear = 0, max = Infinity, rate, tail } = {}) {
+  const L = Math.max(0, Math.floor(level));
   const head = perLevel * Math.min(L, linear);
   if (L <= linear) return head;
+  if (tail) {
+    let total = head;
+    for (let k = linear + 1; k <= L; k++) total += perLevel * (linear / k) ** tail;
+    return Math.min(max, total);
+  }
   const gap = Math.max(0, max - perLevel * linear);
   const r = rate ?? Math.min(1, gap > 0 ? perLevel / gap : 1);
   return head + gap * (1 - (1 - r) ** (L - linear));
@@ -238,7 +247,10 @@ export function derivedStats(p = getProfile()) {
     crit: Math.min(critCap, crit),
     // 0.112: crit chance past the cap isn't lost — it becomes crit damage
     // (critOverflowDamage x the excess, added to the crit multiplier)
-    critBonus: Math.max(0, crit - critCap) * (pl.critOverflowDamage ?? 1.5),
+    // + (0.113) Precision's own crit damage: a flat bit per trained level,
+    // so late Precision levels never stop counting
+    critBonus: Math.max(0, crit - critCap) * (pl.critOverflowDamage ?? 1.5)
+      + trainedLevel(p, 'precision') * (pl.critDamagePerPrecision ?? 0.01),
     lifesteal,
     dodge,
     thorns,

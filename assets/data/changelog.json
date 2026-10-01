@@ -1,0 +1,166 @@
+{
+  "0.113": [
+    "New CHANGELIST button (upper right): every build's release notes in one place",
+    "Precision never stops paying off: every level adds +1% crit damage on top of its crit chance (no more +0%)",
+    "Efficiency keeps growing in ever smaller steps, and shows MAX once there's nothing left to gain"
+  ],
+  "0.112": [
+    "Efficiency never stops paying off: every level adds a little less (no more 40% wall)",
+    "Precision is worth training: +3% crit per level for 10 levels, then tapering — and crit chance past the max turns into crit damage",
+    "The Great Hall shows what the next Precision / Efficiency level actually adds",
+    "Fallen enemies stay faintly visible (20%)"
+  ],
+  "0.111": [
+    "The name field's text is centred properly (and no more specks above the letters)"
+  ],
+  "0.110": [
+    "Sword strikes and hits on the knight sound different every time (metal glints, thuds, armour clanks)",
+    "The coin jingle is a touch quieter"
+  ],
+  "0.109": [
+    "Enter your name when you first open the game (change it any time on the title screen)",
+    "Fallen enemies fade almost completely away"
+  ],
+  "0.108": [
+    "A whoosh when you move to the next room",
+    "The 'You escaped!' fanfare is 30% quieter"
+  ],
+  "0.107": [
+    "Cleaner combat audio: fewer sounds piled on top of each other, a rebalanced mix (rare finds and loot are audible now) and a limiter as a safety net",
+    "Music no longer dips into silence every ~20 seconds",
+    "Sounds come from where they happen (the knight on the left, enemies on the right) and land with the blow",
+    "Crits ring, mega crits hit deeper, OVERKILL booms; the music dips under the big moments",
+    "New VOLUME sliders (master, music, effects) in the top-right corner"
+  ],
+  "0.106": [
+    "OVERKILL now gets a huge banner and a red-hot flash when one blow wipes the room",
+    "Mega crits are twice as common (one crit in five)"
+  ],
+  "0.105": [
+    "Testing: ?debug toggles to force crits and mega crits"
+  ],
+  "0.104": [
+    "Critical hits now vary in damage",
+    "New: rare MEGA CRITS that hit 1.5x harder than a normal crit"
+  ],
+  "0.103": [
+    "Play stats now reach the developer automatically"
+  ],
+  "0.102": [
+    "Descending with XP or coins still to spend now asks first",
+    "Play stats are shared automatically (anonymous) so the developer sees every tester's runs"
+  ],
+  "0.101": [
+    "The mist is now made of big soft drifting fog banks that sit between things in the scene — sideways on the ramparts, rolling in at the gate",
+    "Smoother backgrounds: the fog costs far less, high-DPI screens render fewer pixels, and slow devices lower quality step by step instead of stuttering"
+  ],
+  "0.100": [
+    "Critical hits, potions and revives now light up the scene around the fighter — walls and mist nearby catch the glow"
+  ],
+  "0.099": [
+    "Drifting mist in the backgrounds: thicker over long views, a light haze indoors"
+  ],
+  "0.098": [
+    "Faster start: the title appears without waiting for the dungeon art to load"
+  ],
+  "0.097": [
+    "Run-end screen counts cleared rooms correctly",
+    "Smoother menus on slower screens (removed a costly background blur)",
+    "Loot summary no longer lists replaced items as equipped"
+  ],
+  "0.096": [
+    "Shrine blessings sit in a tidy compact row (the same blessing twice shows x2)"
+  ],
+  "0.095": [
+    "Your runs are now recorded (for the testers' play-stats page)",
+    "Critical hits show CRIT! above the damage number",
+    "The room-wipe blow now reads OVERKILL!"
+  ],
+  "0.094": [
+    "The game now tells you when a new build is out, with what changed"
+  ],
+  "0.093": [
+    "HP, armor and enemy damage numbers are 10x bigger (same difficulty)",
+    "Lifesteal percentages 10x too (they heal from the damage you deal)",
+    "Big hits now gently rock the background"
+  ],
+  "0.092": [
+    "Bosses summon skeletons: watch the violet bar under the boss HP",
+    "Heavy Attack strikes the summon standing in front of the boss",
+    "Button text and elite enemy names line up properly"
+  ],
+  "0.091": [
+    "A shrine in every 8-room stretch (rooms 2-7, 10-15, ...)",
+    "Shrine rebalance: Crit +15% for a flat 30 coins, Second Wind a flat 40 coins, stronger Armor, Bulwark and Glass Cannon",
+    "Drops that can't beat your gear are salvaged for coins on the spot"
+  ],
+  "0.090": [
+    "Feast Hall candelabras now sit properly in 3D",
+    "Great Hall: XP and Coins turn green when there's something to spend them on",
+    "Buy Potion glows when the satchel runs low"
+  ],
+  "0.089": [
+    "Particle bursts on hits and kills: blood, embers, soul wisps, dust",
+    "Elites and bosses glow with a pulsing aura",
+    "Potions get a big green heal effect; HP bars flash on heals and hits"
+  ],
+  "0.088": [
+    "Critical hits: big gold numbers and a hit-stop",
+    "Screen shake on heavy blows, SMASH and multi-kills",
+    "Dodges show MISS; revives flare gold"
+  ],
+  "0.087": [
+    "Characters come alive: idle animations, attack lunges, hit reactions, death collapses",
+    "Floating damage numbers; enemies step in when a room starts"
+  ],
+  "0.086": [
+    "HP bars move in step with the combat log, your own included",
+    "Heavy Attack misclicks no longer waste the cooldown"
+  ],
+  "0.085": [
+    "Deeper, livelier 3D backgrounds"
+  ],
+  "0.084": [
+    "3D background tuning tools for testing (?debug)"
+  ],
+  "0.083": [
+    "Living 3D backgrounds: the painted rooms have depth and the camera sways slowly"
+  ],
+  "0.082": [
+    "Smoother pulsing glow on the next button",
+    "Updates load cleanly (no more half-updated pages after a new build)"
+  ],
+  "0.081": [
+    "Great Hall stats in a tidy 3-column grid"
+  ],
+  "0.080": [
+    "Potions persist between runs: what you don't drink comes home",
+    "Potion satchel with a cap (start 4, expand up to 10); Buy Potion in the Great Hall",
+    "Your level is shown in the Great Hall"
+  ],
+  "0.079": [
+    "The obvious next button pulses (Push Deeper after a won fight)",
+    "New death sequence: the screen bleeds red and YOU DIED flashes in",
+    "Saves are versioned so future updates carry them forward"
+  ],
+  "0.078": [
+    "Combat cards fit any window width",
+    "Faster loading: lighter character art and audio"
+  ],
+  "0.077": [
+    "Retreat can no longer bank your loot twice",
+    "Typing in the save-code box no longer triggers hotkeys"
+  ],
+  "0.076": [
+    "Enemy portraits 10% smaller"
+  ],
+  "0.075": [
+    "Portraits break out of their card frames"
+  ],
+  "0.074": [
+    "Combat cards are slightly transparent"
+  ],
+  "0.073": [
+    "First tracked build of Castle of the Crimson Moon"
+  ]
+}

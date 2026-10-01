@@ -43,6 +43,7 @@ export function onSceneChange(fn) { sceneListener = fn; }
 // (0.094): fn(key) handles every key, so the scene's hotkeys underneath
 // can't fire. null releases it.
 export function setKeyTrap(fn) { keyTrap = fn; }
+export const currentKeyTrap = () => keyTrap; // to restore one after a dialog on top (0.113)
 
 // Fade the windows out, run `work()` (swap content and/or background),
 // then fade the windows back in. Ignored if a transition is already

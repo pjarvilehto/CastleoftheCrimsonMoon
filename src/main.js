@@ -8,6 +8,7 @@ import { show, initHotkeys, el, setBackground, onBackgroundChange } from './core
 import { initBg3d, showBackground3d, isBg3dActive, bgView, setBgView } from './core/bg3d.js';
 import { bgTunerToggle } from './ui/bgTuner.js';
 import { volumeToggle } from './ui/volumePanel.js';
+import { changelogToggle } from './ui/changelog.js';
 import { loadData, DATA } from './shared/data.js';
 import { preloadAssets, preloadRest } from './shared/preload.js';
 import { titleScene } from './ui/scenes/titleScene.js';
@@ -96,7 +97,7 @@ async function boot() {
       e.currentTarget.textContent = `SOUND: ${m ? 'OFF' : 'ON'}`;
     },
   }, `SOUND: ${sfxMuted() ? 'OFF' : 'ON'}`);
-  document.body.append(...[tag, inv, music, fsBtn, snd, volumeToggle(), ...(debugMode ? bgDebugToggles() : [])].filter(Boolean));
+  document.body.append(...[tag, inv, music, fsBtn, snd, volumeToggle(), changelogToggle(), ...(debugMode ? bgDebugToggles() : [])].filter(Boolean));
   // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
   // under ?debug (headless testing); real players on a GPU-less machine,
   // or with reduced motion requested, keep the flat CSS backgrounds.

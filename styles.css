@@ -774,6 +774,23 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .update-notes li::marker { color: var(--gold-dim); }
 .update-ask { color: var(--parchment); letter-spacing: 0.08em; margin: 0 0 16px; }
 .update-modal .btn-row { justify-content: center; }
+/* CHANGELIST (0.113, ui/changelog.js): every build's notes in a scrolling
+   box with the combat log's look (dark glass, thin gold rule, mixed case) */
+.changelog-modal { max-width: 640px; padding: 26px 30px 22px; }
+.changelog-modal .update-title { margin-bottom: 14px; }
+.changelog-log {
+  max-height: min(62vh, 560px); overflow-y: auto; text-align: left;
+  border: 1px solid rgba(201,162,39,0.2); border-radius: 4px;
+  background: rgba(0,0,0,0.5); padding: 10px 14px; margin: 0 0 18px;
+  font-size: 0.9rem; line-height: 1.5;
+}
+.changelog-log, .changelog-log * { text-transform: none; }
+.changelog-build + .changelog-build { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(201,162,39,0.12); }
+.changelog-version { color: var(--gold); letter-spacing: 0.12em; }
+.changelog-here { color: #9a8b6a; letter-spacing: 0.05em; }
+.changelog-notes { margin: 2px 0 0; padding-left: 1.2em; color: var(--parchment); }
+.changelog-notes li::marker { color: var(--gold-dim); }
+.changelog-empty { color: #9a8b6a; }
 /* "Enter your name" (0.109, ui/namePrompt.js) + the title's "Playing as" line */
 .name-input {
   /* line-height normal: the glyphs fit their own line box (a tighter one
@@ -821,18 +838,20 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .fs-toggle { top: 40px; }
 .sfx-toggle { top: 72px; }
 .volume-toggle { top: 104px; }
+.changelog-toggle { top: 136px; }
 body.debug .music-toggle { top: 40px; }
 body.debug .fs-toggle { top: 72px; }
 body.debug .sfx-toggle { top: 104px; }
 body.debug .volume-toggle { top: 136px; }
+body.debug .changelog-toggle { top: 168px; }
 /* ?debug background evaluation toggles (0.083) */
-.bg-fg-toggle { top: 168px; }
-.bg-view-toggle { top: 200px; }
-.bg-next-toggle { top: 232px; }
-.bg-tune-toggle { top: 264px; }
+.bg-fg-toggle { top: 200px; }
+.bg-view-toggle { top: 232px; }
+.bg-next-toggle { top: 264px; }
+.bg-tune-toggle { top: 296px; }
 /* ?debug crit testing (0.105) */
-.crit-toggle { top: 296px; }
-.megacrit-toggle { top: 328px; }
+.crit-toggle { top: 328px; }
+.megacrit-toggle { top: 360px; }
 /* VOLUME sliders (0.107, ui/volumePanel.js): just under the VOLUME toggle */
 .volume-panel {
   position: fixed; top: 138px; right: 12px; z-index: 51; width: 250px;
@@ -847,7 +866,7 @@ body.debug .volume-panel { top: 170px; }
 .volume-value { text-align: right; color: var(--gold); }
 /* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
 .bg-tuner {
-  position: fixed; top: 362px; right: 12px; z-index: 50; width: 300px;
+  position: fixed; top: 394px; right: 12px; z-index: 50; width: 300px;
   padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);

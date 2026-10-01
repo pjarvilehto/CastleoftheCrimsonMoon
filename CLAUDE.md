@@ -79,7 +79,9 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    every player-facing change (writes version + module list + changelog
    into `assets/data/build.json`), and run the smoke suite before pushing.
    The notes are what players see in the in-game "Build 0.0NN available"
-   prompt (0.094): short, player-facing, one `--note` per change.
+   prompt (0.094) and the CHANGELIST corner button (0.113, the whole
+   history in `assets/data/changelog.json`, also written by bump):
+   short, player-facing, one `--note` per change.
    index.html loads CSS/JS under `?v=<version>` from that list (0.082), so
    a deploy can't leave players on a mix of old and new files.
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
@@ -210,10 +212,12 @@ static play-stats page.
 - Upgrades never charge for nothing (0.112): capped effects use
   `profile.taper` (linear `perLevel` for `linear` levels, then each level
   closes a share of the gap to `max`; smooth by default: the first tapered
-  step equals perLevel) — Precision (`player.precisionTaper`)
-  and Efficiency (`alchemyTracks.efficiency`); crit chance past `critCap`
-  becomes crit damage (`critOverflowDamage`). Hub lines show the next
-  level's real gain. `node tools/stat-study.mjs [--set path=json]` measures
+  step equals perLevel; or `tail: k` = level n adds perLevel·(linear/n)^k,
+  a long tail) — Precision (`player.precisionTaper`) and Efficiency
+  (`alchemyTracks.efficiency`, tail 1.5; MAX once a level adds < `minStep`).
+  Every Precision level also adds `critDamagePerPrecision` crit damage
+  (0.113), and crit chance past `critCap` becomes crit damage
+  (`critOverflowDamage`). Hub lines show the next level's real gain. `node tools/stat-study.mjs [--set path=json]` measures
   what each upgrade is worth (paired seeds, like the shrine study).
 - Boss summons (0.092): `difficulty.json boss.summon` (every N turns,
   enemy, maxAlive, hp/dmg scale, depthBonus). Summons give no rewards.
