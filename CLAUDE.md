@@ -249,11 +249,15 @@ licence alongside) and reached through the page's import map as `three`; a
 new three.js version = a new folder. The game never imports `src/explore/`.
 - `grid.js` (pure, tested in Node): the text map ('#' wall, '.' floor, 'S'
   start), circle-vs-cell collision that slides along walls, seeded random.
-- `mapgen.js` (0.140, pure): a floor from a seed (`explore.json gen`) —
-  rooms that don't touch, a spanning tree of L corridors + `loops` extra
-  links, dead-end spurs; the 5x5 room is the boss, the room farthest from
-  it the start, one halfway the shrine, the rest (nearest first) the
-  `encounters`; rooms marked 'E' / 'H' / 'B' in the rows. The lab: `?seed=N`,
+- `mapgen.js` (0.140, pure; linear and half the size since 0.143, at the
+  owner's request): a floor from a seed (`explore.json gen`) — a chain of
+  rooms laid one after another along a winding path (`straightness`,
+  `linkMin..linkMax` cells of corridor between them), each joined only to
+  the next by an L corridor that touches no other room, up to `deadEnds`
+  short spurs; a floor where walking order differs from the chain (a fork
+  or shortcut) is redrawn. First room = start, last (bossSize) = boss, the
+  middle one the shrine, the rest the `encounters` in order; rooms marked
+  'E' / 'H' / 'B' in the rows. The lab: `?seed=N`,
   the N key = next floor; `minimap.js` shows only what the knight has seen.
 - Encounters (0.141): floor n = the game's rooms (n-1)*8+1..n*8
   (`encounters.js`: encounters nearest first, the boss chamber the boss

@@ -87,13 +87,27 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   const a = generateFloor(42, cfg.gen), b = generateFloor(42, cfg.gen), c = generateFloor(43, cfg.gen);
   ok('floor generator: the same seed, the same floor; the next seed, another', a.rows.join() === b.rows.join() && a.rows.join() !== c.rows.join());
   const spurs = (f) => { const g = parseMap(f.rows); let n = 0; for (let z = 0; z < g.h; z++) for (let x = 0; x < g.w; x++) if (isOpen(g, x, z) && Object.values(DIRS).filter(([dx, dz]) => isOpen(g, x + dx, z + dz)).length === 1) n++; return n; };
-  ok('floor generator: floors have dead ends to poke into', [1, 2, 3, 4, 5].every((s) => spurs(generateFloor(s, cfg.gen)) >= 2));
+  const tips = [...Array(20).keys()].map((i) => spurs(generateFloor(i + 1, cfg.gen)));
+  ok('floor generator: a few dead ends to poke into (up to deadEnds a floor)', tips.reduce((a, b) => a + b, 0) >= 15 && tips.every((n) => n <= cfg.gen.deadEnds), tips.join(' '));
+  // 0.143: linear — the rooms come in walking order, each a step deeper
+  // than the last, and the floor is about half the 0.140 size
+  const lin = [];
+  for (let seed = 1; seed <= 60; seed++) {
+    const f = generateFloor(seed, cfg.gen), g = parseMap(f.rows), d = reach(g, f.start);
+    const marks = [['S', f.start], ...f.encounters.map((e) => ['E', e]), ['H', f.shrine], ['B', f.boss]]
+      .map(([c, p]) => [c, d.get(`${p.x},${p.z}`)]).sort((a, b) => a[1] - b[1]);
+    const seq = marks.map((m) => m[0]).join(''), half = Math.ceil(cfg.gen.encounters / 2);
+    const encDs = f.encounters.map((p) => d.get(`${p.x},${p.z}`));
+    if (seq !== `S${'E'.repeat(half)}H${'E'.repeat(cfg.gen.encounters - half)}B` || !encDs.every((v, i) => i === 0 || v > encDs[i - 1])) lin.push(`seed ${seed}: ${seq}`);
+  }
+  ok('floor generator: one chain — start, encounters, shrine halfway, more encounters, boss, each deeper than the last', lin.length === 0, lin.slice(0, 3).join('; '));
+  ok('floor generator: about half the area of the first generator (33 x 29)', cfg.gen.width * cfg.gen.height <= 0.6 * 33 * 29);
   const nums = ['cell', 'wallHeight', 'eyeHeight', 'move.speed', 'move.runMult', 'move.accel', 'move.turnSpeed', 'move.mouseSens',
     'move.pitchLimit', 'move.radius', 'move.bobAmp', 'move.bobStride', 'light.party.intensity', 'light.party.distance', 'light.party.decay',
     'light.torch.intensity', 'light.torch.distance', 'light.torch.decay', 'light.torch.height', 'light.pool', 'light.flicker',
     'light.ambient.intensity', 'fog.density', 'render.maxPixelRatio', 'render.samples', 'render.exposure', 'paint.edge', 'paint.edgeWidth',
     'paint.bands', 'paint.bandMix', 'paint.desat', 'paint.inkBelow', 'paint.grain', 'paint.vignette', 'decor.beamEvery', 'decor.torchSpacing', 'decor.seed',
-    ...['width', 'height', 'rooms', 'roomMin', 'roomMax', 'bossSize', 'roomGap', 'encounters', 'loops', 'deadEnds', 'deadEndMax', 'seed', 'reveal'].map((k) => `gen.${k}`)];
+    ...['width', 'height', 'roomMin', 'roomMax', 'bossSize', 'roomGap', 'linkMin', 'linkMax', 'straightness', 'encounters', 'deadEnds', 'deadEndMax', 'seed', 'reveal'].map((k) => `gen.${k}`)];
   const colors = ['light.party.color', 'light.torch.color', 'light.ambient.sky', 'light.ambient.ground', 'fog.color', 'paint.shadow', 'paint.highlight', 'paint.ink'];
   const at = (path) => path.split('.').reduce((o, k) => o?.[k], cfg);
   const missing = [...nums.filter((n) => !Number.isFinite(at(n))), ...colors.filter((c) => !/^#[0-9a-f]{6}$/i.test(at(c) ?? ''))];

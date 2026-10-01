@@ -1,20 +1,21 @@
-// explore/mapgen.js — a dungeon floor from a seed (0.140). Pure: no DOM, no
-// three.js; tested in Node. Rooms are scattered without touching, joined
-// by a spanning tree of L-shaped corridors (plus a few extra links, so
-// some routes loop), and a few dead-end spurs are dug off the corridors.
-// Then the rooms get their parts: the big room is the boss chamber, the
-// room farthest from it the start, one room halfway the shrine, and the
-// rest (nearest first) the encounters. Out comes the same text map
-// grid.js reads — '#' wall, '.' floor, 'S' start — with the rooms marked
-// at their centres: 'E' encounter, 'H' shrine, 'B' boss.
+// explore/mapgen.js — a dungeon floor from a seed (0.140; linear since
+// 0.143). Pure: no DOM, no three.js; tested in Node. The floor is a chain:
+// rooms laid one after another along a winding path (mostly onward, now
+// and then a turn), each joined only to the next by a corridor, plus a
+// couple of short dead-end spurs to poke into. The first room is the
+// start, the last the boss chamber, the one halfway the shrine, the rest
+// the encounters in walking order. Out comes the text map grid.js reads —
+// '#' wall, '.' floor, 'S' start — with the rooms marked at their
+// centres: 'E' encounter, 'H' shrine, 'B' boss.
 
 import { seeded, DIRS } from './grid.js';
 
 const W = '#', O = '.';
+const HEADINGS = Object.values(DIRS);
 
 export function generateFloor(seed, gen) {
   const rnd = seeded(seed);
-  for (let attempt = 0; attempt < 100; attempt++) {
+  for (let attempt = 0; attempt < 200; attempt++) {
     const floor = tryFloor(rnd, gen);
     if (floor) return { seed, ...floor };
   }
@@ -25,50 +26,59 @@ function tryFloor(rnd, gen) {
   const { width: w, height: h } = gen;
   const g = Array.from({ length: h }, () => Array(w).fill(W));
   const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const count = gen.encounters + 3; // start, encounters, shrine, boss
+  const centre = (r) => ({ x: r.x + (r.w >> 1), z: r.z + (r.h >> 1) });
+  const inRect = (r, x, z) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h;
 
-  // rooms: the boss chamber first (it must fit), then as many as will go
+  // the chain: each room a corridor's length on from the last
   const rooms = [];
   const fits = (r) => r.x >= 1 && r.z >= 1 && r.x + r.w <= w - 1 && r.z + r.h <= h - 1
     && rooms.every((o) => r.x + r.w + gen.roomGap <= o.x || o.x + o.w + gen.roomGap <= r.x || r.z + r.h + gen.roomGap <= o.z || o.z + o.h + gen.roomGap <= r.z);
-  for (let tries = 0; tries < 400 && rooms.length < gen.rooms; tries++) {
-    const boss = rooms.length === 0;
-    const rw = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax), rh = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax);
-    const r = { x: int(1, w - rw - 1), z: int(1, h - rh - 1), w: rw, h: rh };
-    if (fits(r)) rooms.push(r);
+  const sw = int(gen.roomMin, gen.roomMax), sh = int(gen.roomMin, gen.roomMax);
+  rooms.push({ x: int(1, w - sw - 1), z: int(1, h - sh - 1), w: sw, h: sh });
+  let heading = HEADINGS[int(0, 3)];
+  while (rooms.length < count) {
+    const prev = rooms.at(-1), boss = rooms.length === count - 1;
+    let placed = null;
+    for (let tries = 0; tries < 40 && !placed; tries++) {
+      const dir = rnd() < gen.straightness ? heading : HEADINGS[int(0, 3)];
+      const rw = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax), rh = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax);
+      const link = int(gen.linkMin, gen.linkMax), [dx, dz] = dir;
+      // beyond prev's side in that direction, sliding a little sideways
+      const x = dx > 0 ? prev.x + prev.w + link : dx < 0 ? prev.x - link - rw : prev.x + int(-(rw - 1), prev.w - 1);
+      const z = dz > 0 ? prev.z + prev.h + link : dz < 0 ? prev.z - link - rh : prev.z + int(-(rh - 1), prev.h - 1);
+      const r = { x, z, w: rw, h: rh };
+      if (fits(r)) { placed = r; heading = dir; }
+    }
+    if (!placed) return null; // painted into a corner: start over
+    rooms.push(placed);
   }
-  const needed = gen.encounters + 3; // + start, shrine, boss
-  if (rooms.length < needed) return null;
   for (const r of rooms) for (let z = r.z; z < r.z + r.h; z++) for (let x = r.x; x < r.x + r.w; x++) g[z][x] = O;
-  const centre = (r) => ({ x: r.x + (r.w >> 1), z: r.z + (r.h >> 1) });
 
-  // corridors: a spanning tree (Prim, nearest first), then extra links
-  const dist = (a, b) => Math.abs(centre(a).x - centre(b).x) + Math.abs(centre(a).z - centre(b).z);
-  const linked = new Set([0]), links = [];
-  while (linked.size < rooms.length) {
-    let best = null;
-    for (const i of linked) rooms.forEach((r, j) => {
-      if (!linked.has(j) && (!best || dist(rooms[i], r) < best.d)) best = { i, j, d: dist(rooms[i], r) };
-    });
-    linked.add(best.j); links.push([best.i, best.j]);
-  }
-  for (let k = 0; k < gen.loops; k++) {
-    const i = int(0, rooms.length - 1);
-    const others = rooms.map((_, j) => j).filter((j) => j !== i && !links.some(([a, b]) => (a === i && b === j) || (a === j && b === i)))
-      .sort((a, b) => dist(rooms[i], rooms[a]) - dist(rooms[i], rooms[b]));
-    if (others.length) links.push([i, others[0]]);
-  }
-  for (const [i, j] of links) {
-    const a = centre(rooms[i]), b = centre(rooms[j]), xFirst = rnd() < 0.5;
-    const corner = xFirst ? { x: b.x, z: a.z } : { x: a.x, z: b.z };
-    dig(g, a, corner); dig(g, corner, b);
+  // corridors: each room to the next only, by an L that touches no other room
+  for (let i = 1; i < rooms.length; i++) {
+    const a = centre(rooms[i - 1]), b = centre(rooms[i]);
+    const others = rooms.filter((_, j) => j !== i && j !== i - 1);
+    const clear = (p, q) => {
+      const dx = Math.sign(q.x - p.x), dz = Math.sign(q.z - p.z);
+      for (let x = p.x, z = p.z; ; x += dx, z += dz) {
+        if (others.some((r) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([ox, oz]) => inRect(r, x + ox, z + oz)))) return false;
+        if (x === q.x && z === q.z) return true;
+      }
+    };
+    const corners = [{ x: b.x, z: a.z }, { x: a.x, z: b.z }];
+    if (rnd() < 0.5) corners.reverse();
+    const c = corners.find((k) => clear(a, k) && clear(k, b));
+    if (!c) return null; // the only ways there cut through another room
+    dig(g, a, c); dig(g, c, b);
   }
 
   // dead ends: short spurs off a corridor into solid rock
-  const inRoom = (x, z) => rooms.some((r) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h);
+  const inAny = (x, z) => rooms.some((r) => inRect(r, x, z));
   for (let k = 0, tries = 0; k < gen.deadEnds && tries < 200; tries++) {
     const x = int(1, w - 2), z = int(1, h - 2);
-    if (g[z][x] !== O || inRoom(x, z)) continue;
-    const [dx, dz] = Object.values(DIRS)[int(0, 3)], len = int(2, gen.deadEndMax);
+    if (g[z][x] !== O || inAny(x, z)) continue;
+    const [dx, dz] = HEADINGS[int(0, 3)], len = int(2, gen.deadEndMax);
     const cells = [];
     for (let s = 1; s <= len; s++) {
       const cx = x + dx * s, cz = z + dz * s;
@@ -83,20 +93,19 @@ function tryFloor(rnd, gen) {
     k++;
   }
 
-  // the rooms' parts, by walking distance
-  const bossRoom = rooms[0];
-  const fromBoss = walk(g, centre(bossRoom));
-  const others = rooms.slice(1);
-  const startRoom = others.reduce((a, b) => (fromBoss[key(centre(b))] > fromBoss[key(centre(a))] ? b : a));
+  // the rooms' parts, in walking order; the boss is the deepest point
+  const startRoom = rooms[0], bossRoom = rooms.at(-1);
   const fromStart = walk(g, centre(startRoom));
   const d = (r) => fromStart[key(centre(r))];
-  const rest = others.filter((r) => r !== startRoom).sort((a, b) => d(a) - d(b));
-  if (rest.some((r) => d(r) >= d(bossRoom))) return null; // the boss is the deepest point
-  const shrineRoom = rest.splice(Math.floor(rest.length / 2), 1)[0];
-  const encounterRooms = rest.slice(0, gen.encounters);
+  // still a chain when walked: every room further on than the one before
+  // (a corridor crossing another would make a fork or a shortcut)
+  if (!rooms.every((r, i) => i === 0 || d(r) > d(rooms[i - 1]))) return null;
+  const middle = rooms.slice(1, -1);
+  const shrineRoom = middle[Math.floor(middle.length / 2)];
+  const encounterRooms = middle.filter((r) => r !== shrineRoom);
 
   const start = centre(startRoom);
-  const mark = (r, c) => { const p = centre(r); g[p.z][p.x] = c; return { ...p, room: r }; };
+  const mark = (r, ch) => { const p = centre(r); g[p.z][p.x] = ch; return { ...p, room: r }; };
   mark(startRoom, 'S');
   const encounters = encounterRooms.map((r) => mark(r, 'E'));
   const shrine = mark(shrineRoom, 'H'), boss = mark(bossRoom, 'B');
