@@ -611,3 +611,12 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
     && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => spray(ctx.unit(i), 0, 0, true)'));
 }
+// T90: 0.129 — the particle renderer stays batched and cheap.
+{
+  const src = readFileSync('src/ui/particles.js', 'utf8');
+  ok('particles: batched Path2D buckets, cached flash sprite, dirty-box clear, one canvas per session',
+    src.includes('function bucket(buckets, glow, stroke, rgb, a, w = 0)') && src.includes('glowSprite(p.color)')
+    && src.includes('c.clearRect(box[0], box[1]') && src.includes('if (!shared) {') && !/\.save\(\)|createRadialGradient\(p\./.test(src));
+  ok('particles: 1.25x resolution, 1x once the background stepped down; crowded bursts thin out',
+    src.includes('bgQualityLevel() > 0 ? 1 : 1.25') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);"));
+}

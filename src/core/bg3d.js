@@ -68,6 +68,9 @@ export function bgSway(strength = 1, dir = 1) {
 }
 
 export const isBg3dActive = () => !!gl;
+// The quality ladder step (0 = full; core/bg3dQuality.js) — the particles
+// drop their resolution with it (0.129).
+export const bgQualityLevel = () => level;
 export const bgView = () => view;
 export function setBgView(v) { view = v; }
 

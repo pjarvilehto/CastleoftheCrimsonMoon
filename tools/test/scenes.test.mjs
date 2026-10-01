@@ -342,12 +342,23 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   getProfile().name = 'Tester';
 }
 
-// T74: 0.111 — the name field: glyphs inside their own line box (no caret
-// repaint specks), caps centred from the font's measured metrics.
+// T74: 0.111 — the name field: caps centred from the font's measured
+// metrics. 0.129: a tall line box (room above Å / Ö, whose marks the
+// normal one clipped) and a whole-field repaint on every edit (the macOS
+// specks: the caps' tops sit exactly on the font's ascent line).
 {
   const np = readFileSync('src/ui/namePrompt.js', 'utf8');
-  ok('name field: normal line height, caps centred from measured font metrics', /\.name-input \{[^}]*line-height: normal;/.test(readFileSync('styles.css', 'utf8'))
+  ok('name field: tall line box, caps centred from measured font metrics', /\.name-input \{[^}]*line-height: 1\.5;/.test(readFileSync('styles.css', 'utf8'))
     && np.includes('const low = (asc - desc - cap) / 2;') && np.includes('setTimeout(() => { centerCaps(input);'));
+  const { namePrompt } = await import('../../src/ui/namePrompt.js');
+  const realBody = globalThis.document.body;
+  globalThis.document.body = new El('body');
+  const { input, close } = namePrompt();
+  const bgs = [];
+  for (let i = 0; i < 3; i++) { input.listeners.input[0](); bgs.push(input.style.backgroundColor); }
+  ok('every edit repaints the whole name field (background flips imperceptibly)', bgs[0] === 'rgba(0, 0, 0, 0.556)' && bgs[1] === '' && bgs[2] === bgs[0]);
+  close();
+  globalThis.document.body = realBody;
   const { centerCaps } = await import('../../src/ui/namePrompt.js');
   ok('centerCaps is a safe no-op without a real layout engine', centerCaps(new El('input')) === 0);
 }

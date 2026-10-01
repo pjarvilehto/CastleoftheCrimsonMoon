@@ -17,7 +17,7 @@
 // Off under prefers-reduced-motion, and when the 3D background has fallen
 // back to flat (the renderer's own weak-device signal).
 
-import { isBg3dActive } from '../core/bg3d.js';
+import { isBg3dActive, bgQualityLevel } from '../core/bg3d.js';
 
 export const MATERIAL = {
   ghoul: 'embers',            // "Cinderborn"
@@ -35,22 +35,33 @@ const PAL = {
   wisps: { dark: '20,60,80', mid: '150,220,255', hot: '235,252,255', fall: -1 },
 };
 const MULT = { hit: 1, crit: 1.8, kill: 2.4 };
-const MAX = 450;
+const MAX = 450, BUDGET = 300;
+const THINNABLE = new Set(['streak', 'blob', 'dot']);
 const R = Math.random, rr = (a, b) => a + R() * (b - a);
 let canvas = null, ctx2d = null, parts = [], running = false, last = 0, scale = 1;
+let box = null; // last frame's painted area, device px: [x0, y0, x1, y1]
 
 export function particlesEnabled() {
   return isBg3dActive() && !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-// (Re)attach the canvas to a combat room's fx layer.
+// Attach the canvas to a combat room's fx layer. One canvas for the whole
+// session (0.129): a new full-screen one per room cost a ~10 ms hitch on
+// each room's first hit (allocating its backing store).
+let shared = null;
 export function attachParticles(layer) {
-  parts = [];
-  if (!layer || !particlesEnabled()) { canvas = null; return; }
-  canvas = document.createElement('canvas');
-  canvas.className = 'fx-particles';
-  ctx2d = canvas.getContext?.('2d') ?? null;
-  if (!ctx2d) { canvas = null; return; }
+  parts = []; box = null;
+  canvas = null;
+  if (!layer || !particlesEnabled()) return;
+  if (!shared) {
+    shared = document.createElement('canvas');
+    shared.className = 'fx-particles';
+    ctx2d = shared.getContext?.('2d') ?? null;
+    if (!ctx2d) { shared = null; return; }
+  }
+  canvas = shared;
+  ctx2d.setTransform(1, 0, 0, 1, 0, 0);
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height); // the last room's splats
   layer.prepend(canvas);
 }
 
@@ -60,7 +71,16 @@ export function attachParticles(layer) {
 // where ink drops land.
 export function burst(material, x, y, opts = {}) {
   if (!canvas?.isConnected) return;
-  for (const p of spawnParticles(material, x, y, opts)) if (parts.length < MAX) parts.push(p);
+  // Crowded (OVERKILL: a kill burst on every card at once): past BUDGET
+  // live particles a new burst keeps its rings, flashes and slashes but
+  // only some of its streaks, blobs and sparks (0.129).
+  const list = spawnParticles(material, x, y, opts);
+  const keep = Math.min(1, Math.max(0.35, (BUDGET - parts.length) / list.length));
+  for (const p of list) {
+    if (parts.length >= MAX) break;
+    if (keep < 1 && THINNABLE.has(p.kind) && R() > keep) continue;
+    parts.push(p);
+  }
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
 }
 
@@ -121,10 +141,21 @@ function heal(h, u) {
   return out;
 }
 
+// ---- drawing (0.129: batched) ----
+// Each frame the particles are sorted into buckets by how they paint —
+// composite mode, colour, an alpha step (ALPHA_STEPS levels) and line
+// width — and each bucket is ONE fill or stroke of a Path2D. A burst of
+// 50 streaks is a handful of draw calls instead of 50 state changes; the
+// ink pass (source-over) runs before the glow pass ('lighter'). Only the
+// area painted last frame is cleared.
+const TAU = Math.PI * 2, ALPHA_STEPS = 12;
+const qa = (a) => Math.round(Math.min(1, a) * ALPHA_STEPS) / ALPHA_STEPS;
+
 function step(p, dt) {
   if (p.vx === undefined) return;
-  p.vx *= Math.exp(-p.drag * dt);
-  p.vy = p.vy * Math.exp(-p.drag * dt) + p.g * dt;
+  const d = Math.exp(-p.drag * dt);
+  p.vx *= d;
+  p.vy = p.vy * d + p.g * dt;
   p.x += p.vx * dt + (p.wobble ? Math.sin(p.age * 5 + p.wobble) * 0.6 : 0);
   p.y += p.vy * dt;
   if (p.floor && p.y > p.floor && p.kind === 'blob') { // lands: a splat that fades slowly
@@ -132,76 +163,152 @@ function step(p, dt) {
   }
 }
 
-function draw(c, p) {
-  if (p.age < 0) return; // a delayed ring
-  const k = Math.max(0, 1 - p.age / p.life);
+// bucket: one Path2D per (pass, fill/stroke, colour, alpha step, width)
+function bucket(buckets, glow, stroke, rgb, a, w = 0) {
+  const key = `${glow ? 1 : 0}${stroke ? 1 : 0}${rgb}|${a}|${w}`;
+  let b = buckets.get(key);
+  if (!b) buckets.set(key, (b = { glow, stroke, style: `rgba(${rgb},${a})`, w, path: new Path2D() }));
+  return b.path;
+}
+
+// What one particle adds to its bucket; returns its reach (CSS px) for the
+// dirty box, or -1 when it is drawn on its own (slash, ring, flash).
+function add(buckets, p, k) {
   switch (p.kind) {
     case 'dot': {
-      const fl = p.flicker ? 0.55 + 0.45 * Math.sin(p.age * 38 + p.wobble * 9) : 1;
-      c.globalCompositeOperation = p.glow ? 'lighter' : 'source-over';
-      c.fillStyle = `rgba(${p.color},${0.55 * k * fl})`;
-      c.beginPath(); c.arc(p.x, p.y, Math.max(0.5, p.size * (0.6 + k * 0.4)), 0, 7); c.fill(); break;
+      const a = qa(0.55 * k * (p.flicker ? 0.55 + 0.45 * Math.sin(p.age * 38 + p.wobble * 9) : 1));
+      if (a <= 0) return 0;
+      const r = Math.max(0.5, p.size * (0.6 + k * 0.4)), path = bucket(buckets, p.glow, false, p.color, a);
+      path.moveTo(p.x + r, p.y); path.arc(p.x, p.y, r, 0, TAU);
+      return r;
     }
     case 'blob': {
+      const a = qa(0.95 * Math.min(1, k * 1.6));
+      if (a <= 0) return 0;
       const st = Math.min(3.2, 1 + Math.hypot(p.vx, p.vy) / 260); // stretched along its flight, like a brush flick
-      c.globalCompositeOperation = 'source-over';
-      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(p.vy, p.vx));
-      c.fillStyle = `rgba(${p.color},${0.95 * Math.min(1, k * 1.6)})`;
-      c.beginPath(); c.ellipse(0, 0, p.size * st, p.size / Math.sqrt(st), 0, 0, 7); c.fill(); c.restore(); break;
+      const rx = p.size * st, ry = p.size / Math.sqrt(st), rot = Math.atan2(p.vy, p.vx), path = bucket(buckets, false, false, p.color, a);
+      path.moveTo(p.x + rx * Math.cos(rot), p.y + rx * Math.sin(rot)); path.ellipse(p.x, p.y, rx, ry, rot, 0, TAU);
+      return rx;
     }
-    case 'splat':
-      c.globalCompositeOperation = 'source-over';
-      c.fillStyle = `rgba(${p.color},${0.85 * k})`;
-      c.beginPath(); c.ellipse(p.x, p.y, p.w, p.w * 0.28, 0, 0, 7); c.fill(); break;
-    case 'slash': {
-      const t = p.age / p.life, L = p.len * Math.min(1, t * 4), x0 = -p.len / 2;
-      c.globalCompositeOperation = 'source-over';
-      c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
-      c.fillStyle = `rgba(${p.color},${0.92 * (1 - t)})`;
-      c.beginPath(); c.moveTo(x0, 0); c.quadraticCurveTo(x0 + L / 2, -p.w, x0 + L, 0); c.quadraticCurveTo(x0 + L / 2, p.w * 0.35, x0, 0); c.fill();
-      // a thin hot edge along the cut, so the dark ink reads on dark rooms
-      c.strokeStyle = `rgba(${p.edge},${0.85 * (1 - t)})`; c.lineWidth = Math.max(1, p.w * 0.14);
-      c.beginPath(); c.moveTo(x0, 0); c.quadraticCurveTo(x0 + L / 2, -p.w, x0 + L, 0); c.stroke();
-      c.restore(); break;
-    }
-    case 'ring': {
-      const t = p.age / p.life, r = p.r0 + (p.r1 - p.r0) * (1 - (1 - t) ** 3);
-      c.globalCompositeOperation = 'lighter';
-      c.strokeStyle = `rgba(${p.color},${0.9 * (1 - t)})`; c.lineWidth = Math.max(1, 7 * (1 - t));
-      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.stroke(); break;
-    }
-    case 'flash': {
-      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-      g.addColorStop(0, `rgba(${p.color},${0.9 * k})`); g.addColorStop(1, `rgba(${p.color},0)`);
-      c.globalCompositeOperation = 'lighter'; c.fillStyle = g;
-      c.beginPath(); c.arc(p.x, p.y, p.size, 0, 7); c.fill(); break;
+    case 'splat': {
+      const a = qa(0.85 * k);
+      if (a <= 0) return 0;
+      const path = bucket(buckets, false, false, p.color, a);
+      path.moveTo(p.x + p.w, p.y); path.ellipse(p.x, p.y, p.w, p.w * 0.28, 0, 0, TAU);
+      return p.w;
     }
     case 'streak': {
+      const a = qa(k * 1.4);
+      if (a <= 0) return 0;
       const sp = Math.hypot(p.vx, p.vy) || 1, len = Math.min(70, sp * 0.05) + 3;
-      c.globalCompositeOperation = 'lighter'; c.lineCap = 'round'; c.lineWidth = p.size;
-      c.strokeStyle = `rgba(${k > 0.6 ? p.hot : p.mid},${Math.min(1, k * 1.4)})`; // white-hot, then cooling
-      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - (p.vx / sp) * len, p.y - (p.vy / sp) * len); c.stroke(); break;
+      const path = bucket(buckets, true, true, k > 0.6 ? p.hot : p.mid, a, Math.max(1, Math.round(p.size))); // white-hot, then cooling
+      path.moveTo(p.x, p.y); path.lineTo(p.x - (p.vx / sp) * len, p.y - (p.vy / sp) * len);
+      return len + p.size;
     }
+    default: return -1;
   }
 }
 
-function tick(now) {
-  if (!canvas?.isConnected) { running = false; parts = []; return; }
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  fit();
-  ctx2d.setTransform(1, 0, 0, 1, 0, 0);
-  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
-  ctx2d.setTransform(scale, 0, 0, scale, 0, 0); // particles live in CSS px
-  parts = parts.filter((p) => (p.age += dt) < p.life);
-  for (const p of parts) { step(p, dt); draw(ctx2d, p); }
-  if (parts.length) requestAnimationFrame(tick);
-  else { ctx2d.setTransform(1, 0, 0, 1, 0, 0); ctx2d.clearRect(0, 0, canvas.width, canvas.height); running = false; }
+// The few one-off shapes, drawn directly (a handful per burst).
+function drawOne(c, p, k) {
+  switch (p.kind) {
+    case 'slash': {
+      const t = p.age / p.life, L = p.len * Math.min(1, t * 4), x0 = -p.len / 2, cos = Math.cos(p.rot), sin = Math.sin(p.rot);
+      c.setTransform(scale * cos, scale * sin, -scale * sin, scale * cos, p.x * scale, p.y * scale);
+      c.globalAlpha = 0.92 * (1 - t); c.fillStyle = `rgb(${p.color})`;
+      c.beginPath(); c.moveTo(x0, 0); c.quadraticCurveTo(x0 + L / 2, -p.w, x0 + L, 0); c.quadraticCurveTo(x0 + L / 2, p.w * 0.35, x0, 0); c.fill();
+      // a thin hot edge along the cut, so the dark ink reads on dark rooms
+      c.globalAlpha = 0.85 * (1 - t); c.strokeStyle = `rgb(${p.edge})`; c.lineWidth = Math.max(1, p.w * 0.14);
+      c.beginPath(); c.moveTo(x0, 0); c.quadraticCurveTo(x0 + L / 2, -p.w, x0 + L, 0); c.stroke();
+      c.setTransform(scale, 0, 0, scale, 0, 0);
+      return p.len / 2 + p.w;
+    }
+    case 'ring': {
+      const t = p.age / p.life, r = p.r0 + (p.r1 - p.r0) * (1 - (1 - t) ** 3);
+      c.globalAlpha = 0.9 * (1 - t); c.strokeStyle = `rgb(${p.color})`; c.lineWidth = Math.max(1, 7 * (1 - t));
+      c.beginPath(); c.arc(p.x, p.y, r, 0, TAU); c.stroke();
+      return r + 4;
+    }
+    case 'flash': // a cached soft sprite, not a new gradient every frame
+      c.globalAlpha = 0.9 * k;
+      c.drawImage(glowSprite(p.color), p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+      return p.size;
+    default: return 0;
+  }
 }
 
-// Backing store at up to 1.5x device pixels (particles are small; more is waste).
+const sprites = new Map();
+function glowSprite(rgb) {
+  let s = sprites.get(rgb);
+  if (!s) {
+    s = document.createElement('canvas'); s.width = s.height = 64;
+    const g2 = s.getContext('2d'), g = g2.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, `rgba(${rgb},1)`); g.addColorStop(1, `rgba(${rgb},0)`);
+    g2.fillStyle = g; g2.fillRect(0, 0, 64, 64);
+    sprites.set(rgb, s);
+  }
+  return s;
+}
+
+function render(c) {
+  // clear only what was painted last frame
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 1;
+  if (box) c.clearRect(box[0], box[1], box[2] - box[0], box[3] - box[1]);
+  c.setTransform(scale, 0, 0, scale, 0, 0);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const grow = (p, r) => { if (p.x - r < x0) x0 = p.x - r; if (p.y - r < y0) y0 = p.y - r; if (p.x + r > x1) x1 = p.x + r; if (p.y + r > y1) y1 = p.y + r; };
+  const buckets = new Map(), ink = [], glow = [];
+  for (const p of parts) {
+    if (p.age < 0) continue; // a delayed ring
+    const k = Math.max(0, 1 - p.age / p.life);
+    const r = add(buckets, p, k);
+    if (r >= 0) grow(p, r);
+    else (p.kind === 'slash' ? ink : glow).push(p);
+  }
+  // pass 1: ink (source-over); pass 2: glow ('lighter')
+  for (const pass of [false, true]) {
+    c.globalCompositeOperation = pass ? 'lighter' : 'source-over';
+    c.globalAlpha = 1;
+    for (const b of buckets.values()) {
+      if (b.glow !== pass) continue;
+      if (b.stroke) { c.strokeStyle = b.style; c.lineWidth = b.w; c.lineCap = 'round'; c.stroke(b.path); }
+      else { c.fillStyle = b.style; c.fill(b.path); }
+    }
+    for (const p of pass ? glow : ink) grow(p, drawOne(c, p, Math.max(0, 1 - p.age / p.life)));
+  }
+  c.globalAlpha = 1;
+  c.globalCompositeOperation = 'source-over';
+  box = x1 < x0 ? null : [
+    Math.max(0, Math.floor(x0 * scale) - 2), Math.max(0, Math.floor(y0 * scale) - 2),
+    Math.min(canvas.width, Math.ceil(x1 * scale) + 2), Math.min(canvas.height, Math.ceil(y1 * scale) + 2)];
+}
+
+function tick(now) {
+  if (!canvas?.isConnected) { running = false; parts = []; box = null; return; }
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (fit()) box = null; // a resized canvas starts blank
+  // age, step and drop the dead in place (no new array every frame)
+  let n = 0;
+  for (const p of parts) {
+    p.age += dt;
+    if (p.age < p.life) { step(p, dt); parts[n++] = p; }
+  }
+  parts.length = n;
+  render(ctx2d);
+  if (parts.length) requestAnimationFrame(tick);
+  else running = false; // render() already cleared the last painted area
+}
+
+// Backing store at up to 1.25x device pixels (0.129, was 1.5: particles are
+// fast and soft — 1.5 cost ~20% more raster for no visible gain; more is
+// waste), and 1x once the 3D background has had to step down its quality
+// (0.129: the device is struggling). true = the canvas was resized.
 function fit() {
-  scale = Math.min(globalThis.devicePixelRatio || 1, 1.5);
+  scale = Math.min(globalThis.devicePixelRatio || 1, bgQualityLevel() > 0 ? 1 : 1.25);
   const w = Math.round(canvas.clientWidth * scale), h = Math.round(canvas.clientHeight * scale);
-  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  if (canvas.width === w && canvas.height === h) return false;
+  canvas.width = w; canvas.height = h;
+  return true;
 }

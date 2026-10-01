@@ -253,7 +253,13 @@ static play-stats page.
   `ui/combatFx.js`, driven by `fx` descriptors on playback queue items.
   Particle looks (0.128) per material in `ui/particles.js` (`STYLE_OF`;
   bursts come as hit / crit / kill, `spawnParticles` is pure and tested);
-  OVERKILL bursts every victim (`smash` event `victims`).
+  OVERKILL bursts every victim (`smash` event `victims`). Drawing (0.129)
+  is batched: one Path2D fill/stroke per (pass, colour, alpha step,
+  width) bucket, ink pass then glow pass, flash = cached sprite, only last
+  frame's painted box is cleared, one canvas per session, 1.25x DPR (1x
+  once bg3d stepped down), past BUDGET live particles new bursts thin out.
+  Keep new particle kinds in buckets — a per-particle save/restore or
+  gradient doubled the frame cost in 0.128.
   Loops animate only translate/rotate/scale (never filter); one-shots use
   element.animate so they don't restart the CSS loops. Attack pacing:
   `difficulty.json combatPacing`. Particles (0.089, `ui/particles.js`):

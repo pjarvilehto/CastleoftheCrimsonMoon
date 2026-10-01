@@ -15,6 +15,9 @@ import { shareStats } from '../meta/telemetry.js';
 // buttons use) doesn't apply to an input's text, and each OS reads this
 // font's vertical metrics differently — so measure the real ones (canvas)
 // and move the text by the gap between the caps' middle and the line's.
+// one 8-bit alpha step off the field's rgba(0, 0, 0, 0.55): invisible, but a real change
+const REPAINT_BG = 'rgba(0, 0, 0, 0.556)';
+
 export function centerCaps(input) {
   const cs = globalThis.getComputedStyle?.(input);
   const c = globalThis.document?.createElement?.('canvas')?.getContext?.('2d');
@@ -37,6 +40,13 @@ export function namePrompt(onDone = () => {}) {
     class: 'name-input', type: 'text', maxlength: NAME_MAX, value: current, placeholder: 'Your name',
     autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Your name',
   });
+  // The specks (0.111, back in 0.128): the caps' tops sit exactly on the
+  // font's ascent line, so when the centred text shifts on a keystroke the
+  // browser's repaint can miss a hairline at their tops and leave it on
+  // screen. An imperceptible background change on every edit repaints the
+  // whole field, so nothing stale survives.
+  let flip = false;
+  input.addEventListener('input', () => { flip = !flip; input.style.backgroundColor = flip ? REPAINT_BG : ''; });
   const close = () => dlg.close();
   const submit = () => {
     if (!cleanName(input.value)) { input.focus?.(); return; }
