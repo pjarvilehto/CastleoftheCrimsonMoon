@@ -141,9 +141,15 @@ export function byBuild(runs) {
 }
 
 // Depth per run, one series per player (x = their run number).
-export function depthSeries(players, runs) {
+// A run that won the game (0.123): it beat the boss of finalBossRoom —
+// it went past that room, or retreated from it (retreat is only offered
+// once the room is cleared). The same test as bossClears.
+export const wonGame = (r, finalRoom = 24) => r.room > finalRoom || (r.room === finalRoom && r.outcome === 'retreat');
+
+// Points are [run #, room, won the game?] — the chart marks the wins.
+export function depthSeries(players, runs, finalRoom = 24) {
   return players
-    .map((pl) => ({ key: pl.key, label: pl.label, points: runs.filter((r) => r.player === pl.key).map((r) => [r.n, r.room]) }))
+    .map((pl) => ({ key: pl.key, label: pl.label, points: runs.filter((r) => r.player === pl.key).map((r) => [r.n, r.room, wonGame(r, finalRoom)]) }))
     .filter((s) => s.points.length);
 }
 

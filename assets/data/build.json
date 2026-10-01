@@ -1,5 +1,5 @@
 {
-  "version": "0.122",
+  "version": "0.123",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -73,6 +73,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.123": [
+      "Play stats: the Depth per run chart marks every run that won the game (beat the room 24 boss) with a gold star."
+    ],
     "0.122": [
       "Play stats: the name a player typed in the game now always shows on the stats page (it overrides renames there), and a name change is sent right away."
     ],
@@ -125,10 +128,6 @@
     "0.109": [
       "Enter your name when you first open the game (change it any time on the title screen)",
       "Fallen enemies fade almost completely away"
-    ],
-    "0.108": [
-      "A whoosh when you move to the next room",
-      "The 'You escaped!' fanfare is 30% quieter"
     ]
   }
 }

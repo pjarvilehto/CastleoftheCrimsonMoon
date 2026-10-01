@@ -72,6 +72,13 @@ fresh();
   ok('CSV: header + a row per run, quoted safely', csv.split('\n').length === 5 && csv.split('\n')[1].startsWith('"Te,""st"""'));
   const evil = ch.bars([{ label: '<img src=x>', value: 1 }]);
   ok('charts escape labels from saves', evil.includes('&lt;img') && !evil.includes('<img'));
+  {
+    const wins = [{ room: 30, outcome: 'death' }, { room: 24, outcome: 'retreat' }, { room: 24, outcome: 'death' }, { room: 12, outcome: 'retreat' }].map((r) => st.wonGame(r, 24));
+    ok('a win = beat the room-24 boss: past it, or retreated from it (0.123)', wins.join() === 'true,true,false,false');
+    const svg = ch.lines([{ label: 'A', points: [[1, 12, false], [2, 25, true]] }], { mark: 'won the game' });
+    ok('depth chart stars the winning runs, with a legend key', (svg.match(/class="mark"/g) ?? []).length === 1 && svg.includes('★</b> won the game'));
+    ok('no star key without a win', !ch.lines([{ label: 'A', points: [[1, 12, false]] }]).includes('★'));
+  }
   ok('charts render lines + columns', ch.lines(st.depthSeries(players, runs)).includes('<path') && ch.columns([{ x: 1, parts: [1, 2] }], { names: ['a', 'b'] }).includes('<rect'));
   const html = readFileSync('analytics/index.html', 'utf8');
   ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json', { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));

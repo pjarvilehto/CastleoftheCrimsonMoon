@@ -14,7 +14,7 @@ import { levelFromStats } from '../src/shared/level.js';
 const STORE = 'castle-analytics-players-v1';
 const NAMES = 'castle-analytics-names-v1';   // playerId -> name (collected players)
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
-const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '' };
+const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24 };
 const server = { status: 'off', records: [], at: 0, version: null, busy: false, delta: null }; // off | loading | ok | key | error
 const view = { player: 'all', build: 'all' };
 let players = [];
@@ -192,7 +192,7 @@ function render() {
     ${kpi('Relic runs', s.relics)}
   </section>
   <div class="grid">
-    ${card('Depth per run', lines(depthSeries(shown, runs), { xLabel: 'run #', yLabel: 'room' }))}
+    ${card('Depth per run', lines(depthSeries(shown, runs, data.finalRoom), { xLabel: 'run #', yLabel: 'room', mark: `won the game (beat the room ${data.finalRoom} boss)` }))}
     ${card('Where runs end', columns(endRooms(runs).map((r) => ({ x: r.room, parts: [r.death, r.retreat] })), { names: ['died', 'retreated'], xLabel: 'room', yLabel: 'runs' }))}
     ${card('What kills players', bars(countBy(runs, 'killedBy').map(([id, n]) => ({ label: enemyName(id), value: n })), { color: '#c14b4b' }))}
     ${card('Boss rooms', bars(bossClears(runs).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
@@ -296,9 +296,9 @@ function wire() {
 
 async function boot() {
   const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-  const [enemies, items, shrines, build, telemetry] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry'].map(get));
+  const [enemies, items, shrines, build, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry', 'difficulty'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
+    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? 24, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';

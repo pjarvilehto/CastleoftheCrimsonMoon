@@ -40,7 +40,7 @@ function frame(xMax, yMax, xLabel, yLabel) {
 }
 
 // Lines: [{ label, points: [[x, y], ...] }], one colour per series.
-export function lines(series, { xLabel = '', yLabel = '' } = {}) {
+export function lines(series, { xLabel = '', yLabel = '', mark = 'marked' } = {}) {
   if (!series.length) return '<p class="empty">No runs recorded yet.</p>';
   const xMax = Math.max(...series.flatMap((s) => s.points.map((p) => p[0])));
   const yMax = Math.max(...series.flatMap((s) => s.points.map((p) => p[1])), 1);
@@ -51,8 +51,13 @@ export function lines(series, { xLabel = '', yLabel = '' } = {}) {
     const dots = s.points.length <= 80 ? s.points.map((p) => `<circle cx="${f.x(p[0])}" cy="${f.y(p[1])}" r="2.6" fill="${c}"><title>${esc(s.label)} run ${p[0]}: room ${p[1]}</title></circle>`).join('') : '';
     return `<path d="${d}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>${dots}`;
   }).join('');
-  const legend = series.map((s, i) => `<span class="legend"><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(s.label)}</span>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${f.svg}${paths}</svg><div class="legends">${legend}</div>`;
+  // Marked points (a truthy 3rd value, e.g. a run that won the game):
+  // a gold star over the line, drawn last so it sits on top.
+  const marks = series.flatMap((s) => s.points.filter((p) => p[2]).map((p) =>
+    `<text x="${f.x(p[0]).toFixed(1)}" y="${(f.y(p[1]) + 5).toFixed(1)}" class="mark" text-anchor="middle">★<title>${esc(s.label)} run ${p[0]}: ${esc(mark)} (room ${p[1]})</title></text>`)).join('');
+  const legend = series.map((s, i) => `<span class="legend"><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(s.label)}</span>`).join('')
+    + (marks ? `<span class="legend"><b class="mark-key">★</b> ${esc(mark)}</span>` : '');
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${f.svg}${paths}${marks}</svg><div class="legends">${legend}</div>`;
 }
 
 // Stacked columns: [{ x, parts: [v1, v2] }] with parts coloured by `colors`.

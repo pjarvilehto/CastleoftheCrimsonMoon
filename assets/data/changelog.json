@@ -1,4 +1,7 @@
 {
+  "0.123": [
+    "Play stats: the Depth per run chart marks every run that won the game (beat the room 24 boss) with a gold star."
+  ],
   "0.122": [
     "Play stats: the name a player typed in the game now always shows on the stats page (it overrides renames there), and a name change is sent right away."
   ],
