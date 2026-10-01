@@ -15,7 +15,7 @@ const STORE = 'castle-analytics-players-v1';
 const NAMES = 'castle-analytics-names-v1';   // playerId -> name (collected players)
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
 const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '' };
-const server = { status: 'off', records: [], at: 0, version: null }; // off | loading | ok | key | error
+const server = { status: 'off', records: [], at: 0, version: null, busy: false, delta: null }; // off | loading | ok | key | error
 const view = { player: 'all', build: 'all' };
 let players = [];
 let message = '';
@@ -79,8 +79,17 @@ async function loadServer() {
   }
 }
 
+// Refresh shows that it happened (0.120): the button reads "Refreshing…"
+// while it loads, then the card names the exact time and what changed —
+// before, an unchanged result looked like a dead button.
 async function refresh() {
+  const before = server.records.reduce((n, r) => n + (r.profile?.history?.length ?? 0), 0);
+  server.busy = true;
+  render();
   await loadServer();
+  server.busy = false;
+  const after = server.records.reduce((n, r) => n + (r.profile?.history?.length ?? 0), 0);
+  server.delta = server.status === 'ok' && before ? after - before : null;
   loadPlayers();
   render();
 }
@@ -89,7 +98,7 @@ function serverCard() {
   const text = {
     off: 'Automatic collection is not set up yet (collector/README.md) — until then, add testers by save code below.',
     loading: 'Loading collected players…',
-    ok: `Collected automatically: ${server.records.length} player${server.records.length === 1 ? '' : 's'} · updated ${ago(server.at)}.`,
+    ok: `Collected automatically: ${server.records.length} player${server.records.length === 1 ? '' : 's'} · updated ${server.at ? new Date(server.at).toLocaleTimeString() : '—'}${server.delta === null || server.delta === undefined ? '' : server.delta > 0 ? ` (+${server.delta} new run${server.delta === 1 ? '' : 's'})` : ' (no new runs)'}.`,
     key: 'Enter the stats key (the collector’s READ_KEY) to see collected players.',
     error: 'Could not reach the stats collector — showing this browser and pasted codes only.',
   }[server.status];
@@ -101,7 +110,7 @@ function serverCard() {
     <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game (0.109 on; older saves show an id until their next visit) — rename them in the Players table if you like (your names stay in this browser).</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
-      ${data.endpoint ? '<button data-act="refresh">Refresh</button>' : ''}
+      ${data.endpoint ? `<button data-act="refresh"${server.busy ? ' disabled' : ''}>${server.busy ? 'Refreshing…' : 'Refresh'}</button>` : ''}
     </div>
   </section>`;
 }

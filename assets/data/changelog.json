@@ -1,4 +1,7 @@
 {
+  "0.120": [
+    "Stats page: Refresh shows that it worked (time of the update, new runs)"
+  ],
   "0.119": [
     "Under the hood: the play-stats collector stores only what the stats page shows and turns away spam"
   ],
