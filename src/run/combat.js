@@ -144,7 +144,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
       continue;
     }
     // Testing switch (corner toggle): player shrugs off all damage.
-    const armor = combat.run.stats.armor + (combat.run.tempArmor ?? 0); // Infusion potions
+    const armor = combat.run.stats.armor + combat.run.tempArmor; // Infusion potions
     // Armor soaks at most 83% of a blow (0.062; 85% until 0.093): stacked
     // Endurance + relic plates used to reduce deep-room enemies to 0-1 dmg,
     // removing all pressure. The floor scales with the hit, so deep foes

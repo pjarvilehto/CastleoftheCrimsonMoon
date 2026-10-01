@@ -1,4 +1,7 @@
 {
+  "0.115": [
+    "Under the hood: cleaner dialogs and corner buttons (a dialog over another no longer lets keys slip through)"
+  ],
   "0.114": [
     "New music: a dark ambient cinematic score for every scene",
     "Prefer the old music? VOLUME → Score → Classic switches back (and remembers it)"

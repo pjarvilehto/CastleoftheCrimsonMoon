@@ -9,6 +9,7 @@
 import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
+import { levelFromStats } from '../src/shared/level.js';
 
 const STORE = 'castle-analytics-players-v1';
 const NAMES = 'castle-analytics-names-v1';   // playerId -> name (collected players)
@@ -115,7 +116,7 @@ const itemName = (id) => (id ? data.items[id]?.name ?? id : '—');
 const boonName = (id) => (data.offers[id] ? `${data.offers[id].icon} ${data.offers[id].buff}` : id);
 const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
 const pct = (x) => `${Math.round(x * 100)}%`;
-const level = (s = {}) => 1 + Math.floor(((s.power ?? 0) + (s.vitality ?? 0) + (s.fortune ?? 0) + (s.precision ?? 0) + (s.endurance ?? 0)) / 5);
+const level = levelFromStats;
 function ago(t) {
   if (!t) return '—';
   const m = Math.round((Date.now() - t) / 60000);

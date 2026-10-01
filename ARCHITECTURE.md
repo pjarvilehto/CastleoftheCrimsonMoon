@@ -104,7 +104,10 @@ src/
 │   │                     boot = title + hub only, the rest in the
 │   │                     background after the title (0.098 staged)
 │   ├── debug.js          DEBUG flags (invulnerable), session-only,
-│   │                     default OFF; combat.js reads it, main.js toggle
+│   │                     default OFF; combat.js reads it, ui/debugToggles.js
+│   ├── version.js        compareVersions / isNewer for build numbers (0.115)
+│   ├── level.js          character level from disciplines (0.115; analytics too)
+│   ├── prefs.js          per-browser settings in localStorage, never throws (0.115)
 │   └── balance.js        enemy scaling (HP/dmg growth, LV naming)
 └── ui/
     ├── hud.js            hpBar, statBox, logLine (glyphs)
@@ -131,6 +134,9 @@ src/
     │                     boss summon bar; summons join mid-fight in front
     │                     of the boss and leave the row when they fall (0.092)
     ├── shrineUI.js       the shrine room: panel, HUD row, boon cards
+    ├── dialog.js         openDialog: overlay + keyboard (key-trap stack, 0.115)
+    ├── cornerToggles.js  the upper-right column: ON/OFF + panel toggles (0.115)
+    ├── debugToggles.js   ?debug tools in that column (0.115)
     ├── changelog.js      CHANGELIST corner button: every build's notes (0.113)
     ├── confirmPrompt.js  yes/no dialog (0.102: Descend with unspent XP/coins)
     ├── namePrompt.js     "Enter your name" on the title screen (0.109)

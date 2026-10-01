@@ -4,6 +4,7 @@
 // and baked into backgrounds.json `parallax` as the default for everyone.
 
 import { el } from '../core/scene.js';
+import { panelToggle } from './cornerToggles.js';
 import { isBg3dActive, liveTuning, setLiveTuning, saveLiveTuning, resetLiveTuning } from '../core/bg3d.js';
 
 // [key, label, min, max, step, unit]
@@ -28,19 +29,7 @@ const HINTS = {
 
 const fmt = (v, step) => Number(v).toFixed(step < 0.1 ? 2 : 1);
 
-export function bgTunerToggle() {
-  let panel = null;
-  const btn = el('button', {
-    class: 'debug-toggle bg-tune-toggle',
-    onclick: (e) => {
-      if (panel) { panel.remove(); panel = null; e.currentTarget.classList.remove('on'); return; }
-      panel = buildPanel();
-      document.body.append(panel);
-      e.currentTarget.classList.add('on');
-    },
-  }, 'BG TUNING');
-  return btn;
-}
+export const bgTunerToggle = () => panelToggle('BG TUNING', 'bg-tune-toggle', buildPanel);
 
 function buildPanel() {
   if (!isBg3dActive()) {

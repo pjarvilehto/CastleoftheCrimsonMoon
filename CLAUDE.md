@@ -234,10 +234,17 @@ static play-stats page.
   the canvas loop only runs while particles live and is off when the 3D
   background fell back to flat.
 - Keep files under ~300 lines; one responsibility per file.
-- Yes/no dialogs: `ui/confirmPrompt.js` (0.102; e.g. Descend with unspent
-  XP/coins). A dialog layered over a scene takes the keyboard with `setKeyTrap(fn)`
-  (scene.js; see `updatePrompt.js`) and releases it with `setKeyTrap(null)`,
-  so the scene's hotkeys can't fire underneath. A scene that is mid-run
+- Dialogs (0.115): build every overlay with `ui/dialog.js openDialog({ label,
+  children, onKey(k, close) })` — it owns the keyboard while open (a key-trap
+  stack in scene.js, so a dialog over a dialog hands the keys back on close)
+  and the scene's hotkeys can't fire underneath. Yes/no: `ui/confirmPrompt.js`.
+- Upper-right column (0.115, `ui/cornerToggles.js`): one flex column;
+  add a button with `onOffToggle(label, { get, flip })` or
+  `panelToggle(label, cls, buildPanel)` in main.js's `cornerBar([...])`
+  (?debug tools: `ui/debugToggles.js`). No pixel offsets.
+- Shared helpers (0.115): `shared/version.js` (compareVersions — never
+  compare build numbers as strings), `shared/level.js` (character level),
+  `shared/prefs.js` (per-browser settings, never throws). A scene that is mid-run
   sets `inRun: true` on its scene object (a reload there would lose the
   run, so the update prompt waits for the next scene).
 - Save data from other browsers (the dashboard's pasted codes) is

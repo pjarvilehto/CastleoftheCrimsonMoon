@@ -43,8 +43,12 @@ export function createRun() {
     startedAt: Date.now(),
     level: playerLevel(),
     turns: 0, potionsDrunk: 0, bossesBeaten: 0, killedBy: null,
+    tempArmor: 0,                // Infusion potions: armor until the room ends
+    coinMult: 1,                 // Greed boon: x kill coins
     over: false,
     room: null,
+    // filled in by settleRun (0.115: the whole run shape lives here)
+    tollPct: 0, coinsLost: 0, coinsRetrieved: null, equipSummary: null,
   };
 }
 
@@ -63,7 +67,7 @@ export function applyLoot(run, enemy, log) {
   const fortune = trainedLevel(getProfile(), 'fortune');
   const loot = rollLoot(enemy, fortune, run.roomNumber, run.relicFound);
   // Greed shrine boon multiplies kill coins (run.coinMult, default 1).
-  const coins = Math.round(loot.coins * (run.coinMult ?? 1));
+  const coins = Math.round(loot.coins * run.coinMult);
   run.coins += coins;
   run.xp += loot.xp;
   run.kills += 1;
@@ -123,7 +127,7 @@ export function drinkPotion(run) {
   run.potionsDrunk = (run.potionsDrunk ?? 0) + 1;
   run.hp = Math.min(run.maxHp, run.hp + healed);
   const armor = infusionArmor();
-  if (armor > 0) run.tempArmor = (run.tempArmor ?? 0) + armor;
+  if (armor > 0) run.tempArmor += armor;
   return { healed, free, armor };
 }
 

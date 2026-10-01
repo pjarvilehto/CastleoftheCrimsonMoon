@@ -98,6 +98,13 @@ export class El {
     const i = ref ? this.children.indexOf(ref) : -1;
     this.children.splice(i < 0 ? this.children.length : i, 0, n);
   }
+  get parentNode() { return this.parent ?? null; }
+  after(...nodes) { // real DOM: insert right after this element
+    if (!this.parent) return;
+    const kids = this.parent.children;
+    let i = kids.indexOf(this) + 1;
+    for (const n of nodes) { if (n.remove) n.remove(); n.parent = this.parent; kids.splice(i++, 0, n); }
+  }
   getBoundingClientRect() { return { left: 50, top: 50, width: 100, height: 20 }; }
   set innerHTML(v) { if (v === '') this.children.length = 0; }
   get innerHTML() { return ''; }

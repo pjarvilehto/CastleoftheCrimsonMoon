@@ -15,13 +15,12 @@
    11 Shrine room
    12 Run end
    13 Dialogs: YOU DIED, new build available
-   14 Corner toggles and ?debug tools
+   14 Corner column (toggles, panels, ?debug tools)
 
    Order matters where two rules of equal specificity style the same
    element: buttons come before the combat block (.unit-actions button
    overrides button.ready), .hud-chip .hpbar before .hp-line .hpbar,
-   .char-card before .player-card, .fx-num before its variants,
-   .debug-toggle before the per-toggle positions. */
+   .char-card before .player-card, .fx-num before its variants. */
 
 /* ================= 1 Base ================= */
 :root {
@@ -819,12 +818,17 @@ button.primary { border-color: var(--gold); font-weight: bold; }
   text-shadow: 0 1px 4px #000;
   pointer-events: none;
 }
-/* Corner toggles (main.js), upper right: dimmed when off so they never
-   distract players; lit gold when on. INVULNERABLE only exists with
-   ?debug in the URL (body.debug, 0.079); without it the other toggles
-   move up one slot. */
-.debug-toggle {
+/* The upper-right column (ui/cornerToggles.js, 0.115): one flex column,
+   so buttons and the panels they open (VOLUME, BG TUNING) stack in order
+   with no hand-placed offsets. Dimmed when off; lit gold when on.
+   ?debug adds INVULNERABLE on top and the testing tools below. */
+.corner-bar {
   position: fixed; top: 8px; right: 12px; z-index: 50;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  max-height: calc(100vh - 16px); overflow-y: auto; pointer-events: none;
+}
+.corner-bar > * { pointer-events: auto; }
+.debug-toggle {
   padding: 4px 12px; font-size: 0.7rem; letter-spacing: 1px;
   opacity: 0.45;
 }
@@ -834,32 +838,13 @@ button.primary { border-color: var(--gold); font-weight: bold; }
   text-shadow: 0 0 8px rgba(201, 162, 39, 0.8);
   box-shadow: 0 0 12px rgba(201, 162, 39, 0.35);
 }
-.music-toggle { top: 8px; }
-.fs-toggle { top: 40px; }
-.sfx-toggle { top: 72px; }
-.volume-toggle { top: 104px; }
-.changelog-toggle { top: 136px; }
-body.debug .music-toggle { top: 40px; }
-body.debug .fs-toggle { top: 72px; }
-body.debug .sfx-toggle { top: 104px; }
-body.debug .volume-toggle { top: 136px; }
-body.debug .changelog-toggle { top: 168px; }
-/* ?debug background evaluation toggles (0.083) */
-.bg-fg-toggle { top: 200px; }
-.bg-view-toggle { top: 232px; }
-.bg-next-toggle { top: 264px; }
-.bg-tune-toggle { top: 296px; }
-/* ?debug crit testing (0.105) */
-.crit-toggle { top: 328px; }
-.megacrit-toggle { top: 360px; }
-/* VOLUME sliders (0.107, ui/volumePanel.js): just under the VOLUME toggle */
+/* VOLUME sliders (0.107, ui/volumePanel.js): in the column, under VOLUME */
 .volume-panel {
-  position: fixed; top: 138px; right: 12px; z-index: 51; width: 250px;
+  width: 250px; box-sizing: border-box;
   padding: 10px 14px; background: rgba(14, 9, 8, 0.94);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);
 }
-body.debug .volume-panel { top: 170px; }
 .volume-title { color: var(--gold); letter-spacing: 1.5px; margin-bottom: 6px; }
 .volume-row { display: grid; grid-template-columns: 62px 1fr 40px; align-items: center; gap: 8px; margin: 6px 0; }
 .volume-row input { width: 100%; accent-color: #c9a227; }
@@ -871,7 +856,7 @@ body.debug .volume-panel { top: 170px; }
 .score-btn.on { opacity: 1; color: var(--gold); border-color: var(--gold); box-shadow: 0 0 10px rgba(201, 162, 39, 0.3); }
 /* ?debug BG TUNING sliders (0.084, ui/bgTuner.js) */
 .bg-tuner {
-  position: fixed; top: 394px; right: 12px; z-index: 50; width: 300px;
+  width: 300px; box-sizing: border-box;
   padding: 12px 14px; background: rgba(14, 9, 8, 0.92);
   border: 1px solid var(--gold-dim); border-radius: 6px;
   font-size: 0.8rem; letter-spacing: 0.5px; color: var(--parchment);

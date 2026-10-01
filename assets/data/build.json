@@ -1,5 +1,5 @@
 {
-  "version": "0.114",
+  "version": "0.115",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -33,7 +33,10 @@
     "src/shared/balance.js",
     "src/shared/data.js",
     "src/shared/debug.js",
+    "src/shared/level.js",
+    "src/shared/prefs.js",
     "src/shared/preload.js",
+    "src/shared/version.js",
     "src/ui/battleLine.js",
     "src/ui/bgTuner.js",
     "src/ui/buffs.js",
@@ -43,7 +46,10 @@
     "src/ui/combatQueue.js",
     "src/ui/combatSfx.js",
     "src/ui/confirmPrompt.js",
+    "src/ui/cornerToggles.js",
     "src/ui/deathModal.js",
+    "src/ui/debugToggles.js",
+    "src/ui/dialog.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
     "src/ui/hud.js",
@@ -58,6 +64,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.115": [
+      "Under the hood: cleaner dialogs and corner buttons (a dialog over another no longer lets keys slip through)"
+    ],
     "0.114": [
       "New music: a dark ambient cinematic score for every scene",
       "Prefer the old music? VOLUME → Score → Classic switches back (and remembers it)"
@@ -116,9 +125,6 @@
     "0.101": [
       "The mist is now made of big soft drifting fog banks that sit between things in the scene — sideways on the ramparts, rolling in at the gate",
       "Smoother backgrounds: the fog costs far less, high-DPI screens render fewer pixels, and slow devices lower quality step by step instead of stuttering"
-    ],
-    "0.100": [
-      "Critical hits, potions and revives now light up the scene around the fighter — walls and mist nearby catch the glow"
     ]
   }
 }

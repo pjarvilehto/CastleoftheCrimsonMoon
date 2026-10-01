@@ -2,10 +2,11 @@
 // screen, when the save has no name yet; the title's "Playing as …" line
 // reopens it to change the name. The name travels with the save and the
 // play stats (meta/telemetry.js), so the /analytics/ dashboard shows it.
-// While open it owns the keyboard (setKeyTrap): typing goes to the field,
+// While open it owns the keyboard (ui/dialog.js): typing goes to the field,
 // Enter confirms; Esc closes only when changing an existing name.
 
-import { el, setKeyTrap } from '../core/scene.js';
+import { el } from '../core/scene.js';
+import { openDialog } from './dialog.js';
 import { getProfile, setPlayerName, cleanName, NAME_MAX } from '../meta/profile.js';
 
 // Centre the CAPITALS in the field (0.111): text-box trimming (what the
@@ -29,12 +30,12 @@ export function centerCaps(input) {
 
 export function namePrompt(onDone = () => {}) {
   const current = getProfile().name;
-  let overlay = null;
+  let dlg = null;
   const input = el('input', {
     class: 'name-input', type: 'text', maxlength: NAME_MAX, value: current, placeholder: 'Your name',
     autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Your name',
   });
-  const close = () => { overlay?.remove(); overlay = null; setKeyTrap(null); };
+  const close = () => dlg.close();
   const submit = () => {
     if (!cleanName(input.value)) { input.focus?.(); return; }
     setPlayerName(input.value);
@@ -49,19 +50,20 @@ export function namePrompt(onDone = () => {}) {
     else if (e.key === 'Escape' && current) close();
   });
   sync();
-  overlay = el('div', { class: 'update-overlay name-overlay', role: 'dialog', 'aria-label': 'Enter your name' },
-    el('div', { class: 'update-modal' },
+  // Hotkeys stay away while it's open (keys typed in the field never reach
+  // them; the key trap catches the rest — e.g. focus moved to the button).
+  dlg = openDialog({
+    label: 'Enter your name', overlayClass: 'update-overlay name-overlay',
+    children: [
       el('h2', { class: 'update-title' }, current ? 'Change Your Name' : 'Enter Your Name'),
       el('p', { class: 'update-ask' }, current ? 'How shall the castle remember you?' : 'Who dares the Castle of the Crimson Moon?'),
       input,
-      el('div', { class: 'btn-row' }, ok, current ? el('button', { onclick: close }, 'Cancel') : null)));
-  document.body.append(overlay);
-  // Hotkeys stay away while it's open (keys typed in the field never reach
-  // them; this catches the rest — e.g. focus moved to the button).
-  setKeyTrap((k) => {
-    if (k === 'enter') submit();
-    else if (k === 'escape' && current) close();
-    return true;
+      el('div', { class: 'btn-row' }, ok, current ? el('button', { onclick: close }, 'Cancel') : null),
+    ],
+    onKey: (k) => {
+      if (k === 'enter') submit();
+      else if (k === 'escape' && current) close();
+    },
   });
   setTimeout(() => { centerCaps(input); input.focus?.(); input.select?.(); }, 0);
   return { close, input, ok };

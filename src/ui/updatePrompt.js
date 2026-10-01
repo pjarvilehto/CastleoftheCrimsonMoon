@@ -9,7 +9,11 @@
 // the loot is banked). "Later" silences that version for this session —
 // the next page load boots the new build anyway.
 
-import { el, currentScene, onSceneChange, setKeyTrap } from '../core/scene.js';
+import { el, currentScene, onSceneChange } from '../core/scene.js';
+import { openDialog } from './dialog.js';
+import { isNewer } from '../shared/version.js';
+
+export { isNewer }; // (tests, older imports)
 import { DATA } from '../shared/data.js';
 
 const POLL_MS = 3 * 60 * 1000;
@@ -17,16 +21,7 @@ const MAX_NOTES = 8;
 
 let pending = null;   // { version, notes } — newer than this build, not yet shown
 let dismissed = null; // the version the player put off
-let overlay = null;   // the open prompt
-
-// "0.100" vs "0.099": compare the parts as numbers, not as strings.
-export function isNewer(a, b) {
-  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) > (pb[i] ?? 0);
-  }
-  return false;
-}
+let dialog = null;    // the open prompt
 
 // Notes of every build after `from` up to `to`, newest first, capped.
 export function notesSince(changelog, from, to) {
@@ -54,34 +49,29 @@ export async function checkForUpdate() {
 }
 
 function maybeShow() {
-  if (!pending || overlay || currentScene()?.inRun) return;
+  if (!pending || dialog?.isOpen() || currentScene()?.inRun) return;
   showPrompt(pending);
 }
 
-function close() {
-  overlay?.remove();
-  overlay = null;
-  setKeyTrap(null);
-}
-
 function showPrompt({ version, notes }) {
-  const later = () => { dismissed = version; pending = null; close(); };
+  const later = () => { dismissed = version; pending = null; dialog.close(); };
   const reload = () => globalThis.location.reload();
   const yes = el('button', { class: 'primary active', key: 'y', onclick: reload }, 'Yes, Reload');
   const no = el('button', { key: 'n', onclick: later }, 'No, Later');
-  overlay = el('div', { class: 'update-overlay', role: 'dialog', 'aria-label': `Build ${version} available` },
-    el('div', { class: 'update-modal' },
+  // The prompt owns the keyboard: Y / Enter reload, N / Esc put it off.
+  dialog = openDialog({
+    label: `Build ${version} available`,
+    children: [
       el('h2', { class: 'update-title' }, `Build ${version} Available`),
       notes.length ? el('div', { class: 'update-label' }, 'Changelist') : null,
       notes.length ? el('ul', { class: 'update-notes' }, ...notes.map((n) => el('li', {}, n))) : null,
       el('p', { class: 'update-ask' }, 'Reload to update?'),
-      el('div', { class: 'btn-row' }, yes, no)));
-  document.body.append(overlay);
-  // The prompt owns the keyboard: Y / Enter reload, N / Esc put it off.
-  setKeyTrap((k) => {
-    if (k === 'y' || k === 'enter') yes.click();
-    else if (k === 'n' || k === 'escape') no.click();
-    return true;
+      el('div', { class: 'btn-row' }, yes, no),
+    ],
+    onKey: (k) => {
+      if (k === 'y' || k === 'enter') yes.click();
+      else if (k === 'n' || k === 'escape') no.click();
+    },
   });
 }
 

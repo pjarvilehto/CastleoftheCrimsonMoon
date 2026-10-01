@@ -52,8 +52,8 @@ fresh();
   ok('coverage check detects a too-small skirt', bm.edgeMargin(cfg, 16 / 9, 0) < 0);
 
   const main = readFileSync('src/main.js', 'utf8');
-  ok('bg debug toggles only under ?debug', main.includes('...(debugMode ? bgDebugToggles() : [])')
-    && main.includes("'HIDE FOREGROUND: OFF'") && main.includes("['3d', 'flat', 'depth']"));
+  ok('bg debug toggles only under ?debug', main.includes('...(debugMode ? debugToggles() : [])')
+    && readFileSync('src/ui/debugToggles.js', 'utf8').includes("onOffToggle('HIDE FOREGROUND'") && readFileSync('src/ui/debugToggles.js', 'utf8').includes("['3d', 'flat', 'depth']"));
   const body = globalThis.document.body;
   globalThis.document.body = { classList: { contains: (c) => c === 'fg-hidden' } };
   let clicked = 0;
@@ -95,7 +95,7 @@ fresh();
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
   ok('tuner: 7 sliders + Save Depth Settings + Reset', (tuner.match(/^\s+\['\w+', '[\w ]+', /gm) || []).length === 7
     && tuner.includes("'Save Depth Settings'") && tuner.includes("'Reset'") && tuner.includes('navigator.clipboard.writeText'));
-  ok('tuner only under ?debug', readFileSync('src/main.js', 'utf8').includes('bgTunerToggle(), ...critToggles()]'));
+  ok('tuner only under ?debug', readFileSync('src/ui/debugToggles.js', 'utf8').includes('bgTunerToggle(),') && readFileSync('src/main.js', 'utf8').includes('...(debugMode ? debugToggles() : [])'));
   ok('clip-enemies experiment fully removed (0.090)', !readFileSync('src/main.js', 'utf8').includes('clip')
     && !readFileSync('styles.css', 'utf8').includes('clip-enemies'));
 }

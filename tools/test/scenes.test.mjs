@@ -176,7 +176,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 {
   const cl = await import('../../src/ui/changelog.js');
   const { nextChangelog } = await import('../bump.mjs');
-  const { setKeyTrap, currentKeyTrap } = await import('../../src/core/scene.js');
+  const { pushKeyTrap, releaseKeyTrap, activeKeyTrap } = await import('../../src/core/scene.js');
   const full = JSON.parse(readFileSync('assets/data/changelog.json', 'utf8'));
   const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
   const vs = Object.keys(full);
@@ -186,8 +186,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
   ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
   ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
-  ok('CHANGELIST sits in the corner column, under VOLUME', readFileSync('src/main.js', 'utf8').includes('volumeToggle(), changelogToggle(),')
-    && readFileSync('styles.css', 'utf8').includes('.changelog-toggle { top: 136px; }') && readFileSync('styles.css', 'utf8').includes('body.debug .changelog-toggle { top: 168px; }'));
+  ok('CHANGELIST sits in the corner column, under VOLUME', /volumeToggle\(\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
 
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -206,18 +205,55 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   handleKey('e'); handleKey('1');
   ok('it owns the keyboard', !!dlg() && t() === hubText);
   handleKey('escape');
-  ok('Esc closes and releases the keyboard', !dlg() && !cl.changelogOpen() && currentKeyTrap() === null);
+  ok('Esc closes and releases the keyboard', !dlg() && !cl.changelogOpen() && activeKeyTrap() === null);
   // opened over another dialog: its key trap comes back on close
   const other = () => true;
-  setKeyTrap(other);
+  pushKeyTrap(other);
   await cl.openChangelog(async () => ({ '9.001': ['Bosses dance'], '9.000': ['Bats'] }));
   ok('custom log renders', dlg().textContent.includes('Bosses dance') && dlg().textContent.indexOf('9.001') < dlg().textContent.indexOf('9.000'));
   handleKey('c');
-  ok('closing gives back the trap underneath', !dlg() && currentKeyTrap() === other);
-  setKeyTrap(null);
+  ok('closing gives back the trap underneath', !dlg() && activeKeyTrap() === other);
+  releaseKeyTrap(other);
   await cl.openChangelog(async () => ({}));
   ok('an empty log says so', dlg().textContent.includes('No release notes'));
   cl.closeChangelog();
+  globalThis.document.body = realBody;
+}
+
+// T79: 0.115 — every dialog goes through ui/dialog.js; key traps stack, so
+// a dialog opened over another hands the keyboard back to it on close
+// (before, closing the top one let the scene's hotkeys fire under the
+// bottom one).
+{
+  const { openDialog } = await import('../../src/ui/dialog.js');
+  const { confirmPrompt } = await import('../../src/ui/confirmPrompt.js');
+  const { activeKeyTrap } = await import('../../src/core/scene.js');
+  const realBody = globalThis.document.body;
+  globalThis.document.body = new El('body');
+  show(hubScene());
+  await sleep(1100);
+  let yes = 0;
+  const below = confirmPrompt({ title: 'Descend?', yes: ['Yes', 'y'], no: ['No', 'n'], onYes: () => yes++ });
+  const keys = [];
+  const top = openDialog({ label: 'Top', onKey: (k, close) => { keys.push(k); if (k === 'escape') close(); } });
+  const hubText = t();
+  handleKey('y'); handleKey('e');
+  ok('the top dialog gets the keys; nothing reaches the one below or the scene', keys.join() === 'y,e' && yes === 0 && t() === hubText);
+  handleKey('escape');
+  ok('closing the top hands the keyboard back to the dialog below', !top.isOpen() && activeKeyTrap() !== null);
+  handleKey('e');
+  ok('...whose keys work, scene hotkeys still blocked', t() === hubText && yes === 0);
+  handleKey('y');
+  ok('...and when it closes the scene gets the keyboard back', yes === 1 && activeKeyTrap() === null);
+  top.close();
+  ok('closing twice is harmless', activeKeyTrap() === null);
+  const a = openDialog({ label: 'A' }), b2 = openDialog({ label: 'B' });
+  a.close();
+  ok('out-of-order close keeps the newest dialog in charge', activeKeyTrap() !== null);
+  b2.close();
+  ok('...and all closed = released', activeKeyTrap() === null);
+  const srcs = ['confirmPrompt', 'updatePrompt', 'namePrompt', 'changelog'].map((f) => readFileSync(`src/ui/${f}.js`, 'utf8'));
+  ok('the dialogs all use openDialog', srcs.every((x) => x.includes('openDialog(') && !x.includes('setKeyTrap')));
   globalThis.document.body = realBody;
 }
 

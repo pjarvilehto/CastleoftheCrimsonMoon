@@ -57,15 +57,12 @@ fresh();
   resetProfile();
 }
 
-// T34: 0.069 — fullscreen toggle wired under the music toggle, label synced
-// to fullscreenchange so Esc exits don't leave a stale ON label.
+// T34: 0.069 — fullscreen toggle (0.115: built by main.js's fullscreenToggle
+// on the shared ON/OFF toggle; the label follows fullscreenchange).
 {
   const mainSrc = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
-  ok('fullscreen button created', mainSrc.includes('fs-toggle') && mainSrc.includes('FULLSCREEN: OFF'));
-  ok('toggle requests/exits fullscreen', mainSrc.includes('requestFullscreen') && mainSrc.includes('exitFullscreen'));
-  ok('label synced to fullscreenchange', mainSrc.includes('fullscreenchange') && mainSrc.includes('document.fullscreenElement'));
-  const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
-  ok('fs-toggle positioned under music toggle', css.includes('.fs-toggle { top: 72px; }') && css.includes('.music-toggle { top: 40px; }'));
+  ok('fullscreen toggle requests/exits fullscreen, label synced to fullscreenchange', mainSrc.includes("onOffToggle('FULLSCREEN'")
+    && mainSrc.includes('requestFullscreen') && mainSrc.includes('exitFullscreen') && mainSrc.includes("'fullscreenchange', () => btn.sync()"));
 }
 
 // T35: 0.070 — sound effects: module no-op safety, all clips on disk, and
@@ -102,10 +99,7 @@ fresh();
   ok('hub: levelup + forge wired', h.includes("sfx('levelup')") && h.includes("sfx('forge')"));
   ok('run end: escape fanfare', read('src/ui/scenes/runEndScene.js').includes("sfx('victory')"));
   const m = read('src/main.js');
-  ok('main: SOUND toggle + global clicks', m.includes('sfx-toggle') && m.includes("closest?.('button')") && m.includes('initSfx()'));
-  // 0.079: one slot higher without ?debug (no INVULNERABLE toggle above it)
-  ok('sfx toggle positioned under fullscreen', read('styles.css').includes('.sfx-toggle { top: 72px; }')
-    && read('styles.css').includes('body.debug .sfx-toggle { top: 104px; }'));
+  ok('main: SOUND toggle + global clicks', m.includes("onOffToggle('SOUND'") && m.includes("closest?.('button')") && m.includes('initSfx()'));
 }
 
 // T69: 0.107 — the audio pass: loop points skip the beds' fades, equal-power
@@ -215,7 +209,7 @@ fresh();
 
   const vp = read('src/ui/volumePanel.js');
   ok('VOLUME panel: master / music / effects sliders, live', vp.includes("['master', 'Master'], ['music', 'Music'], ['sfx', 'Effects']") && vp.includes('setVolume(kind, e.target.value)')
-    && read('src/main.js').includes('snd, volumeToggle(),') && read('styles.css').includes('.volume-toggle { top: 104px; }') && read('styles.css').includes('body.debug .volume-toggle { top: 136px; }'));
+    && read('src/main.js').includes('volumeToggle(),'));
 }
 
 // T70: 0.108 — a dedicated whoosh between rooms (generated: sweeps up and
@@ -320,4 +314,28 @@ fresh();
   localStorage.removeItem('castle-music-score');
   ok('score generator ships with the game\'s tools', readFileSync('tools/gen-music.py', 'utf8').includes('TAIL_S = 2.0')
     && readFileSync('tools/music/mix.py', 'utf8').includes('def _fold(self, x):'));
+}
+
+// T78: 0.115 — the corner column: one flex column of ON/OFF toggles in a
+// fixed order; a toggle flips its state and label; a panel opens right
+// under its button (and closes again).
+{
+  const { cornerBar, onOffToggle, panelToggle } = await import('../../src/ui/cornerToggles.js');
+  const { el } = await import('../../src/core/scene.js');
+  let state = false;
+  const t1 = onOffToggle('MUSIC', { cls: 'music-toggle', get: () => state, flip: () => (state = !state) });
+  ok('ON/OFF toggle: label + lit class follow the state', t1.textContent === 'MUSIC: OFF' && !t1.classList.contains('on'));
+  t1.listeners.click[0]();
+  ok('...clicking flips it', state === true && t1.textContent === 'MUSIC: ON' && t1.classList.contains('on'));
+  const p = panelToggle('VOLUME', 'volume-toggle', () => el('div', { class: 'volume-panel' }, 'x'));
+  const after = el('button', {}, 'CHANGELIST');
+  const bar = cornerBar([false, t1, p, after]);
+  ok('the column keeps its order, skipping absent items', bar.className === 'corner-bar' && bar.children.map((c) => c.textContent).join('|') === 'MUSIC: ON|VOLUME|CHANGELIST');
+  p.listeners.click[0]();
+  ok('a panel opens right under its button', bar.children.map((c) => c.className).join('|') === 'debug-toggle music-toggle|debug-toggle volume-toggle|volume-panel|' && p.classList.contains('on'));
+  p.listeners.click[0]();
+  ok('...and closes', bar.children.length === 3 && !p.classList.contains('on'));
+  const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
+  ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*fullscreenToggle\(\),\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
+    && css.includes('.corner-bar {') && !/toggle \{ top: \d+px; \}/.test(css));
 }

@@ -5,6 +5,7 @@
 // the music (new dark ambient score / classic beds, audio/music.js).
 
 import { el } from '../core/scene.js';
+import { panelToggle } from './cornerToggles.js';
 import { getVolumes, setVolume } from '../audio/mixer.js';
 import { sfx } from '../audio/sfx.js';
 import { scores, scoreId, setScore } from '../audio/music.js';
@@ -12,19 +13,7 @@ import { scores, scoreId, setScore } from '../audio/music.js';
 const SLIDERS = [['master', 'Master'], ['music', 'Music'], ['sfx', 'Effects']];
 const pct = (v) => `${Math.round(v * 100)}%`;
 
-export function volumeToggle() {
-  let panel = null;
-  const btn = el('button', {
-    class: 'debug-toggle volume-toggle',
-    onclick: () => {
-      if (panel) { panel.remove(); panel = null; btn.classList.remove('on'); return; }
-      panel = buildPanel();
-      document.body.append(panel);
-      btn.classList.add('on');
-    },
-  }, 'VOLUME');
-  return btn;
-}
+export const volumeToggle = () => panelToggle('VOLUME', 'volume-toggle', buildPanel);
 
 function buildPanel() {
   const v = getVolumes();

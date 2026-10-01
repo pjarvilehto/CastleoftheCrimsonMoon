@@ -6,9 +6,12 @@
 // player's browser. The dashboard reads THIS browser's save directly and
 // testers' saves from the save codes they export on the title screen.
 
+import { compareVersions } from '../src/shared/version.js';
+
 export const LOCAL_SAVE_KEY = 'castle-roguelike-profile-v1';
 
 // A save code (title screen -> Export Save) -> profile, or null.
+
 export function decodeSave(code) {
   try {
     const raw = decodeURIComponent(escape(atob(String(code).replace(/\s+/g, ''))));
@@ -48,15 +51,8 @@ export function sanitizeProfile(p = {}) {
   };
 }
 
-// "0.100" > "0.099": compare version parts as numbers.
-export function versionCmp(a, b) {
-  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (d) return d;
-  }
-  return 0;
-}
+// "0.100" > "0.099": compare version parts as numbers (shared with the game).
+export { compareVersions as versionCmp };
 
 // Every recorded run, tagged with its player and its number in that
 // player's history (1 = their oldest recorded run).
@@ -141,7 +137,7 @@ export function boonStats(runs) {
 export function byBuild(runs) {
   return countBy(runs, 'build')
     .map(([build]) => ({ build, ...summarize(runs.filter((r) => r.build === build)) }))
-    .sort((a, b) => versionCmp(b.build, a.build));
+    .sort((a, b) => compareVersions(b.build, a.build));
 }
 
 // Depth per run, one series per player (x = their run number).

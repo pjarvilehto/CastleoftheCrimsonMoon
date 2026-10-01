@@ -166,7 +166,7 @@ fresh();
   ok('flash timings: 0.9s build, 2s fade to 75%', css.includes('#flash.death-in  { opacity: 0.75; transition: opacity 0.9s')
     && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('const inv = debugMode && el('));
+  ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('debugMode && invulnerableToggle(),'));
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
@@ -491,7 +491,14 @@ fresh();
   ok('FORCE CRITS: every attack crits (0% crit chance)', a.every((e) => e.crit) && !c0.crit);
   ok('FORCE MEGA CRITS: every attack mega crits', b.every((e) => e.crit && e.megaCrit && e.text.includes('MEGA CRIT!')));
   const main = readFileSync('src/main.js', 'utf8');
-  ok('crit toggles only under ?debug', main.includes("toggle('forceCrit', 'FORCE CRITS'") && main.includes("...critToggles()") && main.includes('...(debugMode ? bgDebugToggles() : [])'));
+  const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
+  const labels = debugToggles().map((b) => b.textContent);
+  ok('crit toggles only under ?debug', main.includes('...(debugMode ? debugToggles() : [])')
+    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF', labels.join('|'));
+  const inv = invulnerableToggle();
+  inv.listeners.click[0]();
+  ok('INVULNERABLE toggle flips the debug flag', DEBUG.invulnerable === true && inv.textContent === 'INVULNERABLE: ON');
+  inv.listeners.click[0]();
 }
 
 // T68: 0.106 — OVERKILL gets the mega-crit treatment across the enemy line.

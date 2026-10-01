@@ -21,6 +21,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compareVersions } from '../src/shared/version.js';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const FILE = join(ROOT, 'assets/data/build.json');
@@ -40,14 +41,13 @@ export function listModules() {
 }
 
 const CHANGELOG_KEEP = 15;
-const num = (v) => v.split('.').map(Number).reduce((a, x) => a * 10000 + x, 0);
 
 // The next build.json: new version + module list; the changelog keeps its
 // history, and `notes` (if any) replace that version's entry.
 export function nextBuild(current, version, notes = [], modules = listModules()) {
   const changelog = { ...(current.changelog ?? {}) };
   if (notes.length) changelog[version] = notes;
-  const kept = Object.keys(changelog).sort((a, b) => num(b) - num(a)).slice(0, CHANGELOG_KEEP);
+  const kept = Object.keys(changelog).sort((a, b) => compareVersions(b, a)).slice(0, CHANGELOG_KEEP);
   return { version, modules, changelog: Object.fromEntries(kept.map((v) => [v, changelog[v]])) };
 }
 
@@ -55,7 +55,7 @@ export function nextBuild(current, version, notes = [], modules = listModules())
 export function nextChangelog(full, version, notes = []) {
   const all = { ...(full ?? {}) };
   if (notes.length) all[version] = notes;
-  return Object.fromEntries(Object.keys(all).sort((a, b) => num(b) - num(a)).map((v) => [v, all[v]]));
+  return Object.fromEntries(Object.keys(all).sort((a, b) => compareVersions(b, a)).map((v) => [v, all[v]]));
 }
 
 const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];

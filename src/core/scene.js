@@ -15,7 +15,7 @@ let activeBg = null;   // the bg-layer element currently opaque
 let transitioning = false; // re-entry guard (rapid keys during a fade)
 let bgListener = null;     // the 3D background renderer, when running (0.083)
 let sceneListener = null;  // the update check (0.094): told after every scene switch
-let keyTrap = null;        // an open dialog that owns the keyboard (0.094)
+const keyTraps = [];       // open dialogs that own the keyboard, newest last (0.094; a stack 0.115)
 
 // Tell a listener (core/bg3d.js) about every background change; it is
 // told the current one immediately.
@@ -41,9 +41,15 @@ export function onSceneChange(fn) { sceneListener = fn; }
 
 // A dialog layered over the scene takes the keyboard while it's open
 // (0.094): fn(key) handles every key, so the scene's hotkeys underneath
-// can't fire. null releases it.
-export function setKeyTrap(fn) { keyTrap = fn; }
-export const currentKeyTrap = () => keyTrap; // to restore one after a dialog on top (0.113)
+// can't fire. Traps stack (0.115): a dialog opened over another gets the
+// keys, and closing it hands them back to the one underneath — whichever
+// order they close in. ui/dialog.js does this for every dialog.
+export function pushKeyTrap(fn) { keyTraps.push(fn); }
+export function releaseKeyTrap(fn) {
+  const i = keyTraps.lastIndexOf(fn);
+  if (i >= 0) keyTraps.splice(i, 1);
+}
+export const activeKeyTrap = () => keyTraps.at(-1) ?? null;
 
 // Fade the windows out, run `work()` (swap content and/or background),
 // then fade the windows back in. Ignored if a transition is already
@@ -150,7 +156,7 @@ export function handleKey(key) {
   // must not click unseen buttons.
   if (document.body?.classList?.contains('fg-hidden')) return false;
   const k = key.toLowerCase();
-  if (keyTrap) return keyTrap(k);
+  if (keyTraps.length) return keyTraps.at(-1)(k);
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');
     if (primary) { primary.click(); return true; }

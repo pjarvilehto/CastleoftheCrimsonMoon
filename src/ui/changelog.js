@@ -5,17 +5,16 @@
 // fetched only when the dialog opens, never at boot. Offline it falls back
 // to the recent builds in build.json.
 //
-// The dialog owns the keyboard while open (Esc / Enter / C close it) and
-// gives back whatever key trap was active before, so it can sit over
-// another dialog without releasing that one's keys.
+// The dialog owns the keyboard while open (Esc / Enter / C close it;
+// ui/dialog.js), and hands it back to whatever was below.
 
-import { el, setKeyTrap, currentKeyTrap } from '../core/scene.js';
+import { el } from '../core/scene.js';
+import { openDialog } from './dialog.js';
 import { DATA } from '../shared/data.js';
+import { compareVersions } from '../shared/version.js';
 
-let overlay = null;
+let dialog = null;
 let opening = false;
-
-const num = (v) => String(v).split('.').map(Number).reduce((a, x) => a * 10000 + x, 0);
 
 export async function loadChangelog() {
   try {
@@ -27,47 +26,39 @@ export async function loadChangelog() {
   }
 }
 
-export const changelogOpen = () => !!overlay;
+export const changelogOpen = () => !!dialog?.isOpen();
 
 export function closeChangelog() {
-  if (!overlay) return;
-  overlay.remove();
-  setKeyTrap(overlay.prevTrap ?? null);
-  overlay = null;
+  dialog?.close();
 }
 
 // load: () => Promise<{ version: [notes] }> (tests pass the file directly)
 export async function openChangelog(load = loadChangelog) {
-  if (overlay || opening) return;
+  if (changelogOpen() || opening) return;
   opening = true;
   const log = await load().finally(() => { opening = false; });
   const here = DATA.build?.version;
-  const versions = Object.keys(log ?? {}).sort((a, b) => num(b) - num(a));
+  const versions = Object.keys(log ?? {}).sort(compareVersions).reverse();
   const builds = versions.map((v) => el('div', { class: 'changelog-build' },
     el('div', { class: 'changelog-version' }, `Build ${v}`,
       v === here ? el('span', { class: 'changelog-here' }, ' — this build') : null),
     el('ul', { class: 'changelog-notes' }, ...(log[v] ?? []).map((n) => el('li', {}, String(n))))));
-  const close = el('button', { class: 'primary', key: 'c', onclick: closeChangelog }, 'Close');
-  overlay = el('div', {
-    class: 'update-overlay changelog-overlay', role: 'dialog', 'aria-label': 'Changelist',
-    onclick: (e) => { if (e?.target === overlay) closeChangelog(); }, // a click outside closes it
-  },
-  el('div', { class: 'update-modal changelog-modal' },
-    el('h2', { class: 'update-title' }, 'Changelist'),
-    el('div', { class: 'changelog-log' },
-      ...(builds.length ? builds : [el('div', { class: 'changelog-empty' }, 'No release notes found.')])),
-    el('div', { class: 'btn-row' }, close)));
-  overlay.prevTrap = currentKeyTrap();
-  document.body.append(overlay);
-  setKeyTrap((k) => {
-    if (k === 'c' || k === 'escape' || k === 'enter') closeChangelog();
-    return true;
+  dialog = openDialog({
+    label: 'Changelist', backdropCloses: true, // a click outside closes it
+    overlayClass: 'update-overlay changelog-overlay', modalClass: 'update-modal changelog-modal',
+    children: [
+      el('h2', { class: 'update-title' }, 'Changelist'),
+      el('div', { class: 'changelog-log' },
+        ...(builds.length ? builds : [el('div', { class: 'changelog-empty' }, 'No release notes found.')])),
+      el('div', { class: 'btn-row' }, el('button', { class: 'primary', key: 'c', onclick: closeChangelog }, 'Close')),
+    ],
+    onKey: (k, close) => { if (k === 'c' || k === 'escape' || k === 'enter') close(); },
   });
 }
 
 export function changelogToggle() {
   return el('button', {
     class: 'debug-toggle changelog-toggle',
-    onclick: () => (overlay ? closeChangelog() : openChangelog()),
+    onclick: () => (changelogOpen() ? closeChangelog() : openChangelog()),
   }, 'CHANGELIST');
 }

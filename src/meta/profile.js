@@ -5,6 +5,7 @@ import { loadProfile, saveProfile, wipeProfile, exportProfile, importProfile } f
 import { DATA } from '../shared/data.js';
 import { emptyEquipment, equippedItemIds, equipItems } from './equipment.js';
 import { newPlayerId } from './history.js';
+import { levelFromStats } from '../shared/level.js';
 
 const DEFAULTS = {
   coins: 0,
@@ -160,9 +161,7 @@ export function setPlayerName(n) {
 // Character level: one per five trained discipline levels (shown on the
 // combat card and in the Great Hall, 0.080).
 export function playerLevel(p = getProfile()) {
-  const s = p.stats;
-  return 1 + Math.floor(((s.power ?? 0) + (s.vitality ?? 0) + (s.fortune ?? 0)
-    + (s.precision ?? 0) + (s.endurance ?? 0)) / 5);
+  return levelFromStats(p.stats);
 }
 
 // ---- derived combat stats (base + permanent levels + gear) ----
