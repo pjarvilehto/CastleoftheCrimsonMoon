@@ -11,6 +11,14 @@ export function emptyEquipment() {
   return { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
 }
 
+// What a new knight carries (0.116: moved here from profile.js).
+export function startingEquipment() {
+  const eq = emptyEquipment();
+  eq.weapon = 'rusty_sword';
+  eq.armor = 'oak_shield';
+  return eq;
+}
+
 export function equippedItemIds(eq) {
   return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet].filter(Boolean);
 }
@@ -21,12 +29,12 @@ export function itemValue(id) {
   const it = DATA.items[id];
   if (!it) return -1;
   const w = DATA.difficulty.itemValue ?? {};
-  return it.tier * (w.tier ?? 100)
-    + (it.dmg || 0) * (w.dmg ?? 4)
-    + (it.armor || 0) * (w.armor ?? 0.4)
-    + (it.hp || 0) * (w.hp ?? 0.05)
-    + (it.lifesteal || 0) * (w.lifesteal ?? 20)
-    + (it.crit || 0) * (w.crit ?? 100);
+  return it.tier * w.tier
+    + (it.dmg || 0) * w.dmg
+    + (it.armor || 0) * w.armor
+    + (it.hp || 0) * w.hp
+    + (it.lifesteal || 0) * w.lifesteal
+    + (it.crit || 0) * w.crit;
 }
 
 export function salvageValue(id) {

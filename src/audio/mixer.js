@@ -47,7 +47,7 @@ export function setVolume(kind, v) {
 export function busGain(kind) {
   const v = loadVolumes();
   if (kind === 'master') return sliderGain(v.master);
-  const level = kind === 'music' ? (cfg().musicLevel ?? 0.35) : (cfg().sfxLevel ?? 1);
+  const level = kind === 'music' ? cfg().musicLevel : cfg().sfxLevel;
   return muted[kind] ? 0 : level * sliderGain(v[kind]);
 }
 
@@ -76,11 +76,11 @@ export function mixer() {
   const ctx = ensureCtx();
   const L = cfg().limiter ?? {};
   const limiter = ctx.createDynamicsCompressor();
-  limiter.threshold.value = L.threshold ?? -6;
-  limiter.knee.value = L.knee ?? 4;
-  limiter.ratio.value = L.ratio ?? 16;
-  limiter.attack.value = L.attack ?? 0.002;
-  limiter.release.value = L.release ?? 0.2;
+  limiter.threshold.value = L.threshold;
+  limiter.knee.value = L.knee;
+  limiter.ratio.value = L.ratio;
+  limiter.attack.value = L.attack;
+  limiter.release.value = L.release;
   const [master, music, duck, sfx] = [0, 0, 0, 0].map(() => ctx.createGain());
   music.connect(duck);
   duck.connect(master);
@@ -104,8 +104,8 @@ export function duckMusic(seconds, at = 0) {
   const g = nodes.duck.gain;
   const t = Math.max(at, nodes.ctx.currentTime);
   hold(g, t);
-  g.setTargetAtTime(dbToGain(d.db ?? -7), t, (d.attack ?? 0.08) / 3);
-  g.setTargetAtTime(1, t + seconds, (d.release ?? 0.9) / 3);
+  g.setTargetAtTime(dbToGain(d.db), t, d.attack / 3);
+  g.setTargetAtTime(1, t + seconds, d.release / 3);
 }
 
 // A hidden tab goes quiet (and stops using the CPU for audio); it comes back

@@ -86,7 +86,7 @@ fresh();
     for (let k = 0; k < 3; k++) { handleKey('a'); await sleep(900); }
   }
   if (!t().includes('shrine hums')) {
-    const { derivedStats: dd2 } = await import('../../src/meta/profile.js');
+    const { derivedStats: dd2 } = await import('../../src/meta/stats.js');
     const dd = dd2();
     console.log(`    [t6 debug] guard=${guard} died=${t().includes('YOU DIED')} profileNow: dmg=${dd.dmg} maxHp=${dd.maxHp} vit=${getProfile().stats.vitality} tail=${JSON.stringify(t().slice(-160))}`);
   }
@@ -134,7 +134,7 @@ fresh();
     return !o.buff.includes(buff) || !o.costDesc.includes(cost);
   }).map((o) => o.id);
   ok('shrine text matches shrine numbers', bad.length === 0, bad.join(','));
-  const { statDesc } = await import('../../src/meta/leveling.js');
+  const { statDesc } = await import('../../src/ui/hubText.js');
   const pl = DATA.difficulty.player;
   ok('hub stat text generated from data', statDesc('power', 0).includes(`+${pl.dmgPerPower} `)
     && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('Crit Chance +'));

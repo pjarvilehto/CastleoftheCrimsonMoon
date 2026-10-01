@@ -61,10 +61,12 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    `difficulty.json` instead. Since 0.079 that includes player base stats
    (`player`), combat multipliers (`combat`), and every shrine boon's
    numbers (per-offer fields in `shrines.json`; a smoke check keeps the
-   card text in sync with them).
-3. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
+   card text in sync with them). 0.116: no `?? N` fallback copies of data
+   numbers in `src/` (they drifted); every number the code reads is listed
+   in `shared/dataCheck.js` and checked at load — new knob, new line there.
+3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    0.079; now 4): bump it and append a step to `MIGRATIONS` — never edit a
-   shipped step.
+   shipped step. New-profile defaults: `freshProfile()` in `meta/profile.js`.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot for its
    salvage value; only upgrades land in `run.itemsFound`. One shrine per
@@ -210,7 +212,7 @@ static play-stats page.
   and multi-kills rock the near art right, hits on the knight worth
   >= swayHitShare of max HP rock it left.
 - Upgrades never charge for nothing (0.112): capped effects use
-  `profile.taper` (linear `perLevel` for `linear` levels, then each level
+  `stats.taper` (linear `perLevel` for `linear` levels, then each level
   closes a share of the gap to `max`; smooth by default: the first tapered
   step equals perLevel; or `tail: k` = level n adds perLevel·(linear/n)^k,
   a long tail) — Precision (`player.precisionTaper`) and Efficiency

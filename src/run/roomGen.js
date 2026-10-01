@@ -52,7 +52,7 @@ export function generateRoom(roomNumber, run = {}) {
   const enemies = [];
   let spent = 0;
   let guard = 0; // safety against pathological loops
-  const maxEnemies = diff.maxEnemies ?? 6;
+  const maxEnemies = diff.maxEnemies;
   while (spent < budget && enemies.length < maxEnemies && guard++ < 20) {
     const id = pickRandom(pool);
     const cost = diff.enemyCost[String(DATA.enemies[id].tier)];
@@ -76,9 +76,9 @@ function makeBoss(roomNumber) {
   // rooms). They now scale as if {depthBonus} rooms deeper, with an extra
   // HP/damage spike on top. Name still comes from scaleEnemy.
   const b = DATA.difficulty.boss ?? {};
-  const boss = scaleEnemy('vampire_lord', roomNumber + (b.depthBonus ?? 4));
-  boss.maxHp = Math.round(boss.maxHp * (b.hpMult ?? 1.5));
-  boss.dmg = Math.round(boss.dmg * (b.dmgMult ?? 1.25));
+  const boss = scaleEnemy('vampire_lord', roomNumber + b.depthBonus);
+  boss.maxHp = Math.round(boss.maxHp * b.hpMult);
+  boss.dmg = Math.round(boss.dmg * b.dmgMult);
   // Summoner (0.092): its meter fills each turn; see combat.js summonPhase.
   if (b.summon?.every > 0) Object.assign(boss, { summonEvery: b.summon.every, summonMeter: 0 });
   return boss;

@@ -26,7 +26,7 @@ export function dealOffers() {
 // Coin-priced boons scale with depth (0.072): at room 1 the price is the
 // base; deeper shrines charge more, so rich late profiles can't auto-yes.
 export function coinCost(base, roomNumber) {
-  const growth = DATA.shrines.coinCostGrowthPerRoom ?? 0.5;
+  const growth = DATA.shrines.coinCostGrowthPerRoom;
   return Math.round(base * (1 + growth * Math.max(0, roomNumber - 1)));
 }
 
@@ -44,21 +44,21 @@ export function costText(offer, roomNumber) {
   return offer.costDesc;
 }
 
-const hpFloorOk = (run) => run.maxHp > (DATA.shrines.minMaxHp ?? 50); // keep a sane HP floor
-const dmgFloorOk = (run) => run.stats.dmg > (DATA.shrines.minDmg ?? 5);
+const hpFloorOk = (run) => run.maxHp > DATA.shrines.minMaxHp; // keep a sane HP floor
+const dmgFloorOk = (run) => run.stats.dmg > DATA.shrines.minDmg;
 const coinsOk = (run, o) => run.coins >= offerCoinCost(o, run.roomNumber);
 
 export function canAffordOffer(run, o) {
   switch (o.id) {
     case 'dmg': return hpFloorOk(run);
     case 'crit': return coinsOk(run, o);
-    case 'armor': return run.potions >= (o.potionCost ?? 1);
+    case 'armor': return run.potions >= (o.potionCost);
     case 'leech': return hpFloorOk(run);
     case 'bulwark': return dmgFloorOk(run);
     case 'secondwind': return coinsOk(run, o);
     case 'quicken': return hpFloorOk(run) && (run.stats.heavyCdMax ?? 3) > 1;
     case 'greed': return dmgFloorOk(run);
-    case 'glasscannon': return run.stats.armor >= (o.minArmor ?? 20);
+    case 'glasscannon': return run.stats.armor >= (o.minArmor);
     default: return false;
   }
 }
@@ -90,7 +90,7 @@ export function acceptOffer(run, o) {
       run.potions = Math.max(0, run.potions - o.potionCost);
       // Percentage of CURRENT armor, with a floor (armorMin, 0.091): 25% of
       // a starting armor was next to nothing — not worth the potion it costs.
-      run.stats.armor = Math.max(run.stats.armor + (o.armorMin ?? 0), Math.round(run.stats.armor * o.armorMult));
+      run.stats.armor = Math.max(run.stats.armor + (o.armorMin), Math.round(run.stats.armor * o.armorMult));
       break;
     case 'leech':
       payHp(run, o.hpCostPct);
@@ -100,7 +100,7 @@ export function acceptOffer(run, o) {
       payDmg(run, o.dmgCostPct);
       // Flat armorAdd or a share of current armor, whichever is more (0.091):
       // a flat bonus stopped mattering late while -10% damage kept hurting.
-      run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * (o.armorPct ?? 0)));
+      run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * (o.armorPct)));
       break;
     case 'secondwind':
       payCoins(run, o);
@@ -118,7 +118,7 @@ export function acceptOffer(run, o) {
     case 'greed':
       payDmg(run, o.dmgCostPct);
       // Kill coins multiplier — runState.applyLoot reads run.coinMult.
-      run.coinMult = (run.coinMult ?? 1) + o.coinMultAdd;
+      run.coinMult = run.coinMult + o.coinMultAdd;
       break;
     case 'glasscannon':
       run.stats.armor = Math.floor(run.stats.armor * (1 - o.armorCostPct));

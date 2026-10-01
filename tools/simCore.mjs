@@ -83,6 +83,7 @@ export async function loadSim() {
   const { loadData, DATA } = await import('../src/shared/data.js');
   if (!DATA.difficulty) await loadData();
   const profile = await import('../src/meta/profile.js');
+  const stats = await import('../src/meta/stats.js');
   const lv = await import('../src/meta/leveling.js');
   const rs = await import('../src/run/runState.js');
   const cb = await import('../src/run/combat.js');
@@ -242,5 +243,5 @@ export async function loadSim() {
   }
   const fresh = () => profile.resetProfile();
 
-  return { DATA, playRun, spendInHub, snapshot, restore, fresh, derivedStats: profile.derivedStats, getProfile: P };
+  return { DATA, playRun, spendInHub, snapshot, restore, fresh, derivedStats: stats.derivedStats, getProfile: P };
 }

@@ -7,7 +7,8 @@
 
 import { el } from '../core/scene.js';
 import { hpBar, rarityClass } from './hud.js';
-import { getProfile, itemWithForge, playerLevel } from '../meta/profile.js';
+import { getProfile } from '../meta/profile.js';
+import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
 
 const ART = (id) => `assets/chars/${id}.webp`;

@@ -6,14 +6,16 @@ import { el, setBackground, show, currentScene } from '../../core/scene.js';
 import { preloadRest, restProgress } from '../../shared/preload.js';
 import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
-import { getProfile, derivedStats, itemWithForge, playerLevel } from '../../meta/profile.js';
+import { getProfile } from '../../meta/profile.js';
+import { derivedStats, itemWithForge, playerLevel } from '../../meta/stats.js';
 import {
-  STAT_DEFS, statDesc, statCost, canAfford, buyStat,
+  STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, efficiencyDesc, infusionArmor,
+  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName } from '../hud.js';
+import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
 import { dungeonScene } from './dungeonScene.js';
 import { titleScene } from './titleScene.js';
@@ -39,7 +41,7 @@ export function canSpendCoins(p) {
   if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
   const eq = p.equipment;
   return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet]
-    .some((id) => id && (DATA.items[id]?.tier ?? 1) > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
+    .some((id) => id && DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
 }
 
 // Buy Potion gets the pulsing 'active' glow below 30% of the satchel.
@@ -91,7 +93,7 @@ export function hubScene() {
   function render(root) {
     const p = getProfile();
     const stats = derivedStats(p);
-    const every = DATA.difficulty.breakthroughEvery ?? 5;
+    const every = DATA.difficulty.breakthroughEvery;
 
     // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
     // Potions alone in the middle column (hub-stats in styles.css).
@@ -125,7 +127,7 @@ export function hubScene() {
 
     // ---- ALCHEMY: potions + three coin tracks. ----
     const alchemyDesc = {
-      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel ?? 50} potion healing per level (now ${potionHealAmount()} HP)`,
+      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
       efficiency: () => efficiencyDesc(), // 0.112: tapering — shows the next level's gain
       infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
     };
@@ -174,7 +176,7 @@ export function hubScene() {
       const forgeLvl = id ? (p.forged[id] ?? 0) : 0;
       // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
       // worth the coins, so it gets no enhance button at all (0.068).
-      const forgeable = !!item && (item.tier ?? 1) > 1;
+      const forgeable = !!item && item.tier > 1;
       return el('div', { class: 'item-row' },
         el('span', { style: 'color:#9a8b6a;flex-shrink:0' }, label),
         item

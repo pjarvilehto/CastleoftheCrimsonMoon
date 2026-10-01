@@ -84,7 +84,7 @@ fresh();
     weapon: 'fang_of_the_eclipse', armor: 'bloodmoon_aegis', boots: 'umbral_treads',
     rings: ['ring_of_the_red_veil', null], trinket: 'heart_of_the_dying_moon', amulet: null,
   };
-  const { derivedStats } = await import('../../src/meta/profile.js');
+  const { derivedStats } = await import('../../src/meta/stats.js');
   const d = derivedStats(p);
   ok('relic powers: dodge 14%, thorns 4, heavy cd 2, revive', Math.abs(d.dodge - 0.14) < 1e-9
     && d.thorns === 4 && d.heavyCdMax === 2 && d.revive === true);
@@ -191,4 +191,25 @@ fresh();
   }
   ok('styles.css braces balanced', intact && depth === 0);
   ok('title-panel docking rule present', css.includes('#app > .panel.title-panel'));
+}
+
+// T80: 0.116 — every number the code reads is in the data (checked at
+// load), and the code keeps no `?? N` fallback copies of them (they had
+// drifted: boss x1.5/x1.25 vs 1.2/0.7 in the data, T4 chance 5% vs 2%).
+{
+  const { checkData } = await import('../../src/shared/dataCheck.js');
+  ok('data check: every tuning number the code reads is present', checkData(DATA).length === 0, checkData(DATA).join('; '));
+  const broken = structuredClone({ ...DATA });
+  delete broken.difficulty.boss.hpMult;
+  broken.difficulty.player.baseHp = 'lots';
+  broken.audio.clips.attack = {};
+  const probs = checkData(broken);
+  ok('data check names what is missing or not a number', probs.some((p) => p.includes('boss.hpMult')) && probs.some((p) => p.includes('player.baseHp'))
+    && probs.some((p) => p.includes('clips.attack.gainDb')), probs.join('; '));
+  ok('loadData runs the check', readFileSync('src/shared/data.js', 'utf8').includes('checkData(DATA)'));
+  const leaves = new Set(readFileSync('src/shared/dataCheck.js', 'utf8').match(/'[a-zA-Z.]+'/g).map((s) => s.slice(1, -1).split('.').pop()));
+  const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
+  const copies = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\.(\w+) \?\? -?[\d.]+/g)]
+    .filter((m) => leaves.has(m[1]) && !f.endsWith('migrations.js') && !f.endsWith('history.js')).map((m) => `${f}: ${m[0]}`));
+  ok('no fallback copies of data numbers in src (the shipped migration step and run records aside)', copies.length === 0, copies.join('; '));
 }

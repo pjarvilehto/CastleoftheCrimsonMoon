@@ -1,5 +1,8 @@
 // shared/data.js — single async load point for all game data JSON.
-// Everything else imports the already-parsed objects from here.
+// Everything else imports the already-parsed objects from here. The
+// numbers the code reads are checked once loaded (shared/dataCheck.js).
+
+import { checkData } from './dataCheck.js';
 
 export const DATA = {};
 
@@ -12,5 +15,6 @@ export async function loadData() {
     if (!res.ok) throw new Error(`Failed to load ${name}.json`);
     DATA[name] = await res.json();
   }));
+  for (const problem of checkData(DATA)) console.error(`[data] ${problem}`);
   return DATA;
 }

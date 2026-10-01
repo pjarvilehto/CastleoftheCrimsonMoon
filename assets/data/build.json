@@ -1,5 +1,5 @@
 {
-  "version": "0.115",
+  "version": "0.116",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -22,7 +22,10 @@
     "src/meta/equipment.js",
     "src/meta/history.js",
     "src/meta/leveling.js",
+    "src/meta/migrations.js",
+    "src/meta/names.js",
     "src/meta/profile.js",
+    "src/meta/stats.js",
     "src/meta/storage.js",
     "src/meta/telemetry.js",
     "src/run/combat.js",
@@ -32,6 +35,7 @@
     "src/run/shrine.js",
     "src/shared/balance.js",
     "src/shared/data.js",
+    "src/shared/dataCheck.js",
     "src/shared/debug.js",
     "src/shared/level.js",
     "src/shared/prefs.js",
@@ -52,6 +56,7 @@
     "src/ui/dialog.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
+    "src/ui/hubText.js",
     "src/ui/hud.js",
     "src/ui/namePrompt.js",
     "src/ui/particles.js",
@@ -64,6 +69,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.116": [
+      "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
+    ],
     "0.115": [
       "Under the hood: cleaner dialogs and corner buttons (a dialog over another no longer lets keys slip through)"
     ],
@@ -121,10 +129,6 @@
     "0.102": [
       "Descending with XP or coins still to spend now asks first",
       "Play stats are shared automatically (anonymous) so the developer sees every tester's runs"
-    ],
-    "0.101": [
-      "The mist is now made of big soft drifting fog banks that sit between things in the scene — sideways on the ramparts, rolling in at the gate",
-      "Smoother backgrounds: the fog costs far less, high-DPI screens render fewer pixels, and slow devices lower quality step by step instead of stuttering"
     ]
   }
 }

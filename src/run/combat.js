@@ -14,8 +14,8 @@ import { scaleEnemy } from '../shared/balance.js';
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
 export function critMultiplier(tune, mega = false, r = Math.random()) {
-  const m = (tune.critMult ?? 1.5) * (1 + (r * 2 - 1) * (tune.critJitter ?? 0));
-  return mega ? m * (tune.megaCritMult ?? 1.5) : m;
+  const m = tune.critMult * (1 + (r * 2 - 1) * tune.critJitter);
+  return mega ? m * tune.megaCritMult : m;
 }
 
 export function createCombat(run, room) {
@@ -41,7 +41,7 @@ function living(combat) {
 // with the log, animations land on the right beat).
 export function playerAttack(combat, targetIndex, heavy = false) {
   const events = [];
-  combat.run.turns = (combat.run.turns ?? 0) + 1; // run history (0.095)
+  combat.run.turns += 1; // run history (0.095)
   const push = (ev) => {
     ev.snap = {
       enemies: combat.enemies.map((e) => e.hp),
@@ -57,10 +57,10 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   const crit = DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < combat.run.stats.crit;
   // 0.104: a crit's multiplier varies ±critJitter, and a rare crit
   // (megaCritChance of crits) is a MEGA CRIT for megaCritMult more.
-  const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < (tune.megaCritChance ?? 0));
-  const mult = heavy ? (tune.heavyMult ?? 2) : 1;
+  const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
+  const mult = heavy ? tune.heavyMult : 1;
   let dmg = combat.run.stats.dmg * mult;
-  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: (tune.critMult ?? 1.5) + (combat.run.stats.critBonus ?? 0) }, megaCrit));
+  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + (combat.run.stats.critBonus ?? 0) }, megaCrit));
   dmg = Math.max(1, dmg);
 
   // --- SMASH: a heavy hit whose damage covers EVERY living enemy's
@@ -81,7 +81,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   const diff = DATA.difficulty;
   const chain = [targetIndex];
   // Spill is a heavy-attack privilege: basic attacks are single-target.
-  const overpowered = !smashed && heavy && dmg >= target.hp * (diff.spillThreshold ?? 2);
+  const overpowered = !smashed && heavy && dmg >= target.hp * (diff.spillThreshold);
   if (overpowered) {
     // No target cap: a strong enough blow sweeps the whole room.
     for (const [i, e] of combat.enemies.entries()) {
@@ -137,7 +137,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   // enemy phase
   for (const enemy of living(combat)) {
     const source = combat.enemies.indexOf(enemy); // who acts, for the UI
-    const raw = enemy.dmg + Math.floor(Math.random() * ((tune.enemyDmgJitter ?? 20) + 1));
+    const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
     // T4 relic: dodge — the blow misses entirely.
     if (!DEBUG.invulnerable && (combat.run.stats.dodge ?? 0) > 0 && Math.random() < combat.run.stats.dodge) {
       push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
@@ -150,7 +150,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     // removing all pressure. The floor scales with the hit, so deep foes
     // stay dangerous. (0.093: the x10 HP scale made the floor's ceil() much
     // finer — 17% keeps the old effective floor.)
-    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * (tune.armorMinTakenPct ?? 0.17)), raw - armor);
+    const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * tune.armorMinTakenPct), raw - armor);
     combat.run.hp = Math.max(0, combat.run.hp - taken);
     push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
     // T4 relic: thorns wound the attacker — but never finish it (kill/loot
@@ -164,7 +164,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
       // T4 relic: the Heart of the Dying Moon beats again — once per run.
       if (combat.run.revive) {
         combat.run.revive = false;
-        combat.run.hp = Math.ceil(combat.run.maxHp * (DATA.difficulty.player?.reviveHpPct ?? 0.5));
+        combat.run.hp = Math.ceil(combat.run.maxHp * DATA.difficulty.player?.reviveHpPct);
         push({ type: 'revive', text: 'The Heart of the Dying Moon beats again! You rise at half health.' });
         continue;
       }
@@ -181,7 +181,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (living(combat).length === 0) {
     combat.over = true;
     combat.victory = true;
-    if (combat.isBoss) combat.run.bossesBeaten = (combat.run.bossesBeaten ?? 0) + 1;
+    if (combat.isBoss) combat.run.bossesBeaten += 1;
     push({ type: 'sys', text: 'The room is cleared.' });
   }
 
@@ -199,10 +199,10 @@ function summonPhase(combat, push) {
     if (!e.summonEvery || e.hp <= 0) continue;
     e.summonMeter = Math.min(e.summonEvery, e.summonMeter + 1);
     const alive = combat.enemies.filter((x) => x.summoned && x.hp > 0).length;
-    if (e.summonMeter < e.summonEvery || alive >= (cfg.maxAlive ?? 3)) continue; // full: waits for room
-    const s = scaleEnemy(cfg.enemy ?? 'skeleton', (combat.roomNumber ?? 1) + (cfg.depthBonus ?? 0));
-    s.maxHp = Math.max(1, Math.round(s.maxHp * (cfg.hpScale ?? 1)));
-    s.dmg = Math.max(1, Math.round(s.dmg * (cfg.dmgScale ?? 1)));
+    if (e.summonMeter < e.summonEvery || alive >= cfg.maxAlive) continue; // full: waits for room
+    const s = scaleEnemy(cfg.enemy ?? 'skeleton', (combat.roomNumber ?? 1) + cfg.depthBonus);
+    s.maxHp = Math.max(1, Math.round(s.maxHp * cfg.hpScale));
+    s.dmg = Math.max(1, Math.round(s.dmg * cfg.dmgScale));
     Object.assign(s, { hp: s.maxHp, summoned: true, xp: 0, coins: [0, 0] });
     combat.enemies.push(s);
     // Snapshot BEFORE the reset: the bar shows full as the summon lands,
@@ -225,5 +225,5 @@ export function canHeavy(combat) {
 
 export function useHeavy(combat) {
   // Cooldown is player.baseHeavyCd (3); relics and the quicken boon lower it (floor 1).
-  combat.heavyCd = combat.run.stats.heavyCdMax ?? DATA.difficulty.player?.baseHeavyCd ?? 3;
+  combat.heavyCd = combat.run.stats.heavyCdMax ?? DATA.difficulty.player?.baseHeavyCd;
 }

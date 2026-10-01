@@ -72,7 +72,7 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   const vary = rate == null ? planVariation(A.variation?.[name]) : null;
   const r = rate ?? vary?.rate ?? (jitter ? 0.88 + Math.random() * 0.24 : 1);
   const out = ctx.createGain();
-  out.gain.value = dbToGain((A.clips?.[name]?.gainDb ?? 0) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
+  out.gain.value = dbToGain((A.clips?.[name]?.gainDb) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
   let node = out;
   if (pan && ctx.createStereoPanner) {
     const p = ctx.createStereoPanner();

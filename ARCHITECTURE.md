@@ -71,18 +71,24 @@ src/
 │                         handleKey()/initHotkeys(), setKeyTrap() for
 │                         dialogs, currentScene()/onSceneChange() (0.094)
 ├── meta/                 PERSISTS across runs (localStorage)
-│   ├── storage.js        the only file that touches localStorage;
+│   ├── storage.js        the only file that touches the SAVE in localStorage;
 │   │                     exportProfile()/importProfile() — base64 save
 │   │                     codes for cross-origin transfer (new URL = new
 │   │                     localStorage, so saves must be carried by hand)
-│   ├── profile.js        coins, xp, stat levels, equipment, records,
-│   │                     resetProfile(); SAVE_VERSION + ordered MIGRATIONS
+│   ├── profile.js        coins, xp, stat levels, equipment, records;
+│   │                     lifecycle: getProfile/freshProfile/reset/import
+│   ├── migrations.js     SAVE_VERSION + append-only MIGRATIONS (0.116 split)
+│   ├── stats.js          derivedStats, trainedLevel, itemWithForge, taper,
+│   │                     precisionCrit, playerLevel (0.116 split)
+│   ├── names.js          cleanName / NAME_MAX (0.116 split)
 │   ├── equipment.js      slot rules + auto-equip/salvage logic
 │   ├── history.js        run history records (0.095; settleRun appends,
 │   │                     the /analytics/ dashboard reads them)
 │   ├── telemetry.js      sends the history to the collector (0.102;
 │   │                     after each run + once per session)
-│   └── leveling.js       training costs, buyStat(), restockPotion()
+│   └── leveling.js       training costs, buyStat(), restockPotion(), the
+│                         numbers behind the hub lines (precisionGain);
+│                         the wording is ui/hubText.js (0.116)
 ├── run/                  EXISTS only during a dungeon run
 │   ├── runState.js       run object, room progression, settleRun()
 │   ├── roomGen.js        threat-budget combat rooms, boss every 8,
@@ -107,6 +113,8 @@ src/
 │   │                     default OFF; combat.js reads it, ui/debugToggles.js
 │   ├── version.js        compareVersions / isNewer for build numbers (0.115)
 │   ├── level.js          character level from disciplines (0.115; analytics too)
+│   ├── dataCheck.js      every tuning number the code reads, checked at
+│   │                     load (0.116; no `?? N` copies in src)
 │   ├── prefs.js          per-browser settings in localStorage, never throws (0.115)
 │   └── balance.js        enemy scaling (HP/dmg growth, LV naming)
 └── ui/

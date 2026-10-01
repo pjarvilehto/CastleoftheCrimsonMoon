@@ -47,7 +47,7 @@ export function runEndScene(run, outcome) {
             : null,
           outcome === 'death'
             ? el('div', { style: 'text-align:center;color:#e07b7b;margin-top:8px' },
-                run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round((run.tollPct ?? 0.5) * 100)}%).` : null)
+                run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round(run.tollPct * 100)}%).` : null)
             : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },

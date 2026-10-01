@@ -1,4 +1,7 @@
 {
+  "0.116": [
+    "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
+  ],
   "0.115": [
     "Under the hood: cleaner dialogs and corner buttons (a dialog over another no longer lets keys slip through)"
   ],

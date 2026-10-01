@@ -111,7 +111,7 @@ fresh();
 // T22: disciplines — XP-only training, new stats feed derived, breakthroughs double
 {
   const { buyStat, statCost } = await import('../../src/meta/leveling.js');
-  const { derivedStats, trainedLevel } = await import('../../src/meta/profile.js');
+  const { derivedStats, trainedLevel } = await import('../../src/meta/stats.js');
   resetProfile();
   const p = getProfile();
   p.coins = 0; p.xp = 10000;
@@ -155,7 +155,7 @@ fresh();
 // T24: The Forge — per-item enhancement, escalating cost, derived stats boosted
 {
   const { forgeCost, forgeItem, forgeMaxed } = await import('../../src/meta/leveling.js');
-  const { itemWithForge, derivedStats } = await import('../../src/meta/profile.js');
+  const { itemWithForge, derivedStats } = await import('../../src/meta/stats.js');
   resetProfile();
   const p = getProfile();
   p.coins = 10000;
@@ -190,7 +190,7 @@ fresh();
 
 // T28: 0.062 — precision taper, armor floor, title panel docked low
 {
-  const { precisionCrit, derivedStats } = await import('../../src/meta/profile.js');
+  const { precisionCrit, derivedStats } = await import('../../src/meta/stats.js');
   const T = DATA.difficulty.player.precisionTaper; // 0.112: +3%/level for 10 levels, then tapering to 40%
   const steps = Array.from({ length: 80 }, (_, l) => precisionCrit(l + 1) - precisionCrit(l));
   ok('precision taper: +3% for the first 10, then every level adds less, never nothing', Math.abs(precisionCrit(10) - T.perLevel * 10) < 1e-9
@@ -221,8 +221,8 @@ fresh();
 // T31: 0.067 — precision desc shows the next click's ACTUAL gain (taper bands
 // including ★ breakthrough doubles: lvl 4→5 counts double, hence '+2%').
 {
-  const { precisionDesc } = await import('../../src/meta/leveling.js');
-  const { precisionCrit, trainedLevel } = await import('../../src/meta/profile.js');
+  const { precisionDesc } = await import('../../src/ui/hubText.js');
+  const { precisionCrit, trainedLevel } = await import('../../src/meta/stats.js');
   const eff = (l) => l + Math.floor(l / 5);
   const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
   const want = (l) => { // 0.113: every level also adds crit damage, so none reads +0%
@@ -242,7 +242,7 @@ fresh();
   const eq = getProfile().equipment;
   eq.trinket = 'fang_of_the_crimson_moon'; eq.weapon = 'moonbrand'; eq.rings = ['ring_of_the_blood_moon', 'ring_of_the_blood_moon'];
   getProfile().stats.precision = 30;
-  const { derivedStats } = await import('../../src/meta/profile.js');
+  const { derivedStats } = await import('../../src/meta/stats.js');
   const ds = derivedStats(getProfile());
   ok('crit past the cap becomes crit damage (0.112)', ds.crit === DATA.difficulty.player.critCap && ds.critBonus > 0
     && Math.abs(ds.critBonus - ((0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5
@@ -461,7 +461,7 @@ fresh();
 // level of every coin/XP track adds something; the shared taper; crit
 // overflow reaches combat; the hub lines show the next level's gain.
 {
-  const { taper } = await import('../../src/meta/profile.js');
+  const { taper } = await import('../../src/meta/stats.js');
   const lv = await import('../../src/meta/leveling.js');
   const cfg = { perLevel: 0.08, linear: 3, max: 0.6 };
   ok('taper: linear, then a smooth fall (first step = perLevel), toward max', Math.abs(taper(3, cfg) - 0.24) < 1e-9 && Math.abs(taper(4, cfg) - 0.32) < 1e-9
@@ -472,19 +472,36 @@ fresh();
     && lv.efficiencyChance(20) > 0.49 && lv.efficiencyChance(20) < 0.51 && lv.efficiencyChance(40) - lv.efficiencyChance(20) > 0.04);
   resetProfile();
   getProfile().alchemy.efficiency = 20;
-  ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test(lv.efficiencyDesc()), lv.efficiencyDesc());
+  ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
   // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
   getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
   const { canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
   hubScene().enter(registry.app);
   ok('maxed efficiency: MAX, not trainable, not counted as spendable', lv.alchemyMaxed('efficiency') && !lv.trainAlchemy('efficiency')
-    && getProfile().coins === 1e6 && lv.efficiencyDesc().includes('max') && registry.app.textContent.includes('MAX')
+    && getProfile().coins === 1e6 && (await import('../../src/ui/hubText.js')).efficiencyDesc().includes('max') && registry.app.textContent.includes('MAX')
     && !lv.alchemyMaxed('potency') && !lv.alchemyMaxed('infusion'));
   ok('canSpendCoins skips maxed tracks', canSpendCoins.toString().includes('!alchemyMaxed(t) && p.coins >= alchemyCost(t)'));
   const { critMultiplier } = await import('../../src/run/combat.js');
   const src = readFileSync('src/run/combat.js', 'utf8');
-  ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: (tune.critMult ?? 1.5) + (combat.run.stats.critBonus ?? 0)')
+  ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: tune.critMult + (combat.run.stats.critBonus ?? 0)')
     && critMultiplier({ critMult: 1.8, critJitter: 0 }, false) === 1.8);
   ok('stat study tool exists', readFileSync('tools/stat-study.mjs', 'utf8').includes('export async function statStudy'));
+  resetProfile();
+}
+
+// T81: 0.116 — profile.js split: a new profile is built at the current
+// save version from the data (no longer a "version 0" save run through
+// every migration); stats/migrations/names have their own modules.
+{
+  const prof = await import('../../src/meta/profile.js');
+  const { derivedStats } = await import('../../src/meta/stats.js');
+  const { MIGRATIONS, SAVE_VERSION } = await import('../../src/meta/migrations.js').then((m) => ({ ...m, MIGRATIONS: m.MIGRATIONS ?? null }));
+  getProfile().playerId = 'keepme12'; getProfile().name = 'Kept';
+  prof.resetProfile();
+  const p = getProfile(), pc = DATA.difficulty.potions;
+  ok('fresh profile: current version, data potions, starting gear, same id + name', p.saveVersion === SAVE_VERSION && p.potions === pc.startCount
+    && p.potionCap === pc.startCap && p.equipment.weapon === 'rusty_sword' && p.equipment.armor === 'oak_shield' && p.playerId === 'keepme12' && p.name === 'Kept');
+  ok('fresh profile stats from the data', derivedStats(p).maxHp === DATA.difficulty.player.baseHp && derivedStats(p).dmg === DATA.difficulty.player.baseDmg + 4);
+  ok('profile.js re-exports SAVE_VERSION / cleanName for old imports', prof.SAVE_VERSION === SAVE_VERSION && prof.cleanName(' a  b ') === 'a b');
   resetProfile();
 }

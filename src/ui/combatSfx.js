@@ -17,7 +17,7 @@ let lastPan = 0; // loot lines follow a death line: they come from that card
 // Stereo position of a unit's card ('player' or enemy index).
 export function panOf(ctx, who) {
   const r = ctx?.unit?.(who)?.card?.getBoundingClientRect?.();
-  return r ? panForX(r.left + r.width / 2, globalThis.innerWidth || 0, DATA.audio?.pan?.width ?? 0.6) : 0;
+  return r ? panForX(r.left + r.width / 2, globalThis.innerWidth || 0, DATA.audio?.pan?.width) : 0;
 }
 
 // item: a playback queue item with .sfx (and maybe .fx / .sink).
@@ -29,14 +29,14 @@ export function combatSfx(item, ctx, play = sfx) {
     const opts = { pan: panOf(ctx, fx.to), delayMs: strikeMs(fx) };
     play(item.sfx, opts);
     if (fx.mega) {
-      play('ring', { ...opts, rate: 0.8, gainDb: S.mega?.ringDb ?? -10 });
-      play('kill', { ...opts, rate: S.mega?.deepRate ?? 0.72, gainDb: S.mega?.deepDb ?? -5 });
-    } else if (fx.crit) play('ring', { ...opts, gainDb: S.crit?.ringDb ?? -14 });
+      play('ring', { ...opts, rate: 0.8, gainDb: S.mega?.ringDb });
+      play('kill', { ...opts, rate: S.mega?.deepRate, gainDb: S.mega?.deepDb });
+    } else if (fx.crit) play('ring', { ...opts, gainDb: S.crit?.ringDb });
     return;
   }
   if (fx?.kind === 'smash') {
-    play(item.sfx, { pan: lastPan = 0.3 * (DATA.audio?.pan?.width ?? 0.6) });
-    play('boom', { gainDb: S.overkill?.boomDb ?? -4 });
+    play(item.sfx, { pan: lastPan = 0.3 * DATA.audio?.pan?.width });
+    play('boom', { gainDb: S.overkill?.boomDb });
     return;
   }
   let pan = 0;

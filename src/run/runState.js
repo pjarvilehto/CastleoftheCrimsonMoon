@@ -3,7 +3,8 @@
 // via settleRun() when the run ends (death or retreat). This is the
 // single write-path from run state to meta state — keep it that way.
 
-import { getProfile, derivedStats, persist, trainedLevel, playerLevel } from '../meta/profile.js';
+import { getProfile, persist } from '../meta/profile.js';
+import { derivedStats, trainedLevel, playerLevel } from '../meta/stats.js';
 import { recordRun } from '../meta/history.js';
 import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
 import { equipItems, salvageValue } from '../meta/equipment.js';
@@ -101,7 +102,7 @@ export function applyLoot(run, enemy, log) {
 }
 
 function satchelSellCoins() {
-  return DATA.difficulty.potions?.fullSatchelSellCoins ?? 10;
+  return DATA.difficulty.potions?.fullSatchelSellCoins;
 }
 
 // Put one potion in the satchel. At the cap it's sold on the spot instead
@@ -124,7 +125,7 @@ export function drinkPotion(run) {
   const healed = potionHealAmount(); // potency-trained
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;
-  run.potionsDrunk = (run.potionsDrunk ?? 0) + 1;
+  run.potionsDrunk += 1;
   run.hp = Math.min(run.maxHp, run.hp + healed);
   const armor = infusionArmor();
   if (armor > 0) run.tempArmor += armor;
@@ -151,7 +152,7 @@ export function settleRun(run, outcome) {
   run.coins += equip.coins;
   // Death toll: the castle takes half of everything you carried out.
   // Retreat banks the full purse.
-  run.tollPct = DATA.difficulty.deathCoinToll ?? 0.5; // difficulty.json (0.097)
+  run.tollPct = DATA.difficulty.deathCoinToll; // difficulty.json (0.097)
   run.coinsLost = outcome === 'death' ? Math.floor(run.coins * run.tollPct) : 0;
   run.coinsRetrieved = run.coins - run.coinsLost;
   run.equipSummary = equip;

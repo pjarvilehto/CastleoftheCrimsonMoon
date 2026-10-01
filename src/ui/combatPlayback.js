@@ -69,7 +69,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
     view = { hp: [...pre.enemies], php: pre.hp, dead: pre.enemies.map((h) => h <= 0), meters: [...(pre.meters ?? [])] };
     printing = true;
     onTick();
-    const delay = DATA.difficulty.logDelayMs ?? 100;
+    const delay = DATA.difficulty.logDelayMs;
     const step = () => {
       // A queued card sink fires one tick after its death line printed.
       if (pendingSink !== null) {

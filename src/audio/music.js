@@ -30,7 +30,7 @@ import { createLoop } from './musicLoop.js';
 
 const MUTE_KEY = 'castle-music-muted';
 const SCORE_KEY = 'castle-music-score';
-const fadeS = () => DATA.audio?.music?.fadeS ?? 1.6;
+const fadeS = () => DATA.audio?.music?.fadeS;
 
 let ctx = null;
 let buffers = {};        // file -> Promise<AudioBuffer> — only the playing bed
@@ -94,7 +94,7 @@ async function startTrack(name) {
   gain.gain.value = 0;
   gain.connect(musicInput());
   const t = ctx.currentTime;
-  const plan = loopPlan(b, buffer, DATA.audio?.music?.crossfade ?? 1.2);
+  const plan = loopPlan(b, buffer, DATA.audio?.music?.crossfade);
   const loop = createLoop(ctx, buffer, gain, plan.sections, t, plan.opts);
   gain.gain.setValueAtTime(0, t);
   gain.gain.linearRampToValueAtTime(dbToGain(b.gainDb ?? 0), t + fadeS()); // level-matched (audio.json)

@@ -7,7 +7,8 @@
 
 import { el } from '../core/scene.js';
 import { openDialog } from './dialog.js';
-import { getProfile, setPlayerName, cleanName, NAME_MAX } from '../meta/profile.js';
+import { getProfile, setPlayerName } from '../meta/profile.js';
+import { cleanName, NAME_MAX } from '../meta/names.js';
 
 // Centre the CAPITALS in the field (0.111): text-box trimming (what the
 // buttons use) doesn't apply to an input's text, and each OS reads this

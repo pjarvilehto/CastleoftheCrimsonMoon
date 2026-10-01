@@ -113,7 +113,7 @@ export function planVariation(cfg, rnd = Math.random) {
   const span = ([lo, hi], r = rnd()) => lo + (hi - lo) * r;
   const rate = cfg.rate ? span(cfg.rate) : 1;
   const eq = cfg.eq
-    ? { freq: cfg.eq.lo * (cfg.eq.hi / cfg.eq.lo) ** rnd(), gain: (rnd() * 2 - 1) * cfg.eq.db, q: cfg.eq.q ?? 1.2 }
+    ? { freq: cfg.eq.lo * (cfg.eq.hi / cfg.eq.lo) ** rnd(), gain: (rnd() * 2 - 1) * cfg.eq.db, q: cfg.eq.q }
     : null;
   const layers = (cfg.layers ?? [])
     .filter((l) => rnd() < l.p)
