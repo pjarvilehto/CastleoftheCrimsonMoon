@@ -2,9 +2,11 @@
 // src/explore/). The three.js parts need a browser; here: the map and its
 // collision (pure, grid.js), the data file, and the lab page's wiring.
 
-import { ok, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, fresh, El, DATA, createRun, readFileSync, readdirSync, statSync } from './harness.mjs';
 import { parseMap, isOpen, corridorAxis, collide, seeded, DIRS } from '../../src/explore/grid.js';
 import { generateFloor } from '../../src/explore/mapgen.js';
+import { planFloor, roomFor, leaderOf, inRect } from '../../src/explore/encounters.js';
+import { startFight } from '../../src/explore/fight.js';
 
 const exists = (f) => { try { return statSync(f).isFile(); } catch { return false; } };
 
@@ -99,14 +101,60 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('explore.json: the body fits a cell, the eye under the ceiling', cfg.move.radius * 2 < cfg.cell && cfg.eyeHeight < cfg.wallHeight);
 
   const page = readFileSync('dungeon-lab/index.html', 'utf8');
-  const mods = [...page.matchAll(/'\.\.\/(src\/explore\/\w+\.js)'/g)].map((m) => m[1]);
-  const vendor = page.match(/\.\.\/(vendor\/three-[\d.]+\/three\.module\.min\.js)/)?.[1];
+  const build = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
+  const vendor = page.match(/'(vendor\/three-[\d.]+\/three\.module\.min\.js)'/)?.[1];
   const core = vendor && readFileSync(vendor, 'utf8').match(/from\s*["']\.\/(three\.core\.min\.js)["']/)?.[1];
-  ok('dungeon lab: every module it maps exists, three.js is vendored with its licence', mods.length >= 8 && mods.every(exists)
-    && readdirSync('src/explore').every((f) => mods.includes(`src/explore/${f}`))
-    && !!vendor && exists(vendor) && !!core && exists(vendor.replace('three.module.min.js', core)) && exists(vendor.replace('three.module.min.js', 'LICENSE')),
-    `${mods.join(', ')} | ${vendor} | ${core}`);
-  ok('dungeon lab: versioned module loads, not indexed, a way back to the game', page.includes("'?v=' + encodeURIComponent(version)")
-    && page.includes('name="robots" content="noindex"') && page.includes('href="../?debug"'));
+  ok('dungeon lab: three.js is vendored with its licence; every lab module is in the build list', !!vendor && exists(vendor) && !!core
+    && exists(vendor.replace('three.module.min.js', core)) && exists(vendor.replace('three.module.min.js', 'LICENSE'))
+    && readdirSync('src/explore').every((f) => build.modules.includes(`src/explore/${f}`)), `${vendor} | ${core}`);
+  ok('dungeon lab: the site root as base, every module versioned from build.json, the game stylesheet, not indexed, a way back',
+    page.includes('<base href="../">') && page.includes('boot(b.version, b.modules)') && page.includes("'?v=' + encodeURIComponent(version)")
+    && page.includes("'styles.css' + q") && page.includes('name="robots" content="noindex"') && page.includes('href="?debug"') && page.includes('<main id="app">'));
   ok('DUNGEON LAB is a ?debug corner button', readFileSync('src/ui/debugToggles.js', 'utf8').includes("'dungeon-lab/'"));
+  const sizes = cfg.billboard.sizes;
+  ok('explore.json: every enemy has a billboard size', Object.keys(DATA.enemies).every((id) => sizes[id]?.height > 0) && sizes.default.height > 0
+    && ['tear', 'shadow', 'glow', 'bossScale'].every((k) => Number.isFinite(cfg.billboard[k]))
+    && ['intensity', 'distance', 'decay', 'height', 'ahead', 'pool'].every((k) => Number.isFinite(cfg.light.lair[k])) && Number.isFinite(cfg.paint.fightDim));
+}
+
+// T100: 0.141 — a floor's encounters are the game's rooms, and a fight
+// over the dungeon view hands back to it
+{
+  fresh();
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const every = DATA.difficulty.bossEvery;
+  ok('a floor holds one boss stretch: encounters + the boss = bossEvery rooms', cfg.gen.encounters === every - 1);
+  const f = generateFloor(5, cfg.gen);
+  const p1 = planFloor(f, 1, every), p3 = planFloor(f, 3, every);
+  ok('encounters: depth 1 = rooms 1..7 nearest first, the boss room 8; depth 3 = rooms 17..24',
+    p1.map((s) => s.number).join() === '1,2,3,4,5,6,7,8' && p1.at(-1).boss && !p1[0].boss && p3[0].number === 17 && p3.at(-1).number === 24
+    && p1.every((s) => inRect(s.rect, s.x, s.z)));
+  const r1 = roomFor(p1[0]), rb = roomFor(p1.at(-1));
+  ok('encounter rooms come from the game (combat at their depth, the boss room a boss)', r1.kind === 'combat' && r1.number === 1 && r1.enemies.length > 0
+    && rb.isBoss && rb.enemies[0].id === 'vampire_lord' && leaderOf(rb).id === 'vampire_lord'
+    && leaderOf(r1).maxHp === Math.max(...r1.enemies.map((e) => e.maxHp)));
+
+  // a fight played out on the DOM shim: attack until it ends, then Onward
+  const root = new El('main'), run = createRun();
+  run.stats.dmg = 100000;
+  let done = null;
+  startFight(root, run, roomFor(p1[0]), { onDone: (won) => { done = won; } });
+  const btn = (re) => root.all((e) => e.tagName === 'button' && re.test(e.textContent) && e.attrs.disabled === undefined)[0];
+  for (let i = 0; i < 40 && done === null; i++) {
+    const proceed = btn(/^(Onward|Rise Again)/);
+    if (proceed) { proceed.click(); break; }
+    btn(/^Attack$/)?.click();
+    await sleep(3000);
+  }
+  ok('fight: the knight clears the room, Onward hands back (a win), the run keeps its spoils', done === true && run.kills > 0 && run.coins > 0, String(done));
+}
+
+// T101: 0.141 — the lab plays with a copy of the knight: nothing in
+// src/explore may settle a run, save the profile or send play stats
+{
+  const src = readdirSync('src/explore').map((f) => readFileSync(`src/explore/${f}`, 'utf8')).join('\n');
+  const game = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js') && !String(f).startsWith('explore'))
+    .map((f) => readFileSync(`src/${f}`, 'utf8')).join('\n');
+  ok('the Dungeon Lab never touches the save or the play stats; the game never imports it',
+    !/settleRun|saveProfile|shareStats|recordBenchmark|markVictorySeen|storage\.js|telemetry\.js/.test(src) && !/from '[./]*explore\//.test(game));
 }

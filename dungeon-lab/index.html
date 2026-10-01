@@ -4,20 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
+<!-- the site root: the lab shares the game's data, art and modules, whose paths are root-relative -->
+<base href="../">
 <title>Dungeon Lab · Castle of the Crimson Moon</title>
-<link rel="icon" type="image/png" sizes="64x64" href="../icon-64.png">
-<!-- dungeon-lab/ (0.139): the 3D dungeon prototype — a generated floor to walk,
-     opened from the game's ?debug corner column. Code: src/explore/
-     (three.js 0.186.1, vendored in vendor/three-0.186.1/). Tuning and map:
-     assets/data/explore.json. -->
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<!-- dungeon-lab/ (0.139): the 3D dungeon prototype — generated floors to
+     walk (0.140) with the game's own fights in their rooms (0.141), opened
+     from the game's ?debug corner column. Code: src/explore/ (three.js
+     0.186.1, vendored in vendor/three-0.186.1/). Tuning: assets/data/explore.json. -->
 <style>
-  @font-face { font-family: "DIN Condensed"; src: url("../assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; }
-  html, body { margin: 0; height: 100%; background: #060304; overflow: hidden; }
-  canvas#view { display: block; width: 100vw; height: 100vh; cursor: pointer; }
-  .hud { position: fixed; font-family: "DIN Condensed", "Arial Narrow", sans-serif; color: #d8c9a3; letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none; }
+  canvas#view { position: fixed; inset: 0; display: block; width: 100vw; height: 100vh; cursor: pointer; z-index: 0; }
+  /* the game's #app hosts the fights; it lets clicks through to the view while empty */
+  #app { position: fixed; inset: 0; padding: 0; pointer-events: none; z-index: 2; }
+  #app > * { pointer-events: auto; }
+  .lab-descend { position: fixed; left: 50%; top: 55%; transform: translateX(-50%); }
+  .hud { position: fixed; z-index: 3; font-family: "DIN Condensed", "Arial Narrow", sans-serif; color: #d8c9a3; letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none; }
   #status { left: 14px; bottom: 12px; font-size: 13px; color: rgba(216, 201, 163, 0.6); }
   #minimap { right: 14px; top: 14px; width: 232px; height: 232px; background: rgba(6, 3, 4, 0.55); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 4px; }
-  #intro { inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(6, 3, 4, 0.55); pointer-events: none; }
+  #intro { inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(6, 3, 4, 0.55); }
   #intro .card { text-align: center; padding: 26px 34px; border: 1px solid #8a6d1c; border-radius: 8px; background: rgba(16, 10, 8, 0.9); box-shadow: 0 0 40px rgba(201, 162, 39, 0.2); }
   #intro h1 { margin: 0 0 6px; color: #c9a227; font-size: 34px; letter-spacing: 0.16em; }
   #intro p { margin: 6px 0; font-size: 15px; color: #b8a888; }
@@ -29,42 +33,49 @@
 </head>
 <body>
   <canvas id="view"></canvas>
+  <main id="app"></main>
   <div id="intro" class="hud">
     <div class="card">
       <h1>Dungeon Lab</h1>
-      <p>WASD or arrows to move · mouse to look · shift to run</p>
-      <p>Q / E or left / right arrows turn · M toggles the map · N makes a new floor · Esc frees the mouse</p>
+      <p>WASD or arrows to move · mouse to look · shift to run · Q / E turn</p>
+      <p>Walk into a room to fight what waits there · the boss leads down</p>
+      <p>M toggles the map · N makes a new floor · Esc frees the mouse</p>
       <p class="go">Click to enter</p>
     </div>
   </div>
   <canvas id="minimap" class="hud" width="232" height="232"></canvas>
   <div id="status" class="hud">loading…</div>
-  <div id="back" class="hud"><a href="../?debug">← Back to the game</a></div>
+  <div id="back" class="hud"><a href="?debug">← Back to the game</a></div>
   <script>
     // Versioned like the game (index.html): read build.json uncached, then
-    // load the lab's modules under ?v=<version> so a deploy never mixes old
-    // and new files. three.js has a versioned folder of its own.
+    // map every module in its list (the lab imports the game's combat
+    // too) to ?v=<version>, so a deploy never mixes old and new files.
+    // three.js has a versioned folder of its own.
     (function () {
-      var mods = ['../src/explore/grid.js', '../src/explore/mapgen.js', '../src/explore/textures.js', '../src/explore/build.js',
-        '../src/explore/player.js', '../src/explore/post.js', '../src/explore/minimap.js', '../src/explore/lab.js'];
-      function boot(version) {
+      var base = document.baseURI;
+      function boot(version, modules) {
         var q = version ? '?v=' + encodeURIComponent(version) : '';
-        var map = { imports: { three: new URL('../vendor/three-0.186.1/three.module.min.js', location.href).href } };
-        mods.forEach(function (m) { map.imports[new URL(m, location.href).href] = new URL(m + q, location.href).href; });
+        var map = { imports: { three: new URL('vendor/three-0.186.1/three.module.min.js', base).href } };
+        (modules || []).forEach(function (m) { map.imports[new URL(m, base).href] = new URL(m + q, base).href; });
         var im = document.createElement('script');
         im.type = 'importmap';
         im.textContent = JSON.stringify(map);
         document.head.appendChild(im);
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'styles.css' + q;
+        document.head.appendChild(css);
         var main = document.createElement('script');
         main.type = 'module';
-        main.textContent = "import { startLab } from '" + new URL('../src/explore/lab.js', location.href).href + "';\n" +
-          "window.lab = await startLab({ canvas: document.getElementById('view'), hud: { intro: document.getElementById('intro'), status: document.getElementById('status'), minimap: document.getElementById('minimap') } });";
-        document.body.appendChild(main);
+        main.textContent = "import { startLab } from '" + new URL('src/explore/lab.js', base).href + "';\n" +
+          "const $ = (id) => document.getElementById(id);\n" +
+          "window.lab = await startLab({ canvas: $('view'), hud: { intro: $('intro'), status: $('status'), minimap: $('minimap'), app: $('app') } });";
+        css.onload = css.onerror = function () { document.body.appendChild(main); };
       }
-      fetch('../assets/data/build.json', { cache: 'no-store' })
+      fetch('assets/data/build.json', { cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(function (b) { boot(b.version); })
-        .catch(function () { boot(''); });
+        .then(function (b) { boot(b.version, b.modules); })
+        .catch(function () { boot('', null); });
     })();
   </script>
 </body>

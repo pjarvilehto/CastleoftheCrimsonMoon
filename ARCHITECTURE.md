@@ -107,10 +107,14 @@ src/
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
   explore/              the 3D dungeon prototype (0.139; Dungeon Lab only —
-                        the game never imports it; three.js as `three`)
+                        the game never imports it; three.js as `three`;
+                        it imports the game's combat, never its save)
     grid.js             text map, collision, seeded random (pure)
     mapgen.js           a floor from a seed: rooms, corridors, parts (pure)
     minimap.js          the corner map of what the knight has seen
+    encounters.js       a floor's rooms -> the game's room numbers (pure)
+    encounterLayer.js  billboard.js  fight.js   enemies in the rooms, the
+                        turn-and-dim hand-off, the game's fight over the view
     build.js  textures.js  the level from the map; canvas-painted surfaces
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass

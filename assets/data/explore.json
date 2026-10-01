@@ -1,5 +1,5 @@
 {
-  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells): width x height, up to `rooms` rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, `encounters` combat rooms, `loops` extra corridor links, `deadEnds` spurs up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells.",
+  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells): width x height, up to `rooms` rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, `encounters` combat rooms, `loops` extra corridor links, `deadEnds` spurs up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), lair = the dim red light before each of the `pool` nearest enemies still standing (`ahead` metres toward the knight), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells. billboard = the enemies standing in the rooms: sizes per enemy id (height in metres, lift = hovers that high), tear = how much of the portrait's cropped bottom is torn away, shadow = opacity of the shadow at its feet, glow = its own light (share of the art shown unlit). paint.fightDim = how far the dungeon darkens behind a fight.",
   "cell": 3,
   "wallHeight": 3.2,
   "eyeHeight": 1.65,
@@ -49,6 +49,15 @@
       "sky": "#56604e",
       "ground": "#1c1b15",
       "intensity": 0.5
+    },
+    "lair": {
+      "color": "#d0583e",
+      "intensity": 9,
+      "distance": 7,
+      "decay": 2,
+      "height": 1.3,
+      "ahead": 0.9,
+      "pool": 2
     }
   },
   "fog": {
@@ -71,11 +80,61 @@
     "vignette": 0.75,
     "shadow": "#232a1c",
     "highlight": "#ffd99a",
-    "ink": "#070806"
+    "ink": "#070806",
+    "fightDim": 0.75
   },
   "decor": {
     "beamEvery": 3,
     "torchSpacing": 3.2,
     "seed": 1307
+  },
+  "billboard": {
+    "tear": 0.14,
+    "shadow": 0.55,
+    "bossScale": 1.0,
+    "sizes": {
+      "default": {
+        "height": 2.0
+      },
+      "rat": {
+        "height": 1.15
+      },
+      "bat": {
+        "height": 1.2,
+        "lift": 1.0
+      },
+      "crypt_spider": {
+        "height": 1.35
+      },
+      "hollow_hound": {
+        "height": 1.5
+      },
+      "skeleton": {
+        "height": 2.0
+      },
+      "ghoul": {
+        "height": 1.9
+      },
+      "cultist": {
+        "height": 1.95
+      },
+      "golem": {
+        "height": 2.6
+      },
+      "wraith": {
+        "height": 2.2,
+        "lift": 0.25
+      },
+      "gargoyle": {
+        "height": 2.3
+      },
+      "blood_knight": {
+        "height": 2.2
+      },
+      "vampire_lord": {
+        "height": 2.8
+      }
+    },
+    "glow": 0.3
   }
 }

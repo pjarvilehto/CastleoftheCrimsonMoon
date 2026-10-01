@@ -239,8 +239,11 @@ Energy Saver), not a slow machine.
 ### 3D dungeon prototype (0.139)
 
 Grimrock-style exploration between combat rooms, prototyped apart from the
-game: `dungeon-lab/index.html` + `src/explore/`, tuning and map in
+game: `dungeon-lab/index.html` + `src/explore/`, tuning in
 `assets/data/explore.json` (not part of `DATA`; the lab fetches it itself).
+The page's `<base>` is the site root and it maps every module in
+`build.json` under `?v=` (it imports the game's combat, data, hotkeys and
+sound); a test keeps `src/explore/` away from the save and the play stats.
 three.js 0.186.1 is vendored, minified, in `vendor/three-0.186.1/` (MIT,
 licence alongside) and reached through the page's import map as `three`; a
 new three.js version = a new folder. The game never imports `src/explore/`.
@@ -252,6 +255,19 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   it the start, one halfway the shrine, the rest (nearest first) the
   `encounters`; rooms marked 'E' / 'H' / 'B' in the rows. The lab: `?seed=N`,
   the N key = next floor; `minimap.js` shows only what the knight has seen.
+- Encounters (0.141): floor n = the game's rooms (n-1)*8+1..n*8
+  (`encounters.js`: encounters nearest first, the boss chamber the boss
+  room; each room from `run/roomGen.js`). `encounterLayer.js` stands the
+  group's strongest enemy in the room (`billboard.js`: the portrait on an
+  upright card facing the knight, alpha-cut so it gets inked, its cropped
+  bottom torn ragged, a little `glow`, a red `light.lair` before the
+  nearest) — stepping in turns the knight to it, dims the view
+  (`paint.fightDim`) and plays the game's fight over it (`fight.js`, the
+  dungeon scene's parts: battle line, playback, effects, sounds); Onward
+  clears the room, the boss's fall offers Descend (next seed, depth + 1),
+  a death Rise Again (depth 1, a fresh run). One `run` object carries HP,
+  potions and loot through the visit and is never settled. Particles stay
+  off in the lab (they follow the game's 3D background).
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of
@@ -266,9 +282,8 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   knight's torch rides with the camera, a pool of `light.pool` point lights
   follows the nearest wall torches (a fixed light count keeps three.js from
   recompiling shaders).
-Next steps discussed with the owner: billboard enemies
-(one per combat room) that hand over to the existing combat, then
-integration into runs.
+Next steps discussed with the owner: a look pass, then integration into
+runs (shrine rooms, retreat rules, settling the run).
 
 ## Testing notes
 
@@ -322,8 +337,8 @@ integration into runs.
 - Engineering: deploy through the test workflow once the HTTPS setup is
   settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
   is experimenting with looks.
-- 3D exploration (Dungeon Lab, 0.139; generator 0.140): enemy billboards →
-  combat hand-off · into the run loop (open: a floor per 8-room stretch?
+- 3D exploration (Dungeon Lab, 0.139; generator 0.140; encounters 0.141):
+  look pass · shrines in 3D · into the run loop (open: a floor per 8-room stretch?
   retreat rules? static or wandering enemies?).
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.

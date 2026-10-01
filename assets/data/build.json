@@ -1,5 +1,5 @@
 {
-  "version": "0.140",
+  "version": "0.141",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -21,7 +21,11 @@
     "src/core/hotkeys.js",
     "src/core/perfMonitor.js",
     "src/core/scene.js",
+    "src/explore/billboard.js",
     "src/explore/build.js",
+    "src/explore/encounterLayer.js",
+    "src/explore/encounters.js",
+    "src/explore/fight.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
     "src/explore/mapgen.js",
@@ -87,6 +91,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.141": [
+      "Testing tools: in the Dungeon Lab, enemies now stand in the rooms; walking in starts the real fight, and the boss leads down to the next floor."
+    ],
     "0.140": [
       "Testing tools: the Dungeon Lab now generates its floors (rooms, corridors, dead ends; N for a new one) and maps only what you have seen."
     ],
@@ -130,9 +137,6 @@
     ],
     "0.127": [
       "Behind the scenes: testing tools update (no gameplay changes)."
-    ],
-    "0.126": [
-      "Low on health? Your HP bar now glows red, and Drink Potion pulses while you still have potions left."
     ]
   }
 }
