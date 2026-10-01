@@ -455,7 +455,7 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .player-card::before { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
-.char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.5; }
+.char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.1; } /* 0.109: nearly gone (was 0.5) */
 
 .card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.3em; }
 /* text rows stay above the overflowing portrait art (0.075) */
@@ -774,6 +774,20 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .update-notes li::marker { color: var(--gold-dim); }
 .update-ask { color: var(--parchment); letter-spacing: 0.08em; margin: 0 0 16px; }
 .update-modal .btn-row { justify-content: center; }
+/* "Enter your name" (0.109, ui/namePrompt.js) + the title's "Playing as" line */
+.name-input {
+  display: block; width: 100%; box-sizing: border-box; margin: 4px 0 20px; padding: 10px 14px;
+  font: inherit; font-size: 1.4rem; letter-spacing: 0.06em; text-align: center;
+  color: var(--parchment); background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--gold-dim); border-radius: 6px; outline: none;
+}
+.name-input:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(201, 162, 39, 0.35); }
+.player-name { margin-top: 14px; color: #9a8b6a; letter-spacing: 0.08em; }
+.link-btn {
+  background: none; border: none; padding: 0; margin: 0; min-width: 0; box-shadow: none;
+  color: var(--gold-dim); font: inherit; letter-spacing: inherit; text-decoration: underline; cursor: pointer;
+}
+.link-btn:hover { color: var(--gold); background: none; }
 
 /* ================= 14 Corner toggles and ?debug tools ================= */
 .build-tag {

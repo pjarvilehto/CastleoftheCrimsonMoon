@@ -164,5 +164,6 @@ export const t = () => registry.app.textContent;
 // Each test file starts from a clean slate: fresh profile, empty screen.
 export function fresh() {
   resetProfile();
+  getProfile().name ||= 'Tester'; // 0.109: unnamed saves get the name prompt on the title screen
   registry.app.innerHTML = '';
 }

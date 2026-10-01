@@ -27,12 +27,13 @@ const country = (c) => (/^[A-Z]{2}$/.test(c ?? '') ? c : '');
 
 function loadPlayers() {
   const local = read(LOCAL_SAVE_KEY);
-  const mine = local?.records ? [{ key: 'local', label: 'This browser', source: 'local', profile: sanitizeProfile(local) }] : [];
+  const mineP = local?.records ? sanitizeProfile(local) : null;
+  const mine = mineP ? [{ key: 'local', label: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP }] : [];
   const nm = names();
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';
     return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0,
-      label: String(nm[id] ?? `Player ${id.slice(0, 4).toUpperCase()}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
+      label: String(nm[id] ?? `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
   });
   // stored players are re-sanitised too: codes imported before 0.097 were kept as-is
   const imported = (Array.isArray(read(STORE)) ? read(STORE) : []).map((s) => ({
@@ -81,7 +82,7 @@ function serverCard() {
   }[server.status];
   return `<section class="card add">
     <h2>Testers</h2>
-    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players are anonymous ids; name them in the Players table (names stay in this browser).</p>
+    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game (0.109 on; older saves show an id until their next visit) — rename them in the Players table if you like (your names stay in this browser).</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
       ${data.endpoint ? '<button data-act="refresh">Refresh</button>' : ''}
@@ -104,7 +105,7 @@ function addCode(code, label) {
   if (id && players.some((p) => p.source === 'local' && p.profile.playerId === id)) return 'That is this browser’s own save — it is already shown.';
   const same = id && players.find((p) => p.source === 'code' && p.profile.playerId === id);
   if (same) Object.assign(same, { profile, importedAt: Date.now(), label: label || same.label });
-  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), label: label || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
+  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), label: label || profile.name || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
   saveImported();
   return `${same ? 'Updated' : 'Added'} ${label || same?.label || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
 }

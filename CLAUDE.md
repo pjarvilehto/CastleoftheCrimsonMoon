@@ -31,7 +31,10 @@ progression (training, alchemy, forge) in the hub between runs.
   update it), whose URL is `assets/data/telemetry.json` `endpoint`
   (empty = off; never sends from localhost or Node). The
   dashboard reads it back (`GET /players?key=READ_KEY`) plus this
-  browser's save and pasted save codes, deduped by playerId.
+  browser's save and pasted save codes, deduped by playerId. Players are
+  labelled by `profile.name` (0.109, save v4): asked once on the title
+  screen (`ui/namePrompt.js`), changeable there, kept through a progress
+  wipe; the dashboard owner's own renames override it locally.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
   Read it before making structural changes.
 
@@ -60,7 +63,7 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    numbers (per-offer fields in `shrines.json`; a smoke check keeps the
    card text in sync with them).
 3. **Save format changes go through `SAVE_VERSION`** (`meta/profile.js`,
-   0.079; now 3): bump it and append a step to `MIGRATIONS` — never edit a
+   0.079; now 4): bump it and append a step to `MIGRATIONS` — never edit a
    shipped step.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot for its

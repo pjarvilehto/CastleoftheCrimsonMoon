@@ -200,3 +200,54 @@ process.on('uncaughtException', (e) => {
   globalThis.document.body = realBody;
   resetProfile();
 }
+
+// T71: 0.109 — "Enter your name": asked on the title screen while the
+// save has none (the title's hotkeys wait), kept clean and short, kept
+// through a progress wipe, changeable from the title, sent with the stats.
+{
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const dialog = () => body.children.find((c) => c.className === 'update-overlay name-overlay');
+  const prof = await import('../../src/meta/profile.js');
+  ok('names: trimmed, spaces collapsed, no control characters, 20 max', prof.cleanName('  Sir\tLancelot \u0007 of   the   Lake and more ') === 'Sir Lancelot of the'
+    && prof.cleanName(null) === '');
+  resetProfile();
+  getProfile().name = '';
+  show(titleScene());
+  await sleep(1100);
+  const d = dialog();
+  ok('an unnamed player is asked their name on the title screen', !!d && d.textContent.includes('Enter Your Name'));
+  handleKey('e');
+  await sleep(1300);
+  ok('the title\'s hotkeys wait while it asks', !!dialog() && t().includes('CASTLE OF THE CRIMSON MOON') && !t().includes('GREAT HALL'));
+  handleKey('escape');
+  ok('a first name can\'t be skipped with Esc', !!dialog());
+  const input = d.all((n) => n.tagName === 'input')[0];
+  const btn = d.all((n) => n.tagName === 'button')[0];
+  input.value = '   ';
+  btn.listeners.click[0]();
+  ok('a blank name is not accepted', !!dialog() && getProfile().name === '');
+  input.value = '  Lady   Morgana  ';
+  btn.listeners.click[0]();
+  ok('the name is saved (cleaned) and the dialog closes', !dialog() && getProfile().name === 'Lady Morgana'
+    && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).name === 'Lady Morgana');
+  ok('the title greets the player by name', t().includes('Playing as Lady Morgana') && t().includes('Morgana'));
+  handleKey('e');
+  await sleep(1300);
+  ok('hotkeys work again once named', t().includes('GREAT HALL'));
+  resetProfile();
+  ok('a progress wipe keeps the name (same person)', getProfile().name === 'Lady Morgana');
+  show(titleScene());
+  await sleep(1100);
+  ok('a named player is not asked again', !dialog());
+  const change = registry.app.all((n) => n.tagName === 'button' && n.className === 'link-btn')[0];
+  change.listeners.click[0]();
+  ok('"change" reopens it, and Esc cancels a change', !!dialog() && dialog().textContent.includes('Change Your Name') && (handleKey('escape'), !dialog()) && getProfile().name === 'Lady Morgana');
+  globalThis.document.body = realBody;
+  const st = await import('../../analytics/stats.js');
+  ok('dashboard keeps a player\'s name (cleaned, short)', st.sanitizeProfile({ name: 'Morgana\u0000<b>x</b> the very very long-named' }).name.length <= 24
+    && st.sanitizeProfile({ name: 'Ann' }).name === 'Ann' && st.sanitizeProfile({}).name === '');
+  ok('dashboard labels collected players by their name', readFileSync('analytics/dashboard.js', 'utf8').includes("profile.name || `Player ${id.slice(0, 4).toUpperCase()}`"));
+  getProfile().name = 'Tester';
+}

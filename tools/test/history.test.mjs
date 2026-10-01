@@ -41,7 +41,7 @@ fresh();
   const v2 = { ...JSON.parse(JSON.stringify(getProfile())), saveVersion: 2 };
   delete v2.history; delete v2.playerId;
   importSave(Buffer.from(JSON.stringify(v2)).toString('base64'));
-  ok('v2 save migrates: history + player id', SAVE_VERSION === 3 && getProfile().saveVersion === 3 && Array.isArray(getProfile().history) && typeof getProfile().playerId === 'string');
+  ok('v2 save migrates: history + player id', SAVE_VERSION >= 3 && getProfile().saveVersion === SAVE_VERSION && Array.isArray(getProfile().history) && typeof getProfile().playerId === 'string');
 
   // Dashboard stats (analytics/stats.js) against a save code from the game
   const st = await import('../../analytics/stats.js');
@@ -108,7 +108,7 @@ fresh();
     && sent[0].opts.method === 'POST' && sent[0].opts.headers['content-type'] === 'text/plain');
   const body = JSON.parse(sent[0].opts.body);
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
-    && Object.keys(body.profile).sort().join() === 'coins,equipment,history,playerId,potionCap,potions,records,stats,xp');
+    && Object.keys(body.profile).sort().join() === 'coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
   ok('sent after every run and once per session', src.includes('shareStats(settleRun(run, outcome))') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;

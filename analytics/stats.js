@@ -39,6 +39,7 @@ export function sanitizeProfile(p = {}) {
   const s = p.stats ?? {}, rec = p.records ?? {};
   return {
     playerId: str(p.playerId, 16),
+    name: (str(p.name, 24) ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim(), // 0.109: typed by the player
     coins: num(p.coins), xp: num(p.xp), potions: num(p.potions), potionCap: num(p.potionCap),
     stats: Object.fromEntries(['power', 'vitality', 'fortune', 'precision', 'endurance'].map((k) => [k, num(s[k])])),
     records: Object.fromEntries(['runs', 'kills', 'bestRoom', 'deaths'].map((k) => [k, num(rec[k])])),

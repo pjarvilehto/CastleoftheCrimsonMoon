@@ -1,5 +1,5 @@
 {
-  "version": "0.108",
+  "version": "0.109",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -46,6 +46,7 @@
     "src/ui/fx.js",
     "src/ui/fxParts.js",
     "src/ui/hud.js",
+    "src/ui/namePrompt.js",
     "src/ui/particles.js",
     "src/ui/scenes/dungeonScene.js",
     "src/ui/scenes/hubScene.js",
@@ -56,6 +57,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.109": [
+      "Enter your name when you first open the game (change it any time on the title screen)",
+      "Fallen enemies fade almost completely away"
+    ],
     "0.108": [
       "A whoosh when you move to the next room",
       "The 'You escaped!' fanfare is 30% quieter"
@@ -110,9 +115,6 @@
       "Your runs are now recorded (for the testers' play-stats page)",
       "Critical hits show CRIT! above the damage number",
       "The room-wipe blow now reads OVERKILL!"
-    ],
-    "0.094": [
-      "The game now tells you when a new build is out, with what changed"
     ]
   }
 }

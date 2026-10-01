@@ -6,6 +6,7 @@ import { hubScene } from './hubScene.js';
 import { getProfile, resetProfile, exportSave, importSave } from '../../meta/profile.js';
 import { loadProfile } from '../../meta/storage.js';
 import { play } from '../../audio/music.js';
+import { namePrompt } from '../namePrompt.js';
 
 export function titleScene() {
   let transfer = null;      // null | 'export' | 'import'
@@ -15,6 +16,8 @@ export function titleScene() {
     enter(root) {
       play('title');
       render(root);
+      // 0.109: a new player is asked their name first (analytics shows it)
+      if (!getProfile().name) namePrompt(() => render(root));
     },
   };
 
@@ -56,9 +59,9 @@ export function titleScene() {
         el('div', { class: 'subtitle' }, 'A roguelite descent into the haunted keep'),
         p.records.runs > 0
           ? el('div', { class: 'subtitle' },
-              `Welcome back, adventurer — ${p.records.runs} runs, ` +
+              `Welcome back, ${p.name || 'adventurer'} — ${p.records.runs} runs, ` +
               `${p.records.kills} kills, deepest room ${p.records.bestRoom}.`)
-          : el('div', { class: 'subtitle' }, 'Your first descent awaits.'),
+          : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
           el('button', { class: 'primary', key: 'e', onclick: () => show(hubScene()) }, 'Enter the Castle'),
           // Shown only when a save with progress exists: offer to wipe.
@@ -75,6 +78,10 @@ export function titleScene() {
                 },
               }, 'Start a New Game')
             : null),
+        p.name
+          ? el('div', { class: 'player-name' }, `Playing as ${p.name} · `,
+              el('button', { class: 'link-btn', onclick: () => namePrompt(() => render(root)) }, 'change'))
+          : null,
         el('div', { class: 'save-transfer' },
           el('button', { onclick: () => { transfer = transfer === 'export' ? null : 'export'; importFailed = false; render(root); } }, 'Export Save'),
           el('button', { onclick: () => { transfer = transfer === 'import' ? null : 'import'; importFailed = false; render(root); } }, 'Import Save')),

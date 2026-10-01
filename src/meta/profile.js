@@ -19,6 +19,7 @@ const DEFAULTS = {
   potionCap: 4,
   records: { kills: 0, bestRoom: 0, runs: 0, deaths: 0 },
   history: [], // 0.095: one record per finished run (meta/history.js)
+  name: '',     // 0.109: what the player calls themselves (title screen prompt; analytics)
 };
 
 function startingEquipment() {
@@ -45,7 +46,7 @@ export function getProfile() {
 // and APPEND a step — never edit a shipped step (testers' saves have
 // already been through it). saveVersion is deliberately NOT in DEFAULTS:
 // the load merge would stamp it onto old saves and skip their migrations.
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 const MIGRATIONS = [
   // v0 -> v1: everything pre-0.079 builds did on every load.
@@ -84,6 +85,10 @@ const MIGRATIONS = [
   (p) => {
     if (!Array.isArray(p.history)) p.history = [];
     p.playerId ??= newPlayerId();
+  },
+  // v3 -> v4 (0.109): the player's name — asked once on the title screen.
+  (p) => {
+    p.name = cleanName(p.name);
   },
 ];
 
@@ -124,16 +129,32 @@ export function importSave(code) {
   return true;
 }
 
-// Wipe the save and reset the in-memory profile to a fresh start.
+// Wipe the save and reset the in-memory profile to a fresh start. The
+// same person keeps their id and name (analytics, 0.095 / 0.109).
 export function resetProfile() {
-  const id = profile?.playerId; // same player after a wipe (analytics, 0.095)
+  const id = profile?.playerId;
+  const name = profile?.name ?? '';
   wipeProfile();
-  profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId: id ?? newPlayerId() };
+  profile = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId: id ?? newPlayerId(), name };
   profile.equipment = startingEquipment();
   const pc = DATA.difficulty.potions ?? {};
   profile.potions = pc.startCount ?? profile.potions;
   profile.potionCap = pc.startCap ?? profile.potionCap;
   persist();
+}
+
+// Player names (0.109): trimmed, inner whitespace collapsed, no control
+// characters, at most NAME_MAX characters.
+export const NAME_MAX = 20;
+export function cleanName(n) {
+  return String(n ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
+}
+
+export function setPlayerName(n) {
+  const p = getProfile();
+  p.name = cleanName(n);
+  persist();
+  return p.name;
 }
 
 // Character level: one per five trained discipline levels (shown on the

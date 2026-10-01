@@ -132,6 +132,7 @@ src/
     │                     of the boss and leave the row when they fall (0.092)
     ├── shrineUI.js       the shrine room: panel, HUD row, boon cards
     ├── confirmPrompt.js  yes/no dialog (0.102: Descend with unspent XP/coins)
+    ├── namePrompt.js     "Enter your name" on the title screen (0.109)
     ├── updatePrompt.js   "Build 0.0NN available" + changelist, reload
     │                     (0.094: polls build.json; waits out a run)
     ├── buffs.js          blessing bar (horizontal, beside resources)

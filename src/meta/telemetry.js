@@ -5,9 +5,10 @@
 // /analytics/ dashboard reads all players back from it. Testers don't
 // export anything.
 //
-// Who is who: the save's random playerId (meta/history.js) — anonymous,
-// stable per browser, survives a progress wipe. Nothing personal is sent:
-// only the run records, disciplines, gear and purse the dashboard shows.
+// Who is who: the save's random playerId (meta/history.js) — stable per
+// browser, survives a progress wipe — and, since 0.109, the name the
+// player typed on the title screen. Nothing else personal is sent: only
+// the run records, disciplines, gear and purse the dashboard shows.
 // Empty endpoint, or a local/dev host, sends nothing. Never throws.
 
 import { DATA } from '../shared/data.js';
@@ -20,7 +21,7 @@ export function statsPayload(p) {
     playerId: p.playerId,
     build: DATA.build?.version ?? '?',
     profile: {
-      playerId: p.playerId, coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
+      playerId: p.playerId, name: p.name ?? '', coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
       stats: p.stats, records: p.records, equipment: p.equipment, history: p.history ?? [],
     },
   };
