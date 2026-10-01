@@ -23,6 +23,8 @@ import { getPref, setPref } from '../shared/prefs.js';
 const MUTE_KEY = 'castle-narration-muted';
 const cfg = () => DATA.audio?.narration ?? {};
 const takesOf = (id) => DATA.narration?.lines?.[id] ?? null;
+// A re-rendered take keeps its filename; its URL carries the render stamp so no cache serves the old one.
+const urlOf = (t) => (t.rendered ? `${t.file}?r=${encodeURIComponent(t.rendered)}` : t.file);
 
 let ctx = null;
 let muted = getPref(MUTE_KEY) === '1';
@@ -68,7 +70,7 @@ export function narrate(id, { delayMs = 0 } = {}) {
   state.lastTake[id] = take.take;
   if (!ctx || muted) return true; // the moment counted; nothing to hear yet
   const N = cfg();
-  decode(take.file).then((buffer) => {
+  decode(urlOf(take)).then((buffer) => {
     const now = ctx.currentTime;
     const at = Math.max(now + delayMs / 1000, busyUntil);
     if (at - now > N.maxWaitS) return; // too long a queue: the moment has passed
@@ -106,7 +108,7 @@ export function initNarrator() {
   onFirstGesture(() => {
     ctx = ensureCtx();
     mixer();
-    for (const takes of Object.values(DATA.narration?.lines ?? {})) for (const t of takes) fetchBytes(t.file).catch(() => {});
+    for (const takes of Object.values(DATA.narration?.lines ?? {})) for (const t of takes) fetchBytes(urlOf(t)).catch(() => {});
     if (armed) { const id = armed; armed = null; narrate(id); }
   });
 }

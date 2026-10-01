@@ -54,6 +54,9 @@ section.line { border: 1px solid var(--line); border-radius: 6px; background: va
 .take.current { outline: 2px solid var(--gold); outline-offset: -2px; }
 .take.ok { background: rgba(79, 154, 92, 0.12); }
 .take.no { background: rgba(178, 58, 58, 0.14); }
+.take.redone { background: rgba(201, 162, 39, 0.1); }
+.take .badge { color: var(--gold); letter-spacing: 0.04em; }
+.take .badge:empty { display: none; }
 .take .n { font-family: var(--display); color: var(--muted); }
 .take .text { font-size: 1.05rem; }
 .take .meta { color: var(--muted); font-size: 0.85rem; grid-column: 2; }
@@ -78,12 +81,13 @@ section.line { border: 1px solid var(--line); border-radius: 6px; background: va
     <div class="eyebrow">Castle of the Crimson Moon · testing tools</div>
     <h1>VO Lab</h1>
     <p class="lede">Every take of the Old Wizard, as the game plays it (levelled to the game's target). Listen through, approve the keepers, disapprove the rest and say what was wrong; <b>RE-RENDER</b> packs the verdicts for <code>node tools/gen-vo.mjs --rerender</code>.
-      <small>Keys: <kbd>Space</kbd> play the current take · <kbd>A</kbd> approve and move on · <kbd>D</kbd> disapprove · <kbd>1</kbd>/<kbd>2</kbd> volatility less / more · <kbd>3</kbd>/<kbd>4</kbd> shouty less / more · <kbd>J</kbd>/<kbd>K</kbd> or <kbd>↓</kbd>/<kbd>↑</kbd> next / previous · <kbd>Esc</kbd> stop. Verdicts are kept in this browser.</small></p>
+      <small>Keys: <kbd>Space</kbd> play the current take · <kbd>A</kbd> approve and move on · <kbd>D</kbd> disapprove · <kbd>1</kbd>/<kbd>2</kbd> volatility less / more · <kbd>3</kbd>/<kbd>4</kbd> shouty less / more · <kbd>J</kbd>/<kbd>K</kbd> or <kbd>↓</kbd>/<kbd>↑</kbd> next / previous · <kbd>Esc</kbd> stop. Verdicts are kept in this browser; a take re-rendered since you judged it shows as RE-RENDERED and wants a fresh verdict.</small></p>
   </header>
   <div class="controls">
     <button id="playAll" class="primary">▶ Play all from here</button>
     <button id="stop">■ Stop</button>
     <button id="nextUnreviewed">Next unreviewed</button>
+    <button id="nextRedone">Next re-rendered</button>
     <span class="count" id="count"></span>
     <span style="flex:1"></span>
     <button id="rerender" class="primary">Re-render</button>

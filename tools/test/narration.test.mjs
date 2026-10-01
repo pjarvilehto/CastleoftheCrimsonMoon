@@ -161,4 +161,8 @@ const LINES = DATA.narration.lines;
   const m = read('src/main.js');
   ok('main: NARRATOR toggle under SOUND, the narrator initialised', /onOffToggle\('SOUND'[^\n]*\n\s*onOffToggle\('NARRATOR'/.test(m) && m.includes('initNarrator()'));
   ok('CLAUDE.md documents the voice-over', read('CLAUDE.md').includes('narrator.js'));
+  // a re-rendered take (0.164): approved: false + a rendered stamp; the game and the lab fetch it under a stamped URL
+  const redone = Object.values(LINES).flat().filter((t) => t.rendered);
+  ok('re-rendered takes are stamped and unapproved until reviewed', redone.every((t) => t.approved === false && !Number.isNaN(Date.parse(t.rendered)))
+    && read('src/audio/narrator.js').includes('`${t.file}?r=${encodeURIComponent(t.rendered)}`') && read('vo-lab/lab.js').includes('?r=${encodeURIComponent(t.rendered)}'));
 }

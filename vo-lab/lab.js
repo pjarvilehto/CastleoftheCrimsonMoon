@@ -2,7 +2,9 @@
 // (../assets/data/narration.json) and the rules (../assets/data/audio.json),
 // lists every take, plays it as the game would (levelled to
 // narration.targetDb through one AudioContext) and keeps the owner's
-// verdicts in localStorage: { [file]: { v: 'ok' | 'no', volatility: -1|0|1, shouty: -1|0|1 } }.
+// verdicts in localStorage: { [file]: { v: 'ok' | 'no', volatility: -1|0|1, shouty: -1|0|1, at: ms } }.
+// A verdict older than the take's `rendered` stamp is about the old audio and is ignored;
+// such a take shows as RE-RENDERED, awaiting review.
 // RE-RENDER = { approved: [files], rerender: [{ file, id, take, volatility, shouty }] }.
 
 const KEY = 'castle-vo-lab';
@@ -26,8 +28,11 @@ for (const [id, list] of Object.entries(reg.lines)) for (const t of list) takes.
 let verdicts = {};
 try { verdicts = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {}; } catch { verdicts = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(verdicts)); } catch { /* private mode */ } };
-// the registry's approvals are the starting point; this browser's verdicts override
-const verdictOf = (t) => verdicts[t.file] ?? (t.approved ? { v: 'ok' } : null);
+// the registry's approvals are the starting point; this browser's verdicts override,
+// unless the take was re-rendered since (the verdict was about the old audio)
+const stale = (t, v) => !!(t.rendered && (!v?.at || v.at < Date.parse(t.rendered)));
+const verdictOf = (t) => { const v = verdicts[t.file]; return v && !stale(t, v) ? v : t.approved ? { v: 'ok' } : null; };
+const redone = (t) => t.approved === false && stale(t, verdicts[t.file]);
 
 // ---- audio: one context, decoded on demand, levelled like the game ----
 let ctx = null, playing = null, playAll = false;
@@ -38,7 +43,7 @@ async function play(i) {
   ctx ??= new (globalThis.AudioContext || globalThis.webkitAudioContext)();
   await ctx.resume?.();
   stopSound();
-  buffers[t.file] ??= fetch(`../${t.file}`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b));
+  buffers[t.file] ??= fetch(`../${t.file}${t.rendered ? `?r=${encodeURIComponent(t.rendered)}` : ''}`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b));
   let buffer;
   try { buffer = await buffers[t.file]; } catch { delete buffers[t.file]; return; }
   const gain = ctx.createGain();
@@ -70,7 +75,7 @@ function setCurrent(i) {
 function setVerdict(i, v) {
   const t = takes[i];
   const cur = verdicts[t.file] ?? {};
-  verdicts[t.file] = v === 'no' ? { v: 'no', volatility: cur.volatility ?? 0, shouty: cur.shouty ?? 0 } : { v: 'ok' };
+  verdicts[t.file] = v === 'no' ? { v: 'no', volatility: cur.volatility ?? 0, shouty: cur.shouty ?? 0, at: Date.now() } : { v: 'ok', at: Date.now() };
   save(); paint(i);
 }
 function nudge(i, key, dir) {
@@ -84,6 +89,8 @@ function paint(i) {
   const t = takes[i], v = verdictOf(t), row = t.row;
   row.classList.toggle('ok', v?.v === 'ok');
   row.classList.toggle('no', v?.v === 'no');
+  row.classList.toggle('redone', redone(t));
+  row.querySelector('.badge').textContent = redone(t) ? `RE-RENDERED ${t.rendered.slice(0, 10)} · awaiting review` : t.rendered ? `re-rendered ${t.rendered.slice(0, 10)}` : '';
   row.querySelector('.b-ok').classList.toggle('on-ok', v?.v === 'ok');
   row.querySelector('.b-no').classList.toggle('on-no', v?.v === 'no');
   const nudges = row.querySelector('.nudges');
@@ -93,8 +100,8 @@ function paint(i) {
 }
 function count() {
   const vs = takes.map(verdictOf);
-  const ok = vs.filter((v) => v?.v === 'ok').length, no = vs.filter((v) => v?.v === 'no').length;
-  $('count').innerHTML = `<b>${ok + no}</b> / ${takes.length} reviewed · <b>${ok}</b> approved · <b>${no}</b> to re-render · <b>${takes.length - ok - no}</b> left`;
+  const ok = vs.filter((v) => v?.v === 'ok').length, no = vs.filter((v) => v?.v === 'no').length, re = takes.filter(redone).length;
+  $('count').innerHTML = `<b>${ok + no}</b> / ${takes.length} reviewed · <b>${ok}</b> approved · <b>${no}</b> to re-render · <b>${re}</b> re-rendered awaiting review · <b>${takes.length - ok - no}</b> left`;
   $('rerender').disabled = no === 0 && ok === 0;
 }
 const fmt = (s) => s ? `stab ${s.stability} · style ${s.style} · speed ${s.speed}` : '';
@@ -116,7 +123,7 @@ for (const [id, list] of Object.entries(reg.lines)) {
       el('div', { class: 'verdict' },
         el('button', { class: 'b-ok small', onclick: (e) => { e.stopPropagation(); setVerdict(k, 'ok'); } }, 'Approve'),
         el('button', { class: 'b-no small', onclick: (e) => { e.stopPropagation(); setVerdict(k, 'no'); } }, 'Disapprove')),
-      el('span', { class: 'meta' }, `${fmt(t.settings)} · level ${t.measuredDb} dB · ${t.file.split('/').pop()}`),
+      el('span', { class: 'meta' }, el('b', { class: 'badge' }), ` ${fmt(t.settings)} · level ${t.measuredDb} dB · ${t.file.split('/').pop()}`),
       el('div', { class: 'nudges hidden' },
         el('span', { class: 'pair' }, el('span', {}, 'Volatility'), nb('Less', 'volatility', -1), nb('More', 'volatility', 1)),
         el('span', { class: 'pair' }, el('span', {}, 'Shouty'), nb('Less', 'shouty', -1), nb('More', 'shouty', 1)),
@@ -132,6 +139,7 @@ setCurrent(0);
 $('playAll').onclick = () => { playAll = true; play(current); };
 $('stop').onclick = stopAll;
 $('nextUnreviewed').onclick = () => { const k = takes.findIndex((t, j) => j > current && !verdictOf(t)) ; setCurrent(k >= 0 ? k : takes.findIndex((t) => !verdictOf(t))); };
+$('nextRedone').onclick = () => { const k = takes.findIndex((t, j) => j > current && redone(t)); setCurrent(k >= 0 ? k : takes.findIndex(redone)); };
 $('clear').onclick = () => { if (confirm('Forget every verdict in this browser?')) { verdicts = {}; save(); takes.forEach((_, k) => paint(k)); } };
 $('rerender').onclick = async () => {
   const out = { approved: [], rerender: [] };
