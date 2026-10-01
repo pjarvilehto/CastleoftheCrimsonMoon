@@ -6,6 +6,7 @@
 //   node tools/gen-vo.mjs --dry-run       # list what would be rendered
 //   node tools/gen-vo.mjs --only overkill,death   # a subset of IDs
 //   node tools/gen-vo.mjs --manifest     # rebuild manifest.json, no rendering
+//   node tools/gen-vo.mjs --only retreat --stability 0.7 --style 0   # steadier re-render
 //
 // Output: assets/vo/vo_<id>_<take>.mp3 (44.1 kHz, 128 kbps mono) and
 // assets/vo/manifest.json (id -> takes, text, file). Existing files are
@@ -66,12 +67,12 @@ export function cleanTake(raw) {
 
 export function fileFor(id, take) { return `vo_${id}_${take}.mp3`; }
 
-async function render(text, seed) {
+export async function render(text, seed, settings = VOICE.settings) {
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE.voiceId}?output_format=${VOICE.outputFormat}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, model_id: VOICE.modelId, voice_settings: VOICE.settings, seed }),
+    body: JSON.stringify({ text, model_id: VOICE.modelId, voice_settings: settings, seed }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
   return Buffer.from(await res.arrayBuffer());
@@ -88,6 +89,9 @@ async function main() {
   const args = process.argv.slice(2);
   const dry = args.includes('--dry-run');
   const manifestOnly = args.includes('--manifest');
+  const num = (flag) => { const i = args.indexOf(flag); return i >= 0 ? Number(args[i + 1]) : undefined; };
+  const settings = { ...VOICE.settings };
+  for (const k of ['stability', 'style', 'speed']) if (num(`--${k}`) !== undefined) settings[k] = num(`--${k}`);
   const onlyArg = args.find((a) => a.startsWith('--only'));
   const only = onlyArg ? (onlyArg.includes('=') ? onlyArg.split('=')[1] : args[args.indexOf(onlyArg) + 1]).split(',') : null;
 
@@ -113,7 +117,7 @@ async function main() {
     while (i < todo.length) {
       const j = todo[i++];
       try {
-        const buf = await render(j.text, seedFor(j.id, j.take));
+        const buf = await render(j.text, seedFor(j.id, j.take), settings);
         writeFileSync(join(OUT, j.file), buf);
         console.log(`  ok ${j.file} (${(buf.length / 1024).toFixed(0)} KB) "${j.text}"`);
       } catch (e) {
