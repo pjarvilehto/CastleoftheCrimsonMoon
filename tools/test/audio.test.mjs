@@ -228,3 +228,27 @@ fresh();
   ok('room whoosh sits with the hits in the mix', Math.abs(A.clips.whoosh.measuredDb + A.clips.whoosh.gainDb + 12) <= 1);
   ok('escape fanfare 30% quieter (-3.1 dB)', Math.abs(A.clips.victory.gainDb - (1.4 + 20 * Math.log10(0.7))) < 0.05);
 }
+
+// T73: 0.110 — strikes vary every hit (pitch, a random tone colour,
+// random articulation layers); the coin jingle 3 dB quieter.
+{
+  const am = await import('../../src/audio/audioMath.js');
+  const A = DATA.audio;
+  let seq = [0, 0, 0, 0.1, 0.5, 0.2, 0.9, 0.9, 0.9];
+  const det = () => seq.shift() ?? 0.5;
+  const lo = am.planVariation(A.variation.attack, det);
+  ok('variation: lowest pitch, lowest EQ band, layers by chance', Math.abs(lo.rate - A.variation.attack.rate[0]) < 1e-9 && Math.abs(lo.eq.freq - A.variation.attack.eq.lo) < 1e-9
+    && lo.eq.gain === -A.variation.attack.eq.db && lo.layers.length >= 1 && lo.layers[0].name === 'tick');
+  const plans = Array.from({ length: 40 }, () => am.planVariation(A.variation.attack));
+  const sig = (p) => `${p.rate.toFixed(2)}|${Math.round(p.eq.freq)}|${p.layers.map((l) => l.name).join('+')}`;
+  ok('variation: 40 hits, 40 different sounds; layers sometimes, not always', new Set(plans.map(sig)).size === 40
+    && plans.some((p) => p.layers.length === 0) && plans.some((p) => p.layers.length >= 2)
+    && plans.every((p) => p.rate >= 0.84 && p.rate <= 1.2 && p.eq.freq >= 500 && p.eq.freq <= 4500 && Math.abs(p.eq.gain) <= 6));
+  ok('variation: none for clips without a config', am.planVariation(undefined) === null);
+  const syn = readFileSync('src/audio/synth.js', 'utf8'), sfxSrc = readFileSync('src/audio/sfx.js', 'utf8');
+  ok('strike layers are generated: tick, thud, slice (yours), clank, thud (on the knight)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && syn.includes(`${n}: true`))
+    && A.variation.attack.layers.map((l) => l.name).join() === 'tick,thud,slice' && A.variation.hurt.layers.map((l) => l.name).join() === 'clank,thud');
+  ok('sfx: a random peaking EQ and the layers on every strike', sfxSrc.includes("eq.type = 'peaking'") && sfxSrc.includes('planVariation(A.variation?.[name])')
+    && sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,'));
+  ok('coin jingle 3 dB quieter (0.110)', Math.abs(A.clips.loot.gainDb - 0.9) < 1e-9);
+}

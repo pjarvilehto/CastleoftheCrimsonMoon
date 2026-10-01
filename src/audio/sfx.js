@@ -12,13 +12,15 @@
 //     copies quieter — a 5-enemy turn no longer piles up 7 full-level hits;
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb };
-//   - 'ring' / 'boom' are synthesized sweeteners (synth.js);
+//   - 'ring' / 'boom' / 'whoosh' are synthesized (synth.js);
+//   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
+//     peaking EQ, random tick/thud/slice/clank layers from synth.js);
 //   - stingers duck the music (audio.json duck.clips).
 
 import { DATA } from '../shared/data.js';
 import { hasAudio, ensureCtx, decode, onFirstGesture } from './audioCore.js';
 import { mixer, sfxInput, setBusMuted, duckMusic } from './mixer.js';
-import { dbToGain, planVoice } from './audioMath.js';
+import { dbToGain, planVoice, planVariation } from './audioMath.js';
 import { SYNTH, playSynth } from './synth.js';
 
 const CLIPS = {
@@ -66,7 +68,9 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   if (plan.skip) return;
   for (const v of plan.steal) v.stop(t);
   const jitter = JITTERED.has(name);
-  const r = rate ?? (jitter ? 0.88 + Math.random() * 0.24 : 1);
+  // strikes (0.110): random pitch, tone colour and articulation layers
+  const vary = rate == null ? planVariation(A.variation?.[name]) : null;
+  const r = rate ?? vary?.rate ?? (jitter ? 0.88 + Math.random() * 0.24 : 1);
   const out = ctx.createGain();
   out.gain.value = dbToGain((A.clips?.[name]?.gainDb ?? 0) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
   let node = out;
@@ -82,7 +86,15 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
     const src = ctx.createBufferSource();
     src.buffer = buffer;
     src.playbackRate.value = r;
-    src.connect(out);
+    if (vary?.eq) {
+      const eq = ctx.createBiquadFilter();
+      eq.type = 'peaking';
+      eq.frequency.value = vary.eq.freq;
+      eq.gain.value = vary.eq.gain;
+      eq.Q.value = vary.eq.q;
+      src.connect(eq);
+      eq.connect(out);
+    } else src.connect(out);
     src.start(t);
     sources = [src];
     dur = buffer.duration / r;
@@ -101,6 +113,7 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   voices.push(voice);
   const duck = A.duck?.clips?.[name];
   if (duck) duckMusic(duck, t);
+  for (const l of vary?.layers ?? []) start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
 }
 
 // Fire a one-shot. Before the first gesture (or when muted) it silently

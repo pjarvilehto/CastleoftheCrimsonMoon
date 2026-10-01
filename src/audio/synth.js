@@ -5,9 +5,14 @@
 //   boom — a deep falling thump (sine sweep + filtered noise) on OVERKILL
 //   whoosh — moving to the next room (0.108): a band of noise sweeping up
 //          and back down while it travels left to right, with a low gust
+//   tick / thud / slice / clank — strike articulations (0.110), layered at
+//          random under the attack and hurt clips so no two hits sound the
+//          same: a blade's metallic tick, a body thud, the air cut by the
+//          swing, plate armour taking a blow. Each also varies itself.
 // Each plays into `out` at context time t and returns { dur, sources }.
 
-export const SYNTH = { ring: true, boom: true, whoosh: true };
+export const SYNTH = { ring: true, boom: true, whoosh: true, tick: true, thud: true, slice: true, clank: true };
+const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
 let noise = null; // 1.2s of white noise, made once
 function noiseBuffer(ctx) {
@@ -109,7 +114,91 @@ function whoosh(ctx, out, t, rate) {
   return { dur, sources: [n, gust] };
 }
 
+// A few inharmonic partials, struck: blade ticks and armour clanks.
+function partials(ctx, out, t, base, ratios, decay, levels) {
+  const dur = decay * 5;
+  const sources = ratios.map((r, i) => {
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = base * r;
+    const g = envelope(ctx, out, t, 0.0015, decay * (5 - i));
+    const lvl = ctx.createGain();
+    lvl.gain.value = levels[i] ?? 0.3;
+    o.connect(lvl);
+    lvl.connect(g);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+    return o;
+  });
+  return { dur, sources };
+}
+
+function noiseHit(ctx, out, t, type, freq, q, decay) {
+  const n = ctx.createBufferSource();
+  n.buffer = noiseBuffer(ctx);
+  n.playbackRate.value = rand(0.8, 1.25); // a different stretch of the noise each time
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  const g = envelope(ctx, out, t, 0.002, decay);
+  n.connect(f);
+  f.connect(g);
+  n.start(t, rand(0, 0.6));
+  n.stop(t + decay + 0.05);
+  return n;
+}
+
+function tick(ctx, out, t, rate) {
+  const base = rand(2600, 4200) * rate;
+  const p = partials(ctx, out, t, base, [1, 1.47, 2.09], rand(0.012, 0.03), [0.5, 0.3, 0.2]);
+  p.sources.push(noiseHit(ctx, out, t, 'highpass', 5000, 0.7, 0.012));
+  return p;
+}
+
+function thud(ctx, out, t, rate) {
+  const dur = 0.2;
+  const o = ctx.createOscillator();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(rand(120, 170) * rate, t);
+  o.frequency.exponentialRampToValueAtTime(rand(50, 70) * rate, t + 0.12);
+  o.connect(envelope(ctx, out, t, 0.002, rand(0.09, 0.15)));
+  o.start(t);
+  o.stop(t + dur + 0.05);
+  return { dur, sources: [o, noiseHit(ctx, out, t, 'lowpass', rand(300, 600), 0.7, rand(0.03, 0.06))] };
+}
+
+function slice(ctx, out, t, rate) {
+  const dur = rand(0.09, 0.16);
+  const n = ctx.createBufferSource();
+  n.buffer = noiseBuffer(ctx);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 2.2;
+  bp.frequency.setValueAtTime(rand(4500, 7000) * rate, t);
+  bp.frequency.exponentialRampToValueAtTime(rand(1500, 2500) * rate, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(1, t + dur * 0.25);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  n.connect(bp);
+  bp.connect(g);
+  g.connect(out);
+  n.start(t, rand(0, 0.6));
+  n.stop(t + dur + 0.05);
+  return { dur, sources: [n] };
+}
+
+function clank(ctx, out, t, rate) {
+  const base = rand(650, 1300) * rate;
+  const p = partials(ctx, out, t, base, [1, 1.73, 2.41, 3.1], rand(0.04, 0.07), [0.45, 0.3, 0.2, 0.12]);
+  p.sources.push(noiseHit(ctx, out, t, 'bandpass', base * 2, 1.5, 0.03));
+  return p;
+}
+
+const PLAYERS = { whoosh, tick, thud, slice, clank };
+
 export function playSynth(ctx, name, out, t, rate = 1) {
-  if (name === 'whoosh') return whoosh(ctx, out, t, rate);
+  if (PLAYERS[name]) return PLAYERS[name](ctx, out, t, rate);
   return name === 'boom' ? boom(ctx, out, t, rate) : ring(ctx, out, t, rate);
 }

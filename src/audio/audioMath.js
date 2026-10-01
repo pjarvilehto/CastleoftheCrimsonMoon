@@ -98,3 +98,21 @@ export function planVoice(voices, name, t, { maxPerClip = 2, maxTotal = 6, retri
   }
   return { steal, gainDb: (same.length - steal.filter((v) => v.name === name).length) * stackDb };
 }
+
+// Per-hit variation (0.110): a strike played twice in a row must not
+// sound stamped. cfg (audio.json variation.<clip>): rate [lo, hi]; eq
+// { lo, hi, db, q } — a peaking filter at a random frequency, ± db; layers
+// [{ name, p, db }] — each joins with probability p, at db (± 2), with its
+// own random rate. rnd: injectable for tests.
+export function planVariation(cfg, rnd = Math.random) {
+  if (!cfg) return null;
+  const span = ([lo, hi], r = rnd()) => lo + (hi - lo) * r;
+  const rate = cfg.rate ? span(cfg.rate) : 1;
+  const eq = cfg.eq
+    ? { freq: cfg.eq.lo * (cfg.eq.hi / cfg.eq.lo) ** rnd(), gain: (rnd() * 2 - 1) * cfg.eq.db, q: cfg.eq.q ?? 1.2 }
+    : null;
+  const layers = (cfg.layers ?? [])
+    .filter((l) => rnd() < l.p)
+    .map((l) => ({ name: l.name, gainDb: l.db + (rnd() * 4 - 2), rate: span([0.85, 1.2]) }));
+  return { rate, eq, layers };
+}
