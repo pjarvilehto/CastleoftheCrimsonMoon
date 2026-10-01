@@ -5,9 +5,9 @@
     "modelId": "eleven_multilingual_v2",
     "outputFormat": "mp3_44100_128",
     "settings": {
-      "stability": 0.4,
+      "stability": 0.5,
       "similarity_boost": 0.75,
-      "style": 0.2,
+      "style": 0.1,
       "speed": 0.9,
       "use_speaker_boost": true
     }
@@ -61,7 +61,7 @@
       {
         "take": 1,
         "file": "vo_descent_begin_1.mp3",
-        "text": "…your descent begins…"
+        "text": "your descent begins…"
       },
       {
         "take": 2,
@@ -105,7 +105,7 @@
       {
         "take": 1,
         "file": "vo_stretch_2_1.mp3",
-        "text": "…the stone grows colder here."
+        "text": "the stone grows colder here."
       },
       {
         "take": 2,
@@ -171,7 +171,7 @@
       {
         "take": 1,
         "file": "vo_overkill_1.mp3",
-        "text": "Overkill!"
+        "text": "Overkill."
       },
       {
         "take": 2,
@@ -193,17 +193,17 @@
       {
         "take": 1,
         "file": "vo_smash_1.mp3",
-        "text": "Smash!"
+        "text": "Smash."
       },
       {
         "take": 2,
         "file": "vo_smash_2.mp3",
-        "text": "Shattered!"
+        "text": "Shattered."
       },
       {
         "take": 3,
         "file": "vo_smash_3.mp3",
-        "text": "Crushed!"
+        "text": "Crushed."
       },
       {
         "take": 4,
@@ -215,17 +215,17 @@
       {
         "take": 1,
         "file": "vo_mega_crit_1.mp3",
-        "text": "Devastating!"
+        "text": "Devastating."
       },
       {
         "take": 2,
         "file": "vo_mega_crit_2.mp3",
-        "text": "Ha!"
+        "text": "Ha."
       },
       {
         "take": 3,
         "file": "vo_mega_crit_3.mp3",
-        "text": "What a blow!"
+        "text": "What a blow."
       },
       {
         "take": 4,
@@ -303,7 +303,7 @@
       {
         "take": 1,
         "file": "vo_revive_1.mp3",
-        "text": "Rise!"
+        "text": "Rise."
       },
       {
         "take": 2,
@@ -413,7 +413,7 @@
       {
         "take": 1,
         "file": "vo_victory_1.mp3",
-        "text": "…It is done. The castle sleeps."
+        "text": "It is done. The castle sleeps."
       }
     ],
     "shrine_enter": [
@@ -579,7 +579,7 @@
       {
         "take": 2,
         "file": "vo_death_2.mp3",
-        "text": "…and so the knight falls."
+        "text": "and so the knight falls."
       },
       {
         "take": 3,

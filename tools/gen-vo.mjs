@@ -10,8 +10,10 @@
 // Output: assets/vo/vo_<id>_<take>.mp3 (44.1 kHz, 128 kbps mono) and
 // assets/vo/manifest.json (id -> takes, text, file). Existing files are
 // never overwritten (edge caches: new content, new filename) — delete a
-// file to re-render it. Stage directions in *(...)* are stripped before
-// sending; emphasis marks (*Ha!*) are kept as plain text.
+// file to re-render it. Before sending, stage directions in *(...)* are
+// stripped, emphasis marks (*Ha!*) become plain text, an exclamation mark
+// becomes a full stop (the narrator never shouts) and a leading ellipsis
+// goes (the model voices it as a filler "uh…").
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -21,14 +23,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = join(ROOT, 'docs', 'narration-script.md');
 const OUT = join(ROOT, 'assets', 'vo');
 
-// The voice and settings the owner picked from the samples (Old Wizard,
-// ElevenLabs Voice Library).
+// The voice the owner picked from the samples (Old Wizard, ElevenLabs
+// Voice Library). The first batch rendered at stability 0.4 / style 0.2;
+// the short one-word takes came out shouty, so renders since use these.
 export const VOICE = {
   voiceId: 'JoYo65swyP8hH6fVMeTO',
   name: 'Old Wizard',
   modelId: 'eleven_multilingual_v2',
   outputFormat: 'mp3_44100_128',
-  settings: { stability: 0.4, similarity_boost: 0.75, style: 0.2, speed: 0.9, use_speaker_boost: true },
+  settings: { stability: 0.5, similarity_boost: 0.75, style: 0.1, speed: 0.9, use_speaker_boost: true },
 };
 
 const CONCURRENCY = 2;
@@ -55,9 +58,10 @@ export function parseScript(md) {
   return lines;
 }
 
-/** Drop *(stage directions)*, keep *emphasis* as plain words. */
+/** Drop *(stage directions)*, keep *emphasis* as plain words, calm "!" to ".", drop a leading "…". */
 export function cleanTake(raw) {
-  return raw.replace(/\*\([^)]*\)\*\s*/g, '').replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+  return raw.replace(/\*\([^)]*\)\*\s*/g, '').replace(/\*/g, '').replace(/!/g, '.')
+    .replace(/^[…\s]+/, '').replace(/\s+/g, ' ').trim();
 }
 
 export function fileFor(id, take) { return `vo_${id}_${take}.mp3`; }
