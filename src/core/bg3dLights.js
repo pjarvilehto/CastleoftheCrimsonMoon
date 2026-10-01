@@ -10,14 +10,6 @@ export const MAX_LIGHTS = 2;
 
 // Distance in front of the camera, reach (world units), and per-kind
 // colour / strength / timing (s). backgrounds.json parallax `lights` wins.
-export const LIGHT_DEFAULTS = {
-  enabled: true, dist: 0.8, radius: 0.45,
-  crit: { color: [1, 0.72, 0.35], strength: 1, fade: 0.3, life: 1.2 },
-  megacrit: { color: [1, 0.6, 0.25], strength: 1.8, fade: 0.45, life: 1.6 },
-  overkill: { color: [1, 0.35, 0.15], strength: 2.4, fade: 0.6, life: 2 },
-  potion: { color: [0.4, 1, 0.5], strength: 0.9, fade: 0.55, life: 2 },
-  revive: { color: [1, 0.88, 0.55], strength: 1.6, fade: 0.8, life: 2.8 },
-};
 
 // Where a screen point (CSS px) sits in the scene at distance `dist` along
 // its camera ray (rest pose: the camera sway is a degree or two — close
@@ -48,7 +40,9 @@ export function envelope(t, { rise = 0.08, fade = 0.35, life = 1.4 } = {}) {
 // The lights to draw this frame: the MAX_LIGHTS brightest live ones, as
 // flat uniform arrays (unused slots dark). lights: [{ t0 (ms), pos,
 // color: [r,g,b], strength, fade, life }].
+const NONE = { pos: new Float32Array(MAX_LIGHTS * 3), col: new Float32Array(MAX_LIGHTS * 3), count: 0 }; // the usual frame
 export function activeLights(lights, now) {
+  if (!lights.length) return NONE;
   const lit = lights
     .map((L) => ({ L, k: L.strength * envelope((now - L.t0) / 1000, L) }))
     .filter((x) => x.k > 0.002)

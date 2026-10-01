@@ -4,24 +4,25 @@
 // single write-path from run state to meta state — keep it that way.
 
 import { getProfile, persist } from '../meta/profile.js';
-import { derivedStats, trainedLevel, playerLevel } from '../meta/stats.js';
+import { derivedStats, playerLevel } from '../meta/stats.js';
 import { recordRun } from '../meta/history.js';
 import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
-import { equipItems, salvageValue } from '../meta/equipment.js';
+import { equipItems } from '../meta/equipment.js';
 import { generateRoom } from './roomGen.js';
-import { rollLoot, potionDrop } from './loot.js';
+import { rollLoot, potionDrop, takeItem } from './loot.js';
 import { rollTreasureRoom } from './treasure.js';
 import { DATA } from '../shared/data.js';
+import { pick } from '../shared/balance.js';
 
 // One shrine in every stretch of bossEvery rooms (0.091 — it used to be
 // once per run): shrineRoomRange is the room range WITHIN a stretch, so
 // rooms 2-7, 10-15, 18-23, ... Each stretch picks its room on entry —
 // never the run's treasure room (0.155).
 function randomShrineRoom(stretch = 0, treasureRoom = null) {
-  const [lo, hi] = DATA.difficulty.shrineRoomRange ?? [2, 7];
+  const [lo, hi] = DATA.difficulty.shrineRoomRange;
   const rooms = [];
   for (let n = lo; n <= hi; n++) if (stretch * DATA.difficulty.bossEvery + n !== treasureRoom) rooms.push(stretch * DATA.difficulty.bossEvery + n);
-  return rooms[Math.floor(Math.random() * rooms.length)];
+  return pick(rooms);
 }
 
 export function createRun() {
@@ -46,7 +47,7 @@ export function createRun() {
     shrineRooms: [randomShrineRoom(0, treasureRoom)], // one per stretch of bossEvery rooms, added on entry
     treasureRoom,                // the run's treasure room (run/treasure.js), or null
     seenBackgrounds: [],         // paintings shown this run: none twice while the pool lasts (0.156)
-    revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
+    revive: stats.revive,        // Heart of the Dying Moon — once per run (tryRevive)
     // run history (0.095, meta/history.js): who went in, and the tallies
     startedAt: Date.now(),
     level: playerLevel(),
@@ -73,35 +74,14 @@ export function enterNextRoom(run) {
 export function applyLoot(run, enemy, log) {
   // Boss summons (0.092) count as kills but carry nothing.
   if (enemy.summoned) { run.kills += 1; return { itemId: null, kept: false }; }
-  const fortune = trainedLevel(getProfile(), 'fortune');
-  const loot = rollLoot(enemy, fortune, run.roomNumber, run.relicFound);
+  const loot = rollLoot(enemy, run.stats.fortuneBonus, run.roomNumber, run.relicFound);
   // Greed shrine boon multiplies kill coins (run.coinMult, default 1).
   const coins = Math.round(loot.coins * run.coinMult);
   run.coins += coins;
   run.xp += loot.xp;
   run.kills += 1;
   log(`+${coins} coins, +${loot.xp} XP`, 'loot');
-  let kept = false;
-  if (loot.itemId) {
-    const found = DATA.items[loot.itemId];
-    if (found.tier === 4) run.relicFound = true;
-    // Would it be equipped at settle? (Same rules, run against the preview.)
-    kept = equipItems({ equipment: run.gearPreview }, [loot.itemId]).equipped.length > 0;
-    if (kept) {
-      run.itemsFound.push(loot.itemId);
-      // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
-      // { item } parts are rendered rarity-colored by hud.logLine — run/ stays
-      // free of UI imports (0.079).
-      if (found.tier === 4) log(['✦ EPIC ITEM ✦  You found ', { item: found }, '!'], 'relic');
-      else log(['Found: ', { item: found }, '!'], 'loot');
-    } else {
-      // Not an upgrade: it would only be salvaged at the end — take the
-      // coins now instead of piling up junk (0.091). Same value, same toll.
-      const value = salvageValue(loot.itemId);
-      run.coins += value;
-      log(`+${value} coins (salvaged ${found.name})`, 'loot');
-    }
-  }
+  const kept = loot.itemId ? takeItem(run, loot.itemId, log).kept : false;
   if (potionDrop()) {
     if (addPotion(run)) log('Found a healing potion!', 'loot');
     else log(`Found a healing potion — satchel full, sold for ${satchelSellCoins()} coins.`, 'loot');
@@ -117,12 +97,24 @@ function satchelSellCoins() {
 // (coins into the run purse), so a full satchel never wastes a pickup.
 // Returns true when the potion was kept.
 export function addPotion(run) {
-  if (run.potions < (run.potionCap ?? Infinity)) {
+  if (run.potions < run.potionCap) {
     run.potions += 1;
     return true;
   }
   run.coins += satchelSellCoins();
   return false;
+}
+
+// The Heart of the Dying Moon (a T4 relic): a killing blow — in combat or
+// the reliquary's blood price — leaves the knight at player.reviveHpPct of
+// max HP instead, once per run. Returns the log line, or null when it
+// could not save him.
+export function tryRevive(run) {
+  if (!run.revive) return null;
+  const pct = DATA.difficulty.player.reviveHpPct;
+  run.revive = false;
+  run.hp = Math.ceil(run.maxHp * pct);
+  return `The Heart of the Dying Moon beats again! You rise at ${pct === 0.5 ? 'half' : `${Math.round(pct * 100)}% of full`} health.`;
 }
 
 // Returns { healed, free, armor } on success, false when undrinkable.

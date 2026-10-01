@@ -74,7 +74,7 @@ async function boot() {
     onOffToggle('MUSIC', { cls: 'music-toggle', get: () => !isMuted(), flip: () => !toggleMuted() }),
     fullscreenToggle(),
     onOffToggle('SOUND', { cls: 'sfx-toggle', get: () => !sfxMuted(), flip: () => !toggleSfx() }),
-    onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.157)
+    onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.161)
     volumeToggle(),
     changelogToggle(),
     ...(debugMode ? debugToggles() : []),

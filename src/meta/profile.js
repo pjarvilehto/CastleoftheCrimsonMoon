@@ -9,9 +9,7 @@ import { DATA } from '../shared/data.js';
 import { startingEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
 import { SAVE_VERSION, migrateProfile } from './migrations.js';
-import { cleanName, NAME_MAX } from './names.js';
-
-export { SAVE_VERSION, cleanName, NAME_MAX };
+import { cleanName } from './names.js';
 
 const DEFAULTS = {
   coins: 0,
@@ -64,8 +62,8 @@ export function persist() {
 // ---- save transfer (title screen) ----
 
 export function exportSave() {
-  persist(); // flush in-memory state so the code is current
-  return exportProfile();
+  persist();
+  return exportProfile(profile);
 }
 
 // Accept a pasted save code. On success the in-memory profile is

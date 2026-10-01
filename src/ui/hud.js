@@ -7,6 +7,15 @@ import { DATA } from '../shared/data.js';
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
 export const isLowHp = (hp, maxHp) => hp > 0 && hp / maxHp <= DATA.difficulty.lowHpShare;
 
+// Potion count colour (0.089): green when the satchel is full, red when
+// running low (1 or none, or a quarter of the satchel or less). The Great
+// Hall's stat box and the panel rooms' HUD (styles.css .potions-*).
+export function potionLevel(p) {
+  if (p.potions >= p.potionCap) return 'potions-full';
+  if (p.potions <= Math.max(1, Math.floor(p.potionCap / 4))) return 'potions-low';
+  return 'potions-ok';
+}
+
 export function hpBar(current, max, color) {
   const pct = Math.max(0, Math.round((current / max) * 100));
   const fill = color ? `width:${pct}%;background:${color}` : `width:${pct}%`;

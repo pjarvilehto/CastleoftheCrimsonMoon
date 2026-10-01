@@ -16,7 +16,7 @@ import { compareVersions } from '../shared/version.js';
 let dialog = null;
 let opening = false;
 
-export async function loadChangelog() {
+async function loadChangelog() {
   try {
     const r = await fetch('assets/data/changelog.json', { cache: 'no-cache' });
     if (!r.ok) throw new Error(`changelog ${r.status}`);

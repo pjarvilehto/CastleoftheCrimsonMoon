@@ -6,7 +6,7 @@
 export function deathFlash(onPeak) {
   const f = document.getElementById('flash');
   if (!f) { onPeak(); return; }
-  f.classList.remove('on', 'death-out');
+  f.classList.remove('death-out');
   void f.offsetWidth;
   f.classList.add('death-in');
   setTimeout(() => {

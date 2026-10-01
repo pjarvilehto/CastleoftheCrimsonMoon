@@ -20,7 +20,7 @@ export function fadeCurve(n = 32, out = false) {
 
 // Stereo position (-1 left .. 1 right) of a screen x, scaled by `width`
 // (0.6: placement you can hear without hard-panning headphones).
-export function panForX(x, screenW, width = 0.6) {
+export function panForX(x, screenW, width) {
   if (!Number.isFinite(x) || !(screenW > 0)) return 0;
   const p = (x / screenW) * 2 - 1;
   return Math.max(-1, Math.min(1, p)) * width;
@@ -32,7 +32,7 @@ export function panForX(x, screenW, width = 0.6) {
 // dropped, at most maxPerClip copies of one clip and maxTotal voices
 // overall (the oldest go first; stingers are never stolen), and each copy
 // already sounding lowers the new one by stackDb.
-export function planVoice(voices, name, t, { maxPerClip = 2, maxTotal = 6, retriggerMs = 80, stackDb = -3 } = {}) {
+export function planVoice(voices, name, t, { maxPerClip, maxTotal, retriggerMs, stackDb }) {
   const live = voices.filter((v) => v.t1 > t);
   const same = live.filter((v) => v.name === name);
   if (same.some((v) => Math.abs(t - v.t0) * 1000 < retriggerMs)) return { skip: true };
@@ -63,6 +63,6 @@ export function planVariation(cfg, rnd = Math.random) {
     : null;
   const layers = (cfg.layers ?? [])
     .filter((l) => rnd() < l.p)
-    .map((l) => ({ name: l.name, gainDb: l.db + (rnd() * 4 - 2), rate: span([0.85, 1.2]) }));
+    .map((l) => ({ name: l.name, gainDb: l.db + (rnd() * 2 - 1) * cfg.layerDb, rate: span(cfg.layerRate) }));
   return { rate, eq, layers };
 }

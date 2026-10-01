@@ -13,8 +13,6 @@ import { currentScene, onSceneChange } from '../core/scene.js';
 import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { isNewer } from '../shared/version.js';
-
-export { isNewer }; // (tests, older imports)
 import { DATA } from '../shared/data.js';
 
 const POLL_MS = 3 * 60 * 1000;

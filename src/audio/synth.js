@@ -196,9 +196,8 @@ function clank(ctx, out, t, rate) {
   return p;
 }
 
-const PLAYERS = { whoosh, tick, thud, slice, clank };
+const PLAYERS = { ring, boom, whoosh, tick, thud, slice, clank };
 
 export function playSynth(ctx, name, out, t, rate = 1) {
-  if (PLAYERS[name]) return PLAYERS[name](ctx, out, t, rate);
-  return name === 'boom' ? boom(ctx, out, t, rate) : ring(ctx, out, t, rate);
+  return PLAYERS[name] ? PLAYERS[name](ctx, out, t, rate) : null; // null: no such generated sound
 }

@@ -11,11 +11,13 @@
 //   node tools/simulate.mjs --verbose       # per-run lines
 //   node tools/simulate.mjs --retreat       # bot banks the run when it's risky
 //   node tools/simulate.mjs --seeds 1-8     # 8 independent campaigns, mean ± sd
+//   node tools/simulate.mjs --tactic boss   # targeting: suggested (default) | boss | summons
 //   (per-boon shrine balance: node tools/shrine-study.mjs)
 //
 // The bot policy (a competent, greedy player):
-//   combat:  potion below 40% HP, heavy attack whenever off cooldown,
-//            focus the first living enemy, always Push Deeper (death ends
+//   combat:  potion below 40% HP, heavy attack whenever off cooldown, the
+//            game's suggested target (a summon in front of the boss first;
+//            --tactic picks another), always Push Deeper (death ends
 //            every run — this measures the survival curve, not retreat play)
 //   shrine:  take the best affordable boon (priority order below)
 //   hub XP:  round-robin vitality > power > endurance > precision > fortune
@@ -31,8 +33,8 @@ import { loadSim, withSeed, newAgg, STAT_PRIORITY } from './simCore.mjs';
 export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false, tactic = 'suggested' } = {}) {
   const sim = await loadSim();
   const agg = newAgg();
-  const t4MinRoom = sim.DATA.difficulty.t4MinRoom ?? 11;
-  agg.potionDropChance = sim.DATA.difficulty.potionDropChance ?? 0.05;
+  const t4MinRoom = sim.DATA.difficulty.t4MinRoom;
+  agg.potionDropChance = sim.DATA.difficulty.potionDropChance;
   return withSeed(seed, () => {
     sim.fresh();
     for (let r = 0; r < runs; r++) {
@@ -190,7 +192,7 @@ export function renderReport(agg, { runs, seed }) {
 }
 
 // ── Multi-seed summary: independent campaigns, mean ± sd per metric ──
-export async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
+async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
   const rows = [];
   for (const seed of seeds) {
     const agg = await simulate({ runs, seed, retreat, tactic });
@@ -211,7 +213,7 @@ export async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 's
   return rows;
 }
 
-export function renderMultiSeed(rows, { runs, retreat }) {
+function renderMultiSeed(rows, { runs, retreat }) {
   const keys = ['median', 'mean', 'early', 'late', 'first8', 'boss8', 'boss16', 'boss24', 'coins', 'banked', 'turns'];
   const fmt = (k, v) => (Number.isNaN(v) ? '  —  ' : k.startsWith('boss') ? `${Math.round(v * 100)}%` : v.toFixed(1));
   const stat = (k) => {
@@ -248,7 +250,7 @@ if (invokedDirectly) {
     const list = Array.from({ length: (to ?? from) - from + 1 }, (_, i) => from + i);
     console.log(renderMultiSeed(await multiSeed(list, { runs, retreat, tactic }), { runs, retreat }));
   } else {
-    const agg = await simulate({ runs, seed, verbose, retreat });
+    const agg = await simulate({ runs, seed, verbose, retreat, tactic });
     console.log(renderReport(agg, { runs, seed }));
   }
 }

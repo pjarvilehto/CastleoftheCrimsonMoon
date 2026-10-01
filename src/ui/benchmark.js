@@ -64,7 +64,8 @@ export function maybeAskBenchmark() {
   return true;
 }
 
-export function askBenchmark() {
+function askBenchmark() {
+  if (currentScene()?.inRun) return; // never out of a run (it would be lost, unsettled)
   confirmPrompt({
     title: 'Benchmark',
     lines: [`About ${benchmarkSeconds()} seconds of scripted combat: the room at rest, a long fight, then OVERKILL after OVERKILL.`,

@@ -1,6 +1,6 @@
 # Narration script: the Old Wizard
 
-> **In the game since 0.157.** `node tools/gen-vo.mjs` renders this file's
+> **In the game since 0.161.** `node tools/gen-vo.mjs` renders this file's
 > tables (the Old Wizard voice from the ElevenLabs library, stability 0.5,
 > style 0.1, speed 0.9; the earliest takes at 0.4 / 0.2) into
 > `assets/audio/vo/` and `assets/data/narration.json`; the "How often"

@@ -23,7 +23,7 @@ import { loadSim, withSeed, newAgg } from './simCore.mjs';
 const mean = (a) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
 const se = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1) / Math.max(1, a.length)); };
 
-const DISCIPLINES = ['power', 'vitality', 'endurance', 'precision', 'fortune'];
+import { DISCIPLINES } from '../src/shared/level.js';
 const TRACKS = ['potency', 'efficiency', 'infusion'];
 
 export async function statStudy({ n = 200, seed = 1, stages = [5, 15, 30, 60], runsOfBudget = 3, sets = [] } = {}) {

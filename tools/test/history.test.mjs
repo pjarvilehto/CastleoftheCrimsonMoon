@@ -13,7 +13,8 @@ fresh();
 {
   const { settleRun, drinkPotion } = await import('../../src/run/runState.js');
   const { HISTORY_MAX } = await import('../../src/meta/history.js');
-  const { importSave, exportSave, SAVE_VERSION } = await import('../../src/meta/profile.js');
+  const { importSave, exportSave } = await import('../../src/meta/profile.js');
+  const { SAVE_VERSION } = await import('../../src/meta/migrations.js');
   resetProfile();
   const p = getProfile();
   const id0 = p.playerId;
@@ -231,7 +232,7 @@ fresh();
 // sent with the play stats, kept by the collector and shown on the
 // dashboard's Benchmarks card.
 {
-  const { PHASES } = await import('../../src/ui/scenes/benchmarkScene.js');
+  const { PHASES } = await import('../../src/ui/benchmark.js');
   ok('benchmark: idle, combat, overkill with fixed enemies of every particle material',
     PHASES.map((p) => p.id).join() === 'idle,combat,overkill' && PHASES.every((p) => p.enemies.every((id) => DATA.enemies[id]) && DATA.backgrounds.rooms.includes(p.bg))
     && ['rat', 'skeleton', 'ghoul', 'wraith'].every((id) => PHASES[1].enemies.includes(id)));

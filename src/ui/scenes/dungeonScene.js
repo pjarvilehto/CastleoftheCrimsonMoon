@@ -26,7 +26,7 @@ import { renderShrineRoom } from '../shrineUI.js';
 import { renderTreasureRoom } from '../treasureUI.js';
 import { queueEvents } from '../combatQueue.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
-import { mountBattle } from '../battleRoom.js';
+import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
@@ -55,18 +55,14 @@ export function dungeonScene() {
     onEmpty: () => {
       tickUpChips();
       if (combat.over && !combat.victory) openDeathModal();
-      // a boss falls: the win dialog the first time, else the narrator's word (0.157)
+      // a boss falls: the win dialog the first time, else the narrator's word (0.161)
       if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
-    onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.157)
+    onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
   });
-  // What effects can touch: the live units of the battle line.
-  const fxCtx = {
-    unit: (who) => (!ui ? null : who === 'player' ? ui.player : ui.enemies[who] ?? null),
-    get layer() { return ui?.layer ?? null; },
-  };
+  const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
@@ -104,7 +100,7 @@ export function dungeonScene() {
     else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
   }
 
-  // The narrator on a room's threshold (0.157): one line at most, the first
+  // The narrator on a room's threshold (0.161): one line at most, the first
   // of these that its rule lets through — the boss, the shrine, the chests;
   // else the descent, the start of a deeper stretch (room 9: stretch_2,
   // 17: stretch_3...), the first room past the save's best, an elite.
@@ -134,11 +130,6 @@ export function dungeonScene() {
   // Built ONCE per room (0.086) and patched in place on every playback
   // tick — a full rebuild every 100ms restarted any CSS animation.
   function renderCombat(root, room) {
-    if (!ui || ui.room !== room || ui.root !== root) buildCombat(root, room);
-    updateCombat();
-  }
-
-  function buildCombat(root, room) {
     const battle = mountBattle(run, combat, {
       // Heavy goes to the front: a summon standing before the boss (0.092).
       onHeavy: () => { if (canAct()) { useHeavy(combat); act(() => playerAttack(combat, heavyTarget(combat), true)); } },
@@ -175,8 +166,9 @@ export function dungeonScene() {
     logEl.scrollTop = logEl.scrollHeight;
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
-    ui = { room, root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };
+    ui = { root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };
     playFx({ kind: 'enter' }, fxCtx);
+    updateCombat();
   }
 
   function updateCombat() {
@@ -221,8 +213,7 @@ export function dungeonScene() {
   // fight reads as it happens. Input is locked while the queue drains.
   function act(fn) {
     if (!canAct()) return;
-    // The replay starts from the state BEFORE the action resolves (0.086).
-    const pre = { enemies: combat.enemies.map((e) => e.hp), hp: run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null) };
+    const pre = snapshot(combat); // the replay starts from the state BEFORE the action resolves (0.086)
     queueEvents(fn(), { run, combat, playback });
     if (combat.over && combat.victory) {
       playback.enqueue({ text: roomSummaryText(), cls: 'move' });
@@ -273,7 +264,7 @@ export function dungeonScene() {
     if (deathShown) return;
     deathShown = true;
     sfx('death');
-    // the narrator on a death (0.157): the reliquary's or the boss's own line, then the save's first death
+    // the narrator on a death (0.161): the reliquary's or the boss's own line, then the save's first death
     narrate(run.killedBy === 'reliquary' ? 'death_reliquary' : DATA.enemies[run.killedBy]?.boss ? 'death_boss' : 'death');
     if (getProfile().records.deaths === 0) narrate('first_death');
     deathFlash(() => showDeathModal(run, () => endRun(currentRoot, 'death')));

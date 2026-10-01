@@ -16,7 +16,7 @@ const EV_SFX = {
 };
 
 // Combat event -> narrator line (audio/narrator.js decides whether it is
-// said; 0.157): OVERKILL, a multi-kill ("SMASH"), a mega crit, the revive
+// said; 0.161): OVERKILL, a multi-kill ("SMASH"), a mega crit, the revive
 // relic, a boss summon, the room cleared (not a boss's: that fight has its
 // own line) and the knight's HP falling low.
 export function voFor(ev, { run, combat }) {

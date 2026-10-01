@@ -9,40 +9,32 @@ import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile } from '../../meta/profile.js';
 import { derivedStats, itemWithForge, playerLevel } from '../../meta/stats.js';
+import { equippedItemIds } from '../../meta/equipment.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, infusionArmor,
   forgeCost, forgeMaxed, forgeItem,
 } from '../../meta/leveling.js';
-import { statBox, describeItem, itemName } from '../hud.js';
+import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
 import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 import { narrate } from '../../audio/narrator.js';
 
-// Great Hall potion count color (0.089): green when the satchel is full,
-// red when running low (1 or none, or a quarter of the satchel or less).
-export function potionLevel(p) {
-  if (p.potions >= p.potionCap) return 'potions-full';
-  if (p.potions <= Math.max(1, Math.floor(p.potionCap / 4))) return 'potions-low';
-  return 'potions-ok';
-}
-
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
 export function canSpendXp(p) {
-  return Object.keys(STAT_DEFS).some((k) => canAfford(k));
+  return Object.keys(STAT_DEFS).some((k) => p.xp >= statCost(p.stats[k]).xp);
 }
 
 export function canSpendCoins(p) {
   if (!satchelFull(p) && p.coins >= potionCost()) return true;
   if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
   if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
-  const eq = p.equipment;
-  return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet]
-    .some((id) => id && DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
+  return equippedItemIds(p.equipment)
+    .some((id) => DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
 }
 
 // Buy Potion gets the pulsing 'active' glow below 30% of the satchel.
@@ -50,7 +42,7 @@ export function potionsLow(p) {
   return p.potions < p.potionCap * 0.3;
 }
 
-// opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.157)
+// opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.161)
 export function hubScene(opts = {}) {
   let leaving = false;
   const scene = {
@@ -144,7 +136,7 @@ export function hubScene(opts = {}) {
 
     // ---- ALCHEMY: potions + three coin tracks. ----
     const alchemyDesc = {
-      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
+      potency: () => `+${DATA.difficulty.alchemyTracks.potency.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
       efficiency: () => efficiencyDesc(), // 0.112: tapering — shows the next level's gain
       infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
     };

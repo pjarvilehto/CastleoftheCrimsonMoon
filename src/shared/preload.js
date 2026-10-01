@@ -9,7 +9,7 @@
 // Everything else (dungeon rooms, boss/shrine/death art, portraits: ~5MB)
 // loads in the background right after the title shows; the hub's Descend
 // waits for it only if the player gets there first.
-// 0.153: with 34 room paintings (~13MB) Descend waits only for what every
+// 0.153: with 35 room paintings (~13MB) Descend waits only for what every
 // run needs — the boss, shrine and death art and the portraits; the rooms
 // keep loading behind (a room whose painting isn't in yet keeps the last
 // one up until it is: bg3d swaps only once a layer has loaded).

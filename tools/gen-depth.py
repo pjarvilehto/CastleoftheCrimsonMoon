@@ -133,7 +133,7 @@ def main():
     args = [a for a in args if a != "--ground"]
     sess = ort.InferenceSession(sys.argv[1], providers=["CPUExecutionProvider"])
     cfg = json.loads((ROOT / "assets" / "data" / "backgrounds.json").read_text())
-    names = args or sorted({cfg["title"], cfg["hub"], cfg["boss"], cfg["death"], cfg["shrine"], *cfg["rooms"]})
+    names = args or sorted({cfg["title"], cfg["hub"], cfg["death"], cfg["shrine"], *cfg["rooms"], *cfg["bosses"], *cfg["treasure"]})
     OUT.mkdir(parents=True, exist_ok=True)
     for name in names:
         img = Image.open(BG / name)

@@ -20,9 +20,8 @@
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner } from './fxParts.js';
+import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter } from './fxParts.js';
 
-export { floatNumber }; // (defined here before 0.098)
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
 // who: { maxHp } of the knight — sizes hits on him (big-hit sway).
@@ -45,7 +44,7 @@ export function fxFor(ev, who = {}) {
 // How long the log waits after a line with this effect (0.087 pacing):
 // attacks need time to read; everything else keeps logDelayMs.
 export function holdFor(fx) {
-  const p = DATA.difficulty.combatPacing ?? {};
+  const p = DATA.difficulty.combatPacing;
   if (fx?.kind === 'summon') return p.summonMs;
   if (!fx || fx.kind !== 'attack') return undefined;
   if (fx.from === 'player') return fx.heavy ? p.heavyAttackMs : p.playerAttackMs;
@@ -131,7 +130,7 @@ function attack(fx, ctx) {
     }, strike);
   }
   // A crushing hit on the knight swings it back, right -> left.
-  const big = DATA.backgrounds?.parallax?.swayHitShare;
+  const big = DATA.backgrounds.parallax.swayHitShare;
   if (fx.to === 'player' && fx.share >= big) setTimeout(() => bgSway((0.8 * fx.share) / big, -1), strike);
 }
 
@@ -151,7 +150,7 @@ function hit(u, fx, delay, ctx, stop = 0) {
     ], { duration: 240, delay: delay + stop, easing: 'ease-out' });
   }
   if (can(u.portrait)) {
-    const base = getComputedStyle(u.portrait).filter;
+    const base = baseFilter(u);
     const pre = base === 'none' ? '' : base;
     u.portrait.animate([
       { filter: `${pre} brightness(2.6) saturate(0.2)` },

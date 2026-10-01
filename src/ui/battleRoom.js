@@ -10,6 +10,18 @@
 import { el } from '../core/dom.js';
 import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
 
+// What effects can touch — the live units of the current battle line.
+// ui(): the scene's current { player, enemies, layer } (null between rooms).
+export const fxContext = (ui) => ({
+  unit: (who) => { const u = ui(); return !u ? null : who === 'player' ? u.player : u.enemies[who] ?? null; },
+  get layer() { return ui()?.layer ?? null; },
+});
+
+// The state BEFORE an action resolves: the replay starts from there (0.086).
+export const snapshot = (combat) => ({
+  enemies: combat.enemies.map((e) => e.hp), hp: combat.run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null),
+});
+
 export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
   const unit = (i) => createEnemyUnit(combat.enemies[i], i, {
@@ -20,7 +32,8 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
   // --n drives the card size (styles.css --card-h): crowded rooms shrink
   // their cards to fit the width instead of wrapping (0.078).
-  const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}` }, player.el, row);
+  // ondragstart (0.159): no native drag may start from the line — the portraits are images
+  const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}`, ondragstart: (e) => e.preventDefault?.() }, player.el, row);
   const fit = () => line.setAttribute('style', `--n:${Math.max(1, row.children.length)}`);
 
   // Summons join mid-fight (0.092): each card appears as its summon line

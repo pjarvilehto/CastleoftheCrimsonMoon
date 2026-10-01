@@ -28,8 +28,7 @@ export function panelToggle(label, cls, build) {
     onclick: () => {
       if (panel) { panel.remove(); panel = null; btn.classList.remove('on'); return; }
       panel = build();
-      if (btn.parentNode) btn.after(panel); // in the corner column: right below
-      else document.body.append(panel);
+      btn.after(panel); // in the corner column: right below
       btn.classList.add('on');
     },
   }, label);

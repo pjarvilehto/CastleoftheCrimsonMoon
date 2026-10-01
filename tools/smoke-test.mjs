@@ -9,9 +9,12 @@
 // `children` is getter-only (assigning to it threw on real DOM and shipped
 // broken in 0.031), style lives behind setAttribute, etc.
 
-import { counts } from './test/harness.mjs';
+import { counts, readdirSync } from './test/harness.mjs';
 
-const FILES = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'narration', 'sim', 'history'];
+// Every tools/test/*.test.mjs, in the suite's order (new files join at the end).
+const ORDER = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history'];
+const FILES = readdirSync('tools/test').filter((f) => f.endsWith('.test.mjs')).map((f) => f.slice(0, -'.test.mjs'.length))
+  .sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
 const filter = process.argv.slice(2);
 const t0 = process.hrtime.bigint();
 for (const name of FILES.filter((f) => !filter.length || filter.some((q) => f.includes(q)))) {

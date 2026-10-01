@@ -29,7 +29,7 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~625 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~630 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -49,14 +49,20 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    difficulty (incl. `player` base stats, `combat` multipliers), shrines
    (every boon's numbers; a smoke check keeps the card text in sync),
    backgrounds, audio, telemetry. Never a number in `src/`, and no `?? N`
-   fallback copies (they drifted, 0.116): every number the code reads is
-   listed in `shared/dataCheck.js` and checked at load — new knob, new line.
+   fallback copies (they drifted, 0.116; the renderer's and the audio's
+   whole-block copies went in 0.157): every number the code reads is
+   listed in `shared/dataCheck.js` and checked at load — new knob, new
+   line (a smoke check also greps `src/` for `.knob ?? N`). What stays in
+   `src/`: the look — animation durations, shader constants, synth
+   instrument definitions.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot; only
-   upgrades land in `run.itemsFound`. One shrine per stretch of `bossEvery`
+   upgrades land in `run.itemsFound` — one path, `run/loot.js takeItem`,
+   for kill loot and treasure chests (the Heart's revive is one too:
+   `runState.tryRevive`). One shrine per stretch of `bossEvery`
    rooms (`run.shrineRooms`: 2-7, 10-15, ...); coin boons can have a flat
    price (`flatCost`).
 5. **Potions persist** (0.080): a run draws the profile's stock and
@@ -180,7 +186,7 @@ generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
-**Voice-over** (0.157, `audio/narrator.js`): the Old Wizard, a chronicler
+**Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (32 lines,
 four takes each), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
@@ -208,7 +214,10 @@ audio.json, a `narrate()` call — the suite checks the three agree.
 - Every dialog: `ui/dialog.js openDialog({ label, children, onKey, proceed })`
   — it owns the keyboard (key-trap stack) and is tracked (`anyDialogOpen`,
   `closeAllDialogs`). Dialogs live above the scenes, so a scene switch does
-  not close them. Yes/no: `ui/confirmPrompt.js`.
+  not close them; the YOU DIED dialog is one too (0.157: it used to sit in
+  `#app` without a key trap, and a reliquary death left Push Deeper live
+  under it). Yes/no: `ui/confirmPrompt.js` (the title's Start a New Game
+  included). Never the browser's `confirm()`.
 - Keyboard-reachable buttons get `key: 'x'` in `el()`; a screen's way
   forward also gets `proceed: true` (Space clicks it, a tiny `[space]` sits
   under its label; in a dialog pass it as `openDialog({ proceed })`).
@@ -300,12 +309,16 @@ Energy Saver), not a slow machine.
   elements, `match()` supports hardcoded selectors only, `children` is
   read-only, and `classList` doesn't update `className` (check
   `classList.contains`). Click = `el.listeners.click[0]()` or `handleKey()`.
+  Dialogs mount on `document.body` (an `El`; `document.querySelector` looks
+  in `#app`, then there); `fresh()` closes any left open.
 - The check count can vary by one (an assertion that runs only when a
   fixture run dies). A flake gets one rerun; a repeat is real — and a
   random-dependent check should be seeded (0.136).
 - Balance-sensitive tests use constructed fixtures; per-level stat changes
-  need them retuned. Refactors of combat: compare `simulate.mjs` output
-  before and after (byte-identical).
+  need them retuned. Refactors of combat or rooms: compare `simulate.mjs`,
+  `--seeds 1-4` and `shrine-study.mjs` output before and after
+  (byte-identical — the order of `Math.random()` calls is part of it: a
+  room rolls its enemies before its painting).
 - Browser checks: Playwright with Chromium at `/opt/pw-browsers/chromium`
   (`--use-gl=angle --use-angle=swiftshader` for WebGL; it's slow, so judge
   relative numbers only). Use a fresh context; disable CSS transitions for
@@ -348,17 +361,25 @@ sometimes — fetch all branches to find it.
 - Repo: **https://github.com/pjarvilehto/CastleoftheCrimsonMoon** (`main` =
   the live site; everything shipped is there).
 - Start from the latest `main`: `git fetch origin main` and branch from
-  `origin/main`. The last working branch, `claude/serene-feynman-q7i6fw`,
-  is identical to `main` at a14739b (0.156). Treat it as finished: use the
-  branch the new session is given.
+  `origin/main`. The last working branch, `claude/sweet-franklin-bwkdsh`,
+  is identical to `main` at 0.161. Treat it as finished: use the branch
+  the new session is given.
 - Ship as before: bump, suite green, push to `main` and to the session's
   working branch. No PRs unless the owner asks.
 
-## State at handover (0.157)
+## State at handover (0.161)
 
-- Live: the Old Wizard voice-over (0.157, 122 takes), treasure rooms
+- Live: the Old Wizard voice-over (0.161, 122 takes), treasure rooms
   (0.155), click-to-attack, 35 fight paintings + 4 throne rooms + 6
   treasure rooms, no repeats in a run, ordered transitions.
+- 0.157 was a cleanup pass over the whole project (four audits, every
+  file read): no new content. Fixed on the way: a reliquary death left
+  the room's buttons live under YOU DIED; Export Save read localStorage
+  (stale when a write was refused); the balance bot ignored `--tactic`
+  in single-seed mode; the 3D renderer leaked its GL context when the
+  quality ladder stepped down to flat, and the camera lurched after a
+  hidden tab; a bad strike-layer name played a crit ring. The sim output
+  is byte-identical to 0.156.
 - Not yet heard in a real browser session: the narrator's level against the
   music and hits (`audio.json narration.targetDb`, -11: just over the hits)
   and the room-entry delay against the painting's fade — tune by ear.
@@ -366,8 +387,15 @@ sometimes — fetch all branches to find it.
   the pick). Treasure rooms aren't in the play stats yet (no history field —
   a candidate: which chest, what it gave; the collector would need it too).
 - Open ideas the owner floated: a mimic chest (needs enemy art).
+- Left as found (owner's call): `icon.png` (374KB) at the root is
+  referenced by nothing (the master art? move it out of the site root or
+  delete); the Particle Lab's "current" style is the pre-0.128 burst and
+  the lab is out of step with `particleLooks.js`; `collector/worker.js`
+  could cache `/players` and send `access-control-max-age` (a redeploy —
+  not done here); the nine test files share one long copy-pasted import
+  line; the shipped v1→v2 migration keeps its `?? N` copies (rule 3).
 
-## Backlog (as of 0.157)
+## Backlog (as of 0.161)
 
 - Voice-over: a few more takes per frequent line (OVERKILL, room cleared)
   so the wizard repeats less on long sessions · a NARRATOR volume slider if

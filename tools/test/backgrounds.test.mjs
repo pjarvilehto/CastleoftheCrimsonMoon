@@ -13,6 +13,7 @@ fresh();
 // aspect ratios (no black edges); the math mirrors CSS "cover".
 {
   const bg3d = await import('../../src/core/bg3d.js');
+  const bm = await import('../../src/core/bg3dMath.js');
   const b = DATA.backgrounds;
   const all = [...new Set([b.title, b.hub, ...b.bosses, b.death, b.shrine, ...b.rooms, ...b.treasure])];
   const missing = all.filter((f) => { try { return !statSync(bg3d.depthUrl(f)).isFile(); } catch { return true; } });
@@ -39,16 +40,15 @@ fresh();
     DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
     && later.join() === [...need, ...roomArt].join());
 
-  const cs = (w, h) => bg3d.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
+  const cs = (w, h) => bm.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
   ok('cover mapping matches CSS cover', cs(1920, 1080) === '1,1' && cs(1024, 768) === '0.75,1' && cs(2560, 1080) === '1,0.75');
-  const o0 = bg3d.orbit(0, bg3d.tuning(''));
+  const o0 = bm.orbit(0, bg3d.tuning(''));
   ok('sway starts at the rest pose', o0.yaw === 0 && o0.pitch === 0);
   const d = { w: 2, h: 2, data: new Uint8Array([0, 255, 255, 255]) };
-  ok('bilinear depth sampling', bg3d.sampleDepth(d, 0, 0) === 0 && bg3d.sampleDepth(d, 1, 1) === 1
-    && Math.abs(bg3d.sampleDepth(d, 0.5, 0.5) - 0.75) < 1e-9 && bg3d.sampleDepth(d, -3, 9) === 1);
+  ok('bilinear depth sampling', bm.sampleDepth(d, 0, 0) === 0 && bm.sampleDepth(d, 1, 1) === 1
+    && Math.abs(bm.sampleDepth(d, 0.5, 0.5) - 0.75) < 1e-9 && bm.sampleDepth(d, -3, 9) === 1);
 
   // Shader mirror + coverage math live in core/bg3dMath.js (one copy).
-  const bm = await import('../../src/core/bg3dMath.js');
   const cfg = bg3d.tuning('');
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const [rx, ry] = bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9), 0.25, 0.75, 0.9, 16 / 9, cfg);
@@ -81,7 +81,7 @@ fresh();
   const bm = await import('../../src/core/bg3dMath.js');
   const base = bg3d.tuning('');
   ok('tunables: depth, speed, sway x/y, focus, fog, fog drift (0.101)', bg3d.TUNABLE.join(',') === 'depthScale,speed,yawDeg,pitchDeg,pivot,fogScale,fogSpeed'
-    && base.speed === (DATA.backgrounds.parallax.speed ?? 1)); // shipped value comes from the data
+    && base.speed === DATA.backgrounds.parallax.speed); // shipped value comes from the data
   bg3d.setLiveTuning({ depthScale: 0.9, speed: 2 });
   ok('live values override the shipped ones', bg3d.tuning('').depthScale === 0.9 && bg3d.liveTuning().speed === 2
     && bg3d.tuning('').yawDeg === base.yawDeg);
@@ -190,8 +190,8 @@ fresh();
   ok('flash lights are tunable in data (colour, strength, life per kind)', lights && typeof lights.enabled === 'boolean'
     && ['crit', 'potion', 'revive'].every((k) => lights[k]?.color?.length === 3 && lights[k].strength > 0 && lights[k].life > lights[k].fade));
   const rect = { left: 1000, top: 200, width: 300, height: 450 };
-  const flash = L.flashAt('crit', rect, W, H, fov, L.LIGHT_DEFAULTS, 5);
-  ok('a crit flash lands in front of its card, on the card\'s side', flash && flash.t0 === 5 && flash.pos[0] > 0 && flash.color === L.LIGHT_DEFAULTS.crit.color);
+  const flash = L.flashAt('crit', rect, W, H, fov, lights, 5);
+  ok('a crit flash lands in front of its card, on the card\'s side', flash && flash.t0 === 5 && flash.pos[0] > 0 && flash.color === lights.crit.color);
   ok('lights off (enabled: false) or unknown kind = no flash', L.flashAt('crit', rect, W, H, fov, { ...lights, enabled: false }, 5) === null
     && L.flashAt('nope', rect, W, H, fov, lights, 5) === null && L.flashAt('potion', null, W, H, fov, lights, 5) === null);
 }
@@ -204,7 +204,7 @@ fresh();
 // in front of them.
 {
   const pf = await import('../../src/core/bg3dPuffs.js');
-  const P = { ...pf.PUFF_DEFAULTS, ...DATA.backgrounds.parallax.puffs };
+  const P = DATA.backgrounds.parallax.puffs;
   const a = pf.makePuffs(pf.seedOf('castle_courtyard.jpg'), P), b = pf.makePuffs(pf.seedOf('castle_courtyard.jpg'), P);
   const c = pf.makePuffs(pf.seedOf('castle_ramparts.jpg'), P);
   ok('puffs: the same scene always gets the same set, other scenes differ', a.length === P.count && JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a) !== JSON.stringify(c));

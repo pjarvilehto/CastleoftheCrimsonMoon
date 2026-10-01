@@ -216,5 +216,24 @@ fresh();
   for (let i = 0; i < 200; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, { ...generateRoom(6, { treasureRoom: 6 }) }, 'reliquary', log).itemId]?.tier === 4) early++; }
   ok('treasure: the reliquary\'s relic is rare (about relicChance), and never before t4MinRoom', Math.abs(relics / 400 - T.reliquary.relicChance) < 0.06 && early === 0, `${relics} ${early}`);
   Math.random = real;
+  // 0.157: a reliquary death leaves no live way on under the YOU DIED dialog
+  // (Space used to click Push Deeper and carry a dead knight into the next room)
+  {
+    const { renderTreasureRoom } = await import('../../src/ui/treasureUI.js');
+    const { handleKey } = await import('../../src/core/hotkeys.js');
+    const { showDeathModal } = await import('../../src/ui/deathModal.js');
+    const { el } = await import('../../src/core/dom.js');
+    const run = rs.createRun(); run.hp = tr.reliquaryCost(run); run.revive = false;
+    const rm = room();
+    let deeper = 0, died = 0, dlg = null;
+    const h = { title: ['T'], logEl: el('div'), buffBar: el('div'), coins: 0, xp: 0, onDeeper: () => deeper++, onRetreat: () => {},
+      onDeath: () => { died++; dlg = showDeathModal(run, () => {}); }, refresh: () => renderTreasureRoom(registry.app, run, rm, h) };
+    renderTreasureRoom(registry.app, run, rm, h);
+    registry.app.all((e) => e.tagName === 'button' && e.textContent.includes('Open'))[2].click(); // the reliquary
+    const buttons = registry.app.all((e) => e.tagName === 'button');
+    ok('treasure: the reliquary\'s kill closes the chests and takes the way on away', died === 1 && run.hp === 0 && buttons.length === 0);
+    handleKey(' ');
+    ok('treasure: Space goes to the death dialog, not to Push Deeper', deeper === 0 && dlg && !dlg.isOpen());
+  }
   fresh();
 }

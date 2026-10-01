@@ -5,7 +5,8 @@
 // potions, alchemy tracks, and Forge item enhancements. The two never mix.
 
 import { getProfile, persist } from './profile.js';
-import { precisionCrit, taper } from './stats.js';
+import { precisionCrit, taper, itemWithForge, effectiveLevel } from './stats.js';
+import { equippedItemIds } from './equipment.js';
 import { DATA } from '../shared/data.js';
 
 // ---- Disciplines (XP-only) ----
@@ -24,9 +25,8 @@ export const STAT_DEFS = {
 // crit damage = Precision's own per level (0.113) + any chance past the cap
 // (0.112).
 export function precisionGain(currentLevel) {
-  const every = DATA.difficulty.breakthroughEvery;
-  const now = currentLevel + Math.floor(currentLevel / every);
-  const after = (currentLevel + 1) + Math.floor((currentLevel + 1) / every);
+  const now = effectiveLevel(currentLevel);
+  const after = effectiveLevel(currentLevel + 1);
   const pl = DATA.difficulty.player;
   const gain = precisionCrit(after) - precisionCrit(now);
   const room = Math.max(0, pl.critCap - critBeforePrecision() - precisionCrit(now)); // chance left under the cap
@@ -38,13 +38,8 @@ export function precisionGain(currentLevel) {
 
 // Base crit + gear crit (what Precision adds on top of).
 function critBeforePrecision(p = getProfile()) {
-  const gear = Object.values(p.equipment ?? {}).flat().filter(Boolean);
-  return DATA.difficulty.player.baseCrit + gear.reduce((s, id) => s + critOf(id, p), 0);
-}
-function critOf(id, p) {
-  const it = DATA.items[id];
-  if (!it?.crit) return 0;
-  return it.crit * (1 + DATA.difficulty.forge.statBoostPerLevel * (p.forged?.[id] ?? 0));
+  return DATA.difficulty.player.baseCrit
+    + equippedItemIds(p.equipment).reduce((s, id) => s + (itemWithForge(id, p)?.crit || 0), 0);
 }
 
 export function statCost(currentLevel) {
@@ -73,7 +68,7 @@ export function buyStat(stat) {
 // 0.080: potions are a persistent stock capped by the satchel
 // (profile.potionCap). They're consumables now, so the price is flat — the
 // old escalating price only made sense when a purchase was permanent.
-const POT = () => DATA.difficulty.potions ?? {};
+const POT = () => DATA.difficulty.potions;
 
 export function potionCost() {
   return POT().price;
@@ -124,7 +119,7 @@ export const ALCHEMY_DEFS = {
 };
 
 function trackData(track) {
-  return DATA.difficulty.alchemyTracks?.[track] ?? {};
+  return DATA.difficulty.alchemyTracks[track];
 }
 
 export function alchemyCost(track) {
@@ -175,14 +170,14 @@ export function infusionArmor() {
 export function forgeCost(itemId) {
   const p = getProfile();
   const item = DATA.items[itemId];
-  const f = DATA.difficulty.forge ?? {};
+  const f = DATA.difficulty.forge;
   const lvl = p.forged[itemId] ?? 0;
   return (f.baseCost + f.costPerTier * (item.tier - 1)) * (lvl + 1);
 }
 
 export function forgeMaxed(itemId) {
   const p = getProfile();
-  return (p.forged[itemId] ?? 0) >= DATA.difficulty.forge?.maxLevel;
+  return (p.forged[itemId] ?? 0) >= DATA.difficulty.forge.maxLevel;
 }
 
 export function forgeItem(itemId) {

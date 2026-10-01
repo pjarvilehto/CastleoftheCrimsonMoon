@@ -1,4 +1,4 @@
-// tools/test/narration.test.mjs — the Old Wizard's voice-over (0.157):
+// tools/test/narration.test.mjs — the Old Wizard's voice-over (0.161):
 // the script, the rendered takes and their registry agree; the rules
 // (chance, first-in-room, once per room / run / session, cooldown, no take
 // twice in a row); the engine against the fake AudioContext (levelled,

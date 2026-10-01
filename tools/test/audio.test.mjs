@@ -108,7 +108,7 @@ fresh();
   const am = await import('../../src/audio/audioMath.js');
   const fin = am.fadeCurve(32), fout = am.fadeCurve(32, true);
   ok('music crossfade is equal-gain (same audio in phase: sums to 1, no +3 dB bump)', fin.every((v, i) => Math.abs(v + fout[i] - 1) < 1e-6) && fin[0] === 0 && Math.abs(fin[31] - 1) < 1e-6);
-  ok('stereo: left card left, right card right, capped by width', am.panForX(0, 1000) === -0.6 && am.panForX(500, 1000) === 0
+  ok('stereo: left card left, right card right, capped by width', am.panForX(0, 1000, 0.6) === -0.6 && am.panForX(500, 1000, 0.6) === 0
     && Math.abs(am.panForX(1000, 1000, 0.5) - 0.5) < 1e-9 && am.panForX(NaN, 1000) === 0);
   ok('slider curve: half way = quarter gain', am.sliderGain(0.5) === 0.25 && am.sliderGain(2) === 1 && am.sliderGain(-1) === 0);
   const V = { maxPerClip: 2, maxTotal: 4, retriggerMs: 80, stackDb: -3 };

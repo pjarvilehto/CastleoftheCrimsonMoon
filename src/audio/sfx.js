@@ -7,9 +7,10 @@
 // 0.107 (the audio pass):
 //   - every clip has a loudness trim (assets/data/audio.json clips) and
 //     plays through the effects bus -> limiter (mixer.js);
-//   - voice management (audioMath.planVoice): repeats within a few ms are
-//     dropped, at most 2 copies of a clip and ~6 sounds at once, stacked
-//     copies quieter — a 5-enemy turn no longer piles up 7 full-level hits;
+//   - voice management (audioMath.planVoice, audio.json voices): repeats
+//     within retriggerMs are dropped, at most maxPerClip copies of a clip
+//     and maxTotal sounds at once, stacked copies quieter — a 5-enemy turn
+//     no longer piles up 7 full-level hits;
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb };
 //   - 'ring' / 'boom' / 'whoosh' / strike layers are synthesized (synth.js);
@@ -19,7 +20,7 @@
 //   - stingers duck the music (audio.json duck.clips).
 
 import { DATA } from '../shared/data.js';
-import { hasAudio, ensureCtx, decode, onFirstGesture } from './audioCore.js';
+import { hasAudio, ensureCtx, decode, onFirstGesture, cached } from './audioCore.js';
 import { mixer, sfxInput, setBusMuted, duckMusic } from './mixer.js';
 import { dbToGain, planVoice, planVariation } from './audioMath.js';
 import { playSynth } from './synth.js';
@@ -28,7 +29,7 @@ import { getPref, setPref } from '../shared/prefs.js';
 const MUTE_KEY = 'castle-sfx-muted';
 // The sound registry (0.118): assets/data/audio.json `clips` — per name a
 // file or `synth` (audio/synth.js), its trim, and stinger / jitter flags.
-const clip = (name) => DATA.audio?.clips?.[name] ?? null;
+const clip = (name) => DATA.audio.clips[name] ?? null;
 
 let ctx = null;
 const buffers = {}; // name -> Promise<AudioBuffer> (clips are tiny; all stay decoded)
@@ -36,17 +37,11 @@ let voices = [];    // sounding / scheduled: { name, t0, t1, stinger, stop(t) }
 let muted = getPref(MUTE_KEY) === '1';
 setBusMuted('sfx', muted);
 
-function bufferFor(name) {
-  if (!buffers[name]) {
-    buffers[name] = decode(clip(name).file);
-    buffers[name].catch(() => { delete buffers[name]; }); // allow retry on failure
-  }
-  return buffers[name];
-}
+const bufferFor = (name) => cached(buffers, name, () => decode(clip(name).file));
 
 function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   if (muted) return;
-  const A = DATA.audio ?? {};
+  const A = DATA.audio;
   const t = Math.max(at, ctx.currentTime);
   voices = voices.filter((v) => v.t1 > ctx.currentTime);
   const plan = planVoice(voices, name, t, A.voices);
@@ -85,7 +80,9 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
     sources = [src];
     dur = buffer.duration / r;
   } else {
-    ({ sources, dur } = playSynth(ctx, name, out, t, r));
+    const made = playSynth(ctx, name, out, t, r);
+    if (!made) { node.disconnect(); return; } // not a generated sound (a bad layer name)
+    ({ sources, dur } = made);
   }
   sources[0].onended = () => { try { node.disconnect(); } catch { /* gone */ } };
   const voice = {
@@ -134,6 +131,6 @@ export function initSfx() {
     ctx = ensureCtx();
     mixer();
     ctx.resume?.();
-    for (const [name, c] of Object.entries(DATA.audio?.clips ?? {})) if (c.file) bufferFor(name).catch(() => {});
+    for (const [name, c] of Object.entries(DATA.audio.clips)) if (c.file) bufferFor(name).catch(() => {});
   });
 }

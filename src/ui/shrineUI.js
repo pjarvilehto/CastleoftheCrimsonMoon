@@ -7,7 +7,7 @@ import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
-import { hpBar, logLine, isLowHp } from './hud.js';
+import { hpBar, logLine, isLowHp, potionLevel } from './hud.js';
 import { updateBuffs } from './buffs.js';
 
 // HP color scale: <=25% red, <=75% yellow, above green.
@@ -27,14 +27,15 @@ export function renderShrineRoom(root, run, room, h) {
 // HUD, the room's own body, the log, and the way on — Retreat once taken.
 export function renderPanelRoom(root, run, room, h, body) {
   const lowhp = isLowHp(run.hp, run.maxHp) ? ' lowhp' : '';
-  const potionColor = run.potions >= 3 ? '#7bc98a' : run.potions >= 1 ? '#d8c95a' : '#c14b4b';
   const header = el('div', { class: 'run-hud' },
     el('span', {}, 'Room ', el('b', {}, String(room.number))),
     el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${hpColor(run.hp, run.maxHp)}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, hpColor(run.hp, run.maxHp))),
     el('span', {}, 'Coins ', el('b', { id: 'hud-coins' }, String(h.coins))),
     el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(h.xp))),
-    el('span', {}, 'Potions ', el('b', { style: `color:${potionColor}` }, `${run.potions}/${run.potionCap}`)));
-  const proceed = el('div', { class: 'btn-row' },
+    el('span', {}, 'Potions ', el('b', { class: potionLevel(run) }, `${run.potions}/${run.potionCap}`)));
+  // the way on — none for a knight the reliquary killed (0.157: the death
+  // dialog follows; its buttons must not sit live underneath)
+  const proceed = run.hp <= 0 ? null : el('div', { class: 'btn-row' },
     el('button', { class: 'primary', key: 'd', proceed: true, onclick: h.onDeeper }, 'Push Deeper'),
     room.taken ? el('button', { class: 'danger', key: 'r', onclick: h.onRetreat }, 'Retreat with Loot') : null);
   root.innerHTML = '';
@@ -52,7 +53,7 @@ export function renderPanelRoom(root, run, room, h, body) {
 }
 
 // Hooks: log(text) prints to the combat log; refresh() re-renders the scene.
-export function shrineBody(run, room, { log, refresh }) {
+function shrineBody(run, room, { log, refresh }) {
   if (room.taken) {
     return el('div', { class: 'subtitle' }, 'The shrine\'s light fades. Its blessing is yours.');
   }

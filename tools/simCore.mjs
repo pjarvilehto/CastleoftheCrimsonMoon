@@ -56,9 +56,9 @@ export function withSeed(seed, fn) {
   try { return fn(); } finally { Math.random = orig; }
 }
 
-export const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'crit', 'armor', 'greed', 'glasscannon'];
+const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'crit', 'armor', 'greed', 'glasscannon'];
 export const STAT_PRIORITY = ['vitality', 'power', 'endurance', 'precision', 'fortune'];
-export const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
+const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
 
 export function newAgg() {
   return {
@@ -85,6 +85,7 @@ export async function loadSim() {
   const profile = await import('../src/meta/profile.js');
   const stats = await import('../src/meta/stats.js');
   const lv = await import('../src/meta/leveling.js');
+  const eqm = await import('../src/meta/equipment.js');
   const rs = await import('../src/run/runState.js');
   const cb = await import('../src/run/combat.js');
   const sh = await import('../src/run/shrine.js');
@@ -122,7 +123,7 @@ export async function loadSim() {
   }
 
   function playRun({ agg = newAgg(), shrine = 'priority', retreat = false, tactic = 'suggested' } = {}) {
-    const t4MinRoom = DATA.difficulty.t4MinRoom ?? 11;
+    const t4MinRoom = DATA.difficulty.t4MinRoom;
     const run = rs.createRun();
     const rec = { depth: 0, kills: 0, coins: 0, xp: 0, relics: 0, outcome: 'death', boon: null, shrineRoom: null, bossesBeaten: 0, killedBy: null };
     let lastHitter = null;
@@ -230,8 +231,7 @@ export async function loadSim() {
       agg.coinsSpent.alchemy += lv.alchemyCost(track);
       lv.trainAlchemy(track);
     }
-    const eq = p.equipment;
-    for (const id of [eq.weapon, eq.armor, eq.boots, ...(eq.rings ?? []), eq.trinket, eq.amulet].filter(Boolean)) {
+    for (const id of eqm.equippedItemIds(p.equipment)) {
       if ((DATA.items[id]?.tier ?? 1) >= 2 && !lv.forgeMaxed(id) && p.coins >= lv.forgeCost(id) * 2) {
         agg.coinsSpent.forge += lv.forgeCost(id);
         lv.forgeItem(id);

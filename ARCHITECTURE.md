@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~625 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~630 checks, under a second
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -70,14 +70,16 @@ src/
     telemetry.js        sends the save's stats (+ device) to the collector
     names.js            player-name cleaning
   run/                  EXISTS only during a dungeon run
-    runState.js         run object, rooms, potions, loot routing, settleRun()
+    runState.js         run object, rooms, potions, loot routing, tryRevive(),
+                        settleRun()
     roomGen.js          threat-budget rooms, boss every 8 (a throne room of 4),
                         one shrine per stretch, the treasure room; paintings
                         never repeat in a run (pickFresh, run.seenBackgrounds)
     combat.js           one action in phases: rollHit -> smash | strike(+spill)
                         -> lifesteal -> enemyPhase -> summons -> cleared
     shrine.js           boon deal + costs + effects (ids map to code)
-    loot.js             coin / XP / item rolls
+    loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
+                        or salvage on the spot, for kills and chests alike
     treasure.js         treasure rooms: placement, the three chests (0.155)
   shared/               no DOM, used everywhere (and by the analytics page)
     data.js             loads assets/data/*.json into DATA
@@ -85,19 +87,22 @@ src/
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials, then the rooms)
     platform.js         isMobile() (the boot's "not supported yet" notice)
-    debug.js  prefs.js  version.js  level.js
+    debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
+                        the cadence is difficulty.json levelEvery, passed in —
+                        the analytics page has no DATA)
   audio/
     audioCore.js        one AudioContext, compressed bytes cache
     mixer.js            buses -> master -> limiter, sliders, ducking
     music.js  musicLoop.js   five beds, seamless exact loops
     sfx.js  synth.js  audioMath.js   clip registry (audio.json clips), voices,
                         generated sweeteners, pure helpers
-    narrator.js         the Old Wizard voice-over (0.157): rules (audio.json
+    narrator.js         the Old Wizard voice-over (0.161): rules (audio.json
                         narration), takes (data/narration.json), one line at a time
   ui/
     scenes/             title, hub (Great Hall), dungeon, runEnd, benchmark;
                         registered in scenes/index.js, never import each other
-    battleRoom.js       a room's battle line: mount, summon sync, tick update
+    battleRoom.js       a room's battle line: mount, summon sync, tick update,
+                        the effects' context and the pre-action snapshot
                         (dungeon + benchmark)
     battleLine.js       the units: knight card + enemy cards, built once,
                         update() patches in place
@@ -163,7 +168,7 @@ primary button. While a dialog is open it owns the keyboard.
 |---|---|---|
 | `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
 | `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
-| `E` / `N` | title | Enter the Castle / Start a New Game |
+| `E` / `N` | title | Enter the Castle / Start a New Game (then `W` wipes, `K` keeps the save) |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
@@ -171,9 +176,8 @@ primary button. While a dialog is open it owns the keyboard.
 | `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
 | `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
 | `F` | dungeon | Accept Your Fate (death) |
-| `1` `2` `3` | shrine | Accept a boon |
 | `G` | run end | Return to the Great Hall |
-| `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers |
+| `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers (each prompt names its own letters) |
 | `O` | victory | Onward |
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
@@ -192,9 +196,10 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
 - **New scene:** `ui/scenes/xScene.js` returning `{ enter(root) }`,
   registered in `scenes/index.js`, reached with `go('x', ...args)`. A scene
   that is mid-run sets `inRun: true`.
-- **Dialogs:** always `ui/dialog.js openDialog()`; dialogs live above the
-  scenes, so a scene switch does not close them (the benchmark clears them;
-  `anyDialogOpen()` to wait your turn).
+- **Dialogs:** always `ui/dialog.js openDialog()` (YOU DIED included, 0.157);
+  dialogs live above the scenes, so a scene switch does not close them (the
+  benchmark clears them; `anyDialogOpen()` to wait your turn). Never the
+  browser's `confirm()`.
 - **Combat layout is fluid** (vh/vw, cards 50vh): never fixed px in that
   block of styles.css; panel scenes stay in px. Card internals are `em`.
 - **Card art:** frame on `.char-card::before` (opacity 0.85); portraits are

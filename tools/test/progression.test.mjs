@@ -254,7 +254,8 @@ fresh();
 // T40: 0.079 — save schema versioning: old unversioned saves migrate once
 // to SAVE_VERSION; fresh and imported saves carry the version.
 {
-  const { SAVE_VERSION, exportSave, importSave } = await import('../../src/meta/profile.js');
+  const { exportSave, importSave } = await import('../../src/meta/profile.js');
+  const { SAVE_VERSION } = await import('../../src/meta/migrations.js');
   ok('save version defined', Number.isInteger(SAVE_VERSION) && SAVE_VERSION >= 1);
   resetProfile();
   ok('fresh profile carries saveVersion', getProfile().saveVersion === SAVE_VERSION);
@@ -271,6 +272,13 @@ fresh();
     && p.equipment && p.equipment.weapon === 'rusty_sword' && p.inventory === undefined
     && p.records.kills === 0 && p.records.runs === 4);
   ok('import stamps saveVersion', importSave(code) === true && getProfile().saveVersion === SAVE_VERSION);
+  // the code carries the in-memory profile even when the browser refuses the write
+  const setItem = localStorage.setItem;
+  localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+  getProfile().coins = 4321;
+  const blocked = JSON.parse(Buffer.from(exportSave(), 'base64').toString('utf8'));
+  localStorage.setItem = setItem;
+  ok('export save reads the live profile, not the (possibly refused) store', blocked.coins === 4321);
   resetProfile();
 }
 
@@ -301,7 +309,8 @@ fresh();
   ok('...and leftovers are capped at settle', p.potions === p.potionCap);
 
   // v1 save (pre-0.080) with a big permanent potion count
-  const { importSave, SAVE_VERSION } = await import('../../src/meta/profile.js');
+  const { importSave } = await import('../../src/meta/profile.js');
+  const { SAVE_VERSION } = await import('../../src/meta/migrations.js');
   const v1 = { ...JSON.parse(JSON.stringify(p)), saveVersion: 1, potions: 7, potionsBought: 5 };
   delete v1.potionCap;
   ok('v1 save migrates: count becomes a full satchel', importSave(Buffer.from(JSON.stringify(v1)).toString('base64'))
@@ -376,7 +385,12 @@ fresh();
   undo();
   Math.random = origR;
   ok('upgrade (empty ring slot) still drops as an item', r2.kept && run.itemsFound.includes(ring));
-  ok('relic cap tracks salvaged relics too', readFileSync('src/run/runState.js', 'utf8').includes('rollLoot(enemy, fortune, run.roomNumber, run.relicFound)'));
+  const { takeItem, relicIds } = await import('../../src/run/loot.js');
+  const rr = createRun(), relic = relicIds()[0];
+  takeItem(rr, relic, () => {}); // worn
+  rr.relicFound = false;
+  const again = takeItem(rr, relic, () => {}); // the same relic again: not an upgrade, salvaged
+  ok('relic cap tracks salvaged relics too', !again.kept && rr.relicFound === true);
   resetProfile();
 }
 
@@ -483,7 +497,7 @@ fresh();
   ok('canSpendCoins skips maxed tracks', canSpendCoins.toString().includes('!alchemyMaxed(t) && p.coins >= alchemyCost(t)'));
   const { critMultiplier } = await import('../../src/run/combat.js');
   const src = readFileSync('src/run/combat.js', 'utf8');
-  ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: tune.critMult + (combat.run.stats.critBonus ?? 0)')
+  ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: tune.critMult + combat.run.stats.critBonus')
     && critMultiplier({ critMult: 1.8, critJitter: 0 }, false) === 1.8);
   ok('stat study tool exists', readFileSync('tools/stat-study.mjs', 'utf8').includes('export async function statStudy'));
   resetProfile();
@@ -502,6 +516,5 @@ fresh();
   ok('fresh profile: current version, data potions, starting gear, same id + name', p.saveVersion === SAVE_VERSION && p.potions === pc.startCount
     && p.potionCap === pc.startCap && p.equipment.weapon === 'rusty_sword' && p.equipment.armor === 'oak_shield' && p.playerId === 'keepme12' && p.name === 'Kept');
   ok('fresh profile stats from the data', derivedStats(p).maxHp === DATA.difficulty.player.baseHp && derivedStats(p).dmg === DATA.difficulty.player.baseDmg + 4);
-  ok('profile.js re-exports SAVE_VERSION / cleanName for old imports', prof.SAVE_VERSION === SAVE_VERSION && prof.cleanName(' a  b ') === 'a b');
   resetProfile();
 }

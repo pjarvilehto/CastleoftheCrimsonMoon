@@ -9,8 +9,9 @@
 
 const NUM = {
   difficulty: [
-    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'potionHeal', 'lowHpShare',
-    'statTrainXpBase', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
+    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'tierRooms', 'budgetBase', 'budgetPerRoom', 'enemyCost.1', 'enemyCost.2', 'enemyCost.3',
+    'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'shrineRoomRange.0', 'shrineRoomRange.1', 'dropChance', 'potionHeal', 'lowHpShare',
+    'statTrainXpBase', 'levelEvery', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus', 'salvagePerTier',
     ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
     ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins'].map((k) => `potions.${k}`),
@@ -29,13 +30,21 @@ const NUM = {
   ],
   shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg'],
   audio: [
-    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS',
+    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'volumes.master', 'volumes.music', 'volumes.sfx',
+    'voices.maxPerClip', 'voices.maxTotal', 'voices.retriggerMs', 'voices.stackDb',
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
-    'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
+    'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.ringRate', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
     ...['targetDb', 'gapS', 'maxWaitS', 'roomEntryDelayMs', 'combatDelayMs'].map((k) => `narration.${k}`),
   ],
-  backgrounds: ['parallax.swayHitShare'],
+  backgrounds: [
+    ...['depthScale', 'pivot', 'yawDeg', 'pitchDeg', 'yawPeriodS', 'pitchPeriodS', 'speed', 'joltDeg', 'swayDeg', 'swayHitShare', 'fovDeg', 'overscan',
+      'grid.0', 'grid.1', 'maxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
+      'lights.dist', 'lights.radius'].map((k) => `parallax.${k}`),
+    ...['count', 'size.0', 'size.1', 'y.0', 'y.1', 'width', 'near', 'far', 'nearBand', 'farBand', 'soft', 'opacity'].map((k) => `parallax.puffs.${k}`),
+    ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
+      ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
+  ],
   telemetry: ['benchmarkPromptRoom'],
 };
 
@@ -61,8 +70,21 @@ export function checkData(data) {
   }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
+    if (v.layers) {
+      if (!(v.layerRate?.length === 2 && v.layerRate.every(isNum) && isNum(v.layerDb))) out.push(`audio.json: variation.${id} layerRate / layerDb`);
+      for (const l of v.layers) if (!data.audio.clips?.[l.name]?.synth || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a synth clip, p, db)`);
+    }
   }
-  // the voice-over (0.157): every line in narration.json has a rule with a
+  for (const name of Object.keys(data.audio?.duck?.clips ?? {})) if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
+  // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
+  const summon = data.difficulty?.boss?.summon?.enemy;
+  if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);
+  const bg = data.backgrounds ?? {};
+  if (typeof bg.shrineName !== 'string') out.push('backgrounds.json: shrineName');
+  for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? [])]) {
+    if (typeof bg.roomNames?.[f] !== 'string') out.push(`backgrounds.json: roomNames.${f}`);
+  }
+  // the voice-over (0.161): every line in narration.json has a rule with a
   // chance, every rule a line with measured takes on disk
   const rules = data.audio?.narration?.lines ?? {};
   const lines = data.narration?.lines ?? {};
@@ -75,7 +97,11 @@ export function checkData(data) {
     if (!rules[id]) out.push(`audio.json: narration.lines.${id} missing (narration.json has takes)`);
     for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb)) out.push(`narration.json: ${id} take ${t?.take} needs file + measuredDb`);
   }
-  const NEEDS = { armor: ['potionCost', 'armorMin', 'armorMult'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'] };
+  const NEEDS = {
+    dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],
+    leech: ['hpCostPct', 'lifestealAdd', 'lifestealCap'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], secondwind: ['coinCost', 'potionsAdd'],
+    quicken: ['hpCostPct', 'cdReduce'], greed: ['dmgCostPct', 'coinMultAdd'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'],
+  };
   for (const o of data.shrines?.offers ?? []) {
     for (const k of NEEDS[o.id] ?? []) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
   }

@@ -1,4 +1,4 @@
-// audio/narrator.js — the Old Wizard's voice-over (0.157). The lines are
+// audio/narrator.js — the Old Wizard's voice-over (0.161). The lines are
 // docs/narration-script.md, rendered with ElevenLabs by tools/gen-vo.mjs
 // into assets/audio/vo/ and listed in assets/data/narration.json (per line
 // id its takes: file, text, measuredDb). WHEN a line plays is audio.json

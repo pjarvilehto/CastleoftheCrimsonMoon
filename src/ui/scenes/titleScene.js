@@ -7,6 +7,7 @@ import { getProfile, resetProfile, exportSave, importSave } from '../../meta/pro
 import { loadProfile } from '../../meta/storage.js';
 import { play } from '../../audio/music.js';
 import { namePrompt } from '../namePrompt.js';
+import { confirmPrompt } from '../confirmPrompt.js';
 import { armOnGesture } from '../../audio/narrator.js';
 
 export function titleScene() {
@@ -16,7 +17,7 @@ export function titleScene() {
   return {
     enter(root) {
       play('title');
-      armOnGesture('title_welcome'); // the narrator greets on the session's first click or key (0.157)
+      armOnGesture('title_welcome'); // the narrator greets on the session's first click or key (0.161)
       render(root);
       // 0.109: a new player is asked their name first (analytics shows it)
       if (!getProfile().name) namePrompt(() => render(root));
@@ -66,18 +67,19 @@ export function titleScene() {
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
           el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => go('hub') }, 'Enter the Castle'),
-          // Shown only when a save with progress exists: offer to wipe.
+          // Shown only when a save with progress exists: offer to wipe
+          // (the game's own yes/no dialog, not the browser's).
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)
             ? el('button', {
                 class: 'danger',
                 key: 'n',
-                onclick: () => {
-                  if (confirm('Start a new game? Your existing save will be permanently wiped.')) {
-                    resetProfile();
-                    transfer = null;
-                    render(root);
-                  }
-                },
+                onclick: () => confirmPrompt({
+                  title: 'Start a New Game?',
+                  lines: ['Your existing save will be permanently wiped.'],
+                  yes: ['Wipe and Start Over', 'w'],
+                  no: ['Keep My Save', 'k'],
+                  onYes: () => { resetProfile(); transfer = null; render(root); },
+                }),
               }, 'Start a New Game')
             : null),
         p.name
