@@ -221,6 +221,15 @@ fresh();
   ok('puffs fade out at the box edges (wrapping never pops)', edge.length === 0);
   const fr = pf.puffFrame(a, 12, P, [0.01, 0, 0.01]);
   ok('puffs draw back to front', fr.length > P.count / 2 && fr.every((q, i) => !i || q.pos[2] >= fr[i - 1].pos[2]));
+  // 0.164 (the Fog Lab): the shipped values are the old slide; turbulence, pulse and flow are off until tuned
+  ok('shipped puffs: no turbulence, no pulse, no flow (the 0.101 look)', P.turbulence === 0 && P.pulse === 0 && P.flow === 0 && P.breathe === 0.06 && P.bob === 0.012);
+  const turb = { ...P, turbulence: 0.1, turbulencePeriod: 10 }, still = pf.puffFrame(one, 2.5, P, [0, 0, 0])[0], moved = pf.puffFrame(one, 2.5, turb, [0, 0, 0])[0];
+  ok('turbulence moves a puff off its wind line, and only a little', Math.abs(moved.pos[0] - still.pos[0]) > 0.01 && Math.abs(moved.pos[0] - still.pos[0]) <= 0.1);
+  const pulsed = { ...P, pulse: 1, pulsePeriod: 10 }, al = [0, 2.5, 5, 7.5].map((t) => pf.puffFrame(one, t, pulsed, [0, 0, 0])[0]?.alpha ?? 0);
+  ok('pulse fades a puff in and out over its period', Math.max(...al) > Math.min(...al) + 0.3);
+  const pgl = readFileSync('src/core/bg3dPuffGL.js', 'utf8'), ggl = readFileSync('src/core/bg3dGL.js', 'utf8');
+  ok('the puff shader churns by flow noise, tints lit and shaded sides, and reads the scene\'s light; the haze is tunable',
+    pgl.includes('texture2D(uFlow,') && pgl.includes('mix(uShadeTint, uLitTint, lit)') && pgl.includes('texture2D(uArt, uv, 4.0)') && ggl.includes('uHaze.x * pow(1.0 - aDepth, uHaze.y)'));
   const v = pf.puffVertices([{ pos: [0.1, -0.2, -1], size: 0.5, rot: 0, alpha: 0.7, variant: 3, shade: 1 }]);
   const corner = (k) => [...v.subarray(k * pf.PUFF_FLOATS, (k + 1) * pf.PUFF_FLOATS)];
   ok('a puff is a quad around its centre, on its own atlas cell', Math.abs(corner(0)[0] - (0.1 - 0.25)) < 1e-6 && Math.abs(corner(2)[1] - (-0.2 + 0.25 * pf.TALL)) < 1e-6

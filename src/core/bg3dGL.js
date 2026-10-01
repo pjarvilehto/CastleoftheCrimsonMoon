@@ -22,7 +22,8 @@ vec3 lightAt(vec3 p) {
 // GPUs run out of).
 export const VS = `
 attribute vec2 aGrid; attribute float aDepth;
-uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot, uFog;
+uniform mat4 uMVP; uniform vec2 uUvScale, uPlane; uniform float uDepthScale, uPivot, uFog, uHazeMax;
+uniform vec4 uHaze; // density, curve, high, strength (parallax.haze, 0.164)
 ${LIGHT_GLSL}
 varying vec2 vUv; varying float vDepth, vHaze; varying vec3 vLit;
 void main() {
@@ -37,7 +38,7 @@ void main() {
   // haze: air thickens with distance (exponential, like real air), a bit
   // less high up (mist hangs low: full near the ground, gone by the top)
   float low = clamp(0.55 - w.y * 1.1, 0.0, 1.0);
-  vHaze = clamp((1.0 - exp(-2.2 * pow(1.0 - aDepth, 1.3))) * mix(0.6, 1.0, low) * 0.54 * uFog, 0.0, 0.85);
+  vHaze = clamp((1.0 - exp(-uHaze.x * pow(1.0 - aDepth, uHaze.y))) * mix(uHaze.z, 1.0, low) * uHaze.w * uFog, 0.0, uHazeMax);
   vLit = lightAt(w);
   gl_Position = uMVP * vec4(w, 1.0);
 }`;

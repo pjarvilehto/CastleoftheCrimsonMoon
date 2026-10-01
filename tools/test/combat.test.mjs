@@ -495,7 +495,7 @@ fresh();
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
   ok('crit toggles only under ?debug', main.includes('...(debugMode ? debugToggles() : [])')
-    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|PARTICLE LAB|VO LAB|BENCHMARK', labels.join('|'));
+    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|PARTICLE LAB|VO LAB|FOG LAB|BENCHMARK', labels.join('|'));
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
   ok('INVULNERABLE toggle flips the debug flag', DEBUG.invulnerable === true && inv.textContent === 'INVULNERABLE: ON');
