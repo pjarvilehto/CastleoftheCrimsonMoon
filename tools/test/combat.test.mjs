@@ -620,3 +620,12 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   ok('particles: 1.25x resolution, 1x once the background stepped down; crowded bursts thin out',
     src.includes('bgQualityLevel() > 0 ? 1 : 1.25') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);"));
 }
+// T93: 0.132 — splats (slow fades that overlap on the floor) are drawn one
+// by one with smooth alpha: batched, overlapping splats switched between
+// filled-once and filled-twice as their alpha steps parted — a flicker.
+{
+  const src = readFileSync('src/ui/particles.js', 'utf8');
+  const add = src.slice(src.indexOf('function add('), src.indexOf('function drawOne('));
+  ok('splats drawn individually, under the flying ink, never batched', !add.includes("case 'splat'")
+    && /case 'splat':\s+c\.globalAlpha = 0\.85 \* k;/.test(src) && src.includes("if (!pass) for (const p of floor) grow(p, drawOne("));
+}

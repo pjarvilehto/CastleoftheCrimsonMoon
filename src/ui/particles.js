@@ -190,13 +190,6 @@ function add(buckets, p, k) {
       path.moveTo(p.x + rx * Math.cos(rot), p.y + rx * Math.sin(rot)); path.ellipse(p.x, p.y, rx, ry, rot, 0, TAU);
       return rx;
     }
-    case 'splat': {
-      const a = qa(0.85 * k);
-      if (a <= 0) return 0;
-      const path = bucket(buckets, false, false, p.color, a);
-      path.moveTo(p.x + p.w, p.y); path.ellipse(p.x, p.y, p.w, p.w * 0.28, 0, 0, TAU);
-      return p.w;
-    }
     case 'streak': {
       const a = qa(k * 1.4);
       if (a <= 0) return 0;
@@ -212,6 +205,14 @@ function add(buckets, p, k) {
 // The few one-off shapes, drawn directly (a handful per burst).
 function drawOne(c, p, k) {
   switch (p.kind) {
+    // Splats (0.132) fade slowly and overlap on the floor: batched, two
+    // overlapping splats were filled once while they shared an alpha step
+    // and twice when they didn't, so the pool flickered as it faded. Each
+    // one is drawn on its own, with smooth alpha.
+    case 'splat':
+      c.globalAlpha = 0.85 * k; c.fillStyle = `rgb(${p.color})`;
+      c.beginPath(); c.ellipse(p.x, p.y, p.w, p.w * 0.28, 0, 0, TAU); c.fill();
+      return p.w;
     case 'slash': {
       const t = p.age / p.life, L = p.len * Math.min(1, t * 4), x0 = -p.len / 2, cos = Math.cos(p.rot), sin = Math.sin(p.rot);
       c.setTransform(scale * cos, scale * sin, -scale * sin, scale * cos, p.x * scale, p.y * scale);
@@ -258,17 +259,18 @@ function render(c) {
   c.setTransform(scale, 0, 0, scale, 0, 0);
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   const grow = (p, r) => { if (p.x - r < x0) x0 = p.x - r; if (p.y - r < y0) y0 = p.y - r; if (p.x + r > x1) x1 = p.x + r; if (p.y + r > y1) y1 = p.y + r; };
-  const buckets = new Map(), ink = [], glow = [];
+  const buckets = new Map(), floor = [], ink = [], glow = [];
   for (const p of parts) {
     if (p.age < 0) continue; // a delayed ring
     const k = Math.max(0, 1 - p.age / p.life);
     const r = add(buckets, p, k);
     if (r >= 0) grow(p, r);
-    else (p.kind === 'slash' ? ink : glow).push(p);
+    else (p.kind === 'splat' ? floor : p.kind === 'slash' ? ink : glow).push(p);
   }
   // pass 1: ink (source-over); pass 2: glow ('lighter')
   for (const pass of [false, true]) {
     c.globalCompositeOperation = pass ? 'lighter' : 'source-over';
+    if (!pass) for (const p of floor) grow(p, drawOne(c, p, Math.max(0, 1 - p.age / p.life))); // under the flying ink
     c.globalAlpha = 1;
     for (const b of buckets.values()) {
       if (b.glow !== pass) continue;

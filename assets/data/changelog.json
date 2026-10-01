@@ -1,4 +1,7 @@
 {
+  "0.132": [
+    "Fixed: blood splatters on the floor no longer flicker as they fade."
+  ],
   "0.131": [
     "Testing tools: a BENCHMARK button in debug mode measures how smoothly the game runs on this computer."
   ],
