@@ -1,5 +1,5 @@
 {
-  "version": "0.169",
+  "version": "0.170",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.170": [
+      "The narrator, when switched off, no longer uses up a take he never said — switching him back on, the lines vary as they should"
+    ],
     "0.169": [
       "The mist toned down: a gentler drift and wander, smaller breathing, every room's wind eased by a third"
     ],
@@ -132,9 +135,6 @@
     "0.155": [
       "Treasure rooms: now and then a room holds three chests — open one: an Iron Coffer of coins, a Gilded Chest with gear made for you, or a Sealed Reliquary that drinks your blood and may hold a crimson relic",
       "Tap an enemy's card to attack it (the Attack button still works)"
-    ],
-    "0.154": [
-      "Room changes go in order: the fight fades out, the next room's painting fades in fully, and only then do the knight and the enemies (or the shrine) appear"
     ]
   }
 }

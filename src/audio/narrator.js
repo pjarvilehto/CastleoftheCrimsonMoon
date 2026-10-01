@@ -21,8 +21,8 @@ import { dbToGain } from './audioMath.js';
 import { getPref, setPref } from '../shared/prefs.js';
 
 const MUTE_KEY = 'castle-narration-muted';
-const cfg = () => DATA.audio?.narration ?? {};
-const takesOf = (id) => DATA.narration?.lines?.[id] ?? null;
+const cfg = () => DATA.audio.narration;
+const takesOf = (id) => DATA.narration.lines[id] ?? null;
 // A re-rendered take keeps its filename; its URL carries the render stamp so no cache serves the old one.
 const urlOf = (t) => (t.rendered ? `${t.file}?r=${encodeURIComponent(t.rendered)}` : t.file);
 
@@ -65,10 +65,10 @@ export function narratorRun() { state.run.clear(); state.room.clear(); }
 // it (a room's narration waits for the painting, combat's for the blow).
 export function narrate(id, { delayMs = 0 } = {}) {
   const takes = takesOf(id);
-  if (!takes?.length || !decide(cfg().lines?.[id], id, state)) return false;
+  if (!takes?.length || !decide(cfg().lines[id], id, state)) return false;
+  if (!ctx || muted) return true; // the moment counted; nothing to hear yet (and no take spent)
   const take = pickTake(takes, state.lastTake[id]);
   state.lastTake[id] = take.take;
-  if (!ctx || muted) return true; // the moment counted; nothing to hear yet
   const N = cfg();
   decode(urlOf(take)).then((buffer) => {
     const now = ctx.currentTime;
@@ -108,7 +108,7 @@ export function initNarrator() {
   onFirstGesture(() => {
     ctx = ensureCtx();
     mixer();
-    for (const takes of Object.values(DATA.narration?.lines ?? {})) for (const t of takes) fetchBytes(urlOf(t)).catch(() => {});
+    for (const takes of Object.values(DATA.narration.lines)) for (const t of takes) fetchBytes(urlOf(t)).catch(() => {});
     if (armed) { const id = armed; armed = null; narrate(id); }
   });
 }

@@ -41,7 +41,7 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~630 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~690 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -340,7 +340,8 @@ Energy Saver), not a slow machine.
 ## Testing notes
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
-  combat, shrines, progression, content, backgrounds, audio, sim, history),
+  combat, shrines, progression, content, backgrounds, audio, sim, history,
+  narration — new files join at the end),
   each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
   and a **virtual clock** (timers, rAF, Date.now, performance.now; `sleep(ms)`
   advances it) — write tests with `sleep()` as if time were real; even a
@@ -401,18 +402,30 @@ sometimes — fetch all branches to find it.
 - Repo: **https://github.com/pjarvilehto/CastleoftheCrimsonMoon** (`main` =
   the live site; everything shipped is there).
 - Start from the latest `main`: `git fetch origin main` and branch from
-  `origin/main`. The last working branch, `claude/sweet-franklin-bwkdsh`,
-  is identical to `main` at 0.161. Treat it as finished: use the branch
-  the new session is given.
+  `origin/main`. The last working branches, `claude/busy-hawking-blufll`
+  (cleanup, fog) and `claude/sweet-franklin-bwkdsh` (voice-over), both
+  end on `main` at 0.170. Treat them as finished: use the branch the new
+  session is given.
 - Ship as before: bump, suite green, push to `main` and to the session's
-  working branch. No PRs unless the owner asks.
+  working branch. No PRs unless the owner asks. **Two sessions may ship
+  at once** (0.161–0.169 came from two threads): `git fetch origin main`
+  right before every push, merge what landed, pick the build number above
+  it, and read the suite's exit code, not its last line through a pipe.
 
-## State at handover (0.161)
+## State at handover (0.170)
 
-- Live: the Old Wizard voice-over (0.161; all 122 takes reviewed and
-  approved by the owner in the VO Lab by 0.167), treasure rooms
-  (0.155), click-to-attack, 35 fight paintings + 4 throne rooms + 6
-  treasure rooms, no repeats in a run, ordered transitions.
+- Live: the Old Wizard voice-over (0.161; all 122 takes reviewed in the VO
+  Lab, 29 re-rendered steadier, every take approved by 0.167), the Labs
+  menu (0.168), the Fog Lab (0.164) and the living mist it tuned (0.166,
+  toned down to the owner's reference in 0.169: every painting its own
+  fog and wind), treasure rooms (0.155), click-to-attack, 35 fight
+  paintings + 4 throne rooms + 6 treasure rooms, no repeats in a run,
+  ordered transitions.
+- 0.170 reviewed the voice-over code after the two threads met: no
+  structural change needed (`audio/narrator.js` is a pure rule engine
+  the scenes only name moments to; `tools/gen-vo.mjs` renders, measures
+  and keeps the registry; the lab is standalone). A muted narrator no
+  longer spends a take on the never-twice-in-a-row rule.
 - 0.157 was a cleanup pass over the whole project (four audits, every
   file read): no new content. Fixed on the way: a reliquary death left
   the room's buttons live under YOU DIED; Export Save read localStorage
