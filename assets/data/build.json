@@ -1,5 +1,5 @@
 {
-  "version": "0.120",
+  "version": "0.121",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -69,9 +69,13 @@
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
     "src/ui/updatePrompt.js",
+    "src/ui/victoryModal.js",
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.121": [
+      "Beat the boss of room 24 and the castle celebrates: a one-time Victory dialog — you've won the game, for now. Start a New Game on the main menu to play it again."
+    ],
     "0.120": [
       "Stats page: Refresh shows that it worked (time of the update, new runs)"
     ],
@@ -129,10 +133,6 @@
       "Sounds come from where they happen (the knight on the left, enemies on the right) and land with the blow",
       "Crits ring, mega crits hit deeper, OVERKILL booms; the music dips under the big moments",
       "New VOLUME sliders (master, music, effects) in the top-right corner"
-    ],
-    "0.106": [
-      "OVERKILL now gets a huge banner and a red-hot flash when one blow wipes the room",
-      "Mega crits are twice as common (one crit in five)"
     ]
   }
 }

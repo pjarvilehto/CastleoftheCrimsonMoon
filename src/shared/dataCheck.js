@@ -9,7 +9,7 @@
 
 const NUM = {
   difficulty: [
-    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'maxEnemies', 'spillThreshold', 'bossEvery', 'potionHeal',
+    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'potionHeal',
     'statTrainXpBase', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus',
     ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins'].map((k) => `potions.${k}`),

@@ -513,3 +513,42 @@ fresh();
 
 // T72: 0.109 — dead enemy cards fade almost away (10%).
 ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacity: 0\.2;/.test(readFileSync('styles.css', 'utf8')));
+
+// T84: 0.121 — beating the final boss (difficulty.json finalBossRoom) shows
+// the "you've won" dialog once per save; it owns the keys while open, and
+// closing it leaves the usual Push Deeper / Retreat choice.
+{
+  const { DEBUG } = await import('../../src/shared/debug.js');
+  const d = DATA.difficulty;
+  const saved = { bossEvery: d.bossEvery, finalBossRoom: d.finalBossRoom };
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const victoryShown = () => body.children.some((n) => /\bvictory-overlay\b/.test(n.className ?? ''));
+  const killBoss = async () => {
+    show(dungeonScene());
+    await sleep(1300);
+    for (let i = 0; i < 40 && !t().includes('Push Deeper') && !victoryShown(); i++) { handleKey('a'); await sleep(3000); }
+  };
+  ok('final boss room is a boss room in the data', d.finalBossRoom % d.bossEvery === 0);
+  fresh();
+  d.bossEvery = 1; d.finalBossRoom = 1; // room 1 = the final boss
+  DEBUG.invulnerable = true;
+  getProfile().stats.power = 5000;
+  ok('a new save has not seen the victory', getProfile().victorySeen === false);
+  await killBoss();
+  const said = body.textContent;
+  ok('victory dialog after the final boss', victoryShown() && said.includes('Victory!') && said.includes('won the game')
+    && said.includes('Start a New Game'));
+  ok('victory is remembered in the save', getProfile().victorySeen === true);
+  handleKey('r'); // the scene's Retreat must not fire under the dialog
+  ok('dialog owns the keys', victoryShown() && t().includes('Push Deeper'));
+  handleKey('enter');
+  ok('Enter closes the victory dialog', !victoryShown() && t().includes('Push Deeper'));
+  await killBoss();
+  ok('victory dialog shows only once', !victoryShown() && t().includes('Push Deeper'));
+  Object.assign(d, saved);
+  DEBUG.invulnerable = false;
+  globalThis.document.body = realBody;
+  fresh();
+}

@@ -226,6 +226,10 @@ static play-stats page.
   (0.113), and crit chance past `critCap` becomes crit damage
   (`critOverflowDamage`). Hub lines show the next level's real gain. `node tools/stat-study.mjs [--set path=json]` measures
   what each upgrade is worth (paired seeds, like the shrine study).
+- The win (0.121): beating the boss of `difficulty.json finalBossRoom`
+  (24) shows `ui/victoryModal.js` once per save (`profile.victorySeen`,
+  saved at once); the run goes on as usual after it. Move the knob when
+  deeper content lands.
 - Boss summons (0.092): `difficulty.json boss.summon` (every N turns,
   enemy, maxAlive, hp/dmg scale, depthBonus). Summons give no rewards.
   `node tools/simulate.mjs --tactic suggested|boss|summons` compares

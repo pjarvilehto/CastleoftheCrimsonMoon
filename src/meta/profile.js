@@ -29,6 +29,7 @@ const DEFAULTS = {
   records: { kills: 0, bestRoom: 0, runs: 0, deaths: 0 },
   history: [], // 0.095: one record per finished run (meta/history.js)
   name: '',     // 0.109: what the player calls themselves (title screen prompt; analytics)
+  victorySeen: false, // 0.121: the "you've won" dialog after the final boss, shown once
 };
 
 let profile = null;
@@ -83,6 +84,13 @@ export function resetProfile() {
   const name = profile?.name ?? '';
   wipeProfile();
   profile = freshProfile(id ?? newPlayerId(), name);
+  persist();
+}
+
+// The final-boss victory dialog is shown once per save (0.121). A UI flag,
+// not an earning, so it is saved at once rather than through settleRun.
+export function markVictorySeen() {
+  getProfile().victorySeen = true;
   persist();
 }
 

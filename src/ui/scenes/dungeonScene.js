@@ -16,7 +16,7 @@ import { setBackground, transitionTo, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
 import { shareStats } from '../../meta/telemetry.js';
-import { getProfile } from '../../meta/profile.js';
+import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
 import { logLine, itemName } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
@@ -31,6 +31,7 @@ import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
+import { showVictoryModal } from '../victoryModal.js';
 
 export function dungeonScene() {
   const run = createRun();
@@ -50,6 +51,7 @@ export function dungeonScene() {
     onEmpty: () => {
       tickUpChips();
       if (combat.over && !combat.victory) openDeathModal();
+      if (combat.over && combat.victory) maybeShowVictory();
     },
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
@@ -275,6 +277,16 @@ export function dungeonScene() {
     deathShown = true;
     sfx('death');
     deathFlash(() => showDeathModal(run, () => endRun(currentRoot, 'death')));
+  }
+
+  // The final boss falls (0.121): the first time a save beats the boss of
+  // finalBossRoom, a one-off "you've won" dialog celebrates it before the
+  // usual Push Deeper / Retreat choice.
+  function maybeShowVictory() {
+    const room = run.room;
+    if (!room.isBoss || room.number < DATA.difficulty.finalBossRoom || getProfile().victorySeen) return;
+    markVictorySeen();
+    showVictoryModal(run);
   }
 
   // Ghost-click guard: Safari still fires click events on buttons that

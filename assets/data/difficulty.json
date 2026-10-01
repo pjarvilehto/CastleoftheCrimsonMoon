@@ -12,6 +12,7 @@
   "maxEnemies": 6,
   "spillThreshold": 2.0,
   "bossEvery": 8,
+  "finalBossRoom": 24,
   "dropChance": 0.22,
   "potionHeal": 300,
   "potions": {

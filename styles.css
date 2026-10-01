@@ -773,6 +773,27 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .update-notes li::marker { color: var(--gold-dim); }
 .update-ask { color: var(--parchment); letter-spacing: 0.08em; margin: 0 0 16px; }
 .update-modal .btn-row { justify-content: center; }
+/* VICTORY (0.121, ui/victoryModal.js): the once-per-save "you've won"
+   dialog after the final boss — the YOU DIED modal's mirror, in gold */
+.victory-modal {
+  max-width: 580px; padding: 38px 44px 30px;
+  border: 2px solid var(--gold); border-radius: 10px;
+  box-shadow: 0 0 54px rgba(201, 162, 39, 0.45), 0 0 120px rgba(201, 162, 39, 0.18), inset 0 0 34px rgba(0, 0, 0, 0.7);
+  animation: death-flash-in 0.5s ease-out;
+}
+.victory-title {
+  margin: 0 0 14px; font-size: 46px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--gold);
+  animation: victory-pulse 1.8s ease-in-out infinite;
+}
+.victory-lead { color: var(--parchment); font-size: 1.15rem; line-height: 1.45; margin: 0 0 14px; }
+.victory-text { color: #b8a888; line-height: 1.5; margin: 0 0 12px; }
+.victory-modal .btn-row { margin-top: 18px; }
+.victory-accept { min-width: 200px; }
+@keyframes victory-pulse {
+  0%, 100% { text-shadow: 0 0 10px rgba(201, 162, 39, 0.5); }
+  50% { text-shadow: 0 0 22px rgba(232, 190, 60, 0.95), 0 0 60px rgba(201, 162, 39, 0.5); }
+}
 /* CHANGELIST (0.113, ui/changelog.js): every build's notes in a scrolling
    box with the combat log's look (dark glass, thin gold rule, mixed case) */
 .changelog-modal { max-width: 640px; padding: 26px 30px 22px; }
