@@ -1,5 +1,5 @@
 {
-  "version": "0.156",
+  "version": "0.157",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -81,6 +81,13 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.157": [
+      "Fixed: dying to a Sealed Reliquary left the room's buttons live under YOU DIED — Space could carry a dead knight into the next room",
+      "Export Save always gives the current save, even when the browser refuses to store it",
+      "Start a New Game asks in the game's own dialog (W wipes, K keeps)",
+      "The 3D background no longer lurches after a hidden tab or a sleep, and cleans up fully when it steps down to flat",
+      "Under the hood: a cleanup pass over the whole game — every tuning number now comes from the data files, shared code paths, leaner frames; no gameplay changes"
+    ],
     "0.156": [
       "7 new corridors to fight in, and the bosses now hold court in one of four throne rooms — the Ember, Obsidian and Rose Thrones join the old one",
       "No room looks the same twice in a run"
@@ -130,9 +137,6 @@
     ],
     "0.143": [
       "Testing tools: Dungeon Lab floors are now half the size and run as one winding route from the entrance to the boss."
-    ],
-    "0.142": [
-      "Testing tools: the Dungeon Lab's look pass: taller halls with pillars and stone arches, chains, rubble, puddles, torch glow, ground mist, a shrine altar, and new stone for each depth."
     ]
   }
 }
