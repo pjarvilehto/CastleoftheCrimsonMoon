@@ -1,391 +1,218 @@
 # Castle of the Crimson Moon — Architecture
 
-Roguelite browser game. Vanilla JS ES modules, no build step, DOM-based UI
-over full-screen painted backgrounds. DIN Condensed Bold via @font-face (user-supplied);
-all-caps UI chrome, mixed-case combat log.
+Gothic roguelite browser game. Vanilla JS ES modules, **no framework, no
+build step**, DOM-based UI over full-screen painted backgrounds (rendered in
+3D when WebGL allows). DIN Condensed Bold via @font-face; all-caps UI
+chrome, mixed-case combat log. `CLAUDE.md` holds the working rules and the
+per-system notes; this file is the map.
 
-## Run it
-
-```bash
-./"Play Castle.command"   # kills any old server on :8000, serves, opens browser
-```
-
-(Double-click the .command in Finder works too. Server keeps running after
-the Terminal window closes. Requires macOS Command Line Tools — `python3`.)
-
-## Test it
+## Run it, test it
 
 ```bash
-node tools/smoke-test.mjs          # everything (~360 checks, <1s)
-node tools/smoke-test.mjs combat   # one area
+python3 -m http.server 8000          # repo root -> http://localhost:8000
+./"Play Castle.command"              # macOS: the same, and opens the browser
+node tools/smoke-test.mjs            # the suite: ~610 checks, under a second
+node tools/smoke-test.mjs combat     # one area (test files whose name matches)
+node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
 
-Headless DOM-shim suite covering transitions, combat, shrine, death path,
-progression, content integrity, backgrounds, audio, the simulator and the
-analytics data. Tests live in `tools/test/*.test.mjs` by area; the shim,
-shared imports and a virtual clock (timers run instantly, in order) are in
-`tools/test/harness.mjs`. The shim models read-only DOM APIs (`children`
-is getter-only — an assignment that the old shim allowed shipped as a
-real bug in 0.031). **Always run it before packaging a build**; CI runs it
-on every push (`.github/workflows/test-and-deploy.yml`).
+The suite is a DOM shim plus a **virtual clock** (`tools/test/harness.mjs`:
+timers, rAF and `performance.now` run on virtual time, `sleep(ms)` advances
+it), with the tests in `tools/test/<area>.test.mjs`. The shim models
+read-only DOM APIs on purpose (`children` is getter-only — an assignment the
+old shim allowed shipped as a real bug in 0.031). CI runs it on every push
+(`.github/workflows/test-and-deploy.yml`). Browser checks (screenshots,
+benchmarks) use Playwright + the preinstalled Chromium.
 
 ## The one rule that matters
 
 **Run state never writes to meta state directly.** Everything earned in a
-dungeon (coins, XP, items) accumulates in the `run` object. When the run ends,
-`src/run/runState.js :: settleRun()` transfers it all into the profile in a
-single transaction and persists. Death also applies the 50% coin toll here.
-If you add a new earning, route it through the run object.
+dungeon accumulates in the `run` object; `run/runState.js :: settleRun()`
+moves it into the profile in one transaction (death banks half the coins,
+retreat all), appends the run's history record and persists. New earning?
+Route it through the run object. (Two UI records are saved at once by
+design, not earnings: `victorySeen`, `bench`.)
 
 ## Map of the code
 
 ```
+index.html              versioned boot: reads build.json, loads styles.css +
+                        every module under ?v=<version> (import map)
+styles.css              all styling, grouped by screen (index at the top)
 src/
-├── main.js               entry: boot loader panel (progress bar) ->
-│                         loadData() -> preloadAssets() -> initHotkeys()
-│                         -> build tag, MUSIC/FULLSCREEN/SOUND toggles
-│                         (+ ?debug tools) -> 3D backgrounds, audio,
-│                         update check -> title scene
-├── core/bg3d.js          3D backgrounds (0.083): WebGL depth-displaced mesh,
-│                         slow orbit camera, 2s crossfade, CSS fallback;
-│                         live tuning + localStorage save (0.084)
-├── core/bg3dGL.js        its WebGL plumbing: shaders (haze + flash lights
-│                         per vertex, 0.101), program/buffer, image +
-│                         depth-map loading, texture upload (0.098)
-├── core/bg3dTuning.js    settings: defaults < backgrounds.json parallax <
-│                         per-file overrides < saved ?debug sliders (0.101)
-├── core/bg3dQuality.js   frame rate (0.101): pixel budget, fps windows,
-│                         quality ladder (resolution -> fog -> flat)
-├── core/bg3dFog.js       fog math (0.099): tileable noise, scene-hued
-│                         mist colour
-├── core/bg3dPuffs.js     fog puffs (0.101): per-scene puff sets, wind
-│                         drift + wrapping, quad vertices, sprite atlas
-├── core/bg3dPuffGL.js    draws them: half-res buffer, soft depth
-│                         occlusion, one blend pass over the scene
-├── core/bg3dLights.js    flash-light math (0.100): screen point -> scene
-│                         point, rise/fade envelope, brightest-2 uniforms
-├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
-│                         shader mirror + auto overscan (tested in Node)
-├── core/scene.js         scene manager, transitionTo() (try/finally!),
-│                         bg crossfader (bg0/bg1 layers),
-│                         currentScene()/onSceneChange() (0.094), router:
-│                         registerScene()/go(name, ...args) (0.117)
-├── core/dom.js           el() DOM builder (0.117 split)
-├── core/hotkeys.js       handleKey()/initHotkeys(), dialog key-trap stack
-│                         (push/releaseKeyTrap) (0.117 split)
-├── meta/                 PERSISTS across runs (localStorage)
-│   ├── storage.js        the only file that touches the SAVE in localStorage;
-│   │                     exportProfile()/importProfile() — base64 save
-│   │                     codes for cross-origin transfer (new URL = new
-│   │                     localStorage, so saves must be carried by hand)
-│   ├── profile.js        coins, xp, stat levels, equipment, records;
-│   │                     lifecycle: getProfile/freshProfile/reset/import
-│   ├── migrations.js     SAVE_VERSION + append-only MIGRATIONS (0.116 split)
-│   ├── stats.js          derivedStats, trainedLevel, itemWithForge, taper,
-│   │                     precisionCrit, playerLevel (0.116 split)
-│   ├── names.js          cleanName / NAME_MAX (0.116 split)
-│   ├── equipment.js      slot rules + auto-equip/salvage logic
-│   ├── history.js        run history records (0.095; settleRun appends,
-│   │                     the /analytics/ dashboard reads them)
-│   ├── telemetry.js      sends the history to the collector (0.102;
-│   │                     after each run + once per session)
-│   └── leveling.js       training costs, buyStat(), restockPotion(), the
-│                         numbers behind the hub lines (precisionGain);
-│                         the wording is ui/hubText.js (0.116)
-├── run/                  EXISTS only during a dungeon run
-│   ├── runState.js       run object, room progression, settleRun()
-│   ├── roomGen.js        threat-budget combat rooms, boss every 8,
-│   │                     ONE shrine in every 8-room stretch (2-7,
-│   │                     10-15, ...: run.shrineRooms), room kinds
-│   ├── combat.js         combat core, one action in phases (0.117): rollHit
-│   │                     -> smash | strike(+spill) -> lifesteal ->
-│   │                     enemyPhase (dodge/armor/thorns/revive) ->
-│   │                     summons -> cleared; attacks, crits, lifesteal,
-│   │                     MULTI-KILL damage spill — HEAVY attacks only
-│   │                     (>= 2x target HP; basic attacks never spill);
-│   │                     boss SUMMONS (0.092): the meter fills a step a
-│   │                     turn, full = a skeleton joins (difficulty.json
-│   │                     boss.summon; no rewards, capped alive);
-│   │                     heavyTarget() = the front summon, else first
-│   ├── shrine.js         boon costs/effects (ids map to apply logic)
-│   └── loot.js           coin/xp/item rolls, fortune modifier
-├── shared/
-│   ├── data.js           single async load of all assets/data/*.json
-│   ├── preload.js        fetch+decode art before its first paint
-│   │                     (img.decode(), lists derived from data JSONs):
-│   │                     boot = title + hub only, the rest in the
-│   │                     background after the title (0.098 staged)
-│   ├── debug.js          DEBUG flags (invulnerable), session-only,
-│   │                     default OFF; combat.js reads it, ui/debugToggles.js
-│   ├── version.js        compareVersions / isNewer for build numbers (0.115)
-│   ├── level.js          character level from disciplines (0.115; analytics too)
-│   ├── dataCheck.js      every tuning number the code reads, checked at
-│   │                     load (0.116; no `?? N` copies in src)
-│   ├── prefs.js          per-browser settings in localStorage, never throws (0.115)
-│   └── balance.js        enemy scaling (HP/dmg growth, LV naming)
-└── ui/
-    ├── hud.js            hpBar, statBox, logLine (glyphs)
-    ├── fx.js             deathFlash (red build + fade), tickUp (counters)
-    ├── combatPlayback.js log drip queue + replay VIEW (0.086: each event's
-    │                     snapshot plays with its line; owns printing lock)
-    ├── combatQueue.js    combat events -> playback queue items (snapshot,
-    │                     fx, hold, sfx; loot routed per kill) (0.098)
-    ├── combatSfx.js      combat line -> sound: stereo from the card, timed
-    │                     to the strike, crit/mega/overkill layers (0.107)
-    ├── volumePanel.js    VOLUME corner toggle: master/music/effects (0.107)
-    ├── combatFx.js       combat effects: event -> fx descriptor, playFx();
-    │                     bg jolts (heavy blows) and directional bg SWAYS
-    │                     (0.092/0.093: a rocking rotation about the depth
-    │                     centre — crits/SMASH/multi-kills swing the near
-    │                     art right, crushing hits on the knight left)
-    ├── fxParts.js        effect building blocks: shake, spray, HP-bar
-    │                     flash, glow, floating numbers (0.098)
-    ├── particles.js      particle bursts by material (0.089), one canvas
-    ├── battleLine.js     persistent units (0.086: built once per room,
-    │                     update() patches HP/dead/buttons in place;
-    │                     card + button row beneath; HP as text+bar line);
-    │                     adds boss-card + per-id enemy-<id> classes (0.075);
-    │                     boss summon bar; summons join mid-fight in front
-    │                     of the boss and leave the row when they fall (0.092)
-    ├── shrineUI.js       the shrine room: panel, HUD row, boon cards
-    ├── dialog.js         openDialog: overlay + keyboard (key-trap stack, 0.115)
-    ├── cornerToggles.js  the upper-right column: ON/OFF + panel toggles (0.115)
-    ├── debugToggles.js   ?debug tools in that column (0.115)
-    ├── changelog.js      CHANGELIST corner button: every build's notes (0.113)
-    ├── confirmPrompt.js  yes/no dialog (0.102: Descend with unspent XP/coins)
-    ├── namePrompt.js     "Enter your name" on the title screen (0.109)
-    ├── updatePrompt.js   "Build 0.0NN available" + changelist, reload
-    │                     (0.094: polls build.json; waits out a run)
-    ├── buffs.js          blessing bar (horizontal, beside resources)
-    ├── bgTuner.js        ?debug BG TUNING slider panel (0.084)
-    └── scenes/           titleScene, hubScene (two-panel grid),
-                          dungeonScene (combat = chromeless card layout,
-                          shrine = panel layout), runEndScene
-├── audio/
-│   ├── music.js          five scene-routed beds (audio.json music.tracks),
-│   │                     1.6s crossfade, gesture-gated, MUSIC toggle
-│   ├── musicLoop.js      seamless beds: exact loops restart every loopS
-│   │                     over their appended tail, equal gain (0.118)
-│   ├── audioCore.js      shared AudioContext + cached compressed bytes (0.078)
-│   ├── mixer.js          buses -> master -> limiter, volume sliders,
-│   │                     music ducking, hidden-tab pause (0.107)
-│   ├── audioMath.js      pure: music sections, voice planning, pan, curves
-│   ├── synth.js          generated sweeteners: crit ring, overkill boom
-│   └── sfx.js            13 one-shots + voice management, pan, scheduling,
-│                         loudness trims (audio.json), SOUND toggle
-
+  main.js               boot: mobile check -> loader panel -> loadData ->
+                        preloadAssets -> hotkeys, corner column (+ ?debug
+                        tools), 3D backgrounds, audio, update check ->
+                        title; the rest of the art loads in the background
+  core/                 engine-level, no game rules
+    scene.js            show()/transitionTo() (fade, try/finally), bg
+                        crossfader, router: registerScene() / go(name, ...)
+    dom.js              el(tag, attrs, ...children): key / proceed hotkeys
+    hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
+    bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
+                        crossfade, jolts/sways/flash lights, quality ladder,
+                        CSS fallback; gpuName(), holdQuality()
+    bg3dGL.js  bg3dMath.js  bg3dTuning.js  bg3dQuality.js  bg3dFog.js
+    bg3dPuffs.js  bg3dPuffGL.js  bg3dLights.js
+                        its plumbing: shaders, pure math (tested in Node),
+                        settings, frame-rate ladder, fog, mist puffs, lights
+    perfMonitor.js      frame-rate recorder (runs + benchmark), device info
+  meta/                 PERSISTS across runs (localStorage)
+    storage.js          the only file touching the save; base64 save codes
+    profile.js          the profile: defaults, lifecycle, small setters
+    migrations.js       SAVE_VERSION + append-only MIGRATIONS
+    stats.js            derived combat stats, taper, level
+    leveling.js         training/alchemy/forge costs and purchases
+    equipment.js        slots, auto-equip, salvage
+    history.js          one record per finished run (+ its perf)
+    telemetry.js        sends the save's stats (+ device) to the collector
+    names.js            player-name cleaning
+  run/                  EXISTS only during a dungeon run
+    runState.js         run object, rooms, potions, loot routing, settleRun()
+    roomGen.js          threat-budget rooms, boss every 8, one shrine per stretch
+    combat.js           one action in phases: rollHit -> smash | strike(+spill)
+                        -> lifesteal -> enemyPhase -> summons -> cleared
+    shrine.js           boon deal + costs + effects (ids map to code)
+    loot.js             coin / XP / item rolls
+  shared/               no DOM, used everywhere (and by the analytics page)
+    data.js             loads assets/data/*.json into DATA
+    dataCheck.js        every number the code reads, checked at load
+    balance.js          enemy scaling, LV naming, elites
+    preload.js          fetch + decode art (boot set, then the rest)
+    platform.js         isMobile() (the boot's "not supported yet" notice)
+    debug.js  prefs.js  version.js  level.js
+  audio/
+    audioCore.js        one AudioContext, compressed bytes cache
+    mixer.js            buses -> master -> limiter, sliders, ducking
+    music.js  musicLoop.js   five beds, seamless exact loops
+    sfx.js  synth.js  audioMath.js   clip registry (audio.json clips), voices,
+                        generated sweeteners, pure helpers
+  ui/
+    scenes/             title, hub (Great Hall), dungeon, runEnd, benchmark;
+                        registered in scenes/index.js, never import each other
+    battleRoom.js       a room's battle line: mount, summon sync, tick update
+                        (dungeon + benchmark)
+    battleLine.js       the units: knight card + enemy cards, built once,
+                        update() patches in place
+    combatPlayback.js   log drip + replay view (each event's snapshot)
+    combatQueue.js      combat events -> playback items (fx, hold, sfx, loot)
+    combatFx.js  fxParts.js   effects per event; shake, spray, numbers...
+    combatSfx.js        a line's sound, panned to its card, timed to the blow
+    particleLooks.js    what a burst is made of (materials, looks; pure)
+    particles.js        the particle canvas: budget, batched drawing
+    shrineUI.js  buffs.js  hud.js  fx.js  hubText.js
+    dialog.js           openDialog(): overlay + keyboard; open-dialog registry
+    confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
+    deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
+                        result; the script's PHASES)
+    cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
 assets/
-├── bg/                   painted backgrounds (JPEG) + shrine art
-│   └── depth/            per-background depth maps (PNG, white = near;
-│                         Depth Anything V2 Small via tools/gen-depth.py)
-├── chars/                character portraits (WebP with alpha, 0.078) +
-│                         card_enemy/card_player frame art (PNG)
-├── audio/                music-*-v2.mp3 the generated score (0.114) +
-│                         sfx-*.mp3 one-shots (registry: audio.json clips)
-├── fonts/                DINCondensedBold.ttf (user-supplied)
-└── data/                 ALL balance numbers live here as JSON:
-                        enemies, items, difficulty, backgrounds
-                        (incl. roomNames), shrines, build, telemetry
-                        (0.102), audio (0.107: the mix)
-styles.css              all styling, grouped by screen (0.098; index at the top)
-analytics/              /analytics/ play-stats page (0.095, static):
-├── index.html            versioned boot (like the game's)
-├── stats.js              pure aggregation: save codes -> runs -> stats
-├── charts.js             tiny SVG/HTML charts (labels escaped)
-├── dashboard.js          the page: collected players + this browser's
-│                         save + pasted codes (deduped by playerId)
-└── dashboard.css
-collector/              play-stats Worker (0.102, Cloudflare + KV; not
-                        part of the site): POST /collect, GET /players
+  bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
+  chars/                portraits (WebP with alpha) + card frames (PNG)
+  audio/  fonts/
+  data/                 ALL tuning as JSON: enemies, items, difficulty,
+                        shrines, backgrounds, audio, telemetry, build,
+                        changelog
+analytics/              /analytics/ play-stats page (static, versioned boot):
+  stats.js              pure aggregation (sanitizes other people's saves)
+  charts.js  perf.js  tables.js  dashboard.js  dashboard.css
+collector/              the stats Worker (Cloudflare + KV; deployed by
+                        pasting worker.js — see collector/README.md)
+particle-lab/           standalone particle-look experiments (?debug button)
 tools/
-├── smoke-test.mjs        test runner (~360 checks, <1s) - run pre-deploy
-├── test/                 harness.mjs (DOM shim, virtual clock) +
-│                         <area>.test.mjs files (0.098)
-├── simCore.mjs           simulator engine: bot, policies, profile snapshots (0.091)
-├── simulate.mjs          balance report / multi-seed mean ± sd (analyze() flags smells)
-├── shrine-study.mjs      per-boon shrine experiment (forced boons, paired seeds)
-├── bump.mjs              sets build.json version + module manifest (0.082)
-│                         + changelog notes (--note, 0.094; all of them
-│                         also in assets/data/changelog.json, 0.113)
-├── gen-depth.py          depth maps for backgrounds (Depth Anything V2 Small, ONNX)
-├── gen-music.py          renders the dark ambient score (0.114; numpy/scipy/
-│                         lameenc): music/synth.py instruments, music/mix.py
-│                         circular track + hall + master, music/score.py pieces
-├── audio-check.mjs       measures clips + music loops in Chromium (0.118)
-└── stat-study.mjs        what each upgrade is worth (paired seeds, 0.112)
+  smoke-test.mjs  test/ the suite
+  simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
+  bump.mjs              build number + module list + changelist notes
+  audio-check.mjs       clip loudness + loops measured in Chromium
+  gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
 ```
-
-## Keyboard map
-
-| Key | Where | Action |
-|---|---|---|
-| `A` | dungeon | Attack the front-most living enemy (leftmost card; boss summons stand in front of the boss) |
-| `H` | dungeon | Heavy Attack (2x dmg, 3-turn cd) on the front summon, else the first living enemy |
-| `P` | dungeon | Drink Potion (also after a room is cleared, 0.080) |
-| `D` | dungeon/hub | Push Deeper / Descend |
-| `R` | dungeon | Retreat with Loot (after clear) |
-| `F` | dungeon | Accept Your Fate (death) |
-| `1` `2` `3` | shrine | Accept boon |
-| `E` / `N` | title | Enter Castle / New Game |
-| `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
-| `U` | hub | Buy potion (up to the satchel cap) |
-| `X` | hub | Expand potion satchel (+1 cap) |
-| `A` `Y` `N` | hub | Alchemy tracks: Potency / Efficiency / Infusion (coins) |
-| `D` / `B` | hub | Descend into the Dungeon / Back |
-| `G` | run-end | Return to Great Hall |
-| `Y` / `Enter`, `N` / `Esc` | update prompt | Reload to the new build / later (the prompt owns the keyboard while open) |
-| `Space` | every screen | Proceed further (0.124, `el()` `proceed: true`, `[space]` under the label): Enter the Castle, Descend, Push Deeper (combat + shrine), Accept Your Fate, Return to the Great Hall, Onward (victory). A held Space steps once. |
-| `D` | dungeon | Push Deeper |
-| `Enter` | anywhere | Primary button |
-
-MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
 
 ## Data flow
 
-1. `main.js` loads JSON once into `shared/data.js :: DATA`.
-2. Hub reads/writes profile via `meta/*` and persists immediately.
-3. Starting a run snapshots `derivedStats()` into `run.stats` — mid-run
-   profile changes don't affect the current run. Shrine boons mutate
-   `run.stats` directly (run-scoped).
-4. Dungeon scene drives `run/combat.js`; kills route loot through
-   `runState.applyLoot()` into the run object.
-5. Run end (death OR retreat) → `settleRun()` → profile → persist → hub.
-   settleRun also appends the run's record to `profile.history`
-   (`meta/history.js`, newest 250) — the /analytics/ dashboard's data.
-   Potions are a persistent stock (0.080): the run draws `profile.potions`,
-   and whatever is left comes back at settle (both outcomes), capped by
-   `profile.potionCap` (the satchel). Pickups past the cap sell for coins
-   (`runState.addPotion`).
+1. `main.js` loads every JSON once into `DATA` (`shared/data.js`), checked
+   by `dataCheck.js`.
+2. The hub reads and writes the profile through `meta/*`, persisting at once.
+3. A run snapshots `derivedStats()` into `run.stats`; mid-run profile changes
+   don't touch it. Shrine boons change `run.stats` (run-scoped).
+4. The dungeon scene drives `run/combat.js`. A turn resolves instantly; its
+   events become playback items (`combatQueue.js`) that print line by line,
+   each with its state snapshot, effect and sound. Kills route loot through
+   the run.
+5. Run end (death or retreat) -> `settleRun()` -> profile + history record
+   (with the run's frame-rate summary) -> persist -> run-end scene;
+   `shareStats()` posts the save's stats to the collector, and the
+   /analytics/ dashboard reads them back.
 
-## Editing conventions (for humans and AI assistants)
+## Keyboard map
 
-- Balance changes: edit `assets/data/*.json` only. Never hardcode numbers
-  in `src/`.
-- New enemy: add to `enemies.json` (tier 1–3) + drop `<id>.webp` in
-  `assets/chars/` (WebP with alpha, quality 85 — 0.078). RoomGen, LV naming, scaling, and the card portrait
-  pick it up automatically.
-- New item: add to `items.json` with a `slot` and `tier`; `loot.js` and
-  `equipment.js` handle the rest. Salvage value per tier: `salvagePerTier`.
-- New shrine boon: add to `shrines.json` (text + its numbers) AND the
-  matching case in `run/shrine.js` (ids are code-mapped). The shrine deals
-  3 random offers from the pool (Fisher-Yates in `run/shrine.js ::
-  dealOffers`, shared with the simulator; stored on `room.dealtOffers` so
-  re-renders are stable).
-- New room background: drop the JPEG in `assets/bg/`, add to `rooms` and
-  `roomNames` in `backgrounds.json`, and generate its depth map
-  (`python3 tools/gen-depth.py <model.onnx> file.jpg`; the smoke suite
-  fails without one).
-- New scene: create `ui/scenes/xScene.js` returning `{ enter(root) }`,
-  register it in `ui/scenes/index.js` and navigate with `go('x', ...args)`
-  (0.117; scenes never import each other). Mid-run scenes add `inRun: true` (the
-  update prompt waits for them to end). A dialog over a scene takes the
-  keyboard with `setKeyTrap(fn)` and releases it with `setKeyTrap(null)`.
-- Item rarity colors (0.047): tier-driven via `hud.js :: rarityClass /
-  itemName` + `.rarity-1/2/3` in styles.css — T1 ash, T2 azure (soft
-  pulse), T3 amethyst (strong pulse). Use `itemName()` anywhere an item
-  name renders; salvaged loot stays muted `.rarity-1 .salvaged` on
-  purpose. `equipItems()` summaries carry `{name, tier}` so run-end can
-  color them.
-- Player card gear lines (0.048): weapon line shows ACTUAL total damage
-  (`run.stats.dmg` — includes Power training + shrine boons), armor line
-  shows the equipped armor + its stat. Both are flex rows needing
-  `width: 100%` because `.char-card` is `align-items: center` (same
-  reason `.card-head` sets it — forgetting this collapse the row).
-- Keep files under ~300 lines; one responsibility per file. If a scene
-  grows past that, extract a module (see combatPlayback/shrineUI/buffs).
-- Every button that should be keyboard-reachable gets `key: 'x'` in el().
-- `el()` boolean attrs: false/null/undefined = not set. `children` of a
-  real DOM node is READ-ONLY — clear with innerHTML, never assignment.
-- The combat layout is fluid on purpose (0.042): the card-combat block in
-  styles.css sizes in vh/vw (cards 50vh, chrome pinned to viewport edges)
-  so the fight fills any screen identically. Do NOT author fixed px in
-  that block — px there is exactly what broke the layout on the TV.
-  Panel scenes (hub/title/shrine/run-end) stay in tuned px, same as ever.
-- Combat card art (0.074): the card frame PNG sits on `.char-card::before`
-  at opacity 0.85 (room art shows faintly through) so card content stays
-  fully opaque. z-index:-1 is safe because `.battle-line` (the stacking
-  context) has no background of its own.
-- Portraits break the card frame (0.075): `.portrait` is absolutely
-  positioned, bottom-anchored (feet under the hp line), height 108% /
-  max-width 142% — object-fit:contain can never exceed the img box, so the
-  box itself is oversized and max-width is the real constraint on wide arts.
-  Text rows (.card-head/.card-sub/.hp-line) are z-index 2 above the art.
-  Bosses loom via `.boss-card` (116%/165%); per-id `enemy-<id>` classes
-  allow individual boosts (vampire_lord: 126%/190%). player.png is WIDE
-  (aspect 1.11), so `.player-card .portrait` bleeds sideways (width 135%,
-  max-height 67% keeps the head clear of the 4 gear-text rows) and
-  `.player-card .hud-chip` needs margin-top:auto to re-pin the HP row
-  (the in-flow portrait's flex used to push it down).
-- Text centering (0.092): button labels center their CAPITALS (the hotkey
-  underline hangs below, ignored) with `text-box: trim-both cap
-  alphabetic` + padding back to 1lh, so it holds on every OS — Mac,
-  Windows and Linux read different vertical metrics from the font. The
-  `top: 0.15em` nudge remains as the fallback. Fallback-font glyphs in
-  text rows (the elite ★) get `line-height: 0`, or their taller line box
-  shifts the row.
-- Asset cache rule: NEVER replace an asset file in place (edge caches hold
-  ~4h) — new content gets a new filename.
+Buttons opt in with `key: 'x'` in `el()` (the letter is underlined).
+**Space** clicks the screen's way forward (`proceed: true`, a small
+`[space]` under its label); a held Space steps once. **Enter** clicks the
+primary button. While a dialog is open it owns the keyboard.
 
-## Build & release conventions
+| Key | Where | Action |
+|---|---|---|
+| `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
+| `E` / `N` | title | Enter the Castle / Start a New Game |
+| `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
+| `U` `X` | hub | Buy potion / expand the satchel |
+| `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
+| `D` / `B` | hub | Descend / Back |
+| `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
+| `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
+| `F` | dungeon | Accept Your Fate (death) |
+| `1` `2` `3` | shrine | Accept a boon |
+| `G` | run end | Return to the Great Hall |
+| `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers |
+| `O` | victory | Onward |
+| `C` | changelist, benchmark | Close / Continue |
+| `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
 
-- Build number lives in `assets/data/build.json`; bump every build; shown
-  top-left on every screen (check it when reporting bugs).
-- Run `node tools/smoke-test.mjs` before any release — all checks green
-  (~360; the count legitimately varies by one on RNG).
-- Historical: up to 0.042 the game shipped as `Game_Build_X.XXX.zip`;
-  distribution is web-only since 0.043 (see below).
+Corner toggles (MUSIC, SOUND, VOLUME, CHANGELIST, ?debug tools) are mouse-only.
 
-## Web deployment (current, 0.073+)
+## Editing conventions
+
+- **Tuning lives in `assets/data/*.json`.** No numbers in `src/`, no `?? N`
+  fallback copies; a new knob gets a line in `shared/dataCheck.js`.
+- **Saves:** shape changes go through `SAVE_VERSION` + a new `MIGRATIONS`
+  step (never edit a shipped step); new defaults in `profile.js DEFAULTS`.
+- **New enemy:** `enemies.json` + `assets/chars/<id>.webp` (+ an idle family
+  in `battleLine.js`, + a `MATERIAL` in `particleLooks.js` if not flesh).
+- **New item / boon / background:** see CLAUDE.md's cheat-sheet.
+- **New scene:** `ui/scenes/xScene.js` returning `{ enter(root) }`,
+  registered in `scenes/index.js`, reached with `go('x', ...args)`. A scene
+  that is mid-run sets `inRun: true`.
+- **Dialogs:** always `ui/dialog.js openDialog()`; dialogs live above the
+  scenes, so a scene switch does not close them (the benchmark clears them;
+  `anyDialogOpen()` to wait your turn).
+- **Combat layout is fluid** (vh/vw, cards 50vh): never fixed px in that
+  block of styles.css; panel scenes stay in px. Card internals are `em`.
+- **Card art:** frame on `.char-card::before` (opacity 0.85); portraits are
+  absolute, bottom-anchored and larger than the card; text rows sit above.
+- **Button labels** centre their capitals (`text-box: trim-both cap
+  alphabetic`); the `[space]` hint sits in the bottom padding, out of flow.
+- **Keep files under ~300 lines**, one responsibility each.
+- **Assets are never replaced in place** (edge caches ~4 h): new content,
+  new filename.
+- **Every `src/` change ships with a build bump** — the boot loads modules
+  under `?v=<build>`, so an unbumped change stays cached (0.127). The
+  analytics page loads its modules the same way.
+
+## Deployment
 
 **Production:** https://www.castleofthecrimsonmoon.com — GitHub Pages
-serving the `main` branch root of
-https://github.com/pjarvilehto/CastleoftheCrimsonMoon behind Cloudflare
-DNS. The repo IS the site: pushing to `main` redeploys in ~1 minute.
-A `CNAME` file at the repo root pins the custom domain. DNS: CNAME
-`www` → `pjarvilehto.github.io` (DNS-only so GitHub can issue the TLS
-cert), apex handled by an AAAA `100::` placeholder (proxied) + a
-Cloudflare Redirect Rule (301 → www).
+serving `main` (repo root = site root, all paths relative) behind
+Cloudflare DNS; pushing to `main` redeploys in about a minute. `CNAME` pins
+the domain; DNS and HTTPS details are in CLAUDE.md. Players get a "Build
+0.NNN available" prompt (`updatePrompt.js`) shortly after.
 
-**Staging:** https://ublgmuyncizrq.kimi.page — published manually by the
-user from Kimi version cards (one card per build).
+**Release loop:** edit -> `node tools/bump.mjs 0.NNN --note "..."` ->
+`node tools/smoke-test.mjs` (all green) -> check visual changes in Chromium
+-> commit -> push to `main` and the working branch.
 
-**Release loop (game changes):**
-1. Edit, `node tools/bump.mjs 0.0NN --note "..."` (the notes feed the
-   in-game update prompt), `node tools/smoke-test.mjs` — all green.
-2. Screenshot any visual change (headless chromium harness).
-3. Commit and push to GitHub (production updates itself); players get the
-   "Build 0.0NN available" prompt within minutes.
-4. (Legacy) the Kimi staging site is published by the owner from Kimi
-   version cards, when used.
+**Saves are per origin** (localStorage): the title screen's export/import
+save codes carry a save between origins.
 
-**Save-game caveat:** profiles live in localStorage, which is per-origin.
-Saves on the kimi.page origin do NOT carry to the custom domain (and vice
-versa) — use the title screen's export/import save codes to migrate.
-
-Gotchas learned the hard way (the Kimi staging deploy tool — the first
-four bullets concern it; GitHub Pages has none of these issues):
-- The deploy tool ONLY accepts `/mnt/agents/output/app` as the project
-  dir; other paths are rejected. Keep `app` in sync with any working
-  copy (e.g. castle-roguelike/) before deploying.
-- Publish URLs are bound to the site identity at publish time — NOT a
-  mutable "latest" pointer. Deploying from a different project dir
-  creates a NEW site with a NEW URL; the old URL keeps serving its last
-  bytes forever. (0.045 lesson: the project moved from
-  `castle-roguelike/` to `app/`, so `m6bnjvev4lryq.kimi.page` was
-  orphaned on 0.044 and `ublgmuyncizrq.kimi.page` was minted for 0.045.
-  Hours were lost polling the old URL for an update that could never
-  come.)
-- The deploy tool's response may come back with the URL blank on the
-  agent side; verify by curling the known URL, don't wait on the
-  response. If the tool returns a new URL, THAT is the live one.
-- NEVER touch the host's visibility settings ("Make Private" kills the
-  link and a new deploy is needed).
-- The build number top-left is the source of truth for "did the player
-  get the new build" — browser cache sometimes needs a hard refresh.
-- Right after deploying, the first page load can race propagation; if it
-  looks stale, wait ~30s and reload.
-- Backgrounds are JPEG (re-encoded 0.044: 33.5MB → 4.6MB). New room art
-  goes in `assets/bg/` as `.jpg` with the entry in `backgrounds.json`
-  matching. Original PNGs survive in the old `Game_Build_0.040.zip`.
-- Character portraits keep alpha as WebP in `assets/chars/` (0.078:
-  9.6MB of PNGs → 1.5MB). Card frames stay PNG.
+**Legacy:** up to 0.042 builds shipped as zips; a Kimi staging site
+(ublgmuyncizrq.kimi.page) was published by the owner from version cards
+and is not maintained here.
