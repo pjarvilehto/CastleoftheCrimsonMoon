@@ -5,8 +5,8 @@
 // colours (cheap ambient occlusion — the inky contact shadows of painted
 // art). Straight corridors get wooden support frames; wall torches are
 // spread through the level, decor.torchSpacing cells apart.
-// Returns { group, torches: [{ position, flame }] } — the caller lights
-// the torches (a small pool of lights follows the nearest ones).
+// Returns { group, torches: [{ position, flame }], dispose } — the caller
+// lights the torches (a small pool of lights follows the nearest ones).
 
 import * as THREE from 'three';
 import { isOpen, corridorAxis, seeded } from './grid.js';
@@ -111,29 +111,46 @@ export function buildDungeon(grid, cfg) {
       }
     }
   }
-  const tex = { wall: wallTexture(11), floor: floorTexture(23), ceil: ceilingTexture(37), wood: woodTexture(41) };
-  const mat = (t, rough = 0.95) => new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.normalMap, roughness: rough, metalness: 0, vertexColors: true });
+  const M = materials();
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(quadGeometry(floors), mat(tex.floor)));
-  group.add(new THREE.Mesh(quadGeometry(ceilings), mat(tex.ceil)));
-  group.add(new THREE.Mesh(quadGeometry(walls), mat(tex.wall)));
-  if (wood.length) group.add(new THREE.Mesh(boxesGeometry(wood), new THREE.MeshStandardMaterial({ map: tex.wood.map, normalMap: tex.wood.normalMap, roughness: 0.85 })));
+  group.add(new THREE.Mesh(quadGeometry(floors), M.floor));
+  group.add(new THREE.Mesh(quadGeometry(ceilings), M.ceil));
+  group.add(new THREE.Mesh(quadGeometry(walls), M.wall));
+  if (wood.length) group.add(new THREE.Mesh(boxesGeometry(wood), M.wood));
   // torches: an iron bracket, a wooden handle, a flame sprite
-  const iron = new THREE.MeshStandardMaterial({ color: 0x1d1714, roughness: 0.6, metalness: 0.4 });
-  const handle = new THREE.MeshStandardMaterial({ map: tex.wood.map, roughness: 0.9 });
-  const flameMat = new THREE.SpriteMaterial({ map: flameTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
   const out = torches.map((t) => {
     const g = new THREE.Group();
     g.position.set(t.x, t.y, t.z);
-    const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.22), iron);
+    const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.22), M.iron);
     bracket.position.set(-t.nx * 0.02, -0.18, -t.nz * 0.02); bracket.lookAt(t.x + t.nx, t.y - 0.18, t.z + t.nz);
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.5, 6), handle);
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.5, 6), M.handle);
     stick.position.set(t.nx * 0.12, -0.08, t.nz * 0.12); stick.rotation.set(t.nz * 0.35, 0, -t.nx * 0.35);
-    const flame = new THREE.Sprite(flameMat.clone());
+    const flame = new THREE.Sprite(M.flame.clone()); // (own opacity: each flickers)
     flame.position.set(t.nx * 0.2, 0.28, t.nz * 0.2); flame.scale.set(0.32, 0.6, 1);
     g.add(bracket, stick, flame);
     group.add(g);
     return { position: new THREE.Vector3(t.x + t.nx * 0.25, t.y + 0.25, t.z + t.nz * 0.25), flame, phase: rnd() * 100 };
   });
-  return { group, torches: out };
+  // free the GPU side when the floor is replaced (textures and materials are shared)
+  const dispose = () => group.traverse((o) => {
+    if (o.isMesh) o.geometry.dispose();
+    if (o.isSprite) o.material.dispose();
+  });
+  return { group, torches: out, dispose };
+}
+
+// The painted textures take a moment to make, so every floor shares one set.
+let shared = null;
+function materials() {
+  if (shared) return shared;
+  const tex = { wall: wallTexture(11), floor: floorTexture(23), ceil: ceilingTexture(37), wood: woodTexture(41) };
+  const mat = (t, rough = 0.95) => new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.normalMap, roughness: rough, metalness: 0, vertexColors: true });
+  shared = {
+    floor: mat(tex.floor), ceil: mat(tex.ceil), wall: mat(tex.wall),
+    wood: new THREE.MeshStandardMaterial({ map: tex.wood.map, normalMap: tex.wood.normalMap, roughness: 0.85 }),
+    iron: new THREE.MeshStandardMaterial({ color: 0x1d1714, roughness: 0.6, metalness: 0.4 }),
+    handle: new THREE.MeshStandardMaterial({ map: tex.wood.map, roughness: 0.9 }),
+    flame: new THREE.SpriteMaterial({ map: flameTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
+  };
+  return shared;
 }

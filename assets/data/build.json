@@ -1,5 +1,5 @@
 {
-  "version": "0.139",
+  "version": "0.140",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -24,6 +24,8 @@
     "src/explore/build.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
+    "src/explore/mapgen.js",
+    "src/explore/minimap.js",
     "src/explore/player.js",
     "src/explore/post.js",
     "src/explore/textures.js",
@@ -85,6 +87,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.140": [
+      "Testing tools: the Dungeon Lab now generates its floors (rooms, corridors, dead ends; N for a new one) and maps only what you have seen."
+    ],
     "0.139": [
       "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
     ],
@@ -128,9 +133,6 @@
     ],
     "0.126": [
       "Low on health? Your HP bar now glows red, and Drink Potion pulses while you still have potions left."
-    ],
-    "0.125": [
-      "Phones and tablets now see a 'Mobile platforms not supported yet' notice instead of the game — please play on a desktop or laptop."
     ]
   }
 }

@@ -2,8 +2,9 @@
 // src/explore/). The three.js parts need a browser; here: the map and its
 // collision (pure, grid.js), the data file, and the lab page's wiring.
 
-import { ok, readFileSync, statSync } from './harness.mjs';
-import { parseMap, isOpen, corridorAxis, collide, seeded } from '../../src/explore/grid.js';
+import { ok, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { parseMap, isOpen, corridorAxis, collide, seeded, DIRS } from '../../src/explore/grid.js';
+import { generateFloor } from '../../src/explore/mapgen.js';
 
 const exists = (f) => { try { return statSync(f).isFile(); } catch { return false; } };
 
@@ -31,7 +32,7 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('collide: no squeezing through a diagonal pinch', Math.floor(px) === 1 && Math.floor(pz) === 1, `${px}, ${pz}`);
   // a long random walk through the real map never ends inside or too near a wall
   const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
-  const m = parseMap(cfg.map), rr = cfg.move.radius / cfg.cell, rnd = seeded(7);
+  const m = parseMap(generateFloor(cfg.gen.seed, cfg.gen).rows), rr = cfg.move.radius / cfg.cell, rnd = seeded(7);
   let x = m.start.x + 0.5, z = m.start.z + 0.5, bad = null;
   for (let i = 0; i < 20000 && !bad; i++) {
     const a = rnd() * Math.PI * 2, step = rnd() * 0.2; // up to 0.2 cells a frame (6 m/s at 10 fps)
@@ -43,46 +44,66 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
       if (Math.hypot(x - nx, z - nz) < rr - 1e-6) bad = { i, x, z, gx, gz };
     }
   }
-  ok('collide: 20000 random steps through the lab map never enter a wall', !bad, JSON.stringify(bad));
+  ok('collide: 20000 random steps through a generated floor never enter a wall', !bad, JSON.stringify(bad));
   const s1 = seeded(1307), s2 = seeded(1307);
   ok('seeded random repeats and stays in [0, 1)', [...Array(50)].every(() => { const v = s1(); return v === s2() && v >= 0 && v < 1; }));
 }
 
-// T99: 0.139 — explore.json and the lab page
+// T99: 0.139 — explore.json and the lab page; 0.140 — the floor generator
 {
   const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
-  const g = parseMap(cfg.map);
-  const border = [...Array(g.w).keys()].every((x) => !isOpen(g, x, 0) && !isOpen(g, x, g.h - 1))
-    && [...Array(g.h).keys()].every((z) => !isOpen(g, 0, z) && !isOpen(g, g.w - 1, z));
-  const starts = cfg.map.join('').split('S').length - 1;
-  // every open cell reachable from the start
-  const seen = new Set([`${g.start.x},${g.start.z}`]), todo = [g.start];
-  while (todo.length) {
-    const { x, z } = todo.pop();
-    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const k = `${x + dx},${z + dz}`;
-      if (isOpen(g, x + dx, z + dz) && !seen.has(k)) { seen.add(k); todo.push({ x: x + dx, z: z + dz }); }
+  // every floor of 120 seeds: walled in, connected, its rooms and parts in order
+  const reach = (g, from) => {
+    const d = new Map([[`${from.x},${from.z}`, 0]]), todo = [from];
+    for (let i = 0; i < todo.length; i++) {
+      const { x, z } = todo[i];
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const k = `${x + dx},${z + dz}`;
+        if (isOpen(g, x + dx, z + dz) && !d.has(k)) { d.set(k, d.get(`${x},${z}`) + 1); todo.push({ x: x + dx, z: z + dz }); }
+      }
     }
+    return d;
+  };
+  const bad = [];
+  for (let seed = 1; seed <= 120 && bad.length < 3; seed++) {
+    const f = generateFloor(seed, cfg.gen), g = parseMap(f.rows), why = [];
+    const border = [...Array(g.w).keys()].every((x) => !isOpen(g, x, 0) && !isOpen(g, x, g.h - 1))
+      && [...Array(g.h).keys()].every((z) => !isOpen(g, 0, z) && !isOpen(g, g.w - 1, z));
+    if (!border || g.w !== cfg.gen.width || g.h !== cfg.gen.height || !f.rows.every((r) => r.length === g.w)) why.push('shape');
+    const d = reach(g, f.start);
+    if (d.size !== g.open.reduce((n, v) => n + v, 0)) why.push('unreachable cells');
+    const count = (c) => f.rows.join('').split(c).length - 1;
+    if (count('S') !== 1 || count('B') !== 1 || count('H') !== 1 || count('E') !== cfg.gen.encounters || f.encounters.length !== cfg.gen.encounters) why.push('marks');
+    const dist = (p) => d.get(`${p.x},${p.z}`);
+    if (![...f.encounters, f.shrine].every((p) => dist(p) < dist(f.boss))) why.push('boss not deepest');
+    if (f.boss.room.w !== cfg.gen.bossSize || f.boss.room.h !== cfg.gen.bossSize) why.push('boss room');
+    const [dx, dz] = DIRS[f.start.facing];
+    if (!isOpen(g, f.start.x + dx, f.start.z + dz)) why.push('facing a wall');
+    if (why.length) bad.push(`seed ${seed}: ${why.join(', ')}`);
   }
-  ok('explore map: walled in, one start, every cell reachable, rows one width', border && starts === 1
-    && seen.size === g.open.reduce((n, v) => n + v, 0) && cfg.map.every((row) => row.length === g.w));
+  ok('floor generator: 120 seeds — walled in, all connected, one start / shrine / boss, every encounter, the boss deepest', bad.length === 0, bad.join('; '));
+  const a = generateFloor(42, cfg.gen), b = generateFloor(42, cfg.gen), c = generateFloor(43, cfg.gen);
+  ok('floor generator: the same seed, the same floor; the next seed, another', a.rows.join() === b.rows.join() && a.rows.join() !== c.rows.join());
+  const spurs = (f) => { const g = parseMap(f.rows); let n = 0; for (let z = 0; z < g.h; z++) for (let x = 0; x < g.w; x++) if (isOpen(g, x, z) && Object.values(DIRS).filter(([dx, dz]) => isOpen(g, x + dx, z + dz)).length === 1) n++; return n; };
+  ok('floor generator: floors have dead ends to poke into', [1, 2, 3, 4, 5].every((s) => spurs(generateFloor(s, cfg.gen)) >= 2));
   const nums = ['cell', 'wallHeight', 'eyeHeight', 'move.speed', 'move.runMult', 'move.accel', 'move.turnSpeed', 'move.mouseSens',
     'move.pitchLimit', 'move.radius', 'move.bobAmp', 'move.bobStride', 'light.party.intensity', 'light.party.distance', 'light.party.decay',
     'light.torch.intensity', 'light.torch.distance', 'light.torch.decay', 'light.torch.height', 'light.pool', 'light.flicker',
     'light.ambient.intensity', 'fog.density', 'render.maxPixelRatio', 'render.samples', 'render.exposure', 'paint.edge', 'paint.edgeWidth',
-    'paint.bands', 'paint.bandMix', 'paint.desat', 'paint.inkBelow', 'paint.grain', 'paint.vignette', 'decor.beamEvery', 'decor.torchSpacing', 'decor.seed'];
+    'paint.bands', 'paint.bandMix', 'paint.desat', 'paint.inkBelow', 'paint.grain', 'paint.vignette', 'decor.beamEvery', 'decor.torchSpacing', 'decor.seed',
+    ...['width', 'height', 'rooms', 'roomMin', 'roomMax', 'bossSize', 'roomGap', 'encounters', 'loops', 'deadEnds', 'deadEndMax', 'seed', 'reveal'].map((k) => `gen.${k}`)];
   const colors = ['light.party.color', 'light.torch.color', 'light.ambient.sky', 'light.ambient.ground', 'fog.color', 'paint.shadow', 'paint.highlight', 'paint.ink'];
   const at = (path) => path.split('.').reduce((o, k) => o?.[k], cfg);
   const missing = [...nums.filter((n) => !Number.isFinite(at(n))), ...colors.filter((c) => !/^#[0-9a-f]{6}$/i.test(at(c) ?? ''))];
   ok('explore.json: every tuning number and colour the lab reads is there', missing.length === 0, missing.join(', '));
-  ok('explore.json: start facing is a compass direction, the body fits a cell', ['north', 'east', 'south', 'west'].includes(cfg.startFacing)
-    && cfg.move.radius * 2 < cfg.cell && cfg.eyeHeight < cfg.wallHeight);
+  ok('explore.json: the body fits a cell, the eye under the ceiling', cfg.move.radius * 2 < cfg.cell && cfg.eyeHeight < cfg.wallHeight);
 
   const page = readFileSync('dungeon-lab/index.html', 'utf8');
   const mods = [...page.matchAll(/'\.\.\/(src\/explore\/\w+\.js)'/g)].map((m) => m[1]);
   const vendor = page.match(/\.\.\/(vendor\/three-[\d.]+\/three\.module\.min\.js)/)?.[1];
   const core = vendor && readFileSync(vendor, 'utf8').match(/from\s*["']\.\/(three\.core\.min\.js)["']/)?.[1];
-  ok('dungeon lab: every module it maps exists, three.js is vendored with its licence', mods.length >= 6 && mods.every(exists)
+  ok('dungeon lab: every module it maps exists, three.js is vendored with its licence', mods.length >= 8 && mods.every(exists)
+    && readdirSync('src/explore').every((f) => mods.includes(`src/explore/${f}`))
     && !!vendor && exists(vendor) && !!core && exists(vendor.replace('three.module.min.js', core)) && exists(vendor.replace('three.module.min.js', 'LICENSE')),
     `${mods.join(', ')} | ${vendor} | ${core}`);
   ok('dungeon lab: versioned module loads, not indexed, a way back to the game', page.includes("'?v=' + encodeURIComponent(version)")

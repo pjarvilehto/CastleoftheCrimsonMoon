@@ -246,6 +246,12 @@ licence alongside) and reached through the page's import map as `three`; a
 new three.js version = a new folder. The game never imports `src/explore/`.
 - `grid.js` (pure, tested in Node): the text map ('#' wall, '.' floor, 'S'
   start), circle-vs-cell collision that slides along walls, seeded random.
+- `mapgen.js` (0.140, pure): a floor from a seed (`explore.json gen`) —
+  rooms that don't touch, a spanning tree of L corridors + `loops` extra
+  links, dead-end spurs; the 5x5 room is the boss, the room farthest from
+  it the start, one halfway the shrine, the rest (nearest first) the
+  `encounters`; rooms marked 'E' / 'H' / 'B' in the rows. The lab: `?seed=N`,
+  the N key = next floor; `minimap.js` shows only what the knight has seen.
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of
@@ -260,7 +266,7 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   knight's torch rides with the camera, a pool of `light.pool` point lights
   follows the nearest wall torches (a fixed light count keeps three.js from
   recompiling shaders).
-Next steps discussed with the owner: a map generator, billboard enemies
+Next steps discussed with the owner: billboard enemies
 (one per combat room) that hand over to the existing combat, then
 integration into runs.
 
@@ -316,7 +322,7 @@ integration into runs.
 - Engineering: deploy through the test workflow once the HTTPS setup is
   settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
   is experimenting with looks.
-- 3D exploration (Dungeon Lab, 0.139): map generator · enemy billboards →
+- 3D exploration (Dungeon Lab, 0.139; generator 0.140): enemy billboards →
   combat hand-off · into the run loop (open: a floor per 8-room stretch?
   retreat rules? static or wandering enemies?).
 - Other: check the DIN Condensed web-embedding licence (macOS system font)

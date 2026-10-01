@@ -1,4 +1,7 @@
 {
+  "0.140": [
+    "Testing tools: the Dungeon Lab now generates its floors (rooms, corridors, dead ends; N for a new one) and maps only what you have seen."
+  ],
   "0.139": [
     "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
   ],

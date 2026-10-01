@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <title>Dungeon Lab · Castle of the Crimson Moon</title>
 <link rel="icon" type="image/png" sizes="64x64" href="../icon-64.png">
-<!-- dungeon-lab/ (0.139): the 3D dungeon prototype — a corridor to walk,
+<!-- dungeon-lab/ (0.139): the 3D dungeon prototype — a generated floor to walk,
      opened from the game's ?debug corner column. Code: src/explore/
      (three.js 0.186.1, vendored in vendor/three-0.186.1/). Tuning and map:
      assets/data/explore.json. -->
@@ -16,7 +16,7 @@
   canvas#view { display: block; width: 100vw; height: 100vh; cursor: pointer; }
   .hud { position: fixed; font-family: "DIN Condensed", "Arial Narrow", sans-serif; color: #d8c9a3; letter-spacing: 0.12em; text-transform: uppercase; pointer-events: none; }
   #status { left: 14px; bottom: 12px; font-size: 13px; color: rgba(216, 201, 163, 0.6); }
-  #minimap { right: 14px; top: 14px; width: 168px; height: 168px; background: rgba(6, 3, 4, 0.55); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 4px; }
+  #minimap { right: 14px; top: 14px; width: 232px; height: 232px; background: rgba(6, 3, 4, 0.55); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 4px; }
   #intro { inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(6, 3, 4, 0.55); pointer-events: none; }
   #intro .card { text-align: center; padding: 26px 34px; border: 1px solid #8a6d1c; border-radius: 8px; background: rgba(16, 10, 8, 0.9); box-shadow: 0 0 40px rgba(201, 162, 39, 0.2); }
   #intro h1 { margin: 0 0 6px; color: #c9a227; font-size: 34px; letter-spacing: 0.16em; }
@@ -33,11 +33,11 @@
     <div class="card">
       <h1>Dungeon Lab</h1>
       <p>WASD or arrows to move · mouse to look · shift to run</p>
-      <p>Q / E or left / right arrows turn · M toggles the map · Esc frees the mouse</p>
+      <p>Q / E or left / right arrows turn · M toggles the map · N makes a new floor · Esc frees the mouse</p>
       <p class="go">Click to enter</p>
     </div>
   </div>
-  <canvas id="minimap" class="hud" width="168" height="168"></canvas>
+  <canvas id="minimap" class="hud" width="232" height="232"></canvas>
   <div id="status" class="hud">loading…</div>
   <div id="back" class="hud"><a href="../?debug">← Back to the game</a></div>
   <script>
@@ -45,8 +45,8 @@
     // load the lab's modules under ?v=<version> so a deploy never mixes old
     // and new files. three.js has a versioned folder of its own.
     (function () {
-      var mods = ['../src/explore/grid.js', '../src/explore/textures.js', '../src/explore/build.js',
-        '../src/explore/player.js', '../src/explore/post.js', '../src/explore/lab.js'];
+      var mods = ['../src/explore/grid.js', '../src/explore/mapgen.js', '../src/explore/textures.js', '../src/explore/build.js',
+        '../src/explore/player.js', '../src/explore/post.js', '../src/explore/minimap.js', '../src/explore/lab.js'];
       function boot(version) {
         var q = version ? '?v=' + encodeURIComponent(version) : '';
         var map = { imports: { three: new URL('../vendor/three-0.186.1/three.module.min.js', location.href).href } };

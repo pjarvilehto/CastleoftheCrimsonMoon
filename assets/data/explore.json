@@ -1,8 +1,23 @@
 {
-  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. map: rows of '#' wall, '.' floor, 'S' start; startFacing = north | east | south | west. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells.",
+  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells): width x height, up to `rooms` rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, `encounters` combat rooms, `loops` extra corridor links, `deadEnds` spurs up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells.",
   "cell": 3,
   "wallHeight": 3.2,
   "eyeHeight": 1.65,
+  "gen": {
+    "width": 33,
+    "height": 29,
+    "rooms": 14,
+    "roomMin": 2,
+    "roomMax": 5,
+    "bossSize": 5,
+    "roomGap": 2,
+    "encounters": 7,
+    "loops": 2,
+    "deadEnds": 4,
+    "deadEndMax": 5,
+    "seed": 1,
+    "reveal": 3
+  },
   "move": {
     "speed": 3.2,
     "runMult": 1.7,
@@ -62,21 +77,5 @@
     "beamEvery": 3,
     "torchSpacing": 3.2,
     "seed": 1307
-  },
-  "startFacing": "east",
-  "map": [
-    "#############",
-    "#S....#######",
-    "#####.#######",
-    "#####.....###",
-    "#########.###",
-    "###.......###",
-    "###.#########",
-    "###.....#####",
-    "#######.#####",
-    "#####.....###",
-    "#####.....###",
-    "#####.....###",
-    "#############"
-  ]
+  }
 }

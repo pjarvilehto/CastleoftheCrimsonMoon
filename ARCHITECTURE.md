@@ -109,6 +109,8 @@ src/
   explore/              the 3D dungeon prototype (0.139; Dungeon Lab only —
                         the game never imports it; three.js as `three`)
     grid.js             text map, collision, seeded random (pure)
+    mapgen.js           a floor from a seed: rooms, corridors, parts (pure)
+    minimap.js          the corner map of what the knight has seen
     build.js  textures.js  the level from the map; canvas-painted surfaces
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass
