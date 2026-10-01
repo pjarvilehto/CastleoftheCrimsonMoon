@@ -95,7 +95,7 @@ fresh();
   const q = read('src/ui/combatQueue.js'); // event -> queue mapping (0.098)
   ok('dungeon maps combat events to sfx', q.includes("atk: 'attack'") && q.includes("dmg: 'hurt'") && q.includes("kill: 'kill'"));
   ok('dungeon: rare vs common loot sounds', q.includes("cls === 'relic' ? 'rare' : 'loot'"));
-  ok('dungeon: swoosh/death/potion wired', d.includes("sfx('swoosh')") && d.includes("sfx('death')") && d.includes("combatSfx({ sfx: 'heal'"));
+  ok('dungeon: room whoosh/death/potion wired', d.includes("sfx('whoosh'); transitionTo(setup)") && d.includes("sfx('death')") && d.includes("combatSfx({ sfx: 'heal'"));
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/scenes/hubScene.js');
   ok('hub: levelup + forge wired', h.includes("sfx('levelup')") && h.includes("sfx('forge')"));
@@ -215,4 +215,16 @@ fresh();
   const vp = read('src/ui/volumePanel.js');
   ok('VOLUME panel: master / music / effects sliders, live', vp.includes("['master', 'Master'], ['music', 'Music'], ['sfx', 'Effects']") && vp.includes('setVolume(kind, e.target.value)')
     && read('src/main.js').includes('snd, volumeToggle(),') && read('styles.css').includes('.volume-toggle { top: 104px; }') && read('styles.css').includes('body.debug .volume-toggle { top: 136px; }'));
+}
+
+// T70: 0.108 — a dedicated whoosh between rooms (generated: sweeps up and
+// down while travelling left -> right), audible in the mix; the escape
+// fanfare 30% quieter.
+{
+  const A = DATA.audio;
+  const syn = readFileSync('src/audio/synth.js', 'utf8');
+  ok('room whoosh: generated, sweeps, travels left -> right', syn.includes('whoosh: true') && syn.includes("p.pan.setValueAtTime(-0.6, t)")
+    && syn.includes('p.pan.linearRampToValueAtTime(0.6, t + dur)') && syn.includes("bp.frequency.exponentialRampToValueAtTime(2600"));
+  ok('room whoosh sits with the hits in the mix', Math.abs(A.clips.whoosh.measuredDb + A.clips.whoosh.gainDb + 12) <= 1);
+  ok('escape fanfare 30% quieter (-3.1 dB)', Math.abs(A.clips.victory.gainDb - (1.4 + 20 * Math.log10(0.7))) < 0.05);
 }

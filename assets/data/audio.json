@@ -1,5 +1,5 @@
 {
-  "_doc": "Audio mix (0.107, src/audio/): clip trims (gainDb) bring every sound effect to an intended loudness (measuredDb = the file's loudest 50ms, measured in 0.107; measuredDb + gainDb = hits sit around -12 dB, rare finds and stingers louder, the click subtle). Buses: music and effects -> master -> limiter (a safety net: louder rare finds, sliders, stacked hits). sfxLevel 0.7 keeps the overall level where 0.106 was. voices: at most maxPerClip copies of one clip and maxTotal overall, repeats within retriggerMs dropped, each copy already sounding lowers the next by stackDb. pan.width = how far left/right sounds sit (0 = mono, 1 = hard). duck = the music dips by db under these stingers for the given seconds. volumes = default slider positions (0-1; players' own settings persist in localStorage). music.crossfade = seconds of overlap where the ~20s pieces of a bed chain into each other (their own fades to silence are skipped, audioMath.findSections).",
+  "_doc": "Audio mix (0.107, src/audio/): clip trims (gainDb) bring every sound effect to an intended loudness (measuredDb = the file's loudest 50ms, measured in 0.107; measuredDb + gainDb = hits sit around -12 dB, rare finds and stingers louder, the click subtle). Buses: music and effects -> master -> limiter (a safety net: louder rare finds, sliders, stacked hits). sfxLevel 0.7 keeps the overall level where 0.106 was. voices: at most maxPerClip copies of one clip and maxTotal overall, repeats within retriggerMs dropped, each copy already sounding lowers the next by stackDb. pan.width = how far left/right sounds sit (0 = mono, 1 = hard). duck = the music dips by db under these stingers for the given seconds. volumes = default slider positions (0-1; players' own settings persist in localStorage). music.crossfade = seconds of overlap where the ~20s pieces of a bed chain into each other (their own fades to silence are skipped, audioMath.findSections). 0.108: victory (the 'You escaped!' fanfare) 30% quieter (-3.1 dB); whoosh = the generated room-to-room sound (audio/synth.js), measured from an offline render.",
   "volumes": {
     "master": 1,
     "music": 1,
@@ -64,8 +64,12 @@
       "measuredDb": -11.8
     },
     "victory": {
-      "gainDb": 1.4,
+      "gainDb": -1.7,
       "measuredDb": -9.4
+    },
+    "whoosh": {
+      "gainDb": 6.8,
+      "measuredDb": -18.8
     }
   },
   "voices": {

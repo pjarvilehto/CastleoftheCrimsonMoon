@@ -90,7 +90,7 @@ export function dungeonScene() {
       render(root);
     };
     if (instant) setup();
-    else { sfx('swoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in
+    else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
   }
 
   function render(root) {

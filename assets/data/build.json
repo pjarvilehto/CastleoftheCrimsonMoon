@@ -1,5 +1,5 @@
 {
-  "version": "0.107",
+  "version": "0.108",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -56,6 +56,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.108": [
+      "A whoosh when you move to the next room",
+      "The 'You escaped!' fanfare is 30% quieter"
+    ],
     "0.107": [
       "Cleaner combat audio: fewer sounds piled on top of each other, a rebalanced mix (rare finds and loot are audible now) and a limiter as a safety net",
       "Music no longer dips into silence every ~20 seconds",
@@ -109,11 +113,6 @@
     ],
     "0.094": [
       "The game now tells you when a new build is out, with what changed"
-    ],
-    "0.093": [
-      "HP, armor and enemy damage numbers are 10x bigger (same difficulty)",
-      "Lifesteal percentages 10x too (they heal from the damage you deal)",
-      "Big hits now gently rock the background"
     ]
   }
 }
