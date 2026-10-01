@@ -319,6 +319,22 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   nothing and switched on as you approached. Each theme has a `fill`:
   a bounce source baked only (`bakedOnly`, no flame, no haze). Window
   beams fade with distance (60% of the fog).
+- Polish from the current materials (0.147): the field adds one bounce
+  (`field.bounce`: the direct light blurred over open floor only, tinted
+  by the tier's stone); `aoBake.js` bakes prop AO into vertex colours
+  (near the floor, near a wall; props get an AO copy of their material).
+  Post stack in `post.js`: `ssao.js` (depth-only, half res, 12 samples +
+  blur) darkens the light, `bloom.js` (threshold, half-res mip chain)
+  adds glow, both before ACES; the brightest colours bleach toward white
+  (`post.highlightWhite`, no solid orange-red); then the paint grading and
+  last `lut.js` — a 32³ grade table per tier (`tiers[].grade`: lift /
+  gamma / gain, contrast, saturation; pure, tested). `fxpass.js` = the
+  full-screen pass helper. `atmosphere.js`: dust in window beams, embers
+  and smoke over braziers / hearths / torches, cauldron vapour — one GPU
+  point cloud per kind animated in the vertex shader (emitters from
+  furnish.js `emit` and build.js; `explore.json atmosphere`, `maxPx` caps
+  a particle by the eye). The quality ladder sheds shadows, SSAO, bloom,
+  then resolution.
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of

@@ -163,7 +163,7 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
 
   // a fight played out on the DOM shim: attack until it ends, then Onward
   const root = new El('main'), run = createRun();
-  run.stats.dmg = 100000;
+  run.stats.dmg = 100000; run.hp = run.maxHp = 1e6; // (the rooms roll at random: the knight must not lose)
   let done = null;
   startFight(root, run, roomFor(p1[0]), { onDone: (won) => { done = won; } });
   const btn = (re) => root.all((e) => e.tagName === 'button' && re.test(e.textContent) && e.attrs.disabled === undefined)[0];
@@ -259,5 +259,31 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('every room theme has a bounce fill', Object.values(cfg.themes).every((t) => t.fill > 0));
   const lab = readFileSync('src/explore/lab.js', 'utf8'), layer = readFileSync('src/explore/encounterLayer.js', 'utf8');
   ok('the lab bakes the field for each floor and every lit surface reads it (the enemies too)',
-    /bakeLightField\(lab\.grid, lab\.level\.torches, cfg\)/.test(lab) && lab.includes('patchAll(lab.level.group)') && layer.includes('patchMaterial(billboard.mesh.material)'));
+    /bakeLightField\(lab\.grid, lab\.level\.torches, cfg[,)]/.test(lab) && lab.includes('patchAll(lab.level.group)') && layer.includes('patchMaterial(billboard.mesh.material)'));
+}
+
+// T105: 0.147 — the post stack, baked AO and bounce, the atmosphere:
+// the colour grade's table is exact (a neutral grade changes nothing),
+// every knob is in explore.json, and the quality ladder sheds the
+// dearest effects first
+{
+  const { gradeColor, gradeTable, LUT_N } = await import('../../src/explore/lut.js');
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const neutral = { lift: [0, 0, 0], gamma: [1, 1, 1], gain: [1, 1, 1], contrast: 1, saturation: 1 };
+  const probe = [[0, 0, 0], [1, 1, 1], [0.2, 0.5, 0.8], [0.9, 0.1, 0.3]];
+  ok('grade: a neutral grade leaves colours as they are', probe.every((c) => gradeColor(c, neutral).every((v, i) => Math.abs(v - c[i]) < 1e-9)));
+  const t = gradeTable(neutral);
+  const at = (r, g, b) => [...t.slice((g * LUT_N * LUT_N + b * LUT_N + r) * 4, (g * LUT_N * LUT_N + b * LUT_N + r) * 4 + 3)];
+  ok('grade: the table is a 32³ strip (blue slices across, green down) and holds the grade',
+    t.length === LUT_N ** 3 * 4 && at(LUT_N - 1, 0, 0).join() === '255,0,0' && at(0, LUT_N - 1, 0).join() === '0,255,0' && at(0, 0, LUT_N - 1).join() === '0,0,255');
+  const warm = gradeColor([0.5, 0.5, 0.5], cfg.tiers[0].grade);
+  ok('grade: each tier has its own (the Oubliette warms the greys)', cfg.tiers.every((x) => x.grade) && warm[0] > warm[2]);
+  const P = cfg.post, num = (o, keys) => keys.every((k) => Number.isFinite(o[k]));
+  ok('explore.json: bloom, SSAO, highlights, AO, bounce and every particle kind are tuned there',
+    num(P.bloom, ['threshold', 'knee', 'strength', 'levels']) && num(P.ssao, ['radius', 'bias', 'strength']) && Number.isFinite(P.highlightWhite)
+    && num(cfg.ao, ['floor', 'floorReach', 'wall', 'wallReach']) && num(cfg.field, ['bounce', 'bounceReach', 'bouncePasses'])
+    && ['dust', 'ember', 'smoke'].every((k) => num(cfg.atmosphere[k], ['count', 'speed', 'travel', 'size', 'maxPx']) && /^#[0-9a-f]{6}$/i.test(cfg.atmosphere[k].color)));
+  const q = readFileSync('src/explore/quality.js', 'utf8'), lab = readFileSync('src/explore/lab.js', 'utf8');
+  ok('quality ladder: shadows, then SSAO, then bloom, then resolution', q.indexOf('castShadow = false') < q.indexOf("setFeature('ssao'") && q.indexOf("setFeature('ssao'") < q.indexOf("setFeature('bloom'") && q.indexOf("setFeature('bloom'") < q.indexOf('setScale('));
+  ok('the lab bakes the props\' AO, grades by tier and fills the air for each floor', lab.includes('bakeAO(lab.level.group') && lab.includes('paint.setGrade(') && lab.includes('createAtmosphere(lab.level.emitters'));
 }

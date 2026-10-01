@@ -8,7 +8,11 @@
 // texture read in the shader, added as soft light), so distant torches
 // glow from afar; the pool's dynamic lights only add the near detail —
 // flicker, shadows, highlights — fading in with distance, never popping.
-// bakeLightField(grid, sources, cfg) -> fills the shared field uniforms
+// 0.147: one bounce — light that reaches the floor and the walls is passed
+// on to the open floor around it (a blur that never crosses a wall), in
+// the colour of the tier's stone, so a lit wall brightens the floor beside
+// it and light creeps round corners into the dark middles of rooms.
+// bakeLightField(grid, sources, cfg, bounceColor) -> fills the shared field uniforms
 
 import * as THREE from 'three';
 import { isOpen } from './grid.js';
@@ -20,7 +24,7 @@ export const FIELD = {
   fieldStrength: { value: 0 },
 };
 
-export function bakeLightField(grid, sources, cfg) {
+export function bakeLightField(grid, sources, cfg, bounceColor = null) {
   const F = cfg.field, C = cfg.cell, K = F.texelsPerCell, base = cfg.light.torch.intensity;
   const W = grid.w * K, H = grid.h * K, sum = new Float32Array(W * H * 3);
   const open = (x, z) => isOpen(grid, Math.floor(x), Math.floor(z));
@@ -47,6 +51,35 @@ export function bakeLightField(grid, sources, cfg) {
         const k = (j * W + i) * 3;
         sum[k] += col.r * e; sum[k + 1] += col.g * e; sum[k + 2] += col.b * e;
       }
+    }
+  }
+  // one bounce: the direct light spread over the open floor (a box blur
+  // run `bouncePasses` times that only moves light between open texels),
+  // tinted by the stone it bounces off
+  if (F.bounce > 0) {
+    const openT = new Uint8Array(W * H);
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) openT[j * W + i] = open((i + 0.5) / K, (j + 0.5) / K) ? 1 : 0;
+    let a = sum.slice(), b = new Float32Array(W * H * 3);
+    const R = Math.max(1, Math.round(F.bounceReach * K));
+    for (let pass = 0; pass < F.bouncePasses; pass++) {
+      for (const [dx, dz] of [[1, 0], [0, 1]]) {
+        for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+          const k = j * W + i;
+          if (!openT[k]) { b[k * 3] = b[k * 3 + 1] = b[k * 3 + 2] = 0; continue; }
+          let r = 0, g = 0, bl = 0, n = 0;
+          for (let s = -R; s <= R; s++) {
+            const ii = i + dx * s, jj = j + dz * s;
+            if (ii < 0 || jj < 0 || ii >= W || jj >= H || !openT[jj * W + ii]) continue;
+            const q = (jj * W + ii) * 3; r += a[q]; g += a[q + 1]; bl += a[q + 2]; n++;
+          }
+          b[k * 3] = r / n; b[k * 3 + 1] = g / n; b[k * 3 + 2] = bl / n;
+        }
+        [a, b] = [b, a];
+      }
+    }
+    const tint = bounceColor ?? new THREE.Color(1, 1, 1);
+    for (let p = 0; p < W * H; p++) {
+      sum[p * 3] += a[p * 3] * F.bounce * tint.r; sum[p * 3 + 1] += a[p * 3 + 1] * F.bounce * tint.g; sum[p * 3 + 2] += a[p * 3 + 2] * F.bounce * tint.b;
     }
   }
   // walls take their open neighbours' light (no dark seam where the

@@ -13,7 +13,7 @@
 // ones vaulted — vault.js) and furnished (furnish.js + rooms.js); wall
 // torches burn in the corridors only — the rooms bring their own light.
 // buildDungeon(grid, cfg, { rooms, shrine, stairs, tier }) ->
-//   { group, torches: [{ position, flames, halos, phase, power }], posts, boxes, dispose }
+//   { group, torches: [{ position, flames, halos, phase, power }], posts, boxes, emitters, dispose }
 // (flames / halos: sprites, their resting scale in userData.base)
 // The caller lights the torches (a small pool of lights follows the
 // nearest ones) and collides with `posts` (pillars) and `boxes`
@@ -121,7 +121,7 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, stairs = nu
   if (wood.length) group.add(new THREE.Mesh(boxesGeometry(wood), M.wood));
   // torches: an iron bracket and a wooden handle (merged, all torches in
   // two draw calls), a flame sprite and a soft halo around it
-  const iron = [], handles = [];
+  const iron = [], handles = [], emitters = []; // (emitters: the torches' embers and smoke, atmosphere.js)
   const out = torches.map((t) => {
     const bracket = new THREE.BoxGeometry(0.08, 0.08, 0.22);
     bracket.lookAt(new THREE.Vector3(t.nx, 0, t.nz)); bracket.translate(t.x - t.nx * 0.02, t.y - 0.18, t.z - t.nz * 0.02);
@@ -133,6 +133,8 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, stairs = nu
     const halo = new THREE.Sprite(M.halo.clone());
     halo.position.set(t.x + t.nx * 0.3, t.y + 0.3, t.z + t.nz * 0.3); halo.userData.base = [cfg.decor.haloSize, cfg.decor.haloSize];
     group.add(flame, halo);
+    emitters.push({ kind: 'ember', at: flame.position.clone().setY(t.y + 0.25), spread: 0.05, amount: 0.3, size: 0.7 },
+      { kind: 'smoke', at: flame.position.clone().setY(t.y + 0.55), spread: 0.04, amount: 0.35, size: 0.6 });
     return { position: new THREE.Vector3(t.x + t.nx * 0.25, t.y + 0.25, t.z + t.nz * 0.25), flames: [flame], halos: [halo], phase: rnd() * 100, power: 1 };
   });
   if (iron.length) group.add(new THREE.Mesh(mergeParts(iron), M.iron), new THREE.Mesh(mergeParts(handles), M.handle));
@@ -159,7 +161,7 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, stairs = nu
     if (o.isMesh) o.geometry.dispose();
     if (o.isSprite) o.material.dispose();
   });
-  return { group, torches: out, posts: decor.posts, boxes: dressed.boxes, dispose };
+  return { group, torches: out, posts: decor.posts, boxes: dressed.boxes, emitters: [...emitters, ...dressed.emitters], dispose };
 }
 
 // merge geometries that carry the AO colour attribute (vault shells, gables)

@@ -30,7 +30,9 @@ export function furnish(rooms, cfg, { rnd, M, corridors = null }) {
 
 function createKit(cfg, rnd, M) {
   const C = cfg.cell, H = cfg.wallHeight, P = propMaterials(cfg), S = cfg.sources;
-  const parts = {}, lights = [], boxes = [], sprites = [];
+  const parts = {}, lights = [], boxes = [], sprites = [], emitters = [];
+  // atmosphere (0.147): dust, embers, smoke — atmosphere.js makes the particles
+  const emit = (kind, at, opts = {}) => emitters.push({ kind, at, ...opts });
   const between = (a, b) => a + rnd() * (b - a);
   const add = (mat, g) => { (parts[mat] ||= []).push(g); return g; };
   const box = (mat, w, h, d, x, y, z) => add(mat, new THREE.BoxGeometry(w, h, d).translate(x, y, z));
@@ -73,7 +75,7 @@ function createKit(cfg, rnd, M) {
     lights.push({ position, color: color ? new THREE.Color(color) : null, power, phase: rnd() * 100, flames, halos, still, reach, haze, bakedOnly });
 
   const kit = {
-    cfg, C, H, S, rnd, between, box, cyl, add, block, wall, panel, centreOf, light, flameSprite, P,
+    cfg, C, H, S, rnd, between, box, cyl, add, block, wall, panel, centreOf, light, flameSprite, emit, P,
     // a cluster of candles at p (on the floor or a surface at height y): one light
     candles(x, y, z, n = 4, spread = 0.25, power = S.candles) {
       const flames = [];
@@ -100,6 +102,8 @@ function createKit(cfg, rnd, M) {
       add('ember', new THREE.CircleGeometry(0.3, 10).rotateX(-Math.PI / 2).translate(x, 1.18, z));
       const s = flameSprite(new THREE.Vector3(x, 1.5, z), 0.55, 0.85, 1.6);
       light(new THREE.Vector3(x, 1.8, z), { power, color: '#ff8a3a', flames: [s.flame], halos: [s.halo] });
+      emit('ember', new THREE.Vector3(x, 1.35, z), { spread: 0.18 });
+      emit('smoke', new THREE.Vector3(x, 1.6, z), { spread: 0.12 });
       block(x - 0.35, z - 0.35, x + 0.35, z + 0.35);
     },
     // a banner hanging on a wall face
@@ -119,6 +123,10 @@ function createKit(cfg, rnd, M) {
       const g = new THREE.CylinderGeometry(0.55, 1.5, len, 14, 1, true).rotateX(-tilt).rotateY(W.yaw);
       add(`shaft${hue}`, g.translate(mid.x, mid.y, mid.z));
       light(W.at(0, y0 + h * 0.5, 1.4), { color, power: S.window, still: true, reach: 10, haze: 1.6 });
+      // dust turning in the beam
+      const dir = new THREE.Vector3(W.n.x * Math.sin(tilt), -Math.cos(tilt), W.n.z * Math.sin(tilt));
+      const u = new THREE.Vector3(W.t.x, 0, W.t.z), from = mid.clone().addScaledVector(dir, -len / 2);
+      emit('dust', from, { color, cone: { from, dir, len: len * 0.85, r0: 0.55, r1: 1.5, u, v: new THREE.Vector3().crossVectors(dir, u).normalize() } });
     },
     // a wooden shelf case against a wall face, filled with books (or bottles)
     shelf(f, w, h, fill = 'books') {
@@ -158,7 +166,7 @@ function createKit(cfg, rnd, M) {
         group.add(new THREE.Mesh(g, P.get(mat, M)));
       }
       for (const s of sprites) group.add(s);
-      return { group, lights, boxes };
+      return { group, lights, boxes, emitters };
     },
   };
   return kit;

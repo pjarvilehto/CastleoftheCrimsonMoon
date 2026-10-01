@@ -1,17 +1,20 @@
 // explore/quality.js — the lab keeps its frame rate (0.145), like the game's
 // 3D backgrounds do: while the frame rate stays under `minFps` for
 // `seconds`, it steps down once — first the shadows go (the cube maps are
-// the dearest thing on screen), then the render resolution, x0.75 at a
-// time down to `minScale`. Never back up within a visit.
-// createQuality(cfg, { lights, setScale }) -> { tick(dt), level() }
+// the dearest thing on screen), then SSAO, then bloom (0.147), then the
+// render resolution, x0.75 at a time down to `minScale`. Never back up
+// within a visit.
+// createQuality(cfg, { lights, paint, setScale }) -> { tick(dt), level() }
 
-export function createQuality(cfg, { lights, setScale }) {
+export function createQuality(cfg, { lights, paint, setScale }) {
   const Q = cfg.quality;
   let slow = 0, frames = 0, time = 0, step = 0, scale = 1;
   function stepDown() {
-    if (step === 0 && lights.pool.some((l) => l.castShadow)) {
+    if (lights.pool.some((l) => l.castShadow)) {
       for (const l of lights.pool) l.castShadow = false; // (one shader rebuild, once)
-    } else if (scale * 0.75 >= Q.minScale) {
+    } else if (paint.feature('ssao')) paint.setFeature('ssao', false);
+    else if (paint.feature('bloom')) paint.setFeature('bloom', false);
+    else if (scale * 0.75 >= Q.minScale) {
       scale *= 0.75;
       setScale(scale);
     } else return;

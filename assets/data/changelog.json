@@ -1,4 +1,7 @@
 {
+  "0.147": [
+    "Testing tools: the Dungeon Lab gets glowing flames (bloom), soft contact shadows, light that bounces off the walls, a colour grade per depth, and air: dust in the window beams, embers and smoke over the fires."
+  ],
   "0.146": [
     "Testing tools: in the Dungeon Lab every torch, candle and window now lights its surroundings from afar (no more lights switching on as you approach), and the rooms are brighter."
   ],

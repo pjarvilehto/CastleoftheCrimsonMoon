@@ -177,6 +177,8 @@ export const THEMES = {
     const fp = W.at(0, 0.55, 0.35), fire = k.flameSprite(fp, 0.9, 1.1, 2.4);
     const fire2 = k.flameSprite(W.at(-0.35, 0.45, 0.4), 0.55, 0.8, 1.2);
     k.light(W.at(0, 0.9, 1.0), { power: k.S.hearth, color: '#ff9a52', flames: [fire.flame, fire2.flame], halos: [fire.halo, fire2.halo] });
+    k.emit('ember', W.at(0, 0.3, 0.4), { spread: 0.5, amount: 1.5 });
+    k.emit('smoke', W.at(0, 1.2, 0.3), { spread: 0.3, amount: 1.2 });
     W.blockOut(2.8, 0.8);
     rest(room, [hearth]).forEach((f, i) => { if (i % 2 === 0) k.banner(f, 355, 3.0); });
   },
@@ -218,6 +220,7 @@ export const THEMES = {
       k.add('brew', new THREE.CircleGeometry(0.5, 14).rotateX(-Math.PI / 2).translate(p.x, 0.8, p.z));
       const g = k.flameSprite(new THREE.Vector3(p.x, 1.0, p.z), 0.01, 0.01, 2.0, '#4cff6a');
       k.light(new THREE.Vector3(p.x, 1.3, p.z), { power: k.S.cauldron, color: '#4cff6a', flames: [g.flame], halos: [g.halo], haze: 1.5 });
+      k.emit('smoke', new THREE.Vector3(p.x, 0.85, p.z), { spread: 0.3, color: '#5f9c66', amount: 1.3 }); // green vapour
       k.block(p.x - 0.6, p.z - 0.6, p.x + 0.6, p.z + 0.6);
     }
     if (cells[1]) {

@@ -1,5 +1,5 @@
 {
-  "version": "0.146",
+  "version": "0.147",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -21,7 +21,10 @@
     "src/core/hotkeys.js",
     "src/core/perfMonitor.js",
     "src/core/scene.js",
+    "src/explore/aoBake.js",
+    "src/explore/atmosphere.js",
     "src/explore/billboard.js",
+    "src/explore/bloom.js",
     "src/explore/build.js",
     "src/explore/corridors.js",
     "src/explore/decor.js",
@@ -29,11 +32,13 @@
     "src/explore/encounters.js",
     "src/explore/fight.js",
     "src/explore/furnish.js",
+    "src/explore/fxpass.js",
     "src/explore/geom.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
     "src/explore/lightField.js",
     "src/explore/lights.js",
+    "src/explore/lut.js",
     "src/explore/mapgen.js",
     "src/explore/minimap.js",
     "src/explore/mist.js",
@@ -43,6 +48,7 @@
     "src/explore/propTextures.js",
     "src/explore/quality.js",
     "src/explore/rooms.js",
+    "src/explore/ssao.js",
     "src/explore/stairs.js",
     "src/explore/textures.js",
     "src/explore/themes.js",
@@ -105,6 +111,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.147": [
+      "Testing tools: the Dungeon Lab gets glowing flames (bloom), soft contact shadows, light that bounces off the walls, a colour grade per depth, and air: dust in the window beams, embers and smoke over the fires."
+    ],
     "0.146": [
       "Testing tools: in the Dungeon Lab every torch, candle and window now lights its surroundings from afar (no more lights switching on as you approach), and the rooms are brighter."
     ],
@@ -147,9 +156,6 @@
     ],
     "0.133": [
       "Players who have reached room 10 are asked once to run a short (about 40 second) benchmark, which helps make the game run smoothly on every computer."
-    ],
-    "0.132": [
-      "Fixed: blood splatters on the floor no longer flicker as they fade."
     ]
   }
 }

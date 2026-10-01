@@ -22,6 +22,8 @@ import { createMist } from './mist.js';
 import { createStairs } from './stairs.js';
 import { createLights, shadowAll } from './lights.js';
 import { bakeLightField, patchAll } from './lightField.js';
+import { bakeAO } from './aoBake.js';
+import { createAtmosphere } from './atmosphere.js';
 import { themeRooms } from './themes.js';
 import { createQuality } from './quality.js';
 import { el } from '../core/dom.js';
@@ -65,10 +67,10 @@ export async function startLab({ canvas, hud }) {
   document.body.append(returnBtn);
 
   // the floor: generate, build, put the knight at the start
-  const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, mist: null, depth: 1 };
+  const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, mist: null, air: null, depth: 1 };
   function newFloor(seed, depth = lab.depth) {
     lab.depth = depth;
-    if (lab.level) { scene.remove(lab.level.group, lab.mist.group); lab.level.dispose(); lab.mist.dispose(); }
+    if (lab.level) { scene.remove(lab.level.group, lab.mist.group, lab.air.group); lab.level.dispose(); lab.mist.dispose(); lab.air.dispose(); }
     lab.floor = generateFloor(seed, cfg.gen);
     lab.grid = parseMap(lab.floor.rows);
     // the depth tier (0.142): its stone, its fog, its shadows
@@ -77,28 +79,39 @@ export async function startLab({ canvas, hud }) {
     scene.background.set(T.fog); scene.fog.color.set(T.fog);
     hemi.color.set(T.sky); hemi.groundColor.set(T.ground);
     paint.setShadow(T.shadow);
+    paint.setGrade(T.grade ?? cfg.post.grade); // (0.147: the tier's colour grade)
     lab.rooms = themeRooms(lab.floor, depth, cfg, seeded(seed * 7 + depth)); // (0.146: each room its theme)
     lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.rooms, shrine: lab.floor.shrine, stairs: lab.floor.stairs, tier: lab.tier });
     stairs.place(lab.floor, cfg.tiers[Math.min(depth + 1, cfg.tiers.length) - 1].glow); // the next depth's colour
     lab.grid.posts = lab.level.posts;
     lab.grid.boxes = lab.level.boxes;
     lab.mist = createMist(lab.grid, cfg, T.mist, seeded(seed * 31));
+    bakeAO(lab.level.group, lab.grid, cfg); // (0.147: the props' contact shadows)
     shadowAll(lab.level.group);
-    bakeLightField(lab.grid, lab.level.torches, cfg); // (0.146: every source lights the floor from afar)
+    bakeLightField(lab.grid, lab.level.torches, cfg, stoneTint(T.palette.stone)); // (0.146; 0.147 + one bounce)
     patchAll(lab.level.group);
-    scene.add(lab.level.group, lab.mist.group);
+    lab.air = createAtmosphere(lab.level.emitters, cfg, seeded(seed * 13)); // (0.147: dust, embers, smoke)
+    scene.add(lab.level.group, lab.mist.group, lab.air.group);
     lights.reset();
     player.place(lab.grid, lab.floor.start);
     minimap.setFloor(lab.floor, lab.grid);
     encounters.setFloor(lab.floor, depth);
     try { history.replaceState(null, '', `dungeon-lab/?seed=${seed}&depth=${depth}`); } catch { /* (file://) */ }
   }
+  // the colour light takes on bouncing off a tier's stone (its mean tone,
+  // brightest channel at 1, half way to white)
+  function stoneTint(st) {
+    const c = new THREE.Color().setHSL((st[0] + st[1] / 2) / 360, (st[2] + st[3] / 2) / 100, 0.5);
+    const m = Math.max(c.r, c.g, c.b);
+    return new THREE.Color(1, 1, 1).lerp(new THREE.Color(c.r / m, c.g / m, c.b / m), 0.5);
+  }
   const q = new URLSearchParams(location.search), num = (k) => (Number.isInteger(Number(q.get(k))) && Number(q.get(k)) > 0 ? Number(q.get(k)) : null);
   const hold = q.has('hold');
   newFloor(num('seed') ?? cfg.gen.seed, num('depth') ?? 1);
 
   let scale = 1; // the quality ladder's resolution step
-  const quality = createQuality(cfg, { lights, setScale: (k) => { scale = k; resize(); } });
+  const quality = createQuality(cfg, { lights, paint, setScale: (k) => { scale = k; resize(); } });
+  let pxScale = 500; // particles: pixels per metre at a metre's distance
   function resize() {
     const pr = Math.min(devicePixelRatio || 1, cfg.render.maxPixelRatio) * scale;
     renderer.setPixelRatio(pr);
@@ -106,6 +119,7 @@ export async function startLab({ canvas, hud }) {
     paint.setSize(Math.round(innerWidth * pr), Math.round(innerHeight * pr));
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
+    pxScale = (innerHeight * pr) / (2 * Math.tan((camera.fov * Math.PI) / 360));
   }
   addEventListener('resize', resize);
   resize();
@@ -153,6 +167,7 @@ export async function startLab({ canvas, hud }) {
     const torches = lab.level.torches;
     paint.setHaze(lights.update(t, torches, dt)); // the near lights: pool, shadows, flicker, haze
     lab.mist.update(t);
+    lab.air.update(t, pxScale);
     paint.render(scene);
     frames++; fpsT += dt;
     if (walking && !hold) quality.tick(dt); // (fights are DOM: they don't count; ?hold keeps full quality)

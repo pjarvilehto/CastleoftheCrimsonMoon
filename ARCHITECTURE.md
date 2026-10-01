@@ -121,6 +121,10 @@ src/
     stairs.js           the way down: its glow, the walk into the dark
     lights.js  quality.js   the light pool + shadows + flicker; fps ladder
     lightField.js       every source baked into a light map the surfaces read
+    aoBake.js           the props' contact shadows, in vertex colours
+    fxpass.js  bloom.js  ssao.js  lut.js   the post stack (glow, contact
+                        shadows, the grade table) under the paint pass
+    atmosphere.js       dust, embers, smoke: GPU point clouds
     themes.js           each room's theme and its clear way through (pure)
     furnish.js  rooms.js  corridors.js  vault.js   dressing the rooms
                         (one function per theme) and corridors; vaults
