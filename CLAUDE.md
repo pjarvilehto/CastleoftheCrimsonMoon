@@ -31,7 +31,9 @@ progression (training, alchemy, forge) in the hub between runs.
   update it; bump its `VERSION` and telemetry.json `collectorVersion`
   together and the dashboard flags a stale deploy; 0.119: stores only the
   dashboard's fields (typed, capped), rate-limits, read key as a Bearer
-  header, `/version`), whose URL is `assets/data/telemetry.json` `endpoint`
+  header, `/version`; 0.130: per-run frame rate + the player's device —
+  `core/perfMonitor.js` records from dungeon entry to the run's end,
+  dashboard card in `analytics/perf.js`), whose URL is `assets/data/telemetry.json` `endpoint`
   (empty = off; never sends from localhost or Node). The
   dashboard reads it back (`GET /players`, Bearer READ_KEY) plus this
   browser's save and pasted save codes, deduped by playerId. Players are

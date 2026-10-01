@@ -1,4 +1,7 @@
 {
+  "0.130": [
+    "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
+  ],
   "0.129": [
     "Smoother combat: the new particle effects draw much faster (batched rendering, smaller repaints, no hitch on a room's first hit), and thin out when a huge OVERKILL would flood the screen.",
     "Fixed: stray pixel specks in the name field are gone for good, and letters like Å and Ö no longer lose their tops."

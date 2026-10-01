@@ -44,6 +44,7 @@ export function createRun() {
     startedAt: Date.now(),
     level: playerLevel(),
     turns: 0, potionsDrunk: 0, bossesBeaten: 0, killedBy: null,
+    perf: null, // 0.130: frame-rate summary, filled in as the run ends (core/perfMonitor.js)
     tempArmor: 0,                // Infusion potions: armor until the room ends
     coinMult: 1,                 // Greed boon: x kill coins
     over: false,

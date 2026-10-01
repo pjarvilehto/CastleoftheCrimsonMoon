@@ -1,5 +1,5 @@
 {
-  "version": "0.129",
+  "version": "0.130",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -19,6 +19,7 @@
     "src/core/bg3dTuning.js",
     "src/core/dom.js",
     "src/core/hotkeys.js",
+    "src/core/perfMonitor.js",
     "src/core/scene.js",
     "src/main.js",
     "src/meta/equipment.js",
@@ -74,6 +75,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.130": [
+      "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
+    ],
     "0.129": [
       "Smoother combat: the new particle effects draw much faster (batched rendering, smaller repaints, no hitch on a room's first hit), and thin out when a huge OVERKILL would flood the screen.",
       "Fixed: stray pixel specks in the name field are gone for good, and letters like Å and Ö no longer lose their tops."
@@ -120,9 +124,6 @@
     ],
     "0.116": [
       "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
-    ],
-    "0.115": [
-      "Under the hood: cleaner dialogs and corner buttons (a dialog over another no longer lets keys slip through)"
     ]
   }
 }

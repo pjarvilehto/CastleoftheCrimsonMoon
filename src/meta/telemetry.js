@@ -12,6 +12,7 @@
 // Empty endpoint, or a local/dev host, sends nothing. Never throws.
 
 import { DATA } from '../shared/data.js';
+import { deviceInfo } from '../core/perfMonitor.js';
 
 const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|$)/;
 
@@ -20,6 +21,7 @@ export function statsPayload(p) {
   return {
     playerId: p.playerId,
     build: DATA.build?.version ?? '?',
+    device: deviceInfo(), // 0.130: the machine (GPU, browser, OS, cores) — the latest one wins
     profile: {
       playerId: p.playerId, name: p.name ?? '', coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
       stats: p.stats, records: p.records, equipment: p.equipment, history: p.history ?? [],

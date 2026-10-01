@@ -69,6 +69,10 @@ td input { width: 130px; padding: 3px 6px; }
 tr.death td:nth-child(4) { color: var(--red); }
 tr.retreat td:nth-child(4) { color: #7bc98a; }
 .empty { color: var(--muted); margin: 6px 0; }
+/* Performance card (0.130): FPS against the screen's refresh rate */
+.perf-good { color: #7bc98a; }
+.perf-ok { color: #e0b84a; }
+.perf-bad { color: var(--red); }
 @media (max-width: 760px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
   .add-row { grid-template-columns: 1fr; }

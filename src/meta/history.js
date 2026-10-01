@@ -34,6 +34,8 @@ export function runRecord(run, outcome, now = Date.now()) {
     maxHp: run.stats?.maxHp ?? run.maxHp,
     dmg: run.stats?.dmg ?? 0,
     armor: run.stats?.armor ?? 0,
+    // 0.130: how smoothly it ran (core/perfMonitor.js summary), or null
+    perf: run.perf ?? null,
   };
 }
 

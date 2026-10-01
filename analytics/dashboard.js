@@ -9,6 +9,7 @@
 import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
+import { perfTable, sanitizeDevice } from './perf.js';
 import { levelFromStats } from '../src/shared/level.js';
 
 const STORE = 'castle-analytics-players-v1';
@@ -33,7 +34,7 @@ function loadPlayers() {
   const nm = names();
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';
-    return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0,
+    return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0, device: sanitizeDevice(r.device),
       // The name the player typed wins over a rename made here (0.122);
       // renames only label players who never entered one.
       label: String((profile.name ? null : nm[id]) ?? `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
@@ -199,6 +200,7 @@ function render() {
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
     ${card('By build', buildTable(byBuild(runs)))}
   </div>
+  ${card('Performance', perfTable(shown, runs), true)}
   ${card('Players', playersTable(shown), true)}
   ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs), true)}`;
 }

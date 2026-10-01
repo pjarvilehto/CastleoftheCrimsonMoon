@@ -3,8 +3,8 @@
 // snapshot of a player's save after every run; the /analytics/ dashboard
 // GETs every player back. Deploy + wire-up: collector/README.md.
 //
-//   POST /collect   body { playerId, build, profile } (text/plain JSON)
-//   GET  /players   -> { players: [{ playerId, country, firstSeen, lastSeen, build, profile }] }
+//   POST /collect   body { playerId, build, device, profile } (text/plain JSON)
+//   GET  /players   -> { players: [{ playerId, country, firstSeen, lastSeen, build, device, profile }] }
 //                   needs the READ_KEY secret when set: header
 //                   `authorization: Bearer <key>` (0.119; ?key= still works)
 //   GET  /version   -> { version } — which collector is deployed (0.119)
@@ -18,8 +18,13 @@
 // shows are stored, each type-checked and size-capped; a client IP may
 // POST at most RATE_PER_MIN times a minute (per Worker instance, in
 // memory — never stored) and one player at most once a second.
+//
+// 0.130: performance — each run may carry `perf` (frame rate: fps, p95
+// frame ms, % dropped frames, worst frame, refresh rate, background mode,
+// window size), and the POST a `device` (GPU, browser, OS, cores, memory,
+// screen); the latest device is kept on the player.
 
-export const VERSION = '0.119';
+export const VERSION = '0.130';
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -41,6 +46,17 @@ const str = (v, max) => (v === null || v === undefined ? null : String(v).slice(
 const pick = (o, keys, f) => Object.fromEntries(keys.map((k) => [k, f(o?.[k])]));
 const RUN_NUMS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
 const SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
+const PERF_NUMS = ['fps', 'p95', 'drop', 'worst', 'hz', 'secs', 'q', 'dpr', 'vw', 'vh'];
+
+export function cleanPerf(p) {
+  if (!p || typeof p !== 'object') return null;
+  return { ...pick(p, PERF_NUMS, num), bg: p.bg === 'flat' ? 'flat' : '3d' };
+}
+
+export function cleanDevice(d) {
+  if (!d || typeof d !== 'object') return null;
+  return { gpu: str(d.gpu, 120), browser: str(d.browser, 30), os: str(d.os, 20), screen: str(d.screen, 20), ...pick(d, ['cores', 'mem'], num) };
+}
 
 export function cleanRun(r) {
   if (!r || typeof r !== 'object' || !Number.isFinite(r.at)) return null;
@@ -49,6 +65,7 @@ export function cleanRun(r) {
     build: str(r.build, 12), outcome: r.outcome === 'death' ? 'death' : 'retreat',
     relic: !!r.relic, killedBy: str(r.killedBy, 40),
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 24).map((b) => str(b, 24)) : [],
+    perf: cleanPerf(r.perf),
   };
 }
 
@@ -101,6 +118,7 @@ export async function collect(req, env, now = Date.now()) {
     country: req.cf?.country ?? prev?.country ?? null,
     firstSeen: prev?.firstSeen ?? now,
     lastSeen: now,
+    device: cleanDevice(body.device) ?? prev?.device ?? null,
     profile: { ...clean, history: mergeHistory(prev?.profile?.history, clean.history) },
   };
   await env.STATS.put(key, JSON.stringify(record));

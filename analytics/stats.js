@@ -7,6 +7,7 @@
 // testers' saves from the save codes they export on the title screen.
 
 import { compareVersions } from '../src/shared/version.js';
+import { sanitizePerf } from './perf.js';
 
 export const LOCAL_SAVE_KEY = 'castle-roguelike-profile-v1';
 
@@ -32,7 +33,8 @@ const ITEM_SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
 export function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
-    boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [] };
+    boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
+    perf: sanitizePerf(r.perf) }; // 0.130: frame rate (analytics/perf.js)
   for (const k of ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor']) out[k] = num(r[k]);
   return out;
 }
@@ -162,7 +164,7 @@ export function fmtDuration(ms) {
 // CSV of runs (for spreadsheets): one row per run.
 export function toCsv(runs, labelOf = (k) => k) {
   const cols = ['player', 'n', 'at', 'build', 'outcome', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'relic',
-    'boons', 'bosses', 'killedBy', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
+    'boons', 'bosses', 'killedBy', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor', 'fps', 'p95', 'drop', 'hz'];
   const cell = (v) => {
     let s = Array.isArray(v) ? v.join(' ') : v === null || v === undefined ? '' : String(v);
     // text from a save could start a spreadsheet formula (=, +, -, @): defuse it
@@ -170,6 +172,6 @@ export function toCsv(runs, labelOf = (k) => k) {
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const rows = runs.map((r) => cols.map((c) => cell(c === 'player' ? labelOf(r.player)
-    : c === 'at' ? new Date(r.at).toISOString() : r[c])).join(','));
+    : c === 'at' ? new Date(r.at).toISOString() : ['fps', 'p95', 'drop', 'hz'].includes(c) ? r.perf?.[c] : r[c])).join(','));
   return [cols.join(','), ...rows].join('\n');
 }

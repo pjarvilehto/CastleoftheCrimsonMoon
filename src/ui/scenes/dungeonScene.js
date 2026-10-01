@@ -32,6 +32,7 @@ import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
+import { startPerf, stopPerf } from '../../core/perfMonitor.js';
 
 export function dungeonScene() {
   const run = createRun();
@@ -65,6 +66,7 @@ export function dungeonScene() {
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
     enter(root) {
+      startPerf(); // the run's frame rate, for the play stats (0.130)
       logEl = el('div', { id: 'combat-log' });
       buffBar = createBuffBar();
       // First room enters inline — show()'s own transition is already
@@ -297,6 +299,7 @@ export function dungeonScene() {
   }
 
   function endRun(root, outcome) {
+    run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
     shareStats(settleRun(run, outcome)); // play stats (0.102)
     go('runEnd', run, outcome);
   }

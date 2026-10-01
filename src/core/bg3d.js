@@ -71,6 +71,14 @@ export const isBg3dActive = () => !!gl;
 // The quality ladder step (0 = full; core/bg3dQuality.js) — the particles
 // drop their resolution with it (0.129).
 export const bgQualityLevel = () => level;
+// The GPU's name for the play stats (0.130, core/perfMonitor.js), or null.
+export function gpuName() {
+  if (!gl) return null;
+  try {
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    return String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '') || null;
+  } catch { return null; }
+}
 export const bgView = () => view;
 export function setBgView(v) { view = v; }
 

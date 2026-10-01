@@ -170,3 +170,57 @@ fresh();
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
 }
+
+// T91: 0.130 — real-world performance: each run records a frame-rate
+// summary (core/perfMonitor.js) on its history record, the upload carries
+// the device, the collector keeps both (typed, capped), and the dashboard
+// shows a Performance card.
+{
+  const pm = await import('../../src/core/perfMonitor.js');
+  const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
+  const r60 = rec([[16.6, 900], [17.2, 60], [33.3, 30], [60.5, 10]]); // 60 Hz, some drops
+  const s = pm.summarizeFrames(r60);
+  ok('frame summary: fps, p95, refresh rate, dropped frames, worst', s.hz === 60 && s.fps === Math.round(1000 * 10000 / r60.ms) / 10
+    && s.p95 === 18 && s.drop === 4 && s.worst === 61 && s.secs === Math.round(r60.ms / 1000), JSON.stringify(s));
+  const hz = (d) => pm.summarizeFrames(rec([[d, 2000]])).hz;
+  ok('refresh rate snapped from the fastest frames: 60 / 120 / 144 / 165 Hz', hz(16.67) === 60 && hz(8.33) === 120 && hz(6.94) === 144 && hz(6.06) === 165);
+  const slow = pm.summarizeFrames(rec([[150, 30], [400, 10]]));
+  ok('a device that cannot keep up: 60 Hz assumed, nearly every frame dropped', slow.hz === 60 && slow.drop === 100 && slow.fps === Math.round(40 * 10000 / 8500) / 10);
+  pm.stopPerf(); // ends a recording an earlier test's dungeon left running
+  ok('too short a run says nothing; nothing recording = null', pm.summarizeFrames(rec([[16, 50]])) === null && pm.stopPerf() === null
+    && pm.summarizeFrames(rec([[150, 40]]))?.fps === 6.7); // a slow device still counts
+  const { runRecord } = await import('../../src/meta/history.js');
+  const r = createRun(); r.perf = { fps: 58.2, p95: 18 };
+  ok('the run record carries the perf summary (null when unmeasured)', runRecord(r, 'death').perf.fps === 58.2 && runRecord(createRun(), 'death').perf === null
+    && createRun().perf === null);
+  const dsrc = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8');
+  ok('recorded from entering the dungeon to the run\'s end (once)', dsrc.includes('startPerf(); // the run') && dsrc.includes('run.perf ??= stopPerf();'));
+  const tm = await import('../../src/meta/telemetry.js');
+  const payload = tm.statsPayload(getProfile());
+  ok('the upload carries the device, not the save', 'device' in payload && !('device' in payload.profile));
+  const wk = await import('../../collector/worker.js');
+  const cr = wk.cleanRun({ at: 1, room: 3, perf: { fps: '59.5', p95: 18, bg: 'evil', junk: 1, q: 2 } });
+  ok('collector keeps a run\'s perf, typed', cr.perf.fps === 59.5 && cr.perf.bg === '3d' && cr.perf.q === 2 && !('junk' in cr.perf)
+    && wk.cleanRun({ at: 1 }).perf === null);
+  const dev = wk.cleanDevice({ gpu: 'g'.repeat(500), browser: 'Chrome 129', os: 'macOS', cores: '10', mem: 16, extra: 'x' });
+  ok('collector keeps the device, capped', dev.gpu.length === 120 && dev.cores === 10 && !('extra' in dev) && wk.cleanDevice('nope') === null
+    && readFileSync('collector/worker.js', 'utf8').includes('device: cleanDevice(body.device) ?? prev?.device ?? null'));
+  const pf = await import('../../analytics/perf.js');
+  ok('dashboard: GPU names shortened', pf.gpuShort('ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Pro, Unspecified Version)') === 'Apple M2 Pro'
+    && pf.gpuShort('ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)') === 'NVIDIA GeForce RTX 3070'
+    && pf.gpuShort('Mali-G78') === 'Mali-G78');
+  const st = await import('../../analytics/stats.js');
+  const prof = st.sanitizeProfile({ playerId: 'abcd', history: [
+    { at: 1, room: 2, perf: { fps: 40, p95: 30, drop: 12, worst: 90, hz: 60, bg: '3d', q: 1, dpr: 2, vw: 1440, vh: 900 } },
+    { at: 2, room: 3, perf: { fps: 60, p95: 17, drop: 1, worst: 40, hz: 60, bg: '3d', q: 0, dpr: 2, vw: 1440, vh: 900 } },
+    { at: 3, room: 1 }] });
+  const players = [{ key: 'a', label: '<b>A</b>', profile: prof, device: pf.sanitizeDevice({ gpu: '<img>', browser: 'Chrome 129', cores: 8 }) }];
+  const runs = st.allRuns(players);
+  const rows = pf.perfRows(players, runs);
+  ok('dashboard: per-player medians over measured runs', rows.length === 1 && rows[0].runs === 2 && rows[0].fps === 50 && rows[0].worst === 90 && rows[0].q === 0);
+  const html = pf.perfTable(players, runs);
+  ok('dashboard: the Performance card escapes save text and grades fps', html.includes('&lt;b&gt;A&lt;/b&gt;') && html.includes('&lt;img&gt;') && !html.includes('<img>')
+    && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs), true)")
+    && readFileSync('analytics/index.html', 'utf8').includes("'perf.js'"));
+  ok('dashboard: CSV has the frame rate per run', st.toCsv(runs).split('\n')[0].endsWith(',fps,p95,drop,hz') && st.toCsv(runs).split('\n')[2].includes(',60,17,1,60'));
+}

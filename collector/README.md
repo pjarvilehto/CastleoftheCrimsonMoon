@@ -44,9 +44,11 @@ the KV binding stay as they are.
 
 ## API
 
-- `POST /collect` — `{ playerId, build, profile }` as text/plain JSON (≤250KB).
+- `POST /collect` — `{ playerId, build, device, profile }` as text/plain JSON (≤250KB).
   Only the dashboard's fields are stored, type-checked and size-capped
-  (0.119). Limits: 30 POSTs a minute per client IP (in memory, never
+  (0.119). 0.130: each run may carry `perf` (fps, p95 frame ms, % dropped
+  frames, worst frame, refresh rate, background mode, window size), and
+  `device` (GPU, browser, OS, cores, memory, screen) is kept per player. Limits: 30 POSTs a minute per client IP (in memory, never
   stored), one per second per player → `429`.
 - `GET /players` with `authorization: Bearer <READ_KEY>` (0.119; the older
   `?key=READ_KEY` still works) — every player
