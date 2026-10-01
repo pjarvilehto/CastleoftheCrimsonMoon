@@ -12,7 +12,8 @@
 //   sys  — gray   (deaths, misc)
 //   summon — violet (the boss calls a skeleton, 0.092)
 
-import { el, setBackground, show, transitionTo } from '../../core/scene.js';
+import { setBackground, transitionTo, go } from '../../core/scene.js';
+import { el } from '../../core/dom.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile } from '../../meta/profile.js';
@@ -30,7 +31,6 @@ import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
-import { runEndScene } from './runEndScene.js';
 
 export function dungeonScene() {
   const run = createRun();
@@ -286,6 +286,6 @@ export function dungeonScene() {
 
   function endRun(root, outcome) {
     shareStats(settleRun(run, outcome)); // play stats (0.102)
-    show(runEndScene(run, outcome));
+    go('runEnd', run, outcome);
   }
 }

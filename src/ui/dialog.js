@@ -9,7 +9,8 @@
 // onKey gets every key (lowercased: 'enter', 'escape', 'y', ...); keys it
 // ignores are still swallowed. close() is safe to call twice.
 
-import { el, pushKeyTrap, releaseKeyTrap } from '../core/scene.js';
+import { el } from '../core/dom.js';
+import { pushKeyTrap, releaseKeyTrap } from '../core/hotkeys.js';
 
 export function openDialog({
   label, children = [], onKey = null, backdropCloses = false,

@@ -3,7 +3,7 @@
 // at the peak of the red death flash (fx.js deathFlash) and stays up, its
 // button pulsing in the 'active' red state — the only way out.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 
 export function showDeathModal(run, onAccept) {
   let overlay;

@@ -157,15 +157,14 @@ globalThis.fetch = async (url) => ({ ok: true, json: async () => JSON.parse(read
 
 // ---------- boot ----------
 export const { loadData, DATA } = await import('../../src/shared/data.js');
-export const { show, handleKey, setBackground, transitionTo } = await import('../../src/core/scene.js');
+export const { show, setBackground, transitionTo } = await import('../../src/core/scene.js');
+export const { handleKey } = await import('../../src/core/hotkeys.js');
 export const { createRun } = await import('../../src/run/runState.js');
 export const { generateRoom } = await import('../../src/run/roomGen.js');
 export const { scaleEnemy } = await import('../../src/shared/balance.js');
 export const { createCombat, playerAttack } = await import('../../src/run/combat.js');
 export const { shrineOffers, canAffordOffer, acceptOffer } = await import('../../src/run/shrine.js');
-export const { dungeonScene } = await import('../../src/ui/scenes/dungeonScene.js');
-export const { hubScene } = await import('../../src/ui/scenes/hubScene.js');
-export const { titleScene } = await import('../../src/ui/scenes/titleScene.js');
+export const { dungeonScene, hubScene, titleScene } = await import('../../src/ui/scenes/index.js');
 export const { resetProfile, getProfile } = await import('../../src/meta/profile.js');
 await loadData();
 

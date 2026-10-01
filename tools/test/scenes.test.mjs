@@ -50,7 +50,7 @@ process.on('uncaughtException', (e) => {
 // silently dropped, so buttons never got data-key2 and space did nothing.
 // A synthetic setAttribute button can't catch that class of break.
 {
-  const { el: mkEl } = await import('../../src/core/scene.js');
+  const { el: mkEl } = await import('../../src/core/dom.js');
   let clicked = 0;
   const btn = mkEl('button', { key: 'd', key2: ' ', onclick: () => clicked++ }, 'Push Deeper');
   ok('el() wires key2 to data-key2', btn.attrs['data-key2'] === ' ' && btn.attrs.key2 === undefined);
@@ -75,7 +75,8 @@ process.on('uncaughtException', (e) => {
     p.coins === snap.coins && p.xp === snap.xp && p.records.runs === snap.runs && snap.coins === 100 && snap.runs === 1);
 
   let clicked = 0;
-  const { el: mkEl, initHotkeys } = await import('../../src/core/scene.js');
+  const { el: mkEl } = await import('../../src/core/dom.js');
+const { initHotkeys } = await import('../../src/core/hotkeys.js');
   const btn = mkEl('button', { key: 'r', onclick: () => clicked++ }, 'Retreat');
   registry.app.append(btn);
   transitionTo(() => {}, 50);
@@ -176,7 +177,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 {
   const cl = await import('../../src/ui/changelog.js');
   const { nextChangelog } = await import('../bump.mjs');
-  const { pushKeyTrap, releaseKeyTrap, activeKeyTrap } = await import('../../src/core/scene.js');
+  const { pushKeyTrap, releaseKeyTrap, activeKeyTrap } = await import('../../src/core/hotkeys.js');
   const full = JSON.parse(readFileSync('assets/data/changelog.json', 'utf8'));
   const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
   const vs = Object.keys(full);
@@ -227,7 +228,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 {
   const { openDialog } = await import('../../src/ui/dialog.js');
   const { confirmPrompt } = await import('../../src/ui/confirmPrompt.js');
-  const { activeKeyTrap } = await import('../../src/core/scene.js');
+  const { activeKeyTrap } = await import('../../src/core/hotkeys.js');
   const realBody = globalThis.document.body;
   globalThis.document.body = new El('body');
   show(hubScene());
@@ -348,4 +349,24 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && np.includes('const low = (asc - desc - cap) / 2;') && np.includes('setTimeout(() => { centerCaps(input);'));
   const { centerCaps } = await import('../../src/ui/namePrompt.js');
   ok('centerCaps is a safe no-op without a real layout engine', centerCaps(new El('input')) === 0);
+}
+
+// T82: 0.117 — scenes switch by name through the router and never import
+// each other; scene.js's DOM builder and hotkeys live in their own modules.
+{
+  const { go, registerScene, currentScene } = await import('../../src/core/scene.js');
+  const files = ['titleScene', 'hubScene', 'dungeonScene', 'runEndScene'].map((n) => readFileSync(`src/ui/scenes/${n}.js`, 'utf8'));
+  ok('no scene imports another scene', files.every((s) => !/from '\.\/\w+Scene\.js'/.test(s)));
+  let made = 0;
+  registerScene('probe', (x) => { made = x; return { probe: true, enter(root) { root.append('PROBE'); } }; });
+  go('probe', 7);
+  await sleep(1100);
+  ok('go(name, ...args) builds and shows the registered scene', made === 7 && currentScene().probe && t().includes('PROBE'));
+  let threw = false;
+  try { go('nope'); } catch { threw = true; }
+  ok('an unknown scene name fails loudly', threw);
+  ok('scene.js no longer builds DOM or handles keys', !/export function (el|handleKey)\(/.test(readFileSync('src/core/scene.js', 'utf8'))
+    && readFileSync('src/core/dom.js', 'utf8').includes('export function el(') && readFileSync('src/core/hotkeys.js', 'utf8').includes('export function handleKey('));
+  go('title');
+  await sleep(1100);
 }

@@ -5,7 +5,7 @@
 // Portrait convention: assets/chars/<enemy id>.webp, with alpha (0.078:
 // WebP q85 — 9.6MB of PNGs became 1.5MB).
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { hpBar, rarityClass } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';

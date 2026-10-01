@@ -1,6 +1,6 @@
 // ui/hud.js — small shared rendering helpers.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 
 export function hpBar(current, max, color) {
   const pct = Math.max(0, Math.round((current / max) * 100));

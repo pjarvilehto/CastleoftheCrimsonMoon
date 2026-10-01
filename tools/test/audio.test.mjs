@@ -321,7 +321,7 @@ fresh();
 // under its button (and closes again).
 {
   const { cornerBar, onOffToggle, panelToggle } = await import('../../src/ui/cornerToggles.js');
-  const { el } = await import('../../src/core/scene.js');
+  const { el } = await import('../../src/core/dom.js');
   let state = false;
   const t1 = onOffToggle('MUSIC', { cls: 'music-toggle', get: () => state, flip: () => (state = !state) });
   ok('ON/OFF toggle: label + lit class follow the state', t1.textContent === 'MUSIC: OFF' && !t1.classList.contains('on'));

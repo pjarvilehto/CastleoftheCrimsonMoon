@@ -93,8 +93,10 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
 
 `src/main.js` boots: load all data JSONs into a `DATA` singleton →
 preload/decode all art → title scene. `src/core/scene.js` is the scene
-manager (`show()`, transitions, background crossfader, the `el()` DOM helper,
-hotkey dispatch, dialog key trap). `src/meta/` is persistent profile state
+manager (`show()`, transitions, background crossfader) and router (0.117:
+scenes switch with `go('hub')`, registered in `ui/scenes/index.js` — they
+never import each other); `core/dom.js` has the `el()` DOM helper and
+`core/hotkeys.js` hotkey dispatch + the dialog key-trap stack. `src/meta/` is persistent profile state
 (localStorage, versioned save schema + migrations, run history,
 export/import base64 save codes on the title screen). `src/run/` is
 per-dungeon state (room generation with threat budgets, combat core with
@@ -238,7 +240,7 @@ static play-stats page.
 - Keep files under ~300 lines; one responsibility per file.
 - Dialogs (0.115): build every overlay with `ui/dialog.js openDialog({ label,
   children, onKey(k, close) })` — it owns the keyboard while open (a key-trap
-  stack in scene.js, so a dialog over a dialog hands the keys back on close)
+  stack in core/hotkeys.js, so a dialog over a dialog hands the keys back on close)
   and the scene's hotkeys can't fire underneath. Yes/no: `ui/confirmPrompt.js`.
 - Upper-right column (0.115, `ui/cornerToggles.js`): one flex column;
   add a button with `onOffToggle(label, { get, flip })` or

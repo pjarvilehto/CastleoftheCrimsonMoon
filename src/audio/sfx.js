@@ -72,7 +72,8 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   const vary = rate == null ? planVariation(A.variation?.[name]) : null;
   const r = rate ?? vary?.rate ?? (jitter ? 0.88 + Math.random() * 0.24 : 1);
   const out = ctx.createGain();
-  out.gain.value = dbToGain((A.clips?.[name]?.gainDb) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
+  // generated layers (synth.js) have no trim: their level comes from the caller's gainDb
+  out.gain.value = dbToGain((A.clips?.[name]?.gainDb ?? 0) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
   let node = out;
   if (pan && ctx.createStereoPanner) {
     const p = ctx.createStereoPanner();
@@ -121,7 +122,10 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
 export function sfx(name, opts = {}) {
   if ((!CLIPS[name] && !SYNTH[name]) || !ctx || muted) return;
   const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
-  if (SYNTH[name]) { start(name, null, at, opts); return; }
+  if (SYNTH[name]) {
+    try { start(name, null, at, opts); } catch { /* audio must never break gameplay */ }
+    return;
+  }
   bufferFor(name)
     .then((buffer) => start(name, buffer, at, opts))
     .catch(() => { /* audio must never break gameplay */ });

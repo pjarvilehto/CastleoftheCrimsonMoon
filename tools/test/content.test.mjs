@@ -156,7 +156,7 @@ fresh();
     // 0.079: run/ emits a DOM-free { item } part; hud.logLine renders it
     // as the rarity-4 span.
     const { logLine } = await import('../../src/ui/hud.js');
-    const { el: mkEl } = await import('../../src/core/scene.js');
+    const { el: mkEl } = await import('../../src/core/dom.js');
     const logBox = mkEl('div', {});
     logLine(logBox, epic.text, 'relic');
     ok('relic line renders rarity-colored name', logBox.all((n) => n.className === 'rarity-4').length === 1);

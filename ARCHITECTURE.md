@@ -67,9 +67,12 @@ src/
 ├── core/bg3dMath.js      pure math: cover mapping, sway, grid, matrices,
 │                         shader mirror + auto overscan (tested in Node)
 ├── core/scene.js         scene manager, transitionTo() (try/finally!),
-│                         bg crossfader (bg0/bg1 layers), el() helper,
-│                         handleKey()/initHotkeys(), setKeyTrap() for
-│                         dialogs, currentScene()/onSceneChange() (0.094)
+│                         bg crossfader (bg0/bg1 layers),
+│                         currentScene()/onSceneChange() (0.094), router:
+│                         registerScene()/go(name, ...args) (0.117)
+├── core/dom.js           el() DOM builder (0.117 split)
+├── core/hotkeys.js       handleKey()/initHotkeys(), dialog key-trap stack
+│                         (push/releaseKeyTrap) (0.117 split)
 ├── meta/                 PERSISTS across runs (localStorage)
 │   ├── storage.js        the only file that touches the SAVE in localStorage;
 │   │                     exportProfile()/importProfile() — base64 save
@@ -94,7 +97,10 @@ src/
 │   ├── roomGen.js        threat-budget combat rooms, boss every 8,
 │   │                     ONE shrine in every 8-room stretch (2-7,
 │   │                     10-15, ...: run.shrineRooms), room kinds
-│   ├── combat.js         combat core: attacks, crits, lifesteal,
+│   ├── combat.js         combat core, one action in phases (0.117): rollHit
+│   │                     -> smash | strike(+spill) -> lifesteal ->
+│   │                     enemyPhase (dodge/armor/thorns/revive) ->
+│   │                     summons -> cleared; attacks, crits, lifesteal,
 │   │                     MULTI-KILL damage spill — HEAVY attacks only
 │   │                     (>= 2x target HP; basic attacks never spill);
 │   │                     boss SUMMONS (0.092): the meter fills a step a
@@ -270,7 +276,8 @@ MUSIC/SOUND toggles are click-only buttons (persist to localStorage).
   (`python3 tools/gen-depth.py <model.onnx> file.jpg`; the smoke suite
   fails without one).
 - New scene: create `ui/scenes/xScene.js` returning `{ enter(root) }`,
-  navigate via `show(xScene())`. Mid-run scenes add `inRun: true` (the
+  register it in `ui/scenes/index.js` and navigate with `go('x', ...args)`
+  (0.117; scenes never import each other). Mid-run scenes add `inRun: true` (the
   update prompt waits for them to end). A dialog over a scene takes the
   keyboard with `setKeyTrap(fn)` and releases it with `setKeyTrap(null)`.
 - Item rarity colors (0.047): tier-driven via `hud.js :: rarityClass /

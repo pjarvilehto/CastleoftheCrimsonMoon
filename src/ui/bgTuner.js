@@ -3,7 +3,7 @@
 // here even without ?debug) and copies them as JSON, ready to be sent over
 // and baked into backgrounds.json `parallax` as the default for everyone.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { panelToggle } from './cornerToggles.js';
 import { isBg3dActive, liveTuning, setLiveTuning, saveLiveTuning, resetLiveTuning } from '../core/bg3d.js';
 

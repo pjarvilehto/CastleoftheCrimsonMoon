@@ -1,8 +1,8 @@
 // ui/scenes/titleScene.js — title screen -> hub, plus save transfer.
 
-import { el, setBackground, show } from '../../core/scene.js';
+import { setBackground, go } from '../../core/scene.js';
+import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
-import { hubScene } from './hubScene.js';
 import { getProfile, resetProfile, exportSave, importSave } from '../../meta/profile.js';
 import { loadProfile } from '../../meta/storage.js';
 import { play } from '../../audio/music.js';
@@ -63,7 +63,7 @@ export function titleScene() {
               `${p.records.kills} kills, deepest room ${p.records.bestRoom}.`)
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
-          el('button', { class: 'primary', key: 'e', onclick: () => show(hubScene()) }, 'Enter the Castle'),
+          el('button', { class: 'primary', key: 'e', onclick: () => go('hub') }, 'Enter the Castle'),
           // Shown only when a save with progress exists: offer to wipe.
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)
             ? el('button', {

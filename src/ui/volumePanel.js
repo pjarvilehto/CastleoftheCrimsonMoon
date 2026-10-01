@@ -4,7 +4,7 @@
 // separate: muting keeps the slider positions. 0.114: a Score row picks
 // the music (new dark ambient score / classic beds, audio/music.js).
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { panelToggle } from './cornerToggles.js';
 import { getVolumes, setVolume } from '../audio/mixer.js';
 import { sfx } from '../audio/sfx.js';

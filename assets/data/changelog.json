@@ -1,4 +1,8 @@
 {
+  "0.117": [
+    "Fixed: in 0.116 a critical hit could freeze the fight (its sound effect errored)",
+    "Under the hood: the combat engine and scene switching are reorganised for easier changes (no gameplay change)"
+  ],
   "0.116": [
     "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
   ],

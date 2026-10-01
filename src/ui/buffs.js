@@ -3,7 +3,7 @@
 // so per-tick combat re-renders can't touch it. 0.096: compact equal
 // cells, and the same boon twice is one icon with a ×2 badge.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 
 export function createBuffBar() {
   return el('div', { id: 'buffs', style: 'display:none' });

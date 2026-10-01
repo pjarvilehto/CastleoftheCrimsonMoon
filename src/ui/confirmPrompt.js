@@ -3,7 +3,7 @@
 // (ui/dialog.js): the yes button's key / Enter confirms, the no button's
 // key / Esc cancels.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 
 // { title, lines: [text], yes: [label, key], no: [label, key], onYes, onNo }

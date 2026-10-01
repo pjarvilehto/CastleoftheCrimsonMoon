@@ -133,7 +133,7 @@ fresh();
 // the battle line carries --n (enemy count) for the fit-to-width card size.
 {
   const { logLine } = await import('../../src/ui/hud.js');
-  const { el: mkEl } = await import('../../src/core/scene.js');
+  const { el: mkEl } = await import('../../src/core/dom.js');
   const log = mkEl('div', {});
   for (let i = 0; i < 260; i++) logLine(log, `line ${i}`);
   ok('combat log capped at 200 lines', log.children.length === 200 && log.children[0].textContent.includes('line 60'));

@@ -8,7 +8,7 @@
 // The dialog owns the keyboard while open (Esc / Enter / C close it;
 // ui/dialog.js), and hands it back to whatever was below.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { DATA } from '../shared/data.js';
 import { compareVersions } from '../shared/version.js';

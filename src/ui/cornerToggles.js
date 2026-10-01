@@ -6,7 +6,7 @@
 //
 // Dimmed when off so they never distract players; lit gold when on.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 
 // An ON/OFF button: get() -> current state, flip() -> new state.
 export function onOffToggle(label, { get, flip, cls = '' }) {

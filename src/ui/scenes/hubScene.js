@@ -2,7 +2,8 @@
 // Currency split (0.059): XP trains disciplines; coins buy potions,
 // alchemy tracks, and Forge item enhancements.
 
-import { el, setBackground, show, currentScene } from '../../core/scene.js';
+import { setBackground, currentScene, go } from '../../core/scene.js';
+import { el } from '../../core/dom.js';
 import { preloadRest, restProgress } from '../../shared/preload.js';
 import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
@@ -17,8 +18,6 @@ import {
 import { statBox, describeItem, itemName } from '../hud.js';
 import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
-import { dungeonScene } from './dungeonScene.js';
-import { titleScene } from './titleScene.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 
 // Great Hall potion count color (0.089): green when the satchel is full,
@@ -67,17 +66,17 @@ export function hubScene() {
   function descend(btn) {
     const p = getProfile();
     const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendCoins(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
-    if (!left.length) return go(btn);
+    if (!left.length) return enterDungeon(btn);
     confirmPrompt({
       title: 'Descend Now?',
       lines: [`You still have ${left.join(' and ')} to spend.`, 'Are you sure you want to proceed?'],
       yes: ['Descend Anyway', 'y'],
       no: ['Stay and Spend', 'n'],
-      onYes: () => go(btn),
+      onYes: () => enterDungeon(btn),
     });
   }
 
-  async function go(btn) {
+  async function enterDungeon(btn) {
     if (!restProgress().ready) {
       btn.setAttribute('disabled', '');
       const label = () => { const q = restProgress(); btn.textContent = `Gathering shadows… ${q.total ? Math.round((100 * q.done) / q.total) : 0}%`; };
@@ -87,7 +86,7 @@ export function hubScene() {
       clearInterval(timer);
       if (currentScene() !== scene) return; // left the hall meanwhile
     }
-    show(dungeonScene());
+    go('dungeon');
   }
 
   function render(root) {
@@ -229,7 +228,7 @@ export function hubScene() {
             equipSection)),
         el('div', { class: 'btn-row' },
           descendBtn,
-          el('button', { key: 'b', onclick: () => show(titleScene()) }, 'Back')))
+          el('button', { key: 'b', onclick: () => go('title') }, 'Back')))
     );
   }
 }

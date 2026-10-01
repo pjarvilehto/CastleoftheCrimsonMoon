@@ -1,5 +1,5 @@
 {
-  "version": "0.116",
+  "version": "0.117",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -17,6 +17,8 @@
     "src/core/bg3dPuffs.js",
     "src/core/bg3dQuality.js",
     "src/core/bg3dTuning.js",
+    "src/core/dom.js",
+    "src/core/hotkeys.js",
     "src/core/scene.js",
     "src/main.js",
     "src/meta/equipment.js",
@@ -62,6 +64,7 @@
     "src/ui/particles.js",
     "src/ui/scenes/dungeonScene.js",
     "src/ui/scenes/hubScene.js",
+    "src/ui/scenes/index.js",
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
@@ -69,6 +72,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.117": [
+      "Fixed: in 0.116 a critical hit could freeze the fight (its sound effect errored)",
+      "Under the hood: the combat engine and scene switching are reorganised for easier changes (no gameplay change)"
+    ],
     "0.116": [
       "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
     ],
@@ -125,10 +132,6 @@
     ],
     "0.103": [
       "Play stats now reach the developer automatically"
-    ],
-    "0.102": [
-      "Descending with XP or coins still to spend now asks first",
-      "Play stats are shared automatically (anonymous) so the developer sees every tester's runs"
     ]
   }
 }

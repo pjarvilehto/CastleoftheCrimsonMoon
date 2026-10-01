@@ -1,5 +1,7 @@
-// core/scene.js — scene manager, transitions, background crossfader.
-// Scenes are objects with enter(el) and optional leave().
+// core/scene.js — scene manager, transitions, background crossfader, and
+// the scene router (0.117). Scenes are objects with enter(el) and optional
+// leave(). 0.117: the el() DOM builder lives in core/dom.js and hotkeys +
+// dialog key traps in core/hotkeys.js.
 //
 // Transition model:
 //   - Scene switches and room changes go through transitionTo(): windows
@@ -15,7 +17,6 @@ let activeBg = null;   // the bg-layer element currently opaque
 let transitioning = false; // re-entry guard (rapid keys during a fade)
 let bgListener = null;     // the 3D background renderer, when running (0.083)
 let sceneListener = null;  // the update check (0.094): told after every scene switch
-const keyTraps = [];       // open dialogs that own the keyboard, newest last (0.094; a stack 0.115)
 
 // Tell a listener (core/bg3d.js) about every background change; it is
 // told the current one immediately.
@@ -38,18 +39,19 @@ export function show(scene) {
 // update prompt waits for a run to end — scenes mid-run set inRun).
 export const currentScene = () => current;
 export function onSceneChange(fn) { sceneListener = fn; }
+// Mid-fade: the outgoing scene is still in the DOM (hotkeys.js ignores keys).
+export const isTransitioning = () => transitioning;
 
-// A dialog layered over the scene takes the keyboard while it's open
-// (0.094): fn(key) handles every key, so the scene's hotkeys underneath
-// can't fire. Traps stack (0.115): a dialog opened over another gets the
-// keys, and closing it hands them back to the one underneath — whichever
-// order they close in. ui/dialog.js does this for every dialog.
-export function pushKeyTrap(fn) { keyTraps.push(fn); }
-export function releaseKeyTrap(fn) {
-  const i = keyTraps.lastIndexOf(fn);
-  if (i >= 0) keyTraps.splice(i, 1);
+// The router (0.117): scenes switch by name — go('hub'), go('runEnd', run,
+// outcome) — instead of importing each other (title <-> hub, hub ->
+// dungeon -> run end -> hub was an import cycle). ui/scenes/index.js
+// registers the four scenes.
+const scenes = {};
+export function registerScene(name, factory) { scenes[name] = factory; }
+export function go(name, ...args) {
+  if (!scenes[name]) throw new Error(`unknown scene: ${name}`);
+  show(scenes[name](...args));
 }
-export const activeKeyTrap = () => keyTraps.at(-1) ?? null;
 
 // Fade the windows out, run `work()` (swap content and/or background),
 // then fade the windows back in. Ignored if a transition is already
@@ -94,95 +96,4 @@ export function setBackground(file) {
   }
   activeBg = next;
   bgListener?.(file);
-}
-
-export function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v === false || v === null || v === undefined) continue; // boolean attrs: false/absent = not set
-    if (k === 'class') node.className = v;
-    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-    else if (k === 'key') node.setAttribute('data-key', String(v).toLowerCase());
-    // Secondary hotkey (e.g. Space for Push Deeper). No label underline —
-    // it's a hidden convenience binding, not advertised on the button.
-    else if (k === 'key2') node.setAttribute('data-key2', String(v).toLowerCase());
-    else node.setAttribute(k, v === true ? '' : v);
-  }
-  // Hotkey affordance: underline the first occurrence of the key letter
-  // in the label (e.g. "<u>A</u>ttack").
-  if (attrs.key) {
-    const k = String(attrs.key).toLowerCase();
-    for (let i = 0; i < children.length; i++) {
-      if (typeof children[i] === 'string') {
-        const idx = children[i].toLowerCase().indexOf(k);
-        if (idx !== -1) {
-          const s = children[i];
-          children.splice(i, 1,
-            s.slice(0, idx),
-            el('u', {}, s.slice(idx, idx + 1)),
-            s.slice(idx + 1));
-          break;
-        }
-      }
-    }
-  }
-  const content = children.flat();
-  if (tag === 'button') {
-    // Buttons are flex-centered (styles.css), and flex trims whitespace
-    // around anonymous text items — the underline splice splits "Drink
-    // Potion" into "Drink " + <u>p</u> + "otion", losing the space
-    // ("DRINKPOTION", 0.050). A span wrapper keeps the label one inline
-    // context where the space survives.
-    node.append(el('span', { class: 'btn-label' }, ...content));
-    return node;
-  }
-  for (const child of content) {
-    if (child === null || child === undefined || child === false) continue; // conditional children
-    node.append(child instanceof Node ? child : document.createTextNode(child));
-  }
-  return node;
-}
-
-// ---- keyboard shortcuts ----
-// Buttons opt in with `key: 'x'` in el(); pressing the letter clicks the
-// FIRST enabled matching button. Enter clicks the primary button.
-// Registered once from main.js.
-
-export function handleKey(key) {
-  // The outgoing scene is still in the DOM while it fades — its buttons
-  // must not fire (0.077: a second R during the fade re-banked the run).
-  if (transitioning) return false;
-  // Debug "hide foreground" (0.083): the UI is invisible, so its hotkeys
-  // must not click unseen buttons.
-  if (document.body?.classList?.contains('fg-hidden')) return false;
-  const k = key.toLowerCase();
-  if (keyTraps.length) return keyTraps.at(-1)(k);
-  if (k === 'enter') {
-    const primary = document.querySelector('button.primary:not([disabled])');
-    if (primary) { primary.click(); return true; }
-    return false;
-  }
-  // Space is a secondary binding (data-key2) — currently Push Deeper in
-  // the dungeon. Deliberately NOT a primary key: space does nothing in
-  // the hub, so an idle tap can't start a run.
-  if (k === ' ') {
-    const btns = document.querySelectorAll('button[data-key2=" "]:not([disabled])');
-    if (btns.length) { btns[0].click(); return true; }
-    return false;
-  }
-  if (!/^[a-z0-9]$/.test(k)) return false;
-  const btns = document.querySelectorAll(`button[data-key="${k}"]:not([disabled])`);
-  if (btns.length) { btns[0].click(); return true; }
-  return false;
-}
-
-export function initHotkeys() {
-  document.addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    // Typing into a text field (the Import Save box) is text, not hotkeys —
-    // 'e'/'n'/Enter used to fire title-screen buttons mid-paste (0.077).
-    const t = e.target;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;
-    if (handleKey(e.key)) e.preventDefault();
-  });
 }

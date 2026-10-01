@@ -4,7 +4,9 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { show, initHotkeys, el, onBackgroundChange } from './core/scene.js';
+import { onBackgroundChange, go } from './core/scene.js';
+import { el } from './core/dom.js';
+import { initHotkeys } from './core/hotkeys.js';
 import { initBg3d, showBackground3d } from './core/bg3d.js';
 import { volumeToggle } from './ui/volumePanel.js';
 import { changelogToggle } from './ui/changelog.js';
@@ -12,7 +14,7 @@ import { cornerBar, onOffToggle } from './ui/cornerToggles.js';
 import { debugToggles, invulnerableToggle } from './ui/debugToggles.js';
 import { loadData, DATA } from './shared/data.js';
 import { preloadAssets, preloadRest } from './shared/preload.js';
-import { titleScene } from './ui/scenes/titleScene.js';
+import './ui/scenes/index.js'; // registers the scenes with the router
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
 import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
 import { initUpdateCheck } from './ui/updatePrompt.js';
@@ -76,7 +78,7 @@ async function boot() {
   initMusic();
   initSfx();
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
-  show(titleScene());
+  go('title');
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
   shareStats(getProfile()); // play stats: history from before this session too (0.102)
 }

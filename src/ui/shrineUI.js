@@ -3,7 +3,7 @@
 // Pure view + wiring; the boon math lives in run/shrine.js. The shrine
 // deals 3 random offers from the pool (kept on the room across renders).
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 import { hpBar, logLine } from './hud.js';

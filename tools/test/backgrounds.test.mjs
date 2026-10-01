@@ -57,7 +57,7 @@ fresh();
   const body = globalThis.document.body;
   globalThis.document.body = { classList: { contains: (c) => c === 'fg-hidden' } };
   let clicked = 0;
-  const { el: mkEl } = await import('../../src/core/scene.js');
+  const { el: mkEl } = await import('../../src/core/dom.js');
   const btn = mkEl('button', { key: 'q', onclick: () => clicked++ }, 'Q');
   registry.app.append(btn);
   ok('hotkeys off while the foreground is hidden', handleKey('q') === false && clicked === 0);

@@ -9,7 +9,8 @@
 // the loot is banked). "Later" silences that version for this session —
 // the next page load boots the new build anyway.
 
-import { el, currentScene, onSceneChange } from '../core/scene.js';
+import { currentScene, onSceneChange } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { isNewer } from '../shared/version.js';
 

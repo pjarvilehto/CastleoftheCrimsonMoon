@@ -3,7 +3,8 @@
 // FOREGROUND, BG VIEW (3D / FLAT / DEPTH), NEXT BG, BG TUNING (0.083/0.084)
 // — and FORCE CRITS / FORCE MEGA CRITS (0.105). Players never see them.
 
-import { el, setBackground } from '../core/scene.js';
+import { setBackground } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { isBg3dActive, bgView, setBgView } from '../core/bg3d.js';
 import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';

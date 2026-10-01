@@ -1,9 +1,9 @@
 // ui/scenes/runEndScene.js — death or retreat summary, then back to hub.
 
-import { el, setBackground, show } from '../../core/scene.js';
+import { setBackground, go } from '../../core/scene.js';
+import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
 import { statBox, itemName } from '../hud.js';
-import { hubScene } from './hubScene.js';
 import { play } from '../../audio/music.js';
 import { sfx } from '../../audio/sfx.js';
 
@@ -51,7 +51,7 @@ export function runEndScene(run, outcome) {
             : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },
-            el('button', { class: 'primary', key: 'g', onclick: () => show(hubScene()) }, 'Return to the Great Hall'))
+            el('button', { class: 'primary', key: 'g', onclick: () => go('hub') }, 'Return to the Great Hall'))
         )
       );
     },

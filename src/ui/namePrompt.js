@@ -5,7 +5,7 @@
 // While open it owns the keyboard (ui/dialog.js): typing goes to the field,
 // Enter confirms; Esc closes only when changing an existing name.
 
-import { el } from '../core/scene.js';
+import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { getProfile, setPlayerName } from '../meta/profile.js';
 import { cleanName, NAME_MAX } from '../meta/names.js';
