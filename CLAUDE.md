@@ -405,7 +405,8 @@ sometimes — fetch all branches to find it.
 
 ## State at handover (0.161)
 
-- Live: the Old Wizard voice-over (0.161, 122 takes), treasure rooms
+- Live: the Old Wizard voice-over (0.161; all 122 takes reviewed and
+  approved by the owner in the VO Lab by 0.167), treasure rooms
   (0.155), click-to-attack, 35 fight paintings + 4 throne rooms + 6
   treasure rooms, no repeats in a run, ordered transitions.
 - 0.157 was a cleanup pass over the whole project (four audits, every
@@ -416,9 +417,6 @@ sometimes — fetch all branches to find it.
   quality ladder stepped down to flat, and the camera lurched after a
   hidden tab; a bad strike-layer name played a crit ring. The sim output
   is byte-identical to 0.156.
-- Not yet heard in a real browser session: the narrator's level against the
-  music and hits (`audio.json narration.targetDb`, -11: just over the hits)
-  and the room-entry delay against the painting's fade — tune by ear.
 - Not yet browser-checked: a boss fight in the new throne rooms (tests cover
   the pick). Treasure rooms aren't in the play stats yet (no history field —
   a candidate: which chest, what it gave; the collector would need it too).

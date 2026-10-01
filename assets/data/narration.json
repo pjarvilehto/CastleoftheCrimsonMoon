@@ -305,7 +305,7 @@
           "use_speaker_boost": true
         },
         "rendered": "2026-10-01T17:32:25Z",
-        "approved": false
+        "approved": true
       },
       {
         "take": 4,
@@ -453,7 +453,7 @@
           "use_speaker_boost": true
         },
         "rendered": "2026-10-01T17:32:25Z",
-        "approved": false
+        "approved": true
       },
       {
         "take": 2,
@@ -630,7 +630,7 @@
           "use_speaker_boost": true
         },
         "rendered": "2026-10-01T17:32:25Z",
-        "approved": false
+        "approved": true
       },
       {
         "take": 2,
@@ -1144,7 +1144,7 @@
           "use_speaker_boost": true
         },
         "rendered": "2026-10-01T17:32:25Z",
-        "approved": false
+        "approved": true
       }
     ],
     "boss_slain": [
@@ -1604,7 +1604,7 @@
           "use_speaker_boost": true
         },
         "rendered": "2026-10-01T17:32:25Z",
-        "approved": false
+        "approved": true
       },
       {
         "take": 3,
