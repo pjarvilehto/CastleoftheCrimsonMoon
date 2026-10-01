@@ -5,6 +5,7 @@
 import { setBackground, currentScene, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { preloadRest, restProgress } from '../../shared/preload.js';
+import { corridorsOn, corridorView } from '../corridors.js';
 import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile } from '../../meta/profile.js';
@@ -56,6 +57,7 @@ export function hubScene() {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
+      if (corridorsOn()) corridorView(); // (0.150: the 3D corridors load while the hall is up)
       // 0.133: the one-time benchmark request, once the hall has faded in;
       // 0.134: never over another dialog — it waits its turn
       // 0.136: …and never once a descent has started ("Gathering shadows…"

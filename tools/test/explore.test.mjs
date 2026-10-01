@@ -257,9 +257,9 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
     [F.texelsPerCell, F.height, F.reach, F.soften, F.strength, D.near, D.far, D.share, D.swap, D.rampSecs].every(Number.isFinite)
     && D.near < D.far && D.swap > 0 && D.swap < 1 && F.texelsPerCell >= 2);
   ok('every room theme has a bounce fill', Object.values(cfg.themes).every((t) => t.fill > 0));
-  const lab = readFileSync('src/explore/lab.js', 'utf8'), layer = readFileSync('src/explore/encounterLayer.js', 'utf8');
-  ok('the lab bakes the field for each floor and every lit surface reads it (the enemies too)',
-    /bakeLightField\(lab\.grid, lab\.level\.torches, cfg[,)]/.test(lab) && lab.includes('patchAll(lab.level.group)') && layer.includes('patchMaterial(billboard.mesh.material)'));
+  const world = readFileSync('src/explore/world.js', 'utf8'), layer = readFileSync('src/explore/encounterLayer.js', 'utf8');
+  ok('the world bakes the field for each floor and every lit surface reads it (the enemies too)',
+    /bakeLightField\(W\.grid, W\.level\.torches, cfg[,)]/.test(world) && world.includes('patchAll(W.level.group)') && layer.includes('patchMaterial(billboard.mesh.material)'));
 }
 
 // T105: 0.147 — the post stack, baked AO and bounce, the atmosphere:
@@ -283,9 +283,9 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
     num(P.bloom, ['threshold', 'knee', 'strength', 'levels']) && num(P.ssao, ['radius', 'bias', 'strength']) && Number.isFinite(P.highlightWhite)
     && num(cfg.ao, ['floor', 'floorReach', 'wall', 'wallReach']) && num(cfg.field, ['bounce', 'bounceReach', 'bouncePasses'])
     && ['dust', 'ember', 'smoke'].every((k) => num(cfg.atmosphere[k], ['count', 'speed', 'travel', 'size', 'maxPx']) && /^#[0-9a-f]{6}$/i.test(cfg.atmosphere[k].color)));
-  const q = readFileSync('src/explore/quality.js', 'utf8'), lab = readFileSync('src/explore/lab.js', 'utf8');
+  const q = readFileSync('src/explore/quality.js', 'utf8'), world = readFileSync('src/explore/world.js', 'utf8');
   ok('quality ladder: shadows, then SSAO, then bloom, then resolution', q.indexOf('castShadow = false') < q.indexOf("setFeature('ssao'") && q.indexOf("setFeature('ssao'") < q.indexOf("setFeature('bloom'") && q.indexOf("setFeature('bloom'") < q.indexOf('setScale('));
-  ok('the lab bakes the props\' AO, grades by tier and fills the air for each floor', lab.includes('bakeAO(lab.level.group') && lab.includes('paint.setGrade(') && lab.includes('createAtmosphere(lab.level.emitters'));
+  ok('the world bakes the props\' AO, grades by tier and fills the air for each floor', world.includes('bakeAO(W.level.group') && world.includes('paint.setGrade(') && world.includes('createAtmosphere(W.level.emitters'));
 }
 
 // T106: 0.148 — the painted room behind a fight: every room theme has one
@@ -314,7 +314,7 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   const page = readFileSync('dungeon-lab/index.html', 'utf8'), bd = readFileSync('src/explore/backdrop.js', 'utf8');
   const fight = layer.slice(layer.indexOf('function fight('), layer.indexOf('function shrine('));
   ok('backdrop: a fight fades its room\'s painting in and out; the dungeon rests behind it; the page has the game\'s background layers',
-    fight.includes('backdrop.show(spot.painting)') && fight.includes('backdrop.hide()') && lab.includes('if (!backdrop.covered()) paint.render(scene)')
+    fight.includes('backdrop.show(spot.painting)') && fight.includes('backdrop.hide()') && lab.includes('world.frame(t, dt, { render: !backdrop.covered()')
     && /id="backdrop"[\s\S]*id="bg-stack"[\s\S]*id="bg0"[\s\S]*id="bg1"/.test(page) && bd.includes('pauseBg3d(true)') && bd.includes('initBg3d('));
 }
 
@@ -330,4 +330,90 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('light cap: every patched surface, the bloom\'s input and the paint pass\'s input are capped at it',
     /#include <opaque_fragment>\\ngl_FragColor\.rgb = min\(gl_FragColor\.rgb, vec3\(maxLight\)\)/.test(field) && field.includes('FIELD.maxLight.value = cfg.render.maxLight')
     && /min\(max\(texture2D\(src, vUv \+ o\)\.rgb, vec3\(0\.0\)\), vec3\(maxLight\)\)/.test(bloom) && /min\(max\(texture2D\(tColor, vUv\)\.rgb, vec3\(0\.0\)\), vec3\(maxLight\)\)/.test(post));
+}
+
+// T108: 0.150 — the game's 3D corridors (?debug 3D CORRIDORS): a run's
+// stretch is one very linear floor with the game's rooms in order (the
+// shrine where the run put it, the boss last); the knight's way runs along
+// the trail, room by room, smoothly; the game reaches src/explore only
+// through ui/corridors.js; and with a stand-in view a run walks into each
+// room, takes its look from the 3D room and closes the view at the end
+{
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const { planStretch } = await import('../../src/explore/runFloor.js');
+  const { route, smoothWalk } = await import('../../src/explore/walkPath.js');
+  const bad = [];
+  let longest = 0;
+  for (let seed = 1; seed <= 40 && bad.length < 3; seed++) {
+    for (const shrine of [2, 5, 7]) {
+      const stretch = seed % 3, base = stretch * 8;
+      const p = planStretch(stretch, base + shrine, 8, cfg, seed);
+      const kinds = [...p.rooms.values()].map((r) => r.kind[0]).join('');
+      const want = Array.from({ length: 8 }, (_, i) => (i === 7 ? 'b' : i + 1 === shrine ? 's' : 'c')).join('');
+      if (kinds !== want || [...p.rooms.keys()].join() !== Array.from({ length: 8 }, (_, i) => base + i + 1).join()) { bad.push(`${seed}/${shrine}: ${kinds}`); continue; }
+      const trail = new Set(p.floor.trail), rooms = [...p.rooms.values()];
+      let at = p.floor.start;
+      rooms.forEach((r, i) => {
+        const cells = route(p.floor.trail, at, (x, z) => inRect(r.rect, x, z));
+        const ok1 = cells && cells.every((c, j) => (j === 0 || trail.has(`${c.x},${c.z}`)) && (j === 0 || Math.abs(c.x - cells[j - 1].x) + Math.abs(c.z - cells[j - 1].z) === 1));
+        const ahead = cells && rooms.slice(i + 1).some((o) => cells.some((c) => inRect(o.rect, c.x, c.z)));
+        if (!ok1 || ahead) bad.push(`${seed}/${shrine}: room ${r.number}`);
+        else { longest = Math.max(longest, cells.length); at = cells.at(-1); }
+      });
+      if (!route(p.floor.trail, at, (x, z) => x === p.floor.stairs.x && z === p.floor.stairs.z)) bad.push(`${seed}/${shrine}: stairs`);
+    }
+  }
+  ok('run floors: the stretch\'s rooms in walking order (shrine where the run put it, boss last), each reached along the trail without passing a later one, then the stairs',
+    bad.length === 0 && longest < 30, bad.join(' · ') || `longest ${longest}`);
+  const straight = smoothWalk([{ x: 0, z: 0 }, { x: 0, z: 1 }, { x: 0, z: 2 }, { x: 0, z: 3 }], 3, 0.45);
+  const s0 = straight.at(0), s1 = straight.at(straight.length);
+  ok('walk: a straight run is exact, looking down it', Math.abs(straight.length - 9) < 1e-9 && s0.x === 1.5 && s0.z === 1.5 && Math.abs(s1.z - 10.5) < 1e-9 && Math.abs(straight.heading(2, 1.8)) < 1e-9);
+  const bend = smoothWalk([{ x: 0, z: 0 }, { x: 0, z: 1 }, { x: 0, z: 2 }, { x: 1, z: 2 }, { x: 2, z: 2 }], 3, 0.45);
+  let gap = 0, turn = 0;
+  for (let s = 0; s < bend.length - 0.1; s += 0.05) {
+    const a = bend.at(s), b = bend.at(s + 0.05);
+    gap = Math.max(gap, Math.hypot(b.x - a.x, b.z - a.z));
+    turn = Math.max(turn, Math.abs(bend.heading(s + 0.05, 1.8) - bend.heading(s, 1.8)));
+  }
+  ok('walk: a corner is rounded (shorter than the cells), with no jump in place or in the look', bend.length < 12 && bend.length > 11 && gap < 0.06 && turn < 0.2, `${bend.length.toFixed(2)} m, gap ${gap.toFixed(3)}, turn ${turn.toFixed(3)}`);
+  ok('explore.json run: the walk is tuned there', ['walkSpeed', 'skipSpeed', 'ease', 'stride', 'bob', 'lookAhead', 'turnRate', 'round', 'turnSecs', 'fadeInSecs', 'fadeOutSecs', 'blackSecs', 'vanishSecs'].every((k) => Number.isFinite(cfg.run[k]) && cfg.run[k] > 0)
+    && cfg.run.gen.deadEnds === 0);
+
+  const game = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js') && !String(f).startsWith('explore'));
+  const reaching = game.filter((f) => /explore\//.test(readFileSync(`src/${f}`, 'utf8').replace(/^\s*\/\/.*$/gm, '')));
+  const page = readFileSync('index.html', 'utf8');
+  ok('the game reaches src/explore only through ui/corridors.js, by a dynamic import; the page maps three.js',
+    reaching.map((f) => String(f).replace(/\\/g, '/')).join() === 'ui/corridors.js'
+    && readFileSync('src/ui/corridors.js', 'utf8').includes("import('../explore/corridorView.js')") && page.includes("three: new URL('vendor/three-0.186.1/three.module.min.js'"), reaching.join());
+
+  const H = await import('./harness.mjs');
+  const { setCorridorFactory, corridorsOn } = await import('../../src/ui/corridors.js');
+  const { DEBUG } = await import('../../src/shared/debug.js');
+  ok('3D corridors: off without ?debug', corridorsOn() === false);
+  const calls = [], later = (ms) => new Promise((r) => setTimeout(r, ms));
+  setCorridorFactory(() => ({
+    async walkTo(run, room, o) { calls.push(`walk ${room.number}`); o.onCovered?.(); await later(500); return { theme: 'library', background: 'castle_library.jpg' }; },
+    async reveal() { calls.push('reveal'); await later(300); },
+    close() { calls.push('close'); },
+  }));
+  fresh();
+  DEBUG.invulnerable = true;
+  H.show(H.dungeonScene());
+  await sleep(1100); await sleep(900);
+  const lib = [H.registry.bg0, H.registry.bg1].some((l) => l.dataset.file === 'castle_library.jpg' && l.style.opacity === '1');
+  ok('3D corridors: the run walks to room 1, which takes the 3D room\'s painting and name', calls.join() === 'walk 1,reveal' && H.t().includes('Room 1 - The Library') && lib && !H.registry.app.classList.contains('hidden'), calls.join());
+  for (let i = 0; i < 40 && !H.t().includes('Push Deeper'); i++) { H.handleKey('a'); await sleep(900); }
+  H.handleKey('d'); H.handleKey('d'); // (a second press while walking does nothing)
+  await sleep(2000);
+  ok('3D corridors: Push Deeper walks on to room 2 (once)', calls.join() === 'walk 1,reveal,walk 2,reveal' && H.t().includes('Room 2 - '), calls.join());
+  if (H.t().includes('A shrine hums')) { H.handleKey('d'); await sleep(2000); } // (room 2 was the shrine: on to a fight)
+  for (let i = 0; i < 40 && !/Retreat/.test(H.t()); i++) { H.handleKey('a'); await sleep(900); }
+  const retreat = H.registry.app.all((n) => n.tagName === 'button' && /^Retreat/.test(n.textContent))[0];
+  retreat?.listeners.click[0]();
+  await sleep(1500);
+  ok('3D corridors: the run\'s end closes the view (the next run starts on a fresh floor)', calls.at(-1) === 'close', `${calls.join()} · ${!!retreat} · ${H.t().slice(0, 160)}`);
+  setCorridorFactory(null);
+  DEBUG.invulnerable = false;
+  await sleep(2000);
+  fresh();
 }

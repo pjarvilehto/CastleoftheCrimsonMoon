@@ -1,5 +1,5 @@
 {
-  "version": "0.149",
+  "version": "0.150",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -27,6 +27,7 @@
     "src/explore/billboard.js",
     "src/explore/bloom.js",
     "src/explore/build.js",
+    "src/explore/corridorView.js",
     "src/explore/corridors.js",
     "src/explore/decor.js",
     "src/explore/encounterLayer.js",
@@ -49,11 +50,14 @@
     "src/explore/propTextures.js",
     "src/explore/quality.js",
     "src/explore/rooms.js",
+    "src/explore/runFloor.js",
     "src/explore/ssao.js",
     "src/explore/stairs.js",
     "src/explore/textures.js",
     "src/explore/themes.js",
     "src/explore/vault.js",
+    "src/explore/walkPath.js",
+    "src/explore/world.js",
     "src/main.js",
     "src/meta/equipment.js",
     "src/meta/history.js",
@@ -90,6 +94,7 @@
     "src/ui/combatSfx.js",
     "src/ui/confirmPrompt.js",
     "src/ui/cornerToggles.js",
+    "src/ui/corridors.js",
     "src/ui/deathModal.js",
     "src/ui/debugToggles.js",
     "src/ui/dialog.js",
@@ -112,6 +117,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.150": [
+      "Test mode (?debug, 3D CORRIDORS): between rooms the knight walks the 3D dungeon on his own — leaving the Great Hall, after each won room — and the room's painting and fight fade in where he stops. Space hurries him along.",
+      "Test mode: each 8-room stretch is one very linear 3D floor; past the boss the stairs lead down to the next"
+    ],
     "0.149": [
       "Dungeon Lab: fixed flickering black squares on some screens (Macs especially) — a shiny puddle's torch reflection could outshine what the renderer holds"
     ],
@@ -155,9 +164,6 @@
     ],
     "0.136": [
       "Under the hood: a review pass — a few rare bugs fixed (the benchmark now plays exactly the same fight on every machine, and can no longer cancel a descent that was still loading)."
-    ],
-    "0.135": [
-      "Testing tools: the benchmark now reads a battery-saver 30 fps cap correctly and records hitches instead of skipping them."
     ]
   }
 }

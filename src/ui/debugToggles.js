@@ -4,9 +4,11 @@
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), and PARTICLE LAB (the particle
 // look experiments, particle-lab/, in a new tab), BENCHMARK (0.131,
 // ui/benchmark.js), DUNGEON LAB (0.139, the 3D dungeon prototype,
-// dungeon-lab/, in a new tab). Players never see them.
+// dungeon-lab/, in a new tab), 3D CORRIDORS (0.150, ui/corridors.js).
+// Players never see them.
 
 import { setBackground } from '../core/scene.js';
+import { corridorsToggle } from './corridors.js';
 import { el } from '../core/dom.js';
 import { isBg3dActive, bgView, setBgView } from '../core/bg3d.js';
 import { DATA } from '../shared/data.js';
@@ -49,5 +51,6 @@ export function debugToggles() {
   const tab = (label, cls, path) => el('button', { class: `debug-toggle ${cls}`, onclick: () => globalThis.open?.(path, '_blank', 'noopener') }, label);
   return [fg, viewBtn, next, bgTunerToggle(),
     flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'),
-    tab('PARTICLE LAB', 'particle-lab-link', 'particle-lab/'), benchmarkButton(), tab('DUNGEON LAB', 'dungeon-lab-link', 'dungeon-lab/')];
+    tab('PARTICLE LAB', 'particle-lab-link', 'particle-lab/'), benchmarkButton(), tab('DUNGEON LAB', 'dungeon-lab-link', 'dungeon-lab/'),
+    corridorsToggle()]; // (0.150: the 3D corridors between rooms, ui/corridors.js)
 }

@@ -33,6 +33,8 @@ import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
+import { pauseBg3d } from '../../core/bg3d.js';
+import { corridorsOn, corridorView } from '../corridors.js';
 
 export function dungeonScene() {
   const run = createRun();
@@ -45,6 +47,8 @@ export function dungeonScene() {
   let buffBar = null;    // bottom-left shrine blessing bar
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
+  let corridors = false; // 0.150: this run walks the 3D corridors between rooms (?debug, ui/corridors.js)
+  let moving = false;    // …and is on its way: no second Push Deeper
 
   const playback = createPlayback({
     logEl: () => logEl,
@@ -69,6 +73,7 @@ export function dungeonScene() {
       startPerf(); // the run's frame rate, for the play stats (0.130)
       logEl = el('div', { id: 'combat-log' });
       buffBar = createBuffBar();
+      corridors = corridorsOn();
       // First room enters inline — show()'s own transition is already
       // fading the windows, a nested transitionTo would deadlock on guard.
       nextRoom(root, true);
@@ -76,25 +81,75 @@ export function dungeonScene() {
   };
 
   function nextRoom(root, instant = false) {
+    if (corridors) { walkOn(root); return; }
     const setup = () => {
       const firstRoom = run.roomNumber === 0;
-      const room = enterNextRoom(run);
-      play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
-      combat = createCombat(run, room);
-      deathShown = false;
-      ui = null; // the new room builds its own battle line
-      playback.reset();
-      setBackground(room.background);
-      roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
-      shownCoins = run.coins; // reset counters per room (no tick-up anim)
-      shownXp = run.xp;
-      logLine(logEl, firstRoom
-        ? `You enter the castle: ${room.name} (room ${room.number}).`
-        : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
-      render(root);
+      enterRoom(root, enterNextRoom(run), firstRoom);
     };
     if (instant) setup();
     else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
+  }
+
+  // A room just entered (enterNextRoom): its music, fight, painting and UI.
+  function enterRoom(root, room, firstRoom) {
+    play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
+    combat = createCombat(run, room);
+    deathShown = false;
+    ui = null; // the new room builds its own battle line
+    playback.reset();
+    setBackground(room.background);
+    roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
+    shownCoins = run.coins; // reset counters per room (no tick-up anim)
+    shownXp = run.xp;
+    logLine(logEl, firstRoom
+      ? `You enter the castle: ${room.name} (room ${room.number}).`
+      : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
+    render(root);
+  }
+
+  // 0.150 (3D CORRIDORS, ui/corridors.js): to the next room through the 3D
+  // dungeon. The windows fade, the dungeon fades in over the painting and
+  // the knight walks there on his own (explore/corridorView.js); where he
+  // stops, the room's painting — the one for the 3D room's theme — and its
+  // fight fade in as the dungeon fades out. The room itself is rolled as
+  // ever (enterNextRoom); only its look comes from the 3D room.
+  async function walkOn(root) {
+    if (moving) return;
+    moving = true;
+    if (ui) ui.proceed.innerHTML = ''; // (Push Deeper / Retreat go at once)
+    // the outgoing room stays in the DOM while the knight walks: none of
+    // its buttons may fire (hotkeys.js skips disabled ones; 0.077's re-bank)
+    root.querySelectorAll?.('button').forEach((b) => { b.disabled = true; });
+    root.classList.add('hidden');      // the windows fade out
+    const view = await corridorView();
+    const firstRoom = run.roomNumber === 0;
+    if (!view) { // no 3D here: the classic way
+      corridors = false; moving = false;
+      nextRoom(root, firstRoom);
+      if (firstRoom) root.classList.remove('hidden');
+      return;
+    }
+    const room = enterNextRoom(run);
+    sfx('whoosh');
+    play('shrine'); // (the quiet bed while walking)
+    const look = await view.walkTo(run, room, { onCovered: () => pauseBg3d(true) });
+    if (look.background) {
+      room.background = look.background;
+      room.name = DATA.backgrounds.roomNames?.[look.background] ?? room.name;
+    }
+    // the room, built unseen under the dungeon, then both fades at once
+    root.style.transition = 'none';
+    root.classList.add('hidden');
+    root.innerHTML = '';
+    await setBackground(room.background, { instant: true });
+    pauseBg3d(false);
+    enterRoom(root, room, firstRoom);
+    void root.offsetWidth;
+    root.style.transition = '';
+    const gone = view.reveal();
+    root.classList.remove('hidden');
+    await gone;
+    moving = false;
   }
 
   function render(root) {
@@ -255,6 +310,7 @@ export function dungeonScene() {
   }
 
   function endRun(root, outcome) {
+    if (corridors) { corridorView().then((v) => v?.close()); pauseBg3d(false); } // (the next run starts on a fresh floor)
     run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
     shareStats(settleRun(run, outcome)); // play stats (0.102)
     go('runEnd', run, outcome);

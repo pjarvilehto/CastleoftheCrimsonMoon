@@ -104,7 +104,8 @@ function tryFloor(rnd, gen) {
   // (a corridor crossing another would make a fork or a shortcut)
   if (!rooms.every((r, i) => i === 0 || d(r) > d(rooms[i - 1]))) return null;
   const middle = rooms.slice(1, -2);
-  const shrineRoom = middle[Math.floor(middle.length / 2)];
+  // the shrine halfway — or, for a run's floor (0.150), where the run put it
+  const shrineRoom = middle[gen.shrineAt ?? Math.floor(middle.length / 2)];
   const encounterRooms = middle.filter((r) => r !== shrineRoom);
 
   const start = centre(startRoom);

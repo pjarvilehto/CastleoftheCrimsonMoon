@@ -196,7 +196,8 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB,
-  BENCHMARK, DUNGEON LAB) are in `ui/debugToggles.js`. No pixel offsets.
+  BENCHMARK, DUNGEON LAB, 3D CORRIDORS) are in `ui/debugToggles.js`. No
+  pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
   there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
@@ -246,7 +247,9 @@ The page's `<base>` is the site root and it maps every module in
 sound); a test keeps `src/explore/` away from the save and the play stats.
 three.js 0.186.1 is vendored, minified, in `vendor/three-0.186.1/` (MIT,
 licence alongside) and reached through the page's import map as `three`; a
-new three.js version = a new folder. The game never imports `src/explore/`.
+new three.js version = a new folder. The game reaches `src/explore/` only
+through `ui/corridors.js` (0.150, one dynamic import; a test checks it), so
+three.js loads only when the 3D corridors are used.
 - `grid.js` (pure, tested in Node): the text map ('#' wall, '.' floor, 'S'
   start), circle-vs-cell collision that slides along walls, seeded random.
 - `mapgen.js` (0.140, pure; linear and half the size since 0.143, at the
@@ -362,11 +365,34 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   light bands, desaturation, olive shadows / warm light, hatched ink in
   the deepest dark, grain, vignette. All knobs in `explore.json paint`.
 - `player.js`: WASD / arrows, Q / E turn, Shift runs, mouselook under
-  pointer lock; eased velocity, head bob. `lab.js` wires it up: the
-  knight's torch rides with the camera (lights.js, lightField.js: see
-  above for the light pool and the baked field).
-Next steps discussed with the owner: integration into runs (shrine
-rooms, retreat rules, settling the run).
+  pointer lock; eased velocity, head bob. `lab.js` wires the lab up on
+  `world.js` (0.150: renderer, camera, light pool, paint pass, quality
+  ladder, `build(floor, depth)` and `frame(t, dt, { render, tick })` —
+  shared with the game's corridors).
+- **3D corridors in the game (0.150, a `?debug` test, the owner's idea):**
+  the 3D dungeon as the way between the game's rooms; the run itself
+  (rooms, fights, shrine, retreat, settling) is unchanged. `?debug` 3D
+  CORRIDORS (on by default there, `prefs corridors3d`; players never get
+  it) makes `dungeonScene` walk instead of crossfading (`walkOn`): the
+  windows fade, `enterNextRoom` rolls the room as ever, the dungeon fades
+  in over the painting (bg3d paused once covered) and the knight walks
+  there on his own (`corridorView.js`); the room takes the 3D room's
+  theme painting and name (`backdrop.paintings`), is built unseen, then
+  the windows and painting fade in as the dungeon fades out. Space /
+  Enter / a click hurries the walk (`run.skipSpeed`). One floor per
+  stretch (`runFloor.js planStretch`: mapgen with `explore.json run.gen`
+  — very linear, no spurs — the shrine where `run.shrineRooms` put it via
+  mapgen `shrineAt`, the boss last); the way is `walkPath.js` (route
+  along `floor.trail`, rounded corners, looking ahead; pure, tested).
+  Past the boss the next walk goes down the stairs, the new floor built
+  behind the black. Only the room being walked to has its enemy standing
+  (the leader's billboard); a beaten one fades as the dungeon returns.
+  `endRun` closes the view (the next run starts on a fresh floor); the
+  view is made once per page (`ui/corridors.js corridorView()`, warmed in
+  the Great Hall) and falls back to the classic fades where it can't run
+  (no WebGL2). No minimap in this mode. Tests use `setCorridorFactory`.
+  Open with the owner: on for players? what the walk shows between rooms
+  (loot, HP)? retreat from the corridor?
 
 ## Testing notes
 

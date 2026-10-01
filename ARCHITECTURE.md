@@ -46,7 +46,7 @@ src/
                         title; the rest of the art loads in the background
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally), bg
-                        crossfader (instant swaps: the lab), router:
+                        crossfader (instant swaps: under the 3D), router:
                         registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
@@ -107,9 +107,12 @@ src/
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
-  explore/              the 3D dungeon prototype (0.139; Dungeon Lab only —
-                        the game never imports it; three.js as `three`;
-                        it imports the game's combat, never its save)
+    corridors.js        ?debug 3D CORRIDORS (0.150): the toggle, and the one
+                        door into explore/ (dynamic import of corridorView)
+  explore/              the 3D dungeon (0.139; the Dungeon Lab, and since
+                        0.150 the game's ?debug 3D corridors via
+                        ui/corridors.js; three.js as `three`; it imports
+                        the game's combat, never its save)
     grid.js             text map, collision, seeded random (pure)
     mapgen.js           a floor from a seed: rooms, corridors, parts (pure)
     minimap.js          the corner map of what the knight has seen
@@ -135,7 +138,12 @@ src/
     geom.js             merging and world-size UVs
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass
-    lab.js              wires the lab page: scene, lights, HUD, loop
+    world.js            the 3D world: renderer, lights, paint pass, quality,
+                        build(floor, depth), frame() — the lab's and the game's
+    runFloor.js  walkPath.js   a run's stretch as one floor; the knight's
+                        own way along the trail, smoothed (pure)
+    corridorView.js     the game's corridors: walk to a room, reveal, stairs
+    lab.js              wires the lab page: player, encounters, HUD, loop
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha) + card frames (PNG)
@@ -192,6 +200,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `D` / `B` | hub | Descend / Back |
 | `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
 | `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
+| `Space` / `Enter` / click | dungeon, ?debug 3D corridors | hurry the knight's walk to the next room |
 | `F` | dungeon | Accept Your Fate (death) |
 | `1` `2` `3` | shrine | Accept a boon |
 | `G` | run end | Return to the Great Hall |
