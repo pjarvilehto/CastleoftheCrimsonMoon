@@ -48,6 +48,7 @@ export function debugToggles() {
   // A new tab, so the game (and a run in progress) stays as it is.
   const lab = el('button', { class: 'debug-toggle particle-lab-link', onclick: () => globalThis.open?.('particle-lab/', '_blank', 'noopener') }, 'PARTICLE LAB');
   const voLab = el('button', { class: 'debug-toggle vo-lab-link', onclick: () => globalThis.open?.('vo-lab/', '_blank', 'noopener') }, 'VO LAB');
+  const fogLab = el('button', { class: 'debug-toggle fog-lab-link', onclick: () => globalThis.open?.('fog-lab/', '_blank', 'noopener') }, 'FOG LAB');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, voLab, benchmarkButton()];
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, voLab, fogLab, benchmarkButton()];
 }

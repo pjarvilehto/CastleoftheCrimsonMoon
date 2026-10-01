@@ -103,7 +103,7 @@
     "throne_rose_queen.jpg": "The Rose Throne"
   },
   "parallax": {
-    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
+    "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. 0.164 (the Fog Lab, fog-lab/): drift = per-puff wind speed spread, rock = rocking amplitude range (rad), period = the rock/breathe cycle range (s), bob = vertical bob (world units), breathe = size pulse share, shadeVar / alphaVar = per-puff brightness and opacity spread, turbulence = how far each puff wanders on its own (world units) over turbulencePeriod s, pulse = how much each puff fades in and out over pulsePeriod s, flow = how fast the mist churns inside each puff (noise uv/s) at flowScale, thinning by flowAmount. mist = the puffs' lighting: shade = how strong the baked self-shadow reads, litTint / shadeTint = colour multipliers for the lit and shaded sides, sceneLight = how much the painting's own bright pixels (torches, windows) light the mist, nearBright = extra brightness for near puffs. haze = the distance haze on the art: density, curve (power on the far share), high = how much survives high up, strength, max. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",
     "enabled": true,
     "depthScale": 0.8,
     "pivot": 0.5,
@@ -129,7 +129,35 @@
       "nearBand": 0.27,
       "farBand": 0.25,
       "soft": 0.12,
-      "opacity": 0.4
+      "opacity": 0.4,
+      "drift": [0.7, 1.3],
+      "rock": [0.06, 0.16],
+      "period": [24, 46],
+      "bob": 0.012,
+      "breathe": 0.06,
+      "shadeVar": [0.88, 1.1],
+      "alphaVar": [0.6, 1],
+      "turbulence": 0,
+      "turbulencePeriod": 30,
+      "pulse": 0,
+      "pulsePeriod": 40,
+      "flow": 0,
+      "flowScale": 1.5,
+      "flowAmount": 0.5
+    },
+    "mist": {
+      "shade": 1,
+      "litTint": [1, 1, 1],
+      "shadeTint": [1, 1, 1],
+      "sceneLight": 0,
+      "nearBright": 0
+    },
+    "haze": {
+      "density": 2.2,
+      "curve": 1.3,
+      "high": 0.6,
+      "strength": 0.54,
+      "max": 0.85
     },
     "maxPixels": 2100000,
     "minFps": 22,

@@ -26,6 +26,8 @@ export function seedOf(name) {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
+// (The rolls, in this order, are the scene's look: a new per-puff value
+// must be derived from these, not rolled — the same seed keeps the same mist.)
 export function makePuffs(seed, P) {
   const r = mulberry32(seed);
   return Array.from({ length: P.count }, () => ({
@@ -33,13 +35,13 @@ export function makePuffs(seed, P) {
     y: lerp(P.y[0], P.y[1], r() ** 1.6),
     d: lerp(P.near, P.far, r()),
     size: lerp(P.size[0], P.size[1], r()),
-    speed: lerp(0.7, 1.3, r()),       // not in lockstep
-    variant: Math.floor(r() * 4),     // sprite atlas cell
-    spin: lerp(0.06, 0.16, r()) * (r() < 0.5 ? -1 : 1), // rocking amplitude (rad)
+    speed: lerp(P.drift[0], P.drift[1], r()),   // not in lockstep
+    variant: Math.floor(r() * 4),               // sprite atlas cell
+    spin: lerp(P.rock[0], P.rock[1], r()) * (r() < 0.5 ? -1 : 1), // rocking amplitude (rad)
     phase: r() * Math.PI * 2,
-    period: lerp(24, 46, r()),        // s
-    shade: lerp(0.88, 1.1, r()),
-    alpha: lerp(0.6, 1, r()),
+    period: lerp(P.period[0], P.period[1], r()), // s
+    shade: lerp(P.shadeVar[0], P.shadeVar[1], r()),
+    alpha: lerp(P.alphaVar[0], P.alphaVar[1], r()),
   }));
 }
 
@@ -49,17 +51,25 @@ const smooth = (t) => { const c = Math.min(1, Math.max(0, t)); return c * c * (3
 const inBox = (v, lo, hi, bandLo, bandHi = bandLo) => Math.min(smooth((v - lo) / bandLo), smooth((hi - v) / bandHi));
 
 // The puffs at time t (seconds): wind [x, y, z] in world units/s, +z =
-// toward the camera. Far ones first (drawn back to front).
+// toward the camera. Far ones first (drawn back to front). 0.164: on top
+// of the wind each puff wanders on its own (turbulence: a slow figure of
+// its own phase and speed), breathes (breathe), bobs (bob), rocks (rock)
+// and may fade in and out (pulse) — all per P, all 0 = the old slide.
 export function puffFrame(puffs, t, P, wind) {
   const yLo = P.y[0] - 0.25, yHi = P.y[1] + 0.25;
+  const tw = (t * Math.PI * 2) / P.turbulencePeriod, tp = (t * Math.PI * 2) / P.pulsePeriod;
   return puffs.map((p) => {
     const w = (p.phase + (t * Math.PI * 2) / p.period);
-    const x = wrapIn(p.x + wind[0] * p.speed * t, -P.width, P.width);
-    const y = wrapIn(p.y + wind[1] * p.speed * t, yLo, yHi) + Math.sin(w * 0.7) * 0.012;
+    const wander = P.turbulence; // its own loop, not the neighbours'
+    const tx = wander ? wander * Math.sin(tw * p.speed + p.phase * 1.7) : 0;
+    const ty = wander ? wander * 0.5 * Math.cos(tw * 0.8 * p.speed + p.phase * 2.3) : 0;
+    const x = wrapIn(p.x + wind[0] * p.speed * t, -P.width, P.width) + tx;
+    const y = wrapIn(p.y + wind[1] * p.speed * t, yLo, yHi) + Math.sin(w * 0.7) * P.bob + ty;
     const d = wrapIn(p.d - wind[2] * p.speed * t, P.near, P.far);
-    const alpha = p.alpha * inBox(x, -P.width, P.width, 0.25) * inBox(y, yLo, yHi, 0.12)
+    const pulse = P.pulse ? 1 - P.pulse * (0.5 + 0.5 * Math.sin(tp * p.speed + p.phase * 3.1)) : 1;
+    const alpha = p.alpha * pulse * inBox(x, -P.width, P.width, 0.25) * inBox(y, yLo, yHi, 0.12)
       * inBox(d, P.near, P.far, P.nearBand, P.farBand);
-    return { pos: [x, y, -d], size: p.size * (1 + Math.sin(w * 1.3) * 0.06), rot: p.spin * Math.sin(w),
+    return { pos: [x, y, -d], size: p.size * (1 + Math.sin(w * 1.3) * P.breathe), rot: p.spin * Math.sin(w),
       alpha, variant: p.variant, shade: p.shade };
   }).filter((q) => q.alpha > 0.004).sort((a, b) => a.pos[2] - b.pos[2]);
 }

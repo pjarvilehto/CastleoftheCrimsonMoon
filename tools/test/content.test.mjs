@@ -214,6 +214,17 @@ fresh();
   ok('no fallback copies of data numbers in src (the shipped migration step and run records aside)', copies.length === 0, copies.join('; '));
 }
 
+// 0.164: the Fog Lab runs the game's own renderer from fog-lab/ (a base
+// href keeps the game's asset paths), opened from the ?debug column
+{
+  const lab = readFileSync('fog-lab/index.html', 'utf8'), js = readFileSync('fog-lab/lab.js', 'utf8');
+  ok('FOG LAB is a ?debug corner button; the page is not indexed and resolves from the site root',
+    readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('fog-lab/'") && lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../">')
+    && lab.includes('id="bg0"') && lab.includes('id="bg1"') && lab.includes('src="fog-lab/lab.js"'));
+  ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
+    js.includes("from '../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
+}
+
 // T88: the Particle Lab lives at particle-lab/, opened from the ?debug
 // corner column; it loads the game's real art, not copies.
 {

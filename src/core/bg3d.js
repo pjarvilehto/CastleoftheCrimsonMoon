@@ -108,7 +108,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth',
-    'uFog', 'uFogColor', 'uLightPos', 'uLightCol', 'uLightR2']) loc[n] = gl.getUniformLocation(prog, n);
+    'uFog', 'uFogColor', 'uHaze', 'uHazeMax', 'uLightPos', 'uLightCol', 'uLightR2']) loc[n] = gl.getUniformLocation(prog, n);
   puffR = createPuffRenderer(gl); // null: the haze alone
   gl.useProgram(prog);
   gridBuf = gl.createBuffer();
@@ -226,6 +226,9 @@ function draw(L, alpha) {
   gl.uniform1f(loc.uAlpha, alpha);
   gl.uniform1f(loc.uFog, fogAmount(L));
   gl.uniform3fv(loc.uFogColor, L.mist);
+  const H = L.tune.haze;
+  gl.uniform4f(loc.uHaze, H.density, H.curve, H.high, H.strength);
+  gl.uniform1f(loc.uHazeMax, H.max);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, L.tex);
   gl.uniform1i(loc.uTex, 0);
@@ -249,7 +252,8 @@ function drawPuffs(L, alpha, f) {
   if (!puffR || !(amount > 0)) return;
   const P = L.tune.puffs;
   puffR.draw(puffFrame(L.puffs, fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
-    pivot: L.tune.pivot, depthTex: L.depthTex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
+    pivot: L.tune.pivot, depthTex: L.depthTex, artTex: L.tex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
+    flow: [fogT * P.flow, P.flowScale, P.flowAmount], light: L.tune.mist,
     width: canvas.width, height: canvas.height });
   gl.useProgram(mainProg);
 }
@@ -301,7 +305,13 @@ export function liveTuning() {
 export function setLiveTuning(partial) {
   setLive(partial);
   cfg = tuning('');
-  layers.forEach((L) => { L.tune = tuning(L.file); });
+  layers.forEach((L) => {
+    const was = JSON.stringify(L.tune.puffs);
+    L.tune = tuning(L.file);
+    // a changed puff block re-rolls the set (the same seed: the puffs keep
+    // their places, only the changed ranges show — the Fog Lab, 0.164)
+    if (JSON.stringify(L.tune.puffs) !== was) L.puffs = makePuffs(seedOf(L.file), L.tune.puffs);
+  });
   if (gl && refit()) layers.forEach(fillDepth);
 }
 

@@ -22,6 +22,10 @@ before structural changes. This file is the rules and the per-system notes.
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
 - **Particle Lab:** `particle-lab/`, opened from the `?debug` corner column —
   a standalone page for trying particle looks (see "Effects").
+- **Fog Lab (0.164):** `fog-lab/`, from the `?debug` column — the game's real
+  3D renderer on every painting with every fog knob as a live slider,
+  presets, the flash lights on demand, and COPY JSON for a `parallax`
+  patch (see "3D backgrounds").
 - **VO Lab:** `vo-lab/`, same column (VO LAB) — every narrator take with its
   text, when it plays and how often; Play / Approve / Disapprove (+
   volatility and shouty nudges); RE-RENDER gives a JSON for
@@ -174,7 +178,22 @@ per-pixel shader work minimal; slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
 revive): `bgLight(kind, rect)`, settings in `parallax.lights`. Big-hit sway:
-`swayDeg` / `swayHitShare`. New room art: JPEG in `assets/bg/`, entries in
+`swayDeg` / `swayHitShare`. **The mist's own motion and light (0.164,
+tuned in the Fog Lab):** `parallax.puffs` carries what used to be
+constants — `drift` (per-puff wind speed spread), `rock`, `period`,
+`bob`, `breathe`, `shadeVar`, `alphaVar` — and the new `turbulence` /
+`turbulencePeriod` (each puff wanders on its own loop), `pulse` /
+`pulsePeriod` (fades in and out), `flow` / `flowScale` / `flowAmount`
+(tileable noise churning inside each puff, one extra half-res texture
+read); `parallax.mist` = the puffs' lighting (`shade` self-shadow
+strength, `litTint` / `shadeTint`, `sceneLight` = the painting's own
+bright pixels glow through the mist, read with a mip bias, `nearBright`);
+`parallax.haze` = the distance haze's shape. The shipped values are the
+0.101 look (turbulence, pulse, flow, sceneLight, nearBright all 0) until
+the owner picks new ones in the lab; `setLiveTuning` re-rolls a layer's
+puffs when its block changes (same seed: no jump). The lab never writes
+the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
+New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
@@ -241,7 +260,7 @@ may hear the old one for ~4 hours.
   `'active active-red'`.
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
-  (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB,
+  (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB, FOG LAB,
   BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Transitions go strictly in order (0.154, the owner's call):
