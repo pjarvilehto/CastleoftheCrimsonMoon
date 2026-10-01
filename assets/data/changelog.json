@@ -1,4 +1,7 @@
 {
+  "0.154": [
+    "Room changes go in order: the fight fades out, the next room's painting fades in fully, and only then do the knight and the enemies (or the shrine) appear"
+  ],
   "0.153": [
     "26 new rooms to fight in — the Bell Tower, the Drowned Cistern, the Dragon's Hoard, the Frozen Tribute and many more, each with its own depth and mist",
     "Descending no longer waits for every room's painting to load"

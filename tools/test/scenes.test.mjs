@@ -439,3 +439,31 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const m = readFileSync('src/main.js', 'utf8');
   ok('boot stops at the notice on mobile', /if \(isMobile\(\)\) \{[\s\S]*Mobile platforms not supported yet[\s\S]*return;\s*\}/.test(m));
 }
+
+// 0.154 — transitions strictly in order (the owner's call): the windows fade
+// out fully before the background changes, and come back only once the new
+// painting has fully faded in (keys ignored meanwhile); no background change,
+// no wait; a painting that never arrives holds them 4s at most
+{
+  const { onBackgroundChange, isTransitioning } = await import('../../src/core/scene.js');
+  let faded = false;
+  onBackgroundChange(() => new Promise((r) => setTimeout(() => { faded = true; r(); }, 2000)));
+  let swappedAt = null;
+  const t0 = Date.now();
+  transitionTo(() => { swappedAt = Date.now() - t0; setBackground('dungeon_bell_tower.jpg'); });
+  await sleep(1500);
+  const held = registry.app.classList.contains('hidden') && isTransitioning() && !faded;
+  await sleep(1600);
+  ok('transition: the background changes only after the windows are out, and they return only once the painting is fully in',
+    swappedAt >= 1000 && held && faded && !registry.app.classList.contains('hidden') && !isTransitioning(), `${swappedAt} ${held} ${faded}`);
+  transitionTo(() => {});
+  await sleep(1050);
+  ok('transition: no background change, no wait', !registry.app.classList.contains('hidden') && !isTransitioning());
+  onBackgroundChange(() => new Promise(() => {})); // (a painting that never loads)
+  transitionTo(() => setBackground('dungeon_cistern.jpg'));
+  await sleep(1000 + 3900);
+  const stillHeld = registry.app.classList.contains('hidden');
+  await sleep(200);
+  ok('transition: a painting that never arrives holds the windows 4s at most', stillHeld && !registry.app.classList.contains('hidden') && !isTransitioning());
+  onBackgroundChange(() => undefined);
+}

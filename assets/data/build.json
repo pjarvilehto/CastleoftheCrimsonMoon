@@ -1,5 +1,5 @@
 {
-  "version": "0.153",
+  "version": "0.154",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -79,6 +79,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.154": [
+      "Room changes go in order: the fight fades out, the next room's painting fades in fully, and only then do the knight and the enemies (or the shrine) appear"
+    ],
     "0.153": [
       "26 new rooms to fight in — the Bell Tower, the Drowned Cistern, the Dragon's Hoard, the Frozen Tribute and many more, each with its own depth and mist",
       "Descending no longer waits for every room's painting to load"
@@ -126,9 +129,6 @@
     ],
     "0.140": [
       "Testing tools: the Dungeon Lab now generates its floors (rooms, corridors, dead ends; N for a new one) and maps only what you have seen."
-    ],
-    "0.139": [
-      "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
     ]
   }
 }

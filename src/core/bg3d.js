@@ -131,6 +131,8 @@ export function initBg3d({ allowSoftware = false } = {}) {
 
 // Background changed (scene.js onBackgroundChange). Loads async; only the
 // most recent request becomes visible. First one appears instantly.
+// Resolves once the new layer has fully faded in (0.154: the windows wait
+// for it, scene.js transitionTo).
 export async function showBackground3d(file) {
   if (!gl) return;
   wanted = file;
@@ -140,6 +142,7 @@ export async function showBackground3d(file) {
   layer.born = layers.length ? performance.now() : -Infinity; // first: no fade
   layers.push(layer);
   while (layers.length > 2) dropLayer(layers.shift());
+  if (layer.born !== -Infinity) await new Promise((resolve) => setTimeout(resolve, cfg.fadeMs));
 }
 
 async function loadLayer(file) {

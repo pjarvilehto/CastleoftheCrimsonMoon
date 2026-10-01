@@ -196,6 +196,11 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
   (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB,
   BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
+- Transitions go strictly in order (0.154, the owner's call):
+  `transitionTo` fades the windows out fully, runs the swap, and when it
+  changed the background waits for `setBackground`'s promise (the painting
+  fully faded in: bg3d's `fadeMs`, or the CSS layer's own fade, after the
+  image loads; 4s at most) before the windows return.
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
   there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
   what fits `--n` enemies); card internals are `em`. Card frame art on
