@@ -26,6 +26,9 @@
     // build.json, kept current by tools/bump.mjs) under ?v=<version> —
     // a new build changes every URL, so all files update together.
     (function () {
+      // ?Particle_Lab (0.127): the particle look experiments, a separate
+      // page (particle-lab/) — forwarded before any of the game loads.
+      if (/[?&]particle_lab(=|&|$)/i.test(location.search)) { location.replace('particle-lab/'); return; }
       function boot(version, modules) {
         var q = version ? '?v=' + encodeURIComponent(version) : '';
         if (q && modules && modules.length) {

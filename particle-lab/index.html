@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Particle Lab</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../icon-64.png">
+<!-- particle-lab/ (0.127): side-by-side particle look experiments, reached
+     from the game with ?Particle_Lab (index.html forwards here). Standalone:
+     no game modules; art and font come from ../assets. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one control bar, then a 2x2 wall of live stages (current look + three references), notes under each. Single dark look on purpose: it is the game's own world. */
+@font-face { font-family: "DIN Condensed"; src: url("../assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+:root {
+  --bg: #0d0808;
+  --panel: #161009;
+  --line: #3a2c18;
+  --gold: #c9a227;
+  --parchment: #d8c9a3;
+  --muted: #9a8b6a;
+  --blood: #a01818;
+  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --room: url("../assets/bg/castle_chapel_interior.jpg");
+  --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--parchment); }
+body { margin: 0; }
+body { font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--display); letter-spacing: 0.22em; color: var(--muted); font-size: 0.95rem; text-transform: uppercase; }
+h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: clamp(2rem, 5vw, 3.1rem); letter-spacing: 0.08em; text-transform: uppercase; margin: 0; line-height: 1; text-wrap: balance; }
+.lede { margin: 4px 0 0; max-width: 66ch; color: var(--parchment); }
+.lede small { color: var(--muted); font-size: 0.92rem; display: block; margin-top: 6px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.group > span { font-family: var(--display); letter-spacing: 0.16em; color: var(--muted); font-size: 0.9rem; text-transform: uppercase; margin-right: 4px; }
+button { font-family: var(--display); font-size: 1.05rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 7px 14px 5px; cursor: pointer; }
+button:hover { border-color: var(--gold); color: #fff; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button[aria-pressed="true"] { border-color: var(--gold); color: #fff4d0; box-shadow: 0 0 10px rgba(232,196,92,0.45); }
+button.fire { border-color: var(--blood); }
+button.fire:hover { border-color: #e03030; }
+
+.wall { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 760px) { .wall { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.stage { position: relative; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: #000 var(--room) center / cover; }
+.stage::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.05), rgba(0,0,0,0.6)); }
+.card { position: absolute; left: 50%; bottom: 7%; height: 72%; aspect-ratio: 0.66; transform: translateX(-50%); border: 2px solid rgba(201,162,39,0.55); border-radius: 10px; background: linear-gradient(180deg, rgba(40,10,10,0.55), rgba(10,5,5,0.75)); }
+.card img { position: absolute; left: 50%; bottom: 4%; height: 96%; transform: translateX(-50%); max-width: none; pointer-events: none; }
+.card.hit { animation: jolt 0.22s ease-out; }
+@keyframes jolt { 0% { transform: translateX(-50%); } 30% { transform: translateX(calc(-50% + 9px)) rotate(1.2deg); } 100% { transform: translateX(-50%); } }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tag { position: absolute; left: 10px; top: 9px; z-index: 2; font-family: var(--display); letter-spacing: 0.14em; font-size: 0.95rem; color: var(--gold); text-shadow: 0 1px 3px #000; text-transform: uppercase; }
+.tag b { color: var(--parchment); font-weight: 700; }
+figcaption { display: grid; gap: 6px; min-width: 0; }
+figcaption h2 { font-family: var(--display); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--parchment); font-size: 1.45rem; margin: 0; line-height: 1.1; }
+figcaption h2 span { color: var(--muted); font-size: 1rem; letter-spacing: 0.12em; margin-left: 8px; }
+figcaption p { margin: 0; max-width: 62ch; }
+dl { margin: 2px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 0.95rem; }
+dt { font-family: var(--display); letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; padding-top: 2px; }
+dd { margin: 0; min-width: 0; }
+footer { color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { .card.hit { animation: none; } }
+select { font-family: var(--display); font-size: 1.05rem; letter-spacing: 0.06em; color: var(--parchment); background: #1a160d; border: 1px solid #6b5520; border-radius: 4px; padding: 6px 8px 4px; }
+select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.back { color: var(--muted); font-size: 0.92rem; }
+.back a { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Castle of the Crimson Moon &middot; combat effects</div>
+    <h1>Particle Lab</h1>
+    <p class="lede">The same hits, four ways: what the game does today, and three looks recreated from reference games. Every stage fires at the same moment, so you can compare them directly. Switch the material to see how each look handles blood, bone, fire and spirit.
+      <small>These are recreations of each game's look made in our engine, on our own room art and portraits. They are not footage from those games.</small></p>
+  </header>
+
+  <div class="controls" role="toolbar" aria-label="Particle controls">
+    <div class="group" id="mat"><span>Material</span>
+      <button id="m-blood" data-mat="blood" aria-pressed="true">Blood &middot; rat</button>
+      <button id="m-dust" data-mat="dust" aria-pressed="false">Bone &middot; skeleton</button>
+      <button id="m-embers" data-mat="embers" aria-pressed="false">Embers &middot; cinderborn</button>
+      <button id="m-wisps" data-mat="wisps" aria-pressed="false">Spirit &middot; wraith</button>
+    </div>
+    <div class="group"><span>Fire</span>
+      <button class="fire" id="f-hit" data-kind="hit">Hit</button>
+      <button class="fire" id="f-crit" data-kind="crit">Crit</button>
+      <button class="fire" id="f-kill" data-kind="kill">Kill</button>
+      <button id="auto" aria-pressed="true">Auto: on</button>
+    </div>
+    <div class="group"><span>Room</span><select id="room" aria-label="Room background"></select></div>
+  </div>
+
+  <div class="wall">
+    <figure data-style="current">
+      <div class="stage"><div class="tag">Today &middot; <b>0.126</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Current<span>what ships now</span></h2>
+        <p>Small round dots per material: red droplets with gravity, grey bone dust, rising embers, drifting wisps. Every particle is a plain circle that fades out.</p>
+        <dl><dt>Reads as</dt><dd>Clean, but generic. At card size the dots look like confetti, and nothing tells a crit apart from a hit except the count.</dd></dl>
+      </figcaption>
+    </figure>
+
+    <figure data-style="ink">
+      <div class="stage"><div class="tag">A &middot; <b>Ink &amp; gore</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Ink &amp; Gore<span>after Darkest Dungeon</span></h2>
+        <p>Few, heavy, dark shapes. Blobs stretch along their flight like brush flicks, a black-red slash streaks across the target, and droplets that reach the floor stick as splats and fade slowly. Bone breaks into angular shards.</p>
+        <dl><dt>Fits</dt><dd>Our backgrounds are already ink-painted, so this belongs to the same hand. Grim and graphic rather than flashy.</dd>
+        <dt>Risk</dt><dd>Dark on dark: it needs the slash and the splats to read on the shadowed rooms.</dd></dl>
+      </figcaption>
+    </figure>
+
+    <figure data-style="spark">
+      <div class="stage"><div class="tag">B &middot; <b>Spark &amp; streak</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Spark &amp; Streak<span>after Hades</span></h2>
+        <p>Fast, additive streaks stretched by their speed, white-hot at the core and cooling to the material colour, plus an expanding impact ring. Very short-lived: the hit is over in a third of a second. Crits get a double ring.</p>
+        <dl><dt>Fits</dt><dd>The punchiest feedback of the four. Crits and kills become unmistakable.</dd>
+        <dt>Risk</dt><dd>Bright and arcade-like next to the painted, gloomy art. Blood turns into light rather than gore.</dd></dl>
+      </figcaption>
+    </figure>
+
+    <figure data-style="mist">
+      <div class="stage"><div class="tag">C &middot; <b>Visceral mist</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <figcaption>
+        <h2>Visceral Mist<span>after Diablo IV</span></h2>
+        <p>Heavy droplets with motion trails, a few tumbling chunks, and a soft cloud of blood mist (or dust, smoke, ectoplasm) that hangs in the air and drifts after the hit.</p>
+        <dl><dt>Fits</dt><dd>The most physical and weighty. The lingering mist ties in with the fog already in our 3D backgrounds.</dd>
+        <dt>Risk</dt><dd>The heaviest to draw. Large soft puffs cost fill-rate, so it would need the same budget limits as the background fog.</dd></dl>
+      </figcaption>
+    </figure>
+  </div>
+
+  <footer class="back">Experimental page, kept on the site while we decide on a look. <a href="../">Back to the game</a> &middot; Each look is a self-contained particle style that could replace <code>ui/particles.js</code> without touching combat. Pieces can also be mixed, for example the ink splats with the spark style's impact ring on crits.</footer>
+</div>
+
+<script>
+const IMG = { blood: '../assets/chars/rat.webp', dust: '../assets/chars/skeleton.webp', embers: '../assets/chars/ghoul.webp', wisps: '../assets/chars/wraith.webp' };
+// colour ramps per material: dark, mid, hot (r,g,b strings); fall = gravity sign
+const PAL = {
+  blood:  { dark: '58,0,0',    mid: '150,12,12',  hot: '255,96,72',   fall: 1 },
+  dust:   { dark: '62,54,42',  mid: '190,178,155', hot: '255,244,215', fall: 1 },
+  embers: { dark: '110,30,0',  mid: '255,122,32', hot: '255,232,150', fall: -1 },
+  wisps:  { dark: '20,60,80',  mid: '150,220,255', hot: '235,252,255', fall: -1 },
+};
+const R = Math.random, rr = (a, b) => a + R() * (b - a);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let material = 'blood';
+
+// ---------- the four styles: spawn(hit) -> particles; each particle draws itself ----------
+const STYLES = {
+  // today's particles.js, faithfully
+  current(h) {
+    const out = [], m = h.mat, u = h.u, n = Math.round({ blood: 18, embers: 22, wisps: 10, dust: 16 }[m] * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = (R() - 0.5) * Math.PI * 0.9, p = { x: h.x + (R() - 0.5) * 36 * u, y: h.y + (R() - 0.5) * 36 * u, age: 0, kind: 'dot' };
+      if (m === 'embers') { const s = rr(60, 220) * u; Object.assign(p, { vx: Math.cos(a) * s * 0.7, vy: -Math.abs(Math.sin(a)) * s - 40 * u, g: -60 * u, drag: 1.8, life: rr(0.7, 1.5), size: rr(1.5, 4) * u, color: R() < 0.5 ? '255,170,60' : '255,110,30', glow: true }); }
+      else if (m === 'wisps') { const s = rr(20, 70) * u; Object.assign(p, { vx: Math.cos(a) * s, vy: -rr(30, 90) * u, g: -20 * u, drag: 0.8, life: rr(1.1, 1.9), size: rr(4, 11) * u, color: '170,230,255', glow: true, wobble: R() * 6 }); }
+      else if (m === 'dust') { const s = rr(80, 280) * u; Object.assign(p, { vx: Math.cos(a) * s, vy: Math.sin(a) * s - 60 * u, g: 700 * u, drag: 2.5, life: rr(0.5, 1), size: rr(1.5, 4.5) * u, color: R() < 0.5 ? '190,180,160' : '130,120,110' }); }
+      else { const s = rr(120, 380) * u; Object.assign(p, { vx: Math.cos(a) * s, vy: Math.sin(a) * s - 90 * u, g: 900 * u, drag: 1.2, life: rr(0.45, 0.9), size: rr(1.5, 5) * u, color: R() < 0.6 ? '150,10,10' : '200,25,25' }); }
+      out.push(p);
+    }
+    return out;
+  },
+  // A — Darkest Dungeon: few heavy dark blobs stretched by speed, an ink slash, floor splats
+  ink(h) {
+    const out = [], P = PAL[h.mat], u = h.u, solid = P.fall > 0;
+    out.push({ kind: 'slash', x: h.x, y: h.y, age: 0, life: h.kind === 'hit' ? 0.2 : 0.3, len: (h.kind === 'hit' ? 150 : 210) * u, w: (h.kind === 'crit' ? 16 : 11) * u, color: solid ? P.dark : P.mid, edge: P.hot, rot: rr(-0.75, -0.45) });
+    const n = Math.round((solid ? 12 : 10) * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = rr(-0.9, 0.5), s = rr(160, 460) * u;
+      out.push({ kind: h.mat === 'dust' ? 'shard' : 'blob', x: h.x + rr(-14, 14) * u, y: h.y + rr(-14, 14) * u, vx: Math.cos(a) * s, vy: Math.sin(a) * s - (solid ? 120 : 30) * u,
+        g: (solid ? 1100 : -90) * u, drag: solid ? 0.9 : 2.2, age: 0, life: solid ? rr(0.7, 1.1) : rr(0.6, 1.1), size: rr(3, 8) * u * (h.kind === 'kill' ? 1.25 : 1),
+        color: R() < 0.55 ? P.dark : P.mid, floor: solid ? h.floor : null, spin: rr(-9, 9), rot: R() * 6 });
+    }
+    return out;
+  },
+  // B — Hades: additive speed streaks + impact ring, very short
+  spark(h) {
+    const out = [], P = PAL[h.mat], u = h.u;
+    out.push({ kind: 'ring', x: h.x, y: h.y, age: 0, life: 0.28, r0: 10 * u, r1: (h.kind === 'hit' ? 70 : 115) * u, color: P.hot });
+    if (h.kind !== 'hit') out.push({ kind: 'ring', x: h.x, y: h.y, age: -0.06, life: 0.34, r0: 6 * u, r1: 165 * u, color: P.mid });
+    out.push({ kind: 'flash', x: h.x, y: h.y, age: 0, life: 0.12, size: (h.kind === 'hit' ? 46 : 80) * u, color: P.hot });
+    const n = Math.round(20 * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = R() * Math.PI * 2, s = rr(380, 980) * u;
+      out.push({ kind: 'streak', x: h.x, y: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 600 * u * P.fall * 0.5, drag: 6, age: 0, life: rr(0.22, 0.42), size: rr(1.6, 3) * u, P });
+    }
+    return out;
+  },
+  // C — Diablo IV: trailed droplets, tumbling chunks, a lingering mist cloud
+  mist(h) {
+    const out = [], P = PAL[h.mat], u = h.u, solid = P.fall > 0;
+    const puffs = Math.round(5 * Math.min(h.mult, 2));
+    for (let i = 0; i < puffs; i++) {
+      const a = rr(-1, 0.6), s = rr(30, 90) * u;
+      out.push({ kind: 'puff', x: h.x + rr(-20, 30) * u, y: h.y + rr(-20, 20) * u, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 12 * u, g: (solid ? 6 : -30) * u, drag: 1.4, age: 0, life: rr(1.1, 1.9), size: rr(36, 64) * u * (h.kind === 'kill' ? 1.4 : 1), color: solid ? P.mid : P.hot, a: h.mat === 'blood' ? 0.32 : 0.26 });
+    }
+    const n = Math.round(16 * h.mult);
+    for (let i = 0; i < n; i++) {
+      const a = rr(-1.1, 0.7), s = rr(220, 620) * u;
+      out.push({ kind: 'drop', x: h.x, y: h.y, px: h.x, py: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 140 * u * (solid ? 1 : 0.2), g: (solid ? 1300 : -160) * u, drag: 1.1, age: 0, life: rr(0.5, 0.95), size: rr(1.6, 3.6) * u, color: R() < 0.5 ? P.mid : P.dark });
+    }
+    const chunks = h.kind === 'hit' ? 2 : 5;
+    for (let i = 0; i < chunks; i++) {
+      const a = rr(-1.2, 0.2), s = rr(200, 420) * u;
+      out.push({ kind: 'chunk', x: h.x, y: h.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 160 * u, g: (solid ? 1500 : -120) * u, drag: 0.6, age: 0, life: rr(0.7, 1.1), size: rr(4, 7) * u, color: P.dark, spin: rr(-12, 12), rot: R() * 6 });
+    }
+    return out;
+  },
+};
+
+function step(p, dt) {
+  if (p.vx === undefined) return;
+  p.px = p.x; p.py = p.y;
+  p.vx *= Math.exp(-p.drag * dt);
+  p.vy = p.vy * Math.exp(-p.drag * dt) + p.g * dt;
+  p.x += p.vx * dt + (p.wobble ? Math.sin(p.age * 5 + p.wobble) * 0.6 : 0);
+  p.y += p.vy * dt;
+  if (p.rot !== undefined) p.rot += (p.spin ?? 0) * dt;
+  if (p.floor && p.y > p.floor && p.kind === 'blob') { // lands: becomes a splat that fades slowly
+    Object.assign(p, { kind: 'splat', y: p.floor + rr(-3, 3), vx: 0, vy: 0, g: 0, age: 0, life: rr(1.4, 2.2), w: p.size * rr(2.2, 3.4) });
+  }
+}
+
+function draw(c, p) {
+  const k = Math.max(0, 1 - p.age / p.life);
+  if (p.age < 0) return;
+  switch (p.kind) {
+    case 'dot':
+      c.globalCompositeOperation = p.glow ? 'lighter' : 'source-over';
+      c.fillStyle = `rgba(${p.color},${(p.glow ? 0.55 : 0.9) * k})`;
+      c.beginPath(); c.arc(p.x, p.y, Math.max(0.5, p.size * (p.glow ? 0.6 + k * 0.4 : 1)), 0, 7); c.fill(); break;
+    case 'blob': {
+      const sp = Math.hypot(p.vx, p.vy), st = Math.min(3.2, 1 + sp / 260);
+      c.globalCompositeOperation = 'source-over';
+      c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(p.vy, p.vx));
+      c.fillStyle = `rgba(${p.color},${0.95 * Math.min(1, k * 1.6)})`;
+      c.beginPath(); c.ellipse(0, 0, p.size * st, p.size / Math.sqrt(st), 0, 0, 7); c.fill(); c.restore(); break;
+    }
+    case 'splat':
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = `rgba(${p.color},${0.85 * k})`;
+      c.beginPath(); c.ellipse(p.x, p.y, p.w, p.w * 0.28, 0, 0, 7); c.fill(); break;
+    case 'shard':
+      c.globalCompositeOperation = 'source-over';
+      c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
+      c.fillStyle = `rgba(${p.color},${Math.min(1, k * 1.6)})`; c.strokeStyle = `rgba(10,6,4,${Math.min(1, k * 1.6)})`; c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(-p.size, -p.size * 0.3); c.lineTo(p.size * 0.2, -p.size * 0.7); c.lineTo(p.size * 1.1, p.size * 0.4); c.lineTo(-p.size * 0.3, p.size * 0.6); c.closePath(); c.fill(); c.stroke(); c.restore(); break;
+    case 'slash': {
+      const t = p.age / p.life, grow = Math.min(1, t * 4);
+      c.globalCompositeOperation = 'source-over';
+      c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
+      const L = p.len * grow;
+      c.fillStyle = `rgba(${p.color},${0.92 * (1 - t)})`;
+      c.beginPath(); c.moveTo(-p.len / 2, 0); c.quadraticCurveTo(-p.len / 2 + L / 2, -p.w, -p.len / 2 + L, 0); c.quadraticCurveTo(-p.len / 2 + L / 2, p.w * 0.35, -p.len / 2, 0); c.fill();
+      // a thin hot edge along the cut, so the dark ink reads on dark rooms
+      c.strokeStyle = `rgba(${p.edge},${0.85 * (1 - t)})`; c.lineWidth = Math.max(1, p.w * 0.14);
+      c.beginPath(); c.moveTo(-p.len / 2, 0); c.quadraticCurveTo(-p.len / 2 + L / 2, -p.w, -p.len / 2 + L, 0); c.stroke();
+      c.restore(); break;
+    }
+    case 'ring': {
+      const t = p.age / p.life, r = p.r0 + (p.r1 - p.r0) * (1 - Math.pow(1 - t, 3));
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = `rgba(${p.color},${0.9 * (1 - t)})`; c.lineWidth = Math.max(1, 7 * (1 - t));
+      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.stroke(); break;
+    }
+    case 'flash': {
+      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      g.addColorStop(0, `rgba(${p.color},${0.9 * k})`); g.addColorStop(1, `rgba(${p.color},0)`);
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.size, 0, 7); c.fill(); break;
+    }
+    case 'streak': {
+      const sp = Math.hypot(p.vx, p.vy), len = Math.min(70, sp * 0.05) + 3, nx = p.vx / (sp || 1), ny = p.vy / (sp || 1);
+      const col = k > 0.6 ? p.P.hot : p.P.mid;
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = `rgba(${col},${Math.min(1, k * 1.4)})`; c.lineWidth = p.size; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - nx * len, p.y - ny * len); c.stroke(); break;
+    }
+    case 'puff': {
+      const s = p.size * (0.6 + 0.8 * (p.age / p.life)), a = p.a * Math.sin(Math.PI * Math.min(1, p.age / p.life)) ;
+      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, s);
+      g.addColorStop(0, `rgba(${p.color},${a})`); g.addColorStop(1, `rgba(${p.color},0)`);
+      c.globalCompositeOperation = 'source-over'; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, s, 0, 7); c.fill(); break;
+    }
+    case 'drop':
+      c.globalCompositeOperation = 'source-over';
+      c.strokeStyle = `rgba(${p.color},${0.95 * k})`; c.lineWidth = p.size; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(p.px - (p.x - p.px) * 2.5, p.py - (p.y - p.py) * 2.5); c.lineTo(p.x, p.y); c.stroke(); break;
+    case 'chunk':
+      c.globalCompositeOperation = 'source-over';
+      c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.fillStyle = `rgba(${p.color},${Math.min(1, k * 1.5)})`;
+      c.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7); c.restore(); break;
+  }
+}
+
+// ---------- stages ----------
+const stages = [...document.querySelectorAll('figure')].map((fig) => {
+  const canvas = fig.querySelector('canvas'), card = fig.querySelector('.card'), img = card.querySelector('img');
+  return { style: fig.dataset.style, canvas, c: canvas.getContext('2d'), card, img, parts: [] };
+});
+function setMaterial(m) {
+  material = m;
+  for (const s of stages) s.img.src = IMG[m];
+  for (const b of document.querySelectorAll('#mat button')) b.setAttribute('aria-pressed', String(b.dataset.mat === m));
+}
+function fire(kind) {
+  for (const s of stages) {
+    const W = s.canvas.clientWidth, H = s.canvas.clientHeight;
+    const u = H / 400; // the game scales bursts by card height; same here
+    const cr = s.card.getBoundingClientRect(), sr = s.canvas.getBoundingClientRect();
+    const x = cr.left - sr.left + cr.width * 0.5, y = cr.top - sr.top + cr.height * 0.42;
+    const mult = { hit: 1, crit: 1.8, kill: 2.4 }[kind];
+    s.parts.push(...STYLES[s.style]({ x, y, u, mat: material, kind, mult, floor: cr.bottom - sr.top - 4 }));
+    if (s.parts.length > 700) s.parts.splice(0, s.parts.length - 700);
+    s.card.classList.remove('hit'); void s.card.offsetWidth; s.card.classList.add('hit');
+  }
+}
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  for (const s of stages) {
+    const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.round(s.canvas.clientWidth * dpr), h = Math.round(s.canvas.clientHeight * dpr);
+    if (s.canvas.width !== w || s.canvas.height !== h) { s.canvas.width = w; s.canvas.height = h; }
+    s.c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    s.c.clearRect(0, 0, w, h);
+    s.parts = s.parts.filter((p) => (p.age += dt) < p.life);
+    for (const p of s.parts) { step(p, dt); draw(s.c, p); }
+  }
+  requestAnimationFrame(frame);
+}
+document.querySelectorAll('#mat button').forEach((b) => b.addEventListener('click', () => setMaterial(b.dataset.mat)));
+document.querySelectorAll('.fire').forEach((b) => b.addEventListener('click', () => fire(b.dataset.kind)));
+let auto = !reduced, beat = 0;
+const autoBtn = document.getElementById('auto');
+const syncAuto = () => { autoBtn.setAttribute('aria-pressed', String(auto)); autoBtn.textContent = `Auto: ${auto ? 'on' : 'off'}`; };
+autoBtn.addEventListener('click', () => { auto = !auto; syncAuto(); });
+syncAuto();
+// auto demo: hit, hit, crit, kill — then the next material
+setInterval(() => {
+  if (!auto || document.hidden) return;
+  const seq = ['hit', 'hit', 'crit', 'kill'];
+  fire(seq[beat % 4]);
+  beat++;
+  if (beat % 8 === 0) { const ms = Object.keys(IMG); setMaterial(ms[(ms.indexOf(material) + 1) % ms.length]); }
+}, 1300);
+setMaterial('blood');
+// every room background from the game's data, so a look can be judged on the darkest and brightest rooms
+const roomSel = document.getElementById('room');
+fetch('../assets/data/backgrounds.json', { cache: 'no-cache' }).then((r) => r.json()).then((bg) => {
+  for (const f of [...(bg.rooms ?? []), bg.boss, bg.shrine].filter(Boolean)) {
+    const o = document.createElement('option'); o.value = f; o.textContent = bg.roomNames?.[f] ?? f; roomSel.append(o);
+  }
+  roomSel.value = 'castle_chapel_interior.jpg';
+}).catch(() => { roomSel.closest('.group').hidden = true; });
+roomSel.addEventListener('change', () => document.documentElement.style.setProperty('--room', `url("../assets/bg/${roomSel.value}")`));
+requestAnimationFrame(frame);
+setTimeout(() => fire('crit'), 400);
+</script>
+</body>
+</html>
