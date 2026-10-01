@@ -555,7 +555,7 @@
       "linkMax": 3
     },
     "walkSpeed": 3.0,
-    "skipSpeed": 4,
+    "skipSpeed": 2.5,
     "ease": 1.2,
     "stride": 1.1,
     "bob": 0.035,
@@ -563,8 +563,8 @@
     "turnRate": 5,
     "round": 0.45,
     "turnSecs": 0.5,
-    "fadeInSecs": 0.7,
-    "fadeOutSecs": 0.9,
+    "fadeInSecs": 1.0,
+    "fadeOutSecs": 1.2,
     "blackSecs": 0.9,
     "vanishSecs": 1.0
   }

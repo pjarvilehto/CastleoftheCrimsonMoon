@@ -159,11 +159,18 @@ export function createCorridorView(cfg, { bossEvery }) {
     figures.clear();
   }
 
-  // Space, Enter or a click hurries the knight along
-  const hurry = (e) => { if (e.type !== 'keydown' || e.code === 'Space' || e.code === 'Enter') fast = true; };
+  // Space, Enter or a click hurries the knight along — a fresh one: the
+  // Space that pressed Push Deeper is still bubbling up when the walk
+  // starts (hotkeys listen on the document, this on the window), and
+  // used to hurry every walk but the first (0.151); a held key neither
+  let since = 0;
+  const hurry = (e) => {
+    if (e.timeStamp < since || e.repeat) return;
+    if (e.type !== 'keydown' || e.code === 'Space' || e.code === 'Enter') fast = true;
+  };
 
   async function walkTo(run, room, opts = {}) {
-    fast = false; onCovered = opts.onCovered ?? null;
+    fast = false; onCovered = opts.onCovered ?? null; since = performance.now();
     addEventListener('keydown', hurry); addEventListener('pointerdown', hurry);
     try {
       const s = Math.floor((room.number - 1) / bossEvery);
@@ -212,5 +219,5 @@ export function createCorridorView(cfg, { bossEvery }) {
     plan = null; stretch = -1;
   }
 
-  return { walkTo, reveal, close, skip: () => { fast = true; }, world, get knight() { return knight; }, get plan() { return plan; } };
+  return { walkTo, reveal, close, skip: () => { fast = true; }, world, get knight() { return knight; }, get plan() { return plan; }, get hurrying() { return fast; } };
 }

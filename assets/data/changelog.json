@@ -1,4 +1,9 @@
 {
+  "0.151": [
+    "Test mode (?debug, 3D CORRIDORS): the walk keeps its pace — pressing Space for Push Deeper no longer hurries it; a fresh Space during the walk still does",
+    "Test mode: XP, coins, the log with its loot and the boons stay on screen during the walk",
+    "Test mode: the transitions go in order — the knight and enemies fade out before the dungeon appears, and the room's painting fades in fully before they return"
+  ],
   "0.150": [
     "Test mode (?debug, 3D CORRIDORS): between rooms the knight walks the 3D dungeon on his own — leaving the Great Hall, after each won room — and the room's painting and fight fade in where he stops. Space hurries him along.",
     "Test mode: each 8-room stretch is one very linear 3D floor; past the boss the stairs lead down to the next"

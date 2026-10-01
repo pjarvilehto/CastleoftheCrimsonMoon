@@ -390,21 +390,33 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   const { setCorridorFactory, corridorsOn } = await import('../../src/ui/corridors.js');
   const { DEBUG } = await import('../../src/shared/debug.js');
   ok('3D corridors: off without ?debug', corridorsOn() === false);
-  const calls = [], later = (ms) => new Promise((r) => setTimeout(r, ms));
+  const calls = [], seen = [], later = (ms) => new Promise((r) => setTimeout(r, ms));
   setCorridorFactory(() => ({
-    async walkTo(run, room, o) { calls.push(`walk ${room.number}`); o.onCovered?.(); await later(500); return { theme: 'library', background: 'castle_library.jpg' }; },
-    async reveal() { calls.push('reveal'); await later(300); },
+    async walkTo(run, room, o) { calls.push(`walk ${room.number}`); seen.push({ walk: room.number, at: Date.now(), cards: H.t().includes('Heavy Attack') }); o.onCovered?.(); await later(1600); return { theme: 'library', background: 'castle_library.jpg' }; },
+    async reveal() { calls.push('reveal'); await later(300); seen.push({ revealed: Date.now(), room: /Room \d+ - /.test(H.t()) }); },
     close() { calls.push('close'); },
   }));
   fresh();
   DEBUG.invulnerable = true;
   H.show(H.dungeonScene());
-  await sleep(1100); await sleep(900);
+  await sleep(1100); await sleep(500);
+  ok('3D corridors: the first walk shows the HUD (XP, coins, the log) and nothing of a room yet',
+    H.registry.app.classList.contains('walking') && /XP.*COINS/.test(H.t()) && H.t().includes('You leave the Great Hall') && !H.t().includes('Room 1'), H.t().slice(0, 120));
+  await sleep(1500);
   const lib = [H.registry.bg0, H.registry.bg1].some((l) => l.dataset.file === 'castle_library.jpg' && l.style.opacity === '1');
-  ok('3D corridors: the run walks to room 1, which takes the 3D room\'s painting and name', calls.join() === 'walk 1,reveal' && H.t().includes('Room 1 - The Library') && lib && !H.registry.app.classList.contains('hidden'), calls.join());
+  ok('3D corridors: the run walks to room 1, which takes the 3D room\'s painting and name', calls.join() === 'walk 1,reveal' && H.t().includes('Room 1 - The Library') && lib
+    && !H.registry.app.classList.contains('hidden') && !H.registry.app.classList.contains('walking'), calls.join());
   for (let i = 0; i < 40 && !H.t().includes('Push Deeper'); i++) { H.handleKey('a'); await sleep(900); }
+  const pressed = Date.now();
   H.handleKey('d'); H.handleKey('d'); // (a second press while walking does nothing)
-  await sleep(2000);
+  await sleep(1300);
+  ok('3D corridors: while walking on, the HUD stays — XP and coins, the log with the room\'s rewards and loot, the boons — and the room\'s cards and buttons are gone',
+    H.registry.app.classList.contains('walking') && /XP.*COINS/.test(H.t()) && H.t().includes('Room cleared') && !H.t().includes('Push Deeper') && !H.t().includes('Attack')
+    && !!document.getElementById('buffs'), H.t().slice(0, 160));
+  await sleep(2200);
+  const w2 = seen.find((x) => x.walk === 2);
+  ok('3D corridors, in order: the room\'s cards fade fully before the dungeon comes back; the next room appears only once the painting is fully in',
+    w2 && w2.at - pressed >= 900 && !w2.cards && seen.filter((x) => 'revealed' in x).every((x) => !x.room) && H.t().includes('Room 2 - '), JSON.stringify(seen));
   ok('3D corridors: Push Deeper walks on to room 2 (once)', calls.join() === 'walk 1,reveal,walk 2,reveal' && H.t().includes('Room 2 - '), calls.join());
   if (H.t().includes('A shrine hums')) { H.handleKey('d'); await sleep(2000); } // (room 2 was the shrine: on to a fight)
   for (let i = 0; i < 40 && !/Retreat/.test(H.t()); i++) { H.handleKey('a'); await sleep(900); }

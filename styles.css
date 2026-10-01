@@ -92,6 +92,12 @@ body.fg-hidden #app { visibility: hidden; }
   pointer-events: none; /* fading-out scene must not take clicks (0.077) */
   transition: opacity 1s ease-in-out; /* window fade-out length */
 }
+/* ?debug 3D corridors (0.151, dungeonScene.js walkOn): while the knight
+   walks between rooms, the room's own parts fade (title, cards, buttons)
+   and the run's HUD stays over the 3D view — XP and coins, the log with its
+   loot lines, the boons; the next room's parts fade in round it */
+#app.corridor > * { transition: opacity 0.9s ease-in-out; } /* = WALK_FADE_MS */
+#app.walking > :not(.resources):not(#combat-log):not(#buffs) { opacity: 0; pointer-events: none; }
 
 .panel {
   background: var(--panel);

@@ -373,13 +373,20 @@ three.js loads only when the 3D corridors are used.
   the 3D dungeon as the way between the game's rooms; the run itself
   (rooms, fights, shrine, retreat, settling) is unchanged. `?debug` 3D
   CORRIDORS (on by default there, `prefs corridors3d`; players never get
-  it) makes `dungeonScene` walk instead of crossfading (`walkOn`): the
-  windows fade, `enterNextRoom` rolls the room as ever, the dungeon fades
-  in over the painting (bg3d paused once covered) and the knight walks
-  there on his own (`corridorView.js`); the room takes the 3D room's
-  theme painting and name (`backdrop.paintings`), is built unseen, then
-  the windows and painting fade in as the dungeon fades out. Space /
-  Enter / a click hurries the walk (`run.skipSpeed`). One floor per
+  it) makes `dungeonScene` walk instead of crossfading (`walkOn`),
+  strictly in order (0.151, the owner's call): the room's own parts
+  (title, cards, buttons) fade out over the painting (`#app.walking`;
+  `WALK_FADE_MS` = the CSS fade) while the run's HUD stays — XP / coins,
+  the docked log with its loot lines, the boons (`walkHud`; the shrine's
+  log leaves its panel) — then `enterNextRoom` rolls the room as ever and
+  the dungeon fades in over the painting (bg3d paused once covered) as
+  the knight walks there on his own (`corridorView.js`); the room takes
+  the 3D room's theme painting and name (`backdrop.paintings`); the
+  dungeon fades out to that painting fully, and only then is the room
+  built and its parts fade in (no blind hotkeys meanwhile). Space / Enter
+  / a click hurries the walk (`run.skipSpeed`) — a fresh press only: the
+  Space that pressed Push Deeper still bubbles up to the window as the
+  walk starts, and hurried every walk but the first in 0.150. One floor per
   stretch (`runFloor.js planStretch`: mapgen with `explore.json run.gen`
   — very linear, no spurs — the shrine where `run.shrineRooms` put it via
   mapgen `shrineAt`, the boss last); the way is `walkPath.js` (route
