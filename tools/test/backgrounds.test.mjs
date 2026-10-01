@@ -14,7 +14,7 @@ fresh();
 {
   const bg3d = await import('../../src/core/bg3d.js');
   const b = DATA.backgrounds;
-  const all = [...new Set([b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms])];
+  const all = [...new Set([b.title, b.hub, ...b.bosses, b.death, b.shrine, ...b.rooms, ...b.treasure])];
   const missing = all.filter((f) => { try { return !statSync(bg3d.depthUrl(f)).isFile(); } catch { return true; } });
   ok('every background has a depth map', missing.length === 0, missing.join(','));
   const png = readFileSync(bg3d.depthUrl(b.title));
@@ -23,7 +23,7 @@ fresh();
   // (rooms, boss/shrine/death, portraits) loads after the title shows.
   const pre = await import('../../src/shared/preload.js');
   const { depthUrl } = await import('../../src/core/bg3d.js');
-  const bgs = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
+  const bgs = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, ...DATA.backgrounds.bosses, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms, ...DATA.backgrounds.treasure])];
   const boot = pre.bootUrls(), later = pre.restUrls(), staged = new Set([...boot, ...later]);
   ok('boot preloads only the title + hub art (and their depth maps)', boot.length <= 4 && boot.includes(`assets/bg/${DATA.backgrounds.title}`) && boot.includes(depthUrl(DATA.backgrounds.hub)));
   ok('boot + background stage cover every background, depth map and portrait',
@@ -36,7 +36,7 @@ fresh();
   const need = pre.essentialUrls(), roomArt = pre.roomUrls();
   ok('background stage completes and reports progress (over the essentials)', rp.ready && rp.done === rp.total && rp.total === need.length);
   ok('the stage waits for no room painting; the rooms load after the essentials',
-    DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
+    DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
     && later.join() === [...need, ...roomArt].join());
 
   const cs = (w, h) => bg3d.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
@@ -153,7 +153,7 @@ fresh();
   ok('haze + flash lights per vertex; one texture read per background pixel (0.101)', gl.VS.includes('vHaze = clamp(') && gl.VS.includes('vLit = lightAt(w);')
     && (gl.FS.match(/texture2D\(/g) || []).length === 1 && !gl.FS.includes('lightAt') && !gl.FS.includes('exp('));
   const P = DATA.backgrounds.parallax, amt = (f) => P.overrides?.[f]?.fog ?? P.fog;
-  const all = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
+  const all = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, ...DATA.backgrounds.bosses, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms, ...DATA.backgrounds.treasure])];
   ok('every background has a fog amount', all.every((f) => amt(f) > 0 && amt(f) <= 1.5));
   ok('long exterior views are foggier than rooms', amt('castle_ramparts.jpg') > 2 * amt('castle_great_hall.jpg') && amt('castle_courtyard.jpg') > 2 * amt('castle_alchemy_lab.jpg'));
 }
@@ -238,7 +238,7 @@ fresh();
   ok('puffs render at half resolution, then blend over the scene once', src.includes('Math.ceil(w / 2)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)'));
   ok('puffs fade softly into the scene in front of them (depth map)', src.includes('clamp((surf - d) / uSoft, 0.0, 1.0)') && P.soft > 0);
   const Pb = DATA.backgrounds.parallax, wind = (f) => Pb.overrides?.[f]?.fogWind ?? Pb.fogWind;
-  const allBg = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms])];
+  const allBg = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, ...DATA.backgrounds.bosses, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms, ...DATA.backgrounds.treasure])];
   ok('every scene has its own wind: some sideways, some toward, some away from the camera', allBg.every((f) => wind(f)?.length === 3 && wind(f).every(Number.isFinite))
     && allBg.some((f) => Math.abs(wind(f)[0]) >= 0.02) && allBg.some((f) => wind(f)[2] > 0.01) && allBg.some((f) => wind(f)[2] < -0.005));
   ok('tuner: fog drift slider', readFileSync('src/ui/bgTuner.js', 'utf8').includes("['fogSpeed', 'Fog drift'"));
@@ -270,4 +270,28 @@ fresh();
   const src = readFileSync('src/core/bg3d.js', 'utf8');
   ok('past the last step: back to the flat backgrounds', src.includes('if (level >= LADDER.length) { shutdown(); return false; }')
     && src.includes('if (fpsW.slow >= SLOW_WINDOWS && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
+}
+
+// 0.156 — no painting twice in a run (while the pool lasts), and the boss
+// fights draw from the throne rooms
+{
+  const rs = await import('../../src/run/runState.js');
+  const { generateRoom } = await import('../../src/run/roomGen.js');
+  let repeats = 0, offPool = 0;
+  const thrones = new Set();
+  for (let k = 0; k < 40; k++) {
+    const run = rs.createRun(), shown = [];
+    for (let n = 0; n < DATA.difficulty.finalBossRoom; n++) {
+      const room = rs.enterNextRoom(run);
+      if (room.kind === 'shrine') continue;
+      shown.push(room.background);
+      if (room.isBoss) { thrones.add(room.background); if (!DATA.backgrounds.bosses.includes(room.background)) offPool++; }
+    }
+    if (new Set(shown).size !== shown.length) repeats++;
+  }
+  ok('backgrounds: a whole 24-room run shows no painting twice; bosses fight in the throne rooms (all of them, over many runs)',
+    repeats === 0 && offPool === 0 && thrones.size === DATA.backgrounds.bosses.length && DATA.backgrounds.bosses.length >= 4, `${repeats} ${offPool} ${thrones.size}`);
+  const tiny = { seenBackgrounds: [] };
+  const many = Array.from({ length: DATA.backgrounds.rooms.length + 3 }, (_, i) => generateRoom(i * 8 + 1, tiny).background);
+  ok('backgrounds: a pool shown out starts over rather than failing', many.every(Boolean) && new Set(many).size === DATA.backgrounds.rooms.length);
 }

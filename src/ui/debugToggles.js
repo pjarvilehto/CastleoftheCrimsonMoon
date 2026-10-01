@@ -34,7 +34,7 @@ export function debugToggles() {
     },
   }, 'BG VIEW: 3D');
   const b = DATA.backgrounds;
-  const all = [...new Set([b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms])];
+  const all = [...new Set([b.title, b.hub, ...b.bosses, b.death, b.shrine, ...b.rooms, ...b.treasure])];
   let i = -1;
   const next = el('button', {
     class: 'debug-toggle bg-next-toggle',

@@ -45,6 +45,7 @@ export function createRun() {
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
     shrineRooms: [randomShrineRoom(0, treasureRoom)], // one per stretch of bossEvery rooms, added on entry
     treasureRoom,                // the run's treasure room (run/treasure.js), or null
+    seenBackgrounds: [],         // paintings shown this run: none twice while the pool lasts (0.156)
     revive: stats.revive ?? false, // Heart of the Dying Moon — once per run
     // run history (0.095, meta/history.js): who went in, and the tallies
     startedAt: Date.now(),

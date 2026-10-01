@@ -29,7 +29,14 @@
     "dungeon_torch_corridor.jpg",
     "dungeon_treasury.jpg",
     "dungeon_war_room.jpg",
-    "dungeon_wine_cellar.jpg"
+    "dungeon_wine_cellar.jpg",
+    "corridor_bone_passage.jpg",
+    "corridor_cavern_chasm.jpg",
+    "corridor_crypt_walkway.jpg",
+    "corridor_flooded_hall.jpg",
+    "corridor_gothic_vault.jpg",
+    "corridor_sewer_aqueduct.jpg",
+    "corridor_torch_hall.jpg"
   ],
   "treasure": [
     "treasure_cursed_reliquary.jpg",
@@ -39,7 +46,12 @@
     "treasure_smugglers_cache.jpg",
     "treasure_sunken_vault.jpg"
   ],
-  "boss": "castle_throne_room.jpg",
+  "bosses": [
+    "castle_throne_room.jpg",
+    "throne_ember_warlord.jpg",
+    "throne_obsidian_sovereign.jpg",
+    "throne_rose_queen.jpg"
+  ],
   "death": "castle_chapel_exterior.jpg",
   "shrine": "castle_shrine_gold.jpg",
   "shrineName": "The Shrine",
@@ -78,7 +90,17 @@
     "treasure_frozen_tribute.jpg": "The Frozen Tribute",
     "treasure_regalia_chamber.jpg": "The Regalia Chamber",
     "treasure_smugglers_cache.jpg": "The Smugglers' Cache",
-    "treasure_sunken_vault.jpg": "The Sunken Vault"
+    "treasure_sunken_vault.jpg": "The Sunken Vault",
+    "corridor_bone_passage.jpg": "The Bone Passage",
+    "corridor_cavern_chasm.jpg": "The Chasm Bridge",
+    "corridor_crypt_walkway.jpg": "The Crypt Walk",
+    "corridor_flooded_hall.jpg": "The Flooded Hall",
+    "corridor_gothic_vault.jpg": "The Storm Vault",
+    "corridor_sewer_aqueduct.jpg": "The Old Aqueduct",
+    "corridor_torch_hall.jpg": "The Hall of Banners",
+    "throne_ember_warlord.jpg": "The Ember Throne",
+    "throne_obsidian_sovereign.jpg": "The Obsidian Throne",
+    "throne_rose_queen.jpg": "The Rose Throne"
   },
   "parallax": {
     "_doc": "3D backgrounds (0.083, core/bg3d.js): depth maps in assets/bg/depth/ (tools/gen-depth.py). depthScale = how far depth pushes the art along each camera ray; pivot = the depth that stays still; yaw/pitch = sway amplitude in degrees; periods in seconds; overscan = skirt beyond the screen edge; overrides = per-file tweaks keyed by background filename. joltDeg = the small camera kick on heavy blows; swayDeg = the rocking rotation (about the depth centre) on the biggest blows (0.092/0.093; crits, SMASH, multi-kills swing the near art right, hits on the knight of at least swayHitShare of max HP swing it left). depthFiles = per-background depth map filename when regenerated (new name, never overwrite). fog (0.099; puffs 0.101, core/bg3dPuffs.js) = depth-embedded mist: distance haze + large soft mist puffs drifting through the scene volume; amount per background in overrides (long exterior views more, rooms a touch), colour from the scene's own far pixels (fogColor [r,g,b] 0-1 overrides it). fogWind = drift in world units/s [sideways +right, up, toward the camera +] per background; fogSpeed multiplies it. puffs = count, size range, height range (y), box half-width, near/far distance (the art spans ~0.6-1.4; the focal plane is 1) with fading bands, soft = how gently a puff fades into the scene in front of it, opacity. maxPixels = canvas pixel budget; minFps = below this the quality steps down (lower resolution, then no fog, then flat). lights (0.100, core/bg3dLights.js) = the flash a crit / potion / revive puts into the scene in front of the character: dist = how far in front of the camera (focal plane 1), radius = reach in world units, per kind colour, strength, fade and life in seconds; enabled false switches them off.",

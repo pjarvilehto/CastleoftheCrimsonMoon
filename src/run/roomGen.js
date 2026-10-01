@@ -11,6 +11,16 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// A painting the run hasn't shown yet (0.156: no repeats within a run while
+// the pool lasts — run.seenBackgrounds; then the whole pool again).
+function pickFresh(pool, run) {
+  const seen = run.seenBackgrounds;
+  const fresh = seen ? pool.filter((f) => !seen.includes(f)) : pool;
+  const bg = pickRandom(fresh.length ? fresh : pool);
+  seen?.push(bg);
+  return bg;
+}
+
 function roomNameFor(bgFile) {
   return (DATA.backgrounds.roomNames && DATA.backgrounds.roomNames[bgFile]) || 'The Chamber';
 }
@@ -20,13 +30,14 @@ export function generateRoom(roomNumber, run = {}) {
   const isBossRoom = roomNumber % diff.bossEvery === 0;
 
   if (isBossRoom) {
+    const bg = pickFresh(DATA.backgrounds.bosses, run); // (0.156: a throne room of several)
     return {
       number: roomNumber,
       kind: 'boss',
       isBoss: true,
-      name: roomNameFor(DATA.backgrounds.boss),
+      name: roomNameFor(bg),
       enemies: [makeBoss(roomNumber)],
-      background: DATA.backgrounds.boss,
+      background: bg,
     };
   }
 
@@ -45,7 +56,7 @@ export function generateRoom(roomNumber, run = {}) {
 
   // A treasure room (0.155, run/treasure.js): three chests, no fight.
   if (run.treasureRoom === roomNumber) {
-    const bg = pickRandom(DATA.backgrounds.treasure);
+    const bg = pickFresh(DATA.backgrounds.treasure, run);
     return { number: roomNumber, kind: 'treasure', isBoss: false, opened: null, name: roomNameFor(bg), enemies: [], background: bg };
   }
 
@@ -66,7 +77,7 @@ export function generateRoom(roomNumber, run = {}) {
     spent += cost;
   }
 
-  const bg = pickRandom(DATA.backgrounds.rooms);
+  const bg = pickFresh(DATA.backgrounds.rooms, run);
   return {
     number: roomNumber,
     kind: 'combat',
