@@ -1,5 +1,5 @@
 {
-  "version": "0.152",
+  "version": "0.153",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -79,6 +79,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.153": [
+      "26 new rooms to fight in — the Bell Tower, the Drowned Cistern, the Dragon's Hoard, the Frozen Tribute and many more, each with its own depth and mist",
+      "Descending no longer waits for every room's painting to load"
+    ],
     "0.152": [
       "Removed the 3D dungeon experiments (the Dungeon Lab and the 3D corridors test mode) — the game is back to its painted rooms"
     ],
@@ -125,9 +129,6 @@
     ],
     "0.139": [
       "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
-    ],
-    "0.138": [
-      "Play stats: help text tidy-up."
     ]
   }
 }

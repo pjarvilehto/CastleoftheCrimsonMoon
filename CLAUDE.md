@@ -205,7 +205,14 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
   platforms not supported yet" card and the boot stops; `?desktop` skips
   the check. Remove it when a portrait layout lands.
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
-  Hall art only; the hub's Descend waits for the rest if needed.
+  Hall art only; the hub's Descend waits only for the essentials (boss /
+  shrine / death art, portraits); the 34 room paintings (0.153, ~13MB) keep
+  loading behind — a room whose painting isn't in yet keeps the last one up.
+- Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
+  `treasure_*`, names in `backgrounds.json roomNames`) join the 8 castle
+  rooms in the random pick. Source PNGs → 2048x1152 JPEG q86 (~370KB);
+  `treasure_frozen_tribute` had an image-generator sparkle in its corner and
+  was cropped 7% to lose it — check new batches' corners the same way.
 - Shared helpers: `shared/version.js` (never compare build numbers as
   strings), `shared/level.js`, `shared/prefs.js` (per-browser settings).
 

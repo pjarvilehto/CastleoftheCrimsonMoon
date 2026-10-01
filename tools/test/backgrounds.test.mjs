@@ -31,7 +31,13 @@ fresh();
     && boot.every((u) => !later.includes(u)));
   await pre.preloadRest();
   const rp = pre.restProgress();
-  ok('background stage completes and reports progress', rp.ready && rp.done === rp.total && rp.total === later.length);
+  // 0.153: Descend waits for the essentials only (boss / shrine / death art,
+  // portraits) — the room paintings come after, and nobody waits for them
+  const need = pre.essentialUrls(), roomArt = pre.roomUrls();
+  ok('background stage completes and reports progress (over the essentials)', rp.ready && rp.done === rp.total && rp.total === need.length);
+  ok('the stage waits for no room painting; the rooms load after the essentials',
+    DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.boss, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
+    && later.join() === [...need, ...roomArt].join());
 
   const cs = (w, h) => bg3d.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
   ok('cover mapping matches CSS cover', cs(1920, 1080) === '1,1' && cs(1024, 768) === '0.75,1' && cs(2560, 1080) === '1,0.75');

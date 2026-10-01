@@ -78,7 +78,7 @@ src/
     data.js             loads assets/data/*.json into DATA
     dataCheck.js        every number the code reads, checked at load
     balance.js          enemy scaling, LV naming, elites
-    preload.js          fetch + decode art (boot set, then the rest)
+    preload.js          fetch + decode art (boot set, the essentials, then the rooms)
     platform.js         isMobile() (the boot's "not supported yet" notice)
     debug.js  prefs.js  version.js  level.js
   audio/

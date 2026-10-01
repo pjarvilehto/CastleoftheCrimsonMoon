@@ -9,16 +9,15 @@
 // Everything else (dungeon rooms, boss/shrine/death art, portraits: ~5MB)
 // loads in the background right after the title shows; the hub's Descend
 // waits for it only if the player gets there first.
+// 0.153: with 34 room paintings (~13MB) Descend waits only for what every
+// run needs — the boss, shrine and death art and the portraits; the rooms
+// keep loading behind (a room whose painting isn't in yet keeps the last
+// one up until it is: bg3d swaps only once a layer has loaded).
 
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
 
 const bgUrl = (f) => `assets/bg/${f}`;
-
-function allBackgrounds() {
-  const b = DATA.backgrounds;
-  return [...new Set([b.title, b.hub, b.boss, b.death, b.shrine, ...b.rooms])];
-}
 
 // What the title + hub need before the first paint.
 export function bootUrls() {
@@ -26,13 +25,24 @@ export function bootUrls() {
   return [...first.map(bgUrl), ...first.map(depthUrl)];
 }
 
-// Everything the dungeon and run-end screens use (depth maps ~20KB each).
-export function restUrls() {
-  const first = new Set([DATA.backgrounds.title, DATA.backgrounds.hub]);
-  const later = allBackgrounds().filter((f) => !first.has(f));
+// What every run needs before it starts: the boss, shrine and death art,
+// the portraits (depth maps ~20KB each).
+export function essentialUrls() {
+  const b = DATA.backgrounds, first = new Set([b.title, b.hub]);
+  const art = [...new Set([b.boss, b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
-  return [...later.map(bgUrl), ...later.map(depthUrl), ...chars.map((id) => `assets/chars/${id}.webp`)];
+  return [...art.map(bgUrl), ...art.map(depthUrl), ...chars.map((id) => `assets/chars/${id}.webp`)];
 }
+
+// The room paintings (and their depth maps) not already loaded above.
+export function roomUrls() {
+  const b = DATA.backgrounds, seen = new Set([b.title, b.hub, b.boss, b.death, b.shrine]);
+  const rooms = [...new Set(b.rooms)].filter((f) => !seen.has(f));
+  return [...rooms.map(bgUrl), ...rooms.map(depthUrl)];
+}
+
+// Everything the dungeon and run-end screens use, essentials first.
+export const restUrls = () => [...essentialUrls(), ...roomUrls()];
 
 // img.decode() waits for a full decode, not just the network fetch.
 // Falls back to onload where decode is unavailable; resolves (never
@@ -73,10 +83,11 @@ let rest = null;
 const restState = { done: 0, total: 0, ready: false };
 export function preloadRest() {
   rest ??= (async () => {
-    const urls = restUrls();
+    const urls = essentialUrls();
     restState.total = urls.length;
     await pool(urls, 4, async (url) => { await warm(url); restState.done++; });
     restState.ready = true;
+    pool(roomUrls(), 3, warm); // (the rooms keep coming; nobody waits for them)
   })();
   return rest;
 }
