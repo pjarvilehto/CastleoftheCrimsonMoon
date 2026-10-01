@@ -40,6 +40,7 @@ let fogOn = true;     // false once the quality ladder gave the fog up
 let level = 0;        // quality ladder step (core/bg3dQuality.js)
 let fpsW = null;      // frame-rate window; monitor = false: never degrade (debug/headless)
 let monitor = false;
+let held = false;      // holdQuality(): the benchmark measures without stepping down (0.131)
 let firstFrame = null;
 let flashes = [];     // live flash lights: { t0, pos, color, strength, fade, life }
 
@@ -71,6 +72,11 @@ export const isBg3dActive = () => !!gl;
 // The quality ladder step (0 = full; core/bg3dQuality.js) — the particles
 // drop their resolution with it (0.129).
 export const bgQualityLevel = () => level;
+// The benchmark (0.131) holds the quality ladder: it measures this machine
+// as it is, and a slow stretch under test must not lower the quality for
+// the rest of the session.
+export function holdQuality(on) { held = !!on; fpsW = null; }
+
 // The GPU's name for the play stats (0.130, core/perfMonitor.js), or null.
 export function gpuName() {
   if (!gl) return null;
@@ -176,7 +182,7 @@ function frame(now) {
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); } // rest pose = the CSS image
   else { const dt = (now - t0) / 1000; tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
-  if (monitor) {
+  if (monitor && !held) {
     fpsW = fpsWindow(fpsW, now, cfg.minFps);
     if (fpsW.slow >= SLOW_WINDOWS && !degrade()) return;
   }

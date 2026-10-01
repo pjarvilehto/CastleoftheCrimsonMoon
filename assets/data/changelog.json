@@ -1,4 +1,7 @@
 {
+  "0.131": [
+    "Testing tools: a BENCHMARK button in debug mode measures how smoothly the game runs on this computer."
+  ],
   "0.130": [
     "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
   ],

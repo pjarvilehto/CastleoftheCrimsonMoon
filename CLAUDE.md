@@ -295,6 +295,13 @@ static play-stats page.
 - The obvious next button gets the **'active'** state: `class: 'active'`
   (pulsing yellow) or `'active active-red'` (pulsing red) — 0.079.
 - `?debug` in the URL shows the INVULNERABLE toggle (hidden otherwise).
+- BENCHMARK (0.131, `?debug` column; `ui/benchmark.js` +
+  `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s fight (idle /
+  combat / overkill phases) on the real combat pieces; holds the bg3d
+  quality ladder while measuring; result -> `profile.bench` (newest 10,
+  never the run history) -> collector -> the dashboard's Benchmarks card.
+  Changing the script changes what the numbers mean — note it in the
+  changelist when you do.
 - Combat cards: frame art on `.char-card::before` (opacity 0.85);
   portraits overflow the frame (absolute, bottom-anchored, taller/wider
   than the card, text z-index above art); per-enemy tweaks via

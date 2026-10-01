@@ -25,6 +25,7 @@ export function statsPayload(p) {
     profile: {
       playerId: p.playerId, name: p.name ?? '', coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
       stats: p.stats, records: p.records, equipment: p.equipment, history: p.history ?? [],
+      bench: p.bench ?? [], // 0.131: ?debug BENCHMARK results
     },
   };
 }
@@ -35,8 +36,9 @@ export function telemetryEnabled() {
 }
 
 export function shareStats(p) {
-  // no runs yet: nothing to show (and a brand-new save's id isn't stored yet)
-  if (!p?.playerId || !p.history?.length || !telemetryEnabled()) return false;
+  // no runs (or benchmarks, 0.131) yet: nothing to show (and a brand-new
+  // save's id isn't stored yet)
+  if (!p?.playerId || !(p.history?.length || p.bench?.length) || !telemetryEnabled()) return false;
   // text/plain: a "simple" request, no CORS preflight round trip
   globalThis.fetch?.(`${DATA.telemetry.endpoint.replace(/\/$/, '')}/collect`, {
     method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify(statsPayload(p)),

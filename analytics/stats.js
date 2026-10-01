@@ -7,7 +7,7 @@
 // testers' saves from the save codes they export on the title screen.
 
 import { compareVersions } from '../src/shared/version.js';
-import { sanitizePerf } from './perf.js';
+import { sanitizePerf, sanitizeBench } from './perf.js';
 
 export const LOCAL_SAVE_KEY = 'castle-roguelike-profile-v1';
 
@@ -50,6 +50,7 @@ export function sanitizeProfile(p = {}) {
     records: Object.fromEntries(['runs', 'kills', 'bestRoom', 'deaths'].map((k) => [k, num(rec[k])])),
     equipment: Object.fromEntries(ITEM_SLOTS.map((k) => [k, str(eq[k])])),
     history: Array.isArray(p.history) ? p.history.map(sanitizeRun) : [],
+    bench: sanitizeBench(p.bench), // 0.131: ?debug BENCHMARK results
   };
 }
 

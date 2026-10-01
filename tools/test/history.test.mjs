@@ -115,7 +115,7 @@ fresh();
     && sent[0].opts.method === 'POST' && sent[0].opts.headers['content-type'] === 'text/plain');
   const body = JSON.parse(sent[0].opts.body);
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
-    && Object.keys(body.profile).sort().join() === 'coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
+    && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
   ok('sent after every run and once per session', src.includes('shareStats(settleRun(run, outcome))') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
@@ -223,4 +223,43 @@ fresh();
     && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs), true)")
     && readFileSync('analytics/index.html', 'utf8').includes("'perf.js'"));
   ok('dashboard: CSV has the frame rate per run', st.toCsv(runs).split('\n')[0].endsWith(',fps,p95,drop,hz') && st.toCsv(runs).split('\n')[2].includes(',60,17,1,60'));
+}
+
+// T92: 0.131 — the ?debug BENCHMARK: a fixed, seeded fight in three
+// phases; the result is saved to profile.bench (not the run history),
+// sent with the play stats, kept by the collector and shown on the
+// dashboard's Benchmarks card.
+{
+  const { PHASES } = await import('../../src/ui/scenes/benchmarkScene.js');
+  ok('benchmark: idle, combat, overkill with fixed enemies of every particle material',
+    PHASES.map((p) => p.id).join() === 'idle,combat,overkill' && PHASES.every((p) => p.enemies.every((id) => DATA.enemies[id]) && DATA.backgrounds.rooms.includes(p.bg))
+    && ['rat', 'skeleton', 'ghoul', 'wraith'].every((id) => PHASES[1].enemies.includes(id)));
+  const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
+  ok('benchmark: seeded and invulnerable while it runs, everything restored after; quality ladder held',
+    bs.includes('Math.random = seeded(') && bs.includes('Math.random = realRandom;') && bs.includes('DEBUG.invulnerable = wasInvulnerable;')
+    && bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
+  const { recordBenchmark, BENCH_MAX } = await import('../../src/meta/profile.js');
+  const histBefore = getProfile().history.length;
+  for (let i = 0; i < BENCH_MAX + 2; i++) recordBenchmark({ at: i, build: '0.131', phases: {} });
+  ok('results kept in profile.bench (newest 10), never in the run history', getProfile().bench.length === BENCH_MAX && getProfile().bench[0].at === 2
+    && getProfile().history.length === histBefore);
+  const tm = await import('../../src/meta/telemetry.js');
+  const realLoc = globalThis.location, realFetch = globalThis.fetch, ep = DATA.telemetry.endpoint;
+  const sent = [];
+  globalThis.fetch = async (url, opts) => { sent.push(opts); return { ok: true }; };
+  globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; DATA.telemetry.endpoint = 'https://stats.example';
+  ok('a save with only benchmarks still reports', tm.shareStats({ ...getProfile(), history: [] }) === true && JSON.parse(sent[0].body).profile.bench.length === BENCH_MAX);
+  globalThis.location = realLoc; globalThis.fetch = realFetch; DATA.telemetry.endpoint = ep;
+  const wk = await import('../../collector/worker.js');
+  const cb = wk.cleanBench({ at: 5, build: '0.131', bg: 'x', q: 1, junk: 1, phases: { idle: { fps: '60', p95: 17, evil: 1 }, combat: 'nope' } });
+  ok('collector keeps benchmarks, typed', cb.phases.idle.fps === 60 && !('evil' in cb.phases.idle) && cb.phases.combat === null && cb.bg === '3d' && !('junk' in cb)
+    && wk.cleanBench({ build: 'x' }) === null && wk.cleanProfile({ bench: [{ at: 1 }, 'x'] }, 'abcd').bench.length === 1);
+  const pf = await import('../../analytics/perf.js');
+  const bench = pf.sanitizeBench([{ at: 7, build: '<i>', bg: '3d', q: 0, dpr: 2, vw: 1440, vh: 900, phases: { idle: { fps: 60, p95: 17, drop: 0, worst: 30, hz: 60 }, combat: { fps: 44, p95: 31, drop: 18, worst: 120, hz: 60 } } }]);
+  const html = pf.benchTable([{ label: 'A', profile: { bench }, device: null }]);
+  ok('dashboard: Benchmarks card, escaped, graded per phase', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
+    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown), true)"));
+  ok('BENCHMARK sits in the ?debug column and asks first', readFileSync('src/ui/debugToggles.js', 'utf8').includes('benchmarkButton()')
+    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark')"));
+  getProfile().bench = [];
 }

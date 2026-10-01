@@ -22,9 +22,10 @@
 // 0.130: performance — each run may carry `perf` (frame rate: fps, p95
 // frame ms, % dropped frames, worst frame, refresh rate, background mode,
 // window size), and the POST a `device` (GPU, browser, OS, cores, memory,
-// screen); the latest device is kept on the player.
+// screen); the latest device is kept on the player. 0.131: the profile's
+// `bench` — ?debug BENCHMARK results (idle / combat / overkill phases).
 
-export const VERSION = '0.130';
+export const VERSION = '0.131';
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -53,6 +54,17 @@ export function cleanPerf(p) {
   return { ...pick(p, PERF_NUMS, num), bg: p.bg === 'flat' ? 'flat' : '3d' };
 }
 
+// 0.131: ?debug BENCHMARK results — per phase the same frame numbers as a run's perf.
+const BENCH_PHASES = ['idle', 'combat', 'overkill'];
+export function cleanBench(b) {
+  if (!b || typeof b !== 'object' || !Number.isFinite(b.at)) return null;
+  const ph = b.phases ?? {};
+  return {
+    ...pick(b, ['at', 'q', 'dpr', 'vw', 'vh'], num), build: str(b.build, 12), bg: b.bg === 'flat' ? 'flat' : '3d',
+    phases: Object.fromEntries(BENCH_PHASES.map((k) => [k, ph[k] && typeof ph[k] === 'object' ? pick(ph[k], ['fps', 'p95', 'drop', 'worst', 'hz', 'secs'], num) : null])),
+  };
+}
+
 export function cleanDevice(d) {
   if (!d || typeof d !== 'object') return null;
   return { gpu: str(d.gpu, 120), browser: str(d.browser, 30), os: str(d.os, 20), screen: str(d.screen, 20), ...pick(d, ['cores', 'mem'], num) };
@@ -79,6 +91,7 @@ export function cleanProfile(p, id) {
     records: pick(p?.records, ['runs', 'kills', 'bestRoom', 'deaths'], num),
     equipment: { ...pick(eq, SLOTS, (v) => str(v, 40)), rings: Array.isArray(eq.rings) ? eq.rings.slice(0, 2).map((v) => str(v, 40)) : [] },
     history: (Array.isArray(p?.history) ? p.history : []).map(cleanRun).filter(Boolean),
+    bench: (Array.isArray(p?.bench) ? p.bench : []).slice(-20).map(cleanBench).filter(Boolean),
   };
 }
 

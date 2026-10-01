@@ -9,7 +9,7 @@
 import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
-import { perfTable, sanitizeDevice } from './perf.js';
+import { perfTable, benchTable, sanitizeDevice } from './perf.js';
 import { levelFromStats } from '../src/shared/level.js';
 
 const STORE = 'castle-analytics-players-v1';
@@ -201,6 +201,7 @@ function render() {
     ${card('By build', buildTable(byBuild(runs)))}
   </div>
   ${card('Performance', perfTable(shown, runs), true)}
+  ${card('Benchmarks', benchTable(shown), true)}
   ${card('Players', playersTable(shown), true)}
   ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs), true)}`;
 }

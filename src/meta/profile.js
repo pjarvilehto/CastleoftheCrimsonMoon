@@ -30,6 +30,7 @@ const DEFAULTS = {
   history: [], // 0.095: one record per finished run (meta/history.js)
   name: '',     // 0.109: what the player calls themselves (title screen prompt; analytics)
   victorySeen: false, // 0.121: the "you've won" dialog after the final boss, shown once
+  bench: [],          // 0.131: ?debug BENCHMARK results, newest last (ui/scenes/benchmarkScene.js)
 };
 
 let profile = null;
@@ -91,6 +92,15 @@ export function resetProfile() {
 // not an earning, so it is saved at once rather than through settleRun.
 export function markVictorySeen() {
   getProfile().victorySeen = true;
+  persist();
+}
+
+// A benchmark result (0.131): debug data, not an earning — saved at once,
+// newest BENCH_MAX kept.
+export const BENCH_MAX = 10;
+export function recordBenchmark(result) {
+  const p = getProfile();
+  p.bench = [...(Array.isArray(p.bench) ? p.bench : []), result].slice(-BENCH_MAX);
   persist();
 }
 

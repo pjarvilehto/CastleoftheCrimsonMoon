@@ -2,7 +2,8 @@
 // main.js, 0.115): INVULNERABLE (0.079), background evaluation — HIDE
 // FOREGROUND, BG VIEW (3D / FLAT / DEPTH), NEXT BG, BG TUNING (0.083/0.084)
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), and PARTICLE LAB (the particle
-// look experiments, particle-lab/, in a new tab). Players never see them.
+// look experiments, particle-lab/, in a new tab), BENCHMARK (0.131,
+// ui/benchmark.js). Players never see them.
 
 import { setBackground } from '../core/scene.js';
 import { el } from '../core/dom.js';
@@ -11,6 +12,7 @@ import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { onOffToggle } from './cornerToggles.js';
 import { bgTunerToggle } from './bgTuner.js';
+import { benchmarkButton } from './benchmark.js';
 
 const flag = (key, label, cls) => onOffToggle(label, { cls, get: () => DEBUG[key], flip: () => (DEBUG[key] = !DEBUG[key]) });
 
@@ -45,5 +47,5 @@ export function debugToggles() {
   // A new tab, so the game (and a run in progress) stays as it is.
   const lab = el('button', { class: 'debug-toggle particle-lab-link', onclick: () => globalThis.open?.('particle-lab/', '_blank', 'noopener') }, 'PARTICLE LAB');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab];
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, benchmarkButton()];
 }

@@ -1,5 +1,5 @@
 {
-  "version": "0.130",
+  "version": "0.131",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -46,6 +46,7 @@
     "src/shared/preload.js",
     "src/shared/version.js",
     "src/ui/battleLine.js",
+    "src/ui/benchmark.js",
     "src/ui/bgTuner.js",
     "src/ui/buffs.js",
     "src/ui/changelog.js",
@@ -64,6 +65,7 @@
     "src/ui/hud.js",
     "src/ui/namePrompt.js",
     "src/ui/particles.js",
+    "src/ui/scenes/benchmarkScene.js",
     "src/ui/scenes/dungeonScene.js",
     "src/ui/scenes/hubScene.js",
     "src/ui/scenes/index.js",
@@ -75,6 +77,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.131": [
+      "Testing tools: a BENCHMARK button in debug mode measures how smoothly the game runs on this computer."
+    ],
     "0.130": [
       "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
     ],
@@ -121,9 +126,6 @@
     "0.117": [
       "Fixed: in 0.116 a critical hit could freeze the fight (its sound effect errored)",
       "Under the hood: the combat engine and scene switching are reorganised for easier changes (no gameplay change)"
-    ],
-    "0.116": [
-      "Under the hood: every tuning number is now checked at load, and two stale backup values in the code are gone"
     ]
   }
 }

@@ -818,6 +818,11 @@ button.active.potion-remind { animation-duration: 2.2s; }
   0%, 100% { text-shadow: 0 0 10px rgba(201, 162, 39, 0.5); }
   50% { text-shadow: 0 0 22px rgba(232, 190, 60, 0.95), 0 0 60px rgba(201, 162, 39, 0.5); }
 }
+/* BENCHMARK result (0.131, ui/benchmark.js) */
+.bench-table { width: 100%; border-collapse: collapse; margin: 0 0 14px; text-transform: none; letter-spacing: 0.04em; }
+.bench-table th { color: #9a8b6a; font-weight: normal; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; text-align: left; padding: 4px 8px; border-bottom: 1px solid rgba(201,162,39,0.25); }
+.bench-table td { color: var(--parchment); padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(201,162,39,0.1); font-variant-numeric: tabular-nums; }
+.bench-note { font-size: 0.9rem; color: #9a8b6a; text-transform: none; margin: 0 0 8px; }
 /* CHANGELIST (0.113, ui/changelog.js): every build's notes in a scrolling
    box with the combat log's look (dark glass, thin gold rule, mixed case) */
 .changelog-modal { max-width: 640px; padding: 26px 30px 22px; }

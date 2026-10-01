@@ -67,3 +67,32 @@ export function perfTable(players, runs) {
       + `<td>${r.vw}×${r.vh}<small>@${r.dpr}x</small></td><td>${esc(bgText(r))}</td><td>${dev}</td></tr>`;
   }).join('')}</table></div>`;
 }
+
+// ---- ?debug BENCHMARK results (0.131): the same scripted fight on every
+// machine (src/ui/scenes/benchmarkScene.js), so these compare directly.
+const PHASES = [['idle', 'Idle'], ['combat', 'Combat'], ['overkill', 'Overkill']];
+
+export function sanitizeBench(list) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(-20).map((b) => {
+    if (!b || typeof b !== 'object' || !Number.isFinite(Number(b.at))) return null;
+    const ph = b.phases ?? {};
+    return {
+      at: num(b.at), build: str(b.build, 12) || '?', bg: b.bg === 'flat' ? 'flat' : '3d', q: num(b.q), dpr: num(b.dpr), vw: num(b.vw), vh: num(b.vh),
+      phases: Object.fromEntries(PHASES.map(([k]) => [k, sanitizePerf({ ...ph[k], bg: b.bg })])),
+    };
+  }).filter(Boolean);
+}
+
+export function benchTable(players) {
+  const rows = players.flatMap((pl) => (pl.profile.bench ?? []).map((b) => ({ pl, b }))).sort((x, y) => y.b.at - x.b.at);
+  if (!rows.length) return '<p class="empty">No benchmarks yet: in the game with ?debug, press BENCHMARK (about 40 seconds).</p>';
+  const phase = (p) => (p ? `<span class="${grade(p.fps, p.hz)}">${p.fps.toFixed(1)}</span><small>${p.p95} ms · ${p.drop.toFixed(1)}% dropped</small>` : '—');
+  return `<div class="scroll"><table><tr><th>Player</th><th>When</th>${PHASES.map(([, l]) => `<th>${l}</th>`).join('')}<th>Screen</th><th>Background</th><th>Device</th></tr>${rows.map(({ pl, b }) => {
+    const d = pl.device;
+    return `<tr><td>${esc(pl.label)}</td><td>${esc(new Date(b.at).toLocaleString())}<small>build ${esc(b.build)}</small></td>`
+      + PHASES.map(([k]) => `<td>${phase(b.phases[k])}</td>`).join('')
+      + `<td>${b.vw}×${b.vh}<small>@${b.dpr}x</small></td><td>${esc(bgText(b))}</td>`
+      + `<td>${d ? `<span title="${esc(d.gpu)}">${esc(gpuShort(d.gpu))}</span><small>${esc([d.browser, d.os].filter(Boolean).join(' · '))}</small>` : '<small>not reported</small>'}</td></tr>`;
+  }).join('')}</table></div>`;
+}
