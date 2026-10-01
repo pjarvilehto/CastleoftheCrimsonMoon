@@ -211,21 +211,28 @@ fresh();
   ok('puffs start inside the fog box, hanging low', a.every((p) => Math.abs(p.x) <= P.width && p.d >= P.near && p.d <= P.far && p.y >= P.y[0] && p.y <= P.y[1])
     && a.filter((p) => p.y < (P.y[0] + P.y[1]) / 2).length > a.length / 2);
   const one = [{ ...a[0], x: 0, y: -0.2, d: 1.1, speed: 1 }];
-  const at = (t, wind) => pf.puffFrame(one, t, P, wind)[0];
+  const calm = { ...P, turbulence: 0, pulse: 0 }; // the wind alone (0.166: the shipped mist also wanders and pulses)
+  const at = (t, wind) => pf.puffFrame(one, t, calm, wind)[0];
   ok('sideways wind carries a puff sideways', at(10, [0.02, 0, 0]).pos[0] > at(0, [0.02, 0, 0]).pos[0] + 0.19);
   ok('+z wind brings a puff toward the camera, -z takes it away', at(10, [0, 0, 0.02]).pos[2] > at(0, [0, 0, 0.02]).pos[2] + 0.19
     && at(10, [0, 0, -0.02]).pos[2] < at(0, [0, 0, -0.02]).pos[2] - 0.19);
   const long = [1e3, 1e5, 3.3e6].map((t) => at(t, [0.03, 0.002, 0.02]));
   ok('drifting puffs wrap inside the box (any session length)', long.every((q) => Math.abs(q.pos[0]) <= P.width && -q.pos[2] >= P.near && -q.pos[2] <= P.far));
-  const edge = pf.puffFrame([{ ...one[0], x: P.width - 0.001 }, { ...one[0], d: P.near + 0.001 }], 0, P, [0, 0, 0]);
+  const edge = pf.puffFrame([{ ...one[0], x: P.width - 0.001 }, { ...one[0], d: P.near + 0.001 }], 0, calm, [0, 0, 0]);
   ok('puffs fade out at the box edges (wrapping never pops)', edge.length === 0);
+  const windy = { ...P, turbulence: 0.12 }, tWrap = P.width / 0.02; // a puff from x = 0 reaches the edge at tWrap
+  const around = [-0.3, -0.1, 0.1, 0.3].map((dt) => pf.puffFrame(one, tWrap + dt, windy, [0.02, 0, 0])[0]?.alpha ?? 0);
+  ok('with turbulence on, a wrap is still a fade, not a pop', around.every((v) => v < 0.25));
   const fr = pf.puffFrame(a, 12, P, [0.01, 0, 0.01]);
   ok('puffs draw back to front', fr.length > P.count / 2 && fr.every((q, i) => !i || q.pos[2] >= fr[i - 1].pos[2]));
   // 0.164 (the Fog Lab): the shipped values are the old slide; turbulence, pulse and flow are off until tuned
-  ok('shipped puffs: no turbulence, no pulse, no flow (the 0.101 look)', P.turbulence === 0 && P.pulse === 0 && P.flow === 0 && P.breathe === 0.06 && P.bob === 0.012);
-  const turb = { ...P, turbulence: 0.1, turbulencePeriod: 10 }, still = pf.puffFrame(one, 2.5, P, [0, 0, 0])[0], moved = pf.puffFrame(one, 2.5, turb, [0, 0, 0])[0];
+  const ov = DATA.backgrounds.parallax.overrides, every = [...DATA.backgrounds.rooms, ...DATA.backgrounds.bosses, ...DATA.backgrounds.treasure, DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.shrine, DATA.backgrounds.death];
+  ok('shipped mist is alive (0.166: turbulence, pulse and flow on; every painting has its own fog and wind, the ramparts the windiest)',
+    P.turbulence > 0 && P.pulse > 0 && P.flow > 0 && DATA.backgrounds.parallax.fogSpeed >= 3 && every.every((f) => ov[f]?.fogWind?.length === 3 && ov[f].fog > 0)
+    && Math.hypot(...ov['castle_ramparts.jpg'].fogWind) >= Math.max(...every.map((f) => Math.hypot(...ov[f].fogWind))));
+  const turb = { ...calm, turbulence: 0.1, turbulencePeriod: 10 }, still = pf.puffFrame(one, 2.5, calm, [0, 0, 0])[0], moved = pf.puffFrame(one, 2.5, turb, [0, 0, 0])[0];
   ok('turbulence moves a puff off its wind line, and only a little', Math.abs(moved.pos[0] - still.pos[0]) > 0.01 && Math.abs(moved.pos[0] - still.pos[0]) <= 0.1);
-  const pulsed = { ...P, pulse: 1, pulsePeriod: 10 }, al = [0, 2.5, 5, 7.5].map((t) => pf.puffFrame(one, t, pulsed, [0, 0, 0])[0]?.alpha ?? 0);
+  const pulsed = { ...calm, pulse: 1, pulsePeriod: 10 }, al = [0, 2.5, 5, 7.5].map((t) => pf.puffFrame(one, t, pulsed, [0, 0, 0])[0]?.alpha ?? 0);
   ok('pulse fades a puff in and out over its period', Math.max(...al) > Math.min(...al) + 0.3);
   const pgl = readFileSync('src/core/bg3dPuffGL.js', 'utf8'), ggl = readFileSync('src/core/bg3dGL.js', 'utf8');
   ok('the puff shader churns by flow noise, tints lit and shaded sides, and reads the scene\'s light; the haze is tunable',

@@ -63,8 +63,9 @@ export function puffFrame(puffs, t, P, wind) {
     const wander = P.turbulence; // its own loop, not the neighbours'
     const tx = wander ? wander * Math.sin(tw * p.speed + p.phase * 1.7) : 0;
     const ty = wander ? wander * 0.5 * Math.cos(tw * 0.8 * p.speed + p.phase * 2.3) : 0;
-    const x = wrapIn(p.x + wind[0] * p.speed * t, -P.width, P.width) + tx;
-    const y = wrapIn(p.y + wind[1] * p.speed * t, yLo, yHi) + Math.sin(w * 0.7) * P.bob + ty;
+    // (the wander goes in before the wrap: the edge fade sees the final place, so a wrap never pops)
+    const x = wrapIn(p.x + wind[0] * p.speed * t + tx, -P.width, P.width);
+    const y = wrapIn(p.y + wind[1] * p.speed * t + Math.sin(w * 0.7) * P.bob + ty, yLo, yHi);
     const d = wrapIn(p.d - wind[2] * p.speed * t, P.near, P.far);
     const pulse = P.pulse ? 1 - P.pulse * (0.5 + 0.5 * Math.sin(tp * p.speed + p.phase * 3.1)) : 1;
     const alpha = p.alpha * pulse * inBox(x, -P.width, P.width, 0.25) * inBox(y, yLo, yHi, 0.12)

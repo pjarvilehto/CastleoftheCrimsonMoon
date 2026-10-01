@@ -188,9 +188,11 @@ constants — `drift` (per-puff wind speed spread), `rock`, `period`,
 read); `parallax.mist` = the puffs' lighting (`shade` self-shadow
 strength, `litTint` / `shadeTint`, `sceneLight` = the painting's own
 bright pixels glow through the mist, read with a mip bias, `nearBright`);
-`parallax.haze` = the distance haze's shape. The shipped values are the
-0.101 look (turbulence, pulse, flow, sceneLight, nearBright all 0) until
-the owner picks new ones in the lab; `setLiveTuning` re-rolls a layer's
+`parallax.haze` = the distance haze's shape. 0.166: the shipped base is
+the lab's Rolling Mist with the owner's drift 3.5 and haze 0.38 / curve
+1.55, and every painting has its own `fog` + `fogWind` override
+(outdoors and the large halls a notch windier; the wander goes in before
+the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
 the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
 New room art: JPEG in `assets/bg/`, entries in
