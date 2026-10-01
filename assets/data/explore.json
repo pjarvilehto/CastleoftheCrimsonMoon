@@ -1,0 +1,82 @@
+{
+  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. map: rows of '#' wall, '.' floor, 'S' start; startFacing = north | east | south | west. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells.",
+  "cell": 3,
+  "wallHeight": 3.2,
+  "eyeHeight": 1.65,
+  "move": {
+    "speed": 3.2,
+    "runMult": 1.7,
+    "accel": 9,
+    "turnSpeed": 2.2,
+    "mouseSens": 0.0022,
+    "pitchLimit": 1.25,
+    "radius": 0.42,
+    "bobAmp": 0.035,
+    "bobStride": 2.2
+  },
+  "light": {
+    "party": {
+      "color": "#ffd3a6",
+      "intensity": 12,
+      "distance": 11,
+      "decay": 2
+    },
+    "torch": {
+      "color": "#ffa944",
+      "intensity": 28,
+      "distance": 11,
+      "decay": 2,
+      "height": 1.95
+    },
+    "pool": 4,
+    "flicker": 0.22,
+    "ambient": {
+      "sky": "#56604e",
+      "ground": "#1c1b15",
+      "intensity": 0.5
+    }
+  },
+  "fog": {
+    "color": "#0a0b08",
+    "density": 0.11
+  },
+  "render": {
+    "maxPixelRatio": 1.5,
+    "samples": 4,
+    "exposure": 1.0
+  },
+  "paint": {
+    "edge": 1.0,
+    "edgeWidth": 1.3,
+    "bands": 6,
+    "bandMix": 0.5,
+    "desat": 0.45,
+    "inkBelow": 0.06,
+    "grain": 0.035,
+    "vignette": 0.75,
+    "shadow": "#232a1c",
+    "highlight": "#ffd99a",
+    "ink": "#070806"
+  },
+  "decor": {
+    "beamEvery": 3,
+    "torchSpacing": 3.2,
+    "seed": 1307
+  },
+  "startFacing": "east",
+  "map": [
+    "#############",
+    "#S....#######",
+    "#####.#######",
+    "#####.....###",
+    "#########.###",
+    "###.......###",
+    "###.#########",
+    "###.....#####",
+    "#######.#####",
+    "#####.....###",
+    "#####.....###",
+    "#####.....###",
+    "#############"
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "version": "0.138",
+  "version": "0.139",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -21,6 +21,12 @@
     "src/core/hotkeys.js",
     "src/core/perfMonitor.js",
     "src/core/scene.js",
+    "src/explore/build.js",
+    "src/explore/grid.js",
+    "src/explore/lab.js",
+    "src/explore/player.js",
+    "src/explore/post.js",
+    "src/explore/textures.js",
     "src/main.js",
     "src/meta/equipment.js",
     "src/meta/history.js",
@@ -79,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.139": [
+      "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
+    ],
     "0.138": [
       "Play stats: help text tidy-up."
     ],
@@ -122,9 +131,6 @@
     ],
     "0.125": [
       "Phones and tablets now see a 'Mobile platforms not supported yet' notice instead of the game — please play on a desktop or laptop."
-    ],
-    "0.124": [
-      "Space now moves you forward on every screen — Enter the Castle, Descend, Push Deeper, Accept Your Fate, Return to the Great Hall — with a small [space] under the button it presses."
     ]
   }
 }

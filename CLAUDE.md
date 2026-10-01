@@ -22,6 +22,8 @@ before structural changes. This file is the rules and the per-system notes.
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
 - **Particle Lab:** `particle-lab/`, opened from the `?debug` corner column —
   a standalone page for trying particle looks (see "Effects").
+- **Dungeon Lab:** `dungeon-lab/` (0.139), also a `?debug` button — the 3D
+  dungeon-exploration prototype (see "3D dungeon prototype").
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -29,7 +31,7 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~610 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~625 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -194,7 +196,7 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB,
-  BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
+  BENCHMARK, DUNGEON LAB) are in `ui/debugToggles.js`. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
   there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
@@ -234,11 +236,39 @@ numbers mean — say so in the changelist. Reading results: a 30 Hz rate
 means the browser capped the page (macOS Low Power Mode, Chrome / Brave
 Energy Saver), not a slow machine.
 
+### 3D dungeon prototype (0.139)
+
+Grimrock-style exploration between combat rooms, prototyped apart from the
+game: `dungeon-lab/index.html` + `src/explore/`, tuning and map in
+`assets/data/explore.json` (not part of `DATA`; the lab fetches it itself).
+three.js 0.186.1 is vendored, minified, in `vendor/three-0.186.1/` (MIT,
+licence alongside) and reached through the page's import map as `three`; a
+new three.js version = a new folder. The game never imports `src/explore/`.
+- `grid.js` (pure, tested in Node): the text map ('#' wall, '.' floor, 'S'
+  start), circle-vs-cell collision that slides along walls, seeded random.
+- `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
+  frames on straight corridors, wall torches `decor.torchSpacing` apart.
+- `textures.js`: every surface painted on canvas in the style of
+  `assets/bg/castle_dungeon.jpg` (flat olive stone, broken ink outlines,
+  ink chips and drips) plus a normal map from a blurred height canvas.
+- `post.js`: the ink-and-paint pass (look reference: Darkest Dungeon 2):
+  depth-Laplacian ink outlines, ACES, then graded in display space: soft
+  light bands, desaturation, olive shadows / warm light, hatched ink in
+  the deepest dark, grain, vignette. All knobs in `explore.json paint`.
+- `player.js`: WASD / arrows, Q / E turn, Shift runs, mouselook under
+  pointer lock; eased velocity, head bob. `lab.js` wires it up: the
+  knight's torch rides with the camera, a pool of `light.pool` point lights
+  follows the nearest wall torches (a fixed light count keeps three.js from
+  recompiling shaders).
+Next steps discussed with the owner: a map generator, billboard enemies
+(one per combat room) that hand over to the existing combat, then
+integration into runs.
+
 ## Testing notes
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
-  combat, shrines, progression, content, backgrounds, audio, sim, history),
-  each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
+  combat, shrines, progression, content, backgrounds, audio, sim, history,
+  explore), each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
   and a **virtual clock** (timers, rAF, Date.now, performance.now; `sleep(ms)`
   advances it) — write tests with `sleep()` as if time were real; even a
   whole benchmark runs in milliseconds.
@@ -286,5 +316,8 @@ Energy Saver), not a slow machine.
 - Engineering: deploy through the test workflow once the HTTPS setup is
   settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
   is experimenting with looks.
+- 3D exploration (Dungeon Lab, 0.139): map generator · enemy billboards →
+  combat hand-off · into the run loop (open: a floor per 8-room stretch?
+  retreat rules? static or wandering enemies?).
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.

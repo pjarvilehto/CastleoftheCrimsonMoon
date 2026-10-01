@@ -219,7 +219,7 @@ fresh();
 {
   const lab = readFileSync('particle-lab/index.html', 'utf8');
   const idx = readFileSync('index.html', 'utf8');
-  ok('PARTICLE LAB is a ?debug corner button (no URL forward)', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('particle-lab/'") && !/particle_lab/i.test(idx));
+  ok('PARTICLE LAB is a ?debug corner button (no URL forward)', readFileSync('src/ui/debugToggles.js', 'utf8').includes("'particle-lab/'") && !/particle_lab/i.test(idx));
   const refs = [...lab.matchAll(/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(3));
   ok('particle lab: every asset it loads exists', refs.length >= 6 && refs.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }), refs.join(', '));
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));

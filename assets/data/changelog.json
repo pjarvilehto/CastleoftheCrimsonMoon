@@ -1,4 +1,7 @@
 {
+  "0.139": [
+    "Testing tools: a first look at 3D dungeon exploration, a corridor to walk in debug mode (DUNGEON LAB). No gameplay changes."
+  ],
   "0.138": [
     "Play stats: help text tidy-up."
   ],

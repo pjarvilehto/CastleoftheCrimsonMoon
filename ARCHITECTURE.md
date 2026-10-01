@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~610 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~625 checks, under a second
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -106,19 +106,28 @@ src/
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
+  explore/              the 3D dungeon prototype (0.139; Dungeon Lab only —
+                        the game never imports it; three.js as `three`)
+    grid.js             text map, collision, seeded random (pure)
+    build.js  textures.js  the level from the map; canvas-painted surfaces
+    player.js           WASD + mouselook movement
+    post.js             the ink-and-paint post pass
+    lab.js              wires the lab page: scene, lights, HUD, loop
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha) + card frames (PNG)
   audio/  fonts/
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog
+                        changelog; explore.json = the Dungeon Lab's own
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
 particle-lab/           standalone particle-look experiments (?debug button)
+dungeon-lab/            the 3D dungeon prototype page (?debug button)
+vendor/three-0.186.1/   three.js, minified (MIT; used by dungeon-lab/ only)
 tools/
   smoke-test.mjs  test/ the suite
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
