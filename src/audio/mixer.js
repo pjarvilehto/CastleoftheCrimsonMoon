@@ -19,8 +19,8 @@ import { getJsonPref, setJsonPref } from '../shared/prefs.js';
 
 const VOL_KEY = 'castle-audio-volumes';
 const VOLUME_KINDS = ['master', 'music', 'sfx'];
-const cfg = () => DATA.audio ?? {};
-const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(Number(v)) ? Number(v) : 1));
+const cfg = () => DATA.audio;
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 let nodes = null;                         // { ctx, music, duck, sfx, master, limiter }
 const muted = { music: false, sfx: false }; // the corner toggles (music.js / sfx.js own their persistence)
@@ -29,8 +29,8 @@ let volumes = null;
 function loadVolumes() {
   if (volumes) return volumes;
   const saved = getJsonPref(VOL_KEY, {});
-  const def = cfg().volumes ?? {};
-  volumes = Object.fromEntries(VOLUME_KINDS.map((k) => [k, clamp01(saved[k] ?? def[k] ?? 1)]));
+  const def = cfg().volumes;
+  volumes = Object.fromEntries(VOLUME_KINDS.map((k) => [k, clamp01(Number.isFinite(Number(saved[k])) ? Number(saved[k]) : def[k])]));
   return volumes;
 }
 
@@ -74,7 +74,7 @@ export function setBusMuted(kind, m) {
 export function mixer() {
   if (nodes || !hasAudio()) return nodes;
   const ctx = ensureCtx();
-  const L = cfg().limiter ?? {};
+  const L = cfg().limiter;
   const limiter = ctx.createDynamicsCompressor();
   limiter.threshold.value = L.threshold;
   limiter.knee.value = L.knee;
@@ -100,7 +100,7 @@ export const sfxInput = () => mixer()?.sfx ?? null;
 // time) and comes back after `seconds`.
 export function duckMusic(seconds, at = 0) {
   if (!nodes) return;
-  const d = cfg().duck ?? {};
+  const d = cfg().duck;
   const g = nodes.duck.gain;
   const t = Math.max(at, nodes.ctx.currentTime);
   hold(g, t);

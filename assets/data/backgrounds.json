@@ -116,6 +116,8 @@
     "swayHitShare": 0.15,
     "fog": 0.36,
     "fogSpeed": 1,
+    "fogScale": 1,
+    "fogFadeMs": 2500,
     "fogWind": [0.012, 0, 0],
     "puffs": {
       "count": 40,

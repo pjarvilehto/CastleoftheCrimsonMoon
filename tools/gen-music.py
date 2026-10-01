@@ -12,7 +12,7 @@ prints level / loop statistics. Each file is the loop plus its own first
 TAIL_S seconds again: the game restarts the loop exactly one loop-length
 in and crossfades over identical audio (src/audio/musicLoop.js), so the
 beat never shifts and any MP3 decoder delay is hidden. Its length goes in
-assets/data/audio.json music.scores.dark.tracks (loopS, tailS; gainDb
+assets/data/audio.json music.tracks (loopS, tailS; gainDb
 matches the classic beds' loudness as played). The instruments are tools/music/synth.py,
 the hall / loop / master tools/music/mix.py, the pieces tools/music/score.py.
 Each render is deterministic (seeded): same code, same file.
@@ -29,10 +29,12 @@ import numpy as np  # noqa: E402
 TAIL_S = 2.0
 
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
-suffix = 'v2'
-if '--suffix' in sys.argv:
-    suffix = sys.argv[sys.argv.index('--suffix') + 1]
-    args = [a for a in args if a != suffix]
+# Assets are never replaced in place (edge caches): a render needs its own
+# new suffix — the shipped beds are the v2 files named in audio.json.
+if '--suffix' not in sys.argv:
+    sys.exit('usage: python3 tools/gen-music.py --suffix vN [track...]  (a NEW suffix: the shipped files are never overwritten)')
+suffix = sys.argv[sys.argv.index('--suffix') + 1]
+args = [a for a in args if a != suffix]
 out_dir = Path(__file__).parent.parent / 'assets' / 'audio'
 for name in args or TRACKS:
     t0 = time.time()

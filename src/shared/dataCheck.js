@@ -30,12 +30,20 @@ const NUM = {
   ],
   shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg'],
   audio: [
-    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS',
+    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'volumes.master', 'volumes.music', 'volumes.sfx',
+    'voices.maxPerClip', 'voices.maxTotal', 'voices.retriggerMs', 'voices.stackDb',
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
     'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.ringRate', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
   ],
-  backgrounds: ['parallax.swayHitShare', 'parallax.lights.radius'],
+  backgrounds: [
+    ...['depthScale', 'pivot', 'yawDeg', 'pitchDeg', 'yawPeriodS', 'pitchPeriodS', 'speed', 'joltDeg', 'swayDeg', 'swayHitShare', 'fovDeg', 'overscan',
+      'grid.0', 'grid.1', 'maxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
+      'lights.dist', 'lights.radius'].map((k) => `parallax.${k}`),
+    ...['count', 'size.0', 'size.1', 'y.0', 'y.1', 'width', 'near', 'far', 'nearBand', 'farBand', 'soft', 'opacity'].map((k) => `parallax.puffs.${k}`),
+    ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
+      ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
+  ],
   telemetry: ['benchmarkPromptRoom'],
 };
 
@@ -61,7 +69,12 @@ export function checkData(data) {
   }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
+    if (v.layers) {
+      if (!(v.layerRate?.length === 2 && v.layerRate.every(isNum) && isNum(v.layerDb))) out.push(`audio.json: variation.${id} layerRate / layerDb`);
+      for (const l of v.layers) if (!data.audio.clips?.[l.name]?.synth || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a synth clip, p, db)`);
+    }
   }
+  for (const name of Object.keys(data.audio?.duck?.clips ?? {})) if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
   // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
   const summon = data.difficulty?.boss?.summon?.enemy;
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);

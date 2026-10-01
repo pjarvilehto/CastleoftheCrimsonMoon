@@ -3,8 +3,8 @@
 //
 // Where the data comes from: every finished run appends a record to the
 // player's profile (src/meta/history.js), and the profile lives in that
-// player's browser. The dashboard reads THIS browser's save directly and
-// testers' saves from the save codes they export on the title screen.
+// player's browser. The dashboard reads the collector's copies (0.102,
+// collector/), THIS browser's save directly, and pasted save codes.
 
 import { compareVersions } from '../src/shared/version.js';
 import { sanitizePerf, sanitizeBench } from './perf.js';
@@ -81,7 +81,6 @@ export function summarize(runs) {
     playMs: sum(runs, (r) => r.ms),
     bosses: sum(runs, (r) => r.bosses),
     relics: runs.filter((r) => r.relic).length,
-    potions: sum(runs, (r) => r.potions),
   };
 }
 

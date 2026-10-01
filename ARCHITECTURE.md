@@ -168,7 +168,6 @@ primary button. While a dialog is open it owns the keyboard.
 | `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
 | `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
 | `F` | dungeon | Accept Your Fate (death) |
-| `1` `2` `3` | shrine | Accept a boon |
 | `G` | run end | Return to the Great Hall |
 | `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers (each prompt names its own letters) |
 | `O` | victory | Onward |

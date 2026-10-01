@@ -82,6 +82,8 @@ export function depthTexture(gl, img, pivot = 0.5) {
   });
 }
 
+const ATTRS = [['aPos', 3, 0], ['aUv', 2, 3], ['aExtra', 3, 5]], STRIDE = PUFF_FLOATS * 4; // name, floats, offset
+
 export function createPuffRenderer(gl) {
   const prog = program(gl, VS, FS), comp = program(gl, CVS, CFS);
   if (!prog || !comp) return null;
@@ -151,13 +153,12 @@ export function createPuffRenderer(gl) {
     gl.bufferData(gl.ARRAY_BUFFER, puffVertices(frame, verts).subarray(0, n), gl.DYNAMIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibuf);
     if (indexed < frame.length) { indexed = frame.length * 2; gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, puffIndices(indexed), gl.STATIC_DRAW); }
-    const stride = PUFF_FLOATS * 4;
-    [['aPos', 3, 0], ['aUv', 2, 3], ['aExtra', 3, 5]].forEach(([n, size, off]) => {
+    for (const [n, size, off] of ATTRS) {
       gl.enableVertexAttribArray(P[n]);
-      gl.vertexAttribPointer(P[n], size, gl.FLOAT, false, stride, off * 4);
-    });
+      gl.vertexAttribPointer(P[n], size, gl.FLOAT, false, STRIDE, off * 4);
+    }
     gl.drawElements(gl.TRIANGLES, frame.length * 6, gl.UNSIGNED_SHORT, 0);
-    ['aPos', 'aUv', 'aExtra'].forEach((n) => gl.disableVertexAttribArray(P[n]));
+    for (const [n] of ATTRS) gl.disableVertexAttribArray(P[n]);
     // blend the half-resolution mist over the scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, u.width, u.height);
@@ -175,5 +176,14 @@ export function createPuffRenderer(gl) {
     gl.enable(gl.DEPTH_TEST);
   }
 
-  return { draw };
+  // Free everything (the renderer shuts down: context loss, the quality ladder's last step).
+  function dispose() {
+    for (const t of [sprite, buf]) if (t) gl.deleteTexture(t);
+    if (fbo) gl.deleteFramebuffer(fbo);
+    for (const b of [vbuf, ibuf, quad]) gl.deleteBuffer(b);
+    gl.deleteProgram(prog);
+    gl.deleteProgram(comp);
+  }
+
+  return { draw, dispose };
 }

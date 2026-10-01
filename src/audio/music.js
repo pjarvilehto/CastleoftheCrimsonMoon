@@ -17,7 +17,7 @@
 
 import { DATA } from '../shared/data.js';
 import { getPref, setPref } from '../shared/prefs.js';
-import { hasAudio, ensureCtx, fetchBytes, decode, onFirstGesture } from './audioCore.js';
+import { hasAudio, ensureCtx, fetchBytes, decode, onFirstGesture, cached } from './audioCore.js';
 import { mixer, musicInput, setBusMuted } from './mixer.js';
 import { dbToGain } from './audioMath.js';
 import { createLoop } from './musicLoop.js';
@@ -41,14 +41,8 @@ function initCtx() {
   mixer();
 }
 
-function bufferFor(file) {
-  // Cache the in-flight promise: concurrent start calls share one decode.
-  if (!buffers[file]) {
-    buffers[file] = decode(file);
-    buffers[file].catch(() => { delete buffers[file]; }); // allow retry on failure
-  }
-  return buffers[file];
-}
+// Cache the in-flight promise: concurrent start calls share one decode.
+const bufferFor = (file) => cached(buffers, file, () => decode(file));
 
 async function startTrack(name) {
   const b = bed(name);

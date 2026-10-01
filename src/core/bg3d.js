@@ -15,19 +15,18 @@
 import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
 import { VS, FS, program, buffer, loadImage, readDepth, makeTexture, smallPixels } from './bg3dGL.js';
 import { fogColor } from './bg3dFog.js';
-import { PUFF_DEFAULTS, makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
-import { DEFAULTS, TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
+import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
+import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
 import { LADDER, SLOW_WINDOWS, backingSize, fpsWindow } from './bg3dQuality.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
-export { coverScale, sampleDepth, orbit, buildGrid, mvp } from './bg3dMath.js';
 
 let gl = null, canvas = null, loc = null, gridBuf = null, idxBuf = null, grid = null;
-let layers = []; // bottom -> top: { file, tex, depthBuf, depth, img, uvScale, born }
+let layers = []; // bottom -> top: { file, tex, depth, depthBuf, depthTex, img, uvScale, mist, tune, puffs, born }
 let view = '3d'; // '3d' | 'flat' | 'depth' (debug)
-let t0 = null, lastDraw = 0, wanted = null, cfg = DEFAULTS;
+let t0 = null, lastDraw = 0, wanted = null, cfg = null; // cfg: tuning(''), from initBg3d on
 let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
                  // speed change never jumps the camera
 let gridM = -1;  // overscan the current grid was built with
@@ -105,7 +104,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   monitor = !allowSoftware;
   const prog = program(gl, VS, FS);
   if (!prog) { gl = null; return false; }
-  gl.useProgram(mainProg = prog);
+  mainProg = prog;
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth',
@@ -120,10 +119,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   document.getElementById('bg-stack').append(canvas);
   canvas.addEventListener('webglcontextlost', shutdown);
-  // Debounced (0.097): every resize re-samples ~37k vertex depths per layer,
-  // and a window drag fires dozens of events a second.
-  let resizeTimer = null;
-  globalThis.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 120); });
+  globalThis.addEventListener('resize', onResize);
   resize();
   requestAnimationFrame(frame);
   return true;
@@ -154,7 +150,7 @@ async function loadLayer(file) {
   const mist = tune.fogColor ?? fogColor(smallPixels(img), 64, 36, (u, v) => (depth ? sampleDepth(depth, u, v) : 0.5));
   const tex = makeTexture(gl, img);
   const layer = { file, tex, depth, mist, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune,
-    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: makePuffs(seedOf(file), { ...PUFF_DEFAULTS, ...tune.puffs }) };
+    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: makePuffs(seedOf(file), tune.puffs) };
   fillDepth(layer);
   return layer;
 }
@@ -173,17 +169,23 @@ function fillDepth(L) {
   gl.bufferData(gl.ARRAY_BUFFER, a, gl.STATIC_DRAW);
 }
 
+// A gap longer than this between frames (a hidden tab, a sleeping laptop)
+// is a pause, not motion: the sway and fog clocks skip it instead of
+// jumping the camera (0.157; the frame-rate windows treat it the same way).
+const PAUSE_S = 0.4;
+
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
-  jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
-  sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
-  flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
+  // (filtered only while something plays: the quiet frame makes no garbage)
+  if (jolts.length) jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
+  if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
+  if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
   // full frame rate while a jolt/sway/flash plays — at 30fps it would stutter
   if (!layers.length || (!jolts.length && !sways.length && !flashes.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); } // rest pose = the CSS image
-  else { const dt = (now - t0) / 1000; tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
+  else { const dt = Math.min(PAUSE_S, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
   if (monitor && !held) {
     fpsW = fpsWindow(fpsW, now, cfg.minFps);
@@ -207,10 +209,10 @@ function frame(now) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   layers.forEach((L, i) => {
     // crossfade like the CSS layers (2s ease-in-out): new layer over old
-    const t = i === 0 ? 1 : Math.min(1, (now - L.born) / cfg.fadeMs);
+    const t = i === 0 ? 1 : Math.min(1, (now - L.born) / cfg.fadeMs), ease = t * t * (3 - 2 * t);
     gl.clear(gl.DEPTH_BUFFER_BIT); // each layer is its own 3D scene
-    draw(L, t * t * (3 - 2 * t));
-    drawPuffs(L, t * t * (3 - 2 * t), f);
+    draw(L, ease);
+    drawPuffs(L, ease, f);
   });
   if (layers.length > 1 && now - layers[layers.length - 1].born >= cfg.fadeMs) {
     while (layers.length > 1) dropLayer(layers.shift());
@@ -245,7 +247,7 @@ const fogAmount = (L) => (fogOn && view === '3d' ? L.tune.fog * cfg.fogScale * f
 function drawPuffs(L, alpha, f) {
   const amount = fogAmount(L);
   if (!puffR || !(amount > 0)) return;
-  const P = { ...PUFF_DEFAULTS, ...L.tune.puffs };
+  const P = L.tune.puffs;
   puffR.draw(puffFrame(L.puffs, fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
     pivot: L.tune.pivot, depthTex: L.depthTex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
     width: canvas.width, height: canvas.height });
@@ -262,6 +264,11 @@ function degrade() {
   resize();
   return true;
 }
+
+// Debounced (0.097): every resize re-samples ~37k vertex depths per layer,
+// and a window drag fires dozens of events a second.
+let resizeTimer = null;
+function onResize() { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 120); }
 
 function resize() {
   if (!gl) return;
@@ -311,13 +318,29 @@ export function resetLiveTuning() {
   setLiveTuning({});
 }
 
-// Context lost (GPU reset, driver hiccup): give up, the CSS layers show.
-function shutdown(e) {
-  e?.preventDefault?.();
-  gl = null;
-  puffR = null;
-  layers = [];
+// Give up — the CSS layers show: context lost (GPU reset, driver hiccup;
+// nothing restores it, so the event's default stands), or the quality
+// ladder's last step. 0.157: frees the programs, buffers and textures and
+// releases the context (a leaked one counted against the browser's cap),
+// and forgets its clocks so a later initBg3d starts clean.
+function shutdown() {
+  if (gl) {
+    if (!gl.isContextLost()) {
+      layers.forEach(dropLayer);
+      puffR?.dispose();
+      gl.deleteProgram(mainProg);
+      gl.deleteBuffer(gridBuf);
+      gl.deleteBuffer(idxBuf);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    }
+    canvas.removeEventListener('webglcontextlost', shutdown);
+    globalThis.removeEventListener?.('resize', onResize);
+    clearTimeout(resizeTimer);
+  }
+  gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
+  t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = [];
   canvas?.remove();
+  canvas = null;
 }
 
 function dropLayer(L) {

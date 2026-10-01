@@ -74,7 +74,7 @@ export function mvp(yaw, pitch, fovY, aspect) {
   return mul(perspective(fovY, aspect, 0.05, 10), view);
 }
 
-// JS mirror of the vertex shader (core/bg3d.js VS): where a grid vertex at
+// JS mirror of the vertex shader (core/bg3dGL.js VS): where a grid vertex at
 // screen coords (gx, gy) with the given depth lands, in NDC.
 export function projectVertex(M, gx, gy, depth, aspect, c) {
   const fov = (c.fovDeg * Math.PI) / 180;
@@ -154,6 +154,6 @@ export function swayOffset(sways, now) {
 // The sway settings plus the largest possible jolt and big-hit sway, for
 // overscan sizing (generous: two overlapping sways still fit).
 export function withJoltReserve(c) {
-  const extra = (c.joltDeg ?? 0) * JOLT_MAX;
-  return { ...c, yawDeg: c.yawDeg + extra + (c.swayDeg ?? 0) * SWAY_MAX, pitchDeg: c.pitchDeg + extra * 0.5 };
+  const extra = c.joltDeg * JOLT_MAX;
+  return { ...c, yawDeg: c.yawDeg + extra + c.swayDeg * SWAY_MAX, pitchDeg: c.pitchDeg + extra * 0.5 };
 }

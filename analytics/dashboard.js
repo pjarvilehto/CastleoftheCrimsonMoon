@@ -10,13 +10,13 @@ import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summa
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 import { perfTable, benchTable, sanitizeDevice } from './perf.js';
-import { buildTable, playersTable, runsTable, pct, ago } from './tables.js';
+import { buildTable, playersTable, runsTable, pct } from './tables.js';
 
 const STORE = 'castle-analytics-players-v1';
 const TESTERS = 'castle-analytics-testers-v1'; // playerId -> tester name (0.136)
 const NAMES = 'castle-analytics-names-v1';   // pre-0.136 renames: folded into TESTERS once
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
-const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24, levelEvery: 5 }; // the two numbers: until difficulty.json loads
+const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24, bossEvery: 8, levelEvery: 5 }; // the numbers: until difficulty.json loads
 const server = { status: 'off', records: [], at: 0, version: null, busy: false, delta: null }; // off | loading | ok | key | error
 const view = { player: 'all', build: 'all' };
 let players = [];
@@ -210,7 +210,7 @@ function render() {
     ${card('Depth per run', lines(depthSeries(shown, runs, data.finalRoom), { xLabel: 'run #', yLabel: 'room', mark: `won the game (beat the room ${data.finalRoom} boss)` }))}
     ${card('Where runs end', columns(endRooms(runs).map((r) => ({ x: r.room, parts: [r.death, r.retreat] })), { names: ['died', 'retreated'], xLabel: 'room', yLabel: 'runs' }))}
     ${card('What kills players', bars(countBy(runs, 'killedBy').map(([id, n]) => ({ label: enemyName(id), value: n })), { color: '#c14b4b' }))}
-    ${card('Boss rooms', bars(bossClears(runs).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
+    ${card('Boss rooms', bars(bossClears(runs, data.bossEvery, data.finalRoom).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
     ${card('By build', buildTable(byBuild(runs)))}
   </div>
@@ -271,7 +271,7 @@ async function boot() {
   const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
   const [enemies, items, shrines, build, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry', 'difficulty'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
+    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';

@@ -13,12 +13,9 @@ import { fogNoise, mulberry32 } from './bg3dFog.js';
 
 // World units: the focal plane is 1 in front of the camera; the art spans
 // roughly 0.6 (near) to 1.4 (far). y is up; puffs hang low (y is biased
-// toward its lower end). width = the box half-width (covers the frustum at
-// `far`); near/far = distance range, with fading bands at both ends.
-export const PUFF_DEFAULTS = {
-  count: 40, size: [0.34, 0.72], y: [-0.42, 0.12], width: 1.3, near: 0.48, far: 1.8,
-  nearBand: 0.27, farBand: 0.25, soft: 0.12, opacity: 0.4,
-};
+// toward its lower end). P (backgrounds.json parallax.puffs): count, size
+// and y ranges, width = the box half-width (covers the frustum at `far`),
+// near/far = distance range, with fading bands at both ends.
 
 // A stable scene-specific seed (the same file always gets the same puffs).
 export function seedOf(name) {
@@ -29,7 +26,7 @@ export function seedOf(name) {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-export function makePuffs(seed, P = PUFF_DEFAULTS) {
+export function makePuffs(seed, P) {
   const r = mulberry32(seed);
   return Array.from({ length: P.count }, () => ({
     x: lerp(-P.width, P.width, r()),
@@ -53,7 +50,7 @@ const inBox = (v, lo, hi, bandLo, bandHi = bandLo) => Math.min(smooth((v - lo) /
 
 // The puffs at time t (seconds): wind [x, y, z] in world units/s, +z =
 // toward the camera. Far ones first (drawn back to front).
-export function puffFrame(puffs, t, P = PUFF_DEFAULTS, wind = [0, 0, 0]) {
+export function puffFrame(puffs, t, P, wind) {
   const yLo = P.y[0] - 0.25, yHi = P.y[1] + 0.25;
   return puffs.map((p) => {
     const w = (p.phase + (t * Math.PI * 2) / p.period);
@@ -75,15 +72,17 @@ export const PUFF_FLOATS = 8;
 export const TALL = 0.8;
 const CORNERS = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
 export function puffVertices(frame, out = new Float32Array(frame.length * 4 * PUFF_FLOATS)) {
-  frame.forEach((p, i) => {
+  let o = 0; // written in place: no per-corner arrays (160 a frame, 0.157)
+  for (const p of frame) {
     const c = Math.cos(p.rot), s = Math.sin(p.rot), h = p.size / 2;
     const cu = (p.variant % 2) * 0.5, cv = Math.floor(p.variant / 2) * 0.5;
-    CORNERS.forEach(([a, b], k) => {
+    for (const [a, b] of CORNERS) {
       const bt = b * TALL, rx = a * c - bt * s, ry = a * s + bt * c;
-      out.set([p.pos[0] + rx * h, p.pos[1] + ry * h, p.pos[2], cu + (a + 1) * 0.25, cv + (1 - bt) * 0.25,
-        ry, p.alpha, p.shade], (i * 4 + k) * PUFF_FLOATS);
-    });
-  });
+      out[o++] = p.pos[0] + rx * h; out[o++] = p.pos[1] + ry * h; out[o++] = p.pos[2];
+      out[o++] = cu + (a + 1) * 0.25; out[o++] = cv + (1 - bt) * 0.25;
+      out[o++] = ry; out[o++] = p.alpha; out[o++] = p.shade;
+    }
+  }
   return out;
 }
 

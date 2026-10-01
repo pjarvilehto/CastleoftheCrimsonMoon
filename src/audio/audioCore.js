@@ -21,14 +21,20 @@ export function ensureCtx() {
 // Compressed bytes stay cached (small: ~1MB per music bed); decodes are
 // the caller's choice, since a decoded 60s stereo bed is ~23MB of floats.
 export function fetchBytes(url) {
-  if (!bytes[url]) {
-    bytes[url] = fetch(url).then((res) => {
-      if (!res.ok) throw new Error(`audio ${url}: ${res.status}`);
-      return res.arrayBuffer();
-    });
-    bytes[url].catch(() => { delete bytes[url]; }); // allow retry on failure
+  return cached(bytes, url, () => fetch(url).then((res) => {
+    if (!res.ok) throw new Error(`audio ${url}: ${res.status}`);
+    return res.arrayBuffer();
+  }));
+}
+
+// A promise per key, shared by concurrent callers; a failed one is
+// forgotten so the next call retries (the bytes, the beds, the clips).
+export function cached(map, key, make) {
+  if (!map[key]) {
+    map[key] = make();
+    map[key].catch(() => { delete map[key]; });
   }
-  return bytes[url];
+  return map[key];
 }
 
 // Decode from the cached bytes. decodeAudioData detaches its input, so it

@@ -36,7 +36,6 @@ globalThis.clearTimeout = (id) => { timers.delete(id); };
 globalThis.setInterval = (fn, ms = 0, ...args) => { const id = ++seq; timers.set(id, { id, at: clock + Math.max(1, ms), fn, args, every: Math.max(1, ms) }); return id; };
 globalThis.clearInterval = globalThis.clearTimeout;
 Date.now = () => EPOCH + clock;
-export const clockNow = () => clock;
 
 // Advance virtual time by ms, running due timers in (time, creation) order.
 export async function sleep(ms) {
@@ -152,8 +151,8 @@ globalThis.localStorage = {
   setItem(k, v) { this.s[k] = v; },
   removeItem(k) { delete this.s[k]; },
 };
-// Strip ?v= cachebust stamps so the suite also runs in the stamped deploy
-// tree (app/) — the stamp is a browser-cache concern, not a file on disk.
+// Strip the ?v= cache stamps the versioned boot adds — a browser-cache
+// concern, not a file on disk.
 globalThis.fetch = async (url) => ({ ok: true, json: async () => JSON.parse(readFileSync(String(url).split('?')[0], 'utf8')) });
 
 // ---------- boot ----------
