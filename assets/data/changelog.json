@@ -1,4 +1,7 @@
 {
+  "0.146": [
+    "Testing tools: in the Dungeon Lab every torch, candle and window now lights its surroundings from afar (no more lights switching on as you approach), and the rooms are brighter."
+  ],
   "0.145": [
     "Testing tools: the Dungeon Lab's rooms each have a theme now — chapels with stained glass and light shafts, libraries, banquet halls, prisons, alchemy labs, crypts, a throne hall for the boss.",
     "Testing tools: in the Dungeon Lab, torches and other lights cast shadows and glow in the air, and the corridors gain banners, cell doors, skull niches, bones and puddles."

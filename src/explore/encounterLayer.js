@@ -20,6 +20,7 @@ import { renderShrineRoom } from '../ui/shrineUI.js';
 import { createBillboard } from './billboard.js';
 import { planFloor, roomFor, leaderOf, inRect } from './encounters.js';
 import { startFight } from './fight.js';
+import { patchMaterial } from './lightField.js';
 
 const TURN_SECS = 0.7;
 
@@ -53,6 +54,7 @@ export function createEncounters({ scene, camera, player, cfg, appRoot, paint, b
       if (spot.kind === 'boss') size.height *= B.bossScale;
       const at = { x: (spot.x + 0.5) * C, z: (spot.z + 0.5) * C };
       const billboard = createBillboard(lead.id, size, at, B.tear, B.glow);
+      patchMaterial(billboard.mesh.material); // (lit by the room's baked light too)
       const shadow = new THREE.Mesh(shadowGeo, shadowMat);
       shadow.position.set(at.x, 0.012, at.z);
       shadow.scale.setScalar(size.height * 0.28);

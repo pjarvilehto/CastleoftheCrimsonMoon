@@ -9,6 +9,11 @@
 // changes), so pillars, bars, furniture and the enemies throw long
 // shadows across the stone. Their colours and strengths also feed the
 // paint pass's haze (post.js: light scattered in the air).
+// 0.146: every source also lights the floor from afar through the baked
+// light field (lightField.js), so the pool only adds the near detail: a
+// source's dynamic light fades in with distance (field.dynamic near..far),
+// ramps up when it takes a light, and a light stays with its source until
+// a newcomer is clearly stronger — no light switching on as you approach.
 //
 // A light entry: { position, color?, power, phase, flames: [sprite],
 // halos: [sprite], still? } — sprites with their resting scale in
@@ -41,26 +46,42 @@ export function createLights(scene, camera, renderer, cfg) {
     return l;
   });
   const torchColor = new THREE.Color(L.torch.color);
-  let assigned = [], frame = 0;
+  const D = cfg.field.dynamic;
+  const slots = pool.map(() => ({ source: null, level: 0 })); // which source each light serves
+  let frame = 0, shadowed = [];
   const haze = []; // { position, color, intensity } for the paint pass
+  // a source's pull on a light: its strength, faded out with distance
+  const fade = (s) => 1 - THREE.MathUtils.smoothstep(s.position.distanceTo(camera.position), D.near, D.far);
+  const weight = (s) => s.power * fade(s);
 
-  function update(t, sources) {
-    const byDist = [...sources].sort((a, b) => a.position.distanceToSquared(camera.position) - b.position.distanceToSquared(camera.position));
-    const now = byDist.slice(0, pool.length);
-    // the shadow maps follow the nearest lights: redraw when they change
-    if (now.slice(0, SH.count).some((s, i) => s !== assigned[i]) || ++frame % SH.everyFrames === 0) renderer.shadowMap.needsUpdate = true;
-    assigned = now;
+  function update(t, all, dt = 1 / 60) {
+    const sources = all.filter((s) => !s.bakedOnly); // (bounce fills live in the baked field only)
+    // keep each light on its source unless a newcomer pulls clearly harder
+    const w = new Map(sources.map((s) => [s, weight(s)]));
+    const held = new Set(slots.map((sl) => sl.source).filter(Boolean));
+    const free = sources.filter((s) => !held.has(s) && w.get(s) > 0).sort((a, b) => w.get(b) - w.get(a));
+    for (const sl of [...slots].sort((a, b) => (w.get(a.source) ?? -1) - (w.get(b.source) ?? -1))) { // weakest first
+      const best = free[0];
+      if (!best) break;
+      if (!sl.source || (w.get(sl.source) ?? 0) < w.get(best) * D.swap) { sl.source = free.shift(); sl.level = 0; }
+    }
+    // the strongest two (by pull) wear the shadow-casting lights
+    const order = [...slots].sort((a, b) => (w.get(b.source) ?? -1) - (w.get(a.source) ?? -1));
+    const now = order.slice(0, SH.count).map((sl) => sl.source);
+    if (now.some((s, i) => s !== shadowed[i]) || ++frame % SH.everyFrames === 0) renderer.shadowMap.needsUpdate = true;
+    shadowed = now;
     haze.length = 0;
-    pool.forEach((l, i) => {
-      const s = now[i];
-      if (!s) { l.intensity = 0; return; }
+    order.forEach((sl, i) => {
+      const l = pool[i], s = sl.source;
+      if (!s || !(w.get(s) > 0)) { l.intensity = 0; return; }
+      sl.level = Math.min(1, sl.level + dt / D.rampSecs);
       l.position.copy(s.position);
       l.color.copy(s.color ?? torchColor);
       l.distance = s.reach ?? L.torch.distance;
-      l.intensity = L.torch.intensity * s.power * (s.still ? 1 : flicker(t, s.phase, L.flicker));
+      l.intensity = L.torch.intensity * s.power * D.share * fade(s) * sl.level * (s.still ? 1 : flicker(t, s.phase, L.flicker));
       haze.push({ position: l.position, color: l.color, intensity: l.intensity * (s.haze ?? 1) });
     });
-    for (const s of sources) {
+    for (const s of all) {
       const f = s.still ? 1 : flicker(t, s.phase, L.flicker * 1.6);
       for (const sp of s.flames) {
         const [w, h] = sp.userData.base;
@@ -77,8 +98,8 @@ export function createLights(scene, camera, renderer, cfg) {
     return haze;
   }
 
-  // a new floor: redraw the shadows at once
-  const reset = () => { assigned = []; renderer.shadowMap.needsUpdate = true; };
+  // a new floor: the lights let go of the old sources, the shadows redraw
+  const reset = () => { for (const sl of slots) { sl.source = null; sl.level = 0; } shadowed = []; renderer.shadowMap.needsUpdate = true; };
   return { update, reset, party, pool };
 }
 

@@ -10,19 +10,27 @@ const made = new Map();
 
 // A beam of light through dusty air (window shafts): an open cone, added on
 // top of the scene, brightest where the eye looks through the most of it
-// (facing the camera) and fading to nothing at its silhouette and its end.
+// (facing the camera) and fading to nothing at its silhouette and its end,
+// and into the dark with distance (60% of the scene's fog — a bright
+// volume carries further than a wall, but without any fog a far beam
+// glowed through doorways as a grey wedge, 0.146).
+let fogDensity = 0;
 function beamMaterial(color) {
   return new THREE.ShaderMaterial({
-    uniforms: { color: { value: color }, strength: { value: 0.15 } },
-    vertexShader: `varying float vFace; varying float vAlong;
+    uniforms: { color: { value: color }, strength: { value: 0.15 }, fogDensity: { value: fogDensity } },
+    vertexShader: `varying float vFace; varying float vAlong; varying float vDist;
       void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vFace = abs(dot(normalize(normalMatrix * normal), normalize(-mv.xyz)));
         vAlong = uv.y; // 1 at the window, 0 at the far end
+        vDist = length(mv.xyz);
         gl_Position = projectionMatrix * mv;
       }`,
-    fragmentShader: `uniform vec3 color; uniform float strength; varying float vFace; varying float vAlong;
-      void main() { gl_FragColor = vec4(color * strength * pow(vFace, 3.0) * pow(vAlong, 1.4), 1.0); }`,
+    fragmentShader: `uniform vec3 color; uniform float strength, fogDensity; varying float vFace; varying float vAlong; varying float vDist;
+      void main() {
+        float fog = exp(-pow(fogDensity * vDist, 2.0));
+        gl_FragColor = vec4(color * strength * pow(vFace, 3.0) * pow(vAlong, 1.4) * fog, 1.0);
+      }`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
   });
 }
@@ -47,7 +55,8 @@ const MAKERS = {
   black: () => new THREE.MeshBasicMaterial({ color: 0x020202 }),
 };
 
-export function propMaterials() {
+export function propMaterials(cfg) {
+  fogDensity = cfg.fog.density * 0.6;
   return {
     get(name, M) {
       if (M[name]) return M[name]; // stone, wood, iron, wax: the tier's own

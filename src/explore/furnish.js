@@ -17,7 +17,13 @@ import { dressCorridors } from './corridors.js';
 
 export function furnish(rooms, cfg, { rnd, M, corridors = null }) {
   const kit = createKit(cfg, rnd, M);
-  for (const room of rooms) THEMES[room.theme]?.(kit, room);
+  for (const room of rooms) {
+    THEMES[room.theme]?.(kit, room);
+    // the room's bounce light (0.146): a soft source high in the middle
+    // that only the baked light field takes (no flame, no flicker, no haze)
+    const fill = cfg.themes[room.theme]?.fill;
+    if (fill) kit.light(new THREE.Vector3((room.x + room.w / 2) * kit.C, room.height * 0.7, (room.z + room.h / 2) * kit.C), { power: fill, still: true, bakedOnly: true, reach: Math.max(room.w, room.h) * kit.C * 0.9 });
+  }
   if (corridors) dressCorridors(kit, corridors.grid, corridors);
   return kit.finish();
 }
@@ -63,8 +69,8 @@ function createKit(cfg, rnd, M) {
     return { flame, halo };
   };
   // a light source for the pool
-  const light = (position, { color, power = 1, flames = [], halos = [], still = false, reach, haze = 1 } = {}) =>
-    lights.push({ position, color: color ? new THREE.Color(color) : null, power, phase: rnd() * 100, flames, halos, still, reach, haze });
+  const light = (position, { color, power = 1, flames = [], halos = [], still = false, reach, haze = 1, bakedOnly = false } = {}) =>
+    lights.push({ position, color: color ? new THREE.Color(color) : null, power, phase: rnd() * 100, flames, halos, still, reach, haze, bakedOnly });
 
   const kit = {
     cfg, C, H, S, rnd, between, box, cyl, add, block, wall, panel, centreOf, light, flameSprite, P,

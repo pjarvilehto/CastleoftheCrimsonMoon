@@ -176,7 +176,7 @@ export const THEMES = {
     for (const s of [-0.3, 0, 0.3]) { const p = W.at(s, 0.12, 0.35); k.add('wood', new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6).rotateZ(Math.PI / 2).rotateY(W.yaw).translate(p.x, p.y, p.z)); }
     const fp = W.at(0, 0.55, 0.35), fire = k.flameSprite(fp, 0.9, 1.1, 2.4);
     const fire2 = k.flameSprite(W.at(-0.35, 0.45, 0.4), 0.55, 0.8, 1.2);
-    k.light(W.at(0, 0.9, 1.0), { power: k.S.hearth, color: '#ff7a30', flames: [fire.flame, fire2.flame], halos: [fire.halo, fire2.halo] });
+    k.light(W.at(0, 0.9, 1.0), { power: k.S.hearth, color: '#ff9a52', flames: [fire.flame, fire2.flame], halos: [fire.halo, fire2.halo] });
     W.blockOut(2.8, 0.8);
     rest(room, [hearth]).forEach((f, i) => { if (i % 2 === 0) k.banner(f, 355, 3.0); });
   },

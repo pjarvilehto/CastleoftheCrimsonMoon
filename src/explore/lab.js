@@ -21,6 +21,7 @@ import { createEncounters } from './encounterLayer.js';
 import { createMist } from './mist.js';
 import { createStairs } from './stairs.js';
 import { createLights, shadowAll } from './lights.js';
+import { bakeLightField, patchAll } from './lightField.js';
 import { themeRooms } from './themes.js';
 import { createQuality } from './quality.js';
 import { el } from '../core/dom.js';
@@ -83,6 +84,8 @@ export async function startLab({ canvas, hud }) {
     lab.grid.boxes = lab.level.boxes;
     lab.mist = createMist(lab.grid, cfg, T.mist, seeded(seed * 31));
     shadowAll(lab.level.group);
+    bakeLightField(lab.grid, lab.level.torches, cfg); // (0.146: every source lights the floor from afar)
+    patchAll(lab.level.group);
     scene.add(lab.level.group, lab.mist.group);
     lights.reset();
     player.place(lab.grid, lab.floor.start);
@@ -148,7 +151,7 @@ export async function startLab({ canvas, hud }) {
     const c = player.cell();
     minimap.look(c.x, c.z);
     const torches = lab.level.torches;
-    paint.setHaze(lights.update(t, torches)); // the nearest lights: pool, shadows, flicker, haze
+    paint.setHaze(lights.update(t, torches, dt)); // the near lights: pool, shadows, flicker, haze
     lab.mist.update(t);
     paint.render(scene);
     frames++; fpsT += dt;
@@ -158,7 +161,7 @@ export async function startLab({ canvas, hud }) {
       hud.status.textContent = `${Math.round(frames / fpsT)} fps${quality.level() ? ` (quality -${quality.level()})` : ''} · depth ${lab.depth}: ${cfg.tiers[lab.tier].name} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;
       frames = 0; fpsT = 0;
     }
-    if (walking && mapOn) minimap.draw(player, torches, cfg.cell, encounters.cleared());
+    if (walking && mapOn) minimap.draw(player, torches.filter((s) => !s.bakedOnly), cfg.cell, encounters.cleared());
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

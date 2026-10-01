@@ -308,6 +308,17 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   corridors (`explore.json corridor` chances). `quality.js`: under
   `quality.minFps` for a while, shadows go, then resolution; `?hold`
   keeps full quality (screenshots on software GL).
+- Light from afar (0.146): `lightField.js` bakes every source of a floor
+  into a light map over the plan (`field`: texels per cell, walls block
+  by line of sight, ~10 ms) that every lit material reads in its shader
+  (`patchMaterial`: indirect light from the texel just off the surface;
+  the billboards too). The pool's point lights only add the near detail:
+  each fades in by distance (`field.dynamic` near..far, `share`), ramps
+  up when it takes a light, and keeps its source until a newcomer pulls
+  clearly harder (`swap`) — before, a torch beyond the six nearest lit
+  nothing and switched on as you approached. Each theme has a `fill`:
+  a bounce source baked only (`bakedOnly`, no flame, no haze). Window
+  beams fade with distance (60% of the fog).
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of
@@ -319,9 +330,8 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   the deepest dark, grain, vignette. All knobs in `explore.json paint`.
 - `player.js`: WASD / arrows, Q / E turn, Shift runs, mouselook under
   pointer lock; eased velocity, head bob. `lab.js` wires it up: the
-  knight's torch rides with the camera, a pool of `light.pool` point lights
-  follows the nearest wall torches (a fixed light count keeps three.js from
-  recompiling shaders).
+  knight's torch rides with the camera (lights.js, lightField.js: see
+  above for the light pool and the baked field).
 Next steps discussed with the owner: integration into runs (shrine
 rooms, retreat rules, settling the run).
 

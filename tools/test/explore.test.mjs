@@ -247,3 +247,17 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('explore.json: themes (heights, vaults), tier theme weights, light sources, corridor chances, shadows, haze, quality ladder', themeBad.length === 0 && weightBad.length === 0
     && knobs.every(Number.isFinite) && cfg.shadows.count <= cfg.light.pool, themeBad.join(','));
 }
+
+// T104: 0.146 — every light lights from afar: the baked light field's
+// knobs, the pool's distance fade, and each room theme's bounce fill
+{
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const F = cfg.field, D = F.dynamic;
+  ok('explore.json: the light field (texels, height, reach, strength) and the near lights\' fade (near < far, share, swap, ramp)',
+    [F.texelsPerCell, F.height, F.reach, F.soften, F.strength, D.near, D.far, D.share, D.swap, D.rampSecs].every(Number.isFinite)
+    && D.near < D.far && D.swap > 0 && D.swap < 1 && F.texelsPerCell >= 2);
+  ok('every room theme has a bounce fill', Object.values(cfg.themes).every((t) => t.fill > 0));
+  const lab = readFileSync('src/explore/lab.js', 'utf8'), layer = readFileSync('src/explore/encounterLayer.js', 'utf8');
+  ok('the lab bakes the field for each floor and every lit surface reads it (the enemies too)',
+    /bakeLightField\(lab\.grid, lab\.level\.torches, cfg\)/.test(lab) && lab.includes('patchAll(lab.level.group)') && layer.includes('patchMaterial(billboard.mesh.material)'));
+}

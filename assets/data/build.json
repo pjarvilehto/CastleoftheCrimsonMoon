@@ -1,5 +1,5 @@
 {
-  "version": "0.145",
+  "version": "0.146",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -32,6 +32,7 @@
     "src/explore/geom.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
+    "src/explore/lightField.js",
     "src/explore/lights.js",
     "src/explore/mapgen.js",
     "src/explore/minimap.js",
@@ -104,6 +105,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.146": [
+      "Testing tools: in the Dungeon Lab every torch, candle and window now lights its surroundings from afar (no more lights switching on as you approach), and the rooms are brighter."
+    ],
     "0.145": [
       "Testing tools: the Dungeon Lab's rooms each have a theme now — chapels with stained glass and light shafts, libraries, banquet halls, prisons, alchemy labs, crypts, a throne hall for the boss.",
       "Testing tools: in the Dungeon Lab, torches and other lights cast shadows and glow in the air, and the corridors gain banners, cell doors, skull niches, bones and puddles."
