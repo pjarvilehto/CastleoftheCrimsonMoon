@@ -1,5 +1,6 @@
 {
-  "_doc": "Automatic play stats (0.102): when endpoint is set, the game sends this browser's run history (anonymous random player id, no personal data) to the collector Worker in collector/ after every run and once per session; the /analytics/ dashboard reads it back. Empty endpoint = nothing is sent. Setup: collector/README.md. collectorVersion (0.119): the collector/worker.js VERSION this build expects; the dashboard warns when the deployed Worker reports another (it is updated by pasting collector/worker.js into the Cloudflare dashboard).",
+  "_doc": "Automatic play stats (0.102): when endpoint is set, the game sends this browser's run history (anonymous random player id, no personal data) to the collector Worker in collector/ after every run and once per session; the /analytics/ dashboard reads it back. Empty endpoint = nothing is sent. Setup: collector/README.md. collectorVersion (0.119): the collector/worker.js VERSION this build expects; the dashboard warns when the deployed Worker reports another (it is updated by pasting collector/worker.js into the Cloudflare dashboard). benchmarkPromptRoom (0.133): once a player's best room reaches this, the Great Hall asks them (once, until a result exists) to run the BENCHMARK (ui/benchmark.js).",
   "endpoint": "https://castle-stats.petri-jarvilehto.workers.dev",
-  "collectorVersion": "0.131"
+  "collectorVersion": "0.131",
+  "benchmarkPromptRoom": 10
 }

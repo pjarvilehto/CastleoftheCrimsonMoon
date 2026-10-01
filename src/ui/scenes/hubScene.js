@@ -19,6 +19,7 @@ import { statBox, describeItem, itemName } from '../hud.js';
 import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
+import { maybeAskBenchmark } from '../benchmark.js';
 
 // Great Hall potion count color (0.089): green when the satchel is full,
 // red when running low (1 or none, or a quarter of the satchel or less).
@@ -54,6 +55,8 @@ export function hubScene() {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
+      // 0.133: the one-time benchmark request, once the hall has faded in
+      setTimeout(() => { if (currentScene() === scene) maybeAskBenchmark(); }, 1200);
     },
   };
   return scene;

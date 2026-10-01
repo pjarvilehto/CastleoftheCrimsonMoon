@@ -1,5 +1,5 @@
 {
-  "version": "0.132",
+  "version": "0.133",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -77,6 +77,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.133": [
+      "Players who have reached room 10 are asked once to run a short (about 40 second) benchmark, which helps make the game run smoothly on every computer."
+    ],
     "0.132": [
       "Fixed: blood splatters on the floor no longer flicker as they fade."
     ],
@@ -120,11 +123,6 @@
     ],
     "0.119": [
       "Under the hood: the play-stats collector stores only what the stats page shows and turns away spam"
-    ],
-    "0.118": [
-      "The old music is retired: the dark ambient score is the soundtrack (the Score switch is gone)",
-      "\"Playing as …\" is centred on the title screen",
-      "Under the hood: one sound registry and real tests for the audio engine"
     ]
   }
 }

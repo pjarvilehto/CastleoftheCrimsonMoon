@@ -301,8 +301,11 @@ static play-stats page.
   combat / overkill phases) on the real combat pieces; holds the bg3d
   quality ladder while measuring; result -> `profile.bench` (newest 10,
   never the run history) -> collector -> the dashboard's Benchmarks card.
-  Changing the script changes what the numbers mean — note it in the
-  changelist when you do.
+  Changing the script (`PHASES` in `ui/benchmark.js`) changes what the
+  numbers mean — note it in the changelist when you do. 0.133: every
+  player is asked once — entering the Great Hall with best room >=
+  `telemetry.json benchmarkPromptRoom` (10) and no result yet, a
+  Continue-only dialog runs it and comes back to the hall.
 - Combat cards: frame art on `.char-card::before` (opacity 0.85);
   portraits overflow the frame (absolute, bottom-anchored, taller/wider
   than the card, text z-index above art); per-enemy tweaks via

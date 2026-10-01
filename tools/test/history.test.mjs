@@ -263,3 +263,47 @@ fresh();
     && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark')"));
   getProfile().bench = [];
 }
+
+// T94: 0.133 — every player is asked once: entering the Great Hall with a
+// best room of telemetry.json benchmarkPromptRoom (10) or more and no
+// result yet, a dialog offers only Continue; the benchmark plays (virtual
+// time), saves its result and returns to the Great Hall — no second ask.
+{
+  const bm = await import('../../src/ui/benchmark.js');
+  const ep = DATA.telemetry.endpoint;
+  DATA.telemetry.endpoint = 'https://stats.example';
+  fresh();
+  const p = getProfile();
+  p.records.bestRoom = 9;
+  ok('not due before room 10, or without stats collection', !bm.benchmarkDue(p) && DATA.telemetry.benchmarkPromptRoom === 10);
+  p.records.bestRoom = 12;
+  ok('due from room 10 on, until a result exists', bm.benchmarkDue(p) && !bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
+    && !(DATA.telemetry.endpoint = '', bm.benchmarkDue(p)) && (DATA.telemetry.endpoint = 'https://stats.example'));
+  ok('the prompt quotes the real length', bm.benchmarkSeconds() === 40 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const dlg = () => body.children.find((c) => /update-overlay/.test(c.className ?? ''));
+  show(hubScene());
+  await sleep(1100); // the fade to the hall
+  ok('no ask while the hall is still fading in', !dlg());
+  await sleep(1300);
+  ok('Great Hall asks once the hall has faded in', !!dlg() && dlg().textContent.includes('about 40 seconds') && dlg().textContent.includes('Continue')
+    && dlg().textContent.includes('[space]'));
+  handleKey('escape'); handleKey('d');
+  ok('nothing skips it (Esc, the hall\'s hotkeys)', !!dlg() && t().includes('GREAT HALL'));
+  handleKey(' ');
+  ok('Space starts the benchmark', !dlg());
+  await sleep(1300);
+  ok('the benchmark scene runs', t().includes('Benchmark'));
+  await sleep(45000); // the whole script, in virtual time
+  const res = dlg();
+  ok('result shown with thanks; saved', res && res.textContent.includes('Benchmark complete') && res.textContent.includes('Thank you')
+    && getProfile().bench.length === 1 && getProfile().bench[0].phases.combat?.fps > 0 && getProfile().history.length === 0);
+  handleKey(' ');
+  await sleep(1100);
+  ok('back to the Great Hall, and it does not ask again', t().includes('GREAT HALL') && (await sleep(2500), !dlg()));
+  globalThis.document.body = realBody;
+  DATA.telemetry.endpoint = ep;
+  fresh();
+}

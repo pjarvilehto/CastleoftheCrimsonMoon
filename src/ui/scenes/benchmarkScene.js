@@ -27,14 +27,10 @@ import { combatSfx } from '../combatSfx.js';
 import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
 import { holdQuality, isBg3dActive, bgQualityLevel } from '../../core/bg3d.js';
 import { recordBenchmark } from '../../meta/profile.js';
-import { showBenchmarkResult } from '../benchmark.js';
+import { showBenchmarkResult, PHASES } from '../benchmark.js';
 
-const LINE = ['rat', 'skeleton', 'ghoul', 'wraith', 'crypt_spider']; // blood, bone, fire, spirit, blood
-export const PHASES = [
-  { id: 'idle', label: 'Idle', secs: 6, bg: 'castle_chapel_interior.jpg', enemies: LINE, act: null },
-  { id: 'combat', label: 'Combat', secs: 20, bg: 'castle_chapel_interior.jpg', enemies: LINE, act: 'fight' },
-  { id: 'overkill', label: 'Overkill', secs: 10, bg: 'castle_courtyard.jpg', enemies: [...LINE, 'gargoyle'], act: 'smash' },
-];
+export { PHASES }; // the script lives in ui/benchmark.js (the prompt quotes its length)
+
 const ROOM = 3;          // enemy scaling depth: a few hits each
 const BEAT_MS = 150;     // the bot's pause after a turn finishes printing
 const PAUSE_MS = 1000;   // a gap this long is not a frame (perfMonitor's rule)
@@ -42,7 +38,9 @@ const PAUSE_MS = 1000;   // a gap this long is not a frame (perfMonitor's rule)
 // Seeded Math.random (Park-Miller): the same fight on every machine.
 const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
-export function benchmarkScene() {
+// returnTo: the scene to go back to ('title' from the ?debug button; the
+// Great Hall's prompt passes 'hub', 0.133).
+export function benchmarkScene({ returnTo = 'title' } = {}) {
   const realRandom = Math.random, wasInvulnerable = DEBUG.invulnerable;
   let run = null, combat = null, ui = null, root = null, logEl = null;
   let phase = -1, rec = null, endsAt = 0, last = 0, done = false, turn = 0, botTimer = null;
@@ -168,6 +166,6 @@ export function benchmarkScene() {
       phases: results,
     };
     recordBenchmark(result);
-    showBenchmarkResult(result, () => go('title'));
+    showBenchmarkResult(result, () => go(returnTo), returnTo === 'hub');
   }
 }

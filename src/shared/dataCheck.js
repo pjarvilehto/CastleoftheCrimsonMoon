@@ -34,6 +34,7 @@ const NUM = {
     'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
   ],
   backgrounds: ['parallax.swayHitShare'],
+  telemetry: ['benchmarkPromptRoom'],
 };
 
 const at = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
