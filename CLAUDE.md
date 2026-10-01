@@ -29,7 +29,7 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~610 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~625 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -306,7 +306,29 @@ Energy Saver), not a slow machine.
 - `wrangler.jsonc` + `.assetsignore` (Cloudflare Workers static assets) are
   an alternative hosting path, unused.
 
-## Backlog (as of 0.137)
+## Art batches from the owner (the workflow, 0.153 / 0.156)
+
+The owner uploads PNGs through GitHub's web upload (to `main` or the
+working branch, usually the repo root). Per batch: review a contact sheet
+and the bottom-right corners (image-generator watermarks: crop them out,
+see 0.153), convert to 2048x1152 JPEG q86 in `assets/bg/` (new names, never
+replace), `python3 tools/gen-depth.py <model.onnx> <file>.jpg` for each (the
+model URL is in the script's header; download it to /tmp in a new session),
+name them in `backgrounds.json roomNames` ("The …", unique), add them to
+the right list (`rooms` / `bosses` / `treasure`), `git rm` the PNGs, check a
+few in the game, bump, ship. The upload lands outside the working branch
+sometimes — fetch all branches to find it.
+
+## State at handover (0.156)
+
+- Live: treasure rooms (0.155), click-to-attack, 35 fight paintings + 4
+  throne rooms + 6 treasure rooms, no repeats in a run, ordered transitions.
+- Not yet browser-checked: a boss fight in the new throne rooms (tests cover
+  the pick). Treasure rooms aren't in the play stats yet (no history field —
+  a candidate: which chest, what it gave; the collector would need it too).
+- Open ideas the owner floated: a mimic chest (needs enemy art).
+
+## Backlog (as of 0.156)
 
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord) · the room-24 boss is a wall (~5% clear in the simulator) and meta

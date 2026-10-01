@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~610 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~625 checks, under a second
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -45,8 +45,10 @@ src/
                         tools), 3D backgrounds, audio, update check ->
                         title; the rest of the art loads in the background
   core/                 engine-level, no game rules
-    scene.js            show()/transitionTo() (fade, try/finally), bg
-                        crossfader, router: registerScene() / go(name, ...)
+    scene.js            show()/transitionTo() (fade, try/finally; strictly in
+                        order: windows out, swap, the new painting fully in,
+                        windows back), bg crossfader (setBackground returns a
+                        promise), router: registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
@@ -69,11 +71,14 @@ src/
     names.js            player-name cleaning
   run/                  EXISTS only during a dungeon run
     runState.js         run object, rooms, potions, loot routing, settleRun()
-    roomGen.js          threat-budget rooms, boss every 8, one shrine per stretch
+    roomGen.js          threat-budget rooms, boss every 8 (a throne room of 4),
+                        one shrine per stretch, the treasure room; paintings
+                        never repeat in a run (pickFresh, run.seenBackgrounds)
     combat.js           one action in phases: rollHit -> smash | strike(+spill)
                         -> lifesteal -> enemyPhase -> summons -> cleared
     shrine.js           boon deal + costs + effects (ids map to code)
     loot.js             coin / XP / item rolls
+    treasure.js         treasure rooms: placement, the three chests (0.155)
   shared/               no DOM, used everywhere (and by the analytics page)
     data.js             loads assets/data/*.json into DATA
     dataCheck.js        every number the code reads, checked at load
@@ -100,7 +105,8 @@ src/
     combatSfx.js        a line's sound, panned to its card, timed to the blow
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
-    shrineUI.js  buffs.js  hud.js  fx.js  hubText.js
+    shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
+    buffs.js  hud.js  fx.js  hubText.js
     dialog.js           openDialog(): overlay + keyboard; open-dialog registry
     confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
@@ -137,7 +143,7 @@ tools/
 4. The dungeon scene drives `run/combat.js`. A turn resolves instantly; its
    events become playback items (`combatQueue.js`) that print line by line,
    each with its state snapshot, effect and sound. Kills route loot through
-   the run.
+   the run; so do treasure chests (`run/treasure.js`).
 5. Run end (death or retreat) -> `settleRun()` -> profile + history record
    (with the run's frame-rate summary) -> persist -> run-end scene;
    `shareStats()` posts the save's stats to the collector, and the
@@ -152,7 +158,8 @@ primary button. While a dialog is open it owns the keyboard.
 
 | Key | Where | Action |
 |---|---|---|
-| `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
+| `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
+| `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
 | `E` / `N` | title | Enter the Castle / Start a New Game |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
