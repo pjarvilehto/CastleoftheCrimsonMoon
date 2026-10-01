@@ -26,8 +26,8 @@ const read = (k) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null')
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
 
 // Tester names (0.136): who is behind a player, set here by the owner and
-// kept in this browser — "Aki" for the player who calls themselves
-// "Demon" shows as "Aki · Demon" everywhere on the page. The renames of
+// kept in this browser, shown before the player's own name everywhere on
+// the page ("tester · player name"). The renames of
 // 0.102-0.135 (for players without a typed name) become tester names.
 function testers() {
   const t = read(TESTERS) ?? {};
@@ -130,7 +130,7 @@ function serverCard() {
     ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>` : '';
   return `<section class="card add">
     <h2>Testers</h2>${stale}
-    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game. To see who is who, give them a tester name in the Players table (e.g. Aki for "Demon" shows as "Aki · Demon"); tester names stay in this browser.</p>
+    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game. To see who is who, give them a tester name in the Players table; it shows before the name they play under, and stays in this browser.</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
       ${data.endpoint ? `<button data-act="refresh"${server.busy ? ' disabled' : ''}>${server.busy ? 'Refreshing…' : 'Refresh'}</button>` : ''}

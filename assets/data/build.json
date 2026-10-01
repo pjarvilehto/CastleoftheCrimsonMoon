@@ -1,5 +1,5 @@
 {
-  "version": "0.137",
+  "version": "0.138",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -79,8 +79,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.138": [
+      "Play stats: help text tidy-up."
+    ],
     "0.137": [
-      "Play stats: the owner can give each player a tester name (shown as 'Aki · Demon')."
+      "Play stats: the owner can give each player a tester name, shown before the name they play under."
     ],
     "0.136": [
       "Under the hood: a review pass — a few rare bugs fixed (the benchmark now plays exactly the same fight on every machine, and can no longer cancel a descent that was still loading)."
@@ -122,9 +125,6 @@
     ],
     "0.124": [
       "Space now moves you forward on every screen — Enter the Castle, Descend, Push Deeper, Accept Your Fate, Return to the Great Hall — with a small [space] under the button it presses."
-    ],
-    "0.123": [
-      "Play stats: the Depth per run chart marks every run that won the game (beat the room 24 boss) with a gold star."
     ]
   }
 }

@@ -1,6 +1,9 @@
 {
+  "0.138": [
+    "Play stats: help text tidy-up."
+  ],
   "0.137": [
-    "Play stats: the owner can give each player a tester name (shown as 'Aki · Demon')."
+    "Play stats: the owner can give each player a tester name, shown before the name they play under."
   ],
   "0.136": [
     "Under the hood: a review pass — a few rare bugs fixed (the benchmark now plays exactly the same fight on every machine, and can no longer cancel a descent that was still loading)."

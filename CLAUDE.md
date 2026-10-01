@@ -222,7 +222,7 @@ the dashboard's fields, typed and capped, merges history by timestamp and
 rate-limits; reads need the Bearer `READ_KEY`. The dashboard shows the
 collected players, this browser's save and pasted save codes (untrusted:
 `sanitizeProfile()`), deduped by playerId; the owner can give each player a
-**tester name** (kept in that browser, shown as "Aki · Demon"). **BENCHMARK**
+**tester name** (kept in that browser, shown as "tester · player name"). **BENCHMARK**
 (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's
 quality ladder held; result → `profile.bench` (newest 10, never the run
