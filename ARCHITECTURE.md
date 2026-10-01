@@ -46,12 +46,13 @@ src/
                         title; the rest of the art loads in the background
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally), bg
-                        crossfader, router: registerScene() / go(name, ...)
+                        crossfader (instant swaps: the lab), router:
+                        registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
                         crossfade, jolts/sways/flash lights, quality ladder,
-                        CSS fallback; gpuName(), holdQuality()
+                        CSS fallback; gpuName(), holdQuality(), pauseBg3d()
     bg3dGL.js  bg3dMath.js  bg3dTuning.js  bg3dQuality.js  bg3dFog.js
     bg3dPuffs.js  bg3dPuffGL.js  bg3dLights.js
                         its plumbing: shaders, pure math (tested in Node),
@@ -125,6 +126,8 @@ src/
     fxpass.js  bloom.js  ssao.js  lut.js   the post stack (glow, contact
                         shadows, the grade table) under the paint pass
     atmosphere.js       dust, embers, smoke: GPU point clouds
+    backdrop.js         a fight's painted room (the game's depth renderer)
+                        faded in over the dungeon, and out again
     themes.js           each room's theme and its clear way through (pure)
     furnish.js  rooms.js  corridors.js  vault.js   dressing the rooms
                         (one function per theme) and corridors; vaults

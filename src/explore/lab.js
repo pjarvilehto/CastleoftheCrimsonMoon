@@ -8,7 +8,8 @@
 // data, stylesheet, hotkeys and sound (its <base> is the site root). Lights: the
 // party's torch rides with the camera; the wall torches share a small pool
 // of point lights that follows the nearest ones (a fixed light count keeps
-// three.js from recompiling shaders).
+// three.js from recompiling shaders). 0.148: the fights play over the
+// game's painted rooms (backdrop.js), faded in over the dungeon.
 
 import * as THREE from 'three';
 import { parseMap } from './grid.js';
@@ -26,6 +27,7 @@ import { bakeAO } from './aoBake.js';
 import { createAtmosphere } from './atmosphere.js';
 import { themeRooms } from './themes.js';
 import { createQuality } from './quality.js';
+import { createBackdrop } from './backdrop.js';
 import { el } from '../core/dom.js';
 import { seeded } from './grid.js';
 import { loadData, DATA } from '../shared/data.js';
@@ -54,8 +56,9 @@ export async function startLab({ canvas, hud }) {
   const player = createPlayer(cfg, camera, canvas);
   const paint = createPaintPass(renderer, camera, cfg);
   const minimap = createMinimap(hud.minimap, cfg.gen.reveal);
+  const backdrop = createBackdrop(cfg, hud.backdrop); // (0.148: the painted room behind a fight)
   const encounters = createEncounters({
-    scene, camera, player, cfg, paint, appRoot: hud.app, bossEvery: DATA.difficulty.bossEvery,
+    scene, camera, player, cfg, paint, backdrop, appRoot: hud.app, bossEvery: DATA.difficulty.bossEvery,
     onDescend: () => { descent = { t: 0, from: { x: player.state.x, z: player.state.z } }; },
     onDeath: () => newFloor(lab.floor.seed, 1),
     onRestart: () => newFloor(lab.floor.seed + 1, 1),
@@ -67,7 +70,7 @@ export async function startLab({ canvas, hud }) {
   document.body.append(returnBtn);
 
   // the floor: generate, build, put the knight at the start
-  const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, mist: null, air: null, depth: 1 };
+  const lab = { renderer, scene, camera, player, cfg, encounters, backdrop, floor: null, grid: null, level: null, mist: null, air: null, depth: 1 };
   function newFloor(seed, depth = lab.depth) {
     lab.depth = depth;
     if (lab.level) { scene.remove(lab.level.group, lab.mist.group, lab.air.group); lab.level.dispose(); lab.mist.dispose(); lab.air.dispose(); }
@@ -95,7 +98,7 @@ export async function startLab({ canvas, hud }) {
     lights.reset();
     player.place(lab.grid, lab.floor.start);
     minimap.setFloor(lab.floor, lab.grid);
-    encounters.setFloor(lab.floor, depth);
+    encounters.setFloor(lab.floor, depth, lab.rooms);
     try { history.replaceState(null, '', `dungeon-lab/?seed=${seed}&depth=${depth}`); } catch { /* (file://) */ }
   }
   // the colour light takes on bouncing off a tier's stone (its mean tone,
@@ -159,18 +162,20 @@ export async function startLab({ canvas, hud }) {
         if (paint.uniforms.fade.value === 0) descent = null;
       }
     }
-    returnBtn.classList.toggle('hidden', !walking || !!descent);
-    hud.intro.classList.toggle('hidden', !walking || document.pointerLockElement === canvas);
-    hud.minimap.classList.toggle('hidden', !walking || !mapOn);
+    const shown = walking && backdrop.level < 0.5; // (the map and the way home wait for the painting to go)
+    returnBtn.classList.toggle('hidden', !shown || !!descent);
+    hud.intro.classList.toggle('hidden', !shown || document.pointerLockElement === canvas);
+    hud.minimap.classList.toggle('hidden', !shown || !mapOn);
     const c = player.cell();
     minimap.look(c.x, c.z);
     const torches = lab.level.torches;
     paint.setHaze(lights.update(t, torches, dt)); // the near lights: pool, shadows, flicker, haze
     lab.mist.update(t);
     lab.air.update(t, pxScale);
-    paint.render(scene);
+    backdrop.update(dt);
+    if (!backdrop.covered()) paint.render(scene); // (behind a painting the dungeon rests)
     frames++; fpsT += dt;
-    if (walking && !hold) quality.tick(dt); // (fights are DOM: they don't count; ?hold keeps full quality)
+    if (walking && !hold && backdrop.level === 0) quality.tick(dt); // (fights are DOM: they don't count; ?hold keeps full quality)
     if (fpsT >= 0.5) {
       const r = encounters.run, left = encounters.spots.filter((sp) => !sp.cleared).length;
       hud.status.textContent = `${Math.round(frames / fpsT)} fps${quality.level() ? ` (quality -${quality.level()})` : ''} · depth ${lab.depth}: ${cfg.tiers[lab.tier].name} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;

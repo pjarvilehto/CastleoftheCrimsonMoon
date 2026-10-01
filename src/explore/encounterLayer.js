@@ -9,6 +9,9 @@
 // fights the knight may Return to the Great Hall instead (returnHome: the
 // visit's tally). A loss: Rise Again (onDeath).
 // One run object carries HP, potions, boons and loot through the visit.
+// 0.148: a fight (and the shrine) plays over the game's painting for its
+// room's theme, faded in over the dungeon (backdrop.js) and out again
+// when the knight walks on.
 
 import * as THREE from 'three';
 import { createRun } from '../run/runState.js';
@@ -24,7 +27,7 @@ import { patchMaterial } from './lightField.js';
 
 const TURN_SECS = 0.7;
 
-export function createEncounters({ scene, camera, player, cfg, appRoot, paint, bossEvery, onDescend, onDeath, onRestart }) {
+export function createEncounters({ scene, camera, player, cfg, appRoot, paint, backdrop, bossEvery, onDescend, onDeath, onRestart }) {
   const B = cfg.billboard, C = cfg.cell;
   let spots = [], floor = null, depth = 1, mode = 'walk', turn = null, dim = 0, run = createRun();
   const group = new THREE.Group();
@@ -42,12 +45,15 @@ export function createEncounters({ scene, camera, player, cfg, appRoot, paint, b
   const toCam = new THREE.Vector3();
   const shrineLog = el('div', { id: 'combat-log' });
 
-  function setFloor(f, d) {
+  // rooms: the floor's themed rooms (themes.js) — each spot's painting
+  function setFloor(f, d, rooms = []) {
     for (const s of spots) s.billboard?.dispose();
     group.clear();
     floor = f; depth = d;
-    spots = planFloor(f, d, bossEvery).map((spot) => {
-      const room = roomFor(spot);
+    spots = planFloor(f, d, bossEvery).map((plan) => {
+      const room = roomFor(plan);
+      const theme = rooms.find((r) => r.x === plan.rect.x && r.z === plan.rect.z)?.theme;
+      const spot = { ...plan, painting: cfg.backdrop.paintings[theme] ?? room.background };
       if (spot.kind === 'shrine') return { ...spot, room, cleared: false };
       const lead = leaderOf(room);
       const size = { ...(B.sizes[lead.id] ?? B.sizes.default) };
@@ -61,6 +67,8 @@ export function createEncounters({ scene, camera, player, cfg, appRoot, paint, b
       group.add(billboard.mesh, shadow);
       return { ...spot, room, lead, billboard, shadow, cleared: false };
     });
+    backdrop.prefetch(spots.map((s) => s.painting));
+    backdrop.hide();
     appRoot.innerHTML = '';
     mode = 'walk';
     play('shrine');
@@ -80,9 +88,11 @@ export function createEncounters({ scene, camera, player, cfg, appRoot, paint, b
 
   function fight(spot) {
     mode = 'fight';
+    backdrop.show(spot.painting);
     startFight(appRoot, run, spot.room, {
       onDone: (won) => {
         appRoot.innerHTML = '';
+        backdrop.hide();
         if (!won) { mode = 'over'; run = createRun(); onDeath(); return; }
         spot.cleared = true;
         spot.billboard.vanish(1.2, () => { spot.shadow.visible = false; });
@@ -98,11 +108,12 @@ export function createEncounters({ scene, camera, player, cfg, appRoot, paint, b
     document.exitPointerLock?.();
     player.state.vx = player.state.vz = 0;
     run.roomNumber = spot.number; // (boon prices follow the depth)
+    if (cfg.backdrop.shrine) backdrop.show(spot.painting);
     const buffBar = createBuffBar();
     const render = () => renderShrineRoom(appRoot, run, spot.room, {
       title: ['The Shrine'], logEl: shrineLog, buffBar, coins: run.coins, xp: run.xp,
-      onDeeper: () => { spot.cleared = true; appRoot.innerHTML = ''; mode = 'walk'; },
-      onRetreat: () => { spot.cleared = true; mode = 'walk'; returnHome(); },
+      onDeeper: () => { spot.cleared = true; appRoot.innerHTML = ''; backdrop.hide(); mode = 'walk'; },
+      onRetreat: () => { spot.cleared = true; backdrop.hide(); mode = 'walk'; returnHome(); },
       refresh: render,
     });
     logLine(shrineLog, 'Candles gutter on an old altar.', 'move');

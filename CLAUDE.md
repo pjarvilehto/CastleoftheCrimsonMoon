@@ -278,8 +278,7 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   to black) lead to the next floor once the boss is down; Return (R, or
   the button, whenever no fight or dialog is up) ends the visit with its
   tally (To the Great Hall / Descend Again). One `run` object carries HP,
-  potions and loot through the visit and is never settled. Particles stay
-  off in the lab (they follow the game's 3D background).
+  potions and loot through the visit and is never settled.
 - Look pass (0.142): rooms are `roomHeight` tall (a header wall over each
   opening); `decor.js` adds arches at room entrances, pillars in rooms 4+
   a side (`posts`, collided in `grid.js`), chains, rubble, glossy puddles
@@ -335,6 +334,17 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   furnish.js `emit` and build.js; `explore.json atmosphere`, `maxPx` caps
   a particle by the eye). The quality ladder sheds shadows, SSAO, bloom,
   then resolution.
+- Painted fights (0.148, `backdrop.js`): a fight (and the shrine,
+  `backdrop.shrine`) fades in the game's painting for the room's theme
+  (`explore.json backdrop.paintings`; the lab page carries the game's
+  `#bg-stack` + vignette in `#backdrop`) on the game's depth renderer
+  (`initBg3d`, software GL allowed as in ?debug) — sway, mist, jolts,
+  flash lights and the combat particles come with it — and fades it out
+  on Onward / Rise Again. Swapped hidden with `setBackground(file, {
+  instant })` (no crossfade from the last painting; returns bg3d's
+  promise, so the fade waits for the painting); `pauseBg3d` stops the
+  painting while hidden, and lab.js skips the dungeon render while the
+  painting covers the screen (one renderer at a time, except in fades).
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of

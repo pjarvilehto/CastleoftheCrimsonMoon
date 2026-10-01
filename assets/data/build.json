@@ -1,5 +1,5 @@
 {
-  "version": "0.147",
+  "version": "0.148",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -23,6 +23,7 @@
     "src/core/scene.js",
     "src/explore/aoBake.js",
     "src/explore/atmosphere.js",
+    "src/explore/backdrop.js",
     "src/explore/billboard.js",
     "src/explore/bloom.js",
     "src/explore/build.js",
@@ -111,6 +112,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.148": [
+      "Dungeon Lab: fights play over the game's painted rooms — the room's painting (with its depth sway, mist and particles) fades in when a fight starts and back out to the 3D dungeon when you walk on",
+      "Dungeon Lab: the shrine opens over its golden painting too"
+    ],
     "0.147": [
       "Testing tools: the Dungeon Lab gets glowing flames (bloom), soft contact shadows, light that bounces off the walls, a colour grade per depth, and air: dust in the window beams, embers and smoke over the fires."
     ],
@@ -153,9 +158,6 @@
     ],
     "0.134": [
       "Fixed: a dialog left open in the Great Hall (like Descend Now?) could stay on screen over the benchmark."
-    ],
-    "0.133": [
-      "Players who have reached room 10 are asked once to run a short (about 40 second) benchmark, which helps make the game run smoothly on every computer."
     ]
   }
 }

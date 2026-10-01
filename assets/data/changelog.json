@@ -1,4 +1,8 @@
 {
+  "0.148": [
+    "Dungeon Lab: fights play over the game's painted rooms — the room's painting (with its depth sway, mist and particles) fades in when a fight starts and back out to the 3D dungeon when you walk on",
+    "Dungeon Lab: the shrine opens over its golden painting too"
+  ],
   "0.147": [
     "Testing tools: the Dungeon Lab gets glowing flames (bloom), soft contact shadows, light that bounces off the walls, a colour grade per depth, and air: dust in the window beams, embers and smoke over the fires."
   ],

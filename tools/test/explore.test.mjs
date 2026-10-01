@@ -287,3 +287,33 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('quality ladder: shadows, then SSAO, then bloom, then resolution', q.indexOf('castShadow = false') < q.indexOf("setFeature('ssao'") && q.indexOf("setFeature('ssao'") < q.indexOf("setFeature('bloom'") && q.indexOf("setFeature('bloom'") < q.indexOf('setScale('));
   ok('the lab bakes the props\' AO, grades by tier and fills the air for each floor', lab.includes('bakeAO(lab.level.group') && lab.includes('paint.setGrade(') && lab.includes('createAtmosphere(lab.level.emitters'));
 }
+
+// T106: 0.148 — the painted room behind a fight: every room theme has one
+// of the game's paintings (with its depth map); an instant swap skips the
+// crossfade and hands the 3D renderer the painting at once; a fight fades
+// it in and out, and the dungeon is not drawn while it covers the screen
+{
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const { depthUrl } = await import('../../src/core/bg3dTuning.js');
+  const { onBackgroundChange, setBackground } = await import('../../src/core/scene.js');
+  const { registry } = await import('./harness.mjs');
+  const P = cfg.backdrop.paintings, exists = (p) => { try { return statSync(p).isFile(); } catch { return false; } };
+  ok('backdrop: every room theme has a painting of the game\'s, with its depth map; the fades are tuned',
+    Object.keys(cfg.themes).every((t) => P[t] && exists(`assets/bg/${P[t]}`) && exists(depthUrl(P[t]))) && cfg.backdrop.fadeInSecs > 0 && cfg.backdrop.fadeOutSecs > 0);
+  const calls = [];
+  onBackgroundChange((file, o) => { calls.push([file, o?.instant]); return 'up'; });
+  setBackground('castle_courtyard.jpg');
+  setBackground('castle_library.jpg');
+  const r = setBackground('castle_dungeon.jpg', { instant: true });
+  const now = [registry.bg0, registry.bg1].find((l) => l.dataset.file === 'castle_dungeon.jpg'), was = now === registry.bg0 ? registry.bg1 : registry.bg0;
+  ok('backdrop: an instant swap shows the new painting at once and tells the 3D renderer so (a plain one crossfades)',
+    r === 'up' && calls.at(-1).join() === 'castle_dungeon.jpg,true' && calls.find((c) => c[0] === 'castle_library.jpg')?.[1] === false
+    && now?.style.opacity === '1' && was.style.opacity === '0');
+  onBackgroundChange(() => {});
+  const lab = readFileSync('src/explore/lab.js', 'utf8'), layer = readFileSync('src/explore/encounterLayer.js', 'utf8');
+  const page = readFileSync('dungeon-lab/index.html', 'utf8'), bd = readFileSync('src/explore/backdrop.js', 'utf8');
+  const fight = layer.slice(layer.indexOf('function fight('), layer.indexOf('function shrine('));
+  ok('backdrop: a fight fades its room\'s painting in and out; the dungeon rests behind it; the page has the game\'s background layers',
+    fight.includes('backdrop.show(spot.painting)') && fight.includes('backdrop.hide()') && lab.includes('if (!backdrop.covered()) paint.render(scene)')
+    && /id="backdrop"[\s\S]*id="bg-stack"[\s\S]*id="bg0"[\s\S]*id="bg1"/.test(page) && bd.includes('pauseBg3d(true)') && bd.includes('initBg3d('));
+}
