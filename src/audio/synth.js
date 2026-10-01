@@ -10,8 +10,8 @@
 //          same: a blade's metallic tick, a body thud, the air cut by the
 //          swing, plate armour taking a blow. Each also varies itself.
 // Each plays into `out` at context time t and returns { dur, sources }.
+// Each is a `synth: true` entry in audio.json clips (0.118).
 
-export const SYNTH = { ring: true, boom: true, whoosh: true, tick: true, thud: true, slice: true, clank: true };
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
 let noise = null; // 1.2s of white noise, made once

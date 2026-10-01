@@ -1,5 +1,5 @@
 {
-  "version": "0.117",
+  "version": "0.118",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -72,6 +72,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.118": [
+      "The old music is retired: the dark ambient score is the soundtrack (the Score switch is gone)",
+      "\"Playing as …\" is centred on the title screen",
+      "Under the hood: one sound registry and real tests for the audio engine"
+    ],
     "0.117": [
       "Fixed: in 0.116 a critical hit could freeze the fight (its sound effect errored)",
       "Under the hood: the combat engine and scene switching are reorganised for easier changes (no gameplay change)"
@@ -129,9 +134,6 @@
     "0.104": [
       "Critical hits now vary in damage",
       "New: rare MEGA CRITS that hit 1.5x harder than a normal crit"
-    ],
-    "0.103": [
-      "Play stats now reach the developer automatically"
     ]
   }
 }

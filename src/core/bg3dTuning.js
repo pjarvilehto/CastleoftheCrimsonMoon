@@ -2,6 +2,7 @@
 // bg3d.js): built-in defaults < backgrounds.json `parallax` < its per-file
 // `overrides` < this browser's saved ?debug slider values.
 
+import { getJsonPref, setJsonPref, removePref } from '../shared/prefs.js';
 import { DATA } from '../shared/data.js';
 import { PUFF_DEFAULTS } from './bg3dPuffs.js';
 import { LIGHT_DEFAULTS } from './bg3dLights.js';
@@ -23,17 +24,14 @@ export const DEFAULTS = {
 // ?debug). The shipped values for everyone stay in backgrounds.json.
 export const TUNABLE = ['depthScale', 'speed', 'yawDeg', 'pitchDeg', 'pivot', 'fogScale', 'fogSpeed'];
 const SAVE_KEY = 'castle-bg-tuning';
-let live = {};
-try { live = JSON.parse(globalThis.localStorage?.getItem(SAVE_KEY) || '{}') || {}; } catch { live = {}; }
+let live = getJsonPref(SAVE_KEY, {});
 
 export function setLive(partial) { live = { ...live, ...partial }; }
 
 // Keep values in this browser (null: forget them).
 export function storeLive(values) {
-  try {
-    if (values) globalThis.localStorage?.setItem(SAVE_KEY, JSON.stringify(values));
-    else { live = {}; globalThis.localStorage?.removeItem(SAVE_KEY); }
-  } catch { /* private mode */ }
+  if (values) setJsonPref(SAVE_KEY, values);
+  else { live = {}; removePref(SAVE_KEY); }
 }
 
 export function tuning(file) {

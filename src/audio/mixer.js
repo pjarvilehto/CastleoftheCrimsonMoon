@@ -15,6 +15,7 @@
 import { DATA } from '../shared/data.js';
 import { hasAudio, ensureCtx } from './audioCore.js';
 import { dbToGain, sliderGain } from './audioMath.js';
+import { getJsonPref, setJsonPref } from '../shared/prefs.js';
 
 const VOL_KEY = 'castle-audio-volumes';
 export const VOLUME_KINDS = ['master', 'music', 'sfx'];
@@ -27,8 +28,7 @@ let volumes = null;
 
 function loadVolumes() {
   if (volumes) return volumes;
-  let saved = {};
-  try { saved = JSON.parse(globalThis.localStorage?.getItem(VOL_KEY) || '{}') || {}; } catch { saved = {}; }
+  const saved = getJsonPref(VOL_KEY, {});
   const def = cfg().volumes ?? {};
   volumes = Object.fromEntries(VOLUME_KINDS.map((k) => [k, clamp01(saved[k] ?? def[k] ?? 1)]));
   return volumes;
@@ -39,7 +39,7 @@ export const getVolumes = () => ({ ...loadVolumes() });
 export function setVolume(kind, v) {
   if (!VOLUME_KINDS.includes(kind)) return;
   loadVolumes()[kind] = clamp01(v);
-  try { globalThis.localStorage?.setItem(VOL_KEY, JSON.stringify(volumes)); } catch { /* private mode */ }
+  setJsonPref(VOL_KEY, volumes);
   apply();
 }
 

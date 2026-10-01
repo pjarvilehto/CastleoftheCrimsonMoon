@@ -162,12 +162,10 @@ src/
                           dungeonScene (combat = chromeless card layout,
                           shrine = panel layout), runEndScene
 ├── audio/
-│   ├── music.js          five scene-routed beds, 1.6s crossfade,
-│   │                     gesture-gated AudioContext, MUSIC toggle; two
-│   │                     scores from audio.json music.scores (0.114: the
-│   │                     dark ambient score or the classic beds, VOLUME panel)
-│   ├── musicLoop.js      seamless beds: section chain + crossfades (0.107);
-│   │                     exact loops restart over an appended tail (0.114)
+│   ├── music.js          five scene-routed beds (audio.json music.tracks),
+│   │                     1.6s crossfade, gesture-gated, MUSIC toggle
+│   ├── musicLoop.js      seamless beds: exact loops restart every loopS
+│   │                     over their appended tail, equal gain (0.118)
 │   ├── audioCore.js      shared AudioContext + cached compressed bytes (0.078)
 │   ├── mixer.js          buses -> master -> limiter, volume sliders,
 │   │                     music ducking, hidden-tab pause (0.107)
@@ -182,8 +180,8 @@ assets/
 │                         Depth Anything V2 Small via tools/gen-depth.py)
 ├── chars/                character portraits (WebP with alpha, 0.078) +
 │                         card_enemy/card_player frame art (PNG)
-├── audio/                music-*.mp3 classic beds, music-*-v2.mp3 the
-│                         generated score (0.114) + sfx-*.mp3 one-shots
+├── audio/                music-*-v2.mp3 the generated score (0.114) +
+│                         sfx-*.mp3 one-shots (registry: audio.json clips)
 ├── fonts/                DINCondensedBold.ttf (user-supplied)
 └── data/                 ALL balance numbers live here as JSON:
                         enemies, items, difficulty, backgrounds
@@ -213,6 +211,7 @@ tools/
 ├── gen-music.py          renders the dark ambient score (0.114; numpy/scipy/
 │                         lameenc): music/synth.py instruments, music/mix.py
 │                         circular track + hall + master, music/score.py pieces
+├── audio-check.mjs       measures clips + music loops in Chromium (0.118)
 └── stat-study.mjs        what each upgrade is worth (paired seeds, 0.112)
 ```
 

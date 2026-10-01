@@ -22,12 +22,12 @@ fresh();
 // ignores tier-1 gear (no enhance button, forgeItem refuses).
 {
   const musicSrc = readFileSync(new URL('../../src/audio/music.js', import.meta.url), 'utf8');
-  const classic = DATA.audio.music.scores.classic.tracks; // 0.114: the beds live in audio.json
+  const tracks = DATA.audio.music.tracks; // the beds live in audio.json (0.114; one score since 0.118)
   for (const t of ['title', 'combat', 'boss', 'shrine', 'end']) {
-    ok(`music track file referenced: ${t}`, classic[t].file === `assets/audio/music-${t}.mp3`);
-    const size = statSync(new URL(`../../assets/audio/music-${t}.mp3`, import.meta.url)).size;
-    ok(`music-${t}.mp3 is a ~60s track`, size > 800 * 1024); // 61s @ 128kbps ~ 977KB
+    const secs = statSync(tracks[t].file).size * 8 / 128000; // 128 kbps
+    ok(`music bed ${t}: on disk, an exact loop + its tail`, Math.abs(secs - (tracks[t].loopS + tracks[t].tailS)) < 0.6 && tracks[t].loopS >= 60);
   }
+  ok('the classic beds are gone (0.118)', !readdirSync('assets/audio').some((f) => /^music-(title|combat|boss|shrine|end)\.mp3$/.test(f)));
   ok('no stale ambient/dungeon track refs', !musicSrc.includes('ambient.mp3') && !musicSrc.includes('dungeon.mp3'));
   const read = (f) => readFileSync(new URL(`../../src/ui/scenes/${f}`, import.meta.url), 'utf8');
   ok('title screen plays title track', read('titleScene.js').includes("play('title')"));
@@ -77,14 +77,12 @@ fresh();
   sfxMod.sfx('attack'); sfxMod.sfx('nope'); sfxMod.initSfx();
   ok('sfx play/init no-op safely without AudioContext', true);
 
-  const clips = ['click', 'attack', 'kill', 'hurt', 'swoosh', 'death', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory'];
-  const sfxSrc = readFileSync(new URL('../../src/audio/sfx.js', import.meta.url), 'utf8');
-  for (const c of clips) {
-    ok(`sfx clip referenced + on disk: ${c}`,
-      sfxSrc.includes(`assets/audio/sfx-${c}.mp3`)
-      && statSync(new URL(`../../assets/audio/sfx-${c}.mp3`, import.meta.url)).size > 5 * 1024); // 0.5s click ~ 8.8KB
+  const C = DATA.audio.clips; // the sound registry (0.118)
+  for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'death', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
+    ok(`sfx clip registered + on disk: ${c}`, C[c]?.file === `assets/audio/sfx-${c}.mp3` && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
   }
-  ok('combat sounds jittered', sfxSrc.includes('playbackRate') && sfxSrc.includes("'attack'"));
+  ok('generated sounds registered as synth', ['whoosh', 'ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
+  ok('combat sounds jittered', ['attack', 'kill', 'hurt', 'loot'].every((n) => C[n].rate?.length === 2 && C[n].jitterDb > 0));
 
   const read = (f) => readFileSync(f, 'utf8'); // cwd = repo root (harness)
   ok('playback fires item.sfx on print (via the scene\'s onSfx, 0.107)', read('src/ui/combatPlayback.js').includes('if (item.text && item.sfx) onSfx(item);')
@@ -102,30 +100,14 @@ fresh();
   ok('main: SOUND toggle + global clicks', m.includes("onOffToggle('SOUND'") && m.includes("closest?.('button')") && m.includes('initSfx()'));
 }
 
-// T69: 0.107 — the audio pass: loop points skip the beds' fades, equal-power
-// crossfades, stereo from the screen, voice management, the mixer (buses,
+// T69: 0.107 — the audio pass: the music crossfade (equal gain since 0.118), stereo from the screen, voice management, the mixer (buses,
 // limiter, sliders, ducking, background pause), loudness trims, combat
 // sounds placed + timed + tiered, and the VOLUME panel.
 {
   const read = (f) => readFileSync(f, 'utf8');
   const am = await import('../../src/audio/audioMath.js');
-  // a bed like the generated ones: two 10s pieces, each fading out to
-  // silence and back in, plus the file's own fade-in / fade-out; and a
-  // rhythmic bed whose beats decay ~12 dB every half second (no gaps)
-  const sr = 1000, sig = new Float32Array(sr * 26), beat = new Float32Array(sr * 20);
-  for (let i = 0; i < sig.length; i++) {
-    const t = i / sr;
-    const env = t < 1 ? t : t < 11 ? 1 : t < 14 ? Math.max(0, 1 - (t - 11) / 3) ** 3 : t < 15 ? (t - 14) : t < 23 ? 1 : Math.max(0, 1 - (t - 23) / 3) ** 3;
-    sig[i] = Math.sin(i * 0.7) * 0.5 * env;
-  }
-  for (let i = 0; i < beat.length; i++) beat[i] = Math.sin(i * 0.9) * 0.5 * 10 ** (-((i % 500) / 500) * 12 / 20);
-  const secs = am.findSections(sig, sr);
-  ok('music sections: each piece without its fades (no dip into silence)', secs.length === 2 && secs[0].start <= 1 && secs[0].end >= 10.5 && secs[0].end <= 12
-    && secs[1].start >= 14 && secs[1].start <= 15.5 && secs[1].end >= 22.5 && secs[1].end <= 24, JSON.stringify(secs));
-  const bs = am.findSections(beat, sr);
-  ok('music sections: rhythmic decays are not gaps', bs.length === 1 && bs[0].start === 0 && bs[0].end === 20, JSON.stringify(bs));
   const fin = am.fadeCurve(32), fout = am.fadeCurve(32, true);
-  ok('crossfade is equal-power (no dip in the middle)', fin.every((v, i) => Math.abs(v * v + fout[i] * fout[i] - 1) < 1e-6) && fin[0] === 0 && Math.abs(fin[31] - 1) < 1e-6);
+  ok('music crossfade is equal-gain (same audio in phase: sums to 1, no +3 dB bump)', fin.every((v, i) => Math.abs(v + fout[i] - 1) < 1e-6) && fin[0] === 0 && Math.abs(fin[31] - 1) < 1e-6);
   ok('stereo: left card left, right card right, capped by width', am.panForX(0, 1000) === -0.6 && am.panForX(500, 1000) === 0
     && Math.abs(am.panForX(1000, 1000, 0.5) - 0.5) < 1e-9 && am.panForX(NaN, 1000) === 0);
   ok('slider curve: half way = quarter gain', am.sliderGain(0.5) === 0.25 && am.sliderGain(2) === 1 && am.sliderGain(-1) === 0);
@@ -140,7 +122,7 @@ fresh();
   ok('voices: finished sounds don\'t count', am.planVoice([v('hurt', 0)], 'hurt', 1.5, V).gainDb === 0);
 
   const A = DATA.audio;
-  const clips = ['click', 'attack', 'kill', 'hurt', 'swoosh', 'death', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory'];
+  const clips = Object.keys(A.clips).filter((c) => A.clips[c].file);
   const loud = (c) => A.clips[c].measuredDb + A.clips[c].gainDb;
   ok('every clip has a loudness trim', clips.every((c) => Number.isFinite(A.clips[c]?.gainDb) && Number.isFinite(A.clips[c]?.measuredDb)));
   ok('mix: a rare find is louder than common loot and the hits; hits ~-12; the click audible', loud('rare') > loud('loot') + 4 && loud('rare') > loud('attack')
@@ -162,23 +144,6 @@ fresh();
     && mxSrc.includes('createDynamicsCompressor()') && A.limiter.threshold < 0);
   ok('audio pauses in a hidden tab', mxSrc.includes("visibilityState === 'hidden') ctx.suspend"));
   ok('stingers duck the music', ['death', 'victory', 'rare'].every((c) => A.duck.clips[c] > 0) && A.duck.db < 0 && read('src/audio/sfx.js').includes('duckMusic(duck, t)'));
-  const musicSrc = read('src/audio/music.js');
-  ok('music: seamless sections through the music bus', !musicSrc.includes('src.loop = true') && musicSrc.includes('findSections(') && musicSrc.includes('createLoop(')
-    && musicSrc.includes('gain.connect(musicInput())'));
-
-  // the loop chain against a fake audio context
-  const { createLoop } = await import('../../src/audio/musicLoop.js');
-  const starts = [], curves = [];
-  const param = () => ({ setValueAtTime() {}, setValueCurveAtTime(c, t, d) { curves.push([c[0], t, d]); } });
-  const fake = {
-    createGain: () => ({ gain: param(), connect() {}, disconnect() {} }),
-    createBufferSource: () => ({ connect() {}, start(at, off, dur) { starts.push([at, off, dur]); }, stop() {} }),
-  };
-  const loop = createLoop(fake, {}, {}, [{ start: 1, end: 11 }, { start: 15, end: 23 }], 5, { crossfade: 2, ahead: 2 });
-  ok('music chain: sections in turn, each starting a crossfade before the last ends', starts.length === 3 && loop.sections.length === 2
-    && starts[0].join() === '5,1,10' && starts[1].join() === '13,15,8' && starts[2].join() === '19,1,10');
-  ok('music chain: overlapping sections fade in / out over the crossfade', curves.some(([v0, t, d]) => v0 === 0 && t === 13 && d === 2) && curves.some(([v0, t, d]) => v0 === 1 && t === 13 && d === 2));
-
   // combat sounds: placed on their card, timed to the blow, tiered
   const { combatSfx } = await import('../../src/ui/combatSfx.js');
   const { strikeMs } = await import('../../src/ui/combatFx.js');
@@ -218,7 +183,7 @@ fresh();
 {
   const A = DATA.audio;
   const syn = readFileSync('src/audio/synth.js', 'utf8');
-  ok('room whoosh: generated, sweeps, travels left -> right', syn.includes('whoosh: true') && syn.includes("p.pan.setValueAtTime(-0.6, t)")
+  ok('room whoosh: generated, sweeps, travels left -> right', DATA.audio.clips.whoosh.synth === true && syn.includes("p.pan.setValueAtTime(-0.6, t)")
     && syn.includes('p.pan.linearRampToValueAtTime(0.6, t + dur)') && syn.includes("bp.frequency.exponentialRampToValueAtTime(2600"));
   ok('room whoosh sits with the hits in the mix', Math.abs(A.clips.whoosh.measuredDb + A.clips.whoosh.gainDb + 12) <= 1);
   ok('escape fanfare 30% quieter (-3.1 dB)', Math.abs(A.clips.victory.gainDb - (1.4 + 20 * Math.log10(0.7))) < 0.05);
@@ -241,79 +206,11 @@ fresh();
     && plans.every((p) => p.rate >= 0.84 && p.rate <= 1.2 && p.eq.freq >= 500 && p.eq.freq <= 4500 && Math.abs(p.eq.gain) <= 6));
   ok('variation: none for clips without a config', am.planVariation(undefined) === null);
   const syn = readFileSync('src/audio/synth.js', 'utf8'), sfxSrc = readFileSync('src/audio/sfx.js', 'utf8');
-  ok('strike layers are generated: tick, thud, slice (yours), clank, thud (on the knight)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && syn.includes(`${n}: true`))
+  ok('strike layers are generated: tick, thud, slice (yours), clank, thud (on the knight)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && A.clips[n]?.synth)
     && A.variation.attack.layers.map((l) => l.name).join() === 'tick,thud,slice' && A.variation.hurt.layers.map((l) => l.name).join() === 'clank,thud');
   ok('sfx: a random peaking EQ and the layers on every strike', sfxSrc.includes("eq.type = 'peaking'") && sfxSrc.includes('planVariation(A.variation?.[name])')
     && sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,'));
   ok('coin jingle 3 dB quieter (0.110)', Math.abs(A.clips.loot.gainDb - 0.9) < 1e-9);
-}
-
-// T77: 0.114 — the dark ambient score: five exact loops (tools/gen-music.py)
-// that restart every loopS over an appended tail with an equal-gain
-// crossfade; picked against the classic beds in the VOLUME panel.
-{
-  const M = DATA.audio.music;
-  const music = await import('../../src/audio/music.js');
-  const am = await import('../../src/audio/audioMath.js');
-  const scenes = ['title', 'combat', 'boss', 'shrine', 'end'];
-  ok('two scores, the new one by default', Object.keys(M.scores).join() === 'dark,classic' && M.score === 'dark'
-    && scenes.every((n) => M.scores.dark.tracks[n] && M.scores.classic.tracks[n]));
-  const kbps = 128;
-  const bad = scenes.filter((n) => {
-    const b = M.scores.dark.tracks[n];
-    const secs = statSync(b.file).size * 8 / (kbps * 1000);
-    return !/-v2\.mp3$/.test(b.file) || !(b.loopS >= 60) || b.tailS !== 2 || Math.abs(secs - (b.loopS + b.tailS)) > 0.6 || Math.abs(b.gainDb) > 4;
-  });
-  ok('new beds: exact loops + a 2s tail, file length matches loopS + tailS, level trims small', bad.length === 0, bad.join());
-  const fake = { getChannelData: () => new Float32Array(44100), sampleRate: 44100 };
-  const exact = music.loopPlan({ file: 'x', loopS: 60, tailS: 2 }, fake);
-  ok('exact loop: one section loopS + tailS, crossfade = tail, equal gain', exact.sections.length === 1 && exact.sections[0].start === 0 && exact.sections[0].end === 62
-    && exact.opts.crossfade === 2 && exact.opts.linear === true);
-  const cls = music.loopPlan({ file: 'y' }, fake, 1.2);
-  ok('classic bed: its sections, equal-power crossfade', Array.isArray(cls.sections) && cls.opts.crossfade === 1.2 && !cls.opts.linear);
-  const lin = am.fadeCurve(32, false, true), linOut = am.fadeCurve(32, true, true);
-  ok('linear crossfade sums to exactly 1 (same audio in phase: no +3 dB bump)', lin.every((v, i) => Math.abs(v + linOut[i] - 1) < 1e-6)
-    && Math.abs(am.fadeCurve(32)[16] ** 2 + am.fadeCurve(32, true)[16] ** 2 - 1) < 0.01);
-  const { createLoop } = await import('../../src/audio/musicLoop.js');
-  const starts = [], curves = [];
-  const param = () => ({ setValueAtTime() {}, setValueCurveAtTime(c, t, d) { curves.push([c[0], c[c.length - 1], c[16], t, d]); } });
-  const fctx = {
-    createGain: () => ({ gain: param(), connect() {}, disconnect() {} }),
-    createBufferSource: () => ({ connect() {}, start(at, off, dur) { starts.push([at, off, dur]); }, stop() {} }),
-  };
-  createLoop(fctx, {}, {}, exact.sections, 3, { ...exact.opts, ahead: 2 });
-  ok('new beds restart every loopS from the top; the beat keeps its place', starts.map((x) => x.join()).join(' ') === '3,0,62 63,0,62 123,0,62');
-  ok('...crossfading linearly over the 2s tail', curves.some(([a, z, m, t, d]) => a === 0 && z === 1 && Math.abs(m - 16 / 31) < 1e-6 && t === 63 && d === 2)
-    && curves.some(([a, z, m, t, d]) => a === 1 && z === 0 && t === 63 && d === 2));
-  ok('trims applied when a bed fades in', readFileSync('src/audio/music.js', 'utf8').includes('dbToGain(b.gainDb ?? 0)'));
-
-  localStorage.removeItem('castle-music-score');
-  ok('default score until the player picks', music.scoreId() === 'dark');
-  ok('switching scores persists in this browser; unknown ids are ignored', music.setScore('classic') === 'classic' && music.scoreId() === 'classic'
-    && localStorage.getItem('castle-music-score') === 'classic' && music.setScore('nope') === 'classic');
-  music.play('combat'); music.play('nope');
-  ok('play() still a safe no-op without Web Audio', true);
-
-  // the Score row in the VOLUME panel
-  const { volumeToggle } = await import('../../src/ui/volumePanel.js');
-  const realBody = globalThis.document.body;
-  const body = new El('body');
-  globalThis.document.body = body;
-  const vt = volumeToggle();
-  vt.listeners.click[0]();
-  const panel = body.children.find((c) => c.className === 'volume-panel');
-  const btns = [];
-  panel?.walk((e) => { if ((e.className || '').split(' ').includes('score-btn')) btns.push(e); });
-  ok('VOLUME panel: a Score row with New / Classic, the current one lit', btns.length === 2 && btns[0].textContent === 'New' && btns[1].textContent === 'Classic'
-    && btns[1].className.includes('on') && !btns[0].className.includes('on'));
-  btns[0].listeners.click[0]();
-  ok('picking New switches the score and the lit button', music.scoreId() === 'dark' && btns[0].classList.contains('on') && !btns[1].classList.contains('on')
-    && localStorage.getItem('castle-music-score') === 'dark');
-  vt.listeners.click[0]();
-  globalThis.document.body = realBody;
-  localStorage.removeItem('castle-music-score');
-  ok('score generator ships with the game\'s tools', readFileSync('tools/gen-music.py', 'utf8').includes('TAIL_S = 2.0')
-    && readFileSync('tools/music/mix.py', 'utf8').includes('def _fold(self, x):'));
 }
 
 // T78: 0.115 — the corner column: one flex column of ON/OFF toggles in a
@@ -338,4 +235,87 @@ fresh();
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
   ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*fullscreenToggle\(\),\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
     && css.includes('.corner-bar {') && !/toggle \{ top: \d+px; \}/.test(css));
+}
+
+// T83: 0.118 — the audio engine driven for real, against a recording fake
+// AudioContext whose params reject non-finite values like browsers do
+// (0.116 shipped a NaN gain on the generated layers that froze combat on
+// crits; source checks couldn't see it).
+{
+  const { installFakeAudio } = await import('./fakeAudio.mjs');
+  const fa = installFakeAudio();
+  const sfxMod = await import('../../src/audio/sfx.js');
+  const music = await import('../../src/audio/music.js');
+  const mx = await import('../../src/audio/mixer.js');
+  const { dbToGain } = await import('../../src/audio/audioMath.js');
+  const A = DATA.audio;
+  sfxMod.initSfx(); music.initMusic();
+  fa.gesture();
+  const ctx = fa.ctx();
+  await sleep(10);
+  ok('first gesture: one shared context, mixer built', !!ctx && ctx.nodes.some((n) => n.kind === 'compressor') && mx.mixer() !== null);
+
+  // every registered sound, at every option combination the game uses
+  for (const name of Object.keys(A.clips)) {
+    sfxMod.sfx(name);
+    sfxMod.sfx(name, { pan: 0.7, delayMs: 120, rate: 0.8, gainDb: -10 });
+    ctx.currentTime += 1; // past the retrigger window
+  }
+  await sleep(10);
+  ok('every registered sound plays with finite levels (synth layers included)', ctx.errors.length === 0, ctx.errors.join('; '));
+  const synthStarts = ctx.started.filter((s) => s.kind === 'osc').length;
+  ok('...clips start buffer sources, synth sounds oscillators/noise', ctx.started.some((s) => s.kind === 'buffer' && s.buffer) && synthStarts > 0);
+
+  // the 0.116 case: crit / mega crit / overkill sweeteners + strike layers
+  const { combatSfx } = await import('../../src/ui/combatSfx.js');
+  const n0 = ctx.started.length;
+  for (const fx of [{ kind: 'attack', from: 'player', to: 0, crit: true }, { kind: 'attack', from: 'player', to: 0, crit: true, mega: true }, { kind: 'smash', dmg: 300 }]) {
+    combatSfx({ sfx: fx.kind === 'smash' ? 'kill' : 'attack', fx }, {});
+    ctx.currentTime += 1;
+  }
+  await sleep(10);
+  ok('crit, MEGA CRIT and OVERKILL sounds play without an error', ctx.errors.length === 0 && ctx.started.length > n0 + 3, ctx.errors.join('; '));
+
+  // a stinger ducks the music bus
+  const duck = mx.mixer().duck.gain;
+  duck.events.length = 0;
+  sfxMod.sfx('death');
+  await sleep(10);
+  ok('a stinger ducks the music by duck.db', duck.events.some((e) => e[0] === 'target' && Math.abs(e[1] - dbToGain(A.duck.db)) < 1e-9));
+
+  // a repeat inside the retrigger window is dropped
+  const n1 = ctx.started.length;
+  sfxMod.sfx('loot'); sfxMod.sfx('loot');
+  await sleep(10);
+  ok('a repeat inside the retrigger window is dropped', ctx.started.length === n1 + 1);
+
+  // music: the bed loops exactly, at its level, through the music bus
+  music.play('combat');
+  await sleep(10);
+  const T = A.music.tracks.combat;
+  const beds = ctx.started.filter((s) => s.kind === 'buffer' && s.started[2] === T.loopS + T.tailS);
+  ok('music: the combat bed plays [0, loopS + tailS), the next copy one loop later', beds.length >= 2 && beds[0].started[1] === 0
+    && Math.abs(beds[1].started[0] - beds[0].started[0] - T.loopS) < 1e-9, beds.map((b) => b.started.join(',')).join(' | '));
+  const fadeIns = ctx.nodes.filter((n) => n.kind === 'gain' && n.gain.events.some((e) => e[0] === 'linear' && Math.abs(e[1] - dbToGain(T.gainDb)) < 1e-9));
+  ok('...fading in to its level trim', fadeIns.length >= 1);
+  const curves = ctx.nodes.flatMap((n) => (n.gain?.events ?? []).filter((e) => e[0] === 'curve' && e[3] === T.tailS));
+  ok('...crossfading over its tail, equal gain', curves.some((e) => e[1][0] === 0 && e[1].at(-1) === 1) && curves.some((e) => e[1][0] === 1 && e[1].at(-1) === 0));
+  const n2 = ctx.started.length;
+  music.play('combat');
+  await sleep(10);
+  ok('...asking for the playing bed again changes nothing', ctx.started.length === n2);
+  music.play('boss');
+  await sleep(10);
+  ok('a scene change starts the next bed', ctx.started.some((s) => s.started[2] === A.music.tracks.boss.loopS + A.music.tracks.boss.tailS));
+
+  // mute + volume
+  const m = mx.mixer();
+  music.toggleMuted();
+  ok('MUSIC off: the music bus ramps to 0', m.music.gain.events.at(-1)[0] === 'linear' && m.music.gain.events.at(-1)[1] === 0);
+  music.toggleMuted();
+  mx.setVolume('master', 0.5);
+  ok('VOLUME master: squared slider curve on the master bus', Math.abs(m.master.gain.events.at(-1)[1] - 0.25) < 1e-9);
+  mx.setVolume('master', 1);
+  ok('no audio errors anywhere', ctx.errors.length === 0, ctx.errors.join('; '));
+  fa.restore();
 }

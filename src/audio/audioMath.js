@@ -1,5 +1,5 @@
 // audio/audioMath.js — pure helpers for the audio engine (0.107): the
-// loopable sections of a music bed, voice planning (how many copies of a sound may
+// music crossfade curve, voice planning (how many copies of a sound may
 // overlap), stereo position from the screen, and the volume-slider curve.
 // No Web Audio here — the smoke suite tests it in Node.
 
@@ -8,67 +8,13 @@ export const dbToGain = (db) => 10 ** (db / 20);
 // Volume sliders (0..1) feel linear to the ear on a squared curve.
 export const sliderGain = (v) => Math.max(0, Math.min(1, Number(v) || 0)) ** 2;
 
-// The sections of a music bed worth looping (0.107). The generated beds
-// are ~20s pieces that each fade to near-silence and back in (and the file
-// fades in/out at its ends), so plain looping dipped into silence every
-// ~20s. Windows of `win` seconds; body = the median window. A gap is a run
-// of at least `gapS` seconds more than `gapDb` below the body (rhythmic
-// decays inside a bar stay above that), widened to where its fades begin
-// (`edgeDb` below the body, at most `edgeS` each side). Sections = what's
-// between the gaps and the file ends, at least `minS` long; a bed without
-// gaps is one section. data: Float32Array (one channel).
-export function findSections(data, sampleRate, { win = 0.25, gapDb = 15, gapS = 1.5, edgeDb = 6, edgeS = 3, minS = 4 } = {}) {
-  const n = Math.max(1, Math.round(win * sampleRate));
-  const dbs = [];
-  for (let i = 0; i + n <= data.length; i += n) {
-    let s = 0;
-    for (let j = i; j < i + n; j++) s += data[j] * data[j];
-    dbs.push(10 * Math.log10(s / n + 1e-12));
-  }
-  const duration = data.length / sampleRate;
-  if (dbs.length < 8) return [{ start: 0, end: duration }];
-  const body = [...dbs].sort((a, b) => a - b)[Math.floor(dbs.length / 2)];
-  const quiet = dbs.map((d) => d < body - gapDb);
-  const soft = (i) => i >= 0 && i < dbs.length && dbs[i] < body - edgeDb;
-  const edge = Math.round(edgeS / win);
-  const cut = new Array(dbs.length).fill(false);
-  const widen = (lo, hi) => { // mark [lo, hi] plus its fade slopes as cut
-    for (let k = 0; k < edge && soft(lo - 1); k++) lo--;
-    for (let k = 0; k < edge && soft(hi + 1); k++) hi++;
-    for (let i = lo; i <= hi; i++) cut[i] = true;
-  };
-  for (let i = 0; i < dbs.length;) {
-    if (!quiet[i]) { i++; continue; }
-    let j = i;
-    while (j + 1 < dbs.length && quiet[j + 1]) j++;
-    if ((j - i + 1) * win >= gapS) widen(i, j);
-    i = j + 1;
-  }
-  // the file's own fade-in / fade-out
-  let i0 = 0;
-  while (i0 < dbs.length && soft(i0)) cut[i0++] = true;
-  let i1 = dbs.length - 1;
-  while (i1 >= 0 && soft(i1)) cut[i1--] = true;
-  const sections = [];
-  for (let i = 0; i < dbs.length;) {
-    if (cut[i]) { i++; continue; }
-    let j = i;
-    while (j + 1 < dbs.length && !cut[j + 1]) j++;
-    if ((j - i + 1) * win >= minS) sections.push({ start: i * win, end: Math.min(duration, (j + 1) * win) });
-    i = j + 1;
-  }
-  return sections.length ? sections : [{ start: 0, end: duration }];
-}
-
-// Crossfade curve (n points, 0 -> 1; out = 1 -> 0). Equal-power for two
-// different passages; linear (equal-gain) when both play the SAME audio
-// in phase (a seamless bed's overlap, 0.113) — equal power would bump it
-// up 3 dB there.
-export function fadeCurve(n = 32, out = false, linear = false) {
+// Crossfade curve (n points, 0 -> 1; out = 1 -> 0). Equal gain (linear):
+// a music loop's crossfade plays the SAME audio twice, in phase, so the
+// two always sum to exactly 1 (equal power would bump it 3 dB, 0.113).
+export function fadeCurve(n = 32, out = false) {
   return Float32Array.from({ length: n }, (_, i) => {
     const x = i / (n - 1);
-    if (linear) return out ? 1 - x : x;
-    return out ? Math.cos(x * Math.PI / 2) : Math.sin(x * Math.PI / 2);
+    return out ? 1 - x : x;
   });
 }
 

@@ -12,7 +12,8 @@
 //     copies quieter — a 5-enemy turn no longer piles up 7 full-level hits;
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb };
-//   - 'ring' / 'boom' / 'whoosh' are synthesized (synth.js);
+//   - 'ring' / 'boom' / 'whoosh' / strike layers are synthesized (synth.js);
+//   - 0.118: every sound is an entry in audio.json clips (the registry);
 //   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
 //     peaking EQ, random tick/thud/slice/clank layers from synth.js);
 //   - stingers duck the music (audio.json duck.clips).
@@ -21,39 +22,23 @@ import { DATA } from '../shared/data.js';
 import { hasAudio, ensureCtx, decode, onFirstGesture } from './audioCore.js';
 import { mixer, sfxInput, setBusMuted, duckMusic } from './mixer.js';
 import { dbToGain, planVoice, planVariation } from './audioMath.js';
-import { SYNTH, playSynth } from './synth.js';
+import { playSynth } from './synth.js';
+import { getPref, setPref } from '../shared/prefs.js';
 
-const CLIPS = {
-  click: 'assets/audio/sfx-click.mp3',     // every button press
-  attack: 'assets/audio/sfx-attack.mp3',   // sword slash impact
-  kill: 'assets/audio/sfx-kill.mp3',       // killing blow / multi-kill / smash
-  hurt: 'assets/audio/sfx-hurt.mp3',       // player takes a hit
-  swoosh: 'assets/audio/sfx-swoosh.mp3',   // room transitions, dodges
-  death: 'assets/audio/sfx-death.mp3',     // YOU DIED sting
-  shrine: 'assets/audio/sfx-shrine.mp3',   // shrine blessing, relic revive
-  levelup: 'assets/audio/sfx-levelup.mp3', // discipline / alchemy training
-  rare: 'assets/audio/sfx-rare.mp3',       // tier-4 epic item discovery
-  loot: 'assets/audio/sfx-loot.mp3',       // common loot pickup
-  heal: 'assets/audio/sfx-heal.mp3',       // potions, lifesteal drains
-  forge: 'assets/audio/sfx-forge.mp3',     // blacksmith enhancement
-  victory: 'assets/audio/sfx-victory.mp3', // escape fanfare
-};
 const MUTE_KEY = 'castle-sfx-muted';
-// Names that get pitch (±12%) and level (±1 dB) jitter so repeats vary.
-const JITTERED = new Set(['attack', 'kill', 'hurt', 'loot']);
-// Never cut off to make room for another sound.
-const STINGERS = new Set(['death', 'victory', 'rare', 'shrine', 'levelup', 'boom']);
+// The sound registry (0.118): assets/data/audio.json `clips` — per name a
+// file or `synth` (audio/synth.js), its trim, and stinger / jitter flags.
+const clip = (name) => DATA.audio?.clips?.[name] ?? null;
 
 let ctx = null;
 const buffers = {}; // name -> Promise<AudioBuffer> (clips are tiny; all stay decoded)
 let voices = [];    // sounding / scheduled: { name, t0, t1, stinger, stop(t) }
-let muted = false;
-try { muted = globalThis.localStorage?.getItem(MUTE_KEY) === '1'; } catch { /* no storage */ }
+let muted = getPref(MUTE_KEY) === '1';
 setBusMuted('sfx', muted);
 
 function bufferFor(name) {
   if (!buffers[name]) {
-    buffers[name] = decode(CLIPS[name]);
+    buffers[name] = decode(clip(name).file);
     buffers[name].catch(() => { delete buffers[name]; }); // allow retry on failure
   }
   return buffers[name];
@@ -67,13 +52,13 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   const plan = planVoice(voices, name, t, A.voices);
   if (plan.skip) return;
   for (const v of plan.steal) v.stop(t);
-  const jitter = JITTERED.has(name);
-  // strikes (0.110): random pitch, tone colour and articulation layers
+  const c = clip(name);
+  // strikes (0.110): random pitch, tone colour and articulation layers;
+  // other jittered clips: a random pitch within c.rate. Then a random level.
   const vary = rate == null ? planVariation(A.variation?.[name]) : null;
-  const r = rate ?? vary?.rate ?? (jitter ? 0.88 + Math.random() * 0.24 : 1);
+  const r = rate ?? vary?.rate ?? (c.rate ? c.rate[0] + Math.random() * (c.rate[1] - c.rate[0]) : 1);
   const out = ctx.createGain();
-  // generated layers (synth.js) have no trim: their level comes from the caller's gainDb
-  out.gain.value = dbToGain((A.clips?.[name]?.gainDb ?? 0) + gainDb + plan.gainDb + (jitter ? Math.random() * 2 - 1 : 0));
+  out.gain.value = dbToGain(c.gainDb + gainDb + plan.gainDb + (c.jitterDb ? (Math.random() * 2 - 1) * c.jitterDb : 0));
   let node = out;
   if (pan && ctx.createStereoPanner) {
     const p = ctx.createStereoPanner();
@@ -104,7 +89,7 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   }
   sources[0].onended = () => { try { node.disconnect(); } catch { /* gone */ } };
   const voice = {
-    name, t0: t, t1: t + dur, stinger: STINGERS.has(name),
+    name, t0: t, t1: t + dur, stinger: !!c.stinger,
     stop(when) { // a quick fade, never a click
       voice.t1 = Math.min(voice.t1, when + 0.05);
       out.gain.setTargetAtTime(0, when, 0.012);
@@ -117,12 +102,13 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   for (const l of vary?.layers ?? []) start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
 }
 
-// Fire a one-shot. Before the first gesture (or when muted) it silently
-// drops — effects are cosmetic, never queued.
+// Fire a one-shot by its audio.json clips name. Before the first gesture
+// (or when muted) it silently drops — effects are cosmetic, never queued.
 export function sfx(name, opts = {}) {
-  if ((!CLIPS[name] && !SYNTH[name]) || !ctx || muted) return;
+  const c = clip(name);
+  if (!c || !ctx || muted) return;
   const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
-  if (SYNTH[name]) {
+  if (c.synth) {
     try { start(name, null, at, opts); } catch { /* audio must never break gameplay */ }
     return;
   }
@@ -135,7 +121,7 @@ export function isMuted() { return muted; }
 
 export function toggleMuted() {
   muted = !muted;
-  try { globalThis.localStorage?.setItem(MUTE_KEY, muted ? '1' : '0'); } catch { /* no storage */ }
+  setPref(MUTE_KEY, muted ? '1' : '0');
   setBusMuted('sfx', muted);
   return muted;
 }
@@ -148,6 +134,6 @@ export function initSfx() {
     ctx = ensureCtx();
     mixer();
     ctx.resume?.();
-    for (const name of Object.keys(CLIPS)) bufferFor(name).catch(() => {});
+    for (const [name, c] of Object.entries(DATA.audio?.clips ?? {})) if (c.file) bufferFor(name).catch(() => {});
   });
 }

@@ -4,15 +4,17 @@
 // is created lazily from the first pointerdown/keydown. Without a Web Audio
 // implementation (tests), hasAudio() is false and callers no-op.
 
-const AC = globalThis.AudioContext || globalThis.webkitAudioContext || null;
+// Looked up when needed (not at load), so the smoke suite can install its
+// fake AudioContext (tools/test/fakeAudio.mjs, 0.118).
+const AC = () => globalThis.AudioContext || globalThis.webkitAudioContext || null;
 let ctx = null;
 const bytes = {}; // url -> Promise<ArrayBuffer> (compressed file, cached in-flight)
 
-export function hasAudio() { return !!AC; }
+export function hasAudio() { return !!AC(); }
 
 // Create (once) and return the shared context; null without Web Audio.
 export function ensureCtx() {
-  if (!ctx && AC) ctx = new AC();
+  if (!ctx && AC()) ctx = new (AC())();
   return ctx;
 }
 

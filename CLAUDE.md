@@ -268,20 +268,24 @@ static play-stats page.
 - Audio: one shared AudioContext (`src/audio/audioCore.js`); music keeps
   only compressed bytes warm and decodes the playing bed on demand.
   Mix (0.107): every sound goes music/effects bus -> master -> limiter
-  (`audio/mixer.js`); levels, per-clip loudness trims (`measuredDb` +
-  `gainDb`), voice caps, stereo width, ducking and the music crossfade
-  live in `assets/data/audio.json`. A new clip needs a trim there (measure
-  its loudest 50ms). `sfx(name, { pan, delayMs, rate, gainDb })`; combat
-  lines go through `ui/combatSfx.js` (stereo from the card, timed to the
-  strike, crit/mega/overkill sweeteners from `audio/synth.js`). Music
-  (0.114): two scores in `audio.json music.scores`, picked in the VOLUME
-  panel (`score` = default). The new dark ambient score is generated
-  (`python3 tools/gen-music.py --suffix v3` — numpy/scipy/lameenc; new
-  suffix for new files): exact loops (`loopS`) with their first `tailS`
-  seconds appended, restarted every loopS with an equal-gain crossfade;
-  `gainDb` level-matches them to the classic beds as played. The classic
-  beds are ~20s pieces with fades: `audioMath.findSections` +
-  `musicLoop.js` chain them without the dips. VOLUME sliders:
+  (`audio/mixer.js`); levels, voice caps, stereo width, ducking live in
+  `assets/data/audio.json`. **Sound registry (0.118): `audio.json clips`**
+  — per name a `file` (or `synth: true`, generated in `audio/synth.js`),
+  `gainDb` trim (`measuredDb` = its loudest 50 ms), `stinger`, `rate` +
+  `jitterDb`. A new sound = one entry there. `sfx(name, { pan, delayMs,
+  rate, gainDb })`; combat lines go through `ui/combatSfx.js` (stereo from
+  the card, timed to the strike, crit/mega/overkill sweeteners). Music
+  (0.114; one score since 0.118): `audio.json music.tracks` — each bed is
+  generated (`python3 tools/gen-music.py --suffix v3`, numpy/scipy/lameenc;
+  new suffix = new files) as an exact loop (`loopS`) with its first
+  `tailS` seconds appended; `musicLoop.js` restarts it every loopS with an
+  equal-gain crossfade over identical audio (which also hides the MP3
+  decoder's faded first frame); `gainDb` is its level trim.
+  Measure for real: `node tools/audio-check.mjs` (Playwright + Chromium:
+  clip loudness vs measuredDb, loop restarts, bed levels as played).
+  Tests drive the engine through a fake AudioContext
+  (`tools/test/fakeAudio.mjs`; its params reject NaN like browsers).
+  Per-browser settings (mute, volumes): `shared/prefs.js`. VOLUME sliders:
   `ui/volumePanel.js`; audio suspends in a hidden tab.
 
 ## Backlog (as of 0.107)

@@ -28,7 +28,7 @@ const NUM = {
   ],
   shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg'],
   audio: [
-    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'music.crossfade',
+    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS',
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
     'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
@@ -48,7 +48,14 @@ export function checkData(data) {
   // per-entry numbers: every item has a tier, every clip a trim, every
   // shrine boon the numbers its case in run/shrine.js reads
   for (const [id, it] of Object.entries(data.items ?? {})) if (!isNum(it?.tier)) out.push(`items.json: ${id}.tier`);
-  for (const [id, c] of Object.entries(data.audio?.clips ?? {})) if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
+  for (const [id, c] of Object.entries(data.audio?.clips ?? {})) {
+    if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
+    if (!c?.file === !c?.synth) out.push(`audio.json: clips.${id} needs a file or synth: true (one of them)`);
+    if (c?.rate && !(c.rate.length === 2 && c.rate.every(isNum))) out.push(`audio.json: clips.${id}.rate`);
+  }
+  for (const [id, t] of Object.entries(data.audio?.music?.tracks ?? {})) {
+    if (typeof t?.file !== 'string' || !['loopS', 'tailS', 'gainDb'].every((k) => isNum(t[k]))) out.push(`audio.json: music.tracks.${id} (file, loopS, tailS, gainDb)`);
+  }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
   }

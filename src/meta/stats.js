@@ -70,7 +70,7 @@ export function taper(level, { perLevel = 0, linear = 0, max = Infinity, rate, t
 // player.precisionTaper — the bands fell to +0.1%/level after 30 levels,
 // worth ~1/5 of Power for the same XP in tools/stat-study.mjs).
 export function precisionCrit(lvl) {
-  return taper(lvl, P().precisionTaper ?? { perLevel: 0.03, linear: 10, max: 0.5 });
+  return taper(lvl, P().precisionTaper);
 }
 
 export function derivedStats(p = getProfile()) {
