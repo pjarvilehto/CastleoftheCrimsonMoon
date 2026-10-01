@@ -455,10 +455,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
 /* dead cards keep their actions-row slot; the placeholder button is
    layout-only — invisible but occupying the same height */
 .unit-actions .ghost-btn { visibility: hidden; }
-/* 0.155: an enemy card attacks on a click too, while its Attack button could;
-   under the mouse it gets the Attack button's small border highlight (0.159) */
+/* 0.155: an enemy card attacks on a click too, while its Attack button could
+   (no hover highlight on the card, 0.160 — only the Attack button lights up) */
 .enemy-char.targetable { cursor: pointer; }
-.enemy-char.targetable:hover { box-shadow: 0 0 0 1px #c14b4b, 0 0 10px rgba(193,75,75,0.35); }
 /* 0.159: nothing in the battle line is text to select or an image to drag —
    a click with a little movement on a portrait started a native image drag,
    after which some browsers (Firefox) stay in "mouse held" mode: the mouse
