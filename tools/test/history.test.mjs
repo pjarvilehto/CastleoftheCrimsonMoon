@@ -343,3 +343,26 @@ fresh();
   DATA.telemetry.endpoint = ep;
   fresh();
 }
+
+// T96: 0.135 — reading the MacBook's benchmark (Low Power Mode): a page
+// capped at 30 fps reads as 30 Hz, not "100% dropped"; the benchmark keeps
+// long freezes (hitches) instead of discarding them as pauses (a whole
+// Overkill phase came back empty); its countdown no longer forces a layout
+// every frame; this browser's own row borrows its collected device.
+{
+  const pm = await import('../../src/core/perfMonitor.js');
+  const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
+  const capped = pm.summarizeFrames(rec([[33.3, 1900], [66.7, 100]]));
+  ok('a 30 fps battery-saver cap reads as 30 Hz; only its doubled frames count as dropped', capped.hz === 30 && capped.drop === 5 && capped.fps > 28);
+  ok('still: a device slower than 25 fps is judged against 60', pm.summarizeFrames(rec([[45, 500]])).hz === 60);
+  ok('the worst frame is reported as it was (no cap)', pm.summarizeFrames(rec([[16.7, 600], [1800, 1]])).worst === 1800);
+  const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
+  ok('benchmark: only a hidden tab or a sleep is not a frame; countdown written only when it changes',
+    bs.includes('d < SLEEP_MS && !document.hidden') && bs.includes('ui.title.textContent !== label'));
+  ok('particles size their canvas from the window, never from layout', !/canvas\.client(Width|Height)/.test(readFileSync('src/ui/particles.js', 'utf8')));
+  const pf = await import('../../analytics/perf.js');
+  const html = pf.benchTable([{ label: 'Mac', device: null, profile: { bench: pf.sanitizeBench([{ at: 1, build: '0.135', phases: { combat: { fps: 29.3, p95: 35, drop: 3, worst: 80, hz: 30 } } }]) } }]);
+  ok('dashboard: a capped run is green against 30 and says so', html.includes('perf-good') && html.includes('capped at 30'));
+  ok('dashboard: this browser\'s row shows the device from its collected copy',
+    readFileSync('analytics/dashboard.js', 'utf8').includes('device: ownDevice }]'));
+}

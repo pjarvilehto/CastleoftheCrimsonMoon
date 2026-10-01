@@ -309,7 +309,10 @@ function tick(now) {
 // (0.129: the device is struggling). true = the canvas was resized.
 function fit() {
   scale = Math.min(globalThis.devicePixelRatio || 1, bgQualityLevel() > 0 ? 1 : 1.25);
-  const w = Math.round(canvas.clientWidth * scale), h = Math.round(canvas.clientHeight * scale);
+  // the canvas fills the viewport (.fx-layer is fixed, inset 0): the window
+  // size, not clientWidth — reading layout every frame forced a reflow
+  // after each DOM change (0.135)
+  const w = Math.round(globalThis.innerWidth * scale), h = Math.round(globalThis.innerHeight * scale);
   if (canvas.width === w && canvas.height === h) return false;
   canvas.width = w; canvas.height = h;
   return true;

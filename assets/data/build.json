@@ -1,5 +1,5 @@
 {
-  "version": "0.134",
+  "version": "0.135",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -77,6 +77,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.135": [
+      "Testing tools: the benchmark now reads a battery-saver 30 fps cap correctly and records hitches instead of skipping them."
+    ],
     "0.134": [
       "Fixed: a dialog left open in the Great Hall (like Descend Now?) could stay on screen over the benchmark."
     ],
@@ -120,9 +123,6 @@
     ],
     "0.121": [
       "Beat the boss of room 24 and the castle celebrates: a one-time Victory dialog — you've won the game, for now. Start a New Game on the main menu to play it again."
-    ],
-    "0.120": [
-      "Stats page: Refresh shows that it worked (time of the update, new runs)"
     ]
   }
 }

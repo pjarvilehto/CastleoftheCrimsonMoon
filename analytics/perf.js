@@ -53,12 +53,13 @@ export function perfRows(players, runs) {
 
 // fps judged against the display: >= 90% of its refresh is smooth.
 const grade = (fps, hz) => (fps >= 0.9 * (hz || 60) ? 'perf-good' : fps >= 30 ? 'perf-ok' : 'perf-bad');
+const capped = (hz) => (hz === 30 ? ' · capped at 30' : '');
 const bgText = (r) => (r.bg === 'flat' ? 'flat' : r.q > 0 ? `3D · step ${r.q}` : '3D');
 
 export function perfTable(players, runs) {
   const rows = perfRows(players, runs);
   if (!rows.length) return '<p class="empty">No measured runs yet. Runs record their frame rate from build 0.130 on.</p>';
-  return `<p class="help">Medians over each player's measured runs. FPS is green at 90%+ of the screen's refresh rate, amber from 30, red below. Slow 5% = the frame time 95% of frames beat; dropped = frames that missed a refresh.</p>
+  return `<p class="help">Medians over each player's measured runs. FPS is green at 90%+ of the rate the page was given frames at, amber from 30, red below; 30 Hz usually means a battery saver (Low Power Mode, Energy Saver) capped the page. Slow 5% = the frame time 95% of frames beat; dropped = frames that missed a refresh.</p>
   <div class="scroll"><table><tr><th>Player</th><th>Runs</th><th>FPS</th><th>Slow 5%</th><th>Dropped</th><th>Worst</th><th>Screen</th><th>Background</th><th>Device</th></tr>${rows.map((r) => {
     const d = r.device;
     const dev = d ? `<span title="${esc(d.gpu)}">${esc(gpuShort(d.gpu))}</span><small>${esc([d.browser, d.os, d.cores ? `${d.cores} cores` : '', d.mem ? `${d.mem} GB` : ''].filter(Boolean).join(' · '))}</small>` : '<small>not reported</small>';
@@ -87,7 +88,7 @@ export function sanitizeBench(list) {
 export function benchTable(players) {
   const rows = players.flatMap((pl) => (pl.profile.bench ?? []).map((b) => ({ pl, b }))).sort((x, y) => y.b.at - x.b.at);
   if (!rows.length) return '<p class="empty">No benchmarks yet: in the game with ?debug, press BENCHMARK (about 40 seconds).</p>';
-  const phase = (p) => (p ? `<span class="${grade(p.fps, p.hz)}">${p.fps.toFixed(1)}</span><small>${p.p95} ms · ${p.drop.toFixed(1)}% dropped</small>` : '—');
+  const phase = (p) => (p ? `<span class="${grade(p.fps, p.hz)}">${p.fps.toFixed(1)}</span><small>${p.p95} ms · ${p.drop.toFixed(1)}% dropped${capped(p.hz)}</small>` : '—');
   return `<div class="scroll"><table><tr><th>Player</th><th>When</th>${PHASES.map(([, l]) => `<th>${l}</th>`).join('')}<th>Screen</th><th>Background</th><th>Device</th></tr>${rows.map(({ pl, b }) => {
     const d = pl.device;
     return `<tr><td>${esc(pl.label)}</td><td>${esc(new Date(b.at).toLocaleString())}<small>build ${esc(b.build)}</small></td>`

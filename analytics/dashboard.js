@@ -30,7 +30,9 @@ const country = (c) => (/^[A-Z]{2}$/.test(c ?? '') ? c : '');
 function loadPlayers() {
   const local = read(LOCAL_SAVE_KEY);
   const mineP = local?.records ? sanitizeProfile(local) : null;
-  const mine = mineP ? [{ key: 'local', label: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP }] : [];
+  // this browser's own save has no device; its collected copy does (0.135)
+  const ownDevice = mineP && sanitizeDevice(server.records.find((r) => r.playerId === mineP.playerId)?.device);
+  const mine = mineP ? [{ key: 'local', label: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP, device: ownDevice }] : [];
   const nm = names();
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';

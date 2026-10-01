@@ -61,11 +61,13 @@ export function stopPerf() {
 // Pure: { hist, frames, ms, worst } -> { fps, p95, drop, worst, hz, secs }.
 //   fps   average frames per second
 //   p95   95% of frames took at most this many ms
-//   hz    the display's refresh rate: the fastest frames' interval, snapped
-//         to a standard rate (60 when no frame was fast enough to tell —
-//         a device that can't keep up never shows its refresh rate)
+//   hz    the rate the page was given frames at: the fastest frames'
+//         interval, snapped to a standard rate. 30 is real (0.135): battery
+//         savers — macOS Low Power Mode, Chrome / Brave Energy Saver — cap
+//         pages there, and every frame read as "dropped" against 60. Slower
+//         than that, the device can't keep up and 60 is assumed.
 //   drop  % of frames that missed a refresh (took > 1.5 refresh intervals)
-const RATES = [48, 50, 60, 75, 90, 100, 120, 144, 165, 240];
+const RATES = [30, 48, 50, 60, 75, 90, 100, 120, 144, 165, 240];
 export function summarizeFrames({ hist, frames, ms, worst }) {
   if (!frames || frames < MIN_FRAMES || !(ms >= MIN_MS)) return null;
   const at = (q) => { // the bin holding the q-th fraction of frames
@@ -74,14 +76,14 @@ export function summarizeFrames({ hist, frames, ms, worst }) {
     return hist.length - 1;
   };
   const fast = (at(0.1) + 0.5) * BIN_MS; // ms: the fastest 10% of frames (bin centre)
-  const hz = fast > 22 ? 60 : RATES.reduce((a, r) => (Math.abs(1000 / r - fast) < Math.abs(1000 / a - fast) ? r : a));
+  const hz = fast > 40 ? 60 : RATES.reduce((a, r) => (Math.abs(1000 / r - fast) < Math.abs(1000 / a - fast) ? r : a));
   let late = 0;
   for (let i = Math.ceil(1500 / hz / BIN_MS); i < hist.length; i++) late += hist[i];
   return {
     fps: Math.round((frames * 10000) / ms) / 10,
     p95: Math.ceil((at(0.95) + 1) * BIN_MS), // whole ms, rounded up
     drop: Math.round((late * 1000) / frames) / 10,
-    worst: Math.round(Math.min(worst, PAUSE_MS)),
+    worst: Math.round(worst), // callers decide what is a pause (runs: PAUSE_MS; the benchmark: never, 0.135)
     hz,
     secs: Math.round(ms / 1000),
   };

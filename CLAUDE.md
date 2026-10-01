@@ -305,7 +305,10 @@ static play-stats page.
   numbers mean — note it in the changelist when you do. 0.133: every
   player is asked once — entering the Great Hall with best room >=
   `telemetry.json benchmarkPromptRoom` (10) and no result yet, a
-  Continue-only dialog runs it and comes back to the hall.
+  Continue-only dialog runs it and comes back to the hall. Reading results
+  (0.135): 30 Hz = the browser was capped (macOS Low Power Mode, Chrome /
+  Brave Energy Saver) — the first MacBook result was exactly that; data
+  reaches us as dashboard screenshots (the collector is blocked here).
 - Combat cards: frame art on `.char-card::before` (opacity 0.85);
   portraits overflow the frame (absolute, bottom-anchored, taller/wider
   than the card, text z-index above art); per-enemy tweaks via

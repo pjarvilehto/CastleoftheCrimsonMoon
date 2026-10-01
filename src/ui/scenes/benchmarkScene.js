@@ -34,7 +34,10 @@ export { PHASES }; // the script lives in ui/benchmark.js (the prompt quotes its
 
 const ROOM = 3;          // enemy scaling depth: a few hits each
 const BEAT_MS = 150;     // the bot's pause after a turn finishes printing
-const PAUSE_MS = 1000;   // a gap this long is not a frame (perfMonitor's rule)
+// Only a hidden tab (or a sleeping laptop, > SLEEP_MS) is not a frame. A
+// run's recorder treats gaps over 1 s as pauses, but here nobody pauses:
+// a long freeze is a hitch, and dropping them hid a whole phase (0.135).
+const SLEEP_MS = 5000;
 
 // Seeded Math.random (Park-Miller): the same fight on every machine.
 const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
@@ -93,9 +96,12 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
   function frame(now) {
     if (done) return;
     const d = now - last;
-    if (last && rec && d > 0 && d < PAUSE_MS && !document.hidden) addFrame(rec, d);
+    if (last && rec && d > 0 && d < SLEEP_MS && !document.hidden) addFrame(rec, d);
     last = now;
-    if (ui?.title) ui.title.textContent = `Benchmark — ${PHASES[phase]?.label ?? ''} · ${Math.max(0, Math.ceil((endsAt - now) / 1000))}s`;
+    // the countdown: only when it changes (0.135 — rewriting it every frame
+    // forced a page layout per frame, which the numbers then measured)
+    const label = `Benchmark — ${PHASES[phase]?.label ?? ''} · ${Math.max(0, Math.ceil((endsAt - now) / 1000))}s`;
+    if (ui?.title && ui.title.textContent !== label) ui.title.textContent = label;
     requestAnimationFrame(frame);
   }
 
