@@ -319,6 +319,17 @@ the right list (`rooms` / `bosses` / `treasure`), `git rm` the PNGs, check a
 few in the game, bump, ship. The upload lands outside the working branch
 sometimes — fetch all branches to find it.
 
+## Starting a new session (repo and branches)
+
+- Repo: **https://github.com/pjarvilehto/CastleoftheCrimsonMoon** (`main` =
+  the live site; everything shipped is there).
+- Start from the latest `main`: `git fetch origin main` and branch from
+  `origin/main`. The last working branch, `claude/serene-feynman-q7i6fw`,
+  is identical to `main` at a14739b (0.156). Treat it as finished: use the
+  branch the new session is given.
+- Ship as before: bump, suite green, push to `main` and to the session's
+  working branch. No PRs unless the owner asks.
+
 ## State at handover (0.156)
 
 - Live: treasure rooms (0.155), click-to-attack, 35 fight paintings + 4
