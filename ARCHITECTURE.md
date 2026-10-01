@@ -116,6 +116,9 @@ src/
     encounterLayer.js  billboard.js  fight.js   enemies in the rooms, the
                         turn-and-dim hand-off, the game's fight over the view
     build.js  textures.js  the level from the map; canvas-painted surfaces
+    decor.js  mist.js   props (arches, pillars, chains, rubble, puddles,
+                        altar), ground mist
+    geom.js             merging and world-size UVs
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass
     lab.js              wires the lab page: scene, lights, HUD, loop

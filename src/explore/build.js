@@ -1,97 +1,80 @@
 // explore/build.js — the 3D dungeon from the 2D map (0.139). Every open cell
 // gets a floor and a ceiling; every edge between an open cell and a wall
-// gets a wall face. Each surface kind is ONE merged mesh (a handful of draw
-// calls for the whole level). Corners and wall bases are darkened in vertex
-// colours (cheap ambient occlusion — the inky contact shadows of painted
-// art). Straight corridors get wooden support frames; wall torches are
-// spread through the level, decor.torchSpacing cells apart.
-// Returns { group, torches: [{ position, flame }], dispose } — the caller
-// lights the torches (a small pool of lights follows the nearest ones).
+// gets a wall face. Rooms stand taller than corridors (0.142: roomHeight;
+// a header wall closes the step above each opening). Each surface kind is
+// ONE merged mesh (a handful of draw calls for the whole level). Corners
+// and wall bases are darkened in vertex colours (cheap ambient occlusion —
+// the inky contact shadows of painted art). Straight corridors get wooden
+// support frames; wall torches (with a soft halo) are spread through the
+// level, decor.torchSpacing cells apart; decor.js adds the props.
+// buildDungeon(grid, cfg, { rooms, shrine, tier }) ->
+//   { group, torches: [{ position, flames, halos, phase, power }], posts, dispose }
+// (flames / halos: sprites, their resting scale in userData.base)
+// The caller lights the torches (a small pool of lights follows the
+// nearest ones) and collides with `posts` (pillars, in cells).
 
 import * as THREE from 'three';
 import { isOpen, corridorAxis, seeded } from './grid.js';
-import { wallTexture, floorTexture, ceilingTexture, woodTexture, flameTexture } from './textures.js';
+import { wallTexture, floorTexture, ceilingTexture, woodTexture, flameTexture, glowTexture } from './textures.js';
+import { quadGeometry, mergeParts, boxesGeometry } from './geom.js';
+import { buildDecor } from './decor.js';
 
-// A quad list -> one BufferGeometry. Each quad: 4 corners (in order around
-// the face), their uv, their AO shade (0..1), and the face normal.
-function quadGeometry(quads) {
-  const pos = [], nor = [], uv = [], col = [];
-  for (const q of quads) {
-    for (const i of [0, 1, 2, 0, 2, 3]) {
-      pos.push(...q.p[i]); nor.push(...q.n); uv.push(...q.uv[i]);
-      const s = q.ao[i]; col.push(s, s, s);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  return g; // no tangents: three derives them per pixel for the normal maps
-}
-
-// Boxes (wood) merged into one geometry.
-function boxesGeometry(boxes) {
-  const parts = boxes.map(({ size, at }) => new THREE.BoxGeometry(...size).translate(...at).toNonIndexed());
-  const total = parts.reduce((n, p) => n + p.attributes.position.count, 0);
-  const g = new THREE.BufferGeometry();
-  for (const [name, k] of [['position', 3], ['normal', 3], ['uv', 2]]) {
-    const arr = new Float32Array(total * k);
-    let o = 0;
-    for (const p of parts) { arr.set(p.attributes[name].array, o); o += p.attributes[name].array.length; }
-    g.setAttribute(name, new THREE.BufferAttribute(arr, k));
-  }
-  return g;
-}
-
-export function buildDungeon(grid, cfg) {
-  const C = cfg.cell, H = cfg.wallHeight, rnd = seeded(cfg.decor.seed);
+export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } = {}) {
+  const C = cfg.cell, H = cfg.wallHeight, rnd = seeded(cfg.decor.seed + tier);
   const floors = [], ceilings = [], walls = [], wood = [], torches = [];
   const open = (x, z) => isOpen(grid, x, z);
+  const inRoom = (x, z) => rooms.some((r) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h);
+  const top = (x, z) => (inRoom(x, z) ? cfg.roomHeight : H); // this cell's ceiling
   // AO at a floor corner: darker the more of the three cells around it are walls
   const cornerAo = (x, z, sx, sz) => {
     const walled = [!open(x + sx, z), !open(x, z + sz), !open(x + sx, z + sz)].filter(Boolean).length;
     return [1, 0.72, 0.55, 0.45][walled];
   };
+  // one wall face from y0 to y1 (v follows height: the painting repeats every H)
+  const wallFace = (f, y0, y1, ua, ub, aoA, aoB) => walls.push({
+    p: [[f.a[0], y0, f.a[1]], [f.b[0], y0, f.b[1]], [f.b[0], y1, f.b[1]], [f.a[0], y1, f.a[1]]], n: f.n,
+    uv: [[ua, y0 / H], [ub, y0 / H], [ub, y1 / H], [ua, y1 / H]], ao: [aoA[0], aoB[0], aoB[1], aoA[1]],
+  });
   for (let z = 0; z < grid.h; z++) {
     for (let x = 0; x < grid.w; x++) {
       if (!open(x, z)) continue;
-      const x0 = x * C, x1 = (x + 1) * C, z0 = z * C, z1 = (z + 1) * C;
+      const x0 = x * C, x1 = (x + 1) * C, z0 = z * C, z1 = (z + 1) * C, T = top(x, z);
       const ao = [cornerAo(x, z, -1, -1), cornerAo(x, z, 1, -1), cornerAo(x, z, 1, 1), cornerAo(x, z, -1, 1)];
       floors.push({ p: [[x0, 0, z0], [x0, 0, z1], [x1, 0, z1], [x1, 0, z0]], n: [0, 1, 0],
         uv: [[0, 0], [0, 1], [1, 1], [1, 0]], ao: [ao[0], ao[3], ao[2], ao[1]] });
-      ceilings.push({ p: [[x0, H, z0], [x1, H, z0], [x1, H, z1], [x0, H, z1]], n: [0, -1, 0],
+      ceilings.push({ p: [[x0, T, z0], [x1, T, z0], [x1, T, z1], [x0, T, z1]], n: [0, -1, 0],
         uv: [[0, 0], [1, 0], [1, 1], [0, 1]], ao: ao.map((a) => 0.6 + 0.4 * a) });
       // wall faces, each split into a lower and an upper band (dark at the
       // floor, a little dark at the ceiling, darker into inner corners).
       // a -> b runs so that (b - a) x up = the normal into the cell: the
       // corners go counter-clockwise seen from the corridor (front face).
       // side: the neighbour beyond a's end and beyond b's end (a wall
-      // there = an inner corner).
+      // there = an inner corner); to: the neighbour across the face.
       const faces = [
-        { wall: !open(x, z - 1), a: [x0, z0], b: [x1, z0], n: [0, 0, 1], side: [[-1, 0], [1, 0]] },  // north
-        { wall: !open(x + 1, z), a: [x1, z0], b: [x1, z1], n: [-1, 0, 0], side: [[0, -1], [0, 1]] }, // east
-        { wall: !open(x, z + 1), a: [x1, z1], b: [x0, z1], n: [0, 0, -1], side: [[1, 0], [-1, 0]] }, // south
-        { wall: !open(x - 1, z), a: [x0, z1], b: [x0, z0], n: [1, 0, 0], side: [[0, 1], [0, -1]] },  // west
+        { to: [0, -1], a: [x0, z0], b: [x1, z0], n: [0, 0, 1], side: [[-1, 0], [1, 0]] },  // north
+        { to: [1, 0], a: [x1, z0], b: [x1, z1], n: [-1, 0, 0], side: [[0, -1], [0, 1]] },  // east
+        { to: [0, 1], a: [x1, z1], b: [x0, z1], n: [0, 0, -1], side: [[1, 0], [-1, 0]] },  // south
+        { to: [-1, 0], a: [x0, z1], b: [x0, z0], n: [1, 0, 0], side: [[0, 1], [0, -1]] },  // west
       ];
       for (const f of faces) {
-        if (!f.wall) continue;
-        const cornerA = !open(x + f.side[0][0], z + f.side[0][1]) ? 0.62 : 1;
-        const cornerB = !open(x + f.side[1][0], z + f.side[1][1]) ? 0.62 : 1;
+        f.wall = !open(x + f.to[0], z + f.to[1]);
         const u0 = rnd() < 0.5 ? 0 : 0.5, flip = rnd() < 0.5; // vary the repeat
         const ua = flip ? u0 + 1 : u0, ub = flip ? u0 : u0 + 1;
-        // v runs up the wall: canvas textures are flipped, so v = 0 is the
-        // painting's bottom edge (where the moss is)
-        const mid = H * 0.38, vMid = mid / H;
-        walls.push({ p: [[f.a[0], 0, f.a[1]], [f.b[0], 0, f.b[1]], [f.b[0], mid, f.b[1]], [f.a[0], mid, f.a[1]]], n: f.n,
-          uv: [[ua, 0], [ub, 0], [ub, vMid], [ua, vMid]], ao: [0.42 * cornerA, 0.42 * cornerB, 0.95 * cornerB, 0.95 * cornerA] });
-        walls.push({ p: [[f.a[0], mid, f.a[1]], [f.b[0], mid, f.b[1]], [f.b[0], H, f.b[1]], [f.a[0], H, f.a[1]]], n: f.n,
-          uv: [[ua, vMid], [ub, vMid], [ub, 1], [ua, 1]], ao: [0.95 * cornerA, 0.95 * cornerB, 0.7 * cornerB, 0.7 * cornerA] });
+        if (!f.wall) { // open: a room's header wall above a lower opening
+          const nT = top(x + f.to[0], z + f.to[1]);
+          if (nT < T) wallFace(f, nT, T, ua, ub, [0.55, 0.7], [0.55, 0.7]);
+          continue;
+        }
+        const cA = !open(x + f.side[0][0], z + f.side[0][1]) ? 0.62 : 1;
+        const cB = !open(x + f.side[1][0], z + f.side[1][1]) ? 0.62 : 1;
+        const mid = H * 0.38;
+        wallFace(f, 0, mid, ua, ub, [0.42 * cA, 0.95 * cA], [0.42 * cB, 0.95 * cB]);
+        wallFace(f, mid, T, ua, ub, [0.95 * cA, 0.7 * cA], [0.95 * cB, 0.7 * cB]);
       }
       // straight corridors: a wooden support frame every few cells
       const axis = corridorAxis(grid, x, z);
       const k = axis === 'ew' ? x : z;
-      const beam = axis && k % cfg.decor.beamEvery === 0;
+      const beam = axis && !inRoom(x, z) && k % cfg.decor.beamEvery === 0;
       if (beam) {
         const cxm = x0 + C / 2, czm = z0 + C / 2, t = 0.28, inset = t / 2 + 0.02;
         if (axis === 'ew') { // the beam runs north-south, posts on both walls
@@ -111,46 +94,61 @@ export function buildDungeon(grid, cfg) {
       }
     }
   }
-  const M = materials();
+  const M = materials(cfg, tier);
   const group = new THREE.Group();
   group.add(new THREE.Mesh(quadGeometry(floors), M.floor));
   group.add(new THREE.Mesh(quadGeometry(ceilings), M.ceil));
   group.add(new THREE.Mesh(quadGeometry(walls), M.wall));
   if (wood.length) group.add(new THREE.Mesh(boxesGeometry(wood), M.wood));
-  // torches: an iron bracket, a wooden handle, a flame sprite
+  // torches: an iron bracket and a wooden handle (merged, all torches in
+  // two draw calls), a flame sprite and a soft halo around it
+  const iron = [], handles = [];
   const out = torches.map((t) => {
-    const g = new THREE.Group();
-    g.position.set(t.x, t.y, t.z);
-    const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.22), M.iron);
-    bracket.position.set(-t.nx * 0.02, -0.18, -t.nz * 0.02); bracket.lookAt(t.x + t.nx, t.y - 0.18, t.z + t.nz);
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.5, 6), M.handle);
-    stick.position.set(t.nx * 0.12, -0.08, t.nz * 0.12); stick.rotation.set(t.nz * 0.35, 0, -t.nx * 0.35);
+    const bracket = new THREE.BoxGeometry(0.08, 0.08, 0.22);
+    bracket.lookAt(new THREE.Vector3(t.nx, 0, t.nz)); bracket.translate(t.x - t.nx * 0.02, t.y - 0.18, t.z - t.nz * 0.02);
+    const stick = new THREE.CylinderGeometry(0.035, 0.05, 0.5, 6).rotateX(t.nz * 0.35).rotateZ(-t.nx * 0.35);
+    stick.translate(t.x + t.nx * 0.12, t.y - 0.08, t.z + t.nz * 0.12);
+    iron.push(bracket); handles.push(stick);
     const flame = new THREE.Sprite(M.flame.clone()); // (own opacity: each flickers)
-    flame.position.set(t.nx * 0.2, 0.28, t.nz * 0.2); flame.scale.set(0.32, 0.6, 1);
-    g.add(bracket, stick, flame);
-    group.add(g);
-    return { position: new THREE.Vector3(t.x + t.nx * 0.25, t.y + 0.25, t.z + t.nz * 0.25), flame, phase: rnd() * 100 };
+    flame.position.set(t.x + t.nx * 0.2, t.y + 0.28, t.z + t.nz * 0.2); flame.userData.base = [0.32, 0.6];
+    const halo = new THREE.Sprite(M.halo.clone());
+    halo.position.set(t.x + t.nx * 0.3, t.y + 0.3, t.z + t.nz * 0.3); halo.userData.base = [cfg.decor.haloSize, cfg.decor.haloSize];
+    group.add(flame, halo);
+    return { position: new THREE.Vector3(t.x + t.nx * 0.25, t.y + 0.25, t.z + t.nz * 0.25), flames: [flame], halos: [halo], phase: rnd() * 100, power: 1 };
   });
+  if (iron.length) group.add(new THREE.Mesh(mergeParts(iron), M.iron), new THREE.Mesh(mergeParts(handles), M.handle));
+  const decor = buildDecor(grid, cfg, { rooms, shrine, top, inRoom, rnd, M });
+  group.add(decor.group);
+  out.push(...decor.lights);
   // free the GPU side when the floor is replaced (textures and materials are shared)
   const dispose = () => group.traverse((o) => {
     if (o.isMesh) o.geometry.dispose();
     if (o.isSprite) o.material.dispose();
   });
-  return { group, torches: out, dispose };
+  return { group, torches: out, posts: decor.posts, dispose };
 }
 
-// The painted textures take a moment to make, so every floor shares one set.
-let shared = null;
-function materials() {
-  if (shared) return shared;
-  const tex = { wall: wallTexture(11), floor: floorTexture(23), ceil: ceilingTexture(37), wood: woodTexture(41) };
-  const mat = (t, rough = 0.95) => new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.normalMap, roughness: rough, metalness: 0, vertexColors: true });
-  shared = {
+// The painted textures take a moment to make, so every floor of a depth
+// tier shares one set (explore.json tiers: one palette per tier).
+const shared = new Map();
+function materials(cfg, tier) {
+  if (shared.has(tier)) return shared.get(tier);
+  const pal = cfg.tiers[tier].palette;
+  const tex = { wall: wallTexture(11, pal), floor: floorTexture(23, pal), ceil: ceilingTexture(37, pal), wood: woodTexture(41) };
+  const mat = (t, rough = 0.95, ao = true) => new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.normalMap, roughness: rough, metalness: 0, vertexColors: ao });
+  const additive = (map, color) => new THREE.SpriteMaterial({ map, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+  const M = {
     floor: mat(tex.floor), ceil: mat(tex.ceil), wall: mat(tex.wall),
-    wood: new THREE.MeshStandardMaterial({ map: tex.wood.map, normalMap: tex.wood.normalMap, roughness: 0.85 }),
-    iron: new THREE.MeshStandardMaterial({ color: 0x1d1714, roughness: 0.6, metalness: 0.4 }),
+    stone: mat(tex.wall, 0.95, false), // props of wall stone (no AO colours)
+    wood: mat(tex.wood, 0.85, false),
+    iron: new THREE.MeshStandardMaterial({ color: 0x1d1714, roughness: 0.55, metalness: 0.5 }),
     handle: new THREE.MeshStandardMaterial({ map: tex.wood.map, roughness: 0.9 }),
-    flame: new THREE.SpriteMaterial({ map: flameTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
+    flame: additive(flameTexture(), 0xffffff),
+    halo: additive(glowTexture(), cfg.light.torch.color),
+    water: new THREE.MeshStandardMaterial({ color: cfg.tiers[tier].palette.water, roughness: 0.1, metalness: 0.2 }),
+    wax: new THREE.MeshStandardMaterial({ color: 0xcdbb8c, roughness: 0.7, emissive: 0x3a2a10 }),
   };
-  return shared;
+  M.halo.opacity = cfg.decor.haloOpacity;
+  shared.set(tier, M);
+  return M;
 }

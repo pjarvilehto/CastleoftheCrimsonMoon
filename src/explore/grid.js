@@ -31,8 +31,9 @@ export function corridorAxis(g, x, z) {
 }
 
 // A circle (radius r, in cells) at (px, pz) pushed out of every wall cell it
-// overlaps: closest point on the cell's square, out along the gap. Two
-// passes settle corners. Returns the corrected position.
+// overlaps — closest point on the cell's square, out along the gap — and
+// out of every post (g.posts: pillars and the like, circles {x, z, r} in
+// cells, 0.142). Two passes settle corners. Returns the corrected position.
 export function collide(g, px, pz, r) {
   let x = px, z = pz;
   for (let pass = 0; pass < 2; pass++) {
@@ -53,6 +54,11 @@ export function collide(g, px, pz, r) {
           x += out[0]; z += out[1];
         }
       }
+    }
+    for (const p of g.posts ?? []) {
+      const ox = x - p.x, oz = z - p.z, d = Math.hypot(ox, oz), min = r + p.r;
+      if (d >= min) continue;
+      if (d > 1e-9) { x += (ox / d) * (min - d); z += (oz / d) * (min - d); } else x += min;
     }
   }
   return { x, z };

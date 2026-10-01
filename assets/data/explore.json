@@ -1,7 +1,8 @@
 {
-  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells): width x height, up to `rooms` rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, `encounters` combat rooms, `loops` extra corridor links, `deadEnds` spurs up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), lair = the dim red light before each of the `pool` nearest enemies still standing (`ahead` metres toward the knight), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells. billboard = the enemies standing in the rooms: sizes per enemy id (height in metres, lift = hovers that high), tear = how much of the portrait's cropped bottom is torn away, shadow = opacity of the shadow at its feet, glow = its own light (share of the art shown unlit). paint.fightDim = how far the dungeon darkens behind a fight.",
+  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells): width x height, up to `rooms` rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, `encounters` combat rooms, `loops` extra corridor links, `deadEnds` spurs up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), lair = the dim red light before each of the `pool` nearest enemies still standing (`ahead` metres toward the knight), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells. billboard = the enemies standing in the rooms: sizes per enemy id (height in metres, lift = hovers that high), tear = how much of the portrait's cropped bottom is torn away, shadow = opacity of the shadow at its feet, glow = its own light (share of the art shown unlit). paint.fightDim = how far the dungeon darkens behind a fight. roomHeight = rooms' ceilings (corridors: wallHeight). decor (0.142): haloSize / haloOpacity = the torches' glow, rubble / puddles = chance per cell, chainsPerRoom = at most, altarLight = the shrine altar's light (x a torch's). mist = ground mist: perCell chance, size and height in metres, opacity, drift speed. tiers = one per depth (the last repeats): name, fog / sky / ground (hemisphere fill) / mist / shadow (the paint pass's shadow tint) colours, palette for the painted textures: stone / floor / ceiling = [hue, hue spread, saturation, spread, lightness, spread], growth = [hue, spread] of moss at the wall foot (null: none), dark = the joints, water = puddles.",
   "cell": 3,
   "wallHeight": 3.2,
+  "roomHeight": 4.4,
   "eyeHeight": 1.65,
   "gen": {
     "width": 33,
@@ -86,7 +87,13 @@
   "decor": {
     "beamEvery": 3,
     "torchSpacing": 3.2,
-    "seed": 1307
+    "seed": 1307,
+    "haloSize": 1.5,
+    "haloOpacity": 0.28,
+    "rubble": 0.12,
+    "puddles": 0.1,
+    "chainsPerRoom": 3,
+    "altarLight": 0.6
   },
   "billboard": {
     "tear": 0.14,
@@ -136,5 +143,131 @@
       }
     },
     "glow": 0.3
-  }
+  },
+  "mist": {
+    "perCell": 0.35,
+    "size": 2.2,
+    "height": 0.45,
+    "opacity": 0.1,
+    "drift": 0.12
+  },
+  "tiers": [
+    {
+      "name": "The Oubliette",
+      "fog": "#0a0b08",
+      "sky": "#56604e",
+      "ground": "#1c1b15",
+      "mist": "#7d8572",
+      "palette": {
+        "stone": [
+          75,
+          35,
+          4,
+          6,
+          24,
+          11
+        ],
+        "floor": [
+          70,
+          35,
+          3,
+          6,
+          26,
+          10
+        ],
+        "ceiling": [
+          70,
+          30,
+          6,
+          0,
+          9,
+          6
+        ],
+        "growth": [
+          80,
+          25
+        ],
+        "dark": "#0d0e0a",
+        "water": "#0a0c09"
+      },
+      "shadow": "#232a1c"
+    },
+    {
+      "name": "The Crypt",
+      "fog": "#0f0706",
+      "sky": "#6a4038",
+      "ground": "#22120e",
+      "mist": "#8a6a64",
+      "palette": {
+        "stone": [
+          0,
+          16,
+          14,
+          10,
+          21,
+          10
+        ],
+        "floor": [
+          10,
+          15,
+          10,
+          8,
+          23,
+          9
+        ],
+        "ceiling": [
+          5,
+          15,
+          12,
+          0,
+          8,
+          5
+        ],
+        "growth": null,
+        "dark": "#130b09",
+        "water": "#100808"
+      },
+      "shadow": "#3a1414"
+    },
+    {
+      "name": "The Catacombs",
+      "fog": "#07080d",
+      "sky": "#465674",
+      "ground": "#12141c",
+      "mist": "#76829a",
+      "palette": {
+        "stone": [
+          205,
+          20,
+          12,
+          10,
+          27,
+          12
+        ],
+        "floor": [
+          212,
+          18,
+          8,
+          8,
+          27,
+          9
+        ],
+        "ceiling": [
+          215,
+          15,
+          10,
+          0,
+          8,
+          5
+        ],
+        "growth": [
+          165,
+          25
+        ],
+        "dark": "#0a0b0e",
+        "water": "#08090c"
+      },
+      "shadow": "#18233a"
+    }
+  ]
 }

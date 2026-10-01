@@ -1,5 +1,5 @@
 {
-  "version": "0.141",
+  "version": "0.142",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -23,13 +23,16 @@
     "src/core/scene.js",
     "src/explore/billboard.js",
     "src/explore/build.js",
+    "src/explore/decor.js",
     "src/explore/encounterLayer.js",
     "src/explore/encounters.js",
     "src/explore/fight.js",
+    "src/explore/geom.js",
     "src/explore/grid.js",
     "src/explore/lab.js",
     "src/explore/mapgen.js",
     "src/explore/minimap.js",
+    "src/explore/mist.js",
     "src/explore/player.js",
     "src/explore/post.js",
     "src/explore/textures.js",
@@ -91,6 +94,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.142": [
+      "Testing tools: the Dungeon Lab's look pass: taller halls with pillars and stone arches, chains, rubble, puddles, torch glow, ground mist, a shrine altar, and new stone for each depth."
+    ],
     "0.141": [
       "Testing tools: in the Dungeon Lab, enemies now stand in the rooms; walking in starts the real fight, and the boss leads down to the next floor."
     ],
@@ -134,9 +140,6 @@
     "0.128": [
       "New combat particles: hits on flesh splash ink-dark blood that spatters onto the floor; bone, fire and spirit enemies burst into bright sparks with an impact ring (fire burns yellow and leaves floating cinders).",
       "OVERKILL! now bursts particles out of every enemy it wipes."
-    ],
-    "0.127": [
-      "Behind the scenes: testing tools update (no gameplay changes)."
     ]
   }
 }

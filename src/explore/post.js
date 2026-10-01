@@ -82,5 +82,7 @@ export function createPaintPass(renderer, camera, cfg) {
       renderer.render(scene, ortho);
     },
     uniforms: material.uniforms,
+    // a depth tier's mood (0.142): the colour of its shadows
+    setShadow(hex) { material.uniforms.shadowTint.value.copy(tint(hex, 0.55)); },
   };
 }

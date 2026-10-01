@@ -158,3 +158,29 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('the Dungeon Lab never touches the save or the play stats; the game never imports it',
     !/settleRun|saveProfile|shareStats|recordBenchmark|markVictorySeen|storage\.js|telemetry\.js/.test(src) && !/from '[./]*explore\//.test(game));
 }
+
+// T102: 0.142 — the look pass: pillars block the way, and every new knob
+// (room height, props, mist, the depth tiers' palettes) is in explore.json
+{
+  const g = parseMap(['#####', '#...#', '#...#', '#...#', '#####']);
+  g.posts = [{ x: 2.5, z: 2.5, r: 0.2 }];
+  const p = collide(g, 2.55, 2.5, 0.14);
+  ok('collide: a pillar (post) holds the body off by both radii', Math.abs(Math.hypot(p.x - 2.5, p.z - 2.5) - 0.34) < 1e-9, JSON.stringify(p));
+  let x = 1.5, z = 2.5;
+  for (let i = 0; i < 60; i++) ({ x, z } = collide(g, x + 0.03, z, 0.14)); // walk east into it
+  ok('collide: walking into a pillar stops short of it (or slides round it)', Math.hypot(x - 2.5, z - 2.5) >= 0.34 - 1e-9);
+
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const hex = (v) => /^#[0-9a-f]{6}$/i.test(v ?? '');
+  const nums = [cfg.roomHeight, ...['haloSize', 'haloOpacity', 'rubble', 'puddles', 'chainsPerRoom', 'altarLight'].map((k) => cfg.decor[k]),
+    ...['perCell', 'size', 'height', 'opacity', 'drift'].map((k) => cfg.mist[k])];
+  const tierBad = cfg.tiers.flatMap((t, i) => {
+    const P = t.palette, bad = [];
+    if (!t.name || !['fog', 'sky', 'ground', 'mist', 'shadow'].every((k) => hex(t[k]))) bad.push(`tier ${i} colours`);
+    if (!['stone', 'floor', 'ceiling'].every((k) => Array.isArray(P[k]) && P[k].length === 6 && P[k].every(Number.isFinite))) bad.push(`tier ${i} tones`);
+    if (!(P.growth === null || (P.growth.length === 2 && P.growth.every(Number.isFinite))) || !hex(P.dark) || !hex(P.water)) bad.push(`tier ${i} palette`);
+    return bad;
+  });
+  ok('explore.json: room height, props, mist and a palette per depth tier', nums.every(Number.isFinite) && cfg.roomHeight > cfg.wallHeight
+    && cfg.tiers.length >= 3 && tierBad.length === 0, tierBad.join(', '));
+}

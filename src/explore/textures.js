@@ -145,11 +145,17 @@ function grime(cx, rnd, n, tone) {
   for (let k = 0; k < n; k++) chip(cx, rnd() * SIZE, rnd() * SIZE, 1 + rnd() * 2.5, rnd);
 }
 
+// A depth tier's palette (explore.json tiers, 0.142): stone / floor /
+// ceiling = [hue, hue spread, saturation, its spread, lightness, its
+// spread], growth = [hue, spread] of the moss or stains at the wall's foot
+// (or null), dark = the joints between the stones.
+const toneOf = (p, rnd) => ({ h: p[0] + rnd() * p[1], s: p[2] + rnd() * p[3], l: p[4] + rnd() * p[5] });
+
 // Wall: courses of chunky stones, black joints, grime, moss at the foot.
 // (Canvas row 0 is the TOP of the wall: build.js maps v = 0 to the floor.)
-export function wallTexture(seed) {
+export function wallTexture(seed, pal) {
   const rnd = seeded(seed), { color, height, cx, hx } = canvases();
-  cx.fillStyle = '#0d0e0a'; cx.fillRect(0, 0, SIZE, SIZE);
+  cx.fillStyle = pal.dark; cx.fillRect(0, 0, SIZE, SIZE);
   hx.fillStyle = '#000'; hx.fillRect(0, 0, SIZE, SIZE);
   let y = 0;
   while (y < SIZE - 20) {
@@ -157,54 +163,52 @@ export function wallTexture(seed) {
     let x = -Math.floor(rnd() * 60);
     while (x < SIZE) {
       const w = 60 + Math.floor(rnd() * 120);
-      const tone = { h: 75 + rnd() * 35, s: 4 + rnd() * 6, l: 24 + rnd() * 11 };
-      paintStone(cx, hx, x + 2, y + 2, w - 4, ch - 4, tone, rnd);
+      paintStone(cx, hx, x + 2, y + 2, w - 4, ch - 4, toneOf(pal.stone, rnd), rnd);
       x += w;
     }
     y += ch;
   }
-  grime(cx, rnd, 40, { h: 70, s: 10 });
-  for (let k = 0; k < 70; k++) { // moss and damp, thick near the floor
+  grime(cx, rnd, 40, { h: pal.stone[0], s: 10 });
+  for (let k = 0; k < (pal.growth ? 70 : 0); k++) { // moss and damp, thick near the floor
     const my = SIZE - Math.pow(rnd(), 2.2) * SIZE * 0.45, mx = rnd() * SIZE;
-    cx.fillStyle = hsl(80 + rnd() * 25, 22, 12 + rnd() * 8, 0.25 + rnd() * 0.25);
+    cx.fillStyle = hsl(pal.growth[0] + rnd() * pal.growth[1], 22, 12 + rnd() * 8, 0.25 + rnd() * 0.25);
     chip(cx, mx, my, 5 + rnd() * 16, rnd);
   }
   return finish(color, height, 1.6);
 }
 
 // Floor: big worn flagstones in staggered rows, wet dark patches.
-export function floorTexture(seed) {
+export function floorTexture(seed, pal) {
   const rnd = seeded(seed), { color, height, cx, hx } = canvases();
-  cx.fillStyle = '#0b0c09'; cx.fillRect(0, 0, SIZE, SIZE);
+  cx.fillStyle = pal.dark; cx.fillRect(0, 0, SIZE, SIZE);
   hx.fillStyle = '#000'; hx.fillRect(0, 0, SIZE, SIZE);
   const rows = 4, rh = SIZE / rows;
   for (let r = 0; r < rows; r++) {
     let x = r % 2 ? -rh * 0.5 : 0;
     while (x < SIZE) {
       const w = rh * (0.8 + rnd() * 0.7);
-      const tone = { h: 70 + rnd() * 35, s: 3 + rnd() * 6, l: 26 + rnd() * 10 };
-      paintStone(cx, hx, x + 4, r * rh + 4, w - 8, rh - 8, tone, rnd, 0.6);
+      paintStone(cx, hx, x + 4, r * rh + 4, w - 8, rh - 8, toneOf(pal.floor, rnd), rnd, 0.6);
       x += w;
     }
   }
   for (let k = 0; k < 9; k++) { // damp patches
-    cx.fillStyle = hsl(75, 12, 7, 0.35 + rnd() * 0.25);
+    cx.fillStyle = hsl(pal.floor[0], 12, 7, 0.35 + rnd() * 0.25);
     chip(cx, rnd() * SIZE, rnd() * SIZE, 18 + rnd() * 40, rnd);
   }
-  grime(cx, rnd, 0, { h: 70, s: 8 });
   cx.fillStyle = INK;
   for (let k = 0; k < 60; k++) chip(cx, rnd() * SIZE, rnd() * SIZE, 1 + rnd() * 3, rnd);
   return finish(color, height, 1.4);
 }
 
 // Ceiling: rough dark rock, no courses — blotches and ink cracks.
-export function ceilingTexture(seed) {
+export function ceilingTexture(seed, pal) {
   const rnd = seeded(seed), { color, height, cx, hx } = canvases();
-  cx.fillStyle = '#10110d'; cx.fillRect(0, 0, SIZE, SIZE);
+  cx.fillStyle = pal.dark; cx.fillRect(0, 0, SIZE, SIZE);
   hx.fillStyle = '#404040'; hx.fillRect(0, 0, SIZE, SIZE);
   for (let k = 0; k < 120; k++) {
     const x = rnd() * SIZE, y = rnd() * SIZE, r = 10 + rnd() * 46;
-    cx.fillStyle = hsl(70 + rnd() * 30, 6, 9 + rnd() * 6, 0.6);
+    const t = toneOf(pal.ceiling, rnd);
+    cx.fillStyle = hsl(t.h, t.s, t.l, 0.6);
     chip(cx, x, y, r, rnd);
     const g = 60 + rnd() * 140 | 0; hx.fillStyle = `rgb(${g},${g},${g})`; chip(hx, x, y, r, rnd);
   }
@@ -251,6 +255,19 @@ export function flameTexture() {
   g.addColorStop(0.6, 'rgba(235,120,40,0.5)'); g.addColorStop(1, 'rgba(120,40,10,0)');
   x.fillStyle = g;
   x.beginPath(); x.moveTo(32, 6); x.quadraticCurveTo(62, 70, 32, 124); x.quadraticCurveTo(2, 70, 32, 6); x.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// A soft round glow, white (tinted by the material): torch halos and the
+// ground mist (0.142).
+export function glowTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+  g.addColorStop(0.7, 'rgba(255,255,255,0.1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }

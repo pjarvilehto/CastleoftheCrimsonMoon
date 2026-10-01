@@ -18,6 +18,8 @@ import { createPlayer } from './player.js';
 import { createPaintPass } from './post.js';
 import { createMinimap } from './minimap.js';
 import { createEncounters } from './encounterLayer.js';
+import { createMist } from './mist.js';
+import { seeded } from './grid.js';
 import { loadData, DATA } from '../shared/data.js';
 import { initHotkeys } from '../core/hotkeys.js';
 import { initMusic } from '../audio/music.js';
@@ -40,7 +42,8 @@ export async function startLab({ canvas, hud }) {
   scene.add(camera);
 
   const amb = cfg.light.ambient;
-  scene.add(new THREE.HemisphereLight(amb.sky, amb.ground, amb.intensity));
+  const hemi = new THREE.HemisphereLight(amb.sky, amb.ground, amb.intensity);
+  scene.add(hemi);
   const L = cfg.light;
   const party = new THREE.PointLight(L.party.color, L.party.intensity, L.party.distance, L.party.decay);
   party.position.set(0.35, -0.15, -0.3); // the torch in the right hand
@@ -61,14 +64,22 @@ export async function startLab({ canvas, hud }) {
   });
 
   // the floor: generate, build, put the knight at the start
-  const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, depth: 1 };
+  const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, mist: null, depth: 1 };
   function newFloor(seed, depth = lab.depth) {
     lab.depth = depth;
-    if (lab.level) { scene.remove(lab.level.group); lab.level.dispose(); }
+    if (lab.level) { scene.remove(lab.level.group, lab.mist.group); lab.level.dispose(); lab.mist.dispose(); }
     lab.floor = generateFloor(seed, cfg.gen);
     lab.grid = parseMap(lab.floor.rows);
-    lab.level = buildDungeon(lab.grid, cfg);
-    scene.add(lab.level.group);
+    // the depth tier (0.142): its stone, its fog, its shadows
+    lab.tier = Math.min(depth, cfg.tiers.length) - 1;
+    const T = cfg.tiers[lab.tier];
+    scene.background.set(T.fog); scene.fog.color.set(T.fog);
+    hemi.color.set(T.sky); hemi.groundColor.set(T.ground);
+    paint.setShadow(T.shadow);
+    lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.floor.rooms, shrine: lab.floor.shrine, tier: lab.tier });
+    lab.grid.posts = lab.level.posts;
+    lab.mist = createMist(lab.grid, cfg, T.mist, seeded(seed * 31));
+    scene.add(lab.level.group, lab.mist.group);
     player.place(lab.grid, lab.floor.start);
     minimap.setFloor(lab.floor, lab.grid);
     encounters.setFloor(lab.floor, depth);
@@ -117,19 +128,28 @@ export async function startLab({ canvas, hud }) {
       const tr = byDist[i];
       if (!tr) { l.intensity = 0; return; }
       l.position.copy(tr.position);
-      l.intensity = L.torch.intensity * flicker(t, tr.phase, L.flicker);
+      l.intensity = L.torch.intensity * tr.power * flicker(t, tr.phase, L.flicker);
     });
     for (const tr of torches) {
       const f = flicker(t, tr.phase, L.flicker * 1.6);
-      tr.flame.scale.set(0.3 * (0.9 + 0.1 * f), 0.58 * f, 1);
-      tr.flame.material.opacity = 0.75 + 0.25 * f;
+      for (const s of tr.flames) {
+        const [w, h] = s.userData.base;
+        s.scale.set(w * (0.9 + 0.1 * f), h * f, 1);
+        s.material.opacity = 0.75 + 0.25 * f;
+      }
+      for (const s of tr.halos) {
+        const [w, h] = s.userData.base;
+        s.scale.set(w * (0.95 + 0.05 * f), h * (0.95 + 0.05 * f), 1);
+        s.material.opacity = cfg.decor.haloOpacity * (0.75 + 0.25 * f);
+      }
     }
     party.intensity = L.party.intensity * flicker(t, 3.1, L.flicker);
+    lab.mist.update(t);
     paint.render(scene);
     frames++; fpsT += dt;
     if (fpsT >= 0.5) {
       const r = encounters.run, left = encounters.spots.filter((sp) => !sp.cleared).length;
-      hud.status.textContent = `${Math.round(frames / fpsT)} fps · depth ${lab.depth} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;
+      hud.status.textContent = `${Math.round(frames / fpsT)} fps · depth ${lab.depth}: ${cfg.tiers[lab.tier].name} (floor ${lab.floor.seed}) · HP ${Math.max(0, r.hp)}/${r.maxHp} · potions ${r.potions} · ${left} left`;
       frames = 0; fpsT = 0;
     }
     if (walking && mapOn) minimap.draw(player, torches, cfg.cell, encounters.cleared());

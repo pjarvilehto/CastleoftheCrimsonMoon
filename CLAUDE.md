@@ -268,6 +268,15 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   a death Rise Again (depth 1, a fresh run). One `run` object carries HP,
   potions and loot through the visit and is never settled. Particles stay
   off in the lab (they follow the game's 3D background).
+- Look pass (0.142): rooms are `roomHeight` tall (a header wall over each
+  opening); `decor.js` adds arches at room entrances, pillars in rooms 4+
+  a side (`posts`, collided in `grid.js`), chains, rubble, glossy puddles
+  and the shrine's candle altar (one light in the torch pool), merged per
+  material; torches get a glow halo; `mist.js` is one drifting point cloud.
+  `explore.json tiers` = one look per depth (the last repeats): texture
+  palette, fog / hemisphere / mist colours and the paint pass's shadow
+  tint (`paint.setShadow`). Prop UVs come from world size (`geom.js
+  worldUV`). Keep the draw calls down (~80 a frame): merge, don't add meshes.
 - `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
   frames on straight corridors, wall torches `decor.torchSpacing` apart.
 - `textures.js`: every surface painted on canvas in the style of
@@ -282,8 +291,8 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   knight's torch rides with the camera, a pool of `light.pool` point lights
   follows the nearest wall torches (a fixed light count keeps three.js from
   recompiling shaders).
-Next steps discussed with the owner: a look pass, then integration into
-runs (shrine rooms, retreat rules, settling the run).
+Next steps discussed with the owner: integration into runs (shrine
+rooms, retreat rules, settling the run).
 
 ## Testing notes
 
@@ -338,7 +347,7 @@ runs (shrine rooms, retreat rules, settling the run).
   settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
   is experimenting with looks.
 - 3D exploration (Dungeon Lab, 0.139; generator 0.140; encounters 0.141):
-  look pass · shrines in 3D · into the run loop (open: a floor per 8-room stretch?
+  shrines in 3D · into the run loop (open: a floor per 8-room stretch?
   retreat rules? static or wandering enemies?).
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.
