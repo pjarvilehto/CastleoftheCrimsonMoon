@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tools/gen-music.py — render the procedural dark ambient score (0.108).
+"""tools/gen-music.py — render the procedural dark ambient score (0.114).
 
     pip install numpy scipy lameenc
     python3 tools/gen-music.py                 # all five beds
@@ -12,7 +12,8 @@ prints level / loop statistics. Each file is the loop plus its own first
 TAIL_S seconds again: the game restarts the loop exactly one loop-length
 in and crossfades over identical audio (src/audio/musicLoop.js), so the
 beat never shifts and any MP3 decoder delay is hidden. Its length goes in
-assets/data/audio.json music.beds (loopS, tailS). The instruments are tools/music/synth.py,
+assets/data/audio.json music.scores.dark.tracks (loopS, tailS; gainDb
+matches the classic beds' loudness as played). The instruments are tools/music/synth.py,
 the hall / loop / master tools/music/mix.py, the pieces tools/music/score.py.
 Each render is deterministic (seeded): same code, same file.
 """

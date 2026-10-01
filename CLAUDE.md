@@ -262,10 +262,16 @@ static play-stats page.
   live in `assets/data/audio.json`. A new clip needs a trim there (measure
   its loudest 50ms). `sfx(name, { pan, delayMs, rate, gainDb })`; combat
   lines go through `ui/combatSfx.js` (stereo from the card, timed to the
-  strike, crit/mega/overkill sweeteners from `audio/synth.js`). Music beds
-  are ~20s pieces with fades: `audioMath.findSections` + `musicLoop.js`
-  chain them without the dips. VOLUME sliders: `ui/volumePanel.js`;
-  audio suspends in a hidden tab.
+  strike, crit/mega/overkill sweeteners from `audio/synth.js`). Music
+  (0.114): two scores in `audio.json music.scores`, picked in the VOLUME
+  panel (`score` = default). The new dark ambient score is generated
+  (`python3 tools/gen-music.py --suffix v3` — numpy/scipy/lameenc; new
+  suffix for new files): exact loops (`loopS`) with their first `tailS`
+  seconds appended, restarted every loopS with an equal-gain crossfade;
+  `gainDb` level-matches them to the classic beds as played. The classic
+  beds are ~20s pieces with fades: `audioMath.findSections` +
+  `musicLoop.js` chain them without the dips. VOLUME sliders:
+  `ui/volumePanel.js`; audio suspends in a hidden tab.
 
 ## Backlog (as of 0.107)
 

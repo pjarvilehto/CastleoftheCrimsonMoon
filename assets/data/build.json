@@ -1,5 +1,5 @@
 {
-  "version": "0.113",
+  "version": "0.114",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -58,6 +58,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.114": [
+      "New music: a dark ambient cinematic score for every scene",
+      "Prefer the old music? VOLUME → Score → Classic switches back (and remembers it)"
+    ],
     "0.113": [
       "New CHANGELIST button (upper right): every build's release notes in one place",
       "Precision never stops paying off: every level adds +1% crit damage on top of its crit chance (no more +0%)",
@@ -115,9 +119,6 @@
     ],
     "0.100": [
       "Critical hits, potions and revives now light up the scene around the fighter — walls and mist nearby catch the glow"
-    ],
-    "0.099": [
-      "Drifting mist in the backgrounds: thicker over long views, a light haze indoors"
     ]
   }
 }

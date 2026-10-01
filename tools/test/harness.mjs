@@ -73,7 +73,10 @@ export class El {
     // array reference; assignments throw in module strict mode.
     Object.defineProperty(this, 'children', { get: () => kids, enumerable: true });
     const s = new Set();
-    this.classList = { add: (c) => s.add(c), remove: (c) => s.delete(c), contains: (c) => s.has(c) };
+    this.classList = {
+      add: (c) => s.add(c), remove: (c) => s.delete(c), contains: (c) => s.has(c),
+      toggle: (c, on = !s.has(c)) => { if (on) s.add(c); else s.delete(c); return on; },
+    };
   }
   set className(v) { this._cls = v; String(v).split(' ').filter(Boolean).forEach((c) => this.classList.add(c)); }
   get className() { return this._cls || ''; }

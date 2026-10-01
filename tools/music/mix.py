@@ -1,18 +1,19 @@
 """tools/music/mix.py — placing sounds, the hall, the loop and the master (0.108).
 
-A Track is a stereo dry buffer plus a reverb send, `length` seconds long
-plus a tail. place() adds a sound at a time and pan (equal power). render()
-runs the hall reverb on the send, folds everything past the loop length
-back onto the start — reverb tails and notes held over the end continue
-into the next pass, so the loop has no seam — then masters it: subsonic
+A Track is a stereo dry buffer plus a reverb send, exactly one loop
+(`length` seconds) long and CIRCULAR: place() adds a sound at a time and
+pan (equal power), and whatever runs past the loop's end continues from
+its start. render() runs the hall reverb on the send and folds the reverb
+tail back onto the start the same way — notes held over the end and
+reverb tails continue into the next pass, so the loop has no seam (0.114:
+the first version wrapped long sounds to the wrong place and cut reverb
+tails, leaving small edges at the seam and 10 s in) — then masters it: subsonic
 high-pass, gentle compression, a soft limiter, and a level matched to the
 target (median 0.5s RMS), ending at -1 dBFS peak at most.
 """
 import numpy as np
 from scipy.signal import fftconvolve
 from synth import SR, lowpass, highpass
-
-TAIL = 10.0
 
 # Frequency balance (0.113): the first renders were all sub-bass — the
 # 400 Hz-2.5 kHz range, where laptop and phone speakers live, sat 10-18 dB
@@ -55,13 +56,20 @@ class Track:
     def __init__(self, length, tempo=None):
         self.length = length
         self.n = int(length * SR)
-        self.total = int((length + TAIL) * SR)
-        self.dry = np.zeros((2, self.total))
-        self.wet = np.zeros((2, self.total))
+        self.dry = np.zeros((2, self.n))
+        self.wet = np.zeros((2, self.n))
         self.beat = 60.0 / tempo if tempo else None
 
     def at(self, bar, beat=0.0, beats_per_bar=4):
         return (bar * beats_per_bar + beat) * self.beat
+
+    def _add(self, buf, ch, start, x):
+        """x into the circular buffer from `start`, wrapping round the loop."""
+        pos = start
+        while len(x):
+            k = min(len(x), self.n - pos)
+            buf[ch, pos:pos + k] += x[:k]
+            x, pos = x[k:], 0
 
     def place(self, sound, when, pan=0.0, gain=1.0, send=0.3):
         """sound: mono array or (L, R). when: seconds (wrapped into the loop)."""
@@ -71,31 +79,25 @@ class Track:
             L = R = sound
         a = (np.clip(pan, -1, 1) + 1) * np.pi / 4
         L, R = L * np.cos(a) * gain * 1.414, R * np.sin(a) * gain * 1.414
-        start = int((when % self.length) * SR)
-        m = min(len(L), self.total - start)
-        if m <= 0:
-            return
+        start = int((when % self.length) * SR) % self.n
         for ch, x in ((0, L), (1, R)):
-            self.dry[ch, start:start + m] += x[:m] * (1 - send * 0.5)
-            self.wet[ch, start:start + m] += x[:m] * send
-            if len(x) > m:  # longer than the buffer: wrap the rest to the start
-                rest = x[m:m + self.n]
-                self.dry[ch, :len(rest)] += rest * (1 - send * 0.5)
-                self.wet[ch, :len(rest)] += rest * send
+            self._add(self.dry, ch, start, x * (1 - send * 0.5))
+            self._add(self.wet, ch, start, x * send)
+
+    def _fold(self, x):
+        """A linear result (longer than the loop) folded round the loop."""
+        out = np.zeros(self.n)
+        for k in range(0, len(x), self.n):
+            seg = x[k:k + self.n]
+            out[: len(seg)] += seg
+        return out
 
     def render(self, rt60=4.5, wet_gain=1.0, target_db=-18.0, width=0.85, tone='dark'):
         irL, irR = hall_ir(rt60, width=width)
-        verbL = fftconvolve(self.wet[0], irL)[: self.total] + fftconvolve(self.wet[1], irL * 0.25)[: self.total]
-        verbR = fftconvolve(self.wet[1], irR)[: self.total] + fftconvolve(self.wet[0], irR * 0.25)[: self.total]
-        mix = self.dry + np.vstack([verbL, verbR]) * wet_gain
-        # fold the tail onto the start: the loop is seamless
-        out = mix[:, : self.n].copy()
-        tail = mix[:, self.n:]
-        k = 0
-        while k < tail.shape[1]:
-            seg = tail[:, k:k + self.n]
-            out[:, : seg.shape[1]] += seg
-            k += self.n
+        # circular reverb: the full tail of every note, folded round the loop
+        verbL = self._fold(fftconvolve(self.wet[0], irL) + fftconvolve(self.wet[1], irL * 0.25))
+        verbR = self._fold(fftconvolve(self.wet[1], irR) + fftconvolve(self.wet[0], irR * 0.25))
+        out = self.dry + np.vstack([verbL, verbR]) * wet_gain
         out = match_bands(out, TARGETS[tone])
         return master(out, target_db)
 
@@ -176,7 +178,10 @@ def stats(x):
         'medianDb': round(float(med), 1), 'quietestDb': round(float(dbs.min()), 1),
         'loudestDb': round(float(dbs.max()), 1), 'peakDb': round(float(20 * np.log10(np.abs(x).max())), 1),
         'dipsOver15dB': int(np.sum(dbs < med - 15)), 'stereoCorr': round(float(corr), 2),
-        # the loop point should look like any other pair of neighbouring samples
+        # the loop point should look like any other pair of neighbouring
+        # samples: seamRank = share of the loop's sample steps that are
+        # smaller than the step across the seam (a click would be ~1.0)
         'seamJump': round(float(np.abs(x[:, 0] - x[:, -1]).max()), 4),
+        'seamRank': round(float(np.mean(np.abs(np.diff(x, axis=1)).max(axis=0) < np.abs(x[:, 0] - x[:, -1]).max())), 4),
         'typicalJump': round(float(np.percentile(np.abs(np.diff(x[0])), 99.9)), 4), 'seamPeak': round(float(seam), 2),
     }

@@ -22,8 +22,9 @@ fresh();
 // ignores tier-1 gear (no enhance button, forgeItem refuses).
 {
   const musicSrc = readFileSync(new URL('../../src/audio/music.js', import.meta.url), 'utf8');
+  const classic = DATA.audio.music.scores.classic.tracks; // 0.114: the beds live in audio.json
   for (const t of ['title', 'combat', 'boss', 'shrine', 'end']) {
-    ok(`music track file referenced: ${t}`, musicSrc.includes(`assets/audio/music-${t}.mp3`));
+    ok(`music track file referenced: ${t}`, classic[t].file === `assets/audio/music-${t}.mp3`);
     const size = statSync(new URL(`../../assets/audio/music-${t}.mp3`, import.meta.url)).size;
     ok(`music-${t}.mp3 is a ~60s track`, size > 800 * 1024); // 61s @ 128kbps ~ 977KB
   }
@@ -251,4 +252,72 @@ fresh();
   ok('sfx: a random peaking EQ and the layers on every strike', sfxSrc.includes("eq.type = 'peaking'") && sfxSrc.includes('planVariation(A.variation?.[name])')
     && sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,'));
   ok('coin jingle 3 dB quieter (0.110)', Math.abs(A.clips.loot.gainDb - 0.9) < 1e-9);
+}
+
+// T77: 0.114 — the dark ambient score: five exact loops (tools/gen-music.py)
+// that restart every loopS over an appended tail with an equal-gain
+// crossfade; picked against the classic beds in the VOLUME panel.
+{
+  const M = DATA.audio.music;
+  const music = await import('../../src/audio/music.js');
+  const am = await import('../../src/audio/audioMath.js');
+  const scenes = ['title', 'combat', 'boss', 'shrine', 'end'];
+  ok('two scores, the new one by default', Object.keys(M.scores).join() === 'dark,classic' && M.score === 'dark'
+    && scenes.every((n) => M.scores.dark.tracks[n] && M.scores.classic.tracks[n]));
+  const kbps = 128;
+  const bad = scenes.filter((n) => {
+    const b = M.scores.dark.tracks[n];
+    const secs = statSync(b.file).size * 8 / (kbps * 1000);
+    return !/-v2\.mp3$/.test(b.file) || !(b.loopS >= 60) || b.tailS !== 2 || Math.abs(secs - (b.loopS + b.tailS)) > 0.6 || Math.abs(b.gainDb) > 4;
+  });
+  ok('new beds: exact loops + a 2s tail, file length matches loopS + tailS, level trims small', bad.length === 0, bad.join());
+  const fake = { getChannelData: () => new Float32Array(44100), sampleRate: 44100 };
+  const exact = music.loopPlan({ file: 'x', loopS: 60, tailS: 2 }, fake);
+  ok('exact loop: one section loopS + tailS, crossfade = tail, equal gain', exact.sections.length === 1 && exact.sections[0].start === 0 && exact.sections[0].end === 62
+    && exact.opts.crossfade === 2 && exact.opts.linear === true);
+  const cls = music.loopPlan({ file: 'y' }, fake, 1.2);
+  ok('classic bed: its sections, equal-power crossfade', Array.isArray(cls.sections) && cls.opts.crossfade === 1.2 && !cls.opts.linear);
+  const lin = am.fadeCurve(32, false, true), linOut = am.fadeCurve(32, true, true);
+  ok('linear crossfade sums to exactly 1 (same audio in phase: no +3 dB bump)', lin.every((v, i) => Math.abs(v + linOut[i] - 1) < 1e-6)
+    && Math.abs(am.fadeCurve(32)[16] ** 2 + am.fadeCurve(32, true)[16] ** 2 - 1) < 0.01);
+  const { createLoop } = await import('../../src/audio/musicLoop.js');
+  const starts = [], curves = [];
+  const param = () => ({ setValueAtTime() {}, setValueCurveAtTime(c, t, d) { curves.push([c[0], c[c.length - 1], c[16], t, d]); } });
+  const fctx = {
+    createGain: () => ({ gain: param(), connect() {}, disconnect() {} }),
+    createBufferSource: () => ({ connect() {}, start(at, off, dur) { starts.push([at, off, dur]); }, stop() {} }),
+  };
+  createLoop(fctx, {}, {}, exact.sections, 3, { ...exact.opts, ahead: 2 });
+  ok('new beds restart every loopS from the top; the beat keeps its place', starts.map((x) => x.join()).join(' ') === '3,0,62 63,0,62 123,0,62');
+  ok('...crossfading linearly over the 2s tail', curves.some(([a, z, m, t, d]) => a === 0 && z === 1 && Math.abs(m - 16 / 31) < 1e-6 && t === 63 && d === 2)
+    && curves.some(([a, z, m, t, d]) => a === 1 && z === 0 && t === 63 && d === 2));
+  ok('trims applied when a bed fades in', readFileSync('src/audio/music.js', 'utf8').includes('dbToGain(b.gainDb ?? 0)'));
+
+  localStorage.removeItem('castle-music-score');
+  ok('default score until the player picks', music.scoreId() === 'dark');
+  ok('switching scores persists in this browser; unknown ids are ignored', music.setScore('classic') === 'classic' && music.scoreId() === 'classic'
+    && localStorage.getItem('castle-music-score') === 'classic' && music.setScore('nope') === 'classic');
+  music.play('combat'); music.play('nope');
+  ok('play() still a safe no-op without Web Audio', true);
+
+  // the Score row in the VOLUME panel
+  const { volumeToggle } = await import('../../src/ui/volumePanel.js');
+  const realBody = globalThis.document.body;
+  const body = new El('body');
+  globalThis.document.body = body;
+  const vt = volumeToggle();
+  vt.listeners.click[0]();
+  const panel = body.children.find((c) => c.className === 'volume-panel');
+  const btns = [];
+  panel?.walk((e) => { if ((e.className || '').split(' ').includes('score-btn')) btns.push(e); });
+  ok('VOLUME panel: a Score row with New / Classic, the current one lit', btns.length === 2 && btns[0].textContent === 'New' && btns[1].textContent === 'Classic'
+    && btns[1].className.includes('on') && !btns[0].className.includes('on'));
+  btns[0].listeners.click[0]();
+  ok('picking New switches the score and the lit button', music.scoreId() === 'dark' && btns[0].classList.contains('on') && !btns[1].classList.contains('on')
+    && localStorage.getItem('castle-music-score') === 'dark');
+  vt.listeners.click[0]();
+  globalThis.document.body = realBody;
+  localStorage.removeItem('castle-music-score');
+  ok('score generator ships with the game\'s tools', readFileSync('tools/gen-music.py', 'utf8').includes('TAIL_S = 2.0')
+    && readFileSync('tools/music/mix.py', 'utf8').includes('def _fold(self, x):'));
 }
