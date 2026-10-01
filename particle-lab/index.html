@@ -82,7 +82,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <header>
     <div class="eyebrow">Castle of the Crimson Moon &middot; combat effects</div>
     <h1>Particle Lab</h1>
-    <p class="lede">Every stage fires the same hits at the same moment. Up top: today's look beside the mix picked so far, with Ink &amp; Gore for blood, Spark &amp; Streak for bone, and a yellower, fiery Spark &amp; Streak for embers. The wraith is still open, so four spirit options follow, each of which can be dropped into the mix. The three original reference looks are kept at the bottom.
+    <p class="lede">Every stage fires the same hits at the same moment. Up top: the old dots beside the mix the game ships since 0.128 — Ink &amp; Gore for blood, Spark &amp; Streak for bone and the wraith, and a yellower, fiery Spark &amp; Streak for embers. Four alternative spirit looks follow, each of which can be tried in the mix. The three original reference looks are kept at the bottom.
       <small>These are recreations of each game's look made in our engine, on our own room art and portraits. They are not footage from those games.</small></p>
   </header>
 
@@ -105,20 +105,20 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <h2 class="sec">Your picks</h2>
   <div class="wall">
     <figure data-style="current">
-      <div class="stage"><div class="tag">Today &middot; <b>0.126</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <div class="stage"><div class="tag">Before &middot; <b>0.127</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
       <figcaption>
-        <h2>Current<span>what ships now</span></h2>
+        <h2>Before 0.128<span>the old dots</span></h2>
         <p>Small round dots per material: red droplets with gravity, grey bone dust, rising embers, drifting wisps. Every particle is a plain circle that fades out.</p>
         <dl><dt>Reads as</dt><dd>Clean, but generic. At card size the dots look like confetti, and nothing tells a crit apart from a hit except the count.</dd></dl>
       </figcaption>
     </figure>
 
     <figure data-style="mix">
-      <div class="stage"><div class="tag">Mix &middot; <b id="mix-tag">wraith: today's wisps</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
+      <div class="stage"><div class="tag">Mix &middot; <b id="mix-tag">wraith: spark &amp; streak</b></div><div class="card"><img alt=""></div><canvas></canvas></div>
       <figcaption>
-        <h2>Chosen mix<span>per material</span></h2>
-        <p>Blood uses Ink &amp; Gore. Bone uses Spark &amp; Streak. Embers use Spark &amp; Streak on a fire ramp: yellow-white cores, amber tails, sparks that rise, and a few cinders that float up after the hit. The wraith uses whichever option below is set to "Use in mix".</p>
-        <dl><dt>Next</dt><dd>Once the wraith is settled, this mix is what gets ported into the game.</dd></dl>
+        <h2>Shipped mix<span>in the game since 0.128</span></h2>
+        <p>Blood uses Ink &amp; Gore. Bone uses Spark &amp; Streak. Embers use Spark &amp; Streak on a fire ramp: yellow-white cores, amber tails, sparks that rise, and a few cinders that float up after the hit. The wraith ships with Spark &amp; Streak too; "Use in mix" on an option below tries it in its place.</p>
+        <dl><dt>Game</dt><dd>src/ui/particles.js; this page is a copy for experiments, so keep the two in step when a look changes.</dd></dl>
       </figcaption>
     </figure>
   </div>
@@ -215,7 +215,7 @@ const PAL = {
 const R = Math.random, rr = (a, b) => a + R() * (b - a);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let material = 'blood';
-let mixWraith = 'current'; // which wraith option the mix uses ("Use in mix")
+let mixWraith = 'spark'; // which look the mix's wraith uses: the shipped Spark & Streak, or an option's "Use in mix"
 
 // ---------- the four styles: spawn(hit) -> particles; each particle draws itself ----------
 const STYLES = {
@@ -496,9 +496,9 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 document.querySelectorAll('#mat button').forEach((b) => b.addEventListener('click', () => setMaterial(b.dataset.mat)));
-const WRAITH_NAMES = { current: "today's wisps", shreds: 'soul shreds', ecto: 'ectoplasm', void: 'void smoke', coldflame: 'spirit flame' };
+const WRAITH_NAMES = { spark: 'spark & streak', current: "the old wisps", shreds: 'soul shreds', ecto: 'ectoplasm', void: 'void smoke', coldflame: 'spirit flame' };
 document.querySelectorAll('.use').forEach((b) => b.addEventListener('click', () => {
-  mixWraith = mixWraith === b.dataset.use ? 'current' : b.dataset.use; // click again to go back to today's wisps
+  mixWraith = mixWraith === b.dataset.use ? 'spark' : b.dataset.use; // click again: back to the shipped look
   document.querySelectorAll('.use').forEach((x) => { const on = x.dataset.use === mixWraith; x.setAttribute('aria-pressed', String(on)); x.textContent = on ? 'In the mix' : 'Use in mix'; });
   document.getElementById('mix-tag').textContent = `wraith: ${WRAITH_NAMES[mixWraith]}`;
   setMaterial('wisps'); fire('hit');

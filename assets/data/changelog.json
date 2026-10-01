@@ -1,4 +1,7 @@
 {
+  "0.136": [
+    "Under the hood: a review pass — a few rare bugs fixed (the benchmark now plays exactly the same fight on every machine, and can no longer cancel a descent that was still loading)."
+  ],
   "0.135": [
     "Testing tools: the benchmark now reads a battery-saver 30 fps cap correctly and records hitches instead of skipping them."
   ],

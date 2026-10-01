@@ -12,7 +12,7 @@
 // instead just means the question comes back next visit.
 
 import { el } from '../core/dom.js';
-import { go } from '../core/scene.js';
+import { go, currentScene } from '../core/scene.js';
 import { openDialog, anyDialogOpen } from './dialog.js';
 import { confirmPrompt } from './confirmPrompt.js';
 import { shareStats } from '../meta/telemetry.js';
@@ -49,7 +49,7 @@ export function maybeAskBenchmark() {
   if (asking || !benchmarkDue(getProfile())) return false;
   if (anyDialogOpen()) return 'wait';
   asking = true;
-  const start = el('button', { class: 'primary active', key: 'c', proceed: true, onclick: () => { dlg.close(); go('benchmark', { returnTo: 'hub' }); } }, 'Continue');
+  const start = el('button', { class: 'primary active', key: 'c', proceed: true, onclick: () => { dlg.close(); if (!currentScene()?.inRun) go('benchmark', { returnTo: 'hub' }); } }, 'Continue'); // never out of a run
   const dlg = openDialog({
     label: 'Benchmark', proceed: start, onClose: () => { asking = false; },
     children: [

@@ -140,7 +140,7 @@ fresh();
   const css = readFileSync('styles.css', 'utf8');
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
-  ok('dungeon sets --n on the battle line', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('--n:${enemies.length}'));
+  ok('the battle line carries --n (ui/battleRoom.js, shared by dungeon and benchmark)', readFileSync('src/ui/battleRoom.js', 'utf8').includes('--n:${enemies.length}') && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('mountBattle(run, combat') && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('mountBattle(run, combat'));
 }
 
 // T41: 0.079 — 'active' pulse on Push Deeper after a won fight, the death
@@ -313,7 +313,7 @@ fresh();
   const auraKf = css.slice(i, css.indexOf('} }', i) + 3); // one-line block
   ok('aura animates only opacity/scale', auraKf.includes('opacity') && auraKf.includes('scale') && !auraKf.includes('filter') && !auraKf.includes('transform'));
   ok('potion is an event (aura, bar flare, sparkles)', readFileSync('src/ui/combatFx.js', 'utf8').includes("aura.className = 'heal-aura'")
-    && css.includes('.heal-aura {') && readFileSync('src/ui/particles.js', 'utf8').includes("if (material === 'heal') return heal("));
+    && css.includes('.heal-aura {') && readFileSync('src/ui/particleLooks.js', 'utf8').includes("if (material === 'heal') return heal("));
   const { potionLevel } = await import('../../src/ui/scenes/hubScene.js');
   ok('Great Hall potions: green full, red low',
     potionLevel({ potions: 4, potionCap: 4 }) === 'potions-full' && potionLevel({ potions: 1, potionCap: 4 }) === 'potions-low'
@@ -628,4 +628,22 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const add = src.slice(src.indexOf('function add('), src.indexOf('function drawOne('));
   ok('splats drawn individually, under the flying ink, never batched', !add.includes("case 'splat'")
     && /case 'splat':\s+c\.globalAlpha = 0\.85 \* k;/.test(src) && src.includes("if (!pass) for (const p of floor) grow(p, drawOne("));
+}
+// T97: 0.136 review — the benchmark's seeded Math.random reaches the
+// particles (they captured the real one at load, so the "same fight on
+// every machine" drew different particles), and its ?debug crit toggles
+// can't change the fight.
+{
+  const { spawnParticles } = await import('../../src/ui/particles.js');
+  const real = Math.random;
+  const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  Math.random = seeded(42); const a = JSON.stringify(spawnParticles('dust', 0, 0, { kind: 'crit' }));
+  Math.random = seeded(42); const b = JSON.stringify(spawnParticles('dust', 0, 0, { kind: 'crit' }));
+  Math.random = real;
+  ok('particles follow a seeded Math.random', a === b);
+  const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
+  ok('benchmark: crit toggles off while it runs, every debug flag restored after',
+    bs.includes('forceCrit: false, forceMegaCrit: false') && bs.includes('Object.assign(DEBUG, debugWas);'));
+  const hub = readFileSync('src/ui/scenes/hubScene.js', 'utf8');
+  ok('no benchmark ask once a descent has started (it can wait for the art)', hub.includes('leaving = true;') && hub.includes('!leaving && maybeAskBenchmark()'));
 }

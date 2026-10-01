@@ -236,7 +236,7 @@ fresh();
     && ['rat', 'skeleton', 'ghoul', 'wraith'].every((id) => PHASES[1].enemies.includes(id)));
   const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
   ok('benchmark: seeded and invulnerable while it runs, everything restored after; quality ladder held',
-    bs.includes('Math.random = seeded(') && bs.includes('Math.random = realRandom;') && bs.includes('DEBUG.invulnerable = wasInvulnerable;')
+    bs.includes('Math.random = seeded(') && bs.includes('Math.random = realRandom;') && bs.includes('Object.assign(DEBUG, debugWas);')
     && bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
   const { recordBenchmark, BENCH_MAX } = await import('../../src/meta/profile.js');
   const histBefore = getProfile().history.length;

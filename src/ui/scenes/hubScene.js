@@ -50,6 +50,7 @@ export function potionsLow(p) {
 }
 
 export function hubScene() {
+  let leaving = false;
   const scene = {
     enter(root) {
       play('title');
@@ -57,7 +58,9 @@ export function hubScene() {
       render(root);
       // 0.133: the one-time benchmark request, once the hall has faded in;
       // 0.134: never over another dialog — it waits its turn
-      const ask = () => { if (currentScene() === scene && maybeAskBenchmark() === 'wait') setTimeout(ask, 1000); };
+      // 0.136: …and never once a descent has started ("Gathering shadows…"
+      // waits for the art; the run would start under the prompt and be lost)
+      const ask = () => { if (currentScene() === scene && !leaving && maybeAskBenchmark() === 'wait') setTimeout(ask, 1000); };
       setTimeout(ask, 1200);
     },
   };
@@ -82,6 +85,7 @@ export function hubScene() {
   }
 
   async function enterDungeon(btn) {
+    leaving = true; // no benchmark ask once a descent is under way (it may wait for the art)
     if (!restProgress().ready) {
       btn.setAttribute('disabled', '');
       const label = () => { const q = restProgress(); btn.textContent = `Gathering shadows… ${q.total ? Math.round((100 * q.done) / q.total) : 0}%`; };

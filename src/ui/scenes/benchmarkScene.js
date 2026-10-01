@@ -21,7 +21,7 @@ import { DEBUG } from '../../shared/debug.js';
 import { DATA } from '../../shared/data.js';
 import { createPlayback } from '../combatPlayback.js';
 import { queueEvents } from '../combatQueue.js';
-import { createPlayerUnit, createEnemyUnit } from '../battleLine.js';
+import { mountBattle } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { combatSfx } from '../combatSfx.js';
 import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
@@ -45,7 +45,7 @@ const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147
 // returnTo: the scene to go back to ('title' from the ?debug button; the
 // Great Hall's prompt passes 'hub', 0.133).
 export function benchmarkScene({ returnTo = 'title' } = {}) {
-  const realRandom = Math.random, wasInvulnerable = DEBUG.invulnerable;
+  const realRandom = Math.random, debugWas = { ...DEBUG }; // restored as it ends
   let run = null, combat = null, ui = null, root = null, logEl = null;
   let phase = -1, rec = null, endsAt = 0, last = 0, done = false, turn = 0, botTimer = null;
   const results = {};
@@ -68,7 +68,8 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
       root = r;
       closeAllDialogs(); // 0.134: nothing left over from the last scene may stay up (or act) over the fight
       Math.random = seeded(20261001);
-      DEBUG.invulnerable = true;
+      // the knight can't die; the ?debug crit toggles must not change the fight (0.136)
+      Object.assign(DEBUG, { invulnerable: true, forceCrit: false, forceMegaCrit: false });
       holdQuality(true); // measure at this machine's current quality; never step it down here
       run = createRun();
       Object.assign(run.stats, { dmg: 12, crit: 0.3, armor: 30, maxHp: 400 });
@@ -136,27 +137,18 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     combat = createCombat(run, room);
     playback.reset();
     const none = () => {}; // the player's buttons do nothing here: the bot plays
-    const player = createPlayerUnit(run, { onHeavy: none, onPotion: none });
-    const enemies = combat.enemies.map((e, i) => createEnemyUnit(e, i, { onAttack: none, onGone: none }));
+    const battle = mountBattle(run, combat, { onHeavy: none, onPotion: none, onAttack: none }); // the dungeon's own battle line
     const title = el('h1', { class: 'room-title' }, 'Benchmark');
     const layer = el('div', { class: 'fx-layer' });
     root.innerHTML = '';
-    root.append(title,
-      el('div', { class: 'battle-line', style: `--n:${enemies.length}` }, player.el, el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el))),
-      layer, logEl);
-    ui = { player, enemies, layer, title };
+    root.append(title, battle.line, layer, logEl);
+    ui = { battle, player: battle.player, enemies: battle.enemies, layer, title };
     playFx({ kind: 'enter' }, fxCtx);
     update();
   }
 
   function update() {
-    if (!ui) return;
-    const printing = playback.isPrinting();
-    ui.player.update({ hp: playback.playerHpOf(run.hp), printing, heavyReady: false, heavyCd: 0, dead: false });
-    ui.enemies.forEach((u, i) => {
-      const e = combat.enemies[i];
-      u.update({ hp: playback.hpOf(i, e.hp), dead: playback.deadOf(i, e.hp), printing, combatOver: combat.over, meter: null });
-    });
+    ui?.battle.update(playback);
   }
 
   function finish() {
@@ -164,7 +156,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     clearTimeout(botTimer);
     playback.reset();
     Math.random = realRandom;
-    DEBUG.invulnerable = wasInvulnerable;
+    Object.assign(DEBUG, debugWas);
     holdQuality(false);
     const result = {
       at: Date.now(), build: DATA.build?.version ?? '?',

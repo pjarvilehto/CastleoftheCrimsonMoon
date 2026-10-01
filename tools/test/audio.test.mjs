@@ -199,7 +199,10 @@ fresh();
   const lo = am.planVariation(A.variation.attack, det);
   ok('variation: lowest pitch, lowest EQ band, layers by chance', Math.abs(lo.rate - A.variation.attack.rate[0]) < 1e-9 && Math.abs(lo.eq.freq - A.variation.attack.eq.lo) < 1e-9
     && lo.eq.gain === -A.variation.attack.eq.db && lo.layers.length >= 1 && lo.layers[0].name === 'tick');
-  const plans = Array.from({ length: 40 }, () => am.planVariation(A.variation.attack));
+  // seeded (0.136): 40 independent random plans could collide by chance — the
+  // check flaked about one run in twenty
+  let seed = 12345; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const plans = Array.from({ length: 40 }, () => am.planVariation(A.variation.attack, rnd));
   const sig = (p) => `${p.rate.toFixed(2)}|${Math.round(p.eq.freq)}|${p.layers.map((l) => l.name).join('+')}`;
   ok('variation: 40 hits, 40 different sounds; layers sometimes, not always', new Set(plans.map(sig)).size === 40
     && plans.some((p) => p.layers.length === 0) && plans.some((p) => p.layers.length >= 2)

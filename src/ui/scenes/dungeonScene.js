@@ -25,7 +25,7 @@ import { combatSfx } from '../combatSfx.js';
 import { renderShrineRoom } from '../shrineUI.js';
 import { queueEvents } from '../combatQueue.js';
 import { createBuffBar, updateBuffs } from '../buffs.js';
-import { createPlayerUnit, createEnemyUnit } from '../battleLine.js';
+import { mountBattle } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
@@ -113,7 +113,7 @@ export function dungeonScene() {
   }
 
   function buildCombat(root, room) {
-    const player = createPlayerUnit(run, {
+    const battle = mountBattle(run, combat, {
       // Heavy goes to the front: a summon standing before the boss (0.092).
       onHeavy: () => { if (canAct()) { useHeavy(combat); act(() => playerAttack(combat, heavyTarget(combat), true)); } },
       onPotion: () => {
@@ -128,10 +128,8 @@ export function dungeonScene() {
         }
         updateCombat();
       },
+      onAttack: (i) => act(() => playerAttack(combat, i, false)),
     });
-    const enemies = combat.enemies.map((e, i) => enemyUnit(i));
-    const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
-    const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}` }, player.el, row);
     // Death has no corner button — the fatal blow triggers the blood-red
     // flash and the centered YOU DIED dialog (openDeathModal, 0.067).
     const proceed = el('div', { class: 'combat-proceed' });
@@ -139,9 +137,7 @@ export function dungeonScene() {
     root.innerHTML = '';
     root.append(
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
-      // --n drives the card size (styles.css --card-h): crowded rooms
-      // shrink their cards to fit the width instead of wrapping (0.078).
-      line,
+      battle.line, // ui/battleRoom.js
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
@@ -152,53 +148,13 @@ export function dungeonScene() {
     logEl.scrollTop = logEl.scrollHeight;
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
-    ui = { room, root, player, enemies, row, line, proceed, layer };
+    ui = { room, root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };
     playFx({ kind: 'enter' }, fxCtx);
   }
 
-  // (Function declarations: consts below the factory's return are TDZ.)
-  function enemyUnit(i) {
-    return createEnemyUnit(combat.enemies[i], i, {
-      onAttack: () => act(() => playerAttack(combat, i, false)),
-      onGone: () => fitRow(), // a fallen summon crumbles away, freeing its slot
-    });
-  }
-  function fitRow() {
-    ui?.line.setAttribute('style', `--n:${Math.max(1, ui.row.children.length)}`);
-  }
-
-  // Summons join mid-fight (0.092): each card appears as its summon line
-  // prints (the playback view says how many enemies exist yet), in front
-  // of — left of — the boss.
-  function syncUnits() {
-    const n = playback.enemyCount(combat.enemies.length);
-    if (ui.enemies.length >= n) return;
-    const boss = ui.enemies.find((u) => !u.summoned);
-    while (ui.enemies.length < n) {
-      const u = enemyUnit(ui.enemies.length);
-      ui.enemies.push(u);
-      ui.row.insertBefore(u.el, boss?.el ?? null);
-    }
-    fitRow();
-  }
-
   function updateCombat() {
+    ui.battle.update(playback, { heavyReady: canHeavy(combat), dead: combat.over && !combat.victory });
     const printing = playback.isPrinting();
-    syncUnits();
-    ui.player.update({
-      hp: playback.playerHpOf(run.hp),
-      printing,
-      heavyReady: canHeavy(combat) && !printing && !combat.over,
-      heavyCd: combat.heavyCd,
-      dead: combat.over && !combat.victory,
-    });
-    ui.enemies.forEach((u, i) => {
-      const e = combat.enemies[i];
-      u.update({
-        hp: playback.hpOf(i, e.hp), dead: playback.deadOf(i, e.hp), printing, combatOver: combat.over,
-        meter: playback.meterOf(i, e.summonMeter ?? null),
-      });
-    });
     const showProceed = combat.over && !printing && combat.victory;
     if (showProceed && !ui.proceed.children.length) {
       ui.proceed.append(
