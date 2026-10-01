@@ -3,12 +3,9 @@
 // FOREGROUND, BG VIEW (3D / FLAT / DEPTH), NEXT BG, BG TUNING (0.083/0.084)
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), and PARTICLE LAB (the particle
 // look experiments, particle-lab/, in a new tab), BENCHMARK (0.131,
-// ui/benchmark.js), DUNGEON LAB (0.139, the 3D dungeon prototype,
-// dungeon-lab/, in a new tab), 3D CORRIDORS (0.150, ui/corridors.js).
-// Players never see them.
+// ui/benchmark.js). Players never see them.
 
 import { setBackground } from '../core/scene.js';
-import { corridorsToggle } from './corridors.js';
 import { el } from '../core/dom.js';
 import { isBg3dActive, bgView, setBgView } from '../core/bg3d.js';
 import { DATA } from '../shared/data.js';
@@ -47,10 +44,8 @@ export function debugToggles() {
       next.textContent = `NEXT BG (${i + 1}/${all.length}: ${all[i].replace(/^castle_|\.jpg$/g, '')})`;
     },
   }, 'NEXT BG');
-  // The labs open in a new tab, so the game (and a run in progress) stays as it is.
-  const tab = (label, cls, path) => el('button', { class: `debug-toggle ${cls}`, onclick: () => globalThis.open?.(path, '_blank', 'noopener') }, label);
+  // A new tab, so the game (and a run in progress) stays as it is.
+  const lab = el('button', { class: 'debug-toggle particle-lab-link', onclick: () => globalThis.open?.('particle-lab/', '_blank', 'noopener') }, 'PARTICLE LAB');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'),
-    tab('PARTICLE LAB', 'particle-lab-link', 'particle-lab/'), benchmarkButton(), tab('DUNGEON LAB', 'dungeon-lab-link', 'dungeon-lab/'),
-    corridorsToggle()]; // (0.150: the 3D corridors between rooms, ui/corridors.js)
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, benchmarkButton()];
 }

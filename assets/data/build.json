@@ -1,5 +1,5 @@
 {
-  "version": "0.151",
+  "version": "0.152",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -21,43 +21,6 @@
     "src/core/hotkeys.js",
     "src/core/perfMonitor.js",
     "src/core/scene.js",
-    "src/explore/aoBake.js",
-    "src/explore/atmosphere.js",
-    "src/explore/backdrop.js",
-    "src/explore/billboard.js",
-    "src/explore/bloom.js",
-    "src/explore/build.js",
-    "src/explore/corridorView.js",
-    "src/explore/corridors.js",
-    "src/explore/decor.js",
-    "src/explore/encounterLayer.js",
-    "src/explore/encounters.js",
-    "src/explore/fight.js",
-    "src/explore/furnish.js",
-    "src/explore/fxpass.js",
-    "src/explore/geom.js",
-    "src/explore/grid.js",
-    "src/explore/lab.js",
-    "src/explore/lightField.js",
-    "src/explore/lights.js",
-    "src/explore/lut.js",
-    "src/explore/mapgen.js",
-    "src/explore/minimap.js",
-    "src/explore/mist.js",
-    "src/explore/player.js",
-    "src/explore/post.js",
-    "src/explore/propMaterials.js",
-    "src/explore/propTextures.js",
-    "src/explore/quality.js",
-    "src/explore/rooms.js",
-    "src/explore/runFloor.js",
-    "src/explore/ssao.js",
-    "src/explore/stairs.js",
-    "src/explore/textures.js",
-    "src/explore/themes.js",
-    "src/explore/vault.js",
-    "src/explore/walkPath.js",
-    "src/explore/world.js",
     "src/main.js",
     "src/meta/equipment.js",
     "src/meta/history.js",
@@ -94,7 +57,6 @@
     "src/ui/combatSfx.js",
     "src/ui/confirmPrompt.js",
     "src/ui/cornerToggles.js",
-    "src/ui/corridors.js",
     "src/ui/deathModal.js",
     "src/ui/debugToggles.js",
     "src/ui/dialog.js",
@@ -117,6 +79,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.152": [
+      "Removed the 3D dungeon experiments (the Dungeon Lab and the 3D corridors test mode) — the game is back to its painted rooms"
+    ],
     "0.151": [
       "Test mode (?debug, 3D CORRIDORS): the walk keeps its pace — pressing Space for Push Deeper no longer hurries it; a fresh Space during the walk still does",
       "Test mode: XP, coins, the log with its loot and the boons stay on screen during the walk",
@@ -163,9 +128,6 @@
     ],
     "0.138": [
       "Play stats: help text tidy-up."
-    ],
-    "0.137": [
-      "Play stats: the owner can give each player a tester name, shown before the name they play under."
     ]
   }
 }

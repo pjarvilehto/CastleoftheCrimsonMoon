@@ -33,11 +33,6 @@ import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
-import { pauseBg3d } from '../../core/bg3d.js';
-import { corridorsOn, corridorView } from '../corridors.js';
-
-const WALK_FADE_MS = 900; // the room's parts fading as a walk starts (styles.css #app.corridor > *)
-const later = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function dungeonScene() {
   const run = createRun();
@@ -50,8 +45,6 @@ export function dungeonScene() {
   let buffBar = null;    // bottom-left shrine blessing bar
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
-  let corridors = false; // 0.150: this run walks the 3D corridors between rooms (?debug, ui/corridors.js)
-  let moving = false;    // …and is on its way: no second Push Deeper
 
   const playback = createPlayback({
     logEl: () => logEl,
@@ -76,7 +69,6 @@ export function dungeonScene() {
       startPerf(); // the run's frame rate, for the play stats (0.130)
       logEl = el('div', { id: 'combat-log' });
       buffBar = createBuffBar();
-      corridors = corridorsOn();
       // First room enters inline — show()'s own transition is already
       // fading the windows, a nested transitionTo would deadlock on guard.
       nextRoom(root, true);
@@ -84,98 +76,25 @@ export function dungeonScene() {
   };
 
   function nextRoom(root, instant = false) {
-    if (corridors) { walkOn(root); return; }
     const setup = () => {
       const firstRoom = run.roomNumber === 0;
-      enterRoom(root, enterNextRoom(run), firstRoom);
+      const room = enterNextRoom(run);
+      play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
+      combat = createCombat(run, room);
+      deathShown = false;
+      ui = null; // the new room builds its own battle line
+      playback.reset();
+      setBackground(room.background);
+      roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
+      shownCoins = run.coins; // reset counters per room (no tick-up anim)
+      shownXp = run.xp;
+      logLine(logEl, firstRoom
+        ? `You enter the castle: ${room.name} (room ${room.number}).`
+        : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
+      render(root);
     };
     if (instant) setup();
     else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
-  }
-
-  // A room just entered (enterNextRoom): its music, fight, painting and UI.
-  function enterRoom(root, room, firstRoom) {
-    play(room.kind === 'boss' ? 'boss' : room.kind === 'shrine' ? 'shrine' : 'combat');
-    combat = createCombat(run, room);
-    deathShown = false;
-    ui = null; // the new room builds its own battle line
-    playback.reset();
-    setBackground(room.background);
-    roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
-    shownCoins = run.coins; // reset counters per room (no tick-up anim)
-    shownXp = run.xp;
-    logLine(logEl, firstRoom
-      ? `You enter the castle: ${room.name} (room ${room.number}).`
-      : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
-    render(root);
-  }
-
-  // 0.150 (3D CORRIDORS, ui/corridors.js): to the next room through the 3D
-  // dungeon. The windows fade, the dungeon fades in over the painting and
-  // the knight walks there on his own (explore/corridorView.js); where he
-  // stops, the room's painting — the one for the 3D room's theme — and its
-  // fight fade in as the dungeon fades out. The room itself is rolled as
-  // ever (enterNextRoom); only its look comes from the 3D room.
-  async function walkOn(root) {
-    if (moving) return;
-    moving = true;
-    if (ui) ui.proceed.innerHTML = ''; // (Push Deeper / Retreat go at once)
-    // the outgoing room stays in the DOM while it fades: none of its
-    // buttons may fire (hotkeys.js skips disabled ones; 0.077's re-bank)
-    root.querySelectorAll?.('button').forEach((b) => { b.disabled = true; });
-    // In order (0.151): the room's own parts fade first (title, cards,
-    // buttons) — the run's HUD (XP and coins, the log with its loot lines,
-    // the boons) stays all the way (styles.css #app.walking) — and only
-    // then does the dungeon fade in over the painting
-    root.classList.add('corridor');
-    root.classList.add('walking');
-    const firstRoom = run.roomNumber === 0;
-    const [view] = await Promise.all([corridorView(), firstRoom ? null : later(WALK_FADE_MS)]);
-    if (!view) { // no 3D here: the classic way
-      corridors = false; moving = false;
-      root.classList.remove('corridor'); root.classList.remove('walking');
-      nextRoom(root, firstRoom);
-      return;
-    }
-    walkHud(root);
-    const room = enterNextRoom(run);
-    sfx('whoosh');
-    play('shrine'); // (the quiet bed while walking)
-    if (firstRoom) logLine(logEl, 'You leave the Great Hall and descend into the dark...', 'move');
-    const look = await view.walkTo(run, room, { onCovered: () => pauseBg3d(true) });
-    if (look.background) {
-      room.background = look.background;
-      room.name = DATA.backgrounds.roomNames?.[look.background] ?? room.name;
-    }
-    // ...and back: the dungeon fades out to the room's painting, fully, and
-    // only then do the room's parts (the knight, the enemies) fade in
-    await setBackground(room.background, { instant: true });
-    pauseBg3d(false);
-    await view.reveal();
-    enterRoom(root, room, firstRoom); // (built while .walking: unseen, then faded in)
-    void root.offsetWidth;
-    root.classList.remove('walking');
-    moving = false;
-  }
-
-  // The walk's screen: only the HUD — XP and coins, the log (docked, as in
-  // combat; the shrine kept it in its panel) and the boons.
-  function walkHud(root) {
-    const fromPanel = logEl.className !== 'docked';
-    logEl.className = 'docked';
-    const parts = [resourcesHud(), logEl, buffBar];
-    root.innerHTML = '';
-    root.append(...parts);
-    logEl.scrollTop = logEl.scrollHeight;
-    updateBuffs(buffBar, run.buffs);
-    if (fromPanel) for (const n of parts) n.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' });
-  }
-
-  // bottom-left XP / COINS (the chips tick up to the run's real values)
-  function resourcesHud() {
-    return el('div', { class: 'resources' },
-      el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
-      el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))));
   }
 
   function render(root) {
@@ -219,7 +138,9 @@ export function dungeonScene() {
     root.append(
       el('h1', { class: 'room-title' }, room.isBoss ? room.name : `Room ${room.number} - ${room.name}`, recordTag()),
       battle.line, // ui/battleRoom.js
-      resourcesHud(),
+      el('div', { class: 'resources' },
+        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
+        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
       layer,
       logEl,
       proceed);
@@ -334,10 +255,6 @@ export function dungeonScene() {
   }
 
   function endRun(root, outcome) {
-    if (corridors) { // (the next run starts on a fresh floor)
-      corridorView().then((v) => v?.close()); pauseBg3d(false);
-      root?.classList.remove('corridor'); root?.classList.remove('walking');
-    }
     run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
     shareStats(settleRun(run, outcome)); // play stats (0.102)
     go('runEnd', run, outcome);

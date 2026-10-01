@@ -29,8 +29,7 @@
       function boot(version, modules) {
         var q = version ? '?v=' + encodeURIComponent(version) : '';
         if (q && modules && modules.length) {
-          // three.js (0.150): only the ?debug 3D corridors load it, from its own versioned folder
-          var map = { imports: { three: new URL('vendor/three-0.186.1/three.module.min.js', location.href).href } };
+          var map = { imports: {} };
           modules.forEach(function (m) {
             map.imports[new URL(m, location.href).href] = new URL(m + q, location.href).href;
           });

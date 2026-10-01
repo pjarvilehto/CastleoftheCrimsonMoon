@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~625 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~610 checks, under a second
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -46,13 +46,12 @@ src/
                         title; the rest of the art loads in the background
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally), bg
-                        crossfader (instant swaps: under the 3D), router:
-                        registerScene() / go(name, ...)
+                        crossfader, router: registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
                         crossfade, jolts/sways/flash lights, quality ladder,
-                        CSS fallback; gpuName(), holdQuality(), pauseBg3d()
+                        CSS fallback; gpuName(), holdQuality()
     bg3dGL.js  bg3dMath.js  bg3dTuning.js  bg3dQuality.js  bg3dFog.js
     bg3dPuffs.js  bg3dPuffGL.js  bg3dLights.js
                         its plumbing: shaders, pure math (tested in Node),
@@ -107,58 +106,19 @@ src/
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
-    corridors.js        ?debug 3D CORRIDORS (0.150): the toggle, and the one
-                        door into explore/ (dynamic import of corridorView)
-  explore/              the 3D dungeon (0.139; the Dungeon Lab, and since
-                        0.150 the game's ?debug 3D corridors via
-                        ui/corridors.js; three.js as `three`; it imports
-                        the game's combat, never its save)
-    grid.js             text map, collision, seeded random (pure)
-    mapgen.js           a floor from a seed: rooms, corridors, parts (pure)
-    minimap.js          the corner map of what the knight has seen
-    encounters.js       a floor's rooms -> the game's room numbers (pure)
-    encounterLayer.js  billboard.js  fight.js   enemies in the rooms, the
-                        turn-and-dim hand-off, the game's fight over the view
-    build.js  textures.js  the level from the map; canvas-painted surfaces
-    decor.js  mist.js   props (arches, pillars, chains, rubble, puddles,
-                        altar), ground mist
-    stairs.js           the way down: its glow, the walk into the dark
-    lights.js  quality.js   the light pool + shadows + flicker; fps ladder
-    lightField.js       every source baked into a light map the surfaces read
-    aoBake.js           the props' contact shadows, in vertex colours
-    fxpass.js  bloom.js  ssao.js  lut.js   the post stack (glow, contact
-                        shadows, the grade table) under the paint pass
-    atmosphere.js       dust, embers, smoke: GPU point clouds
-    backdrop.js         a fight's painted room (the game's depth renderer)
-                        faded in over the dungeon, and out again
-    themes.js           each room's theme and its clear way through (pure)
-    furnish.js  rooms.js  corridors.js  vault.js   dressing the rooms
-                        (one function per theme) and corridors; vaults
-    propTextures.js  propMaterials.js   painted prop textures, materials
-    geom.js             merging and world-size UVs
-    player.js           WASD + mouselook movement
-    post.js             the ink-and-paint post pass
-    world.js            the 3D world: renderer, lights, paint pass, quality,
-                        build(floor, depth), frame() — the lab's and the game's
-    runFloor.js  walkPath.js   a run's stretch as one floor; the knight's
-                        own way along the trail, smoothed (pure)
-    corridorView.js     the game's corridors: walk to a room, reveal, stairs
-    lab.js              wires the lab page: player, encounters, HUD, loop
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha) + card frames (PNG)
   audio/  fonts/
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog; explore.json = the Dungeon Lab's own
+                        changelog
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
 particle-lab/           standalone particle-look experiments (?debug button)
-dungeon-lab/            the 3D dungeon prototype page (?debug button)
-vendor/three-0.186.1/   three.js, minified (MIT; used by dungeon-lab/ only)
 tools/
   smoke-test.mjs  test/ the suite
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
@@ -200,7 +160,6 @@ primary button. While a dialog is open it owns the keyboard.
 | `D` / `B` | hub | Descend / Back |
 | `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
 | `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
-| `Space` / `Enter` / click | dungeon, ?debug 3D corridors | hurry the knight's walk to the next room |
 | `F` | dungeon | Accept Your Fate (death) |
 | `1` `2` `3` | shrine | Accept a boon |
 | `G` | run end | Return to the Great Hall |

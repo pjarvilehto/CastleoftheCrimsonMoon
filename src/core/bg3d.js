@@ -43,7 +43,6 @@ let monitor = false;
 let held = false;      // holdQuality(): the benchmark measures without stepping down (0.131)
 let firstFrame = null;
 let flashes = [];     // live flash lights: { t0, pos, color, strength, fade, life }
-let paused = false;   // pauseBg3d(): nothing drawn (the Dungeon Lab between fights, 0.148)
 
 // A big hit kicks the background camera (0.088). strength 1 = joltDeg.
 export function bgJolt(strength = 1) {
@@ -89,15 +88,6 @@ export function gpuName() {
 export const bgView = () => view;
 export function setBgView(v) { view = v; }
 
-// The Dungeon Lab (0.148) shows the paintings only behind its fights:
-// paused, nothing is drawn (the canvas keeps its last frame, unseen); on
-// resume the clock starts afresh, so the sway never jumps and the mist
-// rises again as at a handover.
-export function pauseBg3d(on) {
-  paused = !!on;
-  if (!paused) t0 = null;
-}
-
 // Returns true when the 3D renderer is running. allowSoftware: accept
 // software-rendered GL (debug/headless only — too slow for real players).
 export function initBg3d({ allowSoftware = false } = {}) {
@@ -140,17 +130,16 @@ export function initBg3d({ allowSoftware = false } = {}) {
 }
 
 // Background changed (scene.js onBackgroundChange). Loads async; only the
-// most recent request becomes visible. First one appears instantly, and
-// so does an `instant` one (0.148: swapped while nobody sees it).
-export async function showBackground3d(file, { instant = false } = {}) {
+// most recent request becomes visible. First one appears instantly.
+export async function showBackground3d(file) {
   if (!gl) return;
   wanted = file;
   let layer;
   try { layer = await loadLayer(file); } catch { return; } // flat CSS keeps showing
   if (!gl || wanted !== file) { if (layer) dropLayer(layer); return; }
-  layer.born = layers.length && !instant ? performance.now() : -Infinity; // first: no fade
+  layer.born = layers.length ? performance.now() : -Infinity; // first: no fade
   layers.push(layer);
-  while (layers.length > (instant ? 1 : 2)) dropLayer(layers.shift());
+  while (layers.length > 2) dropLayer(layers.shift());
 }
 
 async function loadLayer(file) {
@@ -184,7 +173,6 @@ function fillDepth(L) {
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
-  if (paused) return;
   jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
   sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
   flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);

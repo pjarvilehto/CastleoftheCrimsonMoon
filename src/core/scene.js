@@ -75,30 +75,25 @@ export function transitionTo(work, fadeOutMs = 1000) {
 }
 
 // Crossfade between the two stacked background layers. Same file = no-op.
-// First background ever: instant (the windows fade in over it), and so is
-// an `instant` swap (0.148: the Dungeon Lab, while the paintings are
-// hidden). Returns the listener's promise (bg3d: resolved once the new
-// painting is up).
-export function setBackground(file, { instant = false } = {}) {
+// First background ever: instant (the windows fade in over it).
+export function setBackground(file) {
   const a = document.getElementById('bg0');
   const b = document.getElementById('bg1');
   const url = `url("assets/bg/${file}")`;
-  if (activeBg && activeBg.dataset.file === file) return undefined;
+  if (activeBg && activeBg.dataset.file === file) return;
   const next = activeBg === a ? b : a;
   next.dataset.file = file;
-  if (!activeBg || instant) {
-    const both = [next, activeBg].filter(Boolean);
-    for (const l of both) l.style.transition = 'none';
+  if (!activeBg) {
+    next.style.transition = 'none';
     next.style.backgroundImage = url;
     next.style.opacity = '1';
-    if (activeBg) activeBg.style.opacity = '0';
     void next.offsetWidth;
-    for (const l of both) l.style.transition = '';
+    next.style.transition = '';
   } else {
     next.style.backgroundImage = url;
     next.style.opacity = '1';
     activeBg.style.opacity = '0';
   }
   activeBg = next;
-  return bgListener?.(file, { instant });
+  bgListener?.(file);
 }

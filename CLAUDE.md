@@ -22,8 +22,6 @@ before structural changes. This file is the rules and the per-system notes.
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
 - **Particle Lab:** `particle-lab/`, opened from the `?debug` corner column —
   a standalone page for trying particle looks (see "Effects").
-- **Dungeon Lab:** `dungeon-lab/` (0.139), also a `?debug` button — the 3D
-  dungeon-exploration prototype (see "3D dungeon prototype").
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -31,7 +29,7 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~625 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~610 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -196,8 +194,7 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, PARTICLE LAB,
-  BENCHMARK, DUNGEON LAB, 3D CORRIDORS) are in `ui/debugToggles.js`. No
-  pixel offsets.
+  BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
   there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
@@ -237,175 +234,11 @@ numbers mean — say so in the changelist. Reading results: a 30 Hz rate
 means the browser capped the page (macOS Low Power Mode, Chrome / Brave
 Energy Saver), not a slow machine.
 
-### 3D dungeon prototype (0.139)
-
-Grimrock-style exploration between combat rooms, prototyped apart from the
-game: `dungeon-lab/index.html` + `src/explore/`, tuning in
-`assets/data/explore.json` (not part of `DATA`; the lab fetches it itself).
-The page's `<base>` is the site root and it maps every module in
-`build.json` under `?v=` (it imports the game's combat, data, hotkeys and
-sound); a test keeps `src/explore/` away from the save and the play stats.
-three.js 0.186.1 is vendored, minified, in `vendor/three-0.186.1/` (MIT,
-licence alongside) and reached through the page's import map as `three`; a
-new three.js version = a new folder. The game reaches `src/explore/` only
-through `ui/corridors.js` (0.150, one dynamic import; a test checks it), so
-three.js loads only when the 3D corridors are used.
-- `grid.js` (pure, tested in Node): the text map ('#' wall, '.' floor, 'S'
-  start), circle-vs-cell collision that slides along walls, seeded random.
-- `mapgen.js` (0.140, pure; linear and half the size since 0.143, at the
-  owner's request): a floor from a seed (`explore.json gen`) — a chain of
-  rooms laid one after another along a winding path (`straightness`,
-  `linkMin..linkMax` cells of corridor between them), each joined only to
-  the next by an L corridor that touches no other room, up to `deadEnds`
-  short spurs; a floor where walking order differs from the chain (a fork
-  or shortcut) is redrawn. First room = start, then the `encounters` in
-  order with the shrine halfway, the boss (bossSize), and past it one
-  cell of stairs (0.144, `floor.stairs` with its `down` direction); marked
-  'E' / 'H' / 'B' / 'X' in the rows. Rooms are small (`roomMax` 3) so the
-  enemy plainly stands across the way. The lab: `?seed=N`,
-  the N key = next floor; `minimap.js` shows only what the knight has seen.
-- Encounters (0.141): floor n = the game's rooms (n-1)*8+1..n*8
-  (`encounters.js`: encounters nearest first, the boss chamber the boss
-  room; each room from `run/roomGen.js`). `encounterLayer.js` stands the
-  group's strongest enemy in the room (`billboard.js`: the portrait on an
-  upright card facing the knight, alpha-cut so it gets inked, its cropped
-  bottom torn ragged, a little `glow`, a red `light.lair` before the
-  nearest) — stepping in turns the knight to it, dims the view
-  (`paint.fightDim`) and plays the game's fight over it (`fight.js`, the
-  dungeon scene's parts: battle line, playback, effects, sounds); Onward
-  clears the room, a death Rise Again (depth 1, a fresh run). 0.144: the
-  shrine room opens the game's shrine (`renderShrineRoom`, priced as the
-  room after the encounter before it); past the boss the stairs (a pit
-  with steps in build.js; `stairs.js` = one pulsing light from below in
-  the NEXT tier's `glow`, and the walk down with the paint pass's `fade`
-  to black) lead to the next floor once the boss is down; Return (R, or
-  the button, whenever no fight or dialog is up) ends the visit with its
-  tally (To the Great Hall / Descend Again). One `run` object carries HP,
-  potions and loot through the visit and is never settled.
-- Look pass (0.142): rooms are `roomHeight` tall (a header wall over each
-  opening); `decor.js` adds arches at room entrances, pillars in rooms 4+
-  a side (`posts`, collided in `grid.js`), chains, rubble, glossy puddles
-  and the shrine's candle altar (one light in the torch pool), merged per
-  material; torches get a glow halo; `mist.js` is one drifting point cloud.
-  `explore.json tiers` = one look per depth (the last repeats): texture
-  palette, fog / hemisphere / mist colours and the paint pass's shadow
-  tint (`paint.setShadow`). Prop UVs come from world size (`geom.js
-  worldUV`). Keep the draw calls down (~80 a frame): merge, don't add meshes.
-- Light and rooms (0.145, the DD2-style polish): `lights.js` runs the
-  knight's torch and a pool of `light.pool` point lights over every light
-  source (wall torches, candles, braziers, hearths, windows, cauldrons:
-  entries with their own colour / power / reach), the nearest
-  `shadows.count` casting shadows (cube maps redrawn only when the pool
-  moves or every `everyFrames`; `shadowAll` marks the casters); post.js
-  adds `haze` — each pool light's in-scatter along the view ray, in
-  closed form. Rooms are themed (`themes.js`, pure: antechamber start,
-  sanctum shrine, throne boss, the rest by the tier's `themes` weights;
-  `path` = centre row/column + `floor.trail`, the corridor cells — keep
-  furniture off it, the suite checks; a bend can fall inside a room) and
-  furnished (`furnish.js` kit: pieces merged per material from
-  `propMaterials.js` / `propTextures.js`, light sources, collision
-  `boxes`; `rooms.js` = one function per theme, after the assets/bg
-  paintings; `vault.js` = the chapel / throne pointed vaults, light shafts
-  are cone beams with a view-facing fade). `corridors.js` dresses the
-  corridors (`explore.json corridor` chances). `quality.js`: under
-  `quality.minFps` for a while, shadows go, then resolution; `?hold`
-  keeps full quality (screenshots on software GL).
-- Light from afar (0.146): `lightField.js` bakes every source of a floor
-  into a light map over the plan (`field`: texels per cell, walls block
-  by line of sight, ~10 ms) that every lit material reads in its shader
-  (`patchMaterial`: indirect light from the texel just off the surface;
-  the billboards too). The pool's point lights only add the near detail:
-  each fades in by distance (`field.dynamic` near..far, `share`), ramps
-  up when it takes a light, and keeps its source until a newcomer pulls
-  clearly harder (`swap`) — before, a torch beyond the six nearest lit
-  nothing and switched on as you approached. Each theme has a `fill`:
-  a bounce source baked only (`bakedOnly`, no flame, no haze). Window
-  beams fade with distance (60% of the fog).
-- Polish from the current materials (0.147): the field adds one bounce
-  (`field.bounce`: the direct light blurred over open floor only, tinted
-  by the tier's stone); `aoBake.js` bakes prop AO into vertex colours
-  (near the floor, near a wall; props get an AO copy of their material).
-  Post stack in `post.js`: `ssao.js` (depth-only, half res, 12 samples +
-  blur) darkens the light, `bloom.js` (threshold, half-res mip chain)
-  adds glow, both before ACES; the brightest colours bleach toward white
-  (`post.highlightWhite`, no solid orange-red); then the paint grading and
-  last `lut.js` — a 32³ grade table per tier (`tiers[].grade`: lift /
-  gamma / gain, contrast, saturation; pure, tested). `fxpass.js` = the
-  full-screen pass helper. `atmosphere.js`: dust in window beams, embers
-  and smoke over braziers / hearths / torches, cauldron vapour — one GPU
-  point cloud per kind animated in the vertex shader (emitters from
-  furnish.js `emit` and build.js; `explore.json atmosphere`, `maxPx` caps
-  a particle by the eye). The quality ladder sheds shadows, SSAO, bloom,
-  then resolution.
-- Light cap (0.149): the scene renders into a half-float target (max
-  65504); a glossy highlight past that (a puddle mirroring a torch at a low
-  angle) became infinite on Apple GPUs, and the bloom spread it into
-  flickering black blocks (SwiftShader clamps, so headless runs never show
-  it — force one with a huge `emissiveIntensity` to test). Every patched
-  surface caps its output at `render.maxLight`, and the bloom prefilter and
-  the paint pass cap what they read (NaN reads as 0).
-- Painted fights (0.148, `backdrop.js`): a fight (and the shrine,
-  `backdrop.shrine`) fades in the game's painting for the room's theme
-  (`explore.json backdrop.paintings`; the lab page carries the game's
-  `#bg-stack` + vignette in `#backdrop`) on the game's depth renderer
-  (`initBg3d`, software GL allowed as in ?debug) — sway, mist, jolts,
-  flash lights and the combat particles come with it — and fades it out
-  on Onward / Rise Again. Swapped hidden with `setBackground(file, {
-  instant })` (no crossfade from the last painting; returns bg3d's
-  promise, so the fade waits for the painting); `pauseBg3d` stops the
-  painting while hidden, and lab.js skips the dungeon render while the
-  painting covers the screen (one renderer at a time, except in fades).
-- `build.js`: one merged mesh per surface kind, vertex-colour AO, wooden
-  frames on straight corridors, wall torches `decor.torchSpacing` apart.
-- `textures.js`: every surface painted on canvas in the style of
-  `assets/bg/castle_dungeon.jpg` (flat olive stone, broken ink outlines,
-  ink chips and drips) plus a normal map from a blurred height canvas.
-- `post.js`: the ink-and-paint pass (look reference: Darkest Dungeon 2):
-  depth-Laplacian ink outlines, ACES, then graded in display space: soft
-  light bands, desaturation, olive shadows / warm light, hatched ink in
-  the deepest dark, grain, vignette. All knobs in `explore.json paint`.
-- `player.js`: WASD / arrows, Q / E turn, Shift runs, mouselook under
-  pointer lock; eased velocity, head bob. `lab.js` wires the lab up on
-  `world.js` (0.150: renderer, camera, light pool, paint pass, quality
-  ladder, `build(floor, depth)` and `frame(t, dt, { render, tick })` —
-  shared with the game's corridors).
-- **3D corridors in the game (0.150, a `?debug` test, the owner's idea):**
-  the 3D dungeon as the way between the game's rooms; the run itself
-  (rooms, fights, shrine, retreat, settling) is unchanged. `?debug` 3D
-  CORRIDORS (on by default there, `prefs corridors3d`; players never get
-  it) makes `dungeonScene` walk instead of crossfading (`walkOn`),
-  strictly in order (0.151, the owner's call): the room's own parts
-  (title, cards, buttons) fade out over the painting (`#app.walking`;
-  `WALK_FADE_MS` = the CSS fade) while the run's HUD stays — XP / coins,
-  the docked log with its loot lines, the boons (`walkHud`; the shrine's
-  log leaves its panel) — then `enterNextRoom` rolls the room as ever and
-  the dungeon fades in over the painting (bg3d paused once covered) as
-  the knight walks there on his own (`corridorView.js`); the room takes
-  the 3D room's theme painting and name (`backdrop.paintings`); the
-  dungeon fades out to that painting fully, and only then is the room
-  built and its parts fade in (no blind hotkeys meanwhile). Space / Enter
-  / a click hurries the walk (`run.skipSpeed`) — a fresh press only: the
-  Space that pressed Push Deeper still bubbles up to the window as the
-  walk starts, and hurried every walk but the first in 0.150. One floor per
-  stretch (`runFloor.js planStretch`: mapgen with `explore.json run.gen`
-  — very linear, no spurs — the shrine where `run.shrineRooms` put it via
-  mapgen `shrineAt`, the boss last); the way is `walkPath.js` (route
-  along `floor.trail`, rounded corners, looking ahead; pure, tested).
-  Past the boss the next walk goes down the stairs, the new floor built
-  behind the black. Only the room being walked to has its enemy standing
-  (the leader's billboard); a beaten one fades as the dungeon returns.
-  `endRun` closes the view (the next run starts on a fresh floor); the
-  view is made once per page (`ui/corridors.js corridorView()`, warmed in
-  the Great Hall) and falls back to the classic fades where it can't run
-  (no WebGL2). No minimap in this mode. Tests use `setCorridorFactory`.
-  Open with the owner: on for players? what the walk shows between rooms
-  (loot, HP)? retreat from the corridor?
-
 ## Testing notes
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
-  combat, shrines, progression, content, backgrounds, audio, sim, history,
-  explore), each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
+  combat, shrines, progression, content, backgrounds, audio, sim, history),
+  each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
   and a **virtual clock** (timers, rAF, Date.now, performance.now; `sleep(ms)`
   advances it) — write tests with `sleep()` as if time were real; even a
   whole benchmark runs in milliseconds.
@@ -453,8 +286,11 @@ three.js loads only when the 3D corridors are used.
 - Engineering: deploy through the test workflow once the HTTPS setup is
   settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
   is experimenting with looks.
-- 3D exploration (Dungeon Lab, 0.139; generator 0.140; encounters 0.141):
-  shrines in 3D · into the run loop (open: a floor per 8-room stretch?
-  retreat rules? static or wandering enemies?).
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.
+
+**Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon
+Lab (generated floors, themed rooms, the game's fights in them) and a
+`?debug` mode walking 3D corridors between the game's rooms. The owner
+dropped it in 0.152 — it didn't fit the creative direction; the game is
+back to its 0.138 shape. The code is in git history (0.151, `6081e7a`).

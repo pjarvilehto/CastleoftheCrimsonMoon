@@ -1,4 +1,7 @@
 {
+  "0.152": [
+    "Removed the 3D dungeon experiments (the Dungeon Lab and the 3D corridors test mode) — the game is back to its painted rooms"
+  ],
   "0.151": [
     "Test mode (?debug, 3D CORRIDORS): the walk keeps its pace — pressing Space for Push Deeper no longer hurries it; a fresh Space during the walk still does",
     "Test mode: XP, coins, the log with its loot and the boons stay on screen during the walk",
