@@ -28,9 +28,12 @@ progression (training, alchemy, forge) in the hub between runs.
   `collector/README.md`; live since 0.103 at
   https://castle-stats.petri-jarvilehto.workers.dev, deployed from the
   Cloudflare dashboard — paste `collector/worker.js` into Edit code to
-  update it), whose URL is `assets/data/telemetry.json` `endpoint`
+  update it; bump its `VERSION` and telemetry.json `collectorVersion`
+  together and the dashboard flags a stale deploy; 0.119: stores only the
+  dashboard's fields (typed, capped), rate-limits, read key as a Bearer
+  header, `/version`), whose URL is `assets/data/telemetry.json` `endpoint`
   (empty = off; never sends from localhost or Node). The
-  dashboard reads it back (`GET /players?key=READ_KEY`) plus this
+  dashboard reads it back (`GET /players`, Bearer READ_KEY) plus this
   browser's save and pasted save codes, deduped by playerId. Players are
   labelled by `profile.name` (0.109, save v4): asked once on the title
   screen (`ui/namePrompt.js`), changeable there, kept through a progress
@@ -42,7 +45,7 @@ progression (training, alchemy, forge) in the hub between runs.
 
 ```bash
 python3 -m http.server 8000     # from the repo root, open http://localhost:8000
-node tools/smoke-test.mjs       # DOM-shim test suite: ~360 checks, under a second
+node tools/smoke-test.mjs       # DOM-shim test suite: ~520 checks, under a second
 node tools/smoke-test.mjs combat   # just the test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd

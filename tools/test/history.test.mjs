@@ -123,10 +123,11 @@ fresh();
   const post = (obj, cf) => wk.default.fetch(Object.assign(new Request('https://w/collect', { method: 'POST', body: typeof obj === 'string' ? obj : JSON.stringify(obj) }), { cf }), env);
   const run = (at) => ({ at, room: at });
   const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] } }, { country: 'FI' });
+  await sleep(1100); // one player at most once a second (0.119)
   const r2 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(3)] } }); // e.g. after a progress wipe
   const rec = JSON.parse(kv.get('player:abc123'));
   ok('collector stores a player by id; history merged by timestamp (a wipe loses nothing)', r1.status === 200 && r2.status === 200
-    && rec.profile.history.map((r) => r.at).join() === '1,2,3' && rec.country === 'FI' && !JSON.stringify(rec).includes('ip'));
+    && rec.profile.history.map((r) => r.at).join() === '1,2,3' && rec.country === 'FI' && !/"(ip|clientIp|cf-connecting-ip)":/i.test(JSON.stringify(rec)));
   const bad = await Promise.all([post('nope'), post({ playerId: '../x', profile: { history: [] } }), post({ playerId: 'abcd', profile: {} }),
     post({ playerId: 'abcd', profile: { history: [], pad: 'x'.repeat(300000) } })]);
   ok('collector rejects bad json, ids, payloads and oversize bodies', bad.map((r) => r.status).join() === '400,400,400,413' && kv.size === 1);
@@ -135,7 +136,27 @@ fresh();
   const list = await open.json();
   ok('reading players needs the key', locked.status === 401 && open.status === 200 && list.players.length === 1 && list.players[0].playerId === 'abc123');
   ok('collector answers CORS preflight', (await wk.default.fetch(new Request('https://w/collect', { method: 'OPTIONS' }), env)).headers.get('access-control-allow-origin') === '*');
+  // 0.119 hardening
+  const auth = await wk.default.fetch(new Request('https://w/players', { headers: { authorization: 'Bearer k' } }), env);
+  ok('the read key works as a Bearer header (kept out of URLs)', auth.status === 200
+    && (await wk.default.fetch(new Request('https://w/players', { headers: { authorization: 'Bearer nope' } }), env)).status === 401
+    && (await wk.default.fetch(new Request('https://w/collect', { method: 'OPTIONS' }), env)).headers.get('access-control-allow-headers').includes('authorization'));
+  await sleep(1100);
+  await post({ playerId: 'abc123', build: '0.119', profile: {
+    name: 'x'.repeat(99), coins: '12', evil: '<script>', stats: { power: 3, hacked: 9 }, equipment: { weapon: 'w'.repeat(99), rings: ['a', 'b', 'c'], extra: 1 },
+    history: [{ at: 9, room: 4, outcome: 'death', boons: ['dmg'], junk: 'x'.repeat(5000) }, { room: 1 }, 'nope'] } });
+  const stored = JSON.parse(kv.get('player:abc123')).profile;
+  ok('only the dashboard\'s fields are stored, typed and capped', stored.name.length === 20 && stored.coins === 12 && !('evil' in stored)
+    && !('hacked' in stored.stats) && stored.equipment.weapon.length === 40 && stored.equipment.rings.length === 2 && !('extra' in stored.equipment)
+    && stored.history.at(-1).at === 9 && !('junk' in stored.history.at(-1)) && stored.history.every((r) => Number.isFinite(r.at)));
+  const quick = await post({ playerId: 'abc123', build: '0.119', profile: { history: [] } });
+  ok('one player at most once a second', quick.status === 429);
+  ok('an IP over the per-minute limit gets 429', Array.from({ length: 30 }, (_, i) => wk.rateLimited('1.2.3.4', 1000 + i)).every((x) => !x)
+    && wk.rateLimited('1.2.3.4', 2000) === true && wk.rateLimited('1.2.3.4', 70000) === false);
+  const ver = await (await wk.default.fetch(new Request('https://w/version'), env)).json();
+  ok('GET /version names the deployed collector, matching what the dashboard expects', ver.version === wk.VERSION && DATA.telemetry.collectorVersion === wk.VERSION);
   const dash = readFileSync('analytics/dashboard.js', 'utf8');
-  ok('dashboard: collected players, deduped by player id, names kept locally', dash.includes('/players?key=') && dash.includes('seen.has(id)') && dash.includes("write(NAMES,"));
+  ok('dashboard: collected players, deduped by player id, names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes("write(NAMES,"));
+  ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
 }

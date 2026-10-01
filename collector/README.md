@@ -33,7 +33,37 @@ other personal data.** Runs are merged by timestamp, so a progress wipe
 doesn't erase collected history. Delete a player with
 `npx wrangler kv key delete --binding STATS player:<id>`.
 
+## Updating the deployed collector
+
+The live Worker is edited in the Cloudflare dashboard: **Workers & Pages →
+castle-stats → Edit code**, replace everything with `collector/worker.js`
+from this repo, **Deploy**. The `/analytics/` page says when the deployed
+collector is older than the repo's (`/version` vs
+`assets/data/telemetry.json` `collectorVersion`). The READ_KEY secret and
+the KV binding stay as they are.
+
 ## API
 
-- `POST /collect` — `{ playerId, build, profile }` as text/plain JSON (≤250KB)
-- `GET /players?key=READ_KEY` — every player
+- `POST /collect` — `{ playerId, build, profile }` as text/plain JSON (≤250KB).
+  Only the dashboard's fields are stored, type-checked and size-capped
+  (0.119). Limits: 30 POSTs a minute per client IP (in memory, never
+  stored), one per second per player → `429`.
+- `GET /players` with `authorization: Bearer <READ_KEY>` (0.119; the older
+  `?key=READ_KEY` still works) — every player
+- `GET /version` — the deployed collector's version
+
+## Optional extra protection
+
+For a hard, edge-level limit (the in-memory one is per Worker instance):
+Cloudflare dashboard → the domain → **Security → WAF → Rate limiting
+rules** — e.g. path `/collect`, 60 requests / 10 s per IP → Block.
+
+## When to move to D1
+
+KV's free tier allows 1,000 writes a day — one per finished run plus one
+per session per player, so roughly 10 testers playing hard. Nothing is
+lost when it runs out (every POST resends the whole history and merges),
+but stats arrive late. Past that, move to D1 (SQLite, 100,000 row writes a
+day): a `players` table and a `runs` table keyed by (player, timestamp),
+inserts that ignore runs already stored, and the dashboard's numbers as
+SQL queries instead of downloading every save.

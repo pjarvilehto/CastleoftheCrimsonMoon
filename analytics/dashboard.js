@@ -15,7 +15,7 @@ const STORE = 'castle-analytics-players-v1';
 const NAMES = 'castle-analytics-names-v1';   // playerId -> name (collected players)
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
 const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '' };
-const server = { status: 'off', records: [], at: 0 }; // off | loading | ok | key | error
+const server = { status: 'off', records: [], at: 0, version: null }; // off | loading | ok | key | error
 const view = { player: 'all', build: 'all' };
 let players = [];
 let message = '';
@@ -56,7 +56,19 @@ async function loadServer() {
   server.status = 'loading';
   try {
     const key = read(KEY) ?? '';
-    const r = await fetch(`${data.endpoint.replace(/\/$/, '')}/players?key=${encodeURIComponent(key)}`, { cache: 'no-store' });
+    const base = data.endpoint.replace(/\/$/, '');
+    // 0.119: the key goes in a header (kept out of URLs and logs). A
+    // collector deployed before 0.119 rejects that header's CORS preflight
+    // (or ignores the header: 401) — then fall back to the old ?key= once.
+    const viaQuery = () => fetch(`${base}/players?key=${encodeURIComponent(key)}`, { cache: 'no-store' });
+    let r;
+    try {
+      r = await fetch(`${base}/players`, { cache: 'no-store', headers: { authorization: `Bearer ${key}` } });
+      if (r.status === 401 && key) r = await viaQuery();
+    } catch {
+      r = await viaQuery();
+    }
+    server.version = await fetch(`${base}/version`, { cache: 'no-store' }).then((v) => (v.ok ? v.json() : null)).then((v) => v?.version ?? null).catch(() => null);
     if (r.status === 401) { server.status = 'key'; server.records = []; return; }
     const body = await r.json();
     server.records = Array.isArray(body?.players) ? body.players : [];
@@ -81,8 +93,11 @@ function serverCard() {
     key: 'Enter the stats key (the collector’s READ_KEY) to see collected players.',
     error: 'Could not reach the stats collector — showing this browser and pasted codes only.',
   }[server.status];
+  // the deployed collector is pasted in by hand: say when it's behind the repo
+  const stale = server.status === 'ok' && data.collectorVersion && server.version !== data.collectorVersion
+    ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>` : '';
   return `<section class="card add">
-    <h2>Testers</h2>
+    <h2>Testers</h2>${stale}
     <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game (0.109 on; older saves show an id until their next visit) — rename them in the Players table if you like (your names stay in this browser).</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
@@ -271,7 +286,7 @@ async function boot() {
   const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
   const [enemies, items, shrines, build, telemetry] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''),
+    enemies: enemies ?? {}, items: items ?? {}, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';

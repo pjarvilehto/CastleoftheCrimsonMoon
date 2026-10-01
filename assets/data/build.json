@@ -1,5 +1,5 @@
 {
-  "version": "0.118",
+  "version": "0.119",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -72,6 +72,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.119": [
+      "Under the hood: the play-stats collector stores only what the stats page shows and turns away spam"
+    ],
     "0.118": [
       "The old music is retired: the dark ambient score is the soundtrack (the Score switch is gone)",
       "\"Playing as …\" is centred on the title screen",
@@ -130,10 +133,6 @@
     ],
     "0.105": [
       "Testing: ?debug toggles to force crits and mega crits"
-    ],
-    "0.104": [
-      "Critical hits now vary in damage",
-      "New: rare MEGA CRITS that hit 1.5x harder than a normal crit"
     ]
   }
 }

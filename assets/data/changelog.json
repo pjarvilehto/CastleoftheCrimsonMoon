@@ -1,4 +1,7 @@
 {
+  "0.119": [
+    "Under the hood: the play-stats collector stores only what the stats page shows and turns away spam"
+  ],
   "0.118": [
     "The old music is retired: the dark ambient score is the soundtrack (the Score switch is gone)",
     "\"Playing as …\" is centred on the title screen",

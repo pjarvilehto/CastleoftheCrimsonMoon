@@ -5,25 +5,65 @@
 //
 //   POST /collect   body { playerId, build, profile } (text/plain JSON)
 //   GET  /players   -> { players: [{ playerId, country, firstSeen, lastSeen, build, profile }] }
-//                   (needs ?key=READ_KEY when that secret is set)
+//                   needs the READ_KEY secret when set: header
+//                   `authorization: Bearer <key>` (0.119; ?key= still works)
+//   GET  /version   -> { version } — which collector is deployed (0.119)
 //
 // Players are the save's anonymous random id — no IP address is stored;
 // Cloudflare's country code for the request is kept as a hint. History
 // is merged by run timestamp, so a progress wipe or the save's 250-run cap
 // never deletes runs already collected.
+//
+// 0.119 hardening (anyone can POST here): only the fields the dashboard
+// shows are stored, each type-checked and size-capped; a client IP may
+// POST at most RATE_PER_MIN times a minute (per Worker instance, in
+// memory — never stored) and one player at most once a second.
 
+export const VERSION = '0.119';
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
+const RATE_PER_MIN = 30;     // POSTs per client IP per minute
+const MIN_GAP_MS = 1000;     // between two POSTs of one player
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, OPTIONS',
-  'access-control-allow-headers': 'content-type',
+  'access-control-allow-headers': 'content-type, authorization',
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { ...CORS, 'content-type': 'application/json', 'cache-control': 'no-store' },
 });
+
+// ---- what may be stored: the dashboard's fields, typed and capped ----
+const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const str = (v, max) => (v === null || v === undefined ? null : String(v).slice(0, max));
+const pick = (o, keys, f) => Object.fromEntries(keys.map((k) => [k, f(o?.[k])]));
+const RUN_NUMS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
+const SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
+
+export function cleanRun(r) {
+  if (!r || typeof r !== 'object' || !Number.isFinite(r.at)) return null;
+  return {
+    ...pick(r, RUN_NUMS, num),
+    build: str(r.build, 12), outcome: r.outcome === 'death' ? 'death' : 'retreat',
+    relic: !!r.relic, killedBy: str(r.killedBy, 40),
+    boons: Array.isArray(r.boons) ? r.boons.slice(0, 24).map((b) => str(b, 24)) : [],
+  };
+}
+
+export function cleanProfile(p, id) {
+  const eq = p?.equipment ?? {};
+  return {
+    playerId: id,
+    name: str(p?.name, 20) ?? '',
+    ...pick(p, ['coins', 'xp', 'potions', 'potionCap'], num),
+    stats: pick(p?.stats, ['power', 'vitality', 'fortune', 'precision', 'endurance'], num),
+    records: pick(p?.records, ['runs', 'kills', 'bestRoom', 'deaths'], num),
+    equipment: { ...pick(eq, SLOTS, (v) => str(v, 40)), rings: Array.isArray(eq.rings) ? eq.rings.slice(0, 2).map((v) => str(v, 40)) : [] },
+    history: (Array.isArray(p?.history) ? p.history : []).map(cleanRun).filter(Boolean),
+  };
+}
 
 // Union of two run lists by timestamp (the newer copy of a run wins).
 export function mergeHistory(old = [], add = []) {
@@ -32,7 +72,18 @@ export function mergeHistory(old = [], add = []) {
   return [...byAt.values()].sort((a, b) => a.at - b.at).slice(-MAX_RUNS);
 }
 
+// Per-instance, in-memory sliding window: { ip -> [timestamps] }.
+const hits = new Map();
+export function rateLimited(ip, now = Date.now(), limit = RATE_PER_MIN) {
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60_000);
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5000) hits.clear(); // never grows without bound
+  return recent.length > limit;
+}
+
 export async function collect(req, env, now = Date.now()) {
+  if (rateLimited(req.headers.get('cf-connecting-ip') ?? 'local', now)) return json({ error: 'slow down' }, 429);
   const text = await req.text();
   if (text.length > MAX_BODY) return json({ error: 'too large' }, 413);
   let body;
@@ -42,20 +93,26 @@ export async function collect(req, env, now = Date.now()) {
   if (!ID.test(id) || !profile || typeof profile !== 'object' || !Array.isArray(profile.history)) return json({ error: 'bad payload' }, 400);
   const key = `player:${id}`;
   const prev = await env.STATS.get(key, 'json');
+  if (prev && now - prev.lastSeen < MIN_GAP_MS) return json({ error: 'slow down' }, 429);
+  const clean = cleanProfile(profile, id);
   const record = {
     playerId: id,
     build: String(body.build ?? '?').slice(0, 12),
     country: req.cf?.country ?? prev?.country ?? null,
     firstSeen: prev?.firstSeen ?? now,
     lastSeen: now,
-    profile: { ...profile, playerId: id, history: mergeHistory(prev?.profile?.history, profile.history) },
+    profile: { ...clean, history: mergeHistory(prev?.profile?.history, clean.history) },
   };
   await env.STATS.put(key, JSON.stringify(record));
   return json({ ok: true, runs: record.profile.history.length });
 }
 
-export async function players(url, env) {
-  if (env.READ_KEY && url.searchParams.get('key') !== env.READ_KEY) return json({ error: 'key required' }, 401);
+// The read key: `authorization: Bearer <key>` (kept out of URLs and logs),
+// or the older ?key= query.
+const readKey = (req, url) => (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '') || url.searchParams.get('key');
+
+export async function players(req, url, env) {
+  if (env.READ_KEY && readKey(req, url) !== env.READ_KEY) return json({ error: 'key required' }, 401);
   const names = [];
   let cursor;
   do {
@@ -73,9 +130,10 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     try {
       if (req.method === 'POST' && url.pathname === '/collect') return await collect(req, env);
-      if (req.method === 'GET' && url.pathname === '/players') return await players(url, env);
+      if (req.method === 'GET' && url.pathname === '/players') return await players(req, url, env);
+      if (req.method === 'GET' && url.pathname === '/version') return json({ version: VERSION });
       return json({ error: 'not found' }, 404);
-    } catch (e) {
+    } catch {
       return json({ error: 'server error' }, 500);
     }
   },
