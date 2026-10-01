@@ -1,5 +1,5 @@
 {
-  "version": "0.157",
+  "version": "0.158",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -81,6 +81,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.158": [
+      "Enemy cards no longer glow under the mouse — only the Attack button does (tapping a card still attacks)"
+    ],
     "0.157": [
       "Fixed: dying to a Sealed Reliquary left the room's buttons live under YOU DIED — Space could carry a dead knight into the next room",
       "Export Save always gives the current save, even when the browser refuses to store it",
@@ -134,9 +137,6 @@
     ],
     "0.144": [
       "Testing tools: in the Dungeon Lab, stairs past the boss lead down (glowing with the next depth's colour), the shrine works, you can Return to the Great Hall between fights, and floors are more linear."
-    ],
-    "0.143": [
-      "Testing tools: Dungeon Lab floors are now half the size and run as one winding route from the entrance to the boss."
     ]
   }
 }

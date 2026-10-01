@@ -455,9 +455,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
 /* dead cards keep their actions-row slot; the placeholder button is
    layout-only — invisible but occupying the same height */
 .unit-actions .ghost-btn { visibility: hidden; }
-/* 0.155: an enemy card attacks on a click too, while its Attack button could */
+/* 0.155: an enemy card attacks on a click too, while its Attack button could
+   (0.158: no hover glow on the card — only the Attack button lights up) */
 .enemy-char.targetable { cursor: pointer; }
-.enemy-char.targetable:hover { box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.55), 0 0 1.4em rgba(193, 75, 75, 0.35); }
 
 /* cards: aspect-ratio derives shape from the source card art */
 .char-card {

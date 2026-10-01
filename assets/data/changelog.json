@@ -1,4 +1,7 @@
 {
+  "0.158": [
+    "Enemy cards no longer glow under the mouse — only the Attack button does (tapping a card still attacks)"
+  ],
   "0.157": [
     "Fixed: dying to a Sealed Reliquary left the room's buttons live under YOU DIED — Space could carry a dead knight into the next room",
     "Export Save always gives the current save, even when the browser refuses to store it",
