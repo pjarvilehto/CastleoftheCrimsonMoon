@@ -25,23 +25,666 @@
         "text": "The castle wakes…"
       },
       {
+        "take": 3,
+        "file": "vo_title_welcome_3.mp3",
+        "text": "Another night…"
+      },
+      {
         "take": 4,
         "file": "vo_title_welcome_4.mp3",
         "text": "Welcome back, knight…"
       }
     ],
+    "hall_return": [
+      {
+        "take": 1,
+        "file": "vo_hall_return_1.mp3",
+        "text": "Rest… while you can."
+      },
+      {
+        "take": 2,
+        "file": "vo_hall_return_2.mp3",
+        "text": "You live."
+      },
+      {
+        "take": 3,
+        "file": "vo_hall_return_3.mp3",
+        "text": "Back again…"
+      },
+      {
+        "take": 4,
+        "file": "vo_hall_return_4.mp3",
+        "text": "The hearth is warm… for now."
+      }
+    ],
     "descent_begin": [
+      {
+        "take": 1,
+        "file": "vo_descent_begin_1.mp3",
+        "text": "…your descent begins…"
+      },
+      {
+        "take": 2,
+        "file": "vo_descent_begin_2.mp3",
+        "text": "Down… into the dark."
+      },
+      {
+        "take": 3,
+        "file": "vo_descent_begin_3.mp3",
+        "text": "Only forward now."
+      },
       {
         "take": 4,
         "file": "vo_descent_begin_4.mp3",
         "text": "The doors close behind you…"
       }
     ],
+    "retreat": [
+      {
+        "take": 1,
+        "file": "vo_retreat_1.mp3",
+        "text": "Wise."
+      },
+      {
+        "take": 2,
+        "file": "vo_retreat_2.mp3",
+        "text": "The castle will wait…"
+      },
+      {
+        "take": 3,
+        "file": "vo_retreat_3.mp3",
+        "text": "Live to bleed another day."
+      },
+      {
+        "take": 4,
+        "file": "vo_retreat_4.mp3",
+        "text": "Run, then…"
+      }
+    ],
+    "stretch_2": [
+      {
+        "take": 1,
+        "file": "vo_stretch_2_1.mp3",
+        "text": "…the stone grows colder here."
+      },
+      {
+        "take": 2,
+        "file": "vo_stretch_2_2.mp3",
+        "text": "The walls are listening now…"
+      },
+      {
+        "take": 3,
+        "file": "vo_stretch_2_3.mp3",
+        "text": "Deeper… and darker."
+      },
+      {
+        "take": 4,
+        "file": "vo_stretch_2_4.mp3",
+        "text": "Mind the shadows here…"
+      }
+    ],
+    "stretch_3": [
+      {
+        "take": 1,
+        "file": "vo_stretch_3_1.mp3",
+        "text": "Few knights have walked this far…"
+      },
+      {
+        "take": 2,
+        "file": "vo_stretch_3_2.mp3",
+        "text": "Fewer still walked back…"
+      },
+      {
+        "take": 3,
+        "file": "vo_stretch_3_3.mp3",
+        "text": "The heart of the castle is near…"
+      },
+      {
+        "take": 4,
+        "file": "vo_stretch_3_4.mp3",
+        "text": "Even the moon cannot see you here…"
+      }
+    ],
+    "new_record": [
+      {
+        "take": 1,
+        "file": "vo_new_record_1.mp3",
+        "text": "Deeper than ever before…"
+      },
+      {
+        "take": 2,
+        "file": "vo_new_record_2.mp3",
+        "text": "Uncharted dark…"
+      },
+      {
+        "take": 3,
+        "file": "vo_new_record_3.mp3",
+        "text": "No knight of yours has stood here…"
+      },
+      {
+        "take": 4,
+        "file": "vo_new_record_4.mp3",
+        "text": "New ground… new dangers."
+      }
+    ],
     "overkill": [
+      {
+        "take": 1,
+        "file": "vo_overkill_1.mp3",
+        "text": "Overkill!"
+      },
+      {
+        "take": 2,
+        "file": "vo_overkill_2.mp3",
+        "text": "Overkill…"
+      },
+      {
+        "take": 3,
+        "file": "vo_overkill_3.mp3",
+        "text": "Overkill."
+      },
       {
         "take": 4,
         "file": "vo_overkill_4.mp3",
         "text": "Overkill… magnificent."
+      }
+    ],
+    "smash": [
+      {
+        "take": 1,
+        "file": "vo_smash_1.mp3",
+        "text": "Smash!"
+      },
+      {
+        "take": 2,
+        "file": "vo_smash_2.mp3",
+        "text": "Shattered!"
+      },
+      {
+        "take": 3,
+        "file": "vo_smash_3.mp3",
+        "text": "Crushed!"
+      },
+      {
+        "take": 4,
+        "file": "vo_smash_4.mp3",
+        "text": "Broken…"
+      }
+    ],
+    "mega_crit": [
+      {
+        "take": 1,
+        "file": "vo_mega_crit_1.mp3",
+        "text": "Devastating!"
+      },
+      {
+        "take": 2,
+        "file": "vo_mega_crit_2.mp3",
+        "text": "Ha!"
+      },
+      {
+        "take": 3,
+        "file": "vo_mega_crit_3.mp3",
+        "text": "What a blow!"
+      },
+      {
+        "take": 4,
+        "file": "vo_mega_crit_4.mp3",
+        "text": "They felt that in the walls…"
+      }
+    ],
+    "room_cleared": [
+      {
+        "take": 1,
+        "file": "vo_room_cleared_1.mp3",
+        "text": "Silence…"
+      },
+      {
+        "take": 2,
+        "file": "vo_room_cleared_2.mp3",
+        "text": "For now…"
+      },
+      {
+        "take": 3,
+        "file": "vo_room_cleared_3.mp3",
+        "text": "The room is yours."
+      },
+      {
+        "take": 4,
+        "file": "vo_room_cleared_4.mp3",
+        "text": "Still… at last."
+      }
+    ],
+    "low_hp": [
+      {
+        "take": 1,
+        "file": "vo_low_hp_1.mp3",
+        "text": "Your blood runs thin…"
+      },
+      {
+        "take": 2,
+        "file": "vo_low_hp_2.mp3",
+        "text": "Drink, fool…"
+      },
+      {
+        "take": 3,
+        "file": "vo_low_hp_3.mp3",
+        "text": "Careful now…"
+      },
+      {
+        "take": 4,
+        "file": "vo_low_hp_4.mp3",
+        "text": "The castle smells your blood…"
+      }
+    ],
+    "potion": [
+      {
+        "take": 1,
+        "file": "vo_potion_1.mp3",
+        "text": "Drink deep."
+      },
+      {
+        "take": 2,
+        "file": "vo_potion_2.mp3",
+        "text": "Bitter…"
+      },
+      {
+        "take": 3,
+        "file": "vo_potion_3.mp3",
+        "text": "Better…"
+      },
+      {
+        "take": 4,
+        "file": "vo_potion_4.mp3",
+        "text": "It holds… for now."
+      }
+    ],
+    "revive": [
+      {
+        "take": 1,
+        "file": "vo_revive_1.mp3",
+        "text": "Rise!"
+      },
+      {
+        "take": 2,
+        "file": "vo_revive_2.mp3",
+        "text": "Not yet…"
+      },
+      {
+        "take": 3,
+        "file": "vo_revive_3.mp3",
+        "text": "The Heart beats again…"
+      },
+      {
+        "take": 4,
+        "file": "vo_revive_4.mp3",
+        "text": "Death refuses you…"
+      }
+    ],
+    "elite": [
+      {
+        "take": 1,
+        "file": "vo_elite_1.mp3",
+        "text": "Careful…"
+      },
+      {
+        "take": 2,
+        "file": "vo_elite_2.mp3",
+        "text": "An old one…"
+      },
+      {
+        "take": 3,
+        "file": "vo_elite_3.mp3",
+        "text": "This one is different…"
+      },
+      {
+        "take": 4,
+        "file": "vo_elite_4.mp3",
+        "text": "It has killed before…"
+      }
+    ],
+    "boss_enter": [
+      {
+        "take": 1,
+        "file": "vo_boss_enter_1.mp3",
+        "text": "He has been expecting you…"
+      },
+      {
+        "take": 2,
+        "file": "vo_boss_enter_2.mp3",
+        "text": "The throne room…"
+      },
+      {
+        "take": 3,
+        "file": "vo_boss_enter_3.mp3",
+        "text": "Bow… or bleed."
+      },
+      {
+        "take": 4,
+        "file": "vo_boss_enter_4.mp3",
+        "text": "The Lord awaits…"
+      }
+    ],
+    "boss_summon": [
+      {
+        "take": 1,
+        "file": "vo_boss_summon_1.mp3",
+        "text": "He calls his children…"
+      },
+      {
+        "take": 2,
+        "file": "vo_boss_summon_2.mp3",
+        "text": "More of them…"
+      },
+      {
+        "take": 3,
+        "file": "vo_boss_summon_3.mp3",
+        "text": "From the walls…"
+      },
+      {
+        "take": 4,
+        "file": "vo_boss_summon_4.mp3",
+        "text": "They answer his call…"
+      }
+    ],
+    "boss_slain": [
+      {
+        "take": 1,
+        "file": "vo_boss_slain_1.mp3",
+        "text": "The Lord falls…"
+      },
+      {
+        "take": 2,
+        "file": "vo_boss_slain_2.mp3",
+        "text": "Dust and ashes."
+      },
+      {
+        "take": 3,
+        "file": "vo_boss_slain_3.mp3",
+        "text": "Onward…"
+      },
+      {
+        "take": 4,
+        "file": "vo_boss_slain_4.mp3",
+        "text": "The throne stands empty… for now."
+      }
+    ],
+    "victory": [
+      {
+        "take": 1,
+        "file": "vo_victory_1.mp3",
+        "text": "…It is done. The castle sleeps."
+      }
+    ],
+    "shrine_enter": [
+      {
+        "take": 1,
+        "file": "vo_shrine_enter_1.mp3",
+        "text": "A shrine… for a price."
+      },
+      {
+        "take": 2,
+        "file": "vo_shrine_enter_2.mp3",
+        "text": "Kneel…"
+      },
+      {
+        "take": 3,
+        "file": "vo_shrine_enter_3.mp3",
+        "text": "Old gods listen here…"
+      },
+      {
+        "take": 4,
+        "file": "vo_shrine_enter_4.mp3",
+        "text": "Something wants to bargain…"
+      }
+    ],
+    "shrine_take": [
+      {
+        "take": 1,
+        "file": "vo_shrine_take_1.mp3",
+        "text": "The bargain is struck."
+      },
+      {
+        "take": 2,
+        "file": "vo_shrine_take_2.mp3",
+        "text": "Never freely…"
+      },
+      {
+        "take": 3,
+        "file": "vo_shrine_take_3.mp3",
+        "text": "Power… at a price."
+      },
+      {
+        "take": 4,
+        "file": "vo_shrine_take_4.mp3",
+        "text": "So be it."
+      }
+    ],
+    "treasure_enter": [
+      {
+        "take": 1,
+        "file": "vo_treasure_enter_1.mp3",
+        "text": "Choose…"
+      },
+      {
+        "take": 2,
+        "file": "vo_treasure_enter_2.mp3",
+        "text": "Only one will open…"
+      },
+      {
+        "take": 3,
+        "file": "vo_treasure_enter_3.mp3",
+        "text": "Gold… steel… or blood?"
+      },
+      {
+        "take": 4,
+        "file": "vo_treasure_enter_4.mp3",
+        "text": "Three chests… choose well."
+      }
+    ],
+    "chest_coffer": [
+      {
+        "take": 1,
+        "file": "vo_chest_coffer_1.mp3",
+        "text": "Coin…"
+      },
+      {
+        "take": 2,
+        "file": "vo_chest_coffer_2.mp3",
+        "text": "Heavy… and honest."
+      },
+      {
+        "take": 3,
+        "file": "vo_chest_coffer_3.mp3",
+        "text": "Gold glitters…"
+      },
+      {
+        "take": 4,
+        "file": "vo_chest_coffer_4.mp3",
+        "text": "Riches."
+      }
+    ],
+    "chest_gilded": [
+      {
+        "take": 1,
+        "file": "vo_chest_gilded_1.mp3",
+        "text": "Steel, for your hand."
+      },
+      {
+        "take": 2,
+        "file": "vo_chest_gilded_2.mp3",
+        "text": "Fine work…"
+      },
+      {
+        "take": 3,
+        "file": "vo_chest_gilded_3.mp3",
+        "text": "Made for you…"
+      },
+      {
+        "take": 4,
+        "file": "vo_chest_gilded_4.mp3",
+        "text": "A gift… of sorts."
+      }
+    ],
+    "chest_reliquary": [
+      {
+        "take": 1,
+        "file": "vo_chest_reliquary_1.mp3",
+        "text": "The seal drinks…"
+      },
+      {
+        "take": 2,
+        "file": "vo_chest_reliquary_2.mp3",
+        "text": "Always blood."
+      },
+      {
+        "take": 3,
+        "file": "vo_chest_reliquary_3.mp3",
+        "text": "Blood for the old things…"
+      },
+      {
+        "take": 4,
+        "file": "vo_chest_reliquary_4.mp3",
+        "text": "It tastes you…"
+      }
+    ],
+    "relic_found": [
+      {
+        "take": 1,
+        "file": "vo_relic_found_1.mp3",
+        "text": "Ahh… a relic."
+      },
+      {
+        "take": 2,
+        "file": "vo_relic_found_2.mp3",
+        "text": "Hold it close…"
+      },
+      {
+        "take": 3,
+        "file": "vo_relic_found_3.mp3",
+        "text": "A thousand years in the dark…"
+      },
+      {
+        "take": 4,
+        "file": "vo_relic_found_4.mp3",
+        "text": "The moon's own treasure…"
+      }
+    ],
+    "death": [
+      {
+        "take": 1,
+        "file": "vo_death_1.mp3",
+        "text": "The castle claims another soul."
+      },
+      {
+        "take": 2,
+        "file": "vo_death_2.mp3",
+        "text": "…and so the knight falls."
+      },
+      {
+        "take": 3,
+        "file": "vo_death_3.mp3",
+        "text": "Darkness…"
+      },
+      {
+        "take": 4,
+        "file": "vo_death_4.mp3",
+        "text": "Another name for the walls…"
+      }
+    ],
+    "death_reliquary": [
+      {
+        "take": 1,
+        "file": "vo_death_reliquary_1.mp3",
+        "text": "Greed…"
+      },
+      {
+        "take": 2,
+        "file": "vo_death_reliquary_2.mp3",
+        "text": "Too much blood…"
+      },
+      {
+        "take": 3,
+        "file": "vo_death_reliquary_3.mp3",
+        "text": "The seal took everything…"
+      },
+      {
+        "take": 4,
+        "file": "vo_death_reliquary_4.mp3",
+        "text": "Greed kills…"
+      }
+    ],
+    "death_boss": [
+      {
+        "take": 1,
+        "file": "vo_death_boss_1.mp3",
+        "text": "The Lord feeds tonight."
+      },
+      {
+        "take": 2,
+        "file": "vo_death_boss_2.mp3",
+        "text": "He drinks deep…"
+      },
+      {
+        "take": 3,
+        "file": "vo_death_boss_3.mp3",
+        "text": "Not this night…"
+      },
+      {
+        "take": 4,
+        "file": "vo_death_boss_4.mp3",
+        "text": "The throne keeps its master…"
+      }
+    ],
+    "level_up": [
+      {
+        "take": 1,
+        "file": "vo_level_up_1.mp3",
+        "text": "Stronger…"
+      },
+      {
+        "take": 2,
+        "file": "vo_level_up_2.mp3",
+        "text": "You grow."
+      },
+      {
+        "take": 3,
+        "file": "vo_level_up_3.mp3",
+        "text": "Better…"
+      },
+      {
+        "take": 4,
+        "file": "vo_level_up_4.mp3",
+        "text": "The castle will have to try harder…"
+      }
+    ],
+    "forge": [
+      {
+        "take": 1,
+        "file": "vo_forge_1.mp3",
+        "text": "The forge remembers…"
+      },
+      {
+        "take": 2,
+        "file": "vo_forge_2.mp3",
+        "text": "Hot iron…"
+      },
+      {
+        "take": 3,
+        "file": "vo_forge_3.mp3",
+        "text": "Steel waits…"
+      },
+      {
+        "take": 4,
+        "file": "vo_forge_4.mp3",
+        "text": "Hammer and flame…"
+      }
+    ],
+    "first_death": [
+      {
+        "take": 1,
+        "file": "vo_first_death_1.mp3",
+        "text": "The first of many…"
       }
     ]
   }
