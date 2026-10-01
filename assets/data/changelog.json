@@ -1,4 +1,8 @@
 {
+  "0.128": [
+    "New combat particles: hits on flesh splash ink-dark blood that spatters onto the floor; bone, fire and spirit enemies burst into bright sparks with an impact ring (fire burns yellow and leaves floating cinders).",
+    "OVERKILL! now bursts particles out of every enemy it wipes."
+  ],
   "0.127": [
     "Behind the scenes: testing tools update (no gameplay changes)."
   ],

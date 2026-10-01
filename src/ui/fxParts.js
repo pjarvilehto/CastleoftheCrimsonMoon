@@ -13,12 +13,13 @@ export function spray(u, dir, power = 1, big = false) {
   if (!u?.card?.getBoundingClientRect) return;
   const r = u.card.getBoundingClientRect();
   // a random point on the figure each burst (0.090) — not always dead centre
-  const burstOnce = () => burst(materialOf(u.id),
+  // 0.128: one burst sized by the blow (hit / crit-or-heavy / kill — the
+  // looks have their own crit and kill forms); ink drops land on the
+  // card's floor.
+  burst(materialOf(u.id),
     r.left + r.width * (0.5 + (Math.random() - 0.5) * 0.5),
     r.top + r.height * (0.3 + Math.random() * 0.3),
-    { dir: big ? 0 : dir, size: r.height, big });
-  burstOnce();
-  if (power > 1.2) burstOnce(); // heavy / crit: a second, overlapping burst
+    { dir: big ? 0 : dir, size: r.height, kind: big ? 'kill' : power > 1.2 ? 'crit' : 'hit', floor: r.bottom - 4 });
 }
 
 // The whole battle line trembles (heavy blows, SMASH, multi-kills).

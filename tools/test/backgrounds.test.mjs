@@ -124,7 +124,7 @@ fresh();
   const buy = root.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'u')[0];
   ok('Buy Potion glows when low and affordable', buy && /\bactive\b/.test(buy.className));
   ok('particle bursts start at a random point on the figure', readFileSync('src/ui/fxParts.js', 'utf8').includes('r.width * (0.5 + (Math.random() - 0.5) * 0.5)')
-    && readFileSync('src/ui/particles.js', 'utf8').includes('x: x + (r() - 0.5) * 36 * u'));
+    && readFileSync('src/ui/particles.js', 'utf8').includes('x: h.x + rr(-14, 14) * u'));
 }
 
 // T60: 0.099 — depth-embedded fog: the noise tiles seamlessly, the mist

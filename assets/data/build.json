@@ -1,5 +1,5 @@
 {
-  "version": "0.127",
+  "version": "0.128",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -74,6 +74,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.128": [
+      "New combat particles: hits on flesh splash ink-dark blood that spatters onto the floor; bone, fire and spirit enemies burst into bright sparks with an impact ring (fire burns yellow and leaves floating cinders).",
+      "OVERKILL! now bursts particles out of every enemy it wipes."
+    ],
     "0.127": [
       "Behind the scenes: testing tools update (no gameplay changes)."
     ],
@@ -119,11 +123,6 @@
     "0.114": [
       "New music: a dark ambient cinematic score for every scene",
       "Prefer the old music? VOLUME → Score → Classic switches back (and remembers it)"
-    ],
-    "0.113": [
-      "New CHANGELIST button (upper right): every build's release notes in one place",
-      "Precision never stops paying off: every level adds +1% crit damage on top of its crit chance (no more +0%)",
-      "Efficiency keeps growing in ever smaller steps, and shows MAX once there's nothing left to gain"
     ]
   }
 }

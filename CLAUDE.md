@@ -43,10 +43,9 @@ progression (training, alchemy, forge) in the hub between runs.
   (a standalone page using `../assets`). Today's look
   (a copy of `ui/particles.js`) beside three reference styles: Ink & Gore
   (Darkest Dungeon), Spark & Streak (Hades), Visceral Mist (Diablo IV).
-  Picked so far (the lab's "Chosen mix"): blood = Ink & Gore, bone =
-  Spark & Streak, embers = Spark & Streak on a yellower fire ramp; the
-  wraith is still open (options W1-W4: soul shreds, ectoplasm, void
-  smoke, spirit flame). The final mix gets ported into `ui/particles.js`.
+  Shipped in 0.128 (`ui/particles.js STYLE_OF`): blood = Ink & Gore;
+  bone, embers (yellow fire ramp + cinders) and the wraith = Spark &
+  Streak. The lab's wraith options W1-W4 stay there as alternatives.
 - `ARCHITECTURE.md` = full code map, data flow, keyboard map, conventions.
   Read it before making structural changes.
 
@@ -252,6 +251,9 @@ static play-stats page.
   `battleLine.js IDLE_FAMILY` + `.idle-<family>` in styles.css — a new
   enemy needs a family); one-shots (lunge, hit, numbers, entrance) in
   `ui/combatFx.js`, driven by `fx` descriptors on playback queue items.
+  Particle looks (0.128) per material in `ui/particles.js` (`STYLE_OF`;
+  bursts come as hit / crit / kill, `spawnParticles` is pure and tested);
+  OVERKILL bursts every victim (`smash` event `victims`).
   Loops animate only translate/rotate/scale (never filter); one-shots use
   element.animate so they don't restart the CSS loops. Attack pacing:
   `difficulty.json combatPacing`. Particles (0.089, `ui/particles.js`):

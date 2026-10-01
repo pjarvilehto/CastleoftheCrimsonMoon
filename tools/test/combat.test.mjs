@@ -313,7 +313,7 @@ fresh();
   const auraKf = css.slice(i, css.indexOf('} }', i) + 3); // one-line block
   ok('aura animates only opacity/scale', auraKf.includes('opacity') && auraKf.includes('scale') && !auraKf.includes('filter') && !auraKf.includes('transform'));
   ok('potion is an event (aura, bar flare, sparkles)', readFileSync('src/ui/combatFx.js', 'utf8').includes("aura.className = 'heal-aura'")
-    && css.includes('.heal-aura {') && readFileSync('src/ui/particles.js', 'utf8').includes("case 'heal':"));
+    && css.includes('.heal-aura {') && readFileSync('src/ui/particles.js', 'utf8').includes("if (material === 'heal') return heal("));
   const { potionLevel } = await import('../../src/ui/scenes/hubScene.js');
   ok('Great Hall potions: green full, red low',
     potionLevel({ potions: 4, potionCap: 4 }) === 'potions-full' && potionLevel({ potions: 1, potionCap: 4 }) === 'potions-low'
@@ -574,4 +574,40 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const css = readFileSync('styles.css', 'utf8');
   ok('the low-HP bar glow is styled', css.includes('.lowhp .hpbar { animation: lowhp-bar'));
   fresh();
+}
+
+// T89: 0.128 — the particle looks picked in the Particle Lab: blood is
+// Ink & Gore (slash + stretched blobs that land as splats), bone, embers
+// and the wraith are Spark & Streak (ring + streaks; two rings on a crit;
+// embers on a fire ramp with cinders); a kill is the biggest burst.
+{
+  const { spawnParticles, STYLE_OF, materialOf } = await import('../../src/ui/particles.js');
+  const kinds = (ps) => new Set(ps.map((p) => p.kind));
+  const blood = spawnParticles('blood', 100, 100, { dir: 1, size: 290, floor: 300 });
+  ok('blood = Ink & Gore: a slash and stretched blobs that know the floor', kinds(blood).has('slash') && blood.filter((p) => p.kind === 'blob').every((p) => p.floor === 300 && p.vx > -1));
+  const left = spawnParticles('blood', 100, 100, { dir: -1, size: 290 }).filter((p) => p.kind === 'blob');
+  ok('ink sprays away from the blow', left.filter((p) => p.vx < 0).length > left.length * 0.6);
+  ok('bone, embers and the wraith = Spark & Streak', ['skeleton', 'ghoul', 'wraith'].every((id) => STYLE_OF[materialOf(id)] === 'spark')
+    && ['dust', 'embers', 'wisps'].every((m) => { const k = kinds(spawnParticles(m, 0, 0)); return k.has('ring') && k.has('streak') && !k.has('slash'); }));
+  const rings = (m, kind) => spawnParticles(m, 0, 0, { kind }).filter((p) => p.kind === 'ring').length;
+  ok('a crit gets a second ring, a hit one', rings('dust', 'hit') === 1 && rings('dust', 'crit') === 2);
+  const fire = spawnParticles('embers', 0, 0).filter((p) => p.kind === 'streak');
+  ok('embers burn on the yellow fire ramp, with cinders', fire[0].hot === '255,247,196' && fire[0].mid === '255,178,40'
+    && spawnParticles('embers', 0, 0).some((p) => p.kind === 'dot' && p.flicker) && !spawnParticles('wisps', 0, 0).some((p) => p.kind === 'dot'));
+  const n = (kind) => spawnParticles('dust', 0, 0, { kind }).length;
+  ok('kill > crit > hit, and big: true is a kill', n('kill') > n('crit') && n('crit') > n('hit')
+    && spawnParticles('wisps', 0, 0, { big: true }).filter((p) => p.kind === 'ring').length === 2);
+  ok('potion sparkles unchanged', spawnParticles('heal', 0, 0).length === 26);
+}
+// T89b: 0.128 — OVERKILL bursts particles on every enemy it wipes.
+{
+  const { fxFor } = await import('../../src/ui/combatFx.js');
+  const rat = (n) => ({ id: 'rat', name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 2, xp: 1, coins: [1, 1] });
+  const run = createRun();
+  run.stats.dmg = 500; run.stats.crit = 0;
+  const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
+  const sm = playerAttack(cb, 0, true).find((e) => e.type === 'smash');
+  const fx = fxFor(sm, { maxHp: run.maxHp });
+  ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
+    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => spray(ctx.unit(i), 0, 0, true)'));
 }

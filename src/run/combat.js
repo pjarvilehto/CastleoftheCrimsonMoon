@@ -94,7 +94,8 @@ function smash(combat, { dmg, heavy }, push) {
   const alive = living(combat);
   if (!heavy || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false;
   for (const e of alive) e.hp = 0; // before the line: its snap shows the wiped room
-  push({ type: 'smash', text: 'OVERKILL! Everyone dies!', dmg });
+  // victims: their indices, so every card can burst (0.128)
+  push({ type: 'smash', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
   for (const e of alive) push({ type: 'kill', enemy: e, silent: true });
   return true;
 }

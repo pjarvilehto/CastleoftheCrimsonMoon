@@ -34,7 +34,7 @@ export function fxFor(ev, who = {}) {
     case 'dmg': return { kind: 'attack', from: ev.source, to: 'player', dmg: ev.taken, share: who.maxHp ? ev.taken / who.maxHp : 0 };
     case 'dodge': return { kind: 'dodge', from: ev.source, to: 'player' };
     case 'heal': return { kind: 'heal', to: 'player', amount: ev.healed };
-    case 'smash': return { kind: 'smash', dmg: ev.dmg };
+    case 'smash': return { kind: 'smash', dmg: ev.dmg, victims: ev.victims ?? [] };
     case 'multi': return { kind: 'multi' };
     case 'revive': return { kind: 'revive', to: 'player' };
     case 'summon': return { kind: 'summon', from: ev.source, to: ev.target };
@@ -77,6 +77,8 @@ export function playFx(fx, ctx) {
   }
 }
 
+const OVERKILL_STAGGER_MS = 70;
+
 // OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
 // the whole enemy line: a huge number + caption, a hard shake, the widest
 // sway, and a red-hot flash lighting the scene where they stood.
@@ -91,6 +93,8 @@ function overkill(fx, ctx) {
   const area = { left, top, width: right - left, height: bottom - top };
   bgLight('overkill', area);
   floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
+  // every enemy the blow wiped bursts as a kill, rippling down the line (0.128)
+  (fx.victims ?? []).forEach((i, n) => setTimeout(() => spray(ctx.unit(i), 0, 0, true), n * OVERKILL_STAGGER_MS));
 }
 
 function attack(fx, ctx) {
@@ -222,7 +226,7 @@ function summon(fx, ctx) {
   }
   if (s?.card?.getBoundingClientRect) {
     const r = s.card.getBoundingClientRect();
-    burst(materialOf(s.id), r.left + r.width / 2, r.top + r.height * 0.75, { size: r.height, big: true });
+    burst(materialOf(s.id), r.left + r.width / 2, r.top + r.height * 0.75, { size: r.height, big: true, floor: r.bottom - 4 });
   }
 }
 
