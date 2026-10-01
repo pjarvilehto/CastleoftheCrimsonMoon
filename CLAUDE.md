@@ -334,6 +334,13 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   furnish.js `emit` and build.js; `explore.json atmosphere`, `maxPx` caps
   a particle by the eye). The quality ladder sheds shadows, SSAO, bloom,
   then resolution.
+- Light cap (0.149): the scene renders into a half-float target (max
+  65504); a glossy highlight past that (a puddle mirroring a torch at a low
+  angle) became infinite on Apple GPUs, and the bloom spread it into
+  flickering black blocks (SwiftShader clamps, so headless runs never show
+  it — force one with a huge `emissiveIntensity` to test). Every patched
+  surface caps its output at `render.maxLight`, and the bloom prefilter and
+  the paint pass cap what they read (NaN reads as 0).
 - Painted fights (0.148, `backdrop.js`): a fight (and the shrine,
   `backdrop.shrine`) fades in the game's painting for the room's theme
   (`explore.json backdrop.paintings`; the lab page carries the game's

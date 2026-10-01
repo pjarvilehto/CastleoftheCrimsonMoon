@@ -26,7 +26,7 @@ const FRAG = () => `precision highp float;
 #define HAZE_N __HAZE_N__
 varying vec2 vUv;
 uniform sampler2D tColor, tDepth, tBloom, tAO, tLUT;
-uniform float bloomAmt, aoAmt, lutAmt, hiWhite;
+uniform float bloomAmt, aoAmt, lutAmt, hiWhite, maxLight;
 uniform vec2 res;
 uniform mat4 invProj;
 uniform vec3 hazePos[HAZE_N], hazeCol[HAZE_N];
@@ -58,7 +58,8 @@ void main() {
   }
   // the scene's light, darkened where things meet (SSAO), the glow of the
   // brightest parts added (bloom) and the haze
-  vec3 hdr = texture2D(tColor, vUv).rgb * mix(1.0, texture2D(tAO, vUv).r, aoAmt) + texture2D(tBloom, vUv).rgb * bloomAmt + scatter * hazeAmt;
+  // (capped, NaN read as 0: an overflowed pixel stays a bright one, 0.149)
+  vec3 hdr = min(max(texture2D(tColor, vUv).rgb, vec3(0.0)), vec3(maxLight)) * mix(1.0, texture2D(tAO, vUv).r, aoAmt) + texture2D(tBloom, vUv).rgb * bloomAmt + scatter * hazeAmt;
   // tone-map, then grade in display space, where a painter's values live
   vec3 col = aces(hdr * exposure);
   float peak = max(col.r, max(col.g, col.b));                 // bright colours bleach toward white,
@@ -107,7 +108,7 @@ export function createPaintPass(renderer, camera, cfg) {
       shadowTint: { value: tint(p.shadow, 0.55) }, highTint: { value: tint(p.highlight, 0.35) },
       ink: { value: new THREE.Color(p.ink) },
       tBloom: { value: null }, tAO: { value: null }, tLUT: { value: null },
-      bloomAmt: { value: cfg.post.bloom.strength }, aoAmt: { value: cfg.post.ssao.strength }, lutAmt: { value: 1 }, hiWhite: { value: cfg.post.highlightWhite },
+      bloomAmt: { value: cfg.post.bloom.strength }, aoAmt: { value: cfg.post.ssao.strength }, lutAmt: { value: 1 }, hiWhite: { value: cfg.post.highlightWhite }, maxLight: { value: cfg.render.maxLight },
     },
   });
   const P = cfg.post, bloom = createBloom(renderer, cfg), ssao = createSSAO(renderer, camera, cfg);

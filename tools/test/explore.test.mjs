@@ -317,3 +317,17 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
     fight.includes('backdrop.show(spot.painting)') && fight.includes('backdrop.hide()') && lab.includes('if (!backdrop.covered()) paint.render(scene)')
     && /id="backdrop"[\s\S]*id="bg-stack"[\s\S]*id="bg0"[\s\S]*id="bg1"/.test(page) && bd.includes('pauseBg3d(true)') && bd.includes('initBg3d('));
 }
+
+// T107: 0.149 — no light past what the half-float scene target holds: a
+// glossy puddle's torch highlight overflowed to infinity on Apple GPUs and
+// the bloom spread it into flickering black blocks. Every patched surface
+// caps its light, and the bloom and the paint pass cap what they read
+{
+  const cfg = JSON.parse(readFileSync('assets/data/explore.json', 'utf8'));
+  const field = readFileSync('src/explore/lightField.js', 'utf8'), bloom = readFileSync('src/explore/bloom.js', 'utf8'), post = readFileSync('src/explore/post.js', 'utf8');
+  ok('light cap: explore.json render.maxLight, well under a half float\'s 65504',
+    Number.isFinite(cfg.render.maxLight) && cfg.render.maxLight > 4 && cfg.render.maxLight < 65504);
+  ok('light cap: every patched surface, the bloom\'s input and the paint pass\'s input are capped at it',
+    /#include <opaque_fragment>\\ngl_FragColor\.rgb = min\(gl_FragColor\.rgb, vec3\(maxLight\)\)/.test(field) && field.includes('FIELD.maxLight.value = cfg.render.maxLight')
+    && /min\(max\(texture2D\(src, vUv \+ o\)\.rgb, vec3\(0\.0\)\), vec3\(maxLight\)\)/.test(bloom) && /min\(max\(texture2D\(tColor, vUv\)\.rgb, vec3\(0\.0\)\), vec3\(maxLight\)\)/.test(post));
+}

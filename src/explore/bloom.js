@@ -5,16 +5,18 @@
 // blur widens cheaply), then built back up level by level with a tent
 // filter, each level adding the one below. The paint pass adds the result
 // to the scene's light before tone mapping.
+// 0.149: what it reads is capped at render.maxLight (and NaN read as 0):
+// one overflowed pixel used to spread into stepped black blocks.
 // createBloom(renderer, cfg) -> { setSize(w, h), render(hdrTexture) -> texture }
 
 import * as THREE from 'three';
 import { fxPass, fxTarget } from './fxpass.js';
 
 const PREFILTER = `precision highp float; varying vec2 vUv;
-uniform sampler2D src; uniform vec2 texel; uniform float threshold, knee;
+uniform sampler2D src; uniform vec2 texel; uniform float threshold, knee, maxLight;
 void main() {
   vec3 c = vec3(0.0);
-  for (int i = 0; i < 4; i++) { vec2 o = vec2(i == 0 || i == 2 ? -0.5 : 0.5, i < 2 ? -0.5 : 0.5) * texel; c += texture2D(src, vUv + o).rgb; }
+  for (int i = 0; i < 4; i++) { vec2 o = vec2(i == 0 || i == 2 ? -0.5 : 0.5, i < 2 ? -0.5 : 0.5) * texel; c += min(max(texture2D(src, vUv + o).rgb, vec3(0.0)), vec3(maxLight)); }
   c *= 0.25;
   float br = max(c.r, max(c.g, c.b));
   float soft = clamp(br - threshold + knee, 0.0, 2.0 * knee); soft = soft * soft / (4.0 * knee + 1e-4);
@@ -41,7 +43,7 @@ void main() {
 
 export function createBloom(renderer, cfg) {
   const B = cfg.post.bloom, L = B.levels;
-  const pre = fxPass(renderer, PREFILTER, { src: { value: null }, texel: { value: new THREE.Vector2() }, threshold: { value: B.threshold }, knee: { value: B.knee } });
+  const pre = fxPass(renderer, PREFILTER, { src: { value: null }, texel: { value: new THREE.Vector2() }, threshold: { value: B.threshold }, knee: { value: B.knee }, maxLight: { value: cfg.render.maxLight } });
   const down = fxPass(renderer, DOWN, { src: { value: null }, texel: { value: new THREE.Vector2() } });
   const up = fxPass(renderer, UP, { src: { value: null }, below: { value: null }, texel: { value: new THREE.Vector2() } });
   const chain = Array.from({ length: L }, () => fxTarget());   // [0] half size, then halving

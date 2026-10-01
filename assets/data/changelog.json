@@ -1,4 +1,7 @@
 {
+  "0.149": [
+    "Dungeon Lab: fixed flickering black squares on some screens (Macs especially) — a shiny puddle's torch reflection could outshine what the renderer holds"
+  ],
   "0.148": [
     "Dungeon Lab: fights play over the game's painted rooms — the room's painting (with its depth sway, mist and particles) fades in when a fight starts and back out to the 3D dungeon when you walk on",
     "Dungeon Lab: the shrine opens over its golden painting too"

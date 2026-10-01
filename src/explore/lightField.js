@@ -12,6 +12,10 @@
 // on to the open floor around it (a blur that never crosses a wall), in
 // the colour of the tier's stone, so a lit wall brightens the floor beside
 // it and light creeps round corners into the dark middles of rooms.
+// 0.149: every patched surface also caps its light at render.maxLight —
+// a glossy puddle mirroring a torch at a low angle could outshine what the
+// half-float scene target holds (65504): on Apple GPUs the pixel became
+// infinite and the bloom spread it into flickering black blocks.
 // bakeLightField(grid, sources, cfg, bounceColor) -> fills the shared field uniforms
 
 import * as THREE from 'three';
@@ -22,6 +26,7 @@ export const FIELD = {
   lightField: { value: null },
   fieldScale: { value: new THREE.Vector2(1, 1) },
   fieldStrength: { value: 0 },
+  maxLight: { value: 1 },
 };
 
 export function bakeLightField(grid, sources, cfg, bounceColor = null) {
@@ -108,6 +113,7 @@ export function bakeLightField(grid, sources, cfg, bounceColor = null) {
   FIELD.lightField.value = tex;
   FIELD.fieldScale.value.set(1 / (grid.w * C), 1 / (grid.h * C));
   FIELD.fieldStrength.value = F.strength;
+  FIELD.maxLight.value = cfg.render.maxLight;
   return tex;
 }
 
@@ -123,8 +129,9 @@ export function patchMaterial(m) {
       .replace('#include <common>', '#include <common>\nvarying vec3 vFieldPos;\nvarying vec3 vFieldN;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvFieldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvFieldN = normalize(mat3(modelMatrix) * objectNormal);');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vFieldPos;\nvarying vec3 vFieldN;\nuniform sampler2D lightField;\nuniform vec2 fieldScale;\nuniform float fieldStrength;')
-      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n{ vec3 fp = vFieldPos + normalize(vFieldN) * 0.4;\n  reflectedLight.indirectDiffuse += texture2D(lightField, fp.xz * fieldScale).rgb * fieldStrength * BRDF_Lambert(diffuseColor.rgb); }');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFieldPos;\nvarying vec3 vFieldN;\nuniform sampler2D lightField;\nuniform vec2 fieldScale;\nuniform float fieldStrength;\nuniform float maxLight;')
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n{ vec3 fp = vFieldPos + normalize(vFieldN) * 0.4;\n  reflectedLight.indirectDiffuse += texture2D(lightField, fp.xz * fieldScale).rgb * fieldStrength * BRDF_Lambert(diffuseColor.rgb); }')
+      .replace('#include <opaque_fragment>', '#include <opaque_fragment>\ngl_FragColor.rgb = min(gl_FragColor.rgb, vec3(maxLight)); // (never past what the half-float target holds)');
   };
   m.customProgramCacheKey = () => 'lightfield';
   m.needsUpdate = true;
