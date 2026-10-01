@@ -776,8 +776,13 @@ button.primary { border-color: var(--gold); font-weight: bold; }
 .update-modal .btn-row { justify-content: center; }
 /* "Enter your name" (0.109, ui/namePrompt.js) + the title's "Playing as" line */
 .name-input {
+  /* line-height normal: the glyphs fit their own line box (a tighter one
+     let the letters overflow it, and the caret's blink repaint left specks
+     above them on macOS). The text is centred on the caps by
+     ui/namePrompt.js centerCaps (0.111), from the font's real metrics. */
   display: block; width: 100%; box-sizing: border-box; margin: 4px 0 20px; padding: 10px 14px;
-  font: inherit; font-size: 1.4rem; letter-spacing: 0.06em; text-align: center;
+  font: inherit; font-size: 1.4rem; line-height: normal; letter-spacing: 0.06em; text-align: center;
+  -webkit-appearance: none; appearance: none;
   color: var(--parchment); background: rgba(0, 0, 0, 0.55);
   border: 1px solid var(--gold-dim); border-radius: 6px; outline: none;
 }

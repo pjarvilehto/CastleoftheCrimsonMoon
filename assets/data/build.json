@@ -1,5 +1,5 @@
 {
-  "version": "0.110",
+  "version": "0.111",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -57,6 +57,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.111": [
+      "The name field's text is centred properly (and no more specks above the letters)"
+    ],
     "0.110": [
       "Sword strikes and hits on the knight sound different every time (metal glints, thuds, armour clanks)",
       "The coin jingle is a touch quieter"
@@ -111,9 +114,6 @@
       "Run-end screen counts cleared rooms correctly",
       "Smoother menus on slower screens (removed a costly background blur)",
       "Loot summary no longer lists replaced items as equipped"
-    ],
-    "0.096": [
-      "Shrine blessings sit in a tidy compact row (the same blessing twice shows x2)"
     ]
   }
 }

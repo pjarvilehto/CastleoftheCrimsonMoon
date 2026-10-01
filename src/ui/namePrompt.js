@@ -8,6 +8,25 @@
 import { el, setKeyTrap } from '../core/scene.js';
 import { getProfile, setPlayerName, cleanName, NAME_MAX } from '../meta/profile.js';
 
+// Centre the CAPITALS in the field (0.111): text-box trimming (what the
+// buttons use) doesn't apply to an input's text, and each OS reads this
+// font's vertical metrics differently — so measure the real ones (canvas)
+// and move the text by the gap between the caps' middle and the line's.
+export function centerCaps(input) {
+  const cs = globalThis.getComputedStyle?.(input);
+  const c = globalThis.document?.createElement?.('canvas')?.getContext?.('2d');
+  if (!cs || !c) return 0;
+  c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const m = c.measureText('HOMS');
+  const asc = m.fontBoundingBoxAscent, desc = m.fontBoundingBoxDescent, cap = m.actualBoundingBoxAscent;
+  if (!(asc > 0) || !(cap > 0)) return 0;
+  const low = (asc - desc - cap) / 2; // px the caps' middle sits below the line's middle
+  const top = parseFloat(cs.paddingTop) || 0, bottom = parseFloat(cs.paddingBottom) || 0;
+  input.style.paddingTop = `${Math.max(0, top - low)}px`;
+  input.style.paddingBottom = `${Math.max(0, bottom + low)}px`;
+  return low;
+}
+
 export function namePrompt(onDone = () => {}) {
   const current = getProfile().name;
   let overlay = null;
@@ -44,6 +63,6 @@ export function namePrompt(onDone = () => {}) {
     else if (k === 'escape' && current) close();
     return true;
   });
-  setTimeout(() => { input.focus?.(); input.select?.(); }, 0);
+  setTimeout(() => { centerCaps(input); input.focus?.(); input.select?.(); }, 0);
   return { close, input, ok };
 }

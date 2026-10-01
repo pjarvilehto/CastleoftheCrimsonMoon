@@ -251,3 +251,13 @@ process.on('uncaughtException', (e) => {
   ok('dashboard labels collected players by their name', readFileSync('analytics/dashboard.js', 'utf8').includes("profile.name || `Player ${id.slice(0, 4).toUpperCase()}`"));
   getProfile().name = 'Tester';
 }
+
+// T74: 0.111 — the name field: glyphs inside their own line box (no caret
+// repaint specks), caps centred from the font's measured metrics.
+{
+  const np = readFileSync('src/ui/namePrompt.js', 'utf8');
+  ok('name field: normal line height, caps centred from measured font metrics', /\.name-input \{[^}]*line-height: normal;/.test(readFileSync('styles.css', 'utf8'))
+    && np.includes('const low = (asc - desc - cap) / 2;') && np.includes('setTimeout(() => { centerCaps(input);'));
+  const { centerCaps } = await import('../../src/ui/namePrompt.js');
+  ok('centerCaps is a safe no-op without a real layout engine', centerCaps(new El('input')) === 0);
+}
