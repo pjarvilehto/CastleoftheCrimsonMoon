@@ -552,3 +552,26 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   globalThis.document.body = realBody;
   fresh();
 }
+
+// T87: 0.126 — low health (difficulty.json lowHpShare): the knight's HP
+// bar glows, and Drink Potion pulses red while potions are left.
+{
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  fresh();
+  const run = createRun();
+  const u = createPlayerUnit(run, { onHeavy: () => {}, onPotion: () => {} });
+  const btn = u.el.all((n) => n.tagName === 'button').find((b) => b.textContent.includes('Potion'));
+  const chip = u.el.all((n) => /\bhud-chip\b/.test(n.className ?? ''))[0];
+  const upd = (hp) => { run.hp = hp; u.update({ hp, printing: false, heavyReady: false, heavyCd: 0, dead: false }); };
+  const low = Math.floor(run.maxHp * DATA.difficulty.lowHpShare);
+  upd(run.maxHp);
+  ok('healthy: no glow, no potion pulse', !chip.classList.contains('lowhp') && !btn.classList.contains('active'));
+  run.potions = 2; upd(low);
+  ok('low health: HP bar glows', chip.classList.contains('lowhp'));
+  ok('low health + potions: Drink Potion pulses red', btn.classList.contains('active') && btn.classList.contains('active-red'));
+  run.potions = 0; upd(low);
+  ok('no potions left: no pulse (the bar still glows)', !btn.classList.contains('active') && chip.classList.contains('lowhp'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('the low-HP bar glow is styled', css.includes('.lowhp .hpbar { animation: lowhp-bar'));
+  fresh();
+}

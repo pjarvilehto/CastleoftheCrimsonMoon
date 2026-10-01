@@ -6,7 +6,7 @@
 // WebP q85 — 9.6MB of PNGs became 1.5MB).
 
 import { el } from '../core/dom.js';
-import { hpBar, rarityClass } from './hud.js';
+import { hpBar, rarityClass, isLowHp } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -122,7 +122,8 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const unit = el('div', { class: 'unit player-unit' }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
-    setClass(chip, 'lowhp', s.hp / run.maxHp <= 0.25);
+    const low = isLowHp(s.hp, run.maxHp);
+    setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
     potions.textContent = `POTIONS ${run.potions}/${run.potionCap}`;
     armorVal.textContent = armorText();
     cd.textContent = s.heavyCd > 0 ? ` (${s.heavyCd})` : '';
@@ -130,6 +131,12 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setDisabled(heavyBtn, !s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
     setDisabled(potionBtn, s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
+    // Low on health with potions left: Drink Potion pulses red (0.126) —
+    // kept on while a turn prints, so the glow doesn't restart every blow.
+    const remind = low && !s.dead && run.potions > 0;
+    setClass(potionBtn, 'active', remind);
+    setClass(potionBtn, 'active-red', remind);
+    setClass(potionBtn, 'potion-remind', remind);
   };
   return { el: unit, card, portrait: img, id: 'player', update };
 }

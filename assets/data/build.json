@@ -1,5 +1,5 @@
 {
-  "version": "0.125",
+  "version": "0.126",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -74,6 +74,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.126": [
+      "Low on health? Your HP bar now glows red, and Drink Potion pulses while you still have potions left."
+    ],
     "0.125": [
       "Phones and tablets now see a 'Mobile platforms not supported yet' notice instead of the game — please play on a desktop or laptop."
     ],
@@ -124,9 +127,6 @@
       "Precision is worth training: +3% crit per level for 10 levels, then tapering — and crit chance past the max turns into crit damage",
       "The Great Hall shows what the next Precision / Efficiency level actually adds",
       "Fallen enemies stay faintly visible (20%)"
-    ],
-    "0.111": [
-      "The name field's text is centred properly (and no more specks above the letters)"
     ]
   }
 }

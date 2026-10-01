@@ -264,6 +264,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* (must stay before .hp-line .hpbar — the player card's bar is both) */
 .hud-chip .hpbar { width: 110px; margin-top: 3px; }
 .lowhp { animation: lowhp-pulse 1.1s ease-in-out infinite; }
+/* Low health (0.126, difficulty.json lowHpShare): the knight's HP bar
+   glows red in time with the text, and Drink Potion (if any are left)
+   gets the red 'active' pulse on a quicker, more urgent cycle. */
+.lowhp .hpbar { animation: lowhp-bar 1.1s ease-in-out infinite; }
+@keyframes lowhp-bar {
+  0%, 100% { box-shadow: 0 0 3px rgba(224,48,48,0.35); }
+  50%      { box-shadow: 0 0 10px rgba(224,48,48,1), 0 0 22px rgba(224,48,48,0.5); }
+}
+button.active.potion-remind { animation-duration: 2.2s; }
 @keyframes lowhp-pulse {
   0%, 100% { text-shadow: 0 0 4px rgba(193,75,75,0.4); }
   50%      { text-shadow: 0 0 14px rgba(193,75,75,0.95); }

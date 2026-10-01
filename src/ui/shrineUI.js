@@ -6,7 +6,7 @@
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
-import { hpBar, logLine } from './hud.js';
+import { hpBar, logLine, isLowHp } from './hud.js';
 import { updateBuffs } from './buffs.js';
 
 // HP color scale: <=25% red, <=75% yellow, above green.
@@ -19,7 +19,7 @@ const hpColor = (cur, max) => {
 // (h1 content), logEl, buffBar, coins, xp (the HUD counters' shown
 // values), onDeeper, onRetreat, refresh }.
 export function renderShrineRoom(root, run, room, h) {
-  const lowhp = (run.hp / run.maxHp) <= 0.25 ? ' lowhp' : '';
+  const lowhp = isLowHp(run.hp, run.maxHp) ? ' lowhp' : '';
   const potionColor = run.potions >= 3 ? '#7bc98a' : run.potions >= 1 ? '#d8c95a' : '#c14b4b';
   const header = el('div', { class: 'run-hud' },
     el('span', {}, 'Room ', el('b', {}, String(room.number))),

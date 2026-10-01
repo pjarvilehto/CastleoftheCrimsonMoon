@@ -226,6 +226,9 @@ static play-stats page.
   (0.113), and crit chance past `critCap` becomes crit damage
   (`critOverflowDamage`). Hub lines show the next level's real gain. `node tools/stat-study.mjs [--set path=json]` measures
   what each upgrade is worth (paired seeds, like the shrine study).
+- Low health (0.126): at or under `difficulty.json lowHpShare` (35%) of
+  max HP the knight's HP bar glows red (`.lowhp`) and, with potions left,
+  Drink Potion gets the red 'active' pulse (`ui/hud.js isLowHp`).
 - The win (0.121): beating the boss of `difficulty.json finalBossRoom`
   (24) shows `ui/victoryModal.js` once per save (`profile.victorySeen`,
   saved at once); the run goes on as usual after it. Move the knob when

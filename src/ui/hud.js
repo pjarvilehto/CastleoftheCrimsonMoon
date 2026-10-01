@@ -1,6 +1,11 @@
 // ui/hud.js — small shared rendering helpers.
 
 import { el } from '../core/dom.js';
+import { DATA } from '../shared/data.js';
+
+// Low health (0.126): at or under difficulty.json lowHpShare of max HP the
+// knight's HP bar glows red and, with potions left, Drink Potion pulses.
+export const isLowHp = (hp, maxHp) => hp > 0 && hp / maxHp <= DATA.difficulty.lowHpShare;
 
 export function hpBar(current, max, color) {
   const pct = Math.max(0, Math.round((current / max) * 100));
