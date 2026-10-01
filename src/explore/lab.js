@@ -19,6 +19,8 @@ import { createPaintPass } from './post.js';
 import { createMinimap } from './minimap.js';
 import { createEncounters } from './encounterLayer.js';
 import { createMist } from './mist.js';
+import { createStairs } from './stairs.js';
+import { el } from '../core/dom.js';
 import { seeded } from './grid.js';
 import { loadData, DATA } from '../shared/data.js';
 import { initHotkeys } from '../core/hotkeys.js';
@@ -59,9 +61,15 @@ export async function startLab({ canvas, hud }) {
   const minimap = createMinimap(hud.minimap, cfg.gen.reveal);
   const encounters = createEncounters({
     scene, camera, player, cfg, paint, appRoot: hud.app, bossEvery: DATA.difficulty.bossEvery,
-    onDescend: () => newFloor(lab.floor.seed + 1, lab.depth + 1),
+    onDescend: () => { descent = { t: 0, from: { x: player.state.x, z: player.state.z } }; },
     onDeath: () => newFloor(lab.floor.seed, 1),
+    onRestart: () => newFloor(lab.floor.seed + 1, 1),
   });
+  const stairs = createStairs(scene, cfg);
+  let descent = null; // { t, from } while walking down the stairs
+  // Return (0.144): between fights, back to the Great Hall (R, or click)
+  const returnBtn = el('button', { class: 'lab-return-btn', key: 'r', onclick: () => encounters.returnHome() }, 'Return to the Great Hall');
+  document.body.append(returnBtn);
 
   // the floor: generate, build, put the knight at the start
   const lab = { renderer, scene, camera, player, cfg, encounters, floor: null, grid: null, level: null, mist: null, depth: 1 };
@@ -76,7 +84,8 @@ export async function startLab({ canvas, hud }) {
     scene.background.set(T.fog); scene.fog.color.set(T.fog);
     hemi.color.set(T.sky); hemi.groundColor.set(T.ground);
     paint.setShadow(T.shadow);
-    lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.floor.rooms, shrine: lab.floor.shrine, tier: lab.tier });
+    lab.level = buildDungeon(lab.grid, cfg, { rooms: lab.floor.rooms, shrine: lab.floor.shrine, stairs: lab.floor.stairs, tier: lab.tier });
+    stairs.place(lab.floor, cfg.tiers[Math.min(depth + 1, cfg.tiers.length) - 1].glow); // the next depth's colour
     lab.grid.posts = lab.level.posts;
     lab.mist = createMist(lab.grid, cfg, T.mist, seeded(seed * 31));
     scene.add(lab.level.group, lab.mist.group);
@@ -116,6 +125,26 @@ export async function startLab({ canvas, hud }) {
     const walking = encounters.walking();
     if (walking) player.update(dt);
     encounters.update(t, dt);
+    stairs.update(t);
+    if (descent) { // down the stairs into the dark, then the next floor fades in
+      descent.t += dt;
+      const k = descent.t / cfg.stairs.walkSecs;
+      if (k < 1) {
+        const w = stairs.walkDown(k, descent.from);
+        Object.assign(player.state, { x: w.x, z: w.z, yaw: w.yaw, pitch: w.pitch });
+        player.update(0);
+        camera.position.y = w.y;
+        paint.uniforms.fade.value = w.fade;
+      } else if (!descent.done) {
+        descent.done = true;
+        newFloor(lab.floor.seed + 1, lab.depth + 1);
+      }
+      if (descent.done) {
+        paint.uniforms.fade.value = Math.max(0, 1 - (descent.t - cfg.stairs.walkSecs) / 0.9);
+        if (paint.uniforms.fade.value === 0) descent = null;
+      }
+    }
+    returnBtn.classList.toggle('hidden', !walking || !!descent);
     hud.intro.classList.toggle('hidden', !walking || document.pointerLockElement === canvas);
     hud.minimap.classList.toggle('hidden', !walking || !mapOn);
     const c = player.cell();

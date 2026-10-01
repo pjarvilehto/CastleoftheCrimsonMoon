@@ -1,11 +1,11 @@
 // explore/minimap.js — the Dungeon Lab's corner map (0.140): only the cells
 // the knight has seen (within `reveal` cells of where he walked, through
 // open floor), the rooms' marks once seen — red encounters, gold shrine,
-// crimson boss — lit wall torches, and the knight as an arrow.
+// crimson boss, pale blue stairs (0.144) — lit wall torches, and the knight.
 
 import { isOpen } from './grid.js';
 
-const MARK = { E: '#b3362c', H: '#c9a227', B: '#e0303a' };
+const MARK = { E: '#b3362c', H: '#c9a227', B: '#e0303a', X: '#9bb4ff' };
 
 export function createMinimap(canvas, reveal) {
   const ctx = canvas.getContext('2d');
@@ -37,7 +37,7 @@ export function createMinimap(canvas, reveal) {
       if (!seen[z * grid.w + x] || !isOpen(grid, x, z)) continue;
       ctx.fillStyle = 'rgba(216,201,163,0.3)'; ctx.fillRect(ox + x * S, oz + z * S, S, S);
     }
-    const marks = [...floor.encounters.map((e) => ({ ...e, c: 'E' })), { ...floor.shrine, c: 'H' }, { ...floor.boss, c: 'B' }];
+    const marks = [...floor.encounters.map((e) => ({ ...e, c: 'E' })), { ...floor.shrine, c: 'H' }, { ...floor.boss, c: 'B' }, { ...floor.stairs, c: 'X' }];
     for (const m of marks) {
       if (!seen[m.z * grid.w + m.x] || cleared?.has(`${m.x},${m.z}`)) continue;
       ctx.fillStyle = MARK[m.c];

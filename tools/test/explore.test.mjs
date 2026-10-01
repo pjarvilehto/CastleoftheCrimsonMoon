@@ -87,8 +87,18 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   const a = generateFloor(42, cfg.gen), b = generateFloor(42, cfg.gen), c = generateFloor(43, cfg.gen);
   ok('floor generator: the same seed, the same floor; the next seed, another', a.rows.join() === b.rows.join() && a.rows.join() !== c.rows.join());
   const spurs = (f) => { const g = parseMap(f.rows); let n = 0; for (let z = 0; z < g.h; z++) for (let x = 0; x < g.w; x++) if (isOpen(g, x, z) && Object.values(DIRS).filter(([dx, dz]) => isOpen(g, x + dx, z + dz)).length === 1) n++; return n; };
-  const tips = [...Array(20).keys()].map((i) => spurs(generateFloor(i + 1, cfg.gen)));
-  ok('floor generator: a few dead ends to poke into (up to deadEnds a floor)', tips.reduce((a, b) => a + b, 0) >= 15 && tips.every((n) => n <= cfg.gen.deadEnds), tips.join(' '));
+  const tips = [...Array(20).keys()].map((i) => spurs(generateFloor(i + 1, cfg.gen)) - 1); // (the stairs are a dead end too)
+  ok('floor generator: a dead end or so to poke into (up to deadEnds a floor)', tips.reduce((a, b) => a + b, 0) >= 8 && tips.every((n) => n >= 0 && n <= cfg.gen.deadEnds), tips.join(' '));
+  // 0.144: past the boss, the stairs — one cell, a dead end, the deepest point
+  const st = [];
+  for (let seed = 1; seed <= 60; seed++) {
+    const f = generateFloor(seed, cfg.gen), g = parseMap(f.rows), d = reach(g, f.start), at = (p) => d.get(`${p.x},${p.z}`);
+    const ways = Object.values(DIRS).filter(([dx, dz]) => isOpen(g, f.stairs.x + dx, f.stairs.z + dz));
+    const [dx, dz] = f.stairs.down;
+    if (f.rows[f.stairs.z][f.stairs.x] !== 'X' || ways.length !== 1 || ways[0][0] !== -dx || ways[0][1] !== -dz
+      || !(at(f.stairs) > at(f.boss)) || f.rooms.some((r) => inRect(r, f.stairs.x, f.stairs.z))) st.push(`seed ${seed}`);
+  }
+  ok('floor generator: the stairs lie past the boss — one cell, one way in, going down away from it', st.length === 0, st.join(', '));
   // 0.143: linear — the rooms come in walking order, each a step deeper
   // than the last, and the floor is about half the 0.140 size
   const lin = [];
@@ -140,10 +150,12 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
   ok('a floor holds one boss stretch: encounters + the boss = bossEvery rooms', cfg.gen.encounters === every - 1);
   const f = generateFloor(5, cfg.gen);
   const p1 = planFloor(f, 1, every), p3 = planFloor(f, 3, every);
-  ok('encounters: depth 1 = rooms 1..7 nearest first, the boss room 8; depth 3 = rooms 17..24',
-    p1.map((s) => s.number).join() === '1,2,3,4,5,6,7,8' && p1.at(-1).boss && !p1[0].boss && p3[0].number === 17 && p3.at(-1).number === 24
+  ok('encounters: depth 1 = rooms 1..7 nearest first, the shrine priced as room 5, the boss room 8; depth 3 = rooms 17..24',
+    p1.map((s) => s.number).join() === '1,2,3,4,5,6,7,5,8' && p1.at(-1).kind === 'boss' && p1[0].kind === 'fight' && p1.at(-2).kind === 'shrine'
+    && p3[0].number === 17 && p3.at(-1).number === 24
     && p1.every((s) => inRect(s.rect, s.x, s.z)));
-  const r1 = roomFor(p1[0]), rb = roomFor(p1.at(-1));
+  const r1 = roomFor(p1[0]), rb = roomFor(p1.at(-1)), rs = roomFor(p1.at(-2));
+  ok('the shrine spot is a game shrine room', rs.kind === 'shrine' && rs.enemies.length === 0);
   ok('encounter rooms come from the game (combat at their depth, the boss room a boss)', r1.kind === 'combat' && r1.number === 1 && r1.enemies.length > 0
     && rb.isBoss && rb.enemies[0].id === 'vampire_lord' && leaderOf(rb).id === 'vampire_lord'
     && leaderOf(r1).maxHp === Math.max(...r1.enemies.map((e) => e.maxHp)));
@@ -195,6 +207,8 @@ const exists = (f) => { try { return statSync(f).isFile(); } catch { return fals
     if (!(P.growth === null || (P.growth.length === 2 && P.growth.every(Number.isFinite))) || !hex(P.dark) || !hex(P.water)) bad.push(`tier ${i} palette`);
     return bad;
   });
-  ok('explore.json: room height, props, mist and a palette per depth tier', nums.every(Number.isFinite) && cfg.roomHeight > cfg.wallHeight
+  const stairNums = ['depth', 'steps', 'light', 'lightDistance', 'pulse', 'glowSize', 'glowOpacity', 'walkSecs'].map((k) => cfg.stairs[k]);
+  ok('explore.json: room height, props, mist, stairs and a palette (and stair glow) per depth tier', nums.every(Number.isFinite) && cfg.roomHeight > cfg.wallHeight
+    && stairNums.every(Number.isFinite) && cfg.stairs.depth < cfg.wallHeight + 0.5 && cfg.tiers.every((t) => hex(t.glow))
     && cfg.tiers.length >= 3 && tierBad.length === 0, tierBad.join(', '));
 }

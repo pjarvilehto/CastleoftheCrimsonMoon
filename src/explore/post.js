@@ -15,7 +15,7 @@ const FRAG = `precision highp float;
 varying vec2 vUv;
 uniform sampler2D tColor, tDepth;
 uniform vec2 res;
-uniform float near, far, edge, edgeWidth, bands, bandMix, desat, inkBelow, grain, vignette, exposure, dim;
+uniform float near, far, edge, edgeWidth, bands, bandMix, desat, inkBelow, grain, vignette, exposure, dim, fade;
 uniform vec3 shadowTint, highTint, ink;
 float lin(float d) { float z = d * 2.0 - 1.0; return 2.0 * near * far / (far + near - z * (far - near)); }
 vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
@@ -46,6 +46,7 @@ void main() {
   vec2 q = vUv - 0.5;
   col *= 1.0 - vignette * dot(q, q) * 1.8;
   col += (hash(floor(gl_FragCoord.xy / 1.5)) - 0.5) * grain;  // canvas grain
+  col *= 1.0 - fade;                                           // to black (the way down)
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
 
@@ -65,7 +66,7 @@ export function createPaintPass(renderer, camera, cfg) {
       near: { value: camera.near }, far: { value: camera.far },
       edge: { value: p.edge }, edgeWidth: { value: p.edgeWidth }, bands: { value: p.bands }, bandMix: { value: p.bandMix },
       desat: { value: p.desat }, inkBelow: { value: p.inkBelow }, grain: { value: p.grain }, vignette: { value: p.vignette },
-      exposure: { value: cfg.render.exposure }, dim: { value: 0 },
+      exposure: { value: cfg.render.exposure }, dim: { value: 0 }, fade: { value: 0 },
       shadowTint: { value: tint(p.shadow, 0.55) }, highTint: { value: tint(p.highlight, 0.35) },
       ink: { value: new THREE.Color(p.ink) },
     },

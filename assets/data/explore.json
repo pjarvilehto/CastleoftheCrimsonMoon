@@ -1,5 +1,5 @@
 {
-  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells; a linear chain since 0.143): width x height, rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, linkMin..linkMax = corridor length from one room to the next, straightness = chance the chain keeps its heading, `encounters` combat rooms (+ start, shrine, boss), up to `deadEnds` spurs, up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), lair = the dim red light before each of the `pool` nearest enemies still standing (`ahead` metres toward the knight), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells. billboard = the enemies standing in the rooms: sizes per enemy id (height in metres, lift = hovers that high), tear = how much of the portrait's cropped bottom is torn away, shadow = opacity of the shadow at its feet, glow = its own light (share of the art shown unlit). paint.fightDim = how far the dungeon darkens behind a fight. roomHeight = rooms' ceilings (corridors: wallHeight). decor (0.142): haloSize / haloOpacity = the torches' glow, rubble / puddles = chance per cell, chainsPerRoom = at most, altarLight = the shrine altar's light (x a torch's). mist = ground mist: perCell chance, size and height in metres, opacity, drift speed. tiers = one per depth (the last repeats): name, fog / sky / ground (hemisphere fill) / mist / shadow (the paint pass's shadow tint) colours, palette for the painted textures: stone / floor / ceiling = [hue, hue spread, saturation, spread, lightness, spread], growth = [hue, spread] of moss at the wall foot (null: none), dark = the joints, water = puddles.",
+  "_doc": "The 3D dungeon prototype (0.139, dungeon-lab/ + src/explore/): a corridor to walk with WASD / arrows and mouselook. Distances in metres. gen = the floor generator (mapgen.js, sizes in cells; a linear chain since 0.143): width x height, rooms of roomMin..roomMax cells a side (the boss chamber bossSize), roomGap cells of rock between rooms, linkMin..linkMax = corridor length from one room to the next, straightness = chance the chain keeps its heading, `encounters` combat rooms (+ start, shrine, boss), up to `deadEnds` spurs, up to deadEndMax long, seed = the first floor (?seed=N in the lab's URL overrides; the N key = next floor), reveal = how many cells around the knight the map uncovers. light: party = the knight's own torch (rides with the camera), torch = the wall torches (pool = how many of the nearest are lit; intensities in candela), lair = the dim red light before each of the `pool` nearest enemies still standing (`ahead` metres toward the knight), ambient = the hemisphere fill that gives the shadows their olive tone. paint = the ink-and-paint post pass (after Darkest Dungeon 2 and assets/bg/castle_dungeon.jpg), graded in display space: edge = ink outline strength, edgeWidth in pixels, bands = light steps (bandMix how strongly), desat, inkBelow = brightness under which shadows turn to hatched ink, shadow/highlight = tints of the dark and lit values. decor.torchSpacing = minimum distance between wall torches, in cells. billboard = the enemies standing in the rooms: sizes per enemy id (height in metres, lift = hovers that high), tear = how much of the portrait's cropped bottom is torn away, shadow = opacity of the shadow at its feet, glow = its own light (share of the art shown unlit). paint.fightDim = how far the dungeon darkens behind a fight. roomHeight = rooms' ceilings (corridors: wallHeight). decor (0.142): haloSize / haloOpacity = the torches' glow, rubble / puddles = chance per cell, chainsPerRoom = at most, altarLight = the shrine altar's light (x a torch's). mist = ground mist: perCell chance, size and height in metres, opacity, drift speed. tiers = one per depth (the last repeats): name, fog / sky / ground (hemisphere fill) / mist / shadow (the paint pass's shadow tint) colours, palette for the painted textures: stone / floor / ceiling = [hue, hue spread, saturation, spread, lightness, spread], growth = [hue, spread] of moss at the wall foot (null: none), dark = the joints, water = puddles. stairs (0.144) = the way down past the boss: depth of the pit, steps, the light from below (candela, reach, pulses per second; its colour is the NEXT tier's `glow`), the glow sprite over the pit, walkSecs = the walk down into the dark.",
   "cell": 3,
   "wallHeight": 3.2,
   "roomHeight": 4.4,
@@ -8,14 +8,14 @@
     "width": 24,
     "height": 22,
     "roomMin": 2,
-    "roomMax": 4,
+    "roomMax": 3,
     "bossSize": 5,
     "roomGap": 2,
     "linkMin": 2,
     "linkMax": 4,
-    "straightness": 0.6,
+    "straightness": 0.75,
     "encounters": 7,
-    "deadEnds": 2,
+    "deadEnds": 1,
     "deadEndMax": 3,
     "seed": 1,
     "reveal": 3
@@ -191,7 +191,8 @@
         "dark": "#0d0e0a",
         "water": "#0a0c09"
       },
-      "shadow": "#232a1c"
+      "shadow": "#232a1c",
+      "glow": "#a8c45a"
     },
     {
       "name": "The Crypt",
@@ -228,7 +229,8 @@
         "dark": "#130b09",
         "water": "#100808"
       },
-      "shadow": "#3a1414"
+      "shadow": "#3a1414",
+      "glow": "#e2432c"
     },
     {
       "name": "The Catacombs",
@@ -268,7 +270,18 @@
         "dark": "#0a0b0e",
         "water": "#08090c"
       },
-      "shadow": "#18233a"
+      "shadow": "#18233a",
+      "glow": "#5d86ea"
     }
-  ]
+  ],
+  "stairs": {
+    "depth": 3.2,
+    "steps": 7,
+    "light": 30,
+    "lightDistance": 11,
+    "pulse": 0.22,
+    "glowSize": 3.2,
+    "glowOpacity": 0.75,
+    "walkSecs": 1.8
+  }
 }

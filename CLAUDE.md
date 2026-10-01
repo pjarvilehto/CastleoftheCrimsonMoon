@@ -255,9 +255,11 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   `linkMin..linkMax` cells of corridor between them), each joined only to
   the next by an L corridor that touches no other room, up to `deadEnds`
   short spurs; a floor where walking order differs from the chain (a fork
-  or shortcut) is redrawn. First room = start, last (bossSize) = boss, the
-  middle one the shrine, the rest the `encounters` in order; rooms marked
-  'E' / 'H' / 'B' in the rows. The lab: `?seed=N`,
+  or shortcut) is redrawn. First room = start, then the `encounters` in
+  order with the shrine halfway, the boss (bossSize), and past it one
+  cell of stairs (0.144, `floor.stairs` with its `down` direction); marked
+  'E' / 'H' / 'B' / 'X' in the rows. Rooms are small (`roomMax` 3) so the
+  enemy plainly stands across the way. The lab: `?seed=N`,
   the N key = next floor; `minimap.js` shows only what the knight has seen.
 - Encounters (0.141): floor n = the game's rooms (n-1)*8+1..n*8
   (`encounters.js`: encounters nearest first, the boss chamber the boss
@@ -268,8 +270,14 @@ new three.js version = a new folder. The game never imports `src/explore/`.
   nearest) — stepping in turns the knight to it, dims the view
   (`paint.fightDim`) and plays the game's fight over it (`fight.js`, the
   dungeon scene's parts: battle line, playback, effects, sounds); Onward
-  clears the room, the boss's fall offers Descend (next seed, depth + 1),
-  a death Rise Again (depth 1, a fresh run). One `run` object carries HP,
+  clears the room, a death Rise Again (depth 1, a fresh run). 0.144: the
+  shrine room opens the game's shrine (`renderShrineRoom`, priced as the
+  room after the encounter before it); past the boss the stairs (a pit
+  with steps in build.js; `stairs.js` = one pulsing light from below in
+  the NEXT tier's `glow`, and the walk down with the paint pass's `fade`
+  to black) lead to the next floor once the boss is down; Return (R, or
+  the button, whenever no fight or dialog is up) ends the visit with its
+  tally (To the Great Hall / Descend Again). One `run` object carries HP,
   potions and loot through the visit and is never settled. Particles stay
   off in the lab (they follow the game's 3D background).
 - Look pass (0.142): rooms are `roomHeight` tall (a header wall over each

@@ -8,7 +8,7 @@
 //   puddles  glossy black water that catches the torchlight
 //   altar    the shrine room's: a stone block with candles (one light,
 //            joining the torches so the light pool can pick it)
-// buildDecor(grid, cfg, { rooms, shrine, top, inRoom, rnd, M }) ->
+// buildDecor(grid, cfg, { rooms, shrine, top, inRoom, isStairs, rnd, M }) ->
 //   { group, posts: [{ x, z, r }], lights: [{ position, flames, halos, phase, power }] }
 // (flames and halos: sprites with their resting scale in userData.base)
 
@@ -18,7 +18,7 @@ import { mergeParts, worldUV } from './geom.js';
 
 const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-export function buildDecor(grid, cfg, { rooms, shrine, top, inRoom, rnd, M }) {
+export function buildDecor(grid, cfg, { rooms, shrine, top, inRoom, isStairs, rnd, M }) {
   const C = cfg.cell, H = cfg.wallHeight, D = cfg.decor;
   const open = (x, z) => isOpen(grid, x, z);
   const stone = [], iron = [], water = [], posts = [], lights = [];
@@ -27,7 +27,7 @@ export function buildDecor(grid, cfg, { rooms, shrine, top, inRoom, rnd, M }) {
 
   for (let z = 0; z < grid.h; z++) {
     for (let x = 0; x < grid.w; x++) {
-      if (!open(x, z)) continue;
+      if (!open(x, z) || isStairs(x, z)) continue; // (nothing floats over the stairwell)
       // arches: a corridor cell opening into a room, walled on both sides
       if (!inRoom(x, z)) {
         for (const [dx, dz] of DIRS4) {

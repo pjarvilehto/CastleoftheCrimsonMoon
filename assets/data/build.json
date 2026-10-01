@@ -1,5 +1,5 @@
 {
-  "version": "0.143",
+  "version": "0.144",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -35,6 +35,7 @@
     "src/explore/mist.js",
     "src/explore/player.js",
     "src/explore/post.js",
+    "src/explore/stairs.js",
     "src/explore/textures.js",
     "src/main.js",
     "src/meta/equipment.js",
@@ -94,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.144": [
+      "Testing tools: in the Dungeon Lab, stairs past the boss lead down (glowing with the next depth's colour), the shrine works, you can Return to the Great Hall between fights, and floors are more linear."
+    ],
     "0.143": [
       "Testing tools: Dungeon Lab floors are now half the size and run as one winding route from the entrance to the boss."
     ],
@@ -135,10 +139,6 @@
     ],
     "0.130": [
       "Play stats now include how smoothly the game runs: frame rate per run, plus the device (graphics chip, browser, OS) — no personal data."
-    ],
-    "0.129": [
-      "Smoother combat: the new particle effects draw much faster (batched rendering, smaller repaints, no hitch on a room's first hit), and thin out when a huge OVERKILL would flood the screen.",
-      "Fixed: stray pixel specks in the name field are gone for good, and letters like Å and Ö no longer lose their tops."
     ]
   }
 }

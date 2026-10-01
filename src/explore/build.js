@@ -6,8 +6,10 @@
 // and wall bases are darkened in vertex colours (cheap ambient occlusion —
 // the inky contact shadows of painted art). Straight corridors get wooden
 // support frames; wall torches (with a soft halo) are spread through the
-// level, decor.torchSpacing cells apart; decor.js adds the props.
-// buildDungeon(grid, cfg, { rooms, shrine, tier }) ->
+// level, decor.torchSpacing cells apart; decor.js adds the props. Past
+// the boss, the stairs (0.144): the cell is a pit, its walls running on
+// down, with steps descending away from the way in.
+// buildDungeon(grid, cfg, { rooms, shrine, stairs, tier }) ->
 //   { group, torches: [{ position, flames, halos, phase, power }], posts, dispose }
 // (flames / halos: sprites, their resting scale in userData.base)
 // The caller lights the torches (a small pool of lights follows the
@@ -16,15 +18,17 @@
 import * as THREE from 'three';
 import { isOpen, corridorAxis, seeded } from './grid.js';
 import { wallTexture, floorTexture, ceilingTexture, woodTexture, flameTexture, glowTexture } from './textures.js';
-import { quadGeometry, mergeParts, boxesGeometry } from './geom.js';
+import { quadGeometry, mergeParts, boxesGeometry, worldUV } from './geom.js';
 import { buildDecor } from './decor.js';
 
-export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } = {}) {
+export function buildDungeon(grid, cfg, { rooms = [], shrine = null, stairs = null, tier = 0 } = {}) {
   const C = cfg.cell, H = cfg.wallHeight, rnd = seeded(cfg.decor.seed + tier);
   const floors = [], ceilings = [], walls = [], wood = [], torches = [];
   const open = (x, z) => isOpen(grid, x, z);
   const inRoom = (x, z) => rooms.some((r) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h);
   const top = (x, z) => (inRoom(x, z) ? cfg.roomHeight : H); // this cell's ceiling
+  const isStairs = (x, z) => stairs && x === stairs.x && z === stairs.z;
+  const bottom = (x, z) => (isStairs(x, z) ? -cfg.stairs.depth : 0); // this cell's floor
   // AO at a floor corner: darker the more of the three cells around it are walls
   const cornerAo = (x, z, sx, sz) => {
     const walled = [!open(x + sx, z), !open(x, z + sz), !open(x + sx, z + sz)].filter(Boolean).length;
@@ -38,9 +42,9 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } 
   for (let z = 0; z < grid.h; z++) {
     for (let x = 0; x < grid.w; x++) {
       if (!open(x, z)) continue;
-      const x0 = x * C, x1 = (x + 1) * C, z0 = z * C, z1 = (z + 1) * C, T = top(x, z);
+      const x0 = x * C, x1 = (x + 1) * C, z0 = z * C, z1 = (z + 1) * C, T = top(x, z), B = bottom(x, z);
       const ao = [cornerAo(x, z, -1, -1), cornerAo(x, z, 1, -1), cornerAo(x, z, 1, 1), cornerAo(x, z, -1, 1)];
-      floors.push({ p: [[x0, 0, z0], [x0, 0, z1], [x1, 0, z1], [x1, 0, z0]], n: [0, 1, 0],
+      floors.push({ p: [[x0, B, z0], [x0, B, z1], [x1, B, z1], [x1, B, z0]], n: [0, 1, 0],
         uv: [[0, 0], [0, 1], [1, 1], [1, 0]], ao: [ao[0], ao[3], ao[2], ao[1]] });
       ceilings.push({ p: [[x0, T, z0], [x1, T, z0], [x1, T, z1], [x0, T, z1]], n: [0, -1, 0],
         uv: [[0, 0], [1, 0], [1, 1], [0, 1]], ao: ao.map((a) => 0.6 + 0.4 * a) });
@@ -60,14 +64,16 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } 
         f.wall = !open(x + f.to[0], z + f.to[1]);
         const u0 = rnd() < 0.5 ? 0 : 0.5, flip = rnd() < 0.5; // vary the repeat
         const ua = flip ? u0 + 1 : u0, ub = flip ? u0 : u0 + 1;
-        if (!f.wall) { // open: a room's header wall above a lower opening
-          const nT = top(x + f.to[0], z + f.to[1]);
+        if (!f.wall) { // open: a room's header wall above a lower opening, a pit's wall below a higher floor
+          const nT = top(x + f.to[0], z + f.to[1]), nB = bottom(x + f.to[0], z + f.to[1]);
           if (nT < T) wallFace(f, nT, T, ua, ub, [0.55, 0.7], [0.55, 0.7]);
+          if (nB > B) wallFace(f, B, nB, ua, ub, [0.3, 0.6], [0.3, 0.6]);
           continue;
         }
         const cA = !open(x + f.side[0][0], z + f.side[0][1]) ? 0.62 : 1;
         const cB = !open(x + f.side[1][0], z + f.side[1][1]) ? 0.62 : 1;
         const mid = H * 0.38;
+        if (B < 0) wallFace(f, B, 0, ua, ub, [0.3 * cA, 0.42 * cA], [0.3 * cB, 0.42 * cB]);
         wallFace(f, 0, mid, ua, ub, [0.42 * cA, 0.95 * cA], [0.42 * cB, 0.95 * cB]);
         wallFace(f, mid, T, ua, ub, [0.95 * cA, 0.7 * cA], [0.95 * cB, 0.7 * cB]);
       }
@@ -87,7 +93,7 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } 
       }
       // a torch on one of the cell's walls, if none burns within torchSpacing cells
       const sides = faces.filter((f) => f.wall);
-      if (!beam && sides.length && !torches.some((t) => Math.hypot(t.cx - x, t.cz - z) < cfg.decor.torchSpacing)) {
+      if (!beam && !isStairs(x, z) && sides.length && !torches.some((t) => Math.hypot(t.cx - x, t.cz - z) < cfg.decor.torchSpacing)) {
         const f = sides[Math.floor(rnd() * sides.length)];
         const nx = f.n[0], nz = f.n[2], mx = (f.a[0] + f.b[0]) / 2, mz = (f.a[1] + f.b[1]) / 2;
         torches.push({ cx: x, cz: z, x: mx + nx * 0.12, z: mz + nz * 0.12, nx, nz, y: cfg.light.torch.height });
@@ -117,7 +123,18 @@ export function buildDungeon(grid, cfg, { rooms = [], shrine = null, tier = 0 } 
     return { position: new THREE.Vector3(t.x + t.nx * 0.25, t.y + 0.25, t.z + t.nz * 0.25), flames: [flame], halos: [halo], phase: rnd() * 100, power: 1 };
   });
   if (iron.length) group.add(new THREE.Mesh(mergeParts(iron), M.iron), new THREE.Mesh(mergeParts(handles), M.handle));
-  const decor = buildDecor(grid, cfg, { rooms, shrine, top, inRoom, rnd, M });
+  // the stairs: steps from the way in down to the pit's floor
+  const steps = [];
+  if (stairs) {
+    const [dx, dz] = stairs.down, n = cfg.stairs.steps, run = C / n, rise = cfg.stairs.depth / (n + 1);
+    for (let i = 0; i < n; i++) {
+      const h = cfg.stairs.depth - (i + 1) * rise, along = (i + 0.5) * run - C / 2; // from the near edge
+      const cx = (stairs.x + 0.5) * C + dx * along, cz = (stairs.z + 0.5) * C + dz * along;
+      steps.push(new THREE.BoxGeometry(dx ? run : C, h, dz ? run : C).translate(cx, -cfg.stairs.depth + h / 2, cz));
+    }
+  }
+  if (steps.length) group.add(new THREE.Mesh(worldUV(mergeParts(steps), C, H), M.stone));
+  const decor = buildDecor(grid, cfg, { rooms, shrine, top, inRoom, isStairs, rnd, M });
   group.add(decor.group);
   out.push(...decor.lights);
   // free the GPU side when the floor is replaced (textures and materials are shared)

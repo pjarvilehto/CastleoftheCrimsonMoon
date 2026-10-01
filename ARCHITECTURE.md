@@ -118,6 +118,7 @@ src/
     build.js  textures.js  the level from the map; canvas-painted surfaces
     decor.js  mist.js   props (arches, pillars, chains, rubble, puddles,
                         altar), ground mist
+    stairs.js           the way down: its glow, the walk into the dark
     geom.js             merging and world-size UVs
     player.js           WASD + mouselook movement
     post.js             the ink-and-paint post pass

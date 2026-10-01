@@ -2,11 +2,12 @@
 // 0.143). Pure: no DOM, no three.js; tested in Node. The floor is a chain:
 // rooms laid one after another along a winding path (mostly onward, now
 // and then a turn), each joined only to the next by a corridor, plus a
-// couple of short dead-end spurs to poke into. The first room is the
-// start, the last the boss chamber, the one halfway the shrine, the rest
-// the encounters in walking order. Out comes the text map grid.js reads —
-// '#' wall, '.' floor, 'S' start — with the rooms marked at their
-// centres: 'E' encounter, 'H' shrine, 'B' boss.
+// short dead-end spur or so. The first room is the start, then the
+// encounters in walking order with the shrine halfway, then the boss
+// chamber, and past it a single cell: the stairs down (0.144). Out comes
+// the text map grid.js reads — '#' wall, '.' floor, 'S' start — with the
+// rooms marked at their centres: 'E' encounter, 'H' shrine, 'B' boss,
+// 'X' the stairs.
 
 import { seeded, DIRS } from './grid.js';
 
@@ -26,7 +27,7 @@ function tryFloor(rnd, gen) {
   const { width: w, height: h } = gen;
   const g = Array.from({ length: h }, () => Array(w).fill(W));
   const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
-  const count = gen.encounters + 3; // start, encounters, shrine, boss
+  const count = gen.encounters + 4; // start, encounters, shrine, boss, stairs
   const centre = (r) => ({ x: r.x + (r.w >> 1), z: r.z + (r.h >> 1) });
   const inRect = (r, x, z) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h;
 
@@ -38,11 +39,12 @@ function tryFloor(rnd, gen) {
   rooms.push({ x: int(1, w - sw - 1), z: int(1, h - sh - 1), w: sw, h: sh });
   let heading = HEADINGS[int(0, 3)];
   while (rooms.length < count) {
-    const prev = rooms.at(-1), boss = rooms.length === count - 1;
+    const prev = rooms.at(-1), boss = rooms.length === count - 2, stairs = rooms.length === count - 1;
     let placed = null;
     for (let tries = 0; tries < 40 && !placed; tries++) {
       const dir = rnd() < gen.straightness ? heading : HEADINGS[int(0, 3)];
-      const rw = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax), rh = boss ? gen.bossSize : int(gen.roomMin, gen.roomMax);
+      const size = () => (boss ? gen.bossSize : stairs ? 1 : int(gen.roomMin, gen.roomMax));
+      const rw = size(), rh = size();
       const link = int(gen.linkMin, gen.linkMax), [dx, dz] = dir;
       // beyond prev's side in that direction, sliding a little sideways
       const x = dx > 0 ? prev.x + prev.w + link : dx < 0 ? prev.x - link - rw : prev.x + int(-(rw - 1), prev.w - 1);
@@ -94,13 +96,13 @@ function tryFloor(rnd, gen) {
   }
 
   // the rooms' parts, in walking order; the boss is the deepest point
-  const startRoom = rooms[0], bossRoom = rooms.at(-1);
+  const startRoom = rooms[0], bossRoom = rooms.at(-2), stairsRoom = rooms.at(-1);
   const fromStart = walk(g, centre(startRoom));
   const d = (r) => fromStart[key(centre(r))];
   // still a chain when walked: every room further on than the one before
   // (a corridor crossing another would make a fork or a shortcut)
   if (!rooms.every((r, i) => i === 0 || d(r) > d(rooms[i - 1]))) return null;
-  const middle = rooms.slice(1, -1);
+  const middle = rooms.slice(1, -2);
   const shrineRoom = middle[Math.floor(middle.length / 2)];
   const encounterRooms = middle.filter((r) => r !== shrineRoom);
 
@@ -108,11 +110,15 @@ function tryFloor(rnd, gen) {
   const mark = (r, ch) => { const p = centre(r); g[p.z][p.x] = ch; return { ...p, room: r }; };
   mark(startRoom, 'S');
   const encounters = encounterRooms.map((r) => mark(r, 'E'));
-  const shrine = mark(shrineRoom, 'H'), boss = mark(bossRoom, 'B');
+  const shrine = mark(shrineRoom, 'H'), boss = mark(bossRoom, 'B'), stairsAt = mark(stairsRoom, 'X');
+  // the stairs go down away from the way in (its one open neighbour)
+  const [inX, inZ] = HEADINGS.find(([dx, dz]) => g[stairsAt.z + dz][stairsAt.x + dx] !== W);
+  const down = [-inX, -inZ];
   // face down the longest open line from the start
   const run = ([dx, dz]) => { let n = 0; while (g[start.z + dz * (n + 1)][start.x + dx * (n + 1)] !== W) n++; return n; };
   const facing = Object.keys(DIRS).reduce((a, b) => (run(DIRS[b]) > run(DIRS[a]) ? b : a));
-  return { rows: g.map((r) => r.join('')), rooms, start: { ...start, facing }, encounters, shrine, boss };
+  return { rows: g.map((r) => r.join('')), rooms: rooms.slice(0, -1), start: { ...start, facing }, encounters, shrine, boss,
+    stairs: { x: stairsAt.x, z: stairsAt.z, down } };
 }
 
 // a straight line of floor from a to b (one of the axes is shared)

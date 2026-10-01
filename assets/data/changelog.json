@@ -1,4 +1,7 @@
 {
+  "0.144": [
+    "Testing tools: in the Dungeon Lab, stairs past the boss lead down (glowing with the next depth's colour), the shrine works, you can Return to the Great Hall between fights, and floors are more linear."
+  ],
   "0.143": [
     "Testing tools: Dungeon Lab floors are now half the size and run as one winding route from the entrance to the boss."
   ],
