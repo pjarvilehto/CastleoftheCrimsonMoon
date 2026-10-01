@@ -132,6 +132,8 @@ analytics/              /analytics/ play-stats page (static, versioned boot):
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
 particle-lab/           standalone particle-look experiments (?debug button)
+vo-lab/                 review the narrator's takes: play, approve, disapprove ->
+                        vo-rerender.json for tools/gen-vo.mjs --rerender (?debug button)
 tools/
   smoke-test.mjs  test/ the suite
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots

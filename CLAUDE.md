@@ -22,6 +22,10 @@ before structural changes. This file is the rules and the per-system notes.
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
 - **Particle Lab:** `particle-lab/`, opened from the `?debug` corner column —
   a standalone page for trying particle looks (see "Effects").
+- **VO Lab:** `vo-lab/`, same column (VO LAB) — every narrator take with its
+  text, when it plays and how often; Play / Approve / Disapprove (+
+  volatility and shouty nudges); RE-RENDER gives a JSON for
+  `node tools/gen-vo.mjs --rerender` (see "Audio").
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -209,6 +213,17 @@ ducking under it; no take twice in a row; NARRATOR: ON/OFF in the corner
 column. Once-per-save lines (victory, first death) are gated by their
 callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
 audio.json, a `narrate()` call — the suite checks the three agree.
+**Reviewing takes** (0.163): the VO Lab (`vo-lab/`) plays each take as the
+game levels it; the owner approves or disapproves (volatility less/more =
+stability, shouty less/more = style and speed; `gen-vo.mjs NUDGE`), and
+RE-RENDER downloads `vo-rerender.json` (also to the clipboard). Then
+`node tools/gen-vo.mjs --rerender vo-rerender.json` marks the approvals in
+narration.json (`approved`), re-renders the disapproved takes nudged from
+the settings they were rendered at (`settings`, recorded per take; a redo
+gets a fresh seed), measures them, bumps and ships as usual — the owner
+can paste the JSON into the chat for that. A re-rendered take comes back
+unapproved. Edge caches: a re-rendered take keeps its filename, so players
+may hear the old one for ~4 hours.
 
 **UI conventions.**
 - Every dialog: `ui/dialog.js openDialog({ label, children, onKey, proceed })`

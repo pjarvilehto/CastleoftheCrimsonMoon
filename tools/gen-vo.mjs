@@ -7,13 +7,17 @@
 //   node tools/gen-vo.mjs --only overkill,death   # a subset of IDs
 //   node tools/gen-vo.mjs --manifest     # rebuild narration.json, no rendering
 //   node tools/gen-vo.mjs --only retreat --stability 0.7 --style 0   # steadier re-render
+//   node tools/gen-vo.mjs --rerender vo-rerender.json   # the VO Lab's verdicts (vo-lab/):
+//        approves takes, re-renders the disapproved ones nudged by their
+//        "volatility" / "shouty" toggles (stability / style + speed)
 //
 // Output: assets/audio/vo/vo_<id>_<take>.mp3 (44.1 kHz, 128 kbps mono) and
 // assets/data/narration.json (the game's registry: per line its takes —
 // file, text, measuredDb = the loudest 50 ms, so audio/narrator.js can
 // level every take; measured with ffmpeg when it is installed). Existing
 // files are never overwritten (edge caches: new content, new filename) —
-// delete a file to re-render it. Before sending, stage directions in *(...)* are
+// delete a file to re-render it. Each take records the settings it was
+// rendered with and whether the owner approved it (the VO Lab). Before sending, stage directions in *(...)* are
 // stripped, emphasis marks (*Ha!*) become plain text, an exclamation mark
 // becomes a full stop (the narrator never shouts) and a leading ellipsis
 // goes (the model voices it as a filler "uh…").
@@ -46,10 +50,11 @@ const CONCURRENCY = 2;
 export function parseScript(md) {
   const lines = [];
   for (const line of md.split('\n')) {
-    const m = line.match(/^\|\s*`([a-z0-9_]+)`\s*\|(.*?)\|[^|]*\|[^|]*\|\s*$/);
+    const m = line.match(/^\|\s*`([a-z0-9_]+)`\s*\|(.*?)\|([^|]*)\|([^|]*)\|\s*$/);
     if (!m) continue;
     const id = m[1];
     const cell = m[2].trim();
+    const when = m[3].trim(), often = m[4].trim();
     const takes = [];
     const numbered = [...cell.matchAll(/(\d+)\.\s*"([^"]+)"/g)];
     if (numbered.length) {
@@ -59,7 +64,7 @@ export function parseScript(md) {
       if (!single) throw new Error(`Cannot read takes for ${id}: ${cell}`);
       takes.push({ take: 1, raw: single[1], text: cleanTake(single[1]) });
     }
-    lines.push({ id, takes });
+    lines.push({ id, when, often, takes });
   }
   return lines;
 }
@@ -100,6 +105,19 @@ export async function render(text, seed, settings = VOICE.settings) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+// The VO Lab's nudges: volatility is the voice swinging (stability),
+// shouty its push (style, and a touch of speed). -1 = less, +1 = more.
+export const NUDGE = { volatility: { stability: -0.2 }, shouty: { style: 0.1, speed: 0.05 } };
+export function nudged(base, { volatility = 0, shouty = 0 } = {}) {
+  const clamp = (v, lo, hi) => Math.round(Math.max(lo, Math.min(hi, v)) * 100) / 100;
+  return {
+    ...base,
+    stability: clamp(base.stability + volatility * NUDGE.volatility.stability, 0, 1),
+    style: clamp(base.style + shouty * NUDGE.shouty.style, 0, 1),
+    speed: clamp((base.speed ?? 1) + shouty * NUDGE.shouty.speed, 0.7, 1.2),
+  };
+}
+
 /** A stable seed per take so a re-render of one file comes out alike. */
 function seedFor(id, take) {
   let h = 2166136261;
@@ -118,15 +136,27 @@ async function main() {
   const only = onlyArg ? (onlyArg.includes('=') ? onlyArg.split('=')[1] : args[args.indexOf(onlyArg) + 1]).split(',') : null;
 
   const script = parseScript(readFileSync(SCRIPT, 'utf8'));
+  const old = existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : {};
+  const prev = Object.fromEntries(Object.values(old.lines ?? {}).flat().map((t) => [t.file, t]));
+  // --rerender: the lab's verdicts — approvals to record, takes to redo
+  const reqArg = args.indexOf('--rerender');
+  const req = reqArg >= 0 ? JSON.parse(readFileSync(args[reqArg + 1], 'utf8')) : null;
+  const redo = Object.fromEntries((req?.rerender ?? []).map((r) => [r.file, r]));
+  const approved = new Set(req?.approved ?? []);
   const jobs = [];
   for (const { id, takes } of script) {
     if (only && !only.includes(id)) continue;
     for (const t of takes) {
       const file = fileFor(id, t.take);
-      jobs.push({ id, ...t, file, exists: existsSync(join(OUT, file)) });
+      const web = `${WEB}/${file}`;
+      const r = redo[web];
+      // a redo: its own settings, nudged from what it had, and a new seed
+      const own = r ? nudged({ ...VOICE.settings, ...(prev[web]?.settings ?? {}) }, r) : null;
+      jobs.push({ id, ...t, file, web, exists: existsSync(join(OUT, file)) && !r, settings: own, seed: r ? (Date.now() % 1000000) + jobs.length : undefined });
     }
   }
   const todo = manifestOnly ? [] : jobs.filter((j) => !j.exists);
+  for (const j of todo) if (j.settings) console.log(`  redo ${j.file}: ${JSON.stringify(j.settings)}`);
   const chars = todo.reduce((n, j) => n + j.text.length, 0);
   console.log(`${script.length} IDs, ${jobs.length} takes, ${todo.length} to render (${chars} characters)`);
   for (const j of todo) if (j.text !== j.raw) console.log(`  note ${j.file}: "${j.raw}" -> "${j.text}"`);
@@ -139,8 +169,10 @@ async function main() {
     while (i < todo.length) {
       const j = todo[i++];
       try {
-        const buf = await render(j.text, seedFor(j.id, j.take), settings);
+        const used = j.settings ?? settings;
+        const buf = await render(j.text, j.seed ?? seedFor(j.id, j.take), used);
         writeFileSync(join(OUT, j.file), buf);
+        j.rendered = used;
         console.log(`  ok ${j.file} (${(buf.length / 1024).toFixed(0)} KB) "${j.text}"`);
       } catch (e) {
         failed++;
@@ -151,21 +183,25 @@ async function main() {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
   // The registry: every line's takes on disk, each measured (a take already
-  // listed keeps its measurement when ffmpeg is missing).
-  const old = existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : {};
-  const prev = Object.fromEntries(Object.values(old.lines ?? {}).flat().map((t) => [t.file, t]));
+  // listed keeps its measurement), with the settings it was rendered at and
+  // its approval; per line the script's when / how often.
   const reg = {
-    _doc: 'Generated by tools/gen-vo.mjs from docs/narration-script.md: the Old Wizard voice-over. Per line id its takes: file, text as sent, measuredDb = the loudest 50 ms (RMS dB; audio/narrator.js levels every take to audio.json narration.targetDb). When and how often a line plays is audio.json narration.lines.',
+    _doc: 'Generated by tools/gen-vo.mjs from docs/narration-script.md: the Old Wizard voice-over. meta: per line id the script\'s When and How often. lines: per line id its takes: file, text as sent, measuredDb = the loudest 50 ms (RMS dB; audio/narrator.js levels every take to audio.json narration.targetDb), settings it was rendered at, approved (the VO Lab, vo-lab/). When and how often a line plays in the game is audio.json narration.lines.',
     voice: VOICE,
+    meta: Object.fromEntries(script.map((l) => [l.id, { when: l.when, often: l.often }])),
     lines: {},
   };
   let unmeasured = 0;
   for (const j of jobs) {
     if (!existsSync(join(OUT, j.file))) continue;
-    const file = `${WEB}/${j.file}`;
-    const measuredDb = measureDb(join(OUT, j.file)) ?? prev[file]?.measuredDb ?? null;
+    const file = j.web;
+    const was = prev[file] ?? {};
+    const measuredDb = (j.rendered || !Number.isFinite(was.measuredDb) ? measureDb(join(OUT, j.file)) : null) ?? was.measuredDb ?? null;
     if (measuredDb == null) unmeasured++;
-    (reg.lines[j.id] ??= []).push({ take: j.take, file, text: j.text, measuredDb });
+    const entry = { take: j.take, file, text: j.text, measuredDb, settings: j.rendered ?? was.settings ?? settings };
+    if (j.rendered) entry.approved = false; // a redo waits for the lab's verdict
+    else if (approved.has(file) || was.approved) entry.approved = true;
+    (reg.lines[j.id] ??= []).push(entry);
   }
   writeFileSync(REGISTRY, JSON.stringify(reg, null, 2) + '\n');
   const n = Object.values(reg.lines).flat().length;

@@ -222,5 +222,12 @@ fresh();
   ok('PARTICLE LAB is a ?debug corner button (no URL forward)', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('particle-lab/'") && !/particle_lab/i.test(idx));
   const refs = [...lab.matchAll(/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(3));
   ok('particle lab: every asset it loads exists', refs.length >= 6 && refs.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }), refs.join(', '));
+  // the VO Lab (0.163): every take, its text, when and how often; verdicts -> tools/gen-vo.mjs --rerender
+  const vo = readFileSync('vo-lab/index.html', 'utf8'), voJs = readFileSync('vo-lab/lab.js', 'utf8');
+  ok('VO LAB is a ?debug corner button, a standalone page on the registry and the rules', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('vo-lab/'")
+    && vo.includes('src="lab.js"') && voJs.includes("['narration', 'audio'].map((f) => fetch(`../assets/data/${f}.json`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]'));
+  ok('VO lab: plays a take levelled like the game, approve / disapprove, volatility and shouty nudges, re-render JSON', voJs.includes('10 ** ((N.targetDb - t.measuredDb) / 20)')
+    && voJs.includes("setVerdict(k, 'ok')") && voJs.includes("setVerdict(k, 'no')") && voJs.includes("nb('Less', 'volatility', -1)") && voJs.includes("nb('More', 'shouty', 1)")
+    && voJs.includes('out.rerender.push({ file: t.file, id: t.id, take: t.take, volatility:') && readFileSync('tools/gen-vo.mjs', 'utf8').includes("args.indexOf('--rerender')"));
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));
 }

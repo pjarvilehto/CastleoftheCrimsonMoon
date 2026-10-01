@@ -2,7 +2,8 @@
 // main.js, 0.115): INVULNERABLE (0.079), background evaluation — HIDE
 // FOREGROUND, BG VIEW (3D / FLAT / DEPTH), NEXT BG, BG TUNING (0.083/0.084)
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), and PARTICLE LAB (the particle
-// look experiments, particle-lab/, in a new tab), BENCHMARK (0.131,
+// look experiments, particle-lab/, in a new tab), VO LAB (0.163: review the
+// narrator's takes, vo-lab/), BENCHMARK (0.131,
 // ui/benchmark.js). Players never see them.
 
 import { setBackground } from '../core/scene.js';
@@ -46,6 +47,7 @@ export function debugToggles() {
   }, 'NEXT BG');
   // A new tab, so the game (and a run in progress) stays as it is.
   const lab = el('button', { class: 'debug-toggle particle-lab-link', onclick: () => globalThis.open?.('particle-lab/', '_blank', 'noopener') }, 'PARTICLE LAB');
+  const voLab = el('button', { class: 'debug-toggle vo-lab-link', onclick: () => globalThis.open?.('vo-lab/', '_blank', 'noopener') }, 'VO LAB');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, benchmarkButton()];
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), lab, voLab, benchmarkButton()];
 }
