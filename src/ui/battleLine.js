@@ -28,7 +28,7 @@ export const IDLE_FAMILY = {
 // A portrait with its idle loop, started at a random phase so a room of
 // identical skeletons doesn't breathe in unison.
 function portrait(id, alt, family) {
-  const img = el('img', { class: `portrait idle-${family}`, src: ART(id), alt });
+  const img = el('img', { class: `portrait idle-${family}`, src: ART(id), alt, draggable: 'false' }); // never a native image drag (0.159)
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }

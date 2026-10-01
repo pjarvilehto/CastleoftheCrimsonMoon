@@ -663,4 +663,12 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   u.update({ hp: 0, dead: true, printing: false, combatOver: false });
   u.card.listeners.click[0]();
   ok('enemy card: a click attacks while the Attack button could, not mid-replay or once dead', live && hits === 1 && !u.card.classList.contains('targetable'), String(hits));
+  // 0.159: no native image drag from a sloppy click on a portrait, nothing to select in the line
+  const { mountBattle } = await import('../../src/ui/battleRoom.js');
+  const bl = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
+  let prevented = 0;
+  bl.line.listeners.dragstart[0]({ preventDefault: () => prevented++ });
+  const cssL = readFileSync('styles.css', 'utf8');
+  ok('portraits are not draggable, the battle line cancels drags, its text is unselectable',
+    u.portrait.attrs.draggable === 'false' && prevented === 1 && cssL.includes('.battle-line, .unit-actions { user-select: none;') && cssL.includes('.portrait { -webkit-user-drag: none;'));
 }

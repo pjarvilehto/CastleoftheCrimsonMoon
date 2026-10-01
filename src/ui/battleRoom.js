@@ -32,7 +32,8 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
   // --n drives the card size (styles.css --card-h): crowded rooms shrink
   // their cards to fit the width instead of wrapping (0.078).
-  const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}` }, player.el, row);
+  // ondragstart (0.159): no native drag may start from the line — the portraits are images
+  const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}`, ondragstart: (e) => e.preventDefault?.() }, player.el, row);
   const fit = () => line.setAttribute('style', `--n:${Math.max(1, row.children.length)}`);
 
   // Summons join mid-fight (0.092): each card appears as its summon line

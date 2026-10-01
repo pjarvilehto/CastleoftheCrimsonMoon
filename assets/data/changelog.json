@@ -1,4 +1,8 @@
 {
+  "0.159": [
+    "Fixed: after clicking an enemy's picture with a little mouse movement, some browsers (Firefox) kept 'holding' the mouse — every click was swallowed and moving the mouse selected text until the next room. The pictures can no longer be dragged and nothing in the battle line is selectable.",
+    "Enemy cards get the Attack button's small border highlight under the mouse"
+  ],
   "0.158": [
     "Enemy cards no longer glow under the mouse — only the Attack button does (tapping a card still attacks)"
   ],
