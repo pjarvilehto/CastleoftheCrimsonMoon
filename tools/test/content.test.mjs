@@ -214,12 +214,12 @@ fresh();
   ok('no fallback copies of data numbers in src (the shipped migration step and run records aside)', copies.length === 0, copies.join('; '));
 }
 
-// T88: 0.127 — the Particle Lab lives at particle-lab/ and ?Particle_Lab on
-// the game's URL forwards there; it loads the game's real art, not copies.
+// T88: the Particle Lab lives at particle-lab/, opened from the ?debug
+// corner column; it loads the game's real art, not copies.
 {
   const lab = readFileSync('particle-lab/index.html', 'utf8');
   const idx = readFileSync('index.html', 'utf8');
-  ok('index.html forwards ?Particle_Lab before the game boots', /particle_lab\(=\|&\|\$\)\/i\.test\(location\.search\)\) \{ location\.replace\('particle-lab\/'\); return; \}/.test(idx));
+  ok('PARTICLE LAB is a ?debug corner button (no URL forward)', readFileSync('src/ui/debugToggles.js', 'utf8').includes("open?.('particle-lab/'") && !/particle_lab/i.test(idx));
   const refs = [...lab.matchAll(/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(3));
   ok('particle lab: every asset it loads exists', refs.length >= 6 && refs.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }), refs.join(', '));
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));
