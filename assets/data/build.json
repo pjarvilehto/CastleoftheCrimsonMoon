@@ -1,5 +1,5 @@
 {
-  "version": "0.121",
+  "version": "0.122",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -73,6 +73,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.122": [
+      "Play stats: the name a player typed in the game now always shows on the stats page (it overrides renames there), and a name change is sent right away."
+    ],
     "0.121": [
       "Beat the boss of room 24 and the castle celebrates: a one-time Victory dialog — you've won the game, for now. Start a New Game on the main menu to play it again."
     ],
@@ -126,13 +129,6 @@
     "0.108": [
       "A whoosh when you move to the next room",
       "The 'You escaped!' fanfare is 30% quieter"
-    ],
-    "0.107": [
-      "Cleaner combat audio: fewer sounds piled on top of each other, a rebalanced mix (rare finds and loot are audible now) and a limiter as a safety net",
-      "Music no longer dips into silence every ~20 seconds",
-      "Sounds come from where they happen (the knight on the left, enemies on the right) and land with the blow",
-      "Crits ring, mega crits hit deeper, OVERKILL booms; the music dips under the big moments",
-      "New VOLUME sliders (master, music, effects) in the top-right corner"
     ]
   }
 }

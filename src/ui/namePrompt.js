@@ -9,6 +9,7 @@ import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
 import { getProfile, setPlayerName } from '../meta/profile.js';
 import { cleanName, NAME_MAX } from '../meta/names.js';
+import { shareStats } from '../meta/telemetry.js';
 
 // Centre the CAPITALS in the field (0.111): text-box trimming (what the
 // buttons use) doesn't apply to an input's text, and each OS reads this
@@ -40,6 +41,7 @@ export function namePrompt(onDone = () => {}) {
   const submit = () => {
     if (!cleanName(input.value)) { input.focus?.(); return; }
     setPlayerName(input.value);
+    shareStats(getProfile()); // a new name reaches the dashboard now, not after the next run (0.122)
     close();
     onDone();
   };

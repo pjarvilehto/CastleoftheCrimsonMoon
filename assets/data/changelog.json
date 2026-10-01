@@ -1,4 +1,7 @@
 {
+  "0.122": [
+    "Play stats: the name a player typed in the game now always shows on the stats page (it overrides renames there), and a name change is sent right away."
+  ],
   "0.121": [
     "Beat the boss of room 24 and the castle celebrates: a one-time Victory dialog — you've won the game, for now. Start a New Game on the main menu to play it again."
   ],

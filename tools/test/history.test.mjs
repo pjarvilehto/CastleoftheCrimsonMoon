@@ -157,6 +157,9 @@ fresh();
   ok('GET /version names the deployed collector, matching what the dashboard expects', ver.version === wk.VERSION && DATA.telemetry.collectorVersion === wk.VERSION);
   const dash = readFileSync('analytics/dashboard.js', 'utf8');
   ok('dashboard: collected players, deduped by player id, names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes("write(NAMES,"));
+  ok('dashboard: the typed name beats a local rename (0.122)', dash.includes('(profile.name ? null : nm[id])')
+    && dash.includes('pl.profile.name || String(stored[i].label') && dash.includes("pl.source === 'local' || p.name ?"));
+  ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
 }

@@ -34,12 +34,15 @@ function loadPlayers() {
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';
     return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0,
-      label: String(nm[id] ?? `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
+      // The name the player typed wins over a rename made here (0.122);
+      // renames only label players who never entered one.
+      label: String((profile.name ? null : nm[id]) ?? `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`).slice(0, 40) };
   });
   // stored players are re-sanitised too: codes imported before 0.097 were kept as-is
-  const imported = (Array.isArray(read(STORE)) ? read(STORE) : []).map((s) => ({
-    key: String(s.key), label: String(s.label ?? 'Player').slice(0, 40), importedAt: Number(s.importedAt) || 0,
-    source: 'code', profile: sanitizeProfile(s.profile) }));
+  const stored = Array.isArray(read(STORE)) ? read(STORE) : [];
+  const imported = stored.map((s) => ({
+    key: String(s.key), importedAt: Number(s.importedAt) || 0, source: 'code', profile: sanitizeProfile(s.profile) }))
+    .map((pl, i) => ({ ...pl, label: (pl.profile.name || String(stored[i].label ?? 'Player')).slice(0, 40) }));
   const seen = new Set();
   players = [...mine, ...collected, ...imported].filter((pl) => {
     const id = pl.profile.playerId;
@@ -107,7 +110,7 @@ function serverCard() {
     ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>` : '';
   return `<section class="card add">
     <h2>Testers</h2>${stale}
-    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game (0.109 on; older saves show an id until their next visit) — rename them in the Players table if you like (your names stay in this browser).</p>
+    <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game — that always wins. Players who haven't entered one (saves from before 0.109 until their next visit) show an id; you can rename those in the Players table (your names stay in this browser).</p>
     <div class="add-row">
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
       ${data.endpoint ? `<button data-act="refresh"${server.busy ? ' disabled' : ''}>${server.busy ? 'Refreshing…' : 'Refresh'}</button>` : ''}
@@ -129,10 +132,10 @@ function addCode(code, label) {
   const id = profile.playerId;
   if (id && players.some((p) => p.source === 'local' && p.profile.playerId === id)) return 'That is this browser’s own save — it is already shown.';
   const same = id && players.find((p) => p.source === 'code' && p.profile.playerId === id);
-  if (same) Object.assign(same, { profile, importedAt: Date.now(), label: label || same.label });
-  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), label: label || profile.name || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
+  if (same) Object.assign(same, { profile, importedAt: Date.now(), label: profile.name || label || same.label });
+  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), label: profile.name || label || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
   saveImported();
-  return `${same ? 'Updated' : 'Added'} ${label || same?.label || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
+  return `${same ? 'Updated' : 'Added'} ${profile.name || label || same?.label || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
 }
 
 const enemyName = (id) => data.enemies[id]?.name ?? id;
@@ -213,7 +216,7 @@ function playersTable(list) {
     const last = h[h.length - 1];
     const recent = h.slice(-10);
     return `<tr>
-      <td>${pl.source === 'local' ? `<b>${esc(pl.label)}</b>` : `<input data-label="${esc(pl.key)}" value="${esc(pl.label)}" maxlength="40">`}<small>${esc(p.playerId ?? 'pre-0.095 save')}${pl.source === 'server' ? ' · collected' : pl.source === 'code' ? ' · save code' : ''}</small></td>
+      <td>${pl.source === 'local' || p.name ? `<b>${esc(pl.label)}</b>` : `<input data-label="${esc(pl.key)}" value="${esc(pl.label)}" maxlength="40">`}<small>${esc(p.playerId ?? 'pre-0.095 save')}${pl.source === 'server' ? ' · collected' : pl.source === 'code' ? ' · save code' : ''}</small></td>
       <td>${level(st)}</td>
       <td>${h.length}<small>of ${rec.runs ?? 0}</small></td>
       <td>${rec.bestRoom ?? 0}</td>
