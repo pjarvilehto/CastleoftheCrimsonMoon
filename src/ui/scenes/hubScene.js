@@ -9,6 +9,7 @@ import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile } from '../../meta/profile.js';
 import { derivedStats, itemWithForge, playerLevel } from '../../meta/stats.js';
+import { equippedItemIds } from '../../meta/equipment.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
@@ -39,9 +40,8 @@ export function canSpendCoins(p) {
   if (!satchelFull(p) && p.coins >= potionCost()) return true;
   if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
   if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
-  const eq = p.equipment;
-  return [eq.weapon, eq.armor, eq.boots, ...eq.rings, eq.trinket, eq.amulet]
-    .some((id) => id && DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
+  return equippedItemIds(p.equipment)
+    .some((id) => DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
 }
 
 // Buy Potion gets the pulsing 'active' glow below 30% of the satchel.
@@ -135,7 +135,7 @@ export function hubScene() {
 
     // ---- ALCHEMY: potions + three coin tracks. ----
     const alchemyDesc = {
-      potency: () => `+${DATA.difficulty.alchemyTracks?.potency?.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
+      potency: () => `+${DATA.difficulty.alchemyTracks.potency.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
       efficiency: () => efficiencyDesc(), // 0.112: tapering — shows the next level's gain
       infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
     };

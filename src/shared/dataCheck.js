@@ -9,8 +9,9 @@
 
 const NUM = {
   difficulty: [
-    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'potionHeal', 'lowHpShare',
-    'statTrainXpBase', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
+    'hpGrowth', 'dmgGrowth', 'xpGrowth', 'tierRooms', 'budgetBase', 'budgetPerRoom', 'enemyCost.1', 'enemyCost.2', 'enemyCost.3',
+    'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'shrineRoomRange.0', 'shrineRoomRange.1', 'dropChance', 'potionHeal', 'lowHpShare',
+    'statTrainXpBase', 'levelEvery', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus', 'salvagePerTier',
     ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
     ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins'].map((k) => `potions.${k}`),
@@ -34,7 +35,7 @@ const NUM = {
     'duck.db', 'duck.attack', 'duck.release',
     'sweeteners.crit.ringDb', 'sweeteners.mega.ringDb', 'sweeteners.mega.deepDb', 'sweeteners.mega.deepRate', 'sweeteners.overkill.boomDb',
   ],
-  backgrounds: ['parallax.swayHitShare'],
+  backgrounds: ['parallax.swayHitShare', 'parallax.lights.radius'],
   telemetry: ['benchmarkPromptRoom'],
 };
 
@@ -61,7 +62,19 @@ export function checkData(data) {
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
   }
-  const NEEDS = { armor: ['potionCost', 'armorMin', 'armorMult'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'] };
+  // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
+  const summon = data.difficulty?.boss?.summon?.enemy;
+  if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);
+  const bg = data.backgrounds ?? {};
+  if (typeof bg.shrineName !== 'string') out.push('backgrounds.json: shrineName');
+  for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? [])]) {
+    if (typeof bg.roomNames?.[f] !== 'string') out.push(`backgrounds.json: roomNames.${f}`);
+  }
+  const NEEDS = {
+    dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],
+    leech: ['hpCostPct', 'lifestealAdd', 'lifestealCap'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], secondwind: ['coinCost', 'potionsAdd'],
+    quicken: ['hpCostPct', 'cdReduce'], greed: ['dmgCostPct', 'coinMultAdd'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'],
+  };
   for (const o of data.shrines?.offers ?? []) {
     for (const k of NEEDS[o.id] ?? []) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
   }

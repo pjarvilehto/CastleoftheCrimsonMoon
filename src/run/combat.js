@@ -10,6 +10,7 @@
 import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
+import { tryRevive } from './runState.js';
 
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
@@ -45,7 +46,6 @@ function living(combat) {
 // fight line by line (HP bars move with the log, animations land on beat).
 export function playerAttack(combat, targetIndex, heavy = false) {
   const events = [];
-  combat.run.turns += 1; // run history (0.095)
   const push = (ev) => {
     ev.snap = {
       enemies: combat.enemies.map((e) => e.hp),
@@ -56,6 +56,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   };
   const target = combat.enemies[targetIndex];
   if (!target || target.hp <= 0 || combat.over) return events;
+  combat.run.turns += 1; // run history (0.095)
 
   const hit = rollHit(combat, heavy);
   if (!smash(combat, hit, push)) strike(combat, targetIndex, hit, push);
@@ -82,7 +83,7 @@ function rollHit(combat, heavy) {
   const crit = DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < combat.run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
   let dmg = combat.run.stats.dmg * (heavy ? tune.heavyMult : 1);
-  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + (combat.run.stats.critBonus ?? 0) }, megaCrit));
+  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus }, megaCrit));
   return { dmg: Math.max(1, dmg), crit, megaCrit, heavy };
 }
 
@@ -161,7 +162,7 @@ function enemyStrike(combat, enemy, source, push) {
   const tune = DATA.difficulty.combat;
   const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
   // T4 relic: dodge — the blow misses entirely.
-  if (!DEBUG.invulnerable && (run.stats.dodge ?? 0) > 0 && Math.random() < run.stats.dodge) {
+  if (!DEBUG.invulnerable && run.stats.dodge > 0 && Math.random() < run.stats.dodge) {
     push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
     return false;
   }
@@ -174,19 +175,14 @@ function enemyStrike(combat, enemy, source, push) {
   push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
   // T4 relic: thorns wound the attacker — but never finish it (kill/loot
   // flow stays on the player's own blows).
-  const thorns = run.stats.thorns ?? 0;
+  const thorns = run.stats.thorns;
   if (thorns > 0 && taken > 0 && enemy.hp > 1) {
     enemy.hp = Math.max(1, enemy.hp - thorns);
     push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${thorns}.`, target: source, dmg: thorns });
   }
   if (run.hp > 0) return false;
-  // T4 relic: the Heart of the Dying Moon beats again — once per run.
-  if (run.revive) {
-    run.revive = false;
-    run.hp = Math.ceil(run.maxHp * DATA.difficulty.player.reviveHpPct);
-    push({ type: 'revive', text: 'The Heart of the Dying Moon beats again! You rise at half health.' });
-    return false;
-  }
+  const revived = tryRevive(run); // T4 relic: the Heart of the Dying Moon, once per run
+  if (revived) { push({ type: 'revive', text: revived }); return false; }
   combat.over = true;
   combat.victory = false;
   run.killedBy = enemy.id; // run history (0.095)
@@ -198,13 +194,13 @@ function enemyStrike(combat, enemy, source, push) {
 // full it calls a (weakened) enemy that steps in front of it. Summons give
 // no rewards — stalling the boss to farm them is pointless. Capped alive.
 function summonPhase(combat, push) {
-  const cfg = DATA.difficulty.boss?.summon ?? {};
+  const cfg = DATA.difficulty.boss.summon;
   for (const [i, e] of combat.enemies.entries()) {
     if (!e.summonEvery || e.hp <= 0) continue;
     e.summonMeter = Math.min(e.summonEvery, e.summonMeter + 1);
     const alive = combat.enemies.filter((x) => x.summoned && x.hp > 0).length;
     if (e.summonMeter < e.summonEvery || alive >= cfg.maxAlive) continue; // full: waits for room
-    const s = scaleEnemy(cfg.enemy ?? 'skeleton', (combat.roomNumber ?? 1) + cfg.depthBonus);
+    const s = scaleEnemy(cfg.enemy, combat.roomNumber + cfg.depthBonus);
     s.maxHp = Math.max(1, Math.round(s.maxHp * cfg.hpScale));
     s.dmg = Math.max(1, Math.round(s.dmg * cfg.dmgScale));
     Object.assign(s, { hp: s.maxHp, summoned: true, xp: 0, coins: [0, 0] });
@@ -228,6 +224,7 @@ export function canHeavy(combat) {
 }
 
 export function useHeavy(combat) {
-  // Cooldown is player.baseHeavyCd (3); relics and the quicken boon lower it (floor 1).
-  combat.heavyCd = combat.run.stats.heavyCdMax ?? DATA.difficulty.player?.baseHeavyCd;
+  // The cooldown starts at player.baseHeavyCd (meta/stats.js derivedStats);
+  // relics and the quicken boon lower it (floor 1).
+  combat.heavyCd = combat.run.stats.heavyCdMax;
 }

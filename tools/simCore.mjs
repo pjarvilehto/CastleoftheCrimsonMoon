@@ -56,9 +56,9 @@ export function withSeed(seed, fn) {
   try { return fn(); } finally { Math.random = orig; }
 }
 
-export const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'crit', 'armor', 'greed', 'glasscannon'];
+const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'crit', 'armor', 'greed', 'glasscannon'];
 export const STAT_PRIORITY = ['vitality', 'power', 'endurance', 'precision', 'fortune'];
-export const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
+const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
 
 export function newAgg() {
   return {

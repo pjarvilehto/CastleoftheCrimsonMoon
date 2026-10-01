@@ -30,7 +30,7 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const str = (v, max = 40) => (v === null || v === undefined ? null : String(v).slice(0, max));
 const ITEM_SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
 
-export function sanitizeRun(r = {}) {
+function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
@@ -53,9 +53,6 @@ export function sanitizeProfile(p = {}) {
     bench: sanitizeBench(p.bench), // 0.131: ?debug BENCHMARK results
   };
 }
-
-// "0.100" > "0.099": compare version parts as numbers (shared with the game).
-export { compareVersions as versionCmp };
 
 // Every recorded run, tagged with its player and its number in that
 // player's history (1 = their oldest recorded run).

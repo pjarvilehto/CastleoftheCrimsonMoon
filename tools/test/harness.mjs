@@ -150,7 +150,6 @@ globalThis.localStorage = {
   setItem(k, v) { this.s[k] = v; },
   removeItem(k) { delete this.s[k]; },
 };
-globalThis.confirm = () => true;
 // Strip ?v= cachebust stamps so the suite also runs in the stamped deploy
 // tree (app/) — the stamp is a browser-cache concern, not a file on disk.
 globalThis.fetch = async (url) => ({ ok: true, json: async () => JSON.parse(readFileSync(String(url).split('?')[0], 'utf8')) });

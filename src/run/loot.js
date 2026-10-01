@@ -1,35 +1,62 @@
 // run/loot.js — drops after kills. Fortune stat shifts luck.
 
 import { DATA } from '../shared/data.js';
-import { rollCoins, isElite } from '../shared/balance.js';
+import { rollCoins, isElite, pick } from '../shared/balance.js';
+import { equipItems, salvageValue } from '../meta/equipment.js';
 
-// Returns { coins, xp, itemId|null } for one killed enemy.
-// roomNumber gates T4 relics by depth (0.071); direct calls default deep.
-// hasRelic caps relics at ONE per run (0.072) — they're build-defining
-// drops, not a per-room income stream.
-export function rollLoot(enemy, fortuneLevel, roomNumber = Infinity, hasRelic = false) {
+export const RELIC_TIER = 4;
+export const relicIds = () => Object.keys(DATA.items).filter((id) => DATA.items[id].tier === RELIC_TIER);
+
+// Returns { coins, xp, itemId|null } for one killed enemy. fortuneBonus:
+// run.stats.fortuneBonus (meta/stats.js). roomNumber gates T4 relics by
+// depth (0.071, t4MinRoom); direct calls default deep. hasRelic caps relics
+// at ONE per run (0.072) — they're build-defining drops, not a per-room
+// income stream.
+export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = false) {
   const diff = DATA.difficulty;
-  const fortuneBonus = fortuneLevel * diff.fortuneLootBonus;
 
   const coins = Math.round(rollCoins(enemy) * (1 + fortuneBonus));
   const xp = enemy.xp;
 
   let itemId = null;
   // T4 crimson relics: their own rare roll, and only bosses and T3-strength
-  // elites (maxHp >= eliteMinHp) can carry one — and only from room 11 on (0.071),
-  // so early elites can't hand out top-tier gear.
+  // elites (maxHp >= eliteMinHp) can carry one — and only from t4MinRoom on
+  // (0.071), so early elites can't hand out top-tier gear.
   const relicEligible = isElite(enemy) && roomNumber >= diff.t4MinRoom && !hasRelic;
   if (relicEligible && Math.random() < diff.t4Chance + fortuneBonus) {
-    const relics = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === 4);
-    if (relics.length) itemId = relics[Math.floor(Math.random() * relics.length)];
+    const relics = relicIds();
+    if (relics.length) itemId = pick(relics);
   } else if (Math.random() < diff.dropChance + fortuneBonus) {
     const pool = Object.keys(DATA.items).filter(
       (id) => DATA.items[id].tier <= maxTierFor(enemy)
     );
-    if (pool.length) itemId = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length) itemId = pick(pool);
   }
 
   return { coins, xp, itemId };
+}
+
+// An item into the run (kill loot, a treasure chest): kept when it would
+// be equipped at settle (the same rules, run against run.gearPreview), else
+// salvaged on the spot — it would only be salvaged at the end, so take the
+// coins now instead of piling up junk (0.091; same value, same toll).
+// log(text, cls) prints the line: { item } parts are rendered
+// rarity-colored by hud.logLine — run/ stays free of UI imports (0.079).
+// Returns { itemId, kept, coins? }.
+export function takeItem(run, itemId, log) {
+  const item = DATA.items[itemId];
+  if (item.tier === RELIC_TIER) run.relicFound = true; // the per-run relic cap, kept or not
+  if (equipItems({ equipment: run.gearPreview }, [itemId]).equipped.length > 0) {
+    run.itemsFound.push(itemId);
+    // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
+    if (item.tier === RELIC_TIER) log(['✦ EPIC ITEM ✦  You found ', { item }, '!'], 'relic');
+    else log(['Found: ', { item }, '!'], 'loot');
+    return { itemId, kept: true };
+  }
+  const coins = salvageValue(itemId);
+  run.coins += coins;
+  log(`+${coins} coins (salvaged ${item.name})`, 'loot');
+  return { itemId, kept: false, coins };
 }
 
 function maxTierFor(enemy) {

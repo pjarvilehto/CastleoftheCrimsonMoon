@@ -4,7 +4,7 @@
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export const PALETTE = ['#e0b84a', '#d0584a', '#6fb7d8', '#7bc98a', '#b99ae8', '#e08a4a', '#c9c9c9', '#e06fa8'];
+const PALETTE = ['#e0b84a', '#d0584a', '#6fb7d8', '#7bc98a', '#b99ae8', '#e08a4a', '#c9c9c9', '#e06fa8'];
 
 // Horizontal bars: [{ label, value, note? }] — value drives the length.
 export function bars(items, { color = '#c9a227', fmt = (v) => v } = {}) {

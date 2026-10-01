@@ -45,7 +45,7 @@ export function fxFor(ev, who = {}) {
 // How long the log waits after a line with this effect (0.087 pacing):
 // attacks need time to read; everything else keeps logDelayMs.
 export function holdFor(fx) {
-  const p = DATA.difficulty.combatPacing ?? {};
+  const p = DATA.difficulty.combatPacing;
   if (fx?.kind === 'summon') return p.summonMs;
   if (!fx || fx.kind !== 'attack') return undefined;
   if (fx.from === 'player') return fx.heavy ? p.heavyAttackMs : p.playerAttackMs;
@@ -131,7 +131,7 @@ function attack(fx, ctx) {
     }, strike);
   }
   // A crushing hit on the knight swings it back, right -> left.
-  const big = DATA.backgrounds?.parallax?.swayHitShare;
+  const big = DATA.backgrounds.parallax.swayHitShare;
   if (fx.to === 'player' && fx.share >= big) setTimeout(() => bgSway((0.8 * fx.share) / big, -1), strike);
 }
 

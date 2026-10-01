@@ -13,7 +13,8 @@ fresh();
 {
   const { settleRun, drinkPotion } = await import('../../src/run/runState.js');
   const { HISTORY_MAX } = await import('../../src/meta/history.js');
-  const { importSave, exportSave, SAVE_VERSION } = await import('../../src/meta/profile.js');
+  const { importSave, exportSave } = await import('../../src/meta/profile.js');
+  const { SAVE_VERSION } = await import('../../src/meta/migrations.js');
   resetProfile();
   const p = getProfile();
   const id0 = p.playerId;

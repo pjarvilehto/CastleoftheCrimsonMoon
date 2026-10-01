@@ -196,7 +196,7 @@ function frame(now) {
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
   const f = { mvp: mvp(o.yaw, o.pitch, fov, aspect), plane: [Math.tan(fov / 2) * aspect, Math.tan(fov / 2)],
-    lights: activeLights(view === '3d' ? flashes : [], now), r2: (cfg.lights?.radius ?? 0.45) ** 2 };
+    lights: activeLights(view === '3d' ? flashes : [], now), r2: cfg.lights.radius ** 2 };
   gl.uniformMatrix4fv(loc.uMVP, false, f.mvp);
   gl.uniform2fv(loc.uPlane, f.plane);
   gl.uniform1f(loc.uShowDepth, view === 'depth' ? 1 : 0);

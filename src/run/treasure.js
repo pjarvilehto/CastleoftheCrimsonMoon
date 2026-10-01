@@ -12,17 +12,17 @@
 // (blood: `reliquary.hpCost` of max HP as damage, which can kill; inside,
 // rarely a crimson relic — room t4MinRoom on, one per run — else fine gear).
 // Everything lands in the run object (rule 1), gear through the usual
-// upgrade-or-salvage check against run.gearPreview.
+// upgrade-or-salvage check against run.gearPreview (loot.js takeItem).
 
 import { DATA } from '../shared/data.js';
 import { getProfile } from '../meta/profile.js';
-import { trainedLevel } from '../meta/stats.js';
-import { equipItems, salvageValue } from '../meta/equipment.js';
-import { rollCoins } from '../shared/balance.js';
-import { generateRoom } from './roomGen.js';
+import { equipItems } from '../meta/equipment.js';
+import { rollCoins, randInt, pick } from '../shared/balance.js';
+import { roomEnemies } from './roomGen.js';
+import { takeItem, relicIds } from './loot.js';
+import { tryRevive } from './runState.js';
 
 const T = () => DATA.difficulty.treasure;
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // The run's treasure room number, or null (decided at run start).
 export function rollTreasureRoom(bestRoom = getProfile().records.bestRoom) {
@@ -36,8 +36,6 @@ export function rollTreasureRoom(bestRoom = getProfile().records.bestRoom) {
 // The three chests, always in this order.
 export const CHESTS = ['coffer', 'gilded', 'reliquary'];
 
-const fortuneBonus = () => trainedLevel(getProfile(), 'fortune') * DATA.difficulty.fortuneLootBonus;
-
 // Blood price of the reliquary, in HP (never touches max HP).
 export const reliquaryCost = (run) => Math.round(run.maxHp * T().reliquary.hpCost);
 
@@ -49,31 +47,15 @@ function gearFor(run, tier) {
   return pick(better.length ? better : ids);
 }
 
-// Into the run: kept (an upgrade) or salvaged on the spot, as kill loot is.
-function takeItem(run, id, log) {
-  const item = DATA.items[id];
-  if (item.tier === 4) run.relicFound = true;
-  if (equipItems({ equipment: run.gearPreview }, [id]).equipped.length > 0) {
-    run.itemsFound.push(id);
-    if (item.tier === 4) log(['✦ EPIC ITEM ✦  You found ', { item }, '!'], 'relic');
-    else log(['Found: ', { item }, '!'], 'loot');
-    return { itemId: id, kept: true };
-  }
-  const value = salvageValue(id);
-  run.coins += value;
-  log(`+${value} coins (salvaged ${item.name})`, 'loot');
-  return { itemId: id, kept: false, coins: value };
-}
-
 // Open one chest. Returns { kind, coins?, itemId?, kept?, died? }.
 export function openChest(run, room, kind, log) {
   const t = T();
   room.opened = kind;
   if (kind === 'coffer') {
-    const [lo, hi] = t.coffer.fights, fights = lo + Math.floor(Math.random() * (hi - lo + 1));
+    const fights = randInt(t.coffer.fights);
     let coins = 0;
-    for (let i = 0; i < fights; i++) for (const e of generateRoom(room.number).enemies) coins += rollCoins(e);
-    coins = Math.round(coins * (1 + fortuneBonus()) * run.coinMult);
+    for (let i = 0; i < fights; i++) for (const e of roomEnemies(room.number)) coins += rollCoins(e);
+    coins = Math.round(coins * (1 + run.stats.fortuneBonus) * run.coinMult);
     run.coins += coins;
     log(`The coffer spills its hoard: +${coins} coins!`, 'multi');
     return { kind, coins };
@@ -87,11 +69,9 @@ export function openChest(run, room, kind, log) {
   run.hp -= cost;
   log(`The seal drinks your blood. (-${cost} HP)`, 'atk');
   if (run.hp <= 0) {
-    if (run.revive) {
-      run.revive = false;
-      run.hp = Math.ceil(run.maxHp * DATA.difficulty.player.reviveHpPct);
-      log('The Heart of the Dying Moon beats again! You rise at half health.', 'revive');
-    } else {
+    const revived = tryRevive(run);
+    if (revived) log(revived, 'revive');
+    else {
       run.hp = 0;
       run.killedBy = 'reliquary'; // run history: what killed the knight
       log('The reliquary takes everything. The knight falls...', 'sys');
@@ -99,9 +79,8 @@ export function openChest(run, room, kind, log) {
     }
   }
   const relicOk = room.number >= DATA.difficulty.t4MinRoom && !run.relicFound;
-  if (relicOk && Math.random() < t.reliquary.relicChance + fortuneBonus()) {
-    const relics = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === 4);
-    return { kind, ...takeItem(run, pick(relics), log) };
+  if (relicOk && Math.random() < t.reliquary.relicChance + run.stats.fortuneBonus) {
+    return { kind, ...takeItem(run, pick(relicIds()), log) };
   }
   return { kind, ...takeItem(run, gearFor(run, t.reliquary.itemTier), log) };
 }

@@ -26,6 +26,7 @@
     "fullSatchelSellCoins": 10
   },
   "statTrainXpBase": 15,
+  "levelEvery": 5,
   "breakthroughEvery": 5,
   "alchemyTracks": {
     "potency": {

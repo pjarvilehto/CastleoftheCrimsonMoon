@@ -12,17 +12,16 @@ import { getProfile } from './profile.js';
 // Character level: one per five trained discipline levels (shown on the
 // combat card and in the Great Hall, 0.080).
 export function playerLevel(p = getProfile()) {
-  return levelFromStats(p.stats);
+  return levelFromStats(p.stats, DATA.difficulty.levelEvery);
 }
 
 // ---- derived combat stats (base + permanent levels + gear) ----
 
 // Breakthroughs: every 5th trained level in a discipline counts double.
 // Level 12 therefore lands as 14 effective levels.
+export const effectiveLevel = (lvl) => lvl + Math.floor(lvl / DATA.difficulty.breakthroughEvery);
 export function trainedLevel(p, stat) {
-  const lvl = p.stats[stat] ?? 0;
-  const every = DATA.difficulty.breakthroughEvery;
-  return lvl + Math.floor(lvl / every);
+  return effectiveLevel(p.stats[stat] ?? 0);
 }
 
 // The Forge: an equipped item's stats scale by (1 + boost*level).
@@ -31,7 +30,7 @@ export function itemWithForge(id, p = getProfile()) {
   if (!base) return null;
   const lvl = p.forged?.[id] ?? 0;
   if (!lvl) return base;
-  const mult = 1 + DATA.difficulty.forge?.statBoostPerLevel * lvl;
+  const mult = 1 + DATA.difficulty.forge.statBoostPerLevel * lvl;
   const boosted = { ...base, forgeLvl: lvl };
   for (const k of ['dmg', 'armor', 'hp', 'thorns']) if (boosted[k]) boosted[k] = Math.round(boosted[k] * mult);
   for (const k of ['crit', 'lifesteal', 'dodge']) if (boosted[k]) boosted[k] *= mult;
@@ -39,7 +38,7 @@ export function itemWithForge(id, p = getProfile()) {
 }
 
 // Player base stats + per-level gains (difficulty.json `player`, 0.078).
-const P = () => DATA.difficulty.player ?? {};
+const P = () => DATA.difficulty.player;
 
 // Diminishing returns (0.112): `perLevel` for each of the first `linear`
 // levels, then every further level closes a share of the remaining gap to
@@ -106,6 +105,9 @@ export function derivedStats(p = getProfile()) {
     thorns,
     heavyCdMax,
     revive,
+    // Fortune: the loot bonus (a share added to drop chances and coin
+    // rolls) — snapshotted like the rest, read by run/loot.js and treasure.js
+    fortuneBonus: trainedLevel(p, 'fortune') * DATA.difficulty.fortuneLootBonus,
     potions: p.potions,
     potionCap: p.potionCap,
   };

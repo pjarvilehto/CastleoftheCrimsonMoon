@@ -299,7 +299,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const body = new El('body');
   globalThis.document.body = body;
   const dialog = () => body.children.find((c) => c.className === 'update-overlay name-overlay');
-  const prof = await import('../../src/meta/profile.js');
+  const prof = await import('../../src/meta/names.js');
   ok('names: trimmed, spaces collapsed, no control characters, 20 max', prof.cleanName('  Sir\tLancelot \u0007 of   the   Lake and more ') === 'Sir Lancelot of the'
     && prof.cleanName(null) === '');
   resetProfile();

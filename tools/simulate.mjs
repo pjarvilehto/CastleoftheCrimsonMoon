@@ -190,7 +190,7 @@ export function renderReport(agg, { runs, seed }) {
 }
 
 // ── Multi-seed summary: independent campaigns, mean ± sd per metric ──
-export async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
+async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
   const rows = [];
   for (const seed of seeds) {
     const agg = await simulate({ runs, seed, retreat, tactic });
@@ -211,7 +211,7 @@ export async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 's
   return rows;
 }
 
-export function renderMultiSeed(rows, { runs, retreat }) {
+function renderMultiSeed(rows, { runs, retreat }) {
   const keys = ['median', 'mean', 'early', 'late', 'first8', 'boss8', 'boss16', 'boss24', 'coins', 'banked', 'turns'];
   const fmt = (k, v) => (Number.isNaN(v) ? '  —  ' : k.startsWith('boss') ? `${Math.round(v * 100)}%` : v.toFixed(1));
   const stat = (k) => {

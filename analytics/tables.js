@@ -29,7 +29,7 @@ export function playersTable(list, names) {
     return `<tr>
       <td><b>${esc(pl.base)}</b><small>${esc(p.playerId ?? 'pre-0.095 save')}${pl.source === 'server' ? ' · collected' : pl.source === 'code' ? ' · save code' : ''}</small></td>
       <td><input data-tester="${esc(pl.testerKey)}" value="${esc(pl.tester ?? '')}" placeholder="Who is this?" maxlength="30" aria-label="Tester name for ${esc(pl.base)}"></td>
-      <td>${level(st)}</td>
+      <td>${level(st, names.levelEvery)}</td>
       <td>${h.length}<small>of ${rec.runs ?? 0}</small></td>
       <td>${rec.bestRoom ?? 0}</td>
       <td>${recent.length ? (recent.reduce((a, r) => a + r.room, 0) / recent.length).toFixed(1) : '—'}</td>

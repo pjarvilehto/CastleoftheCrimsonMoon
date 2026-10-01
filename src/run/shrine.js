@@ -33,7 +33,7 @@ export function coinCost(base, roomNumber) {
 // What a coin-priced offer costs here: depth-scaled, unless the offer has
 // a flat price (flatCost, 0.091 — scaled prices tripled by room 5 and made
 // Crit / Second Wind unaffordable in the rooms where shrines appear).
-export function offerCoinCost(o, roomNumber) {
+function offerCoinCost(o, roomNumber) {
   return o.flatCost ? o.coinCost : coinCost(o.coinCost, roomNumber);
 }
 
@@ -52,13 +52,13 @@ export function canAffordOffer(run, o) {
   switch (o.id) {
     case 'dmg': return hpFloorOk(run);
     case 'crit': return coinsOk(run, o);
-    case 'armor': return run.potions >= (o.potionCost);
+    case 'armor': return run.potions >= o.potionCost;
     case 'leech': return hpFloorOk(run);
     case 'bulwark': return dmgFloorOk(run);
     case 'secondwind': return coinsOk(run, o);
-    case 'quicken': return hpFloorOk(run) && (run.stats.heavyCdMax ?? 3) > 1;
+    case 'quicken': return hpFloorOk(run) && run.stats.heavyCdMax > 1;
     case 'greed': return dmgFloorOk(run);
-    case 'glasscannon': return run.stats.armor >= (o.minArmor);
+    case 'glasscannon': return run.stats.armor >= o.minArmor;
     default: return false;
   }
 }
@@ -90,17 +90,17 @@ export function acceptOffer(run, o) {
       run.potions = Math.max(0, run.potions - o.potionCost);
       // Percentage of CURRENT armor, with a floor (armorMin, 0.091): 25% of
       // a starting armor was next to nothing — not worth the potion it costs.
-      run.stats.armor = Math.max(run.stats.armor + (o.armorMin), Math.round(run.stats.armor * o.armorMult));
+      run.stats.armor = Math.max(run.stats.armor + o.armorMin, Math.round(run.stats.armor * o.armorMult));
       break;
     case 'leech':
       payHp(run, o.hpCostPct);
-      run.stats.lifesteal = Math.min(o.lifestealCap, (run.stats.lifesteal || 0) + o.lifestealAdd);
+      run.stats.lifesteal = Math.min(o.lifestealCap, run.stats.lifesteal + o.lifestealAdd);
       break;
     case 'bulwark':
       payDmg(run, o.dmgCostPct);
       // Flat armorAdd or a share of current armor, whichever is more (0.091):
       // a flat bonus stopped mattering late while -10% damage kept hurting.
-      run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * (o.armorPct)));
+      run.stats.armor += Math.max(o.armorAdd, Math.round(run.stats.armor * o.armorPct));
       break;
     case 'secondwind':
       payCoins(run, o);
@@ -113,7 +113,7 @@ export function acceptOffer(run, o) {
     case 'quicken':
       payHp(run, o.hpCostPct);
       // Heavy cooldown starts at player.baseHeavyCd; each quicken drops it (floor 1).
-      run.stats.heavyCdMax = Math.max(1, (run.stats.heavyCdMax ?? 3) - o.cdReduce);
+      run.stats.heavyCdMax = Math.max(1, run.stats.heavyCdMax - o.cdReduce);
       break;
     case 'greed':
       payDmg(run, o.dmgCostPct);

@@ -5,24 +5,20 @@
 // 2-7, 10-15, ...), so there's always one before each boss (0.091).
 
 import { DATA } from '../shared/data.js';
-import { scaleEnemy, roomTier } from '../shared/balance.js';
-
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+import { scaleEnemy, roomTier, pick } from '../shared/balance.js';
 
 // A painting the run hasn't shown yet (0.156: no repeats within a run while
 // the pool lasts — run.seenBackgrounds; then the whole pool again).
 function pickFresh(pool, run) {
   const seen = run.seenBackgrounds;
   const fresh = seen ? pool.filter((f) => !seen.includes(f)) : pool;
-  const bg = pickRandom(fresh.length ? fresh : pool);
+  const bg = pick(fresh.length ? fresh : pool);
   seen?.push(bg);
   return bg;
 }
 
 function roomNameFor(bgFile) {
-  return (DATA.backgrounds.roomNames && DATA.backgrounds.roomNames[bgFile]) || 'The Chamber';
+  return DATA.backgrounds.roomNames[bgFile];
 }
 
 export function generateRoom(roomNumber, run = {}) {
@@ -48,7 +44,7 @@ export function generateRoom(roomNumber, run = {}) {
       kind: 'shrine',
       isBoss: false,
       taken: false,
-      name: DATA.backgrounds.shrineName || 'The Shrine',
+      name: DATA.backgrounds.shrineName,
       enemies: [],
       background: DATA.backgrounds.shrine,
     };
@@ -60,23 +56,7 @@ export function generateRoom(roomNumber, run = {}) {
     return { number: roomNumber, kind: 'treasure', isBoss: false, opened: null, name: roomNameFor(bg), enemies: [], background: bg };
   }
 
-  const budget = diff.budgetBase + roomNumber * diff.budgetPerRoom;
-  const tier = roomTier(roomNumber);
-  const pool = Object.keys(DATA.enemies).filter(
-    (id) => DATA.enemies[id].tier <= tier && !DATA.enemies[id].boss
-  );
-
-  const enemies = [];
-  let spent = 0;
-  let guard = 0; // safety against pathological loops
-  const maxEnemies = diff.maxEnemies;
-  while (spent < budget && enemies.length < maxEnemies && guard++ < 20) {
-    const id = pickRandom(pool);
-    const cost = diff.enemyCost[String(DATA.enemies[id].tier)];
-    enemies.push(scaleEnemy(id, roomNumber));
-    spent += cost;
-  }
-
+  const enemies = roomEnemies(roomNumber); // rolled before the painting (seeded runs depend on the order)
   const bg = pickFresh(DATA.backgrounds.rooms, run);
   return {
     number: roomNumber,
@@ -88,11 +68,30 @@ export function generateRoom(roomNumber, run = {}) {
   };
 }
 
+// A combat room's line: the threat budget spent on enemies of the depth's
+// tiers (also what a treasure coffer's haul is counted from, run/treasure.js).
+export function roomEnemies(roomNumber) {
+  const diff = DATA.difficulty;
+  const budget = diff.budgetBase + roomNumber * diff.budgetPerRoom;
+  const tier = roomTier(roomNumber);
+  const pool = Object.keys(DATA.enemies).filter(
+    (id) => DATA.enemies[id].tier <= tier && !DATA.enemies[id].boss
+  );
+  const enemies = [];
+  let spent = 0;
+  while (spent < budget && enemies.length < diff.maxEnemies) {
+    const id = pick(pool);
+    enemies.push(scaleEnemy(id, roomNumber));
+    spent += diff.enemyCost[String(DATA.enemies[id].tier)];
+  }
+  return enemies;
+}
+
 function makeBoss(roomNumber) {
   // 0.072: bosses were dying as fast as deep trash (2/40 sim deaths at boss
   // rooms). They now scale as if {depthBonus} rooms deeper, with an extra
   // HP/damage spike on top. Name still comes from scaleEnemy.
-  const b = DATA.difficulty.boss ?? {};
+  const b = DATA.difficulty.boss;
   const boss = scaleEnemy('vampire_lord', roomNumber + b.depthBonus);
   boss.maxHp = Math.round(boss.maxHp * b.hpMult);
   boss.dmg = Math.round(boss.dmg * b.dmgMult);

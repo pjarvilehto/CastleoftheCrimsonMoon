@@ -7,7 +7,7 @@
 
 import { DATA } from '../shared/data.js';
 
-export function emptyEquipment() {
+function emptyEquipment() {
   return { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
 }
 
@@ -28,7 +28,7 @@ export function equippedItemIds(eq) {
 export function itemValue(id) {
   const it = DATA.items[id];
   if (!it) return -1;
-  const w = DATA.difficulty.itemValue ?? {};
+  const w = DATA.difficulty.itemValue;
   return it.tier * w.tier
     + (it.dmg || 0) * w.dmg
     + (it.armor || 0) * w.armor

@@ -16,7 +16,7 @@ const THINNABLE = new Set(['streak', 'blob', 'dot']);
 let canvas = null, ctx2d = null, parts = [], running = false, last = 0, scale = 1;
 let box = null; // last frame's painted area, device px: [x0, y0, x1, y1]
 
-export function particlesEnabled() {
+function particlesEnabled() {
   return isBg3dActive() && !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 

@@ -27,9 +27,10 @@ export function roomTier(roomNumber) {
   return Math.min(3, 1 + Math.floor((roomNumber - 1) / t));
 }
 
-function randInt([min, max]) {
-  return min + Math.floor(Math.random() * (max - min + 1));
-}
+// The run's random picks (one Math.random() each — seeded sims depend on
+// the call order, so these never roll twice).
+export const randInt = ([min, max]) => min + Math.floor(Math.random() * (max - min + 1));
+export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // T3-strength elites and bosses — marked with a gold star in battle and
 // the only enemies that can drop T4 crimson relics (loot.js).

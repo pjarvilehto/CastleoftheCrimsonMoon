@@ -64,7 +64,7 @@ export function maybeAskBenchmark() {
   return true;
 }
 
-export function askBenchmark() {
+function askBenchmark() {
   confirmPrompt({
     title: 'Benchmark',
     lines: [`About ${benchmarkSeconds()} seconds of scripted combat: the room at rest, a long fight, then OVERKILL after OVERKILL.`,

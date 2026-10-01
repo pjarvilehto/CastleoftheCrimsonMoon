@@ -16,7 +16,7 @@ const STORE = 'castle-analytics-players-v1';
 const TESTERS = 'castle-analytics-testers-v1'; // playerId -> tester name (0.136)
 const NAMES = 'castle-analytics-names-v1';   // pre-0.136 renames: folded into TESTERS once
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
-const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24 };
+const data = { enemies: {}, items: {}, offers: {}, build: '?', endpoint: '', finalRoom: 24, levelEvery: 5 }; // the two numbers: until difficulty.json loads
 const server = { status: 'off', records: [], at: 0, version: null, busy: false, delta: null }; // off | loading | ok | key | error
 const view = { player: 'all', build: 'all' };
 let players = [];
@@ -163,7 +163,7 @@ const itemName = (id) => (id ? data.items[id]?.name ?? id : '—');
 const boonName = (id) => (data.offers[id] ? `${data.offers[id].icon} ${data.offers[id].buff}` : id);
 const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
 // what the tables need to name things (analytics/tables.js)
-const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers };
+const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
 
 function render() {
   const runsAll = allRuns(players);
@@ -271,7 +271,7 @@ async function boot() {
   const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
   const [enemies, items, shrines, build, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry', 'difficulty'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? 24, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
+    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''),
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';

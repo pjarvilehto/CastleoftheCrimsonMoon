@@ -160,7 +160,7 @@ primary button. While a dialog is open it owns the keyboard.
 |---|---|---|
 | `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
 | `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
-| `E` / `N` | title | Enter the Castle / Start a New Game |
+| `E` / `N` | title | Enter the Castle / Start a New Game (then `W` wipes, `K` keeps the save) |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
@@ -170,7 +170,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `F` | dungeon | Accept Your Fate (death) |
 | `1` `2` `3` | shrine | Accept a boon |
 | `G` | run end | Return to the Great Hall |
-| `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers |
+| `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers (each prompt names its own letters) |
 | `O` | victory | Onward |
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |

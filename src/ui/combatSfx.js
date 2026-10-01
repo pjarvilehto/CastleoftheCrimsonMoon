@@ -15,7 +15,7 @@ import { strikeMs } from './combatFx.js';
 let lastPan = 0; // loot lines follow a death line: they come from that card
 
 // Stereo position of a unit's card ('player' or enemy index).
-export function panOf(ctx, who) {
+function panOf(ctx, who) {
   const r = ctx?.unit?.(who)?.card?.getBoundingClientRect?.();
   return r ? panForX(r.left + r.width / 2, globalThis.innerWidth || 0, DATA.audio?.pan?.width) : 0;
 }

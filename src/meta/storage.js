@@ -33,9 +33,10 @@ export function wipeProfile() {
 // a fresh save. Export/import moves it: base64-wrapped JSON, portable as
 // a copy-paste code string. (unescape/escape pair keeps non-ASCII safe.)
 
-export function exportProfile() {
-  const raw = localStorage.getItem(KEY);
-  return raw ? btoa(unescape(encodeURIComponent(raw))) : null;
+// The in-memory profile, not the stored one: a refused write (above) must
+// not hand out a stale code.
+export function exportProfile(profile) {
+  return profile ? btoa(unescape(encodeURIComponent(JSON.stringify(profile)))) : null;
 }
 
 // Parse + lightly validate a save code. Returns the profile object, or

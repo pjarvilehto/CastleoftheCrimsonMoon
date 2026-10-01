@@ -51,7 +51,7 @@ export function renderPanelRoom(root, run, room, h, body) {
 }
 
 // Hooks: log(text) prints to the combat log; refresh() re-renders the scene.
-export function shrineBody(run, room, { log, refresh }) {
+function shrineBody(run, room, { log, refresh }) {
   if (room.taken) {
     return el('div', { class: 'subtitle' }, 'The shrine\'s light fades. Its blessing is yours.');
   }

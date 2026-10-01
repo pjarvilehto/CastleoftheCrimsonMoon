@@ -10,7 +10,7 @@
 
 import { isBg3dActive, bgQualityLevel, gpuName } from './bg3d.js';
 
-export const BIN_MS = 0.25; // histogram resolution (fine enough to tell 144 Hz from 165 Hz)
+const BIN_MS = 0.25; // histogram resolution (fine enough to tell 144 Hz from 165 Hz)
 const BINS = 1000;         // 250 ms of bins; longer frames go in the last one
 const PAUSE_MS = 1000; // a gap this long is a pause (alt-tab, sleep), not a frame
 // Too little to say anything: under MIN_MS measured, or a handful of frames.

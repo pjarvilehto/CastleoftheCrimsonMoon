@@ -18,7 +18,7 @@ import { dbToGain, sliderGain } from './audioMath.js';
 import { getJsonPref, setJsonPref } from '../shared/prefs.js';
 
 const VOL_KEY = 'castle-audio-volumes';
-export const VOLUME_KINDS = ['master', 'music', 'sfx'];
+const VOLUME_KINDS = ['master', 'music', 'sfx'];
 const cfg = () => DATA.audio ?? {};
 const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(Number(v)) ? Number(v) : 1));
 
