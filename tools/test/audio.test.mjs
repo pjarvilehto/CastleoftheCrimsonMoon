@@ -95,7 +95,8 @@ fresh();
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/scenes/hubScene.js');
   ok('hub: levelup + forge wired', h.includes("sfx('levelup')") && h.includes("sfx('forge')"));
-  ok('run end: escape fanfare', read('src/ui/scenes/runEndScene.js').includes("sfx('victory')"));
+  ok('run end: no fanfare, the narrator\'s word on a retreat (0.162); the win dialog keeps the chime', !read('src/ui/scenes/runEndScene.js').includes("sfx('victory')")
+    && read('src/ui/scenes/runEndScene.js').includes("narrate('retreat')") && read('src/ui/victoryModal.js').includes("sfx('victory')"));
   const m = read('src/main.js');
   ok('main: SOUND toggle + global clicks', m.includes("onOffToggle('SOUND'") && m.includes("closest?.('button')") && m.includes('initSfx()'));
 }

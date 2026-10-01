@@ -5,7 +5,6 @@ import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
 import { statBox, itemName } from '../hud.js';
 import { play } from '../../audio/music.js';
-import { sfx } from '../../audio/sfx.js';
 import { narrate } from '../../audio/narrator.js';
 
 // Join rendered item names with plain separators: [a, ', ', b, ', ', c]
@@ -17,7 +16,7 @@ export function runEndScene(run, outcome) {
   return {
     enter(root) {
       play('end');
-      if (outcome !== 'death') { sfx('victory'); narrate('retreat'); }
+      if (outcome !== 'death') narrate('retreat'); // the narrator alone (0.162: the escape fanfare is gone; the win dialog keeps its chime)
       setBackground(DATA.backgrounds.death);
       root.append(
         el('div', { class: 'panel' },
