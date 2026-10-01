@@ -1,2 +1,3 @@
 node_modules/
 _harness_*.html
+__pycache__/

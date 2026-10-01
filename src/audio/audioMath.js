@@ -60,10 +60,14 @@ export function findSections(data, sampleRate, { win = 0.25, gapDb = 15, gapS = 
   return sections.length ? sections : [{ start: 0, end: duration }];
 }
 
-// Equal-power crossfade curve (n points, 0 -> 1); reversed = fade out.
-export function fadeCurve(n = 32, out = false) {
+// Crossfade curve (n points, 0 -> 1; out = 1 -> 0). Equal-power for two
+// different passages; linear (equal-gain) when both play the SAME audio
+// in phase (a seamless bed's overlap, 0.113) — equal power would bump it
+// up 3 dB there.
+export function fadeCurve(n = 32, out = false, linear = false) {
   return Float32Array.from({ length: n }, (_, i) => {
     const x = i / (n - 1);
+    if (linear) return out ? 1 - x : x;
     return out ? Math.cos(x * Math.PI / 2) : Math.sin(x * Math.PI / 2);
   });
 }

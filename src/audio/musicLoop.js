@@ -12,9 +12,13 @@ import { fadeCurve } from './audioMath.js';
 // [{ start, end }] in the buffer (s); crossfade: overlap (s). ahead:
 // segments kept scheduled beyond the playing one (1 live; more for
 // offline rendering).
-export function createLoop(ctx, buffer, dest, sections, when, { crossfade = 1.2, ahead = 1 } = {}) {
+//
+// linear: equal-gain crossfades — for beds rendered as exact loops with
+// their first `crossfade` seconds appended (0.113): the overlap then plays
+// the same audio twice, in phase, and the beat keeps its place.
+export function createLoop(ctx, buffer, dest, sections, when, { crossfade = 1.2, ahead = 1, linear = false } = {}) {
   const list = (Array.isArray(sections) ? sections : [sections]).filter((s) => s.end - s.start >= 0.5);
-  const fadeIn = fadeCurve(32), fadeOut = fadeCurve(32, true);
+  const fadeIn = fadeCurve(32, false, linear), fadeOut = fadeCurve(32, true, linear);
   const live = new Set();
   let next = when, n = 0, stopped = false;
 
