@@ -1,4 +1,7 @@
 {
+  "0.127": [
+    "Behind the scenes: testing tools update (no gameplay changes)."
+  ],
   "0.126": [
     "Low on health? Your HP bar now glows red, and Drink Potion pulses while you still have potions left."
   ],

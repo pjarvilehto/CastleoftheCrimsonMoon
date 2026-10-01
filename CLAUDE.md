@@ -98,6 +98,8 @@ node tools/shrine-study.mjs --n 500         # per-boon shrine balance (paired ru
    short, player-facing, one `--note` per change.
    index.html loads CSS/JS under `?v=<version>` from that list (0.082), so
    a deploy can't leave players on a mix of old and new files.
+   That includes debug-only `src/` changes: without a bump the browser
+   keeps serving its cached copy under the old `?v=` (the 0.127 lesson).
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content = new filename.
 
