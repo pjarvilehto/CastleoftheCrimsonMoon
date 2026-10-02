@@ -19,7 +19,7 @@
 
    Order matters where two rules of equal specificity style the same
    element: buttons come before the combat block (.unit-actions button
-   overrides button.ready), .hud-chip .hpbar before .hp-line .hpbar,
+   overrides button.ready, and .unit-actions button.ready wins back the gold), .hud-chip .hpbar before .hp-line .hpbar,
    .char-card before .player-card, .fx-num before its variants. */
 
 /* ================= 1 Base ================= */
@@ -169,10 +169,22 @@ button:focus-visible {
   outline: 2px solid var(--gold-dim);
   outline-offset: 2px;
 }
+/* Heavy Attack recharged (0.00203): gold border, bright label, and a glow
+   layer whose opacity breathes (compositor only, like .active), with a
+   short flare as the charge lands. The combat row's button rule used to
+   override the border, leaving only a faint box-shadow pulse. */
 button.ready {
-  border-color: var(--gold);
-  animation: pulse-glow 1.6s ease-in-out infinite;
+  border-color: #e8c45c; color: #fff4d0;
+  position: relative; isolation: isolate;
+  box-shadow: 0 0 8px rgba(232,196,92,0.45), inset 0 0 6px rgba(232,196,92,0.2);
 }
+button.ready::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; z-index: -1; pointer-events: none;
+  box-shadow: 0 0 22px rgba(255,214,110,1), 0 0 44px rgba(232,196,92,0.5), inset 0 0 12px rgba(255,214,110,0.35);
+  animation: heavy-flare 0.5s ease-out, heavy-glow 1.4s ease-in-out 0.5s infinite;
+}
+@keyframes heavy-flare { 0% { opacity: 1; } 100% { opacity: 0.35; } }
+@keyframes heavy-glow { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 5px rgba(201,162,39,0.25); }
   50%      { box-shadow: 0 0 18px rgba(201,162,39,0.65); }
@@ -465,6 +477,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
   box-shadow: 0 0 10px rgba(193,75,75,0.35);
   color: #fff;
 }
+.unit-actions button.ready { border-color: #e8c45c; color: #fff4d0; background: linear-gradient(180deg, #7a2a24, #4f1816); } /* (after the row's rule, so the gold wins) */
+.unit-actions button.ready:hover:not(:disabled) { border-color: #ffd86e; box-shadow: 0 0 12px rgba(255,214,110,0.55); }
 /* dead cards keep their actions-row slot; the placeholder button is
    layout-only — invisible but occupying the same height */
 .unit-actions .ghost-btn { visibility: hidden; }
