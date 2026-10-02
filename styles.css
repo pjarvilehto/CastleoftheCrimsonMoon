@@ -896,7 +896,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 }
 .update-title { margin: 0 0 18px; color: var(--gold); font-size: 1.9rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .update-label { color: #9a8b6a; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.9rem; text-align: left; }
-.update-notes { text-align: left; color: var(--parchment); margin: 8px 0 18px; padding-left: 1.2em; line-height: 1.45; }
+.update-notes { text-align: left; color: var(--parchment); margin: 8px 0 18px; padding-left: 1.2em; line-height: 1.45; max-height: 45vh; overflow-y: auto; } /* the notes scroll, the buttons stay (0.00217: a long changelist pushed Reload off a phone's screen) */
 .update-notes li::marker { color: var(--gold-dim); }
 .update-ask { color: var(--parchment); letter-spacing: 0.08em; margin: 0 0 16px; }
 .update-modal .btn-row { justify-content: center; }
@@ -1178,6 +1178,7 @@ html.phone .treasure-cards .shrine-card { padding-bottom: 4px; }
 }
 /* ---- dialogs and the end screen: shorter, scrollable; one with a text field sits high (the on-screen keyboard takes the lower half) ---- */
 html.phone .update-modal { padding: 14px 22px 12px; max-height: 94svh; overflow-y: auto; }
+html.phone .update-notes { max-height: calc(100svh - 200px); margin-bottom: 8px; } /* what is left after the title, the question and the buttons */
 html.phone .update-title { font-size: 1.25rem; margin-bottom: 8px; }
 html.phone .update-overlay:has(.name-input, html.phone .save-code) { align-items: flex-start; padding-top: 6px; }
 html.phone .death-modal { padding: 14px 22px; }
