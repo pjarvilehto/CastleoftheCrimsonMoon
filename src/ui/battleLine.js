@@ -43,7 +43,7 @@ function glint(id, family, img) {
 }
 // --band: the glint's half-width (cards.json), on the unit for its two portraits.
 const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
-// The card's frame art (0.194: a layer instead of a ::before, so the shader
+// The card's frame art (0.195: a layer instead of a ::before, so the shader
 // light can live inside it — styles.css .card-frame carries the art and
 // the card's see-through opacity; the light screens over the art within it).
 const frame = () => el('div', { class: 'card-frame' });

@@ -506,7 +506,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 }
 /* Card art lives on its own layer so it can be slightly transparent
    (room art shows through) without dimming text/portrait/HP (0.074). A
-   real element since 0.194 (battleLine.js frame(), was a ::before): the
+   real element since 0.195 (battleLine.js frame(), was a ::before): the
    shader light (.card-fx) sits inside it, screened over the art within
    this layer's own group, so the plate keeps its 15% see-through with the
    light on it — exactly the Card Lab's plate. z-index:-1 is safe: the unit
@@ -752,7 +752,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
    stylisation (panel scenes stay in tuned px, per convention) */
 .shrine-cards { display: flex; gap: 20px; justify-content: center; margin: 12px 0 8px; }
 .shrine-card {
-  position: relative; /* its gradient is the .card-plate layer below (0.194), the shader light inside it */
+  position: relative; /* its gradient is the .card-plate layer below (0.195), the shader light inside it */
   width: 200px; min-height: 380px;
   border: 1px solid rgba(216,201,163,0.55);
   border-radius: 14px;
@@ -778,7 +778,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .shrine-cost { text-align: center; color: #9a8b6a; margin-top: auto; }
 .shrine-cost-label { color: var(--parchment); letter-spacing: 2px; margin-bottom: 2px; }
 .shrine-card button { width: 100%; padding: 10px 0; font-size: 1.1rem; letter-spacing: 2px; }
-/* the panel card's plate (shrineUI.js litCard, 0.194): its old gradient as a layer at the same 94%, the shader light screened inside it */
+/* the panel card's plate (shrineUI.js litCard, 0.195): its old gradient as a layer at the same 94%, the shader light screened inside it */
 .shrine-card .card-plate { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0.94;
   background: linear-gradient(180deg, rgb(72,31,23), rgb(44,19,14)); }
 /* treasure rooms (0.155, ui/treasureUI.js): the shrine's cards, a hint

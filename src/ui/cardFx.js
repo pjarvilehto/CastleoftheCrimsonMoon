@@ -152,7 +152,7 @@ function sharedGl() {
 // (battleLine.js .card-frame, shrineUI.js .card-plate: the art or gradient
 // behind everything, with the card's see-through opacity on it, so the
 // light and the plate fade together and the plate stays as transparent as
-// the Card Lab's; 0.194 — a canvas screened straight over the card made
+// the Card Lab's; 0.195 — a canvas screened straight over the card made
 // the plate opaque), else the card itself. style: { look, tint }
 // (cardStyle / styleNamed); window: 'frame' | 'panel'; amt: the light
 // (default fx.amt). Returns the entry (null when off: the card is left as

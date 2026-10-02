@@ -188,7 +188,7 @@ canvas and each card's own 2D canvas copies its picture out (`.card-fx`,
 screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
 see-through opacity, so the plate stays as transparent as the lab's
-(0.194) — masked to the frame's window or a panel's rounded edge; a WebGL context per card would run the browser
+(0.195) — masked to the frame's window or a panel's rounded edge; a WebGL context per card would run the browser
 out of them as rooms come and go). Drawn at `fx.scale` of the card's
 pixels at `fx.fps`, dead cards frozen; off with the particles (flat
 background, reduced motion). The cards in 3D: `perspective` on
@@ -385,7 +385,7 @@ may hear the old one for ~4 hours.
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
   there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
   what fits `--n` enemies); card internals are `em`. Card frame art on
-  the card's `.card-frame` layer (opacity 0.85; 0.194: a real element,
+  the card's `.card-frame` layer (opacity 0.85; 0.195: a real element,
   the shader light inside it); portraits overflow the frame;
   per-enemy tweaks via `enemy-<id>` classes.
 - Phones and tablets (0.125, `shared/platform.js isMobile`) get a "Mobile

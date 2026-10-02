@@ -84,6 +84,11 @@ fresh();
     ['compare', 'lineup', 'fight'].every((v) => js.includes(`function ${v}()`)) && js.includes("verdict(k, 'ok')") && js.includes("verdict(k, 'no')") && js.includes("'flipped'")
     && js.includes('out.approved.push({ id, file: k.file, flip: !!v.flip })') && js.includes('out.rejected.push({ id, file: k.file, note:') && js.includes('out.reroll.push({ id, n:') && js.includes('out.reroll.push({ id: q.id, clean: q.n })')
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--rerender')"));
+  // 0.194: --prune keeps only the approved candidate of a character that has one; a character without one keeps all
+  const reg = existsSync('assets/data/art.json') ? JSON.parse(readFileSync('assets/data/art.json', 'utf8')) : { chars: {} };
+  const approvedChars = Object.values(reg.chars).filter((e) => e.candidates.some((k) => k.verdict === 'ok'));
+  ok('art.json: a character with an approved candidate carries no other (pruned)', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
+    && approvedChars.every((e) => e.candidates.every((k) => k.verdict === 'ok')), approvedChars.map((e) => `${e.file}: ${e.candidates.length}`).join(', '));
   if (existsSync('assets/data/art.json')) {
     const reg = JSON.parse(readFileSync('assets/data/art.json', 'utf8'));
     const all = Object.values(reg.chars).flatMap((e) => e.candidates);
