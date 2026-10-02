@@ -8,9 +8,9 @@
 //
 //   node tools/gen-art.mjs --dry-run                      # what would be sent, and to which model
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
-//   node tools/gen-art.mjs --style castle_courtyard.jpg   # another painting as the style reference, or any
-//                                                         # picture by path (assets/style/rat.png: a finished
-//                                                         # character sheet in the target style steers best)
+//   node tools/gen-art.mjs --style castle_courtyard.jpg   # a painting as the style reference instead of the
+//                                                         # character's own sheet (assets/style/<id>.png, when
+//                                                         # there is one; else the ossuary); any picture by path
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
@@ -61,6 +61,19 @@ export const MODELS = {
   max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08 },
 };
 export const DEFAULTS = { n: 4, style: 'dungeon_ossuary.jpg', model: 'pro', aspect: '2:3', tolerance: 30, concurrency: 3 };
+// The style reference for a character, when nothing is asked (--style, a
+// re-roll's style): its own finished sheet in the target style if the owner
+// put one in assets/style/<id>.png (0.191: seven of them — a sheet steers
+// Kontext far better than a room painting: flat grey, no shadow), else the
+// painting in DEFAULTS.style.
+export const STYLE_DIR = 'assets/style';
+// A character without a sheet borrows the nearest one (a hooded skull for the
+// Vampire Lord, a beast for the beasts, armour for the brutes, bone for the stone).
+export const STYLE_NEAREST = { vampire_lord: 'wraith', bat: 'rat', crypt_spider: 'rat', hollow_hound: 'rat', golem: 'blood_knight', gargoyle: 'skeleton' };
+export const styleFor = (id, root = ROOT) => {
+  for (const s of [id, STYLE_NEAREST[id]]) if (s && existsSync(join(root, STYLE_DIR, `${s}.png`))) return `${STYLE_DIR}/${s}.png`;
+  return DEFAULTS.style;
+};
 // The clean-up pass (--clean, the lab's CLEAN): the same picture through the
 // one-picture Kontext with the background's faults painted out — the ground
 // shadow the model adds despite the prompt (dark ones survive the key), a
@@ -253,7 +266,7 @@ async function main() {
       if (!c) throw new Error(`reroll: unknown character ${r.id}`);
       const e = charEntry(reg, c), n0 = nextN(e);
       if (r.clean) { jobs.push({ c, n: n0, from: e.candidates.find((k) => k.n === r.clean) ?? (() => { throw new Error(`clean: no candidate ${r.id}_c${r.clean}`); })(), seed: Date.now() % 2147483647 }); continue; }
-      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', DEFAULTS.style), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
+      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', styleFor(c.id)), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
     }
     saveRegistry(reg);
     console.log(`verdicts: ${(req.approved ?? []).length} approved, ${(req.rejected ?? []).length} rejected`);
@@ -264,7 +277,7 @@ async function main() {
     jobs.push({ c, n: nextN(charEntry(reg, c)), from, seed: seedFor(c.id, 1000 + from.n) });
   } else {
     const n = Number(val('--n', DEFAULTS.n));
-    for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', DEFAULTS.style), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
+    for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', styleFor(c.id)), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
   }
   for (const j of jobs) {
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }

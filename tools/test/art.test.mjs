@@ -11,7 +11,9 @@ fresh();
 
 // The doc and the generator: 13 characters, every one a portrait on disk, the facing rule
 {
-  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile } = await import('../gen-art.mjs');
+  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor } = await import('../gen-art.mjs');
+  ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('nobody') === DEFAULTS.style
+    && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));
   const ids = ['player', ...Object.keys(DATA.enemies)].sort();
   ok('the prompts doc has a line for the knight and every enemy, each with its portrait on disk',

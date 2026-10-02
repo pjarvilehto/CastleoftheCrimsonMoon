@@ -276,8 +276,10 @@ fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 away. **Redrawing them:** `docs/portrait-prompts.md` holds the style
 block ("Mike Mignola meets Darkest Dungeon 2", `[FACING]` = left for
 enemies, right for the knight) and a line per character;
-`tools/gen-art.mjs` sends the current portrait + a style painting
-(default `dungeon_ossuary.jpg`, `--style`) + the prompt to FLUX Kontext
+`tools/gen-art.mjs` sends the current portrait + a style reference (the
+character's own finished sheet from the owner, `assets/style/<id>.png`,
+seven of them in 0.191 — flat grey, no shadow, the destination exactly;
+else `dungeon_ossuary.jpg`; `--style` any picture) + the prompt to FLUX Kontext
 on Replicate (`flux-kontext-apps/multi-image-kontext-pro`, two input
 pictures; `--model max`; ~$0.04 a picture from memory, the API has no
 prices; `REPLICATE_API_TOKEN`, `--dry-run` first; in a proxied container
