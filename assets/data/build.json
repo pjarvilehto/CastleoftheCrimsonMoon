@@ -1,5 +1,5 @@
 {
-  "version": "0.179",
+  "version": "0.180",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.180": [
+      "Card Lab: a hit kicks the card to its full angle at once and lets it recover slowly"
+    ],
     "0.179": [
       "Card Lab: the shader light reaches the frame's border (no dark rim around the plate)"
     ],
@@ -125,9 +128,6 @@
     ],
     "0.166": [
       "The mist is alive: it drifts three times faster, every puff wanders, breathes and churns on its own, and it is lit warm above and cool below — every room has its own amount and wind, the courtyards, ramparts and great halls windier than the cells and cellars"
-    ],
-    "0.165": [
-      "The Old Wizard, second pass: 29 of his lines re-recorded steadier and softer after the owner's review; 93 approved"
     ]
   }
 }

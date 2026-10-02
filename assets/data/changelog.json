@@ -1,4 +1,7 @@
 {
+  "0.180": [
+    "Card Lab: a hit kicks the card to its full angle at once and lets it recover slowly"
+  ],
   "0.179": [
     "Card Lab: the shader light reaches the frame's border (no dark rim around the plate)"
   ],

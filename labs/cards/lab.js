@@ -92,12 +92,19 @@ function hit(u, power = 1, fromRight = false) {
   const dir = fromRight ? 1 : -1, deg = O.motion.deg * power;
   if (O.motion.on && O.motion.hit !== 'none' && can(u.card)) {
     const tilt = O.motion.hit === 'tilt' ? deg * 0.35 : 0;
+    // 0.180: the blow lands at once — the card is at its full angle within
+    // the first 6% of the kick (ease-out, ~2 frames) and recovers slowly from
+    // there (each keyframe's easing runs to the next; the animation's own
+    // easing is linear so nothing slows the snap). The wobble decays the
+    // same way: one hard kick, then ever smaller swings.
+    const SNAP = 'cubic-bezier(0.1, 0.9, 0.3, 1)', RECOVER = 'cubic-bezier(0.45, 0.05, 0.35, 1)';
     const kf = O.motion.hit === 'wobble'
-      ? [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${dir * deg}deg) rotateX(${tilt}deg)`, offset: 0.18 }, { transform: `rotateY(${-dir * deg * 0.6}deg)`, offset: 0.45 },
-        { transform: `rotateY(${dir * deg * 0.3}deg)`, offset: 0.7 }, { transform: `rotateY(${-dir * deg * 0.12}deg)`, offset: 0.86 }, { transform: 'rotateY(0deg)' }]
-      : [{ transform: 'rotateY(0deg) rotateX(0deg)' }, { transform: `rotateY(${dir * deg}deg) rotateX(${tilt}deg)`, offset: 0.22, easing: 'ease-out' },
-        { transform: `rotateY(${-dir * deg * 0.3}deg) rotateX(${-tilt * 0.4}deg)`, offset: 0.6 }, { transform: 'rotateY(0deg) rotateX(0deg)' }];
-    u.card.animate(kf, { duration: O.motion.ms * (O.motion.hit === 'wobble' ? 1.8 : 1), easing: 'ease-in-out', composite: 'add' });
+      ? [{ transform: 'rotateY(0deg) rotateX(0deg)', easing: SNAP }, { transform: `rotateY(${dir * deg}deg) rotateX(${tilt}deg)`, offset: 0.06, easing: RECOVER },
+        { transform: `rotateY(${-dir * deg * 0.4}deg) rotateX(0deg)`, offset: 0.4, easing: 'ease-in-out' }, { transform: `rotateY(${dir * deg * 0.18}deg)`, offset: 0.64, easing: 'ease-in-out' },
+        { transform: `rotateY(${-dir * deg * 0.07}deg)`, offset: 0.84, easing: 'ease-in-out' }, { transform: 'rotateY(0deg) rotateX(0deg)' }]
+      : [{ transform: 'rotateY(0deg) rotateX(0deg)', easing: SNAP }, { transform: `rotateY(${dir * deg}deg) rotateX(${tilt}deg)`, offset: 0.06, easing: RECOVER },
+        { transform: `rotateY(${-dir * deg * 0.12}deg) rotateX(${-tilt * 0.25}deg)`, offset: 0.72, easing: 'ease-in-out' }, { transform: 'rotateY(0deg) rotateX(0deg)' }];
+    u.card.animate(kf, { duration: O.motion.ms * (O.motion.hit === 'wobble' ? 1.8 : 1), easing: 'linear', composite: 'add' });
   }
   // the knockback the game plays on the whole unit (combatFx.js hit): kept, so the kick reads on top of it
   if (can(u.el)) { const k = u.el.getBoundingClientRect().width * 0.03 * power * (fromRight ? -1 : 1); u.el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${k}px)` }, { transform: `translateX(${-k * 0.45}px)` }, { transform: 'translateX(0)' }], { duration: 240, easing: 'ease-out' }); }
