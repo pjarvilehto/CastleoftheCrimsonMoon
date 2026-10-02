@@ -2,8 +2,9 @@
 // card units with the current portraits and the candidates tools/gen-art.mjs
 // made (assets/data/art.json), over a room painting. Verdicts live in
 // localStorage: { [file]: { v: 'ok' | 'no', note, flip, at } }, re-rolls
-// under reroll:<id>; COPY JSON = { approved: [{ id, file, flip }],
-// rejected: [{ id, file, note }], reroll: [{ id, n, hint, style }] } for
+// under reroll[id] and clean passes under reroll['clean:' + file]; COPY
+// JSON = { approved: [{ id, file, flip }], rejected: [{ id, file, note }],
+// reroll: [{ id, n, hint, style } | { id, clean: n }] } for
 // node tools/gen-art.mjs --rerender. Nothing here touches the game.
 
 import { loadData, DATA } from '../../src/shared/data.js';
@@ -63,11 +64,14 @@ function compare() {
     const u = units[i + 1], v = verdictOf(k);
     const bOk = el('button', { onclick: () => verdict(k, 'ok') }, 'Approve'), bNo = el('button', { onclick: () => verdict(k, 'no') }, 'Reject');
     const bFlip = el('button', { title: 'Mirror the figure on import (a candidate that came out facing the wrong way)', onclick: () => { const cur = verdictOf(k) ?? { v: null }; S.verdicts[k.file] = { ...cur, flip: !cur.flip, at: Date.now() }; save(); compare(); } }, 'Flip');
+    const queued = S.reroll[`clean:${k.file}`];
+    const bClean = el('button', { title: 'Queue a clean pass: the same picture with the ground shadow, panel and signature painted out by Kontext (a new candidate, ~$0.04)', onclick: () => { if (queued) delete S.reroll[`clean:${k.file}`]; else S.reroll[`clean:${k.file}`] = { id, n: k.n }; save(); compare(); } }, queued ? '✓ Clean' : 'Clean');
+    bClean.classList.toggle('on', !!queued);
     const note = el('input', { type: 'text', placeholder: 'note (what was wrong)', value: v?.note ?? '', oninput: (e) => { S.verdicts[k.file] = { ...(verdictOf(k) ?? { v: 'no' }), note: e.target.value, at: Date.now() }; save(); } });
     bOk.classList.toggle('on-ok', v?.v === 'ok'); bNo.classList.toggle('on-no', v?.v === 'no'); bFlip.classList.toggle('on', !!v?.flip);
     u.el.classList.toggle('ok', v?.v === 'ok'); u.el.classList.toggle('no', v?.v === 'no');
-    u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, `Candidate ${k.n}`), el('span', { class: 'meta' }, `${(k.model ?? '').split('/').pop()} · seed ${k.seed ?? '?'} · ${(k.style ?? '').replace('.jpg', '')}${k.hint ? ` · "${k.hint}"` : ''}`),
-      el('div', { class: 'verdict' }, bOk, bNo, bFlip), note));
+    u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, `Candidate ${k.n}`), el('span', { class: 'meta' }, `${k.from ? `clean of c${k.from} · ` : ''}${(k.model ?? '').split('/').pop()} · seed ${k.seed ?? '?'} · ${(k.style ?? '').replace('.jpg', '')}${k.hint ? ` · "${k.hint}"` : ''}`),
+      el('div', { class: 'verdict' }, bOk, bNo, bFlip, k.from ? null : bClean), note));
   });
   line(id === 'player' ? nFor(units.length, 0) : nFor(0, units.length), units);
   if (!cs.length) stage.firstChild.append(el('p', { class: 'hint', style: 'position:absolute; left:50%; top:30%; transform:translateX(-50%); color:#9a8b6a; font-family:var(--body); text-shadow:0 1px 4px #000;' }, `No candidates for ${nameOf(id)} yet: node tools/gen-art.mjs --only ${id}`));
@@ -128,6 +132,7 @@ async function copy() {
     for (const k of candidates(id)) { const v = verdictOf(k); if (v?.v === 'ok') out.approved.push({ id, file: k.file, flip: !!v.flip }); if (v?.v === 'no') out.rejected.push({ id, file: k.file, note: v.note ?? '' }); }
     const rr = S.reroll[id]; if (rr?.on) out.reroll.push({ id, n: rr.n || 3, hint: rr.hint ?? '', style: rr.style || undefined });
   }
+  for (const [key, q] of Object.entries(S.reroll)) if (key.startsWith('clean:')) out.reroll.push({ id: q.id, clean: q.n });
   const json = JSON.stringify(out, null, 2);
   code.value = json;
   try { await navigator.clipboard.writeText(json); status('Copied.'); } catch { status('Copy the JSON from the box.'); }

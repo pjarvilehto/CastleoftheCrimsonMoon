@@ -10,10 +10,15 @@
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
 //   node tools/gen-art.mjs --style castle_courtyard.jpg   # another painting as the style reference
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
+//   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
 //                                                         # rejections (+ notes), generates the re-rolls
 //   node tools/gen-art.mjs --recut rat_c2 --tolerance 40 --shadow 90   # cut a candidate out again with
-//                                                         # another key (--shadow 0 = keep a ground shadow)
+//                                                         # another key (--shadow 0 keeps a ground shadow,
+//                                                         # --paper 0 keeps light greys reachable from the edge,
+//                                                         # --holes 0 keeps enclosed patches of the paper's tone)
+//   node tools/gen-art.mjs --clean rat_c4                 # a new candidate: the same picture with the ground
+//                                                         # shadow, panel and signature painted out by Kontext
 //   node tools/gen-art.mjs --import [--only rat] [--pick rat=2]   # the approved candidate (or the pick)
 //                                                         # into the game under a NEW filename (rat_v2.webp)
 //   node tools/gen-art.mjs --manifest                     # rebuild art.json from what is on disk
@@ -39,7 +44,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { keyOut, applyAlpha, bbox, placeOn, SHADOW } from './cutout.mjs';
+import { keyOut, applyAlpha, bbox, placeOn, dropStray, fillHoles, SHADOW, PAPER } from './cutout.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'portrait-prompts.md');
@@ -54,6 +59,14 @@ export const MODELS = {
   max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08 },
 };
 export const DEFAULTS = { n: 4, style: 'dungeon_ossuary.jpg', model: 'pro', aspect: '2:3', tolerance: 30, concurrency: 3 };
+// The clean-up pass (--clean, the lab's CLEAN): the same picture through the
+// one-picture Kontext with the background's faults painted out — the ground
+// shadow the model adds despite the prompt (dark ones survive the key), a
+// panel or vignette, its signature. The figure itself is to stay as it is.
+export const CLEAN = {
+  model: 'black-forest-labs/flux-kontext-pro', priceUsd: 0.04,
+  prompt: 'Remove the ground shadow under the figure, any vignette, inner panel, border, paper texture and any signature or text. Make the background one flat, uniform light grey (#c8c8c8) from edge to edge. Keep the character exactly as it is, unchanged in every line, colour and detail.',
+};
 const token = () => process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_KEY;
 
 /** The doc: { style, chars: [{ id, name, file, line }] } (the style block's [FACING] is filled per character). */
@@ -84,6 +97,18 @@ function seedFor(id, n) {
 
 // ---- Replicate ----
 const headers = () => ({ Authorization: `Bearer ${token()}` });
+// The inputs go inline as data URIs by default (--inputs data): the model's
+// own fetch of a picture uploaded to the Files API timed out on a third of
+// the pilot's tries. Kontext works at ~1MP, so the painting goes as a
+// 1024-wide JPEG and a portrait over 1024px tall is scaled down; both stay
+// well under the data URI limit. --inputs files uploads them instead.
+async function inline(path) {
+  const S = await sharp();
+  const img = S(path), meta = await img.metadata();
+  const buf = path.endsWith('.jpg') ? await img.resize({ width: 1024 }).jpeg({ quality: 85 }).toBuffer()
+    : meta.height > 1024 ? await img.resize({ height: 1024 }).webp({ quality: 90, alphaQuality: 100 }).toBuffer() : readFileSync(path);
+  return `data:${path.endsWith('.jpg') ? 'image/jpeg' : 'image/webp'};base64,${buf.toString('base64')}`;
+}
 async function upload(path) {
   const form = new FormData();
   const type = path.endsWith('.jpg') ? 'image/jpeg' : path.endsWith('.png') ? 'image/png' : 'image/webp';
@@ -120,10 +145,12 @@ export async function portraitFrame(file) {
   return { w: info.width, h: info.height, box: bbox(alpha, info.width, info.height) };
 }
 /** rawPath -> cutPath: keyed out, trimmed, scaled onto the reference portrait's canvas. Returns the cut record. */
-export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, flip = false } = {}) {
+export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, paper = true, holes = true, flip = false } = {}) {
   const S = await sharp();
   const { data, info } = await S(rawPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const { alpha, bg } = keyOut(data, info.width, info.height, { tolerance, shadow: shadow > 0 ? { ...SHADOW, tolerance: shadow } : null });
+  const { alpha, bg } = keyOut(data, info.width, info.height, { tolerance, paper: paper ? PAPER : null, shadow: shadow > 0 ? { ...SHADOW, tolerance: shadow } : null });
+  const filled = holes ? fillHoles(data, alpha, info.width, info.height, bg) : 0;
+  const stray = dropStray(alpha, info.width, info.height);
   const box = applyAlpha(data, alpha, info.width, info.height);
   if (!box) throw new Error(`${rawPath}: nothing left after the key (tolerance ${tolerance})`);
   const old = await portraitFrame(refPath);
@@ -134,7 +161,7 @@ export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULT
   const figBuf = await fig.png().toBuffer();
   await S({ create: { width: old.w, height: old.h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: figBuf, left: at.left, top: at.top }]).webp({ quality: 90, alphaQuality: 100 }).toFile(cutPath);
-  return { tolerance, shadow, bg, box, flip, canvas: [old.w, old.h], figure: [at.w, at.h] };
+  return { tolerance, shadow, paper, holes, bg, box, filled, stray, flip, canvas: [old.w, old.h], figure: [at.w, at.h] };
 }
 
 // ---- the registry ----
@@ -160,7 +187,8 @@ async function main() {
   if (only && chars.length !== only.length) throw new Error(`unknown character in --only (known: ${doc.chars.map((c) => c.id).join(', ')})`);
   const model = MODELS[val('--model', DEFAULTS.model)];
   if (!model) throw new Error('--model pro | max');
-  const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance));
+  const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance)), paper = val('--paper', '1') !== '0', holes = val('--holes', '1') !== '0';
+  const cutOpts = { tolerance, shadow, paper, holes };
   mkdirSync(OUT, { recursive: true });
 
   if (has('--manifest')) { // what is on disk, keeping every record that still has its file
@@ -176,12 +204,13 @@ async function main() {
     saveRegistry(reg); console.log(`${REGISTRY.replace(ROOT + '/', '')}: ${Object.values(reg.chars).reduce((s, e) => s + e.candidates.length, 0)} candidates`); return;
   }
 
-  if (has('--recut')) { // the same picture, another key
+  if (has('--recut')) { // the same picture(s), another key ("all" = every candidate of the --only characters)
     const [, id, n] = val('--recut').match(/^([a-z_]+)_c(\d+)$/) ?? [];
-    const c = doc.chars.find((x) => x.id === id), k = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
-    if (!k) throw new Error(`--recut: no candidate ${val('--recut')}`);
-    k.cut = await cutAndFit(join(ROOT, k.raw), join(CHARS, c.file), join(ROOT, k.file), { tolerance, shadow, flip: has('--flip') });
-    saveRegistry(reg); console.log(`  recut ${k.file}: ${JSON.stringify(k.cut)}`); return;
+    const c = doc.chars.find((x) => x.id === id), one = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
+    if (!one && val('--recut') !== 'all') throw new Error(`--recut: no candidate ${val('--recut')} (or "all")`);
+    const list = one ? [[c, one]] : chars.flatMap((ch) => charEntry(reg, ch).candidates.map((k) => [ch, k]));
+    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), join(CHARS, ch.file), join(ROOT, k.file), { ...cutOpts, flip: has('--flip') }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
+    saveRegistry(reg); return;
   }
 
   if (has('--import')) { // the approved candidate (or the pick) into the game, under a new filename
@@ -201,7 +230,7 @@ async function main() {
       await img.webp({ quality: 90, alphaQuality: 100 }).toFile(join(CHARS, file));
       k.imported = file;
       if (c.id === 'player') cards.player.art = file; else enemies[c.id].art = file;
-      console.log(`  ${c.id}: candidate ${k.n} -> assets/chars/${file}${k.flip ? ' (flipped)' : ''}`);
+      console.log(`  ${c.id}: candidate ${k.n} -> assets/chars/${file}${k.flip ? ' (flipped)' : ''}${k.from ? ` (a clean of c${k.from})` : ' (not a clean pass: a ground shadow may be in it — --clean first if so)'}`);
       done++;
     }
     writeFileSync(join(ROOT, 'assets/data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
@@ -221,41 +250,53 @@ async function main() {
       const c = doc.chars.find((x) => x.id === r.id);
       if (!c) throw new Error(`reroll: unknown character ${r.id}`);
       const e = charEntry(reg, c), n0 = nextN(e);
+      if (r.clean) { jobs.push({ c, n: n0, from: e.candidates.find((k) => k.n === r.clean) ?? (() => { throw new Error(`clean: no candidate ${r.id}_c${r.clean}`); })(), seed: Date.now() % 2147483647 }); continue; }
       for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', DEFAULTS.style), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
     }
     saveRegistry(reg);
     console.log(`verdicts: ${(req.approved ?? []).length} approved, ${(req.rejected ?? []).length} rejected`);
+  } else if (has('--clean')) {
+    const [, id, n] = val('--clean').match(/^([a-z_]+)_c(\d+)$/) ?? [];
+    const c = doc.chars.find((x) => x.id === id), from = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
+    if (!from) throw new Error(`--clean: no candidate ${val('--clean')}`);
+    jobs.push({ c, n: nextN(charEntry(reg, c)), from, seed: seedFor(c.id, 1000 + from.n) });
   } else {
     const n = Number(val('--n', DEFAULTS.n));
     for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', DEFAULTS.style), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
   }
   for (const j of jobs) {
+    if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
     if (!existsSync(join(ROOT, 'assets/bg', j.style))) throw new Error(`no such painting: assets/bg/${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
   }
-  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${model.model} (about $${(jobs.length * model.priceUsd).toFixed(2)} at ~$${model.priceUsd} each, from memory)`);
-  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  style ${j.style}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
+  const cost = jobs.reduce((s, j) => s + (j.from ? CLEAN.priceUsd : model.priceUsd), 0);
+  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => (j.from ? CLEAN.model : model.model)))].join(' + ')} (about $${cost.toFixed(2)} at ~$${model.priceUsd} each, from memory)`);
+  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : `style ${j.style}`}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
   if (has('--dry-run')) { if (jobs.length) console.log(`\n--- the prompt for ${jobs[0].c.id} ---\n${jobs[0].prompt}\n---`); return; }
   if (!jobs.length) return;
   if (!token()) throw new Error('REPLICATE_API_TOKEN is not set');
 
-  // one upload per picture, shared by the jobs
+  // one upload (or one inline encoding) per picture, shared by the jobs
   const uploads = {};
-  const uploaded = (path) => (uploads[path] ??= upload(path));
+  const uploaded = (path) => (uploads[path] ??= (val('--inputs', 'data') === 'files' ? upload(path) : inline(path)));
   let i = 0, failed = 0;
   const worker = async () => {
     while (i < jobs.length) {
       const j = jobs[i++];
       const name = candidateFile(j.c.id, j.n);
       try {
-        const [portrait, painting] = await Promise.all([uploaded(join(CHARS, j.c.file)), uploaded(join(ROOT, 'assets/bg', j.style))]);
         const t0 = Date.now();
-        const out = await predict(model.model, { prompt: j.prompt, input_image_1: portrait, input_image_2: painting, aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed });
+        const use = j.from ? CLEAN.model : model.model;
+        const input = j.from
+          ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
+          : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(join(ROOT, 'assets/bg', j.style)), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+        // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
+        const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
         await (await sharp())(out.bytes).jpeg({ quality: 92 }).toFile(rawPath);
-        const cut = await cutAndFit(rawPath, join(CHARS, j.c.file), cutPath, { tolerance, shadow });
+        const cut = await cutAndFit(rawPath, join(CHARS, j.c.file), cutPath, cutOpts);
         const entry = charEntry(reg, j.c);
-        entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: model.model, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
+        entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: use, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, from: j.from?.n, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
         entry.candidates.sort((a, b) => a.n - b.n);
         saveRegistry(reg); // after every picture: a crash loses nothing
         console.log(`  ok ${name} (${(out.bytes.length / 1024).toFixed(0)} KB raw, ${((Date.now() - t0) / 1000).toFixed(0)} s, figure ${cut.figure.join('x')} on ${cut.canvas.join('x')})`);

@@ -1,15 +1,24 @@
 // tools/cutout.mjs — cutting a generated portrait out of its flat grey
-// background (0.184, tools/gen-art.mjs). Pure: RGBA bytes in, alpha out;
+// background (0.185, tools/gen-art.mjs). Pure: RGBA bytes in, alpha out;
 // no sharp, no DOM, so the suite can test it on a synthetic picture.
 //
 // The prompt asks FLUX for "a plain flat light grey background (#c8c8c8)",
-// but a model never hits a colour exactly and the figure may carry greys
-// of its own (the knight's chainmail, the gargoyle's stone), so the key
-// is not a global colour match: the background colour is sampled from
-// the picture's border, and only pixels REACHED from the border through
-// near-background colours go (a flood fill), with a soft edge where the
-// fill meets the figure (anti-aliased edge pixels keep part of their
-// alpha). Then the figure's box, for trimming and scaling.
+// but a model never hits a colour exactly, paints a lighter paper or a
+// darker panel inside a border, a vignette, a ground shadow and a
+// signature anyway, and the figure may carry greys of its own (the
+// knight's chainmail, the gargoyle's stone). So the key is not a global
+// colour match: the background colour is sampled from the picture's
+// border, and only pixels REACHED from the border go (a flood fill) —
+// through near-background colours, through paper-like ones (light and
+// unsaturated: the panels, the vignettes; the inked figure is dark or
+// coloured and its outline stops the fill, so a skull face or a tooth
+// inside it stays) and, in the picture's lower part, through the shadow's
+// mid-light wash — with a soft edge where the fill meets the figure.
+// Then enclosed holes of plain background (the paper between a figure's
+// legs, walled in by its ground shadow) and stray marks in the bottom
+// band (signatures, shadow scraps) go, and the figure's box is measured
+// for trimming and scaling. A dark ground shadow survives all of this (it
+// is as dark as the figure): gen-art.mjs --clean paints it out instead.
 
 /** The background colour: the median of the border ring's pixels. */
 export function sampleBackground(data, w, h, ring = Math.max(2, Math.round(Math.min(w, h) * 0.02))) {
@@ -25,27 +34,36 @@ export function sampleBackground(data, w, h, ring = Math.max(2, Math.round(Math.
   return [med(r), med(g), med(b)];
 }
 
-const dist = (data, i, bg) => Math.sqrt((data[i] - bg[0]) ** 2 + (data[i + 1] - bg[1]) ** 2 + (data[i + 2] - bg[2]) ** 2);
+const dist = (data, i, c) => Math.sqrt((data[i] - c[0]) ** 2 + (data[i + 1] - c[1]) ** 2 + (data[i + 2] - c[2]) ** 2);
 const lum = (data, i) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
 const sat = (data, i) => { const mx = Math.max(data[i], data[i + 1], data[i + 2]); return mx ? (mx - Math.min(data[i], data[i + 1], data[i + 2])) / mx : 0; };
 
-/** The ground shadow the model paints under the figure despite the prompt: a mid-light, unsaturated wash on the background in the picture's lower part (y from `fromY` of the height), reachable from the border. Measured on the pilot: shadow pixels at luminance 105-135 and distance 130-180 from the background; the inked figure under 80. */
+/** Paper-like: light and unsaturated, whatever the exact tone (a lighter paper, a grey panel, a vignette). */
+export const PAPER = { minLum: 135, maxSat: 0.3 };
+/** The ground shadow the model paints under the figure despite the prompt: a mid-light, unsaturated wash in the picture's lower part (y from `fromY` of the height). Measured on the pilot: shadow pixels at luminance 105-135, distance 130-180 from the background; the inked figure under 80. */
 export const SHADOW = { tolerance: 200, minLum: 90, maxSat: 0.45, fromY: 0.6 };
 
 /**
  * The alpha of every pixel: 0 where the flood fill from the border ran
- * (colour within `tolerance` of the background, or a shadow: within
- * `shadow.tolerance`, light and unsaturated — the inked figure is dark or
- * coloured, and its outline stops the fill), 255 inside the figure, in
- * between on the figure's edge pixels (their distance to the background
- * over 2x the tolerance). Returns { alpha, bg }.
+ * (within `tolerance` of the background colour, paper-like, a shadow in
+ * the lower part, or inside the 1% border margin), 255 inside the figure,
+ * in between on the figure's edge pixels (their distance to the
+ * background next to them, over 2x the tolerance). Returns { alpha, bg }.
  */
-export function keyOut(data, w, h, { tolerance = 30, shadow = SHADOW, bg = sampleBackground(data, w, h) } = {}) {
+export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHADOW, margin = Math.max(1, Math.round(Math.min(w, h) * 0.01)), bg = sampleBackground(data, w, h) } = {}) {
   const n = w * h;
   const reached = new Uint8Array(n);
   const stack = [];
   const yShadow = shadow ? Math.round(h * (shadow.fromY ?? 0)) : h;
-  const passable = (p) => { const i = p * 4, d = dist(data, i, bg); return d <= tolerance || (p >= yShadow * w && shadow && d <= shadow.tolerance && lum(data, i) >= shadow.minLum && sat(data, i) <= shadow.maxSat); };
+  const passable = (p) => {
+    const x = p % w, y = (p - x) / w;
+    if (x < margin || y < margin || x >= w - margin || y >= h - margin) return true;
+    const i = p * 4, d = dist(data, i, bg);
+    if (d <= tolerance) return true;
+    const L = lum(data, i), S = sat(data, i);
+    if (paper && L >= paper.minLum && S <= paper.maxSat) return true;
+    return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadow.minLum && S <= shadow.maxSat;
+  };
   const push = (p) => { if (!reached[p] && passable(p)) { reached[p] = 1; stack.push(p); } };
   for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
   for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
@@ -62,10 +80,71 @@ export function keyOut(data, w, h, { tolerance = 30, shadow = SHADOW, bg = sampl
   for (let p = 0; p < n; p++) {
     if (reached[p]) { alpha[p] = 0; continue; }
     const x = p % w, y = (p - x) / w;
-    const edge = (x > 0 && reached[p - 1]) || (x < w - 1 && reached[p + 1]) || (y > 0 && reached[p - w]) || (y < h - 1 && reached[p + w]);
-    if (edge) alpha[p] = Math.max(0, Math.min(255, Math.round((255 * dist(data, p * 4, bg)) / soft)));
+    const near = [x > 0 && reached[p - 1] ? p - 1 : -1, x < w - 1 && reached[p + 1] ? p + 1 : -1, y > 0 && reached[p - w] ? p - w : -1, y < h - 1 && reached[p + w] ? p + w : -1].filter((q) => q >= 0);
+    if (!near.length) continue;
+    // against the background next to it (a panel's grey, not the border's)
+    const q = near[0] * 4, local = [data[q], data[q + 1], data[q + 2]];
+    alpha[p] = Math.max(0, Math.min(255, Math.round((255 * dist(data, p * 4, local)) / soft)));
   }
   return { alpha, bg };
+}
+
+/**
+ * Enclosed holes: a connected piece of unreached PAPER pixels (light,
+ * unsaturated, within `tolerance` of the background — a lighter paper
+ * counts) in the picture's lower half (`fromY`) and at least `minArea` of
+ * the picture is cleared: the paper between the legs, walled in by the
+ * shadow. A skull face sits in the upper half; a tooth is far too small.
+ * (Pale stone in a figure's lower half would go too: --holes 0 then.)
+ * Returns how many went.
+ */
+export const HOLES = { tolerance: 60, minArea: 0.003, fromY: 0.5 };
+export function fillHoles(data, alpha, w, h, bg, opts = {}) {
+  const { tolerance, minArea, fromY } = { ...HOLES, ...opts };
+  const n = w * h, label = new Int32Array(n).fill(-1), yFrom = h * fromY;
+  const paperish = (p) => { const i = p * 4; return alpha[p] > 0 && dist(data, i, bg) <= tolerance && lum(data, i) >= PAPER.minLum && sat(data, i) <= PAPER.maxSat; };
+  let gone = 0;
+  for (let s = 0; s < n; s++) {
+    if (label[s] >= 0 || !paperish(s)) continue;
+    const id = s, pixels = [s], stack = [s];
+    label[s] = id;
+    let y0 = h;
+    while (stack.length) {
+      const p = stack.pop();
+      const x = p % w, y = (p - x) / w;
+      if (y < y0) y0 = y;
+      for (const q of [x > 0 && p - 1, x < w - 1 && p + 1, y > 0 && p - w, y < h - 1 && p + w]) if (q !== false && label[q] < 0 && paperish(q)) { label[q] = id; pixels.push(q); stack.push(q); }
+    }
+    if (y0 >= yFrom && pixels.length >= minArea * n) { for (const p of pixels) alpha[p] = 0; gone++; }
+  }
+  return gone;
+}
+
+/**
+ * Stray marks: every connected piece but the largest that lies entirely
+ * in the bottom `band` of the picture (the model's signature in a corner,
+ * a scrap of shadow) is cleared. Returns how many went.
+ */
+export function dropStray(alpha, w, h, band = 0.15) {
+  const n = w * h, label = new Int32Array(n).fill(-1), comps = [];
+  for (let s = 0; s < n; s++) {
+    if (alpha[s] === 0 || label[s] >= 0) continue;
+    const id = comps.length, c = { area: 0, y0: h, pixels: [] };
+    comps.push(c); label[s] = id;
+    const stack = [s];
+    while (stack.length) {
+      const p = stack.pop(); c.area++; c.pixels.push(p);
+      const x = p % w, y = (p - x) / w;
+      if (y < c.y0) c.y0 = y;
+      for (const q of [x > 0 && p - 1, x < w - 1 && p + 1, y > 0 && p - w, y < h - 1 && p + w]) if (q !== false && alpha[q] > 0 && label[q] < 0) { label[q] = id; stack.push(q); }
+    }
+  }
+  if (comps.length < 2) return 0;
+  const main = comps.reduce((a, b) => (b.area > a.area ? b : a));
+  const yBand = h * (1 - band);
+  let gone = 0;
+  for (const c of comps) if (c !== main && c.y0 >= yBand) { for (const p of c.pixels) alpha[p] = 0; gone++; }
+  return gone;
 }
 
 /** The box of the pixels with alpha > `min`: { x0, y0, x1, y1 } (x1/y1 exclusive), or null when empty. */

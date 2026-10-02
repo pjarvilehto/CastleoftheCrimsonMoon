@@ -1,6 +1,7 @@
 {
   "name": "castle-of-the-crimson-moon",
   "private": true,
+  "type": "module",
   "description": "Tool dependencies only: the game itself has no build step and no runtime dependencies. sharp = tools/gen-art.mjs (the portraits' cut-out and import).",
   "devDependencies": {
     "sharp": "^0.35.5"

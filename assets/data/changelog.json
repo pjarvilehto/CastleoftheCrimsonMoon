@@ -1,4 +1,7 @@
 {
+  "0.185": [
+    "No black rim outside the cards' white border"
+  ],
   "0.184": [
     "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
     "The card glow reaches the frame's border: no dark rim around the plate"

@@ -33,16 +33,19 @@ body.fight #panel { display: none; }
 body:not(.fight) #stage .unit-actions { display: none; }
 .portrait.flipped { transform: translateX(-50%) scaleX(-1); }
 /* the caption under a card: which picture, and the verdict */
-.lab-cap { font-family: var(--body); font-size: max(11px, calc(var(--card-h) * 0.035)); color: var(--parchment); text-align: center; margin-top: 0.5em; display: grid; gap: 0.3em; text-shadow: 0 1px 4px #000; }
+.lab-cap { font-family: var(--body); font-size: max(11px, calc(var(--card-h) * 0.035)); color: var(--parchment); text-align: center; margin-top: 0.5em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.3em; text-shadow: 0 1px 4px #000; min-width: 0; }
+/* a unit is exactly its card's width (the game's art ratios), never squeezed or widened by its caption */
+#stage .unit { min-width: 0; flex: 0 0 auto; width: calc(var(--card-h) * 0.3734); }
+#stage .player-unit { width: calc(var(--card-h) * 0.605); }
 .lab-cap b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); font-size: 1.2em; }
 .lab-cap .meta { color: var(--muted); font-size: 0.85em; }
-.lab-cap .verdict { display: flex; gap: 0.3em; justify-content: center; }
+.lab-cap .verdict { display: flex; flex-wrap: wrap; gap: 0.3em; justify-content: center; }
 .lab-cap button { font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; font-size: 1em; color: var(--parchment); background: rgba(20, 14, 8, 0.85); border: 1px solid var(--line); border-radius: 3px; padding: 0.2em 0.6em; cursor: pointer; }
 .lab-cap button:hover { border-color: var(--gold); }
 .lab-cap button.on-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
 .lab-cap button.on-no { background: var(--no); border-color: var(--no); color: #fff; }
 .lab-cap button.on { background: var(--gold); border-color: var(--gold); color: #1a1208; }
-.lab-cap input { font: inherit; width: 100%; box-sizing: border-box; background: rgba(10, 7, 5, 0.85); color: var(--parchment); border: 1px solid var(--line); border-radius: 3px; padding: 0.2em 0.4em; }
+.lab-cap input { font: inherit; width: 100%; min-width: 0; box-sizing: border-box; background: rgba(10, 7, 5, 0.85); color: var(--parchment); border: 1px solid var(--line); border-radius: 3px; padding: 0.2em 0.4em; }
 .unit.ok .char-card { box-shadow: 0 0 0 3px var(--ok); } .unit.no .char-card { box-shadow: 0 0 0 3px var(--no); } .unit.chosen .char-card { box-shadow: 0 0 0 3px var(--gold); }
 /* ---- the top bar and the panel ---- */
 .top { position: fixed; left: 16px; top: 14px; right: calc(var(--panel-w) + 16px); z-index: 5; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
