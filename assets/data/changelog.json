@@ -1,4 +1,7 @@
 {
+  "0.00211": [
+    "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
+  ],
   "0.00210": [
     "World Lab (under ?debug LABS): the world map above the dungeon as a prototype — the castle as one pin on a painted world under clouds, clearing a place burns the clouds away around its roads, seen from above or from the sky, with the dive through the clouds into a place"
   ],

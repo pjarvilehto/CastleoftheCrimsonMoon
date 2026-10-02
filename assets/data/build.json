@@ -1,5 +1,5 @@
 {
-  "version": "0.00210",
+  "version": "0.00211",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00211": [
+      "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
+    ],
     "0.00210": [
       "World Lab (under ?debug LABS): the world map above the dungeon as a prototype — the castle as one pin on a painted world under clouds, clearing a place burns the clouds away around its roads, seen from above or from the sky, with the dive through the clouds into a place"
     ],
@@ -140,9 +143,6 @@
       "Smoother fights: the background holds 60 fps while a blow plays instead of running at the screen's full rate, the card glow no longer stalls the GPU, the pulsing buttons no longer repaint every frame, and a 40 Hz screen no longer loses the 3D background",
       "Fixed: the narrator could say two lines in the wrong order; muted music kept playing silently; a dialog swallowed F5 and F12; a malformed save code broke the Great Hall; the changelist could miss the newest build; a chest could pay out twice",
       "Under the hood: a review of the whole project — tuning moved into the data files, the ladder's and the lights' numbers too, dead code and stale comments out, a one-command release tool"
-    ],
-    "0.00196": [
-      "Bosses loom larger: the boss's card is twice as wide, and still fits the row with all its summoned minions"
     ]
   }
 }
