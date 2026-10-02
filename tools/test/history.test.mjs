@@ -274,6 +274,10 @@ fresh();
   DATA.telemetry.endpoint = 'https://stats.example';
   fresh();
   const p = getProfile();
+  // 0.00201: the ask is off in the shipped data (the owner's call); the rest of this block turns it on
+  p.records.bestRoom = 12;
+  ok('the benchmark ask is off as shipped (telemetry.json benchmarkPrompt)', DATA.telemetry.benchmarkPrompt === false && !bm.benchmarkDue(p));
+  DATA.telemetry.benchmarkPrompt = true;
   p.records.bestRoom = 9;
   ok('not due before room 10, or without stats collection', !bm.benchmarkDue(p) && DATA.telemetry.benchmarkPromptRoom === 10);
   p.records.bestRoom = 12;
@@ -305,6 +309,7 @@ fresh();
   ok('back to the Great Hall, and it does not ask again', t().includes('GREAT HALL') && (await sleep(2500), !dlg()));
   globalThis.document.body = realBody;
   DATA.telemetry.endpoint = ep;
+  DATA.telemetry.benchmarkPrompt = false;
   fresh();
 }
 
@@ -316,6 +321,7 @@ fresh();
   DATA.telemetry.endpoint = 'https://stats.example';
   fresh();
   const p = getProfile();
+  DATA.telemetry.benchmarkPrompt = true; // (off as shipped, 0.00201)
   p.records.bestRoom = 12; p.coins = 522; // unspent coins: Descend asks first
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -340,7 +346,7 @@ fresh();
   handleKey(' ');
   await sleep(1100);
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep;
+  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = false;
   fresh();
 }
 
