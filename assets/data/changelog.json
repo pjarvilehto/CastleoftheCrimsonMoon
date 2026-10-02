@@ -1,4 +1,10 @@
 {
+  "0.00216": [
+    "Fallen enemies leave the battle line: the row closes up and the cards left grow into the room (the faint skull cards are gone)",
+    "Numbers that change glow and grow for a moment — XP and coins in combat, and the row you just bought in the Great Hall (Precision LV2 flashes to LV3, 3/4 potions to 4/4)",
+    "Buy Potion pulses whenever a potion can be bought, not only when the stock runs low",
+    "Phone: the run's end fits the screen (Return to the Great Hall used to clip), and the PLAY card's iPhone line reads simply: Share, then Add to Home Screen"
+  ],
   "0.00215": [
     "World Lab: the clouds are drawn in screen space each frame, never scaled with the map — the flickering hairlines were the browser seaming the raster tiles of a scaled canvas"
   ],
