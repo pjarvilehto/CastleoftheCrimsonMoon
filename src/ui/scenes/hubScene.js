@@ -13,10 +13,11 @@ import { equippedItemIds } from '../../meta/equipment.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, infusionArmor,
+  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
-import { statDesc, efficiencyDesc } from '../hubText.js';
+import { statDesc, alchemyDesc, potionDesc, satchelDesc } from '../hubText.js';
+import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
@@ -96,6 +97,7 @@ export function hubScene(opts = {}) {
     const p = getProfile();
     const stats = derivedStats(p);
     const every = DATA.difficulty.breakthroughEvery;
+    const phone = phoneLayout(); // 0.00208: the phone's assembly and wording (below)
 
     // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
     // Potions alone in the middle column (hub-stats in styles.css).
@@ -115,7 +117,7 @@ export function hubScene(opts = {}) {
       ...Object.entries(STAT_DEFS).map(([key, def]) => {
         const lvl = p.stats[key];
         const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
-        const desc = statDesc(key, lvl);
+        const desc = statDesc(key, lvl, phone);
         return el('div', { class: 'item-row' },
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
@@ -134,17 +136,12 @@ export function hubScene(opts = {}) {
       }));
 
     // ---- ALCHEMY: potions + three coin tracks. ----
-    const alchemyDesc = {
-      potency: () => `+${DATA.difficulty.alchemyTracks.potency.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`,
-      efficiency: () => efficiencyDesc(), // 0.112: tapering — shows the next level's gain
-      infusion: () => `potions grant armor until the room ends (now +${infusionArmor()})`,
-    };
     const alchemySection = el('div', {},
       el('h2', {}, 'Alchemy (coins)'),
       // 0.080: potions are a persistent stock; the satchel caps it.
       el('div', { class: 'item-row' },
         el('div', {}, el('b', {}, 'Healing Potion '),
-          el('span', {}, `${p.potions}/${p.potionCap} carried — unused potions come home after a run; the price climbs with each bought and starts over after a run`)),
+          el('span', {}, potionDesc(p, phone))),
         el('button', {
           disabled: p.coins < potionCost() || satchelFull(p),
           // running low and able to buy: the obvious next step (0.090)
@@ -153,8 +150,8 @@ export function hubScene(opts = {}) {
           onclick: () => { restockPotion(); render(root); },
         }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
       el('div', { class: 'item-row' },
-        el('div', {}, el('b', {}, 'Potion Satchel '),
-          el('span', {}, satchelMaxed(p) ? `carries ${p.potionCap} potions (max)` : `+1 potion capacity (now ${p.potionCap})`)),
+        el('div', {}, el('b', {}, phone ? 'Satchel ' : 'Potion Satchel '),
+          el('span', {}, satchelDesc(p, satchelMaxed(p), phone))),
         satchelMaxed(p)
           ? el('span', { class: 'forge-max' }, 'MAX')
           : el('button', {
@@ -167,7 +164,7 @@ export function hubScene(opts = {}) {
         return el('div', { class: 'item-row' },
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
-            el('span', {}, `Lv ${lvl} — ${alchemyDesc[track]()}`)),
+            el('span', {}, `Lv ${lvl} — ${alchemyDesc(track, phone)}`)), // (efficiency: 0.112's tapering, the next level's gain)
           alchemyMaxed(track)
             ? el('span', { class: 'forge-max' }, 'MAX')
             : el('button', {
@@ -215,6 +212,7 @@ export function hubScene(opts = {}) {
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     root.innerHTML = '';
+    if (phone) { root.append(phoneHall({ p, statsRow, trainSection, alchemySection, equipSection, descendBtn })); return; }
     root.append(
       el('div', { class: 'hub-container' },
         el('div', { class: 'hub-wrap' },
@@ -241,4 +239,38 @@ export function hubScene(opts = {}) {
           el('button', { key: 'b', onclick: () => go('title') }, 'Back')))
     );
   }
+}
+
+// The phone's Great Hall (0.00208, styles.css's phone layer, .phone-hub):
+// a strip of stat chips beside the title, then TRAIN / ALCHEMY / EQUIPMENT
+// as a stack of three sheets under their tabs — each 45% wide at its tab's
+// position, the picked one lifted to the front, the others dimmed behind
+// it; a tap on a sheet's edge or its tab lifts it — and the records line
+// with Descend and Back fixed along the bottom. A green dot on a tab says
+// something there can be bought (the desktop shows all three panels at
+// once; a phone shows one). The pick lasts the session, so a purchase's
+// re-render stays on the same sheet.
+let phonePick = 0;
+function phoneHall({ p, statsRow, trainSection, alchemySection, equipSection, descendBtn }) {
+  const sheets = [['Train', trainSection, canSpendXp(p)], ['Alchemy', alchemySection, canSpendCoins(p)], ['Equipment', equipSection, false]];
+  const tabs = el('div', { class: 'tabs' });
+  const body = el('div', { class: 'tab-body' });
+  const pick = (i) => {
+    phonePick = i;
+    [...tabs.children].forEach((b, j) => b.classList.toggle('on', j === i));
+    [...body.children].forEach((q, j) => q.classList.toggle('on', j === i));
+    tabs.className = `tabs pick-${i + 1}`; body.className = `tab-body pick-${i + 1}`; // the stacking order (styles.css)
+  };
+  sheets.forEach(([name, section, spend], i) => {
+    tabs.append(el('button', { class: spend ? 'spend' : '', onclick: () => pick(i) }, name));
+    body.append(el('div', { class: 'panel', onclick: () => { if (phonePick !== i) pick(i); } }, section)); // (a sheet behind: the tap only lifts it — its buttons take no taps, styles.css)
+  });
+  pick(Math.min(phonePick, sheets.length - 1));
+  return el('div', { class: 'hub-container phone-hub' },
+    el('div', { class: 'hub-head' }, el('h1', {}, 'THE GREAT HALL'), statsRow),
+    tabs, body,
+    el('div', { class: 'hub-foot' },
+      el('div', { class: 'subtitle records-line' }, `${p.records.runs} runs, ${p.records.kills} kills, deepest room ${p.records.bestRoom}.`),
+      descendBtn,
+      el('button', { key: 'b', onclick: () => go('title') }, 'Back')));
 }

@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -452,7 +452,9 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && deviceClass(android, { width: 800, height: 1280 }, '') === 'tablet' && deviceClass(mac, { width: 1440, height: 900 }, '') === 'desktop'
     && deviceClass(iphone, { width: 390, height: 844 }, '?desktop') === 'desktop' && TABLET_MIN_PX === 1000 && isPhone(iphone, { width: 390, height: 844 }, '') && !isPhone(ipad, { width: 1024, height: 1366 }, ''));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('boot stops at the notice on a phone, and mounts the rotate notice for a tablet held upright', /if \(isPhone\(\)\) \{[\s\S]*Phones are not supported yet[\s\S]*return;\s*\}/.test(m) && m.includes("el('div', { class: 'rotate-notice' }"));
+  // 0.00208: phones play — the gate before the title instead of the old notice
+  ok('boot mounts the rotate notice for a handheld held upright, and the play / install gate on a phone', !m.includes('Phones are not supported yet')
+    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{ await phoneGate\(\); regateOnExit\(\); \}\s*go\('title'\)/.test(m));
   const css = readFileSync('styles.css', 'utf8');
   ok('touch: no double-tap zoom, no image callout, 44px targets and no hotkey hints on a coarse pointer, hover styles only where hover exists, a rotate notice in portrait',
     css.includes('html { touch-action: manipulation; }') && css.includes('img { -webkit-touch-callout: none; }') && css.includes('@media (pointer: coarse) {') && css.includes('min-height: 44px;')
@@ -494,4 +496,65 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   await sleep(200);
   ok('transition: a painting that never arrives holds the windows 4s at most', stillHeld && !registry.app.classList.contains('hidden') && !isTransitioning());
   onBackgroundChange(() => undefined);
+}
+
+// T89: 0.00208 — phones play. The phone layout query is one constant shared
+// by the stylesheet and the hub; the Great Hall's phone assembly is a stats
+// strip, three stacked sheets under their tabs (the pick lifts one and lasts
+// a re-render), the records line and the way on; the short wording carries
+// the data's numbers; the play / install gate resolves on PLAY and skips a
+// home-screen app.
+{
+  const { PHONE_MQ, phoneLayout, standaloneApp } = await import('../../src/shared/platform.js');
+  const { statDesc, alchemyDesc, potionDesc, satchelDesc } = await import('../../src/ui/hubText.js');
+  const { phoneGate } = await import('../../src/ui/phoneGate.js');
+  const css = readFileSync('styles.css', 'utf8');
+  ok('the phone layer sits under the platform query, and matchMedia decides the layout', css.includes(`@media ${PHONE_MQ} {`) && !phoneLayout(undefined)
+    && phoneLayout((q) => ({ matches: q === PHONE_MQ })) && !phoneLayout((q) => ({ matches: q !== PHONE_MQ })));
+  ok('a home-screen app is standalone by display-mode or Safari\'s flag', standaloneApp((q) => ({ matches: q === '(display-mode: standalone)' }), {}) && standaloneApp(undefined, { standalone: true })
+    && !standaloneApp((q) => ({ matches: false }), {}));
+  const pl = DATA.difficulty.player, tr = DATA.difficulty.alchemyTracks;
+  ok('the short wording carries the data\'s numbers', statDesc('power', 0, true) === `+${pl.dmgPerPower} dmg / lv` && statDesc('vitality', 0, true) === `+${pl.hpPerVitality} hp / lv`
+    && statDesc('endurance', 0, true) === `+${pl.armorPerEndurance} armor / lv` && /^\+[\d.]+% crit, \+[\d.]+% crit dmg$/.test(statDesc('precision', 0, true)) && statDesc('fortune', 0, true) === 'better loot'
+    && alchemyDesc('potency', true) === `+${tr.potency.healPerLevel} heal / lv (now ${DATA.difficulty.potionHeal})` && alchemyDesc('infusion', true) === `potion armor +0 (+${tr.infusion.armorPerLevel} / lv)`
+    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === '2/4 — price climbs per buy'
+    && satchelDesc({ potionCap: 4 }, false, true) === '+1 capacity (now 4)' && satchelDesc({ potionCap: 6 }, true, true) === 'carries 6 (max)'
+    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level`); // the desktop's line as before
+  // the hub, under the phone query
+  fresh();
+  const prof = getProfile(); prof.coins = 95; prof.xp = 40;
+  const mmBefore = globalThis.matchMedia; globalThis.matchMedia = (q) => ({ matches: q === PHONE_MQ });
+  try {
+    hubScene().enter(registry.app);
+    const hub = registry.app.all((n) => /\bphone-hub\b/.test(n.className ?? ''))[0];
+    const tabs = hub && hub.all((n) => n.className?.startsWith('tabs'))[0];
+    const body = hub && hub.all((n) => n.className?.startsWith('tab-body'))[0];
+    ok('the phone hall: a head with the stats, three tabs, three sheets, a foot with the records and the way on', hub && tabs && body && tabs.children.length === 3 && body.children.length === 3
+      && tabs.children.map((b) => b.textContent).join('|') === 'Train|Alchemy|Equipment' && hub.all((n) => /\brecords-line\b/.test(n.className ?? '')).length === 1
+      && hub.all((n) => n.tagName === 'button' && /Descend/.test(n.textContent)).length === 1 && hub.all((n) => /\bhub-stats\b/.test(n.className ?? '')).length === 1);
+    ok('the first sheet is up; the tabs with something to buy carry the dot', tabs.children[0].classList.contains('on') && body.children[0].classList.contains('on') && body.className === 'tab-body pick-1'
+      && tabs.children[0].classList.contains('spend') && tabs.children[1].classList.contains('spend') && !tabs.children[2].classList.contains('spend'));
+    tabs.children[2].listeners.click[0]();
+    ok('a tab lifts its sheet and the stacking order follows', tabs.children[2].classList.contains('on') && body.children[2].classList.contains('on') && !body.children[0].classList.contains('on') && body.className === 'tab-body pick-3');
+    hubScene().enter(registry.app); // a purchase re-renders: the pick stays
+    const tabs2 = registry.app.all((n) => n.className?.startsWith('tabs'))[0];
+    ok('the pick lasts a re-render', tabs2.children[2].classList.contains('on'));
+    tabs2.children[0].listeners.click[0](); // (leave the first sheet up for the next test)
+    const row = registry.app.all((n) => /\bitem-row\b/.test(n.className ?? ''))[0];
+    ok('the sheets carry the short wording', row && row.textContent.includes('dmg / lv'));
+  } finally { globalThis.matchMedia = mmBefore; }
+  // the gate: PLAY resolves and runs onPlay; a home-screen app gets no card
+  const body = new El('body'); let played = 0;
+  const doc = { body, documentElement: {}, fullscreenEnabled: false, addEventListener() {} };
+  const p1 = phoneGate({ onPlay: () => played++, doc, nav: { userAgent: 'iPhone', maxTouchPoints: 5 } });
+  const gate = body.children[0];
+  const playBtn = gate && gate.all((n) => n.tagName === 'button' && n.textContent === 'Play')[0];
+  ok('the gate: a card with PLAY and the iPhone\'s way to the full screen', gate && /\bphone-gate\b/.test(gate.className) && playBtn && gate.textContent.includes('Add to Home Screen'));
+  playBtn.listeners.click[0]();
+  ok('PLAY runs onPlay and takes the card away', (await p1) === true && played === 1 && body.children.length === 0);
+  const nav2 = { standalone: true, userAgent: 'iPhone' }; const navBefore = globalThis.navigator;
+  Object.defineProperty(globalThis, 'navigator', { value: nav2, configurable: true, writable: true });
+  try { ok('a home-screen app gets no card', (await phoneGate({ onPlay: () => played++, doc })) === false && played === 2 && body.children.length === 0); }
+  finally { Object.defineProperty(globalThis, 'navigator', { value: navBefore, configurable: true, writable: true }); }
+  fresh();
 }

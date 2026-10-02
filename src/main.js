@@ -4,7 +4,7 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { onBackgroundChange, onTransition, go, setBackground } from './core/scene.js';
+import { onBackgroundChange, onTransition, go } from './core/scene.js';
 import { el } from './core/dom.js';
 import { initHotkeys } from './core/hotkeys.js';
 import { initBg3d, showBackground3d, bgPush } from './core/bg3d.js';
@@ -22,6 +22,7 @@ import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
 import { isPhone } from './shared/platform.js';
+import { phoneGate, regateOnExit } from './ui/phoneGate.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -35,17 +36,8 @@ async function boot() {
   // fade out from yet, and #app starts hidden in index.html.
   const app = document.getElementById('app');
   app.classList.remove('hidden');
-  // Phones (0.125; 0.00205: tablets play, sideways): no layout for a 390px
-  // screen yet — a notice over the title art instead of the game (and no
-  // stats sent). A tablet held upright gets styles.css .rotate-notice.
-  if (isPhone()) {
-    app.append(el('div', { class: 'panel mobile-notice' },
-      el('h1', {}, 'CASTLE OF THE CRIMSON MOON'),
-      el('div', { class: 'subtitle' }, 'Phones are not supported yet'),
-      el('p', { class: 'mobile-sub' }, 'Please play on a tablet or a computer.')));
-    loadData().then(() => setBackground(DATA.backgrounds.title)).catch(() => {});
-    return;
-  }
+  // Handhelds play sideways (0.00205 tablets, 0.00208 phones): a device held
+  // upright gets styles.css .rotate-notice over everything.
   document.body.append(el('div', { class: 'rotate-notice' }, el('div', { class: 'panel' }, el('h1', {}, 'Turn your device sideways'), el('p', { class: 'mobile-sub' }, 'The castle is played in landscape.'))));
   const fill = el('div', { class: 'loader-fill' });
   const pct = el('div', { class: 'subtitle loader-pct' }, '0%');
@@ -96,6 +88,9 @@ async function boot() {
   initSfx();
   initNarrator();
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
+  // A phone in a browser tab (0.00208): PLAY (full screen and landscape where
+  // the browser allows), INSTALL where it offers, before the title.
+  if (isPhone()) { await phoneGate(); regateOnExit(); }
   go('title');
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
   shareStats(getProfile()); // play stats: history from before this session too (0.102)

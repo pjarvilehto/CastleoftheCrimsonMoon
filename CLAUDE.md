@@ -448,23 +448,59 @@ may hear the old one for ~4 hours.
   the card's `.card-frame` layer (opacity 0.85; 0.195: a real element,
   the shader light inside it); portraits overflow the frame;
   per-enemy tweaks via `enemy-<id>` classes.
-- Phones (0.125; `shared/platform.js isPhone`: a touch handheld whose
-  screen's longer side is under `TABLET_MIN_PX` 1000) get a "Phones are
-  not supported yet" card and the boot stops; `?desktop` skips the check.
-  **Tablets play since 0.00205**, sideways: a `.rotate-notice` covers the
-  game in portrait (`pointer: coarse` + `orientation: portrait`); touch
-  gets `touch-action: manipulation` (rapid Attack taps are double taps),
-  no image callout, 44px tap targets, no hotkey hints, hover styles only
-  under `(hover: hover)`; the layout honours the notch (`env(safe-area-
-  inset-*)`, `viewport-fit=cover`) and Safari's toolbars (`--card-h` in
-  `svh`); the hub's three columns fit 1024 wide and keep clear of the
-  corner column under 1400. `manifest.webmanifest` + the Apple metas make
-  a home-screen app (fullscreen, landscape — iPhone Safari has no page
-  fullscreen; the FULLSCREEN toggle also speaks Safari's prefixed API).
-  The device line reads iPadOS / iOS / Android (`perfMonitor.js osOf`;
-  iPadOS calls itself a Macintosh — the stats page said macOS). Remove
-  the phone notice when a phone layout lands (cards sized from height, a
-  one-line log, the corner column folded; see the 0.00205 notes).
+- **Handhelds (0.00205 tablets, 0.00208 phones; `shared/platform.js`):**
+  a touch handheld by user agent (iPadOS calls itself a Macintosh — the
+  stats page said macOS; `perfMonitor.js osOf` reads iPadOS / iOS /
+  Android), phone or tablet by the screen's longer side against
+  `TABLET_MIN_PX` (1000). Both play sideways: a `.rotate-notice` covers
+  the game in portrait (`pointer: coarse` + `orientation: portrait`);
+  touch gets `touch-action: manipulation` (rapid Attack taps are double
+  taps), no image callout, 44px tap targets, no hotkey hints, hover
+  styles only under `(hover: hover)`; the layout honours the notch
+  (`env(safe-area-inset-*)`, `viewport-fit=cover`) and Safari's toolbars
+  (`--card-h` in `svh`); the hub's three columns fit 1024 wide and keep
+  clear of the corner column under 1400. `manifest.webmanifest` + the
+  Apple metas make a home-screen app (fullscreen, landscape — iPhone
+  Safari has no page fullscreen and ignores the orientation; the
+  FULLSCREEN toggle also speaks Safari's prefixed API). `?desktop` skips
+  the device check (testers, the headless checks).
+  **The phone layer (0.00208, designed with the owner over mockups):**
+  `styles.css` section 16 under `PHONE_MQ` (`(max-height: 500px) and
+  (orientation: landscape)` — an iPad mini is 744 sideways; a smoke check
+  keeps the stylesheet and `platform.js` on the same query). Combat: ONE
+  line of cards 72svh tall (the knight's card and the foes' share a
+  baseline), Heavy Attack / Drink Potion hanging under the knight's card
+  (`.player-unit .unit-actions` absolute), the foes' Attack buttons gone
+  (the card is the button, 0.155), the log a one-line strip beside the
+  buttons (`#combat-log.docked`: the last line only, flashed in by
+  `log-flash`; it makes way for Push Deeper / Retreat through `:has()`),
+  XP and coins up by the build tag, the boons as small icons on top of
+  the knight's card (`#buffs`). The corner column folds into ☰
+  (`cornerToggles.js cornerBar`'s `.menu-toggle`, shown only by the phone
+  layer; `.corner-bar.open` is the dropdown, a tap elsewhere closes it).
+  The Great Hall (`hubScene.js phoneHall`): a strip of stat chips beside
+  the title, TRAIN / ALCHEMY / EQUIPMENT as three stacked sheets under
+  their tabs — each 45% wide at its tab's position, the picked one
+  lifted to the front (opaque, a deep shadow), the others dimmed behind,
+  the tabs stacked the same way and the active one joined to its sheet;
+  a tap on a sheet's edge or its tab lifts it (a sheet behind takes no
+  other taps); a green dot on a tab = something there can be bought; the
+  pick lasts the session — and the records line with Descend / Back
+  fixed along the bottom. The rows carry the phone's short wording
+  (`hubText.js` `short`: "+3 dmg / lv", "potion not spent: 0% (+8%)";
+  the suite checks the numbers come from the data). Panel rooms: compact
+  cards, the chests' flavour line hidden, a tighter step under 380px (the
+  360-tall Androids). Dialogs: compact, scrollable; one with a text field
+  (`.name-input`, `.save-code`) sits at the top — the on-screen keyboard
+  takes the lower half. **The gate (`ui/phoneGate.js`):** a phone in a
+  browser tab gets one card before the title — PLAY (requests page
+  fullscreen and the landscape lock where the browser allows: Android),
+  INSTALL when the browser offered (`beforeinstallprompt`, caught at
+  module load), or the iPhone's way (Share → Add to Home Screen, or aA →
+  Hide Toolbar; Safari has neither API); a home-screen app
+  (`standaloneApp`) gets no card; leaving fullscreen on Android brings it
+  back (`regateOnExit`). iOS: the home-screen app has its OWN storage —
+  a save made in Safari is not there (the title's save code carries it).
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep
@@ -662,6 +698,11 @@ sometimes — fetch all branches to find it.
   2.3 to compensate in part; the simulator's baseline moved with it (run
   depth 16.0 → 15.8, coins level, the room-24 boss 30% → ~10% clears — the
   wall the backlog names got taller).
+- 0.00205–0.00208 (this thread): tablets, then phones (the phone layer,
+  the stacked Great Hall, the gate), the Retreat advice and the Attack
+  breathing (0.00206), the hub's height budget (0.00207). The phone
+  mockups' prototype lived in the session's scratchpad; the shipped CSS
+  is the record.
 - Left as found: `icon.png` (374KB) at the root referenced by nothing;
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
@@ -680,8 +721,8 @@ sometimes — fetch all branches to find it.
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
-  against scaled enemy HP · more room kinds · portrait / phone layout
-  (then drop the mobile notice) · the reliquary's revive is not narrated
+  against scaled enemy HP · more room kinds · a portrait phone layout
+  (0.00208 plays sideways only) · the reliquary's revive is not narrated
   · treasure rooms are not in the play stats.
 - Engineering: rename the `smash` combat event to `overkill` (engine,
   sound keys, narration ids and the script disagree on the name) · the

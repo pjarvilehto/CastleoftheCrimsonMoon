@@ -231,11 +231,14 @@ fresh();
   const p = panelToggle('VOLUME', 'volume-toggle', () => el('div', { class: 'volume-panel' }, 'x'));
   const after = el('button', {}, 'CHANGELIST');
   const bar = cornerBar([false, t1, p, after]);
-  ok('the column keeps its order, skipping absent items', bar.className === 'corner-bar' && bar.children.map((c) => c.textContent).join('|') === 'MUSIC: ON|VOLUME|CHANGELIST');
+  // (0.00208: the ☰ button leads — the phone's folded column; styles.css shows it only there)
+  ok('the column keeps its order, skipping absent items', bar.className === 'corner-bar' && bar.children.map((c) => c.textContent).join('|') === '☰|MUSIC: ON|VOLUME|CHANGELIST');
   p.listeners.click[0]();
-  ok('a panel opens right under its button', bar.children.map((c) => c.className).join('|') === 'debug-toggle music-toggle|debug-toggle volume-toggle|volume-panel|' && p.classList.contains('on'));
+  ok('a panel opens right under its button', bar.children.map((c) => c.className).join('|') === 'menu-toggle|debug-toggle music-toggle|debug-toggle volume-toggle|volume-panel|' && p.classList.contains('on'));
   p.listeners.click[0]();
-  ok('...and closes', bar.children.length === 3 && !p.classList.contains('on'));
+  ok('...and closes', bar.children.length === 4 && !p.classList.contains('on'));
+  bar.children[0].listeners.click[0]();
+  ok('☰ opens the folded column (the phone), a second tap closes it', bar.classList.contains('open') && (bar.children[0].listeners.click[0](), !bar.classList.contains('open')));
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
   ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*fullscreenToggle\(\),\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
     && css.includes('.corner-bar {') && !/toggle \{ top: \d+px; \}/.test(css));

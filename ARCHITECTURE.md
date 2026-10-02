@@ -40,7 +40,7 @@ index.html              versioned boot: reads build.json, loads styles.css +
                         every module under ?v=<version> (import map)
 styles.css              all styling, grouped by screen (index at the top)
 src/
-  main.js               boot: mobile check -> loader panel -> loadData ->
+  main.js               boot: rotate notice -> loader panel -> loadData ->
                         preloadAssets -> hotkeys, corner column (+ ?debug
                         tools), 3D backgrounds, audio, update check ->
                         title; the rest of the art loads in the background
@@ -90,7 +90,7 @@ src/
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials, then the rooms)
     portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
-    platform.js         isMobile() (the boot's "not supported yet" notice)
+    platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp()
     motion.js           the one reduced-motion check (0.00197)
     debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
                         the cadence is difficulty.json levelEvery, passed in —
@@ -126,6 +126,7 @@ src/
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
+    phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha; the file named in the data) + card

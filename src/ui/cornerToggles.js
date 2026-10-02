@@ -35,7 +35,14 @@ export function panelToggle(label, cls, build) {
   return btn;
 }
 
-// The column itself: items in order, falsy ones skipped.
+// The column itself: items in order, falsy ones skipped. On a phone
+// (0.00208, styles.css's phone layer) the column is folded: only the ☰
+// button shows, and a tap opens the rest as a dropdown under it
+// (.corner-bar.open); a tap anywhere else closes it.
 export function cornerBar(items) {
-  return el('div', { class: 'corner-bar' }, ...items.filter(Boolean));
+  const bar = el('div', { class: 'corner-bar' });
+  const menu = el('button', { class: 'menu-toggle', 'aria-label': 'Menu', onclick: () => bar.classList.toggle('open') }, '☰');
+  bar.append(menu, ...items.filter(Boolean));
+  document.addEventListener?.('click', (e) => { if (bar.classList.contains('open') && !bar.contains?.(e.target)) bar.classList.remove('open'); });
+  return bar;
 }
