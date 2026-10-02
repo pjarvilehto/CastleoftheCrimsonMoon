@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Art Lab</title>
+<!-- labs/art/: the redrawn portraits (tools/gen-art.mjs, FLUX Kontext on
+     Replicate) on the game's REAL card units (src/ui/battleLine.js +
+     styles.css) over a room painting of your choice. Three views: COMPARE
+     (one character: the current portrait beside every candidate, Approve /
+     Reject with a note, Flip), LINE-UP (all 13, current or new) and FIGHT
+     (the knight and four enemies at the game's own size). Verdicts stay in
+     this browser; COPY JSON packs them, with the re-rolls, for
+     node tools/gen-art.mjs --rerender. The base href keeps the game's
+     relative paths (assets/..., styles.css). -->
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+:root { --panel: rgba(16, 11, 8, 0.9); --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818; --ok: #4f9a5c; --no: #b23a3a;
+  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif; --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif; --panel-w: 380px; }
+html, body { overflow: hidden; }
+#room { position: fixed; inset: 0; background: #0d0808 center / cover no-repeat; }
+#room::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); }
+/* the stage: the game's battle line, kept clear of the panel (its --card-h budget loses the panel's width) */
+#stage .battle-line { right: var(--panel-w); padding-bottom: 9vh; justify-content: center; overflow: visible;
+  --card-h: min(50vh, calc((100vw - var(--panel-w) - 5vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734))); }
+body.fight #stage .battle-line { right: 0; padding-bottom: 17.5vh; justify-content: space-between; --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734))); }
+body.fight #panel { display: none; }
+#stage .enemy-row { justify-content: center; }
+body:not(.fight) #stage .unit-actions { display: none; }
+.portrait.flipped { transform: translateX(-50%) scaleX(-1); }
+/* the caption under a card: which picture, and the verdict */
+.lab-cap { font-family: var(--body); font-size: max(11px, calc(var(--card-h) * 0.035)); color: var(--parchment); text-align: center; margin-top: 0.5em; display: grid; gap: 0.3em; text-shadow: 0 1px 4px #000; }
+.lab-cap b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); font-size: 1.2em; }
+.lab-cap .meta { color: var(--muted); font-size: 0.85em; }
+.lab-cap .verdict { display: flex; gap: 0.3em; justify-content: center; }
+.lab-cap button { font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; font-size: 1em; color: var(--parchment); background: rgba(20, 14, 8, 0.85); border: 1px solid var(--line); border-radius: 3px; padding: 0.2em 0.6em; cursor: pointer; }
+.lab-cap button:hover { border-color: var(--gold); }
+.lab-cap button.on-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.lab-cap button.on-no { background: var(--no); border-color: var(--no); color: #fff; }
+.lab-cap button.on { background: var(--gold); border-color: var(--gold); color: #1a1208; }
+.lab-cap input { font: inherit; width: 100%; box-sizing: border-box; background: rgba(10, 7, 5, 0.85); color: var(--parchment); border: 1px solid var(--line); border-radius: 3px; padding: 0.2em 0.4em; }
+.unit.ok .char-card { box-shadow: 0 0 0 3px var(--ok); } .unit.no .char-card { box-shadow: 0 0 0 3px var(--no); } .unit.chosen .char-card { box-shadow: 0 0 0 3px var(--gold); }
+/* ---- the top bar and the panel ---- */
+.top { position: fixed; left: 16px; top: 14px; right: calc(var(--panel-w) + 16px); z-index: 5; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+body.fight .top { right: 16px; }
+.top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
+.top .labs-link { color: var(--gold); font-family: var(--display); letter-spacing: 0.1em; text-decoration: none; text-shadow: 0 2px 6px #000; }
+.top .hint { color: var(--muted); font-size: 0.85rem; text-shadow: 0 1px 4px #000; font-family: var(--body); }
+.top button, .top select, #panel button, #panel select { font-family: var(--display); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 6px 12px 4px; cursor: pointer; min-width: 0; }
+.top button:hover, .top select:hover, #panel button:hover, #panel select:hover { border-color: var(--gold); color: #fff; }
+.top button.on { background: var(--gold); color: #1a1208; border-color: var(--gold); }
+.top select, #panel select { text-transform: none; letter-spacing: 0.04em; max-width: 16em; }
+#panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(var(--panel-w), 92vw); z-index: 60; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); backdrop-filter: blur(6px); padding: 14px 16px 40px; box-sizing: border-box; font-family: var(--body); font-size: 15px; color: var(--parchment); }
+#panel.hidden { display: none; }
+#panel h2 { font-family: var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-size: 1.05rem; margin: 14px 0 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+#panel h2:first-child { border-top: 0; margin-top: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 2px 0 8px; }
+label.c { display: grid; grid-template-columns: 6em 1fr; gap: 8px; align-items: center; font-size: 0.9rem; margin: 4px 0; }
+#panel input[type=text], #panel input[type=number], textarea { width: 100%; box-sizing: border-box; background: #0a0705; color: var(--parchment); border: 1px solid var(--line); border-radius: 4px; font: 14px/1.35 var(--body); padding: 6px; }
+textarea { font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; }
+#chars { display: grid; gap: 2px; }
+#chars button { display: flex; justify-content: space-between; text-align: left; padding: 4px 10px 3px; }
+#chars button .n { color: var(--muted); font-size: 0.85rem; letter-spacing: 0; }
+#chars button.ok .n { color: var(--ok); }
+#status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="stage"></div>
+<div class="top">
+  <a class="labs-link" href="labs/">‹ Labs</a>
+  <h1>Art Lab</h1>
+  <span id="views"></span>
+  <select id="painting" title="The room painting behind the cards"></select>
+  <span class="hint">1 compare · 2 line-up · 3 fight · N/C new or current · P panel · ←/→ character</span>
+</div>
+<aside id="panel"></aside>
+<script type="module" src="labs/art/lab.js"></script>
+</body>
+</html>

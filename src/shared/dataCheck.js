@@ -70,6 +70,9 @@ export function checkData(data) {
   // per-entry numbers: every item has a tier, every clip a trim, every
   // shrine boon the numbers its case in run/shrine.js reads
   for (const [id, it] of Object.entries(data.items ?? {})) if (!isNum(it?.tier)) out.push(`items.json: ${id}.tier`);
+  // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
+  for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
+  if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
   for (const [id, c] of Object.entries(data.audio?.clips ?? {})) {
     if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
     if (!c?.file === !c?.synth) out.push(`audio.json: clips.${id} needs a file or synth: true (one of them)`);

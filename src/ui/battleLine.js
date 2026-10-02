@@ -2,8 +2,8 @@
 // Player unit anchored left, enemies right (see dungeonScene). Each unit
 // is CARD + ACTIONS-ROW-BELOW. HP is a single line: text left, bar right;
 // player potions sit on the row beneath.
-// Portrait convention: assets/chars/<enemy id>.webp, with alpha (0.078:
-// WebP q85 — 9.6MB of PNGs became 1.5MB).
+// Portraits: WebP with alpha in assets/chars/ (0.078: q85 — 9.6MB of PNGs
+// became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
 import { el } from '../core/dom.js';
 import { hpBar, rarityClass, isLowHp } from './hud.js';
@@ -12,8 +12,7 @@ import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
 import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
-
-const ART = (id) => `assets/chars/${id}.webp`;
+import { portraitUrl as ART } from '../shared/portraits.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
 // .idle-<family>), keyed by enemy ID — display names differ (golem is

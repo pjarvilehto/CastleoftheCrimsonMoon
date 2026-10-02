@@ -46,6 +46,13 @@ before structural changes. This file is the rules and the per-system notes.
     COPY JSON gives the picks back; the owner's picks shipped in 0.183
     (see "Card effects" below). The lab draws the game's shader
     (`src/ui/cardFx.js`), so a look changed there changes here too.
+  - **Art Lab (0.184):** `labs/art/` — the portraits redrawn in the room
+    paintings' style (see "Portraits" below) on the real card units over
+    any room painting: COMPARE (one character, current beside every
+    candidate, Approve / Reject with a note, Flip), LINE-UP (all 13, new
+    or current), FIGHT (the knight and four enemies at the game's size).
+    COPY JSON packs the verdicts and queued re-rolls as `art-rerender.json`
+    for `node tools/gen-art.mjs --rerender`.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -252,6 +259,40 @@ three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
+
+**Portraits (0.184).** The file is data: `enemies.json art` per enemy and
+`cards.json player.art` for the knight, read through
+`shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
+fails on a missing one) — a redraw lands under a NEW filename (rule 7,
+`rat_v2.webp`) and the data points at it, so the old art is one edit
+away. **Redrawing them:** `docs/portrait-prompts.md` holds the style
+block ("Mike Mignola meets Darkest Dungeon 2", `[FACING]` = left for
+enemies, right for the knight) and a line per character;
+`tools/gen-art.mjs` sends the current portrait + a style painting
+(default `dungeon_ossuary.jpg`, `--style`) + the prompt to FLUX Kontext
+on Replicate (`flux-kontext-apps/multi-image-kontext-pro`, two input
+pictures; `--model max`; ~$0.04 a picture from memory, the API has no
+prices; `REPLICATE_API_TOKEN`, `--dry-run` first; in a proxied container
+`NODE_USE_ENV_PROXY=1`). Per candidate it keeps the model's picture
+(`assets/chars/candidates/<id>_c<n>_raw.jpg`) and a cut-out
+(`<id>_c<n>.webp`: `tools/cutout.mjs` keys the flat grey out from the
+border by flood fill, so greys inside the figure stay; a second pass eats
+the ground shadow the model paints anyway — mid-light, unsaturated, in
+the lower 40%; the figure is trimmed and scaled onto the current
+portrait's canvas at the current figure's height, feet on its baseline,
+so it reads the same size on the card), and records seed, prompt, style
+and cut in `assets/data/art.json` (never overwritten; numbering goes on).
+Kontext mirrors figures readily: the prompt says the facing twice and
+the lab's Flip mirrors on import; `--recut <id>_c<n> --tolerance /
+--shadow` re-keys one. The loop: generate → the Art Lab → `--rerender
+art-rerender.json` (verdicts in, re-rolls out, a hint per character) →
+`--import` (the approved candidate, or `--pick rat=3`, to
+`assets/chars/<id>_v<k>.webp` and the data) → bump, ship. `sharp` is the
+one npm dependency (`package.json`, `npm install`; the suite runs
+without it). Pilot (0.184): the knight, the rat and the Vampire Lord,
+four candidates each, for the owner's verdict. Later: a style LoRA
+trained on the ~50 room paintings (`ostris/flux-dev-lora-trainer`) for
+the plain FLUX text-to-image path.
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels

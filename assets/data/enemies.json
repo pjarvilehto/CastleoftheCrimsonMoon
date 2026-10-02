@@ -8,7 +8,8 @@
     "coins": [
       3,
       7
-    ]
+    ],
+    "art": "rat.webp"
   },
   "bat": {
     "name": "Cave Shrieker",
@@ -19,7 +20,8 @@
     "coins": [
       2,
       6
-    ]
+    ],
+    "art": "bat.webp"
   },
   "skeleton": {
     "name": "Skeleton",
@@ -30,7 +32,8 @@
     "coins": [
       6,
       12
-    ]
+    ],
+    "art": "skeleton.webp"
   },
   "ghoul": {
     "name": "Cinderborn",
@@ -41,7 +44,8 @@
     "coins": [
       10,
       18
-    ]
+    ],
+    "art": "ghoul.webp"
   },
   "cultist": {
     "name": "Cult Acolyte",
@@ -52,7 +56,8 @@
     "coins": [
       12,
       22
-    ]
+    ],
+    "art": "cultist.webp"
   },
   "golem": {
     "name": "Fellblade",
@@ -63,7 +68,8 @@
     "coins": [
       20,
       35
-    ]
+    ],
+    "art": "golem.webp"
   },
   "wraith": {
     "name": "Wraith",
@@ -74,7 +80,8 @@
     "coins": [
       22,
       38
-    ]
+    ],
+    "art": "wraith.webp"
   },
   "gargoyle": {
     "name": "Gargoyle",
@@ -85,7 +92,8 @@
     "coins": [
       18,
       32
-    ]
+    ],
+    "art": "gargoyle.webp"
   },
   "vampire_lord": {
     "name": "Vampire Lord",
@@ -97,7 +105,8 @@
       70,
       110
     ],
-    "boss": true
+    "boss": true,
+    "art": "vampire_lord.webp"
   },
   "crypt_spider": {
     "name": "Crypt Spider",
@@ -108,7 +117,8 @@
     "coins": [
       3,
       8
-    ]
+    ],
+    "art": "crypt_spider.webp"
   },
   "hollow_hound": {
     "name": "Hollow Hound",
@@ -119,7 +129,8 @@
     "coins": [
       11,
       20
-    ]
+    ],
+    "art": "hollow_hound.webp"
   },
   "blood_knight": {
     "name": "Blood Knight",
@@ -130,6 +141,7 @@
     "coins": [
       20,
       36
-    ]
+    ],
+    "art": "blood_knight.webp"
   }
 }

@@ -28,7 +28,7 @@ fresh();
   const boot = pre.bootUrls(), later = pre.restUrls(), staged = new Set([...boot, ...later]);
   ok('boot preloads only the title + hub art (and their depth maps)', boot.length <= 4 && boot.includes(`assets/bg/${DATA.backgrounds.title}`) && boot.includes(depthUrl(DATA.backgrounds.hub)));
   ok('boot + background stage cover every background, depth map and portrait',
-    bgs.every((f) => staged.has(`assets/bg/${f}`) && staged.has(depthUrl(f))) && ["player", ...Object.keys(DATA.enemies)].every((id) => staged.has(`assets/chars/${id}.webp`))
+    bgs.every((f) => staged.has(`assets/bg/${f}`) && staged.has(depthUrl(f))) && ["player", ...Object.keys(DATA.enemies)].every((id) => staged.has((DATA.enemies[id] ?? DATA.cards.player).art && `assets/chars/${(DATA.enemies[id] ?? DATA.cards.player).art}`))
     && boot.every((u) => !later.includes(u)));
   await pre.preloadRest();
   const rp = pre.restProgress();

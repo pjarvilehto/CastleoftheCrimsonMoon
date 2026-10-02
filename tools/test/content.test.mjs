@@ -12,7 +12,8 @@ fresh();
 {
   const { readdirSync } = await import('fs');
   const chars = readdirSync('assets/chars');
-  const enemiesOk = Object.keys(DATA.enemies).every((id) => chars.includes(`${id}.webp`));
+  const { portraitFile, portraitUrl } = await import('../../src/shared/portraits.js');
+  const enemiesOk = ['player', ...Object.keys(DATA.enemies)].every((id) => chars.includes(portraitFile(id)) && portraitUrl(id) === `assets/chars/${portraitFile(id)}`); // (0.184: the file is data)
   const slots = new Set(['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet']);
   const itemsOk = Object.values(DATA.items).every((i) => slots.has(i.slot) && i.tier >= 1 && i.tier <= 4);
   ok('content integrity: enemy portraits + item slots', enemiesOk && itemsOk);

@@ -89,6 +89,7 @@ src/
     dataCheck.js        every number the code reads, checked at load
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials, then the rooms)
+    portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
     platform.js         isMobile() (the boot's "not supported yet" notice)
     debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
                         the cadence is difficulty.json levelEvery, passed in —
@@ -126,11 +127,12 @@ src/
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
-  chars/                portraits (WebP with alpha) + card frames (PNG)
+  chars/                portraits (WebP with alpha; the file named in the data) + card
+                        frames (PNG); candidates/ = the redraws tools/gen-art.mjs made
   audio/  fonts/        (audio/vo/: the narrator's 122 takes, tools/gen-vo.mjs)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog; narration (generated: the takes)
+                        changelog; narration, art (generated: the takes, the redraws)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
@@ -143,6 +145,8 @@ labs/                   the testing pages (?debug LABS button): index.html is th
                         vo-rerender.json for tools/gen-vo.mjs --rerender
   cards/                the combat cards' proposals on the real units: shader
                         backgrounds (cardFx.js), 3D hit / entrance motion, glint
+  art/                  the redrawn portraits on the real units over any room:
+                        compare, line-up, fight; verdicts -> art-rerender.json
   particles/            standalone particle-look experiments
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
@@ -152,6 +156,9 @@ tools/
   audio-check.mjs       clip loudness + loops measured in Chromium
   gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
   gen-vo.mjs            the voice-over: docs/narration-script.md -> ElevenLabs -> assets/audio/vo
+  gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> FLUX Kontext (Replicate)
+                        -> assets/chars/candidates + art.json; --import puts one in the game
+package.json            tool dependencies only (sharp, for gen-art.mjs); the game has none
 ```
 
 ## Data flow
@@ -203,7 +210,7 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
   fallback copies; a new knob gets a line in `shared/dataCheck.js`.
 - **Saves:** shape changes go through `SAVE_VERSION` + a new `MIGRATIONS`
   step (never edit a shipped step); new defaults in `profile.js DEFAULTS`.
-- **New enemy:** `enemies.json` + `assets/chars/<id>.webp` (+ an idle family
+- **New enemy:** `enemies.json` (with its `art` file in `assets/chars/`) (+ an idle family
   in `battleLine.js`, + a `MATERIAL` in `particleLooks.js` if not flesh).
 - **New item / boon / background:** see CLAUDE.md's cheat-sheet.
 - **New scene:** `ui/scenes/xScene.js` returning `{ enter(root) }`,
