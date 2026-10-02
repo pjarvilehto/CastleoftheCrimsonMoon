@@ -578,6 +578,39 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   fresh();
 }
 
+// T88: 0.00206 — the way on after a cleared room: Push Deeper pulses, unless
+// the knight is low with no potion left — then Retreat with Loot pulses red
+// and Push Deeper is plain; a potion drunk after the win flips it back. The
+// panel rooms' Retreat (once a boon is taken) follows the same rule. And a
+// live Attack button breathes (its glow layer is CSS, off when disabled).
+{
+  const { markWayOn, shouldRetreat } = await import('../../src/ui/hud.js');
+  const { renderShrineRoom } = await import('../../src/ui/shrineUI.js');
+  const { generateInterlude } = await import('../../src/run/roomGen.js');
+  fresh();
+  const run = createRun();
+  const low = Math.floor(run.maxHp * DATA.difficulty.lowHpShare);
+  const deeper = new El('button'), retreat = new El('button');
+  run.hp = run.maxHp; run.potions = 0; markWayOn(deeper, retreat, run);
+  ok('healthy: Push Deeper pulses, Retreat does not', deeper.classList.contains('active') && !retreat.classList.contains('active'));
+  run.hp = low; run.potions = 1; markWayOn(deeper, retreat, run);
+  ok('low with a potion left: still Push Deeper (Drink Potion is the red one)', deeper.classList.contains('active') && !retreat.classList.contains('active') && !shouldRetreat(run));
+  run.potions = 0; markWayOn(deeper, retreat, run);
+  ok('low with no potion: Retreat pulses red, Push Deeper is plain', !deeper.classList.contains('active') && retreat.classList.contains('active') && retreat.classList.contains('active-red'));
+  run.hp = run.maxHp; markWayOn(deeper, retreat, run);
+  ok('healed after the win: back to Push Deeper', deeper.classList.contains('active') && !retreat.classList.contains('active') && !retreat.classList.contains('active-red'));
+  // the shrine's row, a boon taken
+  const root = new El('div');
+  const room = generateInterlude('shrine', 3, run); room.taken = true;
+  run.hp = low; run.potions = 0;
+  renderShrineRoom(root, run, room, { title: [room.name], logEl: new El('div'), buffBar: new El('div'), coins: 0, xp: 0, onDeeper() {}, onRetreat() {}, refresh() {}, onDeath() {} });
+  const sr = root.all((n) => n.tagName === 'button').find((b) => b.textContent.includes('Retreat'));
+  ok('shrine, low with no potion: Retreat pulses red', sr && sr.classList.contains('active') && sr.classList.contains('active-red'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('a live Attack breathes (glow layer, opacity only)', css.includes('.enemy-unit .unit-actions button:not(:disabled)::after') && /@keyframes attack-glow \{ 0%, 100% \{ opacity:/.test(css));
+  fresh();
+}
+
 // T89: 0.128 — the particle looks picked in the Particle Lab: blood is
 // Ink & Gore (slash + stretched blobs that land as splats), bone, embers
 // and the wraith are Spark & Streak (ring + streaks; two rings on a crit;

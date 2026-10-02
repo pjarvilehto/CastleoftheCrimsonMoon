@@ -19,7 +19,7 @@ import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runS
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
-import { logLine, itemName } from '../hud.js';
+import { logLine, itemName, markWayOn } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
@@ -186,6 +186,8 @@ export function dungeonScene() {
     } else if (!showProceed && ui.proceed.children.length) {
       ui.proceed.innerHTML = '';
     }
+    // Low with nothing to drink: Retreat pulses red and Push Deeper is plain (hud.js markWayOn, 0.00206) — on every update, since a potion drunk after the win changes the advice.
+    if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----

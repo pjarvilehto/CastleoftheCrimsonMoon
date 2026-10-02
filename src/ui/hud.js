@@ -7,6 +7,17 @@ import { DATA } from '../shared/data.js';
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
 export const isLowHp = (hp, maxHp) => hp > 0 && hp / maxHp <= DATA.difficulty.lowHpShare;
 
+// The way on, after a cleared room (0.00206): low on health with no potion
+// left, Retreat with Loot is the advice (pulsing red) and Push Deeper is
+// plain; otherwise Push Deeper pulses yellow as always (0.079). Call it on
+// every update — a potion drunk after the win changes the answer.
+export const shouldRetreat = (run) => isLowHp(run.hp, run.maxHp) && run.potions <= 0;
+export function markWayOn(deeper, retreat, run) {
+  const flee = shouldRetreat(run);
+  if (deeper) deeper.classList.toggle('active', !flee);
+  if (retreat) { retreat.classList.toggle('active', flee); retreat.classList.toggle('active-red', flee); }
+}
+
 // Potion count colour (0.089): green when the satchel is full, red when
 // running low (1 or none, or a quarter of the satchel or less). The Great
 // Hall's stat box and the panel rooms' HUD (styles.css .potions-*).

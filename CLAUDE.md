@@ -197,7 +197,13 @@ damage; chance past `critCap` becomes crit damage) and Efficiency (tail
 1.5, MAX once a level adds < `minStep`). Hub lines show the next level's
 real gain. Low health (0.126): at or under `lowHpShare` (35%) the knight's HP
 bar glows and, with potions left, Drink Potion pulses red (`ui/hud.js
-isLowHp`).
+isLowHp`); low with NO potion left, Retreat with Loot pulses red after a
+cleared room (and in a panel room once a boon is taken) and Push Deeper
+is plain (`hud.js markWayOn`, re-run on every update so a potion drunk
+after the win flips it back; 0.00206). A live Attack button breathes
+faintly in red (`styles.css attack-glow`, a glow layer's opacity, off
+while a turn prints), so the recharged heavy's strong pulse no longer
+sits beside buttons with no glow.
 
 **Effects.** One-shots (lunge, hit, numbers, entrance, shake) live in
 `ui/combatFx.js` + `fxParts.js`, driven by `fx` descriptors on playback

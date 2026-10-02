@@ -7,7 +7,7 @@ import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
-import { hpBar, logLine, isLowHp, potionLevel } from './hud.js';
+import { hpBar, logLine, isLowHp, potionLevel, shouldRetreat, markWayOn } from './hud.js';
 import { updateBuffs, iconArt } from './buffs.js';
 import { attachCardFx, styleNamed, SHRINE_STYLE } from './cardFx.js';
 import { DATA } from '../shared/data.js';
@@ -37,9 +37,10 @@ export function renderPanelRoom(root, run, room, h, body) {
     el('span', {}, 'Potions ', el('b', { class: potionLevel(run) }, `${run.potions}/${run.potionCap}`)));
   // the way on — none for a knight the reliquary killed (0.157: the death
   // dialog follows; its buttons must not sit live underneath)
-  const proceed = run.hp <= 0 ? null : el('div', { class: 'btn-row' },
-    el('button', { class: 'primary', key: 'd', proceed: true, onclick: h.onDeeper }, 'Push Deeper'),
-    room.taken ? el('button', { class: 'danger', key: 'r', onclick: h.onRetreat }, 'Retreat with Loot') : null);
+  const deeper = el('button', { class: 'primary', key: 'd', proceed: true, onclick: h.onDeeper }, 'Push Deeper');
+  const retreat = room.taken ? el('button', { class: 'danger', key: 'r', onclick: h.onRetreat }, 'Retreat with Loot') : null;
+  if (retreat && shouldRetreat(run)) markWayOn(null, retreat, run); // low with no potion: Retreat pulses red (0.00206; Push Deeper has no pulse in the panel rooms)
+  const proceed = run.hp <= 0 ? null : el('div', { class: 'btn-row' }, deeper, retreat);
   root.innerHTML = '';
   root.append(
     el('div', { class: 'panel' },

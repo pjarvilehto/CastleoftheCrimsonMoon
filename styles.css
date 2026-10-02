@@ -491,6 +491,17 @@ button.active.potion-remind { animation-duration: 2.2s; }
 } }
 .unit-actions button.ready { border-color: #e8c45c; color: #fff4d0; background: linear-gradient(180deg, #7a2a24, #4f1816); } /* (after the row's rule, so the gold wins) */
 @media (hover: hover) { .unit-actions button.ready:hover:not(:disabled) { border-color: #ffd86e; box-shadow: 0 0 12px rgba(255,214,110,0.55); } }
+/* 0.00206: a live Attack breathes faintly in red (a glow layer whose opacity
+   animates, like .active — never the box-shadow itself); off while a turn
+   prints or the foe is down, so the breathing also says "your move". The
+   recharged heavy's strong pulse used to sit beside buttons with no glow at all. */
+.enemy-unit .unit-actions button { position: relative; isolation: isolate; }
+.enemy-unit .unit-actions button:not(:disabled)::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; z-index: -1; pointer-events: none;
+  box-shadow: 0 0 14px rgba(224,80,70,0.8), 0 0 28px rgba(224,80,70,0.3), inset 0 0 8px rgba(224,80,70,0.25);
+  animation: attack-glow 3s ease-in-out infinite;
+}
+@keyframes attack-glow { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.55; } }
 /* dead cards keep their actions-row slot; the placeholder button is
    layout-only — invisible but occupying the same height */
 .unit-actions .ghost-btn { visibility: hidden; }
