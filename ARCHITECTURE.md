@@ -155,6 +155,9 @@ labs/                   the testing pages (?debug LABS button): index.html is th
   art/                  the redrawn portraits on the real units over any room:
                         compare, line-up, fight; verdicts -> art-rerender.json
   particles/            standalone particle-look experiments
+  world/                the world map above the dungeon (0.00210, a prototype): the
+                        owner's painting under clouds, places as pins, the reveal,
+                        two looks and the dive; WORLD in lab.js = the future world.json
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite

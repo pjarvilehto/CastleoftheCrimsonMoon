@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon World Lab</title>
+<!-- labs/world/: the world map above the dungeon (0.00210, a prototype).
+     The owner's reference painting (assets/world/world_v1.webp) under a
+     layer of clouds; the castle you play today is one pin on it; clearing
+     a place burns the clouds away around its neighbours. Two looks, both
+     the owner's picks: THE KNOWN WORLD (top-down, the camera framing what
+     you know) and FROM THE SKY (low and tilted over one place, the clouds
+     in front); DESCEND dives through the clouds — the way into a place.
+     Drag to pan, wheel or pinch to zoom, click a pin for its card. CLEAR
+     fakes a cleared boss (the reveal); RESET starts over; COPY JSON gives
+     the places and tuning as the future assets/data/world.json. Nothing is
+     saved into the game. The base href makes the game's relative asset
+     paths resolve from the site root. -->
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+@font-face { font-family: "DIN Condensed"; src: url("assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+:root {
+  --bg: #0d0808; --panel: rgba(16, 11, 8, 0.86); --line: #3a2c18; --gold: #c9a227; --gold-dim: #8a7020; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818;
+  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+  color-scheme: dark;
+}
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--parchment); font-family: var(--body); font-size: 15px; line-height: 1.4; overflow: hidden; }
+/* the map */
+#stage { position: fixed; inset: 0; overflow: hidden; cursor: grab; touch-action: none; }
+#stage.dragging { cursor: grabbing; }
+#world { position: absolute; left: 50%; top: 50%; transform-origin: center; will-change: transform; }
+#world.gliding { transition: transform 1.1s cubic-bezier(0.4, 0, 0.2, 1); }
+#world.diving { transition: transform 2.4s cubic-bezier(0.55, 0, 0.9, 0.3); }
+#world img.map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; -webkit-user-drag: none; user-select: none; }
+#clouds { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#pins { position: absolute; inset: 0; }
+.pin { position: absolute; transform: translate(-50%, -100%); text-align: center; cursor: pointer; transition: opacity 0.6s; }
+.pin.hidden { opacity: 0; pointer-events: none; }
+.pin .dot { width: 34px; height: 34px; margin: 0 auto; border-radius: 50%; border: 2px solid var(--gold); background: radial-gradient(circle at 40% 35%, #3a1410, #140806); box-shadow: 0 0 18px rgba(201,162,39,0.55), 0 6px 14px rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--gold); font-family: var(--display); }
+.pin.cleared .dot { border-color: #6fe07a; color: #6fe07a; box-shadow: 0 0 18px rgba(111,224,122,0.55), 0 6px 14px rgba(0,0,0,0.7); }
+.pin.open .dot { animation: pulse 2.4s ease-in-out infinite; }
+.pin.picked .dot { border-width: 3px; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 10px rgba(232,196,92,0.4), 0 6px 14px rgba(0,0,0,0.7); } 50% { box-shadow: 0 0 28px rgba(232,196,92,1), 0 6px 14px rgba(0,0,0,0.7); } }
+.pin .tail { width: 2px; height: 14px; margin: 0 auto; background: var(--gold); opacity: 0.8; }
+.pin .label { margin-top: 6px; font-family: var(--display); font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; color: #f1e6c8; text-shadow: 0 2px 6px #000, 0 0 12px #000; white-space: nowrap; }
+.pin .label small { display: block; font-size: 13px; letter-spacing: 0.15em; color: #b8a888; }
+/* the lights over it all */
+.redmoon { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% -20%, rgba(150,20,20,0.6), rgba(0,0,0,0) 60%); mix-blend-mode: screen; pointer-events: none; transition: opacity 2s; }
+.vignette { position: fixed; inset: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 85%, rgba(0,0,0,0.85) 100%); pointer-events: none; }
+.scan { position: fixed; left: 0; right: 0; bottom: 0; height: 40%; background: linear-gradient(180deg, rgba(10,6,5,0) 0%, rgba(10,6,5,0.75) 100%); pointer-events: none; opacity: 0; transition: opacity 1s; }
+body.sky .scan { opacity: 1; }
+#veil { position: fixed; inset: 0; background: #e6e2da; opacity: 0; pointer-events: none; transition: opacity 1.2s ease-in; }
+#black { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.8s; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 2rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+/* the game's chrome, as the map scene would carry it */
+.title { position: fixed; top: 22px; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: 34px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); text-shadow: 0 0 20px rgba(201,162,39,0.4), 0 2px 8px #000; pointer-events: none; }
+.title small { display: block; font-size: 14px; letter-spacing: 0.3em; color: #b8a888; margin-top: 4px; }
+.card { position: fixed; right: 40px; bottom: 48px; width: 400px; background: var(--panel); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; padding: 18px 22px; box-shadow: 0 14px 34px rgba(0,0,0,0.8); transition: opacity 0.4s, transform 0.4s; }
+.card.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+.card h2 { font-family: var(--display); font-size: 24px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin: 0; }
+.card .sub { font-family: var(--display); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #b8a888; margin: 4px 0 12px; }
+.card p { margin: 0; color: #d8c9a3; }
+.card .row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+button, select { font-family: var(--display); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 6px 12px 4px; cursor: pointer; }
+button.primary { border-color: var(--gold); color: #fff4d0; box-shadow: 0 0 18px rgba(232,196,92,0.5); }
+button.lab { border-color: #4a3c1c; color: var(--muted); font-size: 0.85rem; }
+button:disabled { opacity: 0.4; cursor: default; }
+/* the lab's own chrome */
+.top { position: fixed; left: 16px; top: 14px; z-index: 5; display: flex; gap: 10px; align-items: center; }
+.top .labs-link { font-family: var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); text-decoration: none; text-shadow: 0 2px 6px #000; }
+.top .labs-link:hover { text-decoration: underline; }
+.top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
+.top .hint { color: var(--muted); font-size: 0.85rem; text-shadow: 0 1px 4px #000; }
+#side { position: fixed; left: 16px; top: 64px; bottom: 16px; width: 300px; z-index: 5; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+#side.folded { display: none; }
+#side h3 { font-family: var(--display); font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin: 6px 0 0; }
+#side .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+#side label { display: grid; grid-template-columns: 1fr 48px; gap: 6px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+#side label input[type=range] { grid-column: 1 / -1; width: 100%; }
+#side label b { color: var(--parchment); font-weight: 500; text-align: right; }
+#side textarea { width: 100%; min-height: 90px; font: 12px/1.3 ui-monospace, monospace; background: #0a0806; color: var(--parchment); border: 1px solid var(--line); border-radius: 4px; }
+#status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+.ideas { font-size: 0.85rem; color: var(--muted); }
+.ideas b { color: var(--parchment); }
+#fold { position: fixed; left: 16px; top: 64px; z-index: 6; display: none; }
+body.folded #fold { display: block; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <img class="map" id="map" alt="">
+    <canvas id="clouds"></canvas>
+    <div id="pins"></div>
+  </div>
+</div>
+<div class="redmoon" id="redmoon"></div>
+<div class="scan"></div>
+<div class="vignette"></div>
+<div id="veil"></div>
+<div id="black"></div>
+<div class="title" id="title">The Known World<small id="subtitle">…</small></div>
+<div class="card hidden" id="card"></div>
+<div class="top">
+  <a class="labs-link" href="labs/" title="all labs">‹ Labs</a>
+  <h1>World Lab</h1>
+  <span class="hint">drag to pan · wheel to zoom · click a pin</span>
+</div>
+<button id="fold" class="lab">controls</button>
+<div id="side">
+  <h3>View</h3>
+  <div class="btns"><button id="viewA">The Known World</button><button id="viewB">From the Sky</button><button id="fit" class="lab">fit the known lands</button></div>
+  <h3>Progress (the lab's)</h3>
+  <div class="btns"><button id="clear" class="primary">Clear the next place</button><button id="reset" class="lab">reset</button></div>
+  <div id="status"></div>
+  <h3>The clouds</h3>
+  <label>cloud cover <b id="v-density"></b><input type="range" id="density" min="0.3" max="2" step="0.05"></label>
+  <label>drift (px/s) <b id="v-drift"></b><input type="range" id="drift" min="0" max="30" step="1"></label>
+  <label>darkness <b id="v-dark"></b><input type="range" id="dark" min="0" max="0.5" step="0.01"></label>
+  <h3>The reveal</h3>
+  <label>a cleared place lifts the clouds for (px) <b id="v-cleared"></b><input type="range" id="cleared" min="120" max="600" step="10"></label>
+  <label>an open road shows (px) <b id="v-open"></b><input type="range" id="open" min="0" max="300" step="10"></label>
+  <label>the burn (s) <b id="v-burn"></b><input type="range" id="burn" min="0.5" max="6" step="0.1"></label>
+  <label>the Crimson Moon's red <b id="v-red"></b><input type="range" id="red" min="0" max="1" step="0.05"></label>
+  <h3>From the sky</h3>
+  <label>tilt (°) <b id="v-tilt"></b><input type="range" id="tilt" min="0" max="30" step="1"></label>
+  <label>height (zoom) <b id="v-skyZoom"></b><input type="range" id="skyZoom" min="1.5" max="4" step="0.1"></label>
+  <h3>Hand it back</h3>
+  <div class="btns"><button id="copy">Copy JSON</button><button id="hide" class="lab">hide controls</button></div>
+  <textarea id="json" readonly></textarea>
+  <p class="ideas"><b>What it would be in the game:</b> a scene between the Great Hall and the dungeon; a place is a dungeon (its boss, its room count, its paintings); clearing its last boss marks it in the save and burns the clouds around its roads. The castle you play today is the first pin.</p>
+</div>
+<script src="labs/boot.js" data-lab="labs/world/lab.js"></script>
+</body>
+</html>

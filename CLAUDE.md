@@ -54,6 +54,24 @@ before structural changes. This file is the rules and the per-system notes.
     or current), FIGHT (the knight and four enemies at the game's size).
     COPY JSON packs the verdicts and queued re-rolls as `art-rerender.json`
     for `node tools/gen-art.mjs --rerender`.
+  - **World Lab (0.00210):** `labs/world/` — the world map above the
+    dungeon, a prototype: the owner's painting (`assets/world/world_v1.webp`,
+    1500 px; the real one wants three times that or tiles) under a canvas of
+    cloud puffs, the places as pins (the castle you play today is the first;
+    the data in `lab.js WORLD` is shaped as the future `world.json`: position,
+    name, boss and room count, `needs` = the place whose clearing opens the
+    road), a cleared place burning the clouds away (`destination-out`
+    circles, a radius per state, a timed burn) around it and its roads; two
+    looks (THE KNOWN WORLD frames every revealed circle from above; FROM THE
+    SKY hangs low and tilted over one place — the owner's picks; a
+    cartographer's-table look was dropped as unimmersive) and DESCEND, the
+    dive through the clouds to the place's first room. Drag, wheel and
+    pinch; CLEAR fakes progress; COPY JSON gives the data and tuning back.
+    Nothing touches the save. The design (0.00209's thread): a scene between
+    the Great Hall and the dungeon; a place is a dungeon with its own boss,
+    room count, paintings and curve; clearing its last boss marks it in the
+    profile at settle time (rule 1) and the save gains a world record (rule
+    3); the hall's Descend goes to the last place chosen with a MAP beside.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 

@@ -287,3 +287,16 @@ fresh();
     && voJs.includes('out.rerender.push({ file: t.file, id: t.id, take: t.take, volatility:') && readFileSync('tools/gen-vo.mjs', 'utf8').includes("args.indexOf('--rerender')"));
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));
 }
+
+// 0.00210: the World Lab — the owner's world painting under clouds, the
+// places as the future world.json (every road leads from a place that
+// exists), the two looks and the dive, booted like every lab.
+{
+  const html = readFileSync('labs/world/index.html', 'utf8'), js = readFileSync('labs/world/lab.js', 'utf8');
+  ok('the World Lab boots through labs/boot.js over the site root and links back', html.includes('<base href="../../">') && html.includes('data-lab="labs/world/lab.js"') && html.includes('class="labs-link" href="labs/"'));
+  const img = js.match(/image: '([^']+)'/)?.[1];
+  ok('the world painting is on disk', img && statSync(img).size > 100000, img);
+  const ids = [...js.matchAll(/\{ id: '(\w+)'/g)].map((m) => m[1]), needs = [...js.matchAll(/needs: '(\w+)'/g)].map((m) => m[1]);
+  ok('the places: the castle first with no road in, every other road from a place that exists', ids[0] === 'castle' && ids.length >= 3 && needs.every((n) => ids.includes(n)) && !/id: 'castle'[^}]*needs:/.test(js));
+  ok('the two looks and the dive', js.includes('function fitKnown()') && js.includes('function sky(p)') && js.includes('async function dive(p)') && js.includes("'destination-out'"));
+}
