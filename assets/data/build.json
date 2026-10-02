@@ -1,5 +1,5 @@
 {
-  "version": "0.183",
+  "version": "0.184",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -83,6 +83,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.184": [
+      "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
+      "The card glow reaches the frame's border: no dark rim around the plate"
+    ],
     "0.183": [
       "The Card Lab's picks are in the game: a slow glow behind every portrait (fog, blood, flames, embers or ether by the creature), the cards in 3D (a hit kicks the card around its axis, the room deals the cards in) and a sheen crossing the figure as it turns",
       "Shrine boons and treasure chests glow too, each its own way",
@@ -128,9 +132,6 @@
     ],
     "0.170": [
       "The narrator, when switched off, no longer uses up a take he never said — switching him back on, the lines vary as they should"
-    ],
-    "0.169": [
-      "The mist toned down: a gentler drift and wander, smaller breathing, every room's wind eased by a third"
     ]
   }
 }

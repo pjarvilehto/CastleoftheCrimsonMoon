@@ -1,4 +1,8 @@
 {
+  "0.184": [
+    "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
+    "The card glow reaches the frame's border: no dark rim around the plate"
+  ],
   "0.183": [
     "The Card Lab's picks are in the game: a slow glow behind every portrait (fog, blood, flames, embers or ether by the creature), the cards in 3D (a hit kicks the card around its axis, the room deals the cards in) and a sheen crossing the figure as it turns",
     "Shrine boons and treasure chests glow too, each its own way",

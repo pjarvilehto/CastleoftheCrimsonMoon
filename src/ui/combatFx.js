@@ -5,7 +5,9 @@
 // Descriptor shape: { kind, from?, to?, dmg?, crit?, heavy?, amount?, share? }
 //   share: a hit on the knight / his max HP (sizes the big-hit sway)
 //   from / to: an enemy index, or 'player'
-//   kinds: attack, hit, dodge, heal, smash, multi, revive, die, enter, summon
+//   kinds: attack, hit, dodge, heal, smash, multi, revive, die, enter, deal, summon
+//   (enter = the room is built: the units wait unseen; deal = the windows are
+//   back: the cards are dealt in — scene.js whenWindowsBack, 0.184)
 //
 // Two animation systems, on purpose: idle loops are CSS animations on the
 // portrait's independent translate/rotate/scale (styles.css .idle-*); every
@@ -65,6 +67,7 @@ export function playFx(fx, ctx) {
     case 'attack': return attack(fx, ctx);
     case 'hit': return hit(ctx.unit(fx.to), fx, 0, ctx);
     case 'enter': attachParticles(ctx.layer); return enter(ctx);
+    case 'deal': return deal(ctx);
     case 'die': return spray(ctx.unit(fx.to), 1, 0, true);
     case 'dodge': return dodge(fx, ctx);
     case 'heal': return heal(fx, ctx);
@@ -260,24 +263,38 @@ function revive(ctx) {
   bgLight('revive', p?.card?.getBoundingClientRect?.()); // golden light in the scene (0.100)
 }
 
-// Room entrance (0.183: dealt, the Card Lab's pick): the cards come in
-// from above and the side, turned and tilted like cards dealt to a table,
-// the enemies from the right, staggered, the player from the left; the
-// glint crosses each as it turns. Starts while the windows are still
-// fading in.
-function enter(ctx) {
-  if (reduced()) return;
-  const M = DATA.cards.motion, G = DATA.cards.glint;
+// The room's units, player first: [unit, side (the way it comes in), index].
+function lineUp(ctx) {
   const units = [];
   for (let i = 0; ctx.unit(i); i++) units.push([ctx.unit(i), 1, i]);
   units.unshift([ctx.unit('player'), -1, 0]);
-  for (const [u, side, i] of units) {
+  return units;
+}
+
+// Room built (0.184): the units wait unseen until the windows are back and
+// the deal comes — a room is rendered while the windows are fully faded
+// out, so an entrance played here was never seen (0.154-0.183).
+function enter(ctx) {
+  if (reduced()) return;
+  for (const [u] of lineUp(ctx)) if (can(u?.el)) u.el.style.opacity = '0';
+}
+
+// The deal (0.183: dealt, the Card Lab's pick; 0.184: once the windows are
+// back): the cards come in from above and the side, turned and tilted like
+// cards dealt to a table, the enemies from the right, staggered, the
+// player from the left; the glint crosses each as it turns.
+function deal(ctx) {
+  if (reduced()) return;
+  const M = DATA.cards.motion, G = DATA.cards.glint;
+  for (const [u, side, i] of lineUp(ctx)) {
     if (!can(u?.el)) continue;
     const delay = M.enterDelayMs + i * M.enterStaggerMs;
+    const show = () => { u.el.style.opacity = ''; };
     u.el.animate([
       { opacity: 0, transform: `translate(${side * 100}px, -50px) rotateY(${-side * 62}deg) rotateZ(${side * 9}deg) scale(0.92)` },
       { opacity: 1, transform: 'translate(0, 0) rotateY(0deg) rotateZ(0deg) scale(1)' },
-    ], { duration: M.enterMs, delay, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)', fill: 'backwards' });
+    ], { duration: M.enterMs, delay, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)', fill: 'backwards' }).finished.then(show, show);
+    setTimeout(show, delay); // the card is the animation's from here (an animation that never finishes must not hide it for good)
     glintSweep(u, G.enterMs, side, delay + 120);
   }
 }

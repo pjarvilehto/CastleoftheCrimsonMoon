@@ -12,7 +12,7 @@
 //   sys  — gray   (deaths, misc)
 //   summon — violet (the boss calls a skeleton, 0.092)
 
-import { setBackground, transitionTo, go } from '../../core/scene.js';
+import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
 import { shareStats } from '../../meta/telemetry.js';
@@ -167,7 +167,9 @@ export function dungeonScene() {
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
     ui = { root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };
-    playFx({ kind: 'enter' }, fxCtx);
+    playFx({ kind: 'enter' }, fxCtx); // the units wait unseen...
+    const built = ui;
+    whenWindowsBack().then(() => { if (ui === built) playFx({ kind: 'deal' }, fxCtx); }); // ...and are dealt in once the windows are back (0.184)
     updateCombat();
   }
 
