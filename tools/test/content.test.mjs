@@ -308,5 +308,6 @@ fresh();
   const { spawnSync } = await import('node:child_process');
   const run = (ref) => spawnSync('node', ['tools/check-bump.mjs', ...(ref ? [ref] : [])], { encoding: 'utf8' });
   const a = run('HEAD~1'), b = run('0000000000000000000000000000000000000000'), c = run('no-such-ref');
+  // (CI's smoke job checks out one commit: HEAD~1 is unknown there and the guard compares HEAD with itself)
   ok('check-bump runs against the last commit and falls back from an unknown or all-zero base', [a, b, c].every((r) => r.status === 0 && /^check-bump:/.test(r.stdout) && !r.stderr.includes('Error')), [a, b, c].map((r) => r.stderr.split('\n')[0]).join(' | '));
 }
