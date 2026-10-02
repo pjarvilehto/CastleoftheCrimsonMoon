@@ -1137,6 +1137,10 @@ html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.pho
 html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
 html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
+/* the equipment sheet (0.00218): every slot row the same height — the forge button no taller than a row without one, so all seven fit */
+html.phone .phone-hub .item-row .forge-btn { min-height: 24px; padding: 2px 8px; font-size: 0.72rem; }
+html.phone .phone-hub .item-row .equip-item { line-height: 1.15; }
+html.phone .phone-hub [data-row^="slot-"] { min-height: 32px; padding: 2px 8px; margin: 1px 0; }
 html.phone .phone-hub .equip-item { display: flex; gap: 6px; align-items: baseline; } /* a slot's name and bonus on one line */
 html.phone .phone-hub .equip-desc { font-size: 0.7rem; }
 html.phone .phone-hub .hub-foot { display: flex; align-items: center; gap: 10px; }
