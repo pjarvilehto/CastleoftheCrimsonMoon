@@ -1,5 +1,5 @@
 {
-  "version": "0.00206",
+  "version": "0.00207",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -85,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00207": [
+      "The Great Hall's panels fit a laptop screen again without a scrollbar (0.00205's tablet budget was too generous on the desktop)"
+    ],
     "0.00206": [
       "Low on health with no potion left, Retreat with Loot pulses red after a cleared room and Push Deeper stays plain (drink one and it flips back)",
       "Attack buttons breathe faintly in red while it is your move — the recharged Heavy Attack no longer glows alone"
@@ -133,9 +136,6 @@
     ],
     "0.00193": [
       "Art Lab: five new Cave Shrieker candidates drawn from the painting with a hint against the rodent look (its style reference no longer borrows the rat's sheet); the Shrieker's portrait file is cave_shrieker.webp"
-    ],
-    "0.00192": [
-      "Art Lab: candidates for the other ten characters (four each from the style sheets; the Shrieker, Fellblade, gargoyle and Hollow Hound also two from the ossuary painting); the knight's and the rat's picks recorded"
     ]
   }
 }
