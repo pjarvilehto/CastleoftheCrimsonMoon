@@ -16,11 +16,16 @@ vec2 hash2(vec2 p) { return vec2(hash(p), hash(p + 19.19)); }
 float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
 float fbm(vec2 p) { float a = 0.0, w = 0.55; for (int i = 0; i < 4; i++) { a += w * noise(p); p = p * 2.03 + 17.0; w *= 0.5; } return a; }
-// the frame's window: a rounded rectangle inset from the card's edge, soft-edged
+// the frame's window, in units of the card's height: the art's grey border
+// sits 1.3% of the height in from every edge (measured on card_enemy.png and
+// card_player.png: 11-14 px of 1106), its corners rounded by 4%; the plate
+// behind the portrait reaches the border, so the light must too (0.179: the
+// old inset left a dark rim between the border and the lit plate)
 float window(vec2 uv) {
-  vec2 c = abs(uv - 0.5) - vec2(0.5 - 0.07, 0.5 - 0.04) + 0.06;
-  float d = length(max(c, 0.0)) - 0.06;
-  return 1.0 - smoothstep(-0.03, 0.01, d);
+  vec2 halfSize = vec2(uAspect, 1.0) * 0.5; float r = 0.04;
+  vec2 c = abs(vec2(uv.x * uAspect, uv.y) - halfSize) - (halfSize - 0.013) + r;
+  float d = length(max(c, 0.0)) - r;
+  return 1.0 - smoothstep(-0.006, 0.003, d);
 }
 void main() {
   vec2 uv = v; vec2 p = vec2(uv.x * uAspect, uv.y); float t = uT;

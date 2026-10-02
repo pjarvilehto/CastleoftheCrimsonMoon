@@ -1,4 +1,7 @@
 {
+  "0.179": [
+    "Card Lab: the shader light reaches the frame's border (no dark rim around the plate)"
+  ],
   "0.178": [
     "The room-change swoosh another 30% quieter"
   ],
