@@ -166,7 +166,12 @@ sound effects; `analytics/` is the separate static stats page.
 
 **Combat and pacing.** A turn (`run/combat.js playerAttack`) runs in phases:
 rollHit → SMASH/OVERKILL (a heavy blow covering every living enemy's HP) or
-strike (+ spill: heavies of `spillThreshold` x the target's HP sweep on) →
+strike (a heavy blow = `combat.heavyMult` x damage, 2.3 since 0.00198,
+and its cooldown `player.baseHeavyCd` counts ORDINARY turns — the
+heavy's own turn used to count too, so a cooldown of 3 was back after
+two blows and two Quicken boons made it every turn; the fix cost the
+room-24 boss most of its clears in the simulator (30% → 3%), 2.3 bought
+back the run depth and coins and leaves that boss at ~9%) (+ spill: heavies of `spillThreshold` x the target's HP sweep on) →
 lifesteal → enemy phase (dodge, armor, thorns, revive) → boss summons →
 cleared. Its events become playback items (`ui/combatQueue.js`) printed
 with their state snapshot, effect and sound; pacing in `difficulty.json
@@ -621,12 +626,11 @@ sometimes — fetch all branches to find it.
   `tools/check-bump.mjs`, `shared/motion.js`, `.nojekyll`, the build
   file read once per page and cache-busted everywhere, the update poll
   every minute. The simulator's output is byte-identical to 0.196.
-- Owner's call (found, not changed): the heavy attack's cooldown is off
-  by one — `useHeavy` sets it before `playerAttack`'s turn-end decrement,
-  so `baseHeavyCd 3` is ready after two ordinary turns and two Quicken
-  boons make it usable every turn; the simulator's balance includes it.
-  Decrementing at the start of the turn (then re-tuning) changes the
-  balance, so it waits for a decision.
+- 0.00198 fixed the heavy attack's off-by-one cooldown (the heavy's own
+  turn no longer counts as recharge) and raised `combat.heavyMult` 2 →
+  2.3 to compensate in part; the simulator's baseline moved with it (run
+  depth 16.0 → 15.9, coins level, the room-24 boss 30% → 9% clears — the
+  wall the backlog names got taller).
 - Left as found: `icon.png` (374KB) at the root referenced by nothing;
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
@@ -646,9 +650,8 @@ sometimes — fetch all branches to find it.
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
   against scaled enemy HP · more room kinds · portrait / phone layout
-  (then drop the mobile notice) · the heavy cooldown above · the
-  reliquary's revive is not narrated · treasure rooms are not in the
-  play stats.
+  (then drop the mobile notice) · the reliquary's revive is not narrated
+  · treasure rooms are not in the play stats.
 - Engineering: rename the `smash` combat event to `overkill` (engine,
   sound keys, narration ids and the script disagree on the name) · the
   mute pattern is copied in music / sfx / narrator (`shared/prefs.js

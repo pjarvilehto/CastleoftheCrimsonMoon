@@ -70,7 +70,10 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     push({ type: 'sys', text: 'The room is cleared.' });
   }
   combat.turn += 1;
-  if (combat.heavyCd > 0) combat.heavyCd -= 1;
+  // the cooldown counts ORDINARY turns (0.00198): the heavy's own turn used
+  // to count too, so a cooldown of 3 was back after two blows and two
+  // Quicken boons (floor 1) made it every turn
+  if (!heavy && combat.heavyCd > 0) combat.heavyCd -= 1;
   return events;
 }
 
@@ -225,6 +228,7 @@ export function canHeavy(combat) {
 
 export function useHeavy(combat) {
   // The cooldown starts at player.baseHeavyCd (meta/stats.js derivedStats);
-  // relics and the quicken boon lower it (floor 1).
+  // relics and the quicken boon lower it (floor 1): that many ordinary
+  // turns pass before the next heavy.
   combat.heavyCd = combat.run.stats.heavyCdMax;
 }

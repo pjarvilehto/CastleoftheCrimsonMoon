@@ -125,13 +125,14 @@
     }
   },
   "combat": {
-    "heavyMult": 2,
+    "heavyMult": 2.3,
     "critMult": 1.5,
     "critJitter": 0.15,
     "megaCritChance": 0.2,
     "megaCritMult": 1.5,
     "armorMinTakenPct": 0.17,
-    "enemyDmgJitter": 20
+    "enemyDmgJitter": 20,
+    "_doc": "0.00198: heavyMult 2 -> 2.3 — the heavy's cooldown now counts ordinary turns only (its own turn used to count, so cd 3 was back after two blows); the multiplier buys back the run depth the fix cost."
   },
   "xpGrowth": 1.06,
   "eliteMinHp": 60,

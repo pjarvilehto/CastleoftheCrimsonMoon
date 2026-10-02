@@ -37,6 +37,16 @@ fresh();
   const cb = createCombat(run, { enemies: [] });
   useHeavy(cb);
   ok('quicken boon: heavy cooldown 3 -> 2', cb.heavyCd === 2);
+  // the cooldown counts ordinary turns (0.00198): the heavy's own turn
+  // used to count too — a cooldown of 2 was back after one blow
+  const { playerAttack: attack } = await import('../../src/run/combat.js');
+  const wall = () => ({ id: 'rat', name: 'Rat', maxHp: 100000, hp: 100000, dmg: 0, xp: 1, coins: [1, 1] });
+  const cd = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x', name: 'T', enemies: [wall()] });
+  useHeavy(cd); attack(cd, 0, true);
+  const afterHeavy = cd.heavyCd;
+  attack(cd, 0, false); const afterOne = cd.heavyCd;
+  attack(cd, 0, false); const afterTwo = cd.heavyCd;
+  ok('heavy cooldown 2 = two ordinary turns between heavies (the heavy turn itself does not count)', afterHeavy === 2 && afterOne === 1 && afterTwo === 0);
 
   // greed: kill coins multiplied x1.4
   const { applyLoot } = await import('../../src/run/runState.js');
