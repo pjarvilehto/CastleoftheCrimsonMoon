@@ -29,7 +29,7 @@ before structural changes. This file is the rules and the per-system notes.
     painting with every fog knob as a live slider, presets, the flash lights
     on demand, and COPY JSON for a `parallax` patch (see "3D backgrounds").
   - **VO Lab:** `labs/vo/` — (booted through `labs/boot.js` like the
-    others since 0.00198) every narrator take with its text, when it
+    others since 0.00197) every narrator take with its text, when it
     plays and how often; Play / Approve / Disapprove (+ volatility and shouty
     nudges); RE-RENDER gives a JSON for `node tools/gen-vo.mjs --rerender`
     (see "Audio").
@@ -87,13 +87,13 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    listed in `shared/dataCheck.js` and checked at load — new knob, new
    line (a smoke check also greps `src/` for `.knob ?? N`; a default
    parameter `{ fade = 0.35 }` is the same copy in another coat — the
-   flash lights had three, 0.00198). What stays in `src/`: the look —
+   flash lights had three, 0.00197). What stays in `src/`: the look —
    animation durations, shader constants, synth instrument definitions.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
    After the steps `migrateProfile` makes an imported code whole (gear
-   slots, numbers, lists; 0.00198) — a malformed paste used to break the
+   slots, numbers, lists; 0.00197) — a malformed paste used to break the
    Great Hall on every entry.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot; only
@@ -110,10 +110,11 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    nothing until `settleRun()` auto-equips it.
 6. **Every game or stats-page change ships as a numbered build:**
    `node tools/ship.mjs --note "..." [--trailer "Co-Authored-By: ..."]`
-   (0.00198) does the whole loop — commits the tree, merges `origin/main`
+   (0.00197) does the whole loop — commits the tree, merges `origin/main`
    (taking main's `build.json` / `changelog.json` on a conflict), picks
-   the next build number above main's (and rewrites the old number's
-   mentions in the files this branch changed), runs `tools/bump.mjs`
+   the next build number above main's (a number it claimed in an earlier
+   round that collided is rewritten in the files this branch changed; a
+   number already on main never is), runs `tools/bump.mjs`
    (version + module list + the changelist) and the smoke suite by exit
    code, commits, fetches once more and pushes to `main` and the working
    branch; main moved meanwhile = another round. Notes are player-facing
@@ -121,7 +122,7 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    one `--note` per change. **Bump for every `src/` or `analytics/`
    change, debug-only ones too:** both pages load their modules under
    `?v=<build>`, so an unbumped change stays cached in players' browsers
-   (0.127). **From push to player (0.00198):** GitHub Pages deploys `main`
+   (0.127). **From push to player (0.00197):** GitHub Pages deploys `main`
    in 45-70 s; every `build.json` fetch carries `?t=<now>` (the boot, the
    data loader, the labs, the stats page), so the CDN's 10-minute copy is
    never served; the update prompt polls every minute and on tab focus,
@@ -208,7 +209,7 @@ ether), the shrine's boons and the treasure chests each their own
 WebGL context for the session draws every card in turn into a hidden
 canvas and each card's own canvas takes its picture as an ImageBitmap
 (a `bitmaprenderer` context; a `drawImage` into a small 2D canvas was a
-GPU readback per card per frame, 0.00198; 2D stays as the fallback)
+GPU readback per card per frame, 0.00197; 2D stays as the fallback)
 (`.card-fx`,
 screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
@@ -259,8 +260,8 @@ down — resolution x0.8, x0.64, no fog, flat (`core/bg3dQuality.js`;
 `parallax.quality` = the window, the pause gap and how many slow
 windows step down; a window is slow only against the rate the `maxFps`
 throttle can reach on this screen, so a 40 Hz display is not punished —
-0.00198). While a jolt, sway, flash or push plays the cap is
-`motionMaxFps` (60), not the display's rate (0.00198; it was uncapped
+0.00197). While a jolt, sway, flash or push plays the cap is
+`motionMaxFps` (60), not the display's rate (0.00197; it was uncapped
 then, 144 fps through most of a fight). The flat CSS layers are hidden
 while the canvas draws (`#bg-stack.gl`, set from the first frame to
 `shutdown()`) and get no push then; they keep every painting as the
@@ -347,7 +348,7 @@ and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
 sound is one entry. Downloads go through `audioCore.fetchBytes`'s pool
-(0.00198: two at a time, a sound about to play first — the beds, every
+(0.00197: two at a time, a sound about to play first — the beds, every
 narrator take and the clip set used to start together at the title,
 against the Descend essentials). Muting the music stops the bed and
 frees its decoded buffer; the narrator's lines decode in the order they
@@ -413,11 +414,11 @@ may hear the old one for ~4 hours.
   Yes/no prompts and text fields don't get one. A held Space steps once.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
   `'active active-red'`. Its glow is a `::after` layer whose opacity
-  animates (0.00198): never animate `box-shadow` or `filter` in a loop —
+  animates (0.00197): never animate `box-shadow` or `filter` in a loop —
   that repaints every frame for as long as it is on screen; loops animate
   opacity / transform (the idle loops' translate / rotate / scale).
 - Hotkeys (`core/hotkeys.js`): a dialog's key trap takes every key but
-  F-keys and Tab (0.00198: a dialog used to swallow F5 and F12).
+  F-keys and Tab (0.00197: a dialog used to swallow F5 and F12).
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, LABS (the menu page),
@@ -529,7 +530,7 @@ Energy Saver), not a slow machine.
   combat, shrines, progression, content, backgrounds, audio, sim, history,
   narration, art, cards),
   each starting from `fresh()`; a test file imports only the harness
-  names it uses (0.00198). CI (`check-bump.mjs`) fails a push to `main`
+  names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
   and a **virtual clock** (timers, rAF, Date.now, performance.now; `sleep(ms)`
   advances it) — write tests with `sleep()` as if time were real; even a
@@ -602,7 +603,7 @@ sometimes — fetch all branches to find it.
   each taken twice): never pick a build number by hand, and read the
   suite's exit code, never its last line through a pipe.
 
-## State at handover (0.00198)
+## State at handover (0.00197)
 
 - Live: the card effects from the Card Lab (0.183–0.195: a glow behind
   every portrait by material, the cards in 3D, the glint, see-through
@@ -610,7 +611,7 @@ sometimes — fetch all branches to find it.
   (0.161–0.188), the Fog Lab's living mist (0.164–0.169), treasure rooms,
   the Art Lab's redrawn portraits (0.186–0.194, the other thread; four
   characters still undecided), build numbers with five decimals.
-- 0.00198 was a review of the whole project (three audits, every file
+- 0.00197 was a review of the whole project (three audits, every file
   read, plus a headless profile): the JavaScript side of a five-enemy
   fight idles at ~2% of a core; the GPU cost is the mist (forty large
   sprites at half resolution), then the card glow, then the mesh — the
@@ -640,7 +641,7 @@ sometimes — fetch all branches to find it.
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
   not quality: re-encoding saved 3%).
 
-## Backlog (as of 0.00198)
+## Backlog (as of 0.00197)
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the owner's (quota per key) · a dropped line (queued past

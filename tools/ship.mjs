@@ -9,9 +9,11 @@
 //      changelog.json is resolved by taking main's (the bump below rewrites
 //      them), any other conflict stops here for a human
 //   3. picks the build number: the tree's own if it is already above main's,
-//      else main's + 1 — and when a re-bump moves it, rewrites "0.NNN"
-//      mentions of the old number in the files this branch changed
-//      (comments, docs, tests cite the build they shipped in)
+//      else main's + 1 — and when a number this run claimed in an earlier
+//      round collides and moves, rewrites that number's mentions in the
+//      files this branch changed (comments, docs, tests cite the build they
+//      ship in); a number that is already on main is never rewritten (it
+//      names a shipped build — 0.00198's first run got this wrong)
 //   4. runs tools/bump.mjs with the notes, then the smoke suite — by exit
 //      code, never the last line of a pipe (0.167) — and commits the bump
 //   5. fetches main once more: if it moved, back to 2 (at most 4 rounds);
@@ -58,6 +60,7 @@ if (dryRun) {
 if (dirty) { git('add', '-A'); git('commit', '-q', '-m', message(versionAt(null))); console.log('ship: committed the working tree'); }
 
 let version = versionAt(null);
+let claimed = null; // a number this run bumped to and has not pushed: the only one safe to rewrite
 for (let round = 1; round <= ROUNDS; round++) {
   // 2. main's latest
   git('fetch', 'origin', 'main');
@@ -74,7 +77,7 @@ for (let round = 1; round <= ROUNDS; round++) {
   const theirs = versionAt('origin/main');
   const next = compareVersions(version, theirs) > 0 ? version : bump1(theirs);
   if (next !== version) {
-    const changed = git('diff', '--name-only', 'origin/main...HEAD').split('\n').filter((f) => f && !GENERATED.includes(f));
+    const changed = claimed === version ? git('diff', '--name-only', 'origin/main...HEAD').split('\n').filter((f) => f && !GENERATED.includes(f)) : [];
     const re = new RegExp(`\\b${version.replace('.', '\\.')}\\b`, 'g');
     const renumbered = [];
     for (const f of changed) {
@@ -88,6 +91,7 @@ for (let round = 1; round <= ROUNDS; round++) {
   }
   // 4. bump, suite, commit
   execFileSync('node', ['tools/bump.mjs', version, ...notes.flatMap((n) => ['--note', n])], { cwd: ROOT, stdio: 'inherit' });
+  claimed = version;
   const suite = spawnSync('node', ['tools/smoke-test.mjs'], { cwd: ROOT, encoding: 'utf8' });
   const tail = suite.stdout.trim().split('\n').slice(-1)[0];
   if (suite.status !== 0) { console.error(suite.stdout.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); fail(`the suite failed (${tail}); nothing pushed — the bump and the merge are in the tree`); }
