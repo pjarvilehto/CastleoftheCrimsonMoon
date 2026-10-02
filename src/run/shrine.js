@@ -129,5 +129,5 @@ export function acceptOffer(run, o) {
       break;
   }
   // label: the compact buff-bar text (0.096); full: the shrine card's text
-  run.buffs.push({ icon: o.icon, label: o.short ?? o.buff, full: o.buff, id: o.id }); // id: run history
+  run.buffs.push({ icon: o.icon, img: o.img, label: o.short ?? o.buff, full: o.buff, id: o.id }); // id: run history
 }

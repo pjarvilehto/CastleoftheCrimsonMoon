@@ -647,6 +647,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
   max-width: calc(50vw - max(23vw, 170px) - 13.5vw);
 }
 .buff { display: flex; flex-direction: column; align-items: center; width: 6.6vh; }
+.buff-icon .icon-art { width: 100%; height: 100%; object-fit: contain; border-radius: 0.7vh; }
 .buff-icon {
   position: relative;
   width: 4vh; height: 4vh;
@@ -740,6 +741,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
   font-size: 2.4rem; color: var(--gold);
   box-shadow: inset 0 0 18px rgba(0,0,0,0.8);
 }
+.shrine-icon .icon-art { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; } /* painted icons (0.172) */
 .shrine-cost { text-align: center; color: #9a8b6a; margin-top: auto; }
 .shrine-cost-label { color: var(--parchment); letter-spacing: 2px; margin-bottom: 2px; }
 .shrine-card button { width: 100%; padding: 10px 0; font-size: 1.1rem; letter-spacing: 2px; }

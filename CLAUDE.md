@@ -317,6 +317,12 @@ may hear the old one for ~4 hours.
   kill, `killedBy: 'reliquary'`; inside, a relic with `relicChance` from
   t4MinRoom, one per run, else a tier-3 item). Shares the shrine's panel
   (`shrineUI.js renderPanelRoom`); the sim's bot opens the gilded chest.
+- Painted icons (0.172, the owner's art): every shrine boon (`shrines.json
+  offers[].img`) and treasure chest (`treasureUI.js LOOK`) shows a picture
+  from `assets/icons/` (192px WebP with alpha, `buffs.js iconArt`; the
+  glyph in `icon` is its alt text), on the cards and in the buff bar;
+  preloaded with the Descend essentials. New boon = new picture, the
+  suite checks every one is on disk.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`).
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /

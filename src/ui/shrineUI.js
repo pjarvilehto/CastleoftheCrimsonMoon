@@ -8,7 +8,7 @@ import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 import { hpBar, logLine, isLowHp, potionLevel } from './hud.js';
-import { updateBuffs } from './buffs.js';
+import { updateBuffs, iconArt } from './buffs.js';
 
 // HP color scale: <=25% red, <=75% yellow, above green.
 const hpColor = (cur, max) => {
@@ -63,7 +63,7 @@ function shrineBody(run, room, { log, refresh }) {
     el('div', { class: 'shrine-cards' },
       ...room.dealtOffers.map((o, i) => el('div', { class: 'shrine-card' },
         el('div', { class: 'shrine-buff' }, o.buff),
-        el('div', { class: 'shrine-icon' }, o.icon),
+        el('div', { class: 'shrine-icon' }, iconArt(o.img, o.icon)),
         el('div', { class: 'shrine-cost' },
           el('div', { class: 'shrine-cost-label' }, 'COST:'),
           el('div', {}, costText(o, room.depth))),

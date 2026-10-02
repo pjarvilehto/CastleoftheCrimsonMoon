@@ -112,6 +112,7 @@ export function checkData(data) {
   };
   for (const o of data.shrines?.offers ?? []) {
     for (const k of NEEDS[o.id] ?? []) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
+    if (typeof o.img !== 'string') out.push(`shrines.json: ${o.id}.img (its icon picture, 0.172)`);
   }
   return out;
 }
