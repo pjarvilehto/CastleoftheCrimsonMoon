@@ -19,8 +19,6 @@ export function titleScene() {
       play('title');
       armOnGesture('title_welcome'); // the narrator greets on the session's first click or key (0.161)
       render(root);
-      // 0.109: a new player is asked their name first (analytics shows it)
-      if (!getProfile().name) namePrompt(() => render(root));
     },
   };
 
@@ -66,7 +64,8 @@ export function titleScene() {
               `${p.records.kills} kills, deepest room ${p.records.bestRoom}.`)
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
-          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => go('hub') }, 'Enter the Castle'),
+          // 0.00200: a new player is asked their name on the way in (the prompt's button reads Enter the Castle), not over the title before seeing anything
+          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? go('hub') : namePrompt(() => go('hub'))) }, 'Enter the Castle'),
           // Shown only when a save with progress exists: offer to wipe
           // (the game's own yes/no dialog, not the browser's).
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)

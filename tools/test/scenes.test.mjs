@@ -290,9 +290,10 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   resetProfile();
 }
 
-// T71: 0.109 — "Enter your name": asked on the title screen while the
-// save has none (the title's hotkeys wait), kept clean and short, kept
-// through a progress wipe, changeable from the title, sent with the stats.
+// T71: 0.109 — "Enter your name": asked while the save has none — on the
+// way in, when Enter the Castle is pressed (0.00200; it used to open over
+// the title before the player had seen anything) — kept clean and short,
+// kept through a progress wipe, changeable from the title, sent with the stats.
 {
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -305,8 +306,11 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   getProfile().name = '';
   show(titleScene());
   await sleep(1100);
+  ok('the title shows first, no prompt over it', !dialog() && t().includes('CASTLE OF THE CRIMSON MOON'));
+  handleKey('e');
+  await sleep(100);
   const d = dialog();
-  ok('an unnamed player is asked their name on the title screen', !!d && d.textContent.includes('Enter Your Name'));
+  ok('an unnamed player is asked their name on Enter the Castle, and stays on the title until named', !!d && d.textContent.includes('Enter Your Name') && !t().includes('GREAT HALL'));
   handleKey('e');
   await sleep(1300);
   ok('the title\'s hotkeys wait while it asks', !!dialog() && t().includes('CASTLE OF THE CRIMSON MOON') && !t().includes('GREAT HALL'));
@@ -321,15 +325,22 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   btn.listeners.click[0]();
   ok('the name is saved (cleaned) and the dialog closes', !dialog() && getProfile().name === 'Lady Morgana'
     && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).name === 'Lady Morgana');
-  ok('the title greets the player by name', t().includes('Playing as Lady Morgana') && t().includes('Morgana'));
-  handleKey('e');
   await sleep(1300);
-  ok('hotkeys work again once named', t().includes('GREAT HALL'));
+  ok('and the way in continues: the Great Hall, its Descend pulsing (nothing to spend yet)', t().includes('GREAT HALL')
+    && registry.app.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'd').some((b) => b.className.includes('active')));
+  show(titleScene());
+  await sleep(1100);
+  ok('the title greets the player by name', t().includes('Playing as Lady Morgana') && t().includes('Morgana'));
   resetProfile();
   ok('a progress wipe keeps the name (same person)', getProfile().name === 'Lady Morgana');
   show(titleScene());
   await sleep(1100);
+  handleKey('e');
+  await sleep(100);
   ok('a named player is not asked again', !dialog());
+  await sleep(1300);
+  show(titleScene());
+  await sleep(1100);
   const change = registry.app.all((n) => n.tagName === 'button' && n.className === 'link-btn')[0];
   change.listeners.click[0]();
   ok('"change" reopens it, and Esc cancels a change', !!dialog() && dialog().textContent.includes('Change Your Name') && (handleKey('escape'), !dialog()) && getProfile().name === 'Lady Morgana');

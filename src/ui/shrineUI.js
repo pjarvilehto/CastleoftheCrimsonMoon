@@ -61,7 +61,7 @@ function shrineBody(run, room, { log, refresh }) {
   }
   if (!room.dealtOffers) room.dealtOffers = dealOffers();
   return el('div', {},
-    el('div', { class: 'subtitle' }, 'A shrine hums with dark power. Accept one boon — or walk away.'),
+    el('div', { class: 'subtitle' }, 'A shrine hums with dark power. Accept one boon for this run — or walk away.'),
     el('div', { class: 'shrine-cards' },
       ...room.dealtOffers.map((o, i) => litCard(SHRINE_STYLE[o.id], el('div', { class: 'shrine-card' },
         el('div', { class: 'shrine-buff' }, o.buff),

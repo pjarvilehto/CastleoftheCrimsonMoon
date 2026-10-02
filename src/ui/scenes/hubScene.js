@@ -212,7 +212,8 @@ export function hubScene(opts = {}) {
       slotRow('Trinket', eq.trinket),
       slotRow('Amulet', eq.amulet));
 
-    const descendBtn = el('button', { class: 'primary', key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
+    // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
+    const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     root.innerHTML = '';
     root.append(
       el('div', { class: 'hub-container' },

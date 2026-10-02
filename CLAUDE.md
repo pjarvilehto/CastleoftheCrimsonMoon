@@ -413,7 +413,10 @@ may hear the old one for ~4 hours.
   under its label; in a dialog pass it as `openDialog({ proceed })`).
   Yes/no prompts and text fields don't get one. A held Space steps once.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
-  `'active active-red'`. Its glow is a `::after` layer whose opacity
+  `'active active-red'`. The Great Hall's Descend pulses while nothing
+  there can be bought (a new player's first visit: three panels of
+  upgrades and nothing to spend; 0.00200). A new player is asked their
+  name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —
   that repaints every frame for as long as it is on screen; loops animate
   opacity / transform (the idle loops' translate / rotate / scale).
