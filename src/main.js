@@ -21,7 +21,7 @@ import { initNarrator, isNarratorMuted, toggleNarrator } from './audio/narrator.
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
-import { isMobile } from './shared/platform.js';
+import { isPhone } from './shared/platform.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -35,16 +35,18 @@ async function boot() {
   // fade out from yet, and #app starts hidden in index.html.
   const app = document.getElementById('app');
   app.classList.remove('hidden');
-  // Phones and tablets (0.125): no keyboard, no landscape layout yet — a
-  // notice over the title art instead of the game (and no stats sent).
-  if (isMobile()) {
+  // Phones (0.125; 0.00205: tablets play, sideways): no layout for a 390px
+  // screen yet — a notice over the title art instead of the game (and no
+  // stats sent). A tablet held upright gets styles.css .rotate-notice.
+  if (isPhone()) {
     app.append(el('div', { class: 'panel mobile-notice' },
       el('h1', {}, 'CASTLE OF THE CRIMSON MOON'),
-      el('div', { class: 'subtitle' }, 'Mobile platforms not supported yet'),
-      el('p', { class: 'mobile-sub' }, 'Please visit on a desktop or laptop computer.')));
+      el('div', { class: 'subtitle' }, 'Phones are not supported yet'),
+      el('p', { class: 'mobile-sub' }, 'Please play on a tablet or a computer.')));
     loadData().then(() => setBackground(DATA.backgrounds.title)).catch(() => {});
     return;
   }
+  document.body.append(el('div', { class: 'rotate-notice' }, el('div', { class: 'panel' }, el('h1', {}, 'Turn your device sideways'), el('p', { class: 'mobile-sub' }, 'The castle is played in landscape.'))));
   const fill = el('div', { class: 'loader-fill' });
   const pct = el('div', { class: 'subtitle loader-pct' }, '0%');
   app.append(el('div', { class: 'panel loader' },
@@ -104,14 +106,17 @@ async function boot() {
 function fullscreenToggle() {
   const btn = onOffToggle('FULLSCREEN', {
     cls: 'fs-toggle',
-    get: () => !!document.fullscreenElement,
+    get: () => !!(document.fullscreenElement || document.webkitFullscreenElement),
     flip: () => {
-      const req = document.fullscreenElement ? document.exitFullscreen?.() : document.documentElement.requestFullscreen?.();
+      // (0.00205: Safari's prefixed names too — iPad Safari has them, iPhone Safari has no page fullscreen at all; there the home-screen app is fullscreen, manifest.webmanifest)
+      const d = document, root = d.documentElement;
+      const req = (d.fullscreenElement || d.webkitFullscreenElement) ? (d.exitFullscreen ?? d.webkitExitFullscreen)?.call(d) : (root.requestFullscreen ?? root.webkitRequestFullscreen)?.call(root);
       Promise.resolve(req).catch(() => { /* denied/unavailable (e.g. iframe) */ }).finally(() => btn.sync());
-      return !!document.fullscreenElement;
+      return !!(d.fullscreenElement || d.webkitFullscreenElement);
     },
   });
   document.addEventListener?.('fullscreenchange', () => btn.sync());
+  document.addEventListener?.('webkitfullscreenchange', () => btn.sync());
   return btn;
 }
 

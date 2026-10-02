@@ -92,6 +92,16 @@ export function summarizeFrames({ hist, frames, ms, worst }) {
 // The machine, for the stats upload: GPU (from WebGL), browser, OS,
 // CPU cores, memory (GB, Chromium only). Strings are short and generic.
 let device = null;
+// The OS for the device line. iPadOS Safari calls itself a Macintosh and
+// gives nothing else away but its touch points (0.00205: it read as macOS
+// on the stats page, and the collector keeps only this field for it).
+export function osOf(ua, touch = false) {
+  if (/iPhone|iPod/.test(ua)) return 'iOS';
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && touch)) return 'iPadOS';
+  if (/Android/.test(ua)) return 'Android';
+  return /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : 'Other';
+}
+
 export function deviceInfo() {
   if (device) return device;
   const nav = globalThis.navigator;
@@ -99,7 +109,7 @@ export function deviceInfo() {
   const ua = String(nav.userAgent ?? '');
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Other';
   const ver = (ua.match(new RegExp(`${browser === 'Edge' ? 'Edg' : browser === 'Safari' ? 'Version' : browser}/(\\d+)`)) ?? [])[1] ?? '';
-  const os = /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : 'Other';
+  const os = osOf(ua, (nav.maxTouchPoints ?? 0) > 1);
   device = {
     gpu: gpuName() ?? probeGpu(), browser: `${browser} ${ver}`.trim(), os,
     cores: Number(nav.hardwareConcurrency) || 0, mem: Number(nav.deviceMemory) || 0,

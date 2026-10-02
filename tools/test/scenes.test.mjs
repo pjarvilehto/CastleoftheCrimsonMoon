@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -433,21 +433,39 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('a held Space (auto-repeat) steps only once', hk.includes("if (e.repeat && e.key === ' ')"));
 }
 
-// T86: 0.125 — phones and tablets get the "not supported yet" notice
-// instead of the game; ?desktop skips the check.
+// T86: 0.125 — phones get the "not supported yet" notice instead of the
+// game; tablets play, sideways (0.00205); ?desktop skips the check.
 {
-  const { isMobile } = await import('../../src/shared/platform.js');
+  const { isMobile, deviceClass, isPhone, TABLET_MIN_PX } = await import('../../src/shared/platform.js');
   const iphone = { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', maxTouchPoints: 5 };
   const android = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36' };
   const ipad = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 5 };
   const mac = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 0 };
   const win = { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36', maxTouchPoints: 10 };
   const hinted = { userAgent: 'Mozilla/5.0 (Linux) Chrome/120', userAgentData: { mobile: true } };
-  ok('phones, tablets and iPadOS count as mobile', [iphone, android, ipad, hinted].every((n) => isMobile(n, '')));
+  ok('phones, tablets and iPadOS count as handhelds', [iphone, android, ipad, hinted].every((n) => isMobile(n, '')));
   ok('desktops (a touch-screen Windows laptop too) do not', !isMobile(mac, '') && !isMobile(win, ''));
   ok('?desktop skips the check', !isMobile(iphone, '?desktop'));
+  // 0.00205: the screen's longer side tells a phone from a tablet
+  ok('a phone screen is a phone, a tablet screen a tablet, a desktop a desktop', deviceClass(iphone, { width: 390, height: 844 }, '') === 'phone'
+    && deviceClass(android, { width: 412, height: 915 }, '') === 'phone' && deviceClass(ipad, { width: 1024, height: 1366 }, '') === 'tablet'
+    && deviceClass(android, { width: 800, height: 1280 }, '') === 'tablet' && deviceClass(mac, { width: 1440, height: 900 }, '') === 'desktop'
+    && deviceClass(iphone, { width: 390, height: 844 }, '?desktop') === 'desktop' && TABLET_MIN_PX === 1000 && isPhone(iphone, { width: 390, height: 844 }, '') && !isPhone(ipad, { width: 1024, height: 1366 }, ''));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('boot stops at the notice on mobile', /if \(isMobile\(\)\) \{[\s\S]*Mobile platforms not supported yet[\s\S]*return;\s*\}/.test(m));
+  ok('boot stops at the notice on a phone, and mounts the rotate notice for a tablet held upright', /if \(isPhone\(\)\) \{[\s\S]*Phones are not supported yet[\s\S]*return;\s*\}/.test(m) && m.includes("el('div', { class: 'rotate-notice' }"));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('touch: no double-tap zoom, no image callout, 44px targets and no hotkey hints on a coarse pointer, hover styles only where hover exists, a rotate notice in portrait',
+    css.includes('html { touch-action: manipulation; }') && css.includes('img { -webkit-touch-callout: none; }') && css.includes('@media (pointer: coarse) {') && css.includes('min-height: 44px;')
+    && css.includes('@media (hover: hover) { button:hover:not(:disabled) {') && css.includes('@media (pointer: coarse) and (orientation: portrait) { .rotate-notice { display: flex; } }'));
+  // the home-screen app (0.00205): a manifest the page links, its icons on disk, the Apple metas
+  const html = readFileSync('index.html', 'utf8'), man = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
+  ok('a web app manifest: fullscreen, landscape, icons on disk, linked with the Apple metas and a cover-fit viewport',
+    man.display === 'fullscreen' && man.orientation === 'landscape' && man.icons.length >= 2 && man.icons.every((i) => { try { return statSync(i.src).isFile(); } catch { return false; } })
+    && html.includes('<link rel="manifest" href="manifest.webmanifest">') && html.includes('apple-mobile-web-app-capable') && html.includes('viewport-fit=cover'));
+  // the device line (0.00205): an iPad reads as iPadOS, not macOS
+  const { osOf } = await import('../../src/core/perfMonitor.js');
+  ok('the device line tells iPadOS (a Macintosh with touch), iOS and Android from macOS', osOf(ipad.userAgent, true) === 'iPadOS' && osOf(mac.userAgent, false) === 'macOS'
+    && osOf(iphone.userAgent, true) === 'iOS' && osOf(android.userAgent, true) === 'Android' && osOf(win.userAgent, true) === 'Windows');
 }
 
 // 0.154 — transitions strictly in order (the owner's call): the windows fade

@@ -442,9 +442,23 @@ may hear the old one for ~4 hours.
   the card's `.card-frame` layer (opacity 0.85; 0.195: a real element,
   the shader light inside it); portraits overflow the frame;
   per-enemy tweaks via `enemy-<id>` classes.
-- Phones and tablets (0.125, `shared/platform.js isMobile`) get a "Mobile
-  platforms not supported yet" card and the boot stops; `?desktop` skips
-  the check. Remove it when a portrait layout lands.
+- Phones (0.125; `shared/platform.js isPhone`: a touch handheld whose
+  screen's longer side is under `TABLET_MIN_PX` 1000) get a "Phones are
+  not supported yet" card and the boot stops; `?desktop` skips the check.
+  **Tablets play since 0.00205**, sideways: a `.rotate-notice` covers the
+  game in portrait (`pointer: coarse` + `orientation: portrait`); touch
+  gets `touch-action: manipulation` (rapid Attack taps are double taps),
+  no image callout, 44px tap targets, no hotkey hints, hover styles only
+  under `(hover: hover)`; the layout honours the notch (`env(safe-area-
+  inset-*)`, `viewport-fit=cover`) and Safari's toolbars (`--card-h` in
+  `svh`); the hub's three columns fit 1024 wide and keep clear of the
+  corner column under 1400. `manifest.webmanifest` + the Apple metas make
+  a home-screen app (fullscreen, landscape — iPhone Safari has no page
+  fullscreen; the FULLSCREEN toggle also speaks Safari's prefixed API).
+  The device line reads iPadOS / iOS / Android (`perfMonitor.js osOf`;
+  iPadOS calls itself a Macintosh — the stats page said macOS). Remove
+  the phone notice when a phone layout lands (cards sized from height, a
+  one-line log, the corner column folded; see the 0.00205 notes).
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep

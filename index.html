@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Castle of the Crimson Moon</title>
   <link rel="preload" href="assets/fonts/DINCondensedBold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
   <link rel="apple-touch-icon" href="icon-180.png">
+  <!-- a home-screen app (0.00205): fullscreen and landscape on a tablet; iPhone Safari has no page fullscreen otherwise -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Crimson Moon">
   <meta name="theme-color" content="#1a0e0e">
   <style>html, body { margin: 0; height: 100%; background: #0d0808; }</style>
 </head>
