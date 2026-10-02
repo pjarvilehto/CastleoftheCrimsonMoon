@@ -189,7 +189,7 @@ fresh();
   ok('room swoosh: its peak lands mid-transition (2 s), a little varied each play', T.peakAtMs === 2000 && T.peakAtMs - c.peakMs > 0
     && readFileSync('src/audio/sfx.js', 'utf8').includes('delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs)')
     && A.variation.room_swoosh.rate[0] < 1 && A.variation.room_swoosh.rate[1] > 1 && A.variation.room_swoosh.eq.lo < A.variation.room_swoosh.eq.hi && c.jitterDb > 0);
-  ok('room swoosh sits well under the hits in the mix (0.175: 30% quieter)', c.measuredDb + c.gainDb <= -15 && c.measuredDb + c.gainDb > -19);
+  ok('room swoosh sits well under the hits in the mix (0.175 and 0.177: 30% quieter twice)', c.measuredDb + c.gainDb <= -18 && c.measuredDb + c.gainDb > -22);
 }
 
 // T73: 0.110 — strikes vary every hit (pitch, a random tone colour,

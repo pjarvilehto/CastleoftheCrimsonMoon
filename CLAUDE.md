@@ -233,7 +233,7 @@ name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 sound is one entry. Combat lines go through `ui/combatSfx.js` (panned to the
 card, timed to the blow, crit/mega/overkill sweeteners). The room change's
 swoosh (0.173, `audio.json transition`): the owner's SFX pitched down three
-quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173), played by `sfx.js transitionSfx()`
+quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.177), played by `sfx.js transitionSfx()`
 from `main.js onTransition` so its measured loudest moment (`peakMs`)
 lands `peakAtMs` (2 s, the middle) into every transition, varied a little
 each play (its `variation` entry + `jitterDb`). Music: five
