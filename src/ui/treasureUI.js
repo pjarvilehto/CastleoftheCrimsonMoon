@@ -8,13 +8,14 @@ import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { CHESTS, openChest, reliquaryCost } from '../run/treasure.js';
 import { renderPanelRoom } from './shrineUI.js';
+import { iconArt } from './buffs.js';
 import { logLine } from './hud.js';
 import { DATA } from '../shared/data.js';
 
 const LOOK = {
-  coffer: { name: 'Iron Coffer', icon: '💰', hint: 'Heavy with coin.' },
-  gilded: { name: 'Gilded Chest', icon: '⚜', hint: 'Fine gear, made for you.' },
-  reliquary: { name: 'Sealed Reliquary', icon: '⚱', hint: 'Something old sleeps within.' },
+  coffer: { name: 'Iron Coffer', icon: '💰', img: 'assets/icons/chest_coffer.webp', hint: 'Heavy with coin.' },
+  gilded: { name: 'Gilded Chest', icon: '⚜', img: 'assets/icons/chest_gilded.webp', hint: 'Fine gear, made for you.' },
+  reliquary: { name: 'Sealed Reliquary', icon: '⚱', img: 'assets/icons/chest_reliquary.webp', hint: 'Something old sleeps within.' },
 };
 
 // h: as renderShrineRoom, plus onDeath() (the reliquary's price can kill)
@@ -28,7 +29,7 @@ export function renderTreasureRoom(root, run, room, h) {
         const L = LOOK[kind], cost = kind === 'reliquary' ? reliquaryCost(run) : 0, lethal = cost >= run.hp;
         return el('div', { class: `shrine-card treasure-card treasure-${kind}` },
           el('div', { class: 'shrine-buff' }, L.name),
-          el('div', { class: 'shrine-icon' }, L.icon),
+          el('div', { class: 'shrine-icon' }, iconArt(L.img, L.icon)),
           el('div', { class: 'treasure-hint' }, L.hint),
           el('div', { class: 'shrine-cost' },
             el('div', { class: 'shrine-cost-label' }, 'COST:'),

@@ -4,7 +4,7 @@
   "minDmg": 5,
   "offers": [
     {
-      "id": "dmg",
+      "id": "dmg", "img": "assets/icons/shrine_dmg.webp",
       "buff": "+25% DAMAGE",
       "short": "+25% DMG",
       "costDesc": "-15% MAX HP",
@@ -13,7 +13,7 @@
       "dmgMult": 1.25
     },
     {
-      "id": "crit",
+      "id": "crit", "img": "assets/icons/shrine_crit.webp",
       "buff": "+15% CRIT",
       "short": "+15% CRIT",
       "costDesc": "-30 COINS",
@@ -24,7 +24,7 @@
       "flatCost": true
     },
     {
-      "id": "armor",
+      "id": "armor", "img": "assets/icons/shrine_armor.webp",
       "buff": "+25% ARMOR (MIN +30)",
       "short": "+25% ARMOR",
       "costDesc": "-1 POTION",
@@ -34,7 +34,7 @@
       "armorMin": 30
     },
     {
-      "id": "leech",
+      "id": "leech", "img": "assets/icons/shrine_leech.webp",
       "buff": "+100% LIFESTEAL",
       "short": "+100% LIFESTEAL",
       "costDesc": "-15% MAX HP",
@@ -44,7 +44,7 @@
       "lifestealCap": 6
     },
     {
-      "id": "bulwark",
+      "id": "bulwark", "img": "assets/icons/shrine_bulwark.webp",
       "buff": "+20% ARMOR (MIN +50)",
       "short": "+20% ARMOR",
       "costDesc": "-10% DMG",
@@ -54,7 +54,7 @@
       "armorPct": 0.2
     },
     {
-      "id": "secondwind",
+      "id": "secondwind", "img": "assets/icons/shrine_secondwind.webp",
       "buff": "+2 POTIONS & FULL HEAL",
       "short": "+2 POTIONS",
       "costDesc": "-40 COINS",
@@ -65,7 +65,7 @@
       "overCap": true
     },
     {
-      "id": "quicken",
+      "id": "quicken", "img": "assets/icons/shrine_quicken.webp",
       "buff": "HEAVY COOLDOWN −1",
       "short": "HEAVY CD −1",
       "costDesc": "-15% MAX HP",
@@ -74,7 +74,7 @@
       "cdReduce": 1
     },
     {
-      "id": "greed",
+      "id": "greed", "img": "assets/icons/shrine_greed.webp",
       "buff": "+40% COINS",
       "short": "+40% COINS",
       "costDesc": "-10% DMG",
@@ -83,7 +83,7 @@
       "coinMultAdd": 0.4
     },
     {
-      "id": "glasscannon",
+      "id": "glasscannon", "img": "assets/icons/shrine_glasscannon.webp",
       "buff": "+60% DMG",
       "short": "+60% DMG",
       "costDesc": "−50% ARMOR",

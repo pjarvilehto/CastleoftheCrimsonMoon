@@ -249,3 +249,16 @@ fresh();
   }
   fresh();
 }
+
+// 0.177: painted icons — every boon and chest has its picture on disk, the
+// cards and the buff bar show it (the glyph is its text alternative)
+{
+  const { iconArt } = await import('../../src/ui/buffs.js');
+  const treasureSrc = readFileSync('src/ui/treasureUI.js', 'utf8');
+  const chestImgs = [...treasureSrc.matchAll(/img: '([^']+)'/g)].map((m) => m[1]);
+  const files = [...DATA.shrines.offers.map((o) => o.img), ...chestImgs];
+  ok('icons: every shrine boon and chest has a picture on disk', chestImgs.length === 3 && DATA.shrines.offers.every((o) => o.img)
+    && files.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }) && new Set(files).size === files.length, files.join(', '));
+  const art = iconArt('assets/icons/shrine_dmg.webp', '⚔');
+  ok('icons: the picture carries the glyph as its alt text', art.tagName === 'img' && art.attrs.alt === '⚔' && art.attrs.src === 'assets/icons/shrine_dmg.webp');
+}
