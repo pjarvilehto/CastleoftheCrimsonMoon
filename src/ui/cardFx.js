@@ -22,6 +22,7 @@ import { isBg3dActive } from '../core/bg3d.js';
 import { MATERIAL } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
 import { program } from '../core/bg3dGL.js';
+import { deviceBlock } from '../shared/platform.js';
 
 export const VS = `attribute vec2 a; varying vec2 v; void main() { v = a * 0.5 + 0.5; gl_Position = vec4(a, 0.0, 1.0); }`;
 export const FS = `
@@ -117,8 +118,15 @@ export const CHEST_STYLE = { coffer: 'goldFog', gilded: 'goldEmbers', reliquary:
 // The lit window per card kind: [inset, corner radius] in card heights.
 export const WINDOW = { frame: [0.0113, 0.04], panel: [0, 0.037] };
 
-const SIZE = 512; // the hidden canvas: a card is never drawn larger than this
+const SIZE = 512; // the hidden canvas's ceiling: a card is never drawn larger than this (it is sized to the largest lit card, 0.00222)
+const GRAIN = 16; // the hidden canvas grows in steps of this many px
 let shared = null, failed = false; // { canvas, gl, loc }
+// cards.json fx, the phone's block merged on a phone (0.00222) — read once
+let F = null;
+const fxKnobs = () => (F ??= deviceBlock(DATA.cards.fx));
+// BATTERY SAVER (0.00222): the light at fx.saverFps
+let saver = false;
+export function setCardFxSaver(on) { saver = !!on; }
 let entries = [], running = false, last = 0;
 // each card's size, kept by one observer (0.00209: clientWidth/Height per card per tick was a layout read 30 times a second — the pattern particles.js dropped in 0.135)
 const sizes = typeof ResizeObserver === 'function' ? new ResizeObserver((recs) => { for (const r of recs) { const e = entries.find((x) => x.card === r.target); if (e) { e.w = r.contentRect.width; e.h = r.contentRect.height; } } }) : null;
@@ -130,7 +138,7 @@ function sharedGl() {
   if (shared || failed) return shared;
   try {
     const canvas = document.createElement('canvas');
-    canvas.width = SIZE; canvas.height = SIZE;
+    canvas.width = GRAIN; canvas.height = GRAIN; // grown to the largest lit card as cards attach (fitShared)
     const gl = canvas.getContext?.('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
     if (!gl) { failed = true; return null; }
     const prog = program(gl, VS, FS); // (bg3dGL.js: the renderer's own helper, 0.00197)
@@ -167,7 +175,7 @@ export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) 
   canvas.width = 8; canvas.height = 8;
   if (ctx) ctx.globalCompositeOperation = 'copy'; // each frame replaces the last, alpha included
   host.insertBefore(canvas, host.children[0] ?? null);
-  const e = { card, canvas, bmp, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? DATA.cards.fx.amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
+  const e = { card, canvas, bmp, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? fxKnobs().amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
   entries.push(e);
   sizes?.observe(card);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
@@ -185,16 +193,18 @@ function tick(now) {
   if (!entries.length) { running = false; return; }
   requestAnimationFrame(tick);
   if (!enabled() || !shared) { stop(); return; } // the background fell back to flat mid-session
-  const F = DATA.cards.fx;
-  if (now - last < 1000 / F.fps - 2) return;
+  const F = fxKnobs();
+  if (now - last < 1000 / (saver ? F.saverFps : F.fps) - 2) return;
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   const { gl, loc, canvas: src } = shared;
   for (const e of entries) {
+    if (sizes && e.w === undefined) continue; // not measured yet (0.00222: a clientWidth read here forced a layout on the room's first tick); the observer's first report is a tick away
     const w = Math.min(SIZE, Math.max(8, Math.round((e.w ?? e.card.clientWidth) * F.scale) || 8));
     const h = Math.min(SIZE, Math.max(8, Math.round((e.h ?? e.card.clientHeight) * F.scale) || 8));
     if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; if (e.ctx) e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets a 2D context)
+    fitShared(w, h);
     e.t += dt * F.speed;
-    gl.viewport(0, SIZE - h, w, h); // the top-left corner of the hidden canvas, as an image
+    gl.viewport(0, src.height - h, w, h); // the top-left corner of the hidden canvas, as an image
     gl.uniform1f(loc.uT, e.t); gl.uniform1f(loc.uAmt, e.amt);
     gl.uniform1f(loc.uLook, LOOKS.indexOf(e.look)); gl.uniform1f(loc.uAspect, w / h);
     gl.uniform2f(loc.uWin, e.win[0], e.win[1]); gl.uniform3fv(loc.uTint, e.tint);
@@ -203,6 +213,32 @@ function tick(now) {
     if (e.bmp) createImageBitmap(src, 0, 0, w, h).then((b) => e.bmp.transferFromImageBitmap(b), () => {});
     else e.ctx.drawImage(src, 0, 0, w, h, 0, 0, w, h);
   }
+}
+
+// The hidden canvas grows to the largest lit card, in GRAIN steps (0.00222:
+// it was 512x512 always, and every card's picture was a snapshot of the
+// whole of it — 1 MB a card a tick for 31x88 px of light on a phone).
+function fitShared(w, h) {
+  const c = shared.canvas, W = Math.min(SIZE, Math.ceil(w / GRAIN) * GRAIN), H = Math.min(SIZE, Math.ceil(h / GRAIN) * GRAIN);
+  if (W > c.width) c.width = W;
+  if (H > c.height) c.height = H;
+}
+
+// Boot (main.js): compile and link the shader behind the title, so the
+// first fight's first card does not pay the pipeline build in the
+// hub-to-dungeon transition (0.00222). Harmless without WebGL.
+export function warmCardFx() {
+  if (!enabled()) return false;
+  const s = sharedGl();
+  if (!s) return false;
+  const { gl, loc } = s;
+  gl.viewport(0, 0, 8, 8);
+  for (let i = 0; i < LOOKS.length; i++) {
+    gl.uniform1f(loc.uT, 0); gl.uniform1f(loc.uAmt, 0); gl.uniform1f(loc.uLook, i); gl.uniform1f(loc.uAspect, 1);
+    gl.uniform2f(loc.uWin, WINDOW.frame[0], WINDOW.frame[1]); gl.uniform3f(loc.uTint, 0, 0, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  return true;
 }
 
 // Tests and the lab: what is lit right now.

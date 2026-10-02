@@ -107,7 +107,18 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    line (a smoke check also greps `src/` for `.knob ?? N`; a default
    parameter `{ fade = 0.35 }` is the same copy in another coat — the
    flash lights had three, 0.00197). What stays in `src/`: the look —
-   animation durations, shader constants, synth instrument definitions.
+   animation durations, shader constants, synth instrument definitions —
+   and a measurement's DEFINITION (0.00222: `perfMonitor.js` BIN_MS,
+   MODE_BINS, STALL_MS, `shared/refreshRates.js` RATES): a stored record
+   compares with another only under one definition, so those change with
+   a build, never with a knob. The judgments on top (how near a rate the
+   average must sit) are data: `telemetry.json perf`.
+   **A phone's own numbers (0.00222):** a data block may carry a `phone`
+   sub-block with the knobs that differ on a phone (`parallax.phone`,
+   `cards.json fx.phone` / `particles.phone`); `shared/platform.js
+   deviceBlock()` merges it on a phone (the device, `isPhone()` — a tablet
+   keeps the desktop values, `?desktop` too) and every phone key is listed
+   in `dataCheck.js` like any other.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
@@ -278,10 +289,33 @@ border, and the canvas is transparent outside it (0.185: an opaque black
 there showed as a rim outside the border, where the frame art is
 transparent and the unit's isolated 3D group has nothing behind to
 screen with). The
-glint: `battleLine.js glint` is a second, bright copy of each portrait
-masked to a band (`--band` on the unit; `.portrait.glint`) that
-`fxParts.js glintSweep` sweeps across the figure on a hit and the
-entrance. The benchmark draws all of it from 0.183 on (its numbers moved
+glint: a second, bright copy of each portrait inside a band three cards
+wide, masked to a soft stripe (`--band` on the unit; `.glint-band`)
+that `fxParts.js glintSweep` slides across the figure on a hit and the
+entrance — the band and the copy inside move opposite ways by
+transforms, so the figure stays put under a travelling stripe (0.00222:
+the mask's position used to animate, a repaint of a full portrait copy
+every frame per sweep); mounted for the sweep only (`battleLine.js
+mountGlint` / `unmountGlint`, the unit's `glint` getter — six invisible
+copies used to run their idle loops and blend-plus-filter surfaces all
+fight long). The card light's hidden canvas is sized to the largest lit
+card (`cardFx.js fitShared`; it was 512x512 and every card's picture a
+snapshot of all of it), an unmeasured card waits for the observer's
+first report, the shader compiles behind the title (`warmCardFx`), and a
+phone draws the light at `fx.phone.fps` (20). The particle bursts'
+budget, cap, floor and DPR cap are `cards.json particles` (a phone: 150
+and 1x), and the particle canvas is opacity 0 between bursts (a
+full-screen layer composited every frame otherwise). OVERKILL's sprays
+take the rects `overkill()` read once (six forced layouts per blow
+before), a dying card's collapse reads the unit's cached filter. The
+combat log is a REVERSED flex column with the newest line first
+(`hud.js logLine`, `#combat-log`): the browser keeps it scrolled with no
+script — a scroll-position write per line forced a layout of the whole
+room mid-hit. Glow loops never animate `box-shadow` (the `.active`
+pattern: a layer whose opacity breathes — the low-HP bar, the summon
+bar, the record tag); a phone shows the figures without the
+drop-shadow filter (an iOS re-render per frame on a looping layer) and
+the rarity / low-HP text without its breathing (`styles.css` section 16). The benchmark draws all of it from 0.183 on (its numbers moved
 with it). **Particles** (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
@@ -301,7 +335,33 @@ a copy for experiments: keep it in step when a look changes.
 `backgrounds.json parallax`, per-file `overrides`, `enabled: false` = kill
 switch): the art on a depth-displaced mesh with a slowly swaying camera;
 flat CSS fallback with no WebGL, software GL, context loss or reduced
-motion. Frame rate: at most `maxPixels` (2.1M) and `maxDpr` (2 — a DPR-3
+motion. **The phone power profile (0.00222, the owner's iPhone ran hot):**
+`parallax.phone` = the knobs that differ on a phone — `maxDpr` 1.5 (1278
+px wide on an 852-px phone, 44% fewer fragments than DPR 2), `maxFps` 24
+at rest, `motionMaxFps` 30, `puffDiv` 3 (the mist buffer at a third of
+the canvas; `puffDiv` 2 on the desktop — a constant in the renderer
+before) — merged by `bg3dTuning.js tuning()` under the per-file
+overrides on a phone (`platform.js deviceBlock`, the device, once per
+session; `?desktop` keeps the desktop values, so the owner can A/B on one
+phone). The same build: the painting and its depth map arrive decoded
+off the main thread (`bg3dGL.js loadPicture`: fetch + createImageBitmap,
+closed after the upload; an `<img>` handed to texImage2D re-decoded the
+2048x1152 JPEG on the main thread, in one task with the 9 MB upload, the
+depth read and the 37k-vertex fill — the quarter-second worst frame every
+fast machine showed once per run), and the fill and the puffs wait for
+the next frame (`loadLayer`); a flash light alone no longer lifts the
+cap to `motionMaxFps` (its slow fade reads the same at the rest rate; it
+held 60 fps for up to 2.8 s after every crit and potion); the VIGNETTE is
+the shaders' under the live canvas (`bg3dGL.js VIGNETTE_GLSL`, both the
+mesh and the mist composite multiply the CSS ellipse's falloff; the CSS
+`#vignette` hides under `#bg-stack.gl` and keeps the flat fallback —
+pixel-identical on the hub, measured; it was a full-screen layer composited
+over the canvas every frame, 3 MP a frame on a phone). **BATTERY SAVER**
+(the corner column, 0.00222, remembered per browser): the ladder's last
+3D rung as the player's own choice — the smallest canvas, no mist, the
+card light at `fx.saverFps`; OFF returns to where the ladder had got;
+never automatic. Records and benchmarks carry `power`: 'saver' / 'phone'
+/ 'full' (the dashboard's Background column). Frame rate: at most `maxPixels` (2.1M) and `maxDpr` (2 — a DPR-3
 phone drew 1080p's pixels at 60 fps and never stepped down, 0.00209),
 redrawn at `maxFps` (30)
 when nothing moves, and all session a device under `minFps` (22) steps
@@ -309,7 +369,10 @@ down — resolution x0.8, x0.64, no fog, flat (`core/bg3dQuality.js`;
 `parallax.quality` = the window, the pause gap and how many slow
 windows step down; a window is slow only against the rate the `maxFps`
 throttle can reach on this screen, so a 40 Hz display is not punished —
-0.00197). While a jolt, sway, flash or push plays the cap is
+0.00197; **0.00222: `quality.reachShare` (0.9) applies only ABOVE
+`maxFps`, where the throttle acts — it used to apply to a struggling
+device's own rate too, 15 rAF/s judged against 13.5, so nobody ever
+stepped down; `bg3dQuality.js slowAt`, tested). While a jolt, sway, flash or push plays the cap is
 `motionMaxFps` (60), not the display's rate (0.00197; it was uncapped
 then, 144 fps through most of a fight). The flat CSS layers are hidden
 while the canvas draws (`#bg-stack.gl`, set from the first frame to
@@ -533,7 +596,10 @@ may hear the old one for ~4 hours.
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep
-  loading behind — a room whose painting isn't in yet keeps the last one up.
+  loading behind — a room whose painting isn't in yet keeps the last one up
+  (0.00222: into the HTTP cache only, `fetchOnly` — the renderer decodes a
+  painting itself as the room is entered; decoding 34 of them here warmed
+  nothing it could reuse).
 - **Only fights are numbered (0.171, the owner's call):** `run.roomNumber`
   counts fights (the boss's included), so room 8 is always the throne room.
   The shrine and the treasure room are interludes met on the way to a
@@ -570,6 +636,9 @@ may hear the old one for ~4 hours.
   glyph in `icon` is its alt text), on the cards and in the buff bar;
   preloaded with the Descend essentials. New boon = new picture, the
   suite checks every one is on disk.
+- **BATTERY SAVER** and the other corner toggles are `onOffToggle`s in
+  `main.js cornerBar` (0.00222: the saver remembers its state in
+  `shared/prefs.js`, key `castle-power-saver`).
 - The boss's card is twice as wide (0.196, the owner's call): `.boss-card`
   aspect 826 / 1106, its frame a 9-slice of `card_enemy.png` (border-image,
   so corners and border keep their shape); `battleRoom.js BOSS_SLOTS`
@@ -607,14 +676,30 @@ may hear the old one for ~4 hours.
 **Play stats and performance.** Every finished run appends a record to
 `profile.history` (`meta/history.js`, newest 250), including its frame-rate
 summary (`core/perfMonitor.js`: fps, slowest 5% frame ms, refresh rate,
-dropped frames, worst frame, background mode — recorded from dungeon entry
-to the run's end). `meta/telemetry.js` POSTs the save's stats (anonymous
+dropped frames, worst frame and whether it fell in a room change
+(`worstOut`), stalls of 100 ms or more, background mode and the power
+mode — recorded from dungeon entry to the run's end). **The refresh rate
+(0.00222):** the busiest frame interval snapped to a standard rate
+(`shared/refreshRates.js`), a faster rate when `perf.paceShare` of the
+frames sit on its pace, and the average corrects it when it beats the
+display (`perf.nearShare`; `telemetry.json perf` holds the judgments,
+the definition stays in src — rule 2). The fastest 10% of frames used to
+decide, and jittered timestamps put them a refresh short: the owner's
+120 Hz Macs read 144 Hz (119.8 fps graded amber), the 60 Hz iPhones 90
+and 75 with 56-61% "dropped" at 59 fps. Records before `perf.hzSince`
+carry the old reading: the dashboard grades such a row by its fps (full
+rate when it sits at a standard rate) and hides its dropped share; a
+player's medians use the trusted runs once there is one. The Performance
+card shows Stalls, the median run's worst frame and the worst run's with
+its moment (a room change or in play). `meta/telemetry.js` POSTs the save's stats (anonymous
 `playerId`, the typed `profile.name`, plus the device: GPU, browser, OS,
 cores — never stored in the save) after every run and once per session to
 the collector (endpoint in `telemetry.json`; off when empty, never from
 localhost). The collector (`collector/worker.js`, Cloudflare KV) keeps only
 the dashboard's fields, typed and capped, merges history by timestamp and
-rate-limits; reads need the Bearer `READ_KEY`. The dashboard shows the
+rate-limits; reads need the Bearer `READ_KEY`. Collector 0.00222 keeps
+`stalls`, `worstOut` and `power` — the owner pastes the Worker; until
+then the old one drops the three fields (the saves keep them). The dashboard shows the
 collected players, this browser's save and pasted save codes (untrusted:
 `sanitizeProfile()`), deduped by playerId; the owner can give each player a
 **tester name** (kept in that browser, shown as "tester · player name"). **BENCHMARK**
@@ -630,8 +715,13 @@ another dialog is up and never interrupts a descent). **A round** is
 `benchmarkSince` (0.00219): a result from an older build does not count,
 so raising it to the build being shipped asks everyone again — do that
 when the script (`PHASES`) or what it draws changes (the card effects in
-0.183, the fallen cards leaving in 0.00216): the numbers mean something
-else then; say so in the changelist. **Phones (0.00219):** the scene
+0.183, the fallen cards leaving in 0.00216, the phone profile and the
+phases at rest in 0.00222): the numbers mean something else then; say so
+in the changelist. **Each phase's clock starts at rest (0.00222):** the
+painting faded in, the windows back, the push settled, the deal played
+(`benchmarkScene.js nextPhase`; "settling…" in the title meanwhile) —
+Idle used to record the room change itself, the renderer's heaviest
+moment on a phone; `benchmarkSeconds()` adds the settles (about 50 s). **Phones (0.00219):** the scene
 holds a screen wake lock for the hands-off 40 s (where the browser has
 the API), and a benchmark that went to the background partway (the
 lock, a call, the home button — no frames are drawn there) is not saved:

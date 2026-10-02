@@ -48,6 +48,7 @@
     "src/shared/portraits.js",
     "src/shared/prefs.js",
     "src/shared/preload.js",
+    "src/shared/refreshRates.js",
     "src/shared/version.js",
     "src/ui/battleLine.js",
     "src/ui/battleRoom.js",

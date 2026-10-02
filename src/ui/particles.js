@@ -9,10 +9,14 @@
 import { isBg3dActive, bgQualityLevel } from '../core/bg3d.js';
 import { spawnParticles, R, rr } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
+import { DATA } from '../shared/data.js';
+import { deviceBlock } from '../shared/platform.js';
 
 export { MATERIAL, materialOf, STYLE_OF, spawnParticles } from './particleLooks.js';
 
-const MAX = 450, BUDGET = 300;
+// cards.json particles (0.00222: budget, max, keepFloor and the DPR cap were numbers here; a phone has its own block)
+let P = null;
+const knobs = () => (P ??= deviceBlock(DATA.cards.particles));
 const THINNABLE = new Set(['streak', 'blob', 'dot']);
 let canvas = null, ctx2d = null, parts = [], running = false, last = 0, scale = 1;
 let box = null; // last frame's painted area, device px: [x0, y0, x1, y1]
@@ -38,6 +42,7 @@ export function attachParticles(layer) {
   canvas = shared;
   ctx2d.setTransform(1, 0, 0, 1, 0, 0);
   ctx2d.clearRect(0, 0, canvas.width, canvas.height); // the last room's splats
+  canvas.style.opacity = '0'; // nothing lives yet (0.00222)
   layer.prepend(canvas);
 }
 
@@ -51,13 +56,14 @@ export function burst(material, x, y, opts = {}) {
   // live particles a new burst keeps its rings, flashes and slashes but
   // only some of its streaks, blobs and sparks (0.129).
   const list = spawnParticles(material, x, y, opts);
-  const keep = Math.min(1, Math.max(0.35, (BUDGET - parts.length) / list.length));
+  const { budget, max, keepFloor } = knobs();
+  const keep = Math.min(1, Math.max(keepFloor, (budget - parts.length) / list.length));
   for (const p of list) {
-    if (parts.length >= MAX) break;
+    if (parts.length >= max) break;
     if (keep < 1 && THINNABLE.has(p.kind) && R() > keep) continue;
     parts.push(p);
   }
-  if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
+  if (!running) { running = true; last = performance.now(); canvas.style.opacity = ''; requestAnimationFrame(tick); } // (0.00222: shown again — see tick)
 }
 
 // ---- drawing (0.129: batched) ----
@@ -219,15 +225,16 @@ function tick(now) {
   parts.length = n;
   render(ctx2d);
   if (parts.length) requestAnimationFrame(tick);
-  else running = false; // render() already cleared the last painted area
+  else { running = false; canvas.style.opacity = '0'; } // render() already cleared the last painted area; 0.00222: an opacity-0 layer is skipped by the compositor between bursts (the backing store stays, so the first hit's hitch of 0.129 does not return)
 }
 
-// Backing store at up to 1.25x device pixels (0.129, was 1.5: particles are
-// fast and soft — 1.5 cost ~20% more raster for no visible gain; more is
-// waste), and 1x once the 3D background has had to step down its quality
-// (0.129: the device is struggling). true = the canvas was resized.
+// Backing store at up to particles.dprCap device pixels per CSS px (0.129:
+// 1.25, was 1.5 — particles are fast and soft, 1.5 cost ~20% more raster
+// for no visible gain; a phone's own cap is 1, 0.00222), and 1x once the
+// 3D background has had to step down its quality (0.129: the device is
+// struggling). true = the canvas was resized.
 function fit() {
-  scale = Math.min(globalThis.devicePixelRatio || 1, bgQualityLevel() > 0 ? 1 : 1.25);
+  scale = Math.min(globalThis.devicePixelRatio || 1, bgQualityLevel() > 0 ? 1 : knobs().dprCap);
   // the canvas fills the viewport (.fx-layer is fixed, inset 0): the window
   // size, not clientWidth — reading layout every frame forced a reflow
   // after each DOM change (0.135)

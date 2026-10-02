@@ -7,7 +7,10 @@
 import { onBackgroundChange, onTransition, go, currentScene } from './core/scene.js';
 import { el } from './core/dom.js';
 import { initHotkeys } from './core/hotkeys.js';
-import { initBg3d, showBackground3d, bgPush } from './core/bg3d.js';
+import { warmCardFx } from './ui/cardFx.js';
+import { initBg3d, showBackground3d, bgPush, setPowerSaver, powerSaver } from './core/bg3d.js';
+import { setCardFxSaver } from './ui/cardFx.js';
+import { getPref, setPref } from './shared/prefs.js';
 import { volumeToggle } from './ui/volumePanel.js';
 import { changelogToggle } from './ui/changelog.js';
 import { cornerBar, onOffToggle } from './ui/cornerToggles.js';
@@ -25,6 +28,8 @@ import { isPhone, PHONE_MQ, fullscreenOn, enterFullscreen, exitFullscreen } from
 import { phoneGate, regateOnExit } from './ui/phoneGate.js';
 import { ensureCtx } from './audio/audioCore.js';
 import { armOnGesture } from './audio/narrator.js';
+
+const SAVER_KEY = 'castle-power-saver'; // BATTERY SAVER (0.00222), this browser's choice
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -72,6 +77,7 @@ async function boot() {
     !isPhone() && fullscreenToggle(), // (a phone: the gate is the way to the full screen; iPhone has none, and on Android OFF would only bring the gate back)
     onOffToggle('SOUND', { cls: 'sfx-toggle', get: () => !sfxMuted(), flip: () => !toggleSfx() }),
     onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.161)
+    onOffToggle('BATTERY SAVER', { cls: 'saver-toggle', get: powerSaver, flip: () => { const on = !powerSaver(); setPowerSaver(on); setCardFxSaver(on); setPref(SAVER_KEY, on ? '1' : '0'); return on; } }), // (0.00222: the smallest canvas, no mist, the card light at saverFps — the player's choice, never automatic)
     volumeToggle(),
     changelogToggle(),
     ...(debugMode ? debugToggles() : []),
@@ -79,7 +85,8 @@ async function boot() {
   // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
   // under ?debug (headless testing); real players on a GPU-less machine,
   // or with reduced motion requested, keep the flat CSS backgrounds.
-  if (initBg3d({ allowSoftware: debugMode })) onBackgroundChange(showBackground3d);
+  if (initBg3d({ allowSoftware: debugMode })) { onBackgroundChange(showBackground3d); warmCardFx(); } // (0.00222: the card light's shader compiles behind the title, not in the first fight's transition)
+  if (getPref(SAVER_KEY) === '1') { setPowerSaver(true); setCardFxSaver(true); } // remembered from the last visit (0.00222)
   // Every transition (0.171/0.173): the swoosh, timed to land mid-way, and the camera's push through the picture.
   onTransition(() => { transitionSfx(); bgPush(); });
   // Every button in the game clicks (delegated, so dynamically rendered

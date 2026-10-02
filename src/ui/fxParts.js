@@ -4,6 +4,7 @@
 // the Web Animations API (the smoke-test shim) or with reduced motion.
 
 import { DATA } from '../shared/data.js';
+import { unmountGlint } from './battleLine.js';
 import { reducedMotion } from '../shared/motion.js';
 import { burst, materialOf } from './particles.js';
 
@@ -14,24 +15,39 @@ export const can = (node) => !!node?.animate;
 // a forced style resolution, and it happened on every blow (0.157).
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
 
-// The glint (0.183): the unit's bright masked copy of its portrait
-// (battleLine.js glint) sweeps its band across the figure over `ms`, in
-// `dir` (1 = left to right), peaking at cards.json glint.strength.
+// The glint (0.183): the unit's bright masked copy of its portrait sweeps
+// across the figure over `ms`, in `dir`, peaking at cards.json
+// glint.strength. 0.00222: the band (battleLine.js mountGlint, mounted
+// for this sweep) carries the mask and slides across the card by a
+// transform while the copy inside slides the other way, so the figure
+// stays put under a travelling stripe — two compositor animations with
+// the same timing (the mask's position used to animate: a style recalc
+// and a repaint of a full portrait copy every frame per sweep, six at
+// once on OVERKILL and every deal). The width is read once; a blow's
+// spray has read this layout already.
 export function glintSweep(u, ms, dir = 1, delay = 0) {
-  const g = u?.glint;
-  if (!can(g) || reduced()) return;
-  const from = dir > 0 ? '-100%' : '200%', to = dir > 0 ? '200%' : '-100%';
-  g.animate([
-    { opacity: 0, maskPosition: `${from} 0`, WebkitMaskPosition: `${from} 0` },
-    { opacity: DATA.cards.glint.strength, offset: 0.4, maskPosition: '50% 0', WebkitMaskPosition: '50% 0' },
-    { opacity: 0, maskPosition: `${to} 0`, WebkitMaskPosition: `${to} 0` },
-  ], { duration: ms, delay, easing: 'ease-out' });
+  if (!can(u?.portrait) || reduced()) return;
+  const band = u.glint, img = band.children[0];
+  if (!can(band) || !can(img)) return;
+  const w = u.card?.clientWidth || 0;
+  const from = (dir > 0 ? 1.6 : -1.6) * w, to = -from;
+  band.live = (band.live ?? 0) + 1;
+  const timing = { duration: ms, delay, easing: 'ease-out' };
+  const a = band.animate([
+    { opacity: 0, translate: `${from}px 0` },
+    { opacity: DATA.cards.glint.strength, offset: 0.4, translate: '0 0' },
+    { opacity: 0, translate: `${to}px 0` },
+  ], timing);
+  img.animate([{ translate: `${-from}px 0` }, { translate: '0 0', offset: 0.4 }, { translate: `${-to}px 0` }], { ...timing, composite: 'add' });
+  const done = () => { if (--band.live <= 0) unmountGlint(u); };
+  a.finished.then(done, done);
 }
 
 // Particles out of a struck (or dying) unit, by what it's made of.
-export function spray(u, dir, power = 1, big = false) {
+// rect (0.00222): the card's rect when the caller has read it already (OVERKILL reads every victim's at once)
+export function spray(u, dir, power = 1, big = false, rect = null) {
   if (!u?.card?.getBoundingClientRect) return;
-  const r = u.card.getBoundingClientRect();
+  const r = rect ?? u.card.getBoundingClientRect();
   // a random point on the figure each burst (0.090) — not always dead centre
   // 0.128: one burst sized by the blow (hit / crit-or-heavy / kill — the
   // looks have their own crit and kill forms); ink drops land on the

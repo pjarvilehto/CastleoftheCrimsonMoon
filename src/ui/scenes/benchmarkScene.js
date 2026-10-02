@@ -30,7 +30,8 @@ import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { combatSfx } from '../combatSfx.js';
 import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
-import { holdQuality, isBg3dActive, bgQualityLevel } from '../../core/bg3d.js';
+import { holdQuality, isBg3dActive, bgQualityLevel, powerMode, whenPushSettled } from '../../core/bg3d.js';
+import { isPhone } from '../../shared/platform.js';
 import { recordBenchmark } from '../../meta/profile.js';
 import { showBenchmarkResult, PHASES } from '../benchmark.js';
 import { closeAllDialogs } from '../dialog.js';
@@ -86,17 +87,27 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     },
   };
 
-  function nextPhase() {
+  // 0.00222: a phase's clock starts once the room is at rest — the painting
+  // faded in, the windows back, the push settled, the deal played out
+  // (every wait a duration the data already holds). Idle used to record
+  // the room change itself, the renderer's heaviest moment on a phone.
+  async function nextPhase() {
     if (rec) results[PHASES[phase].id] = summarizeFrames(rec);
     phase += 1;
     if (phase >= PHASES.length) return finish();
     const ph = PHASES[phase];
-    setBackground(ph.bg);
+    rec = null;
+    const faded = setBackground(ph.bg);
     newRoom();
+    if (ui?.title) ui.title.textContent = `Benchmark — ${ph.label} · settling…`;
+    await Promise.all([faded, whenWindowsBack(), whenPushSettled()]);
+    const M = DATA.cards.motion;
+    await new Promise((resolve) => setTimeout(resolve, M.enterDelayMs + M.enterMs + ph.enemies.length * M.enterStaggerMs));
+    if (done || PHASES[phase] !== ph) return;
     rec = newRecording(); last = 0;
     endsAt = performance.now() + ph.secs * 1000;
     clearTimeout(botTimer);
-    if (ph.act) botTimer = setTimeout(bot, 600); // let the room's entrance play
+    if (ph.act) botTimer = setTimeout(bot, 0);
     else setTimeout(() => { if (PHASES[phase] === ph) nextPhase(); }, ph.secs * 1000);
   }
 
@@ -170,7 +181,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     if (interrupted || document.hidden) return showBenchmarkResult({ interrupted: true }, () => go(returnTo), returnTo === 'hub'); // not saved: it asks again
     const result = {
       at: Date.now(), build: DATA.build?.version ?? '?',
-      bg: isBg3dActive() ? '3d' : 'flat', q: isBg3dActive() ? bgQualityLevel() : -1,
+      bg: isBg3dActive() ? '3d' : 'flat', q: isBg3dActive() ? bgQualityLevel() : -1, power: powerMode(isPhone()),
       dpr: Math.round((globalThis.devicePixelRatio || 1) * 100) / 100,
       vw: Math.round(globalThis.innerWidth || 0), vh: Math.round(globalThis.innerHeight || 0),
       phases: results,

@@ -33,15 +33,33 @@ function portrait(id, alt, family) {
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }
-// The glint (0.183): a second copy of the portrait, bright and masked to a
-// band (styles.css .portrait.glint) that fxParts.js glintSweep sweeps across
-// the figure as the card turns. It runs the same idle loop at the same
-// phase, so it sits on the figure.
-function glint(id, family, img) {
+// The glint (0.183): a second copy of the portrait, bright, inside a band
+// (styles.css .glint-band: three cards wide, masked to a soft stripe) that
+// fxParts.js glintSweep slides across the figure as the card turns. The
+// copy runs the same idle loop at the same phase, so it sits on the
+// figure. 0.00222: mounted for the sweep's length only, through the unit's
+// `glint` getter (mountGlint) — six invisible copies used to run their
+// idle loops and blend-plus-filter surfaces all fight long.
+function glintBand(id, family, img) {
   const g = el('img', { class: `portrait glint idle-${family}`, src: ART(id), alt: '', draggable: 'false', 'aria-hidden': 'true' });
   g.style.animationDelay = img.style.animationDelay;
-  return g;
+  return el('div', { class: 'glint-band', 'aria-hidden': 'true' }, g);
 }
+// The unit's band, mounted right after its portrait; unmountGlint takes it
+// away again (the sweep's end, fxParts.js).
+export function mountGlint(u) {
+  if (u.glintEl) return u.glintEl;
+  const band = glintBand(u.id, u.family, u.portrait);
+  const kids = u.card.children;
+  u.card.insertBefore(band, kids[Array.prototype.indexOf.call(kids, u.portrait) + 1] ?? null);
+  u.glintEl = band;
+  return band;
+}
+export function unmountGlint(u) {
+  u.glintEl?.remove();
+  u.glintEl = null;
+}
+const withGlint = (u) => Object.defineProperty(u, 'glint', { get() { return mountGlint(this); }, enumerable: false });
 // --band: the glint's half-width (cards.json), on the unit for its two portraits.
 const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 // The card's frame art (0.195: a layer instead of a ::before, so the shader
@@ -52,9 +70,10 @@ const frame = () => el('div', { class: 'card-frame' });
 // Death collapse (0.087): sink, flash red, fade — then the card turns
 // and away. Without the Web Animations API (tests) it's instant.
 const COLLAPSE_MS = 700;
-function collapse(img, done) {
+// u: the unit, whose baseFilter fxParts.js caches on the first hit (0.00222: a getComputedStyle here mid-turn was a forced style resolution per death)
+function collapse(img, done, u = null) {
   if (!img.animate || reducedMotion()) { done(); return; }
-  const base = getComputedStyle(img).filter;
+  const base = u ? (u.baseFilter ??= getComputedStyle(img).filter) : getComputedStyle(img).filter;
   const red = `${base === 'none' ? '' : base} sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)`;
   img.animate([
     { translate: '0 0', opacity: 1, filter: base },
@@ -109,7 +128,6 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const chip = el('div', { class: 'hud-chip' }, hp.line);
   const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
   const img = portrait('player', 'player', 'player');
-  const shine = glint('player', 'player', img);
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
@@ -135,7 +153,6 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
         : el('span', { class: 'no-item' }, 'NO ARMOR'),
       armorVal),
     img,
-    shine,
     chip,
     potions);
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
@@ -161,7 +178,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(potionBtn, 'active-red', remind);
     setClass(potionBtn, 'potion-remind', remind);
   };
-  return { el: unit, card, portrait: img, glint: shine, id: 'player', update };
+  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update });
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })
@@ -169,8 +186,8 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
 export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
-  const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
-  const shine = glint(e.id, IDLE_FAMILY[e.id] ?? 'prowl', img);
+  const family = IDLE_FAMILY[e.id] ?? 'prowl';
+  const img = portrait(e.id, e.name, family);
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
@@ -193,7 +210,6 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
-    shine,
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
@@ -212,14 +228,15 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     if (s.dead && !down) {
       down = true;
       setClass(card, 'dying', true);
-      collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); });
+      collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);
     setClass(card, 'targetable', canHit);
   };
-  return { el: unit, card, portrait: img, glint: shine, id: e.id, summoned: !!e.summoned, update };
+  const self = withGlint({ el: unit, card, portrait: img, id: e.id, family, glintEl: null, summoned: !!e.summoned, update });
+  return self;
 }
 
 // One-shot builder (tests): an enemy unit in a given state.

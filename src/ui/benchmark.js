@@ -37,9 +37,13 @@ export const PHASES = [
   { id: 'overkill', label: 'Overkill', secs: 10, bg: 'castle_courtyard.jpg', enemies: [...LINE, 'gargoyle'], act: 'smash' },
 ];
 
-// About how long a benchmark takes: its phases plus the room entrances,
+// About how long a benchmark takes: its phases plus each room's settle
+// (the painting's fade, the deal; 0.00222: a phase's clock starts at rest),
 // rounded up to 5 s.
-export const benchmarkSeconds = () => Math.ceil((PHASES.reduce((s, p) => s + p.secs, 0) + 4) / 5) * 5;
+export const benchmarkSeconds = () => {
+  const M = DATA.cards.motion, settle = PHASES.reduce((s, p) => s + DATA.backgrounds.parallax.fadeMs + M.enterDelayMs + M.enterMs + p.enemies.length * M.enterStaggerMs, 0) / 1000;
+  return Math.ceil((PHASES.reduce((s, p) => s + p.secs, 0) + settle) / 5) * 5;
+};
 
 // Due: the ask is on (telemetry.json benchmarkPrompt), no result from this
 // round yet (a build at or after benchmarkSince), far enough in, and stats

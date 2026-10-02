@@ -96,7 +96,8 @@ function overkill(fx, ctx) {
   bgLight('overkill', area);
   floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
   // every enemy the blow wiped bursts as a kill and takes the kick, rippling down the line (0.128, 0.183)
-  (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
+  // (0.00222: each spray takes the rect read above — a getBoundingClientRect in its own later task was a forced layout per victim)
+  (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[i]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
 }
 
 function attack(fx, ctx) {

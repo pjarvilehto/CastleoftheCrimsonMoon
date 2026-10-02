@@ -165,7 +165,6 @@ export function dungeonScene() {
       logEl,
       proceed);
     logEl.className = 'docked';
-    logEl.scrollTop = logEl.scrollHeight;
     battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);

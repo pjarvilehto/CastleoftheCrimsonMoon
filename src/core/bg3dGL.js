@@ -16,6 +16,23 @@ vec3 lightAt(vec3 p) {
   return l;
 }`;
 
+// The vignette (0.00222): the darkening toward the edges that styles.css
+// #vignette draws over the flat backgrounds — a full-screen composited
+// layer blended over the canvas on every frame (3 MP a frame on a phone).
+// Under the live canvas the shaders multiply the same falloff in instead
+// (the CSS layer is hidden there, styles.css #bg-stack.gl ~ #vignette):
+// the CSS ellipse at the centre reaching the farthest corner (radii W/sqrt2,
+// H/sqrt2), its stops 0 at 30%, 0.55 at 75%, 0.9 at 100% of black. The
+// look, not tuning (rule 2) — change both together.
+export const VIGNETTE_GLSL = `
+uniform vec2 uRes;
+float vignette() {
+  vec2 n = gl_FragCoord.xy / uRes - 0.5;
+  float d = length(n) * 1.41421356;
+  float a = d < 0.3 ? 0.0 : d < 0.75 ? (d - 0.3) / 0.45 * 0.55 : 0.55 + (min(d, 1.0) - 0.75) / 0.25 * 0.35;
+  return 1.0 - a;
+}`;
+
 // The haze (0.099) and the flash lights vary slowly across the scene, so
 // since 0.101 the ~37k vertices carry them instead of every pixel: the
 // pixel shader is one texture read and a blend (fill rate is what weak
@@ -47,11 +64,12 @@ export const FS = `
 precision mediump float;
 uniform sampler2D uTex; uniform float uAlpha, uShowDepth; uniform vec3 uFogColor;
 varying vec2 vUv; varying float vDepth, vHaze; varying vec3 vLit;
+${VIGNETTE_GLSL}
 void main() {
   vec3 c = uShowDepth > 0.5 ? vec3(vDepth) : texture2D(uTex, clamp(vUv, 0.0, 1.0)).rgb;
   c += c * vLit * 2.2 + vLit * 0.05;           // the art brightens where lit (keeps its texture) + a faint glow
   c = mix(c, uFogColor + vLit * 0.7, vHaze);   // lit mist glows
-  gl_FragColor = vec4(c, uAlpha);
+  gl_FragColor = vec4(c * vignette(), uAlpha);
 }`;
 
 // The art at 64x36 for the fog colour (bg3dFog.js fogColor).
@@ -93,11 +111,24 @@ export function loadImage(url) {
   });
 }
 
+// A picture decoded off the main thread (0.00222): fetch + createImageBitmap
+// — texImage2D then copies pixels instead of re-decoding the JPEG on the
+// main thread (an <img> handed to it decodes there, ~100 ms for a 2048x1152
+// painting, in the room change's own task). The bitmap must be close()d
+// once uploaded. Falls back to the <img> path where the browser has no
+// createImageBitmap, or when the fetch fails (an opaque cache miss).
+export function loadPicture(url) {
+  if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return loadImage(url);
+  return fetch(url).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`image ${url}`))))
+    .then((blob) => createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+    .catch(() => loadImage(url));
+}
+
 // Read a grayscale depth map back to the CPU (depth goes in per vertex):
 // { w, h, data: Uint8Array } — 0 = far .. 255 = near.
-export function readDepth(img) {
+export function readDepth(img) { // (an <img> or an ImageBitmap, 0.00222)
   const c = document.createElement('canvas');
-  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.width = img.naturalWidth ?? img.width; c.height = img.naturalHeight ?? img.height;
   const cx = c.getContext('2d', { willReadFrequently: true });
   cx.drawImage(img, 0, 0);
   const px = cx.getImageData(0, 0, c.width, c.height).data;

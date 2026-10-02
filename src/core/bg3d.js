@@ -13,13 +13,13 @@
 // Tuning: backgrounds.json `parallax` (+ per-file `overrides`).
 
 import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
-import { VS, FS, program, buffer, loadImage, readDepth, makeTexture, smallPixels } from './bg3dGL.js';
+import { VS, FS, program, buffer, loadPicture, readDepth, makeTexture, smallPixels } from './bg3dGL.js';
 import { fogColor } from './bg3dFog.js';
 import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
 import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
-import { LADDER, backingSize, fpsWindow } from './bg3dQuality.js';
+import { LADDER, backingSize, fpsWindow, slowAt } from './bg3dQuality.js';
 import { reducedMotion } from '../shared/motion.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
@@ -137,7 +137,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth',
-    'uFog', 'uFogColor', 'uHaze', 'uHazeMax', 'uLightPos', 'uLightCol', 'uLightR2']) loc[n] = gl.getUniformLocation(prog, n);
+    'uFog', 'uFogColor', 'uHaze', 'uHazeMax', 'uLightPos', 'uLightCol', 'uLightR2', 'uRes']) loc[n] = gl.getUniformLocation(prog, n);
   puffR = createPuffRenderer(gl); // null: the haze alone
   gl.useProgram(prog);
   gridBuf = gl.createBuffer();
@@ -171,8 +171,15 @@ async function show3d(file) {
   if (layer.born !== -Infinity) await new Promise((resolve) => setTimeout(resolve, cfg.fadeMs));
 }
 
+// 0.00222: the painting and its depth map arrive decoded (bg3dGL.js
+// loadPicture: createImageBitmap off the main thread where the browser
+// has it — an <img> handed to texImage2D re-decoded the 2048x1152 JPEG on
+// the main thread, in the same task as the 9 MB upload, the depth read,
+// the fog colour and the 37k-vertex fill: a quarter-second stall while the
+// push dolly played), and that task is split in two: the uploads first,
+// the vertex fill and the puffs on the next frame.
 async function loadLayer(file) {
-  const [img, dimg] = await Promise.all([loadImage(`assets/bg/${file}`), loadImage(depthUrl(file)).catch(() => null)]);
+  const [img, dimg] = await Promise.all([loadPicture(`assets/bg/${file}`), loadPicture(depthUrl(file)).catch(() => null)]);
   if (!gl) return null;
   const depth = dimg ? readDepth(dimg) : null;
   const tune = tuning(file);
@@ -180,8 +187,12 @@ async function loadLayer(file) {
   const small = smallPixels(img);
   const mist = tune.fogColor ?? fogColor(small.data, small.w, small.h, (u, v) => (depth ? sampleDepth(depth, u, v) : tune.pivot)); // (no map: the pivot depth, as fillDepth)
   const tex = makeTexture(gl, img);
-  const layer = { file, tex, depth, mist, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune,
-    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: makePuffs(seedOf(file), tune.puffs) };
+  const layer = { file, tex, depth, mist, img: { w: img.naturalWidth ?? img.width, h: img.naturalHeight ?? img.height }, depthBuf: gl.createBuffer(), tune,
+    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: null };
+  img.close?.(); dimg?.close?.(); // the bitmaps' pixels are on the GPU now
+  await new Promise((resolve) => requestAnimationFrame(resolve)); // the rest in a task of its own
+  if (!gl) { dropLayer(layer); return null; }
+  layer.puffs = makePuffs(seedOf(file), tune.puffs);
   fillDepth(layer);
   return layer;
 }
@@ -214,30 +225,31 @@ let rafT0 = 0, rafN = 0, rafRate = 0;
 function slowBelow(now) {
   rafN++;
   if (now - rafT0 >= 1000) { if (rafT0) rafRate = (rafN * 1000) / (now - rafT0); rafT0 = now; rafN = 0; }
-  if (!rafRate) return cfg.minFps;
-  const reachable = rafRate / Math.ceil(rafRate / cfg.maxFps);
-  return Math.min(cfg.minFps, reachable * 0.9);
+  return slowAt(rafRate, cfg); // (core/bg3dQuality.js, 0.00222: a struggling device is judged against minFps, not 0.9 of its own rate)
 }
 
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
-  const slowAt = slowBelow(now); // (counts this rAF call, drawn or not)
+  const slowRate = slowBelow(now); // (counts this rAF call, drawn or not)
   // (filtered only while something plays: the quiet frame makes no garbage)
   if (jolts.length) jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
   if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
   if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
-  // maxFps when nothing moves; motionMaxFps while a jolt / sway / flash /
-  // push plays (at 30 fps those stutter; uncapped, 0.00197, they ran the
-  // whole scene at the display's rate through most of a fight)
-  const cap = push || jolts.length || sways.length || flashes.length ? cfg.motionMaxFps : cfg.maxFps;
+  // maxFps when nothing moves; motionMaxFps while a jolt / sway / push
+  // plays (at 30 fps those stutter; uncapped, 0.00197, they ran the whole
+  // scene at the display's rate through most of a fight). A flash light
+  // alone does not lift the cap (0.00222): its slow exponential fade reads
+  // the same at the rest rate, and it used to hold 60 fps for up to 2.8 s
+  // after every crit and potion.
+  const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps;
   if (!layers.length || now - lastDraw < 1000 / cap - 2) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
   else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
   if (monitor && !held) {
-    fpsW = fpsWindow(fpsW, now, slowAt, cfg.quality);
+    fpsW = fpsWindow(fpsW, now, slowRate, cfg.quality);
     if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
@@ -305,9 +317,32 @@ function drawPuffs(L, alpha, f) {
   puffR.draw(puffFrame(L.puffs, fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
     pivot: L.tune.pivot, depthTex: L.depthTex, artTex: L.tex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
     flow: [fogT * P.flow, P.flowScale, P.flowAmount], light: L.tune.mist,
-    width: canvas.width, height: canvas.height });
+    width: canvas.width, height: canvas.height, div: L.tune.puffDiv });
   gl.useProgram(mainProg);
 }
+
+// BATTERY SAVER (0.00222, the corner column): the ladder's last 3D rung
+// (the smallest canvas, no mist) as the player's own choice — on from any
+// rung, and OFF back to where the ladder had got on its own (the ladder's
+// "never back up" is for its own steps). The particles follow the rung as
+// always (1x), the card light its own saverFps (ui/cardFx.js).
+let saverFrom = -1; // the rung the saver was switched on from, -1 = off
+export function setPowerSaver(on) {
+  if (!gl) { saverFrom = on ? Math.max(saverFrom, 0) : -1; return; }
+  const last = LADDER.length - 1;
+  if (on && saverFrom < 0) { saverFrom = level; level = last; }
+  else if (!on && saverFrom >= 0) { level = saverFrom; saverFrom = -1; }
+  else return;
+  fpsW = null;
+  fogOn = LADDER[level].fog;
+  resize();
+}
+export const powerSaver = () => saverFrom >= 0;
+// 'saver' | 'phone' | 'full': what the picture is drawn under, for the
+// stats (core/perfMonitor.js, the benchmark; the dashboard shows it).
+export const powerMode = (phone = false) => (saverFrom >= 0 ? 'saver' : phone ? 'phone' : 'full');
+// The room push has settled (the benchmark starts a phase's clock only then, 0.00222).
+export const whenPushSettled = () => new Promise((resolve) => { const check = () => (push ? requestAnimationFrame(check) : resolve()); check(); });
 
 // Too slow: one step down the quality ladder (core/bg3dQuality.js).
 // false = past the last step, back to the flat backgrounds.
@@ -332,6 +367,8 @@ function resize() {
   [canvas.width, canvas.height] = backingSize(canvas.clientWidth, canvas.clientHeight,
     Math.min(globalThis.devicePixelRatio || 1, cfg.maxDpr), cfg.maxPixels, LADDER[level].scale); // (maxDpr, 0.00209: a DPR-3 phone drew 1080p's pixels at 60 fps and never stepped down)
   gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.useProgram(mainProg);
+  gl.uniform2f(loc.uRes, canvas.width, canvas.height); // the vignette's frame (bg3dGL.js VIGNETTE_GLSL)
   refit();
   layers.forEach(fillDepth);
 }
@@ -400,7 +437,7 @@ function shutdown() {
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
   t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null;
-  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; // (0.00197: clean for a later initBg3d, as promised)
+  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; saverFrom = -1; // (0.00197: clean for a later initBg3d, as promised)
   document.getElementById('bg-stack')?.classList.remove('gl'); // the CSS layers show again
   canvas?.remove();
   canvas = null;

@@ -9,7 +9,7 @@
 import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
-import { perfTable, benchTable, sanitizeDevice } from './perf.js';
+import { perfTable, benchTable, sanitizeDevice, PERF_DEFAULTS } from './perf.js';
 import { buildTable, playersTable, runsTable, pct } from './tables.js';
 
 const STORE = 'castle-analytics-players-v1';
@@ -214,8 +214,8 @@ function render() {
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
     ${card('By build', buildTable(byBuild(runs)))}
   </div>
-  ${card('Performance', perfTable(shown, runs), true)}
-  ${card('Benchmarks', benchTable(shown, data.benchmarkSince), true)}
+  ${card('Performance', perfTable(shown, runs, data.perf), true)}
+  ${card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)}
   ${card('Players', playersTable(shown, names), true)}
   ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs, names), true)}`;
 }
@@ -271,7 +271,7 @@ async function boot() {
   const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
   const [enemies, items, shrines, build, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry', 'difficulty'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''), benchmarkSince: String(telemetry?.benchmarkSince ?? ''),
+    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''), benchmarkSince: String(telemetry?.benchmarkSince ?? ''), perf: { ...PERF_DEFAULTS, ...(telemetry?.perf ?? {}) }, // (the page's own fallbacks, as finalRoom above)
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';

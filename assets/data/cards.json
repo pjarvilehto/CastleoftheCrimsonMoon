@@ -1,12 +1,11 @@
 {
-  "_doc": "Card effects (0.183, the owner's picks from the Card Lab, labs/cards/ COPY JSON). fx = the shader light behind every portrait (ui/cardFx.js): amt = how much light it adds, speed = how fast it moves, scale = the share of the card's pixels it is drawn at, fps = its frame rate, panelAmt = the light on the shrine boon and treasure chest cards (lighter cards, a touch more). Which look a card gets is ui/cardFx.js (by particle material: flesh blood, bone fog, ember flames, wraith ether, the boss flames, the knight ether; the boons and chests each their own). motion = the cards in 3D (ui/combatFx.js): a hit kicks the card kickDeg around its axis, away from the blow, snapping there and recovering over kickMs (a crit critKick times as far, a heavy blow heavyKick, an OVERKILL victim overkillKick); the room entrance deals the cards in over enterMs, enterDelayMs after the room shows and enterStaggerMs apart. glint = the sheen sweeping the portrait as the card turns (fxParts.js glintSweep): strength = its peak opacity, band = the band's half-width in % of the portrait, hitMs / enterMs = how long a sweep takes on a hit / the entrance. player.art = the knight's portrait file in assets/chars/ (0.184; the enemies' are enemies.json art \u2014 a redraw lands under a new filename, tools/gen-art.mjs --import, so the old art is one edit away).",
+  "_doc": "Card effects (0.183, the owner's picks from the Card Lab, labs/cards/ COPY JSON). fx = the shader light behind every portrait (ui/cardFx.js): amt = how much light it adds, speed = how fast it moves, scale = the share of the card's pixels it is drawn at, fps = its frame rate (phone.fps: on a phone, the phone power profile — 0.00222, shared/platform.js deviceBlock; saverFps: with BATTERY SAVER on), panelAmt = the light on the shrine boon and treasure chest cards (lighter cards, a touch more). Which look a card gets is ui/cardFx.js (by particle material: flesh blood, bone fog, ember flames, wraith ether, the boss flames, the knight ether; the boons and chests each their own). motion = the cards in 3D (ui/combatFx.js): a hit kicks the card kickDeg around its axis, away from the blow, snapping there and recovering over kickMs (a crit critKick times as far, a heavy blow heavyKick, an OVERKILL victim overkillKick); the room entrance deals the cards in over enterMs, enterDelayMs after the room shows and enterStaggerMs apart. glint = the sheen sweeping the portrait as the card turns (fxParts.js glintSweep): strength = its peak opacity, band = the band's half-width in % of the portrait, hitMs / enterMs = how long a sweep takes on a hit / the entrance. player.art = the knight's portrait file in assets/chars/ (0.184; the enemies' are enemies.json art \u2014 a redraw lands under a new filename, tools/gen-art.mjs --import, so the old art is one edit away).",
   "fx": {
     "amt": 0.4,
     "speed": 0.4,
     "scale": 0.34,
     "fps": 30,
-    "panelAmt": 0.35
-  },
+    "panelAmt": 0.35, "phone": { "fps": 20 }, "saverFps": 15 },
   "motion": {
     "kickDeg": 21,
     "kickMs": 530,
@@ -23,6 +22,7 @@
     "hitMs": 580,
     "enterMs": 650
   },
+  "particles": { "_doc": "The particle bursts (ui/particles.js; 0.00222: these were numbers in src): budget = past this many live particles a new burst keeps its rings, flashes and slashes and only a share of its streaks, blobs and dots, never under keepFloor of them; max = the hard cap; dprCap = the canvas backing store at up to this many device pixels per CSS px (1x once the quality ladder stepped down, the renderer's own signal); phone = the phone power profile's own budget and cap.", "budget": 300, "max": 450, "keepFloor": 0.35, "dprCap": 1.25, "phone": { "budget": 150, "dprCap": 1 } },
   "player": {
     "art": "player.webp"
   }

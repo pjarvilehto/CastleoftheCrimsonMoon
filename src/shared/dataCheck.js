@@ -40,7 +40,8 @@ const NUM = {
   backgrounds: [
     ...['depthScale', 'pivot', 'yawDeg', 'pitchDeg', 'yawPeriodS', 'pitchPeriodS', 'speed', 'joltDeg', 'swayDeg', 'swayHitShare', 'fovDeg', 'overscan',
       'grid.0', 'grid.1', 'maxFps', 'motionMaxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
-      'maxDpr', 'lights.dist', 'lights.radius', 'lights.rise', 'quality.windowMs', 'quality.gapMs', 'quality.slowWindows'].map((k) => `parallax.${k}`),
+      'maxDpr', 'lights.dist', 'lights.radius', 'lights.rise', 'quality.windowMs', 'quality.gapMs', 'quality.slowWindows', 'quality.reachShare',
+      'puffDiv', 'phone.maxDpr', 'phone.maxFps', 'phone.motionMaxFps', 'phone.puffDiv'].map((k) => `parallax.${k}`),
     ...['count', 'size.0', 'size.1', 'y.0', 'y.1', 'width', 'near', 'far', 'nearBand', 'farBand', 'soft', 'opacity',
       'drift.0', 'drift.1', 'rock.0', 'rock.1', 'period.0', 'period.1', 'bob', 'breathe', 'shadeVar.0', 'shadeVar.1', 'alphaVar.0', 'alphaVar.1',
       'turbulence', 'turbulencePeriod', 'pulse', 'pulsePeriod', 'flow', 'flowScale', 'flowAmount'].map((k) => `parallax.puffs.${k}`),
@@ -50,9 +51,10 @@ const NUM = {
     ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],
-  telemetry: ['benchmarkPromptRoom'],
+  telemetry: ['benchmarkPromptRoom', 'perf.nearShare', 'perf.paceShare', 'perf.goodShare', 'perf.okFps'],
   cards: [ // the card effects (0.183): ui/cardFx.js, combatFx.js, fxParts.js
-    ...['amt', 'speed', 'scale', 'fps', 'panelAmt'].map((k) => `fx.${k}`),
+    ...['amt', 'speed', 'scale', 'fps', 'panelAmt', 'phone.fps', 'saverFps'].map((k) => `fx.${k}`),
+    ...['budget', 'max', 'keepFloor', 'dprCap', 'phone.budget', 'phone.dprCap'].map((k) => `particles.${k}`),
     ...['kickDeg', 'kickMs', 'critKick', 'heavyKick', 'overkillKick', 'enterMs', 'enterDelayMs', 'enterStaggerMs'].map((k) => `motion.${k}`),
     ...['strength', 'band', 'hitMs', 'enterMs'].map((k) => `glint.${k}`),
   ],
@@ -114,6 +116,7 @@ export function checkData(data) {
   const bg = data.backgrounds ?? {};
   if (typeof data.telemetry?.benchmarkPrompt !== 'boolean') out.push('telemetry.json: benchmarkPrompt (true / false)');
   if (!/^\d+(\.\d+)+$/.test(String(data.telemetry?.benchmarkSince))) out.push('telemetry.json: benchmarkSince (a build number: results from older builds do not count)');
+  if (!/^\d+(\.\d+)+$/.test(String(data.telemetry?.perf?.hzSince))) out.push('telemetry.json: perf.hzSince (the first build whose refresh-rate reading is trusted)');
   if (typeof bg.shrineName !== 'string') out.push('backgrounds.json: shrineName');
   // room 1 is always one of these (0.171): fight paintings, so they're named
   if (!(bg.entrance?.length > 0) || bg.entrance.some((f) => !bg.rooms?.includes(f))) out.push('backgrounds.json: entrance (fight paintings for room 1)');

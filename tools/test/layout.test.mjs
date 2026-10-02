@@ -37,7 +37,7 @@ import { join } from 'node:path';
   const walk = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') ? [p] : []; });
   const code = walk('src').map((p) => readFileSync(p, 'utf8')).join('\n') + readFileSync('index.html', 'utf8');
   const classes = [...new Set([...strip(phone).matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]))];
-  const stateOnly = new Set(['on', 'open', 'pick-3', 'spend', 'docked', 'targetable', 'active', 'primary', 'phone']); // set by classList or a class string the code builds
+  const stateOnly = new Set(['on', 'open', 'pick-3', 'spend', 'docked', 'targetable', 'active', 'primary', 'phone', 'rarity-2', 'rarity-3', 'rarity-4']); // set by classList or a class string the code builds (hud.js rarityClass: `rarity-${t}`)
   const orphans = classes.filter((c) => !stateOnly.has(c) && !new RegExp('(^|[^\\w-])' + c + '([^\\w-]|$)', 'm').test(code));
   ok('every class the phone layer names is one the code produces', orphans.length === 0, orphans.join(', '));
   ok('the phone layer uses no !important, and animates only opacity and transform in its loops', !phone.includes('!important') && !/animation:[^;]*(box-shadow|filter)/.test(phone));

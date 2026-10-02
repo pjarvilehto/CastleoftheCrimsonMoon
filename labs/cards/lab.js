@@ -54,10 +54,11 @@ refresh();
 // ---- the shader backgrounds ----
 for (const u of all) {
   u.fx = attachCardFx(u.card);
-  // the glint copy of the portrait (opacity 0 until a sweep)
+  // the glint copy of the portrait inside its band (opacity 0 until a sweep; 0.00222: the band carries the mask, as in the game)
   const g = u.portrait.cloneNode(false);
   g.classList.add('glint'); g.alt = ''; g.removeAttribute('draggable'); g.setAttribute('draggable', 'false');
-  u.portrait.after(g); u.glint = g;
+  const band = document.createElement('div'); band.className = 'glint-band'; band.append(g);
+  u.portrait.after(band); u.glint = g; u.band = band;
 }
 function applyBg() {
   line.style.setProperty('--plate-alpha', O.bg.alpha);
@@ -74,17 +75,18 @@ const can = (n) => !!n?.animate;
 function applyMotion() {
   line.classList.toggle('p3d', O.motion.on);
   for (const u of all) u.glint.className = `portrait glint ${O.glint.style === 'foil' ? 'foil' : O.glint.style === 'sheen' ? 'sheen' : ''} idle-${u === player ? 'player' : IDLE_FAMILY[u.enemy.id] ?? 'prowl'}`.trim();
-  for (const u of all) { u.glint.style.animationDelay = u.portrait.style.animationDelay; u.glint.style.setProperty('--band', `${O.glint.band}%`); }
+  for (const u of all) { u.glint.style.animationDelay = u.portrait.style.animationDelay; u.band.style.setProperty('--band', `${O.glint.band}%`); }
 }
 // A sweep of the glint over `ms`, the band crossing the portrait with the turn.
 function sweep(u, ms, dir = 1) {
   if (O.glint.style === 'none' || !can(u.glint)) return;
-  const g = u.glint, from = dir > 0 ? '-100%' : '200%', to = dir > 0 ? '200%' : '-100%';
-  const frames = [{ opacity: 0, '--glint-x': from, maskPosition: `${from} 0`, WebkitMaskPosition: `${from} 0` },
-    { opacity: O.glint.strength, offset: 0.4, maskPosition: '50% 0', WebkitMaskPosition: '50% 0' },
-    { opacity: 0, maskPosition: `${to} 0`, WebkitMaskPosition: `${to} 0` }];
-  if (O.glint.style === 'foil') { frames[0]['--hue'] = '0deg'; frames[2]['--hue'] = '360deg'; }
-  g.animate(frames, { duration: ms, easing: 'ease-out' });
+  const g = u.glint, w = u.card.clientWidth, from = (dir > 0 ? 1.6 : -1.6) * w, to = -from; // (0.00222: the band slides, the copy slides back — the game's sweep)
+  const timing = { duration: ms, easing: 'ease-out' };
+  const frames = [{ opacity: 0, translate: `${from}px 0` }, { opacity: O.glint.strength, offset: 0.4, translate: '0 0' }, { opacity: 0, translate: `${to}px 0` }];
+  const copy = [{ translate: `${-from}px 0` }, { translate: '0 0', offset: 0.4 }, { translate: `${-to}px 0` }];
+  if (O.glint.style === 'foil') { copy[0]['--hue'] = '0deg'; copy[2]['--hue'] = '360deg'; }
+  u.band.animate(frames, timing);
+  g.animate(copy, { ...timing, composite: 'add' });
 }
 // A blow: the card kicks around its axis (rotateY away from the blow, a
 // touch of rotateX) and springs back; the glint sweeps with it.

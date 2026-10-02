@@ -50,7 +50,6 @@ export function renderPanelRoom(root, run, room, h, body) {
       h.logEl,
       proceed));
   h.logEl.className = '';
-  h.logEl.scrollTop = h.logEl.scrollHeight;
   root.append(h.buffBar);
   updateBuffs(h.buffBar, run.buffs);
 }

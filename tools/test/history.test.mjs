@@ -3,6 +3,8 @@
 
 import { ok, sleep, t, fresh, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
 import { compareVersions } from '../../src/shared/version.js';
+// how many builds past build.json a build number is (0 = shipped already, 1 = the one being shipped)
+const buildsAhead = (v) => Number(String(v).split('.')[1]) - Number(DATA.build.version.split('.')[1]);
 
 fresh();
 
@@ -184,7 +186,7 @@ fresh();
   ok('frame summary: fps, p95, refresh rate, dropped frames, worst', s.hz === 60 && s.fps === Math.round(1000 * 10000 / r60.ms) / 10
     && s.p95 === 18 && s.drop === 4 && s.worst === 61 && s.secs === Math.round(r60.ms / 1000), JSON.stringify(s));
   const hz = (d) => pm.summarizeFrames(rec([[d, 2000]])).hz;
-  ok('refresh rate snapped from the fastest frames: 60 / 120 / 144 / 165 Hz', hz(16.67) === 60 && hz(8.33) === 120 && hz(6.94) === 144 && hz(6.06) === 165);
+  ok('refresh rate from the busiest interval: 60 / 120 / 144 / 165 Hz', hz(16.67) === 60 && hz(8.33) === 120 && hz(6.94) === 144 && hz(6.06) === 165);
   const slow = pm.summarizeFrames(rec([[150, 30], [400, 10]]));
   ok('a device that cannot keep up: 60 Hz assumed, nearly every frame dropped', slow.hz === 60 && slow.drop === 100 && slow.fps === Math.round(40 * 10000 / 8500) / 10);
   pm.stopPerf(); // ends a recording an earlier test's dungeon left running
@@ -218,10 +220,10 @@ fresh();
   const players = [{ key: 'a', label: '<b>A</b>', profile: prof, device: pf.sanitizeDevice({ gpu: '<img>', browser: 'Chrome 129', cores: 8 }) }];
   const runs = st.allRuns(players);
   const rows = pf.perfRows(players, runs);
-  ok('dashboard: per-player medians over measured runs', rows.length === 1 && rows[0].runs === 2 && rows[0].fps === 50 && rows[0].worst === 90 && rows[0].q === 0);
+  ok('dashboard: per-player medians over measured runs; the worst frame as a median and as the worst run\'s', rows.length === 1 && rows[0].runs === 2 && rows[0].fps === 50 && rows[0].worst === 65 && rows[0].worstRun === 90 && rows[0].q === 0);
   const html = pf.perfTable(players, runs);
   ok('dashboard: the Performance card escapes save text and grades fps', html.includes('&lt;b&gt;A&lt;/b&gt;') && html.includes('&lt;img&gt;') && !html.includes('<img>')
-    && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs), true)")
+    && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs, data.perf), true)")
     && readFileSync('analytics/index.html', 'utf8').includes("'perf.js'"));
   ok('dashboard: CSV has the frame rate per run', st.toCsv(runs).split('\n')[0].endsWith(',fps,p95,drop,hz') && st.toCsv(runs).split('\n')[2].includes(',60,17,1,60'));
 }
@@ -260,7 +262,7 @@ fresh();
   const html = pf.benchTable([{ label: 'A', profile: { bench }, device: null }]);
   ok('dashboard: Benchmarks card, escaped, graded per phase, the build in its own column', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
     && html.includes('<th>Build</th>') && !html.includes('bench-old')
-    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown, data.benchmarkSince), true)"));
+    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)"));
   // 0.00221: the current round (telemetry.json benchmarkSince) — an older build's row is marked and muted, a newer one is not
   const two = pf.sanitizeBench([{ at: 1, build: '0.00218', phases: {} }, { at: 2, build: '0.00221', phases: {} }]);
   const roundHtml = pf.benchTable([{ label: 'A', profile: { bench: two }, device: null }], '0.00220');
@@ -287,7 +289,7 @@ fresh();
   DATA.telemetry.benchmarkPrompt = false;
   ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
   DATA.telemetry.benchmarkPrompt = true;
-  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && compareVersions(DATA.telemetry.benchmarkSince, DATA.build.version) <= 0); // the round is a shipped build, never one ahead of build.json (ship.mjs runs the suite after the bump)
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && [0, 1].includes(buildsAhead(DATA.telemetry.benchmarkSince))); // the round is a shipped build or the one being shipped (ship.mjs bumps build.json after the suite's first run)
   p.records.bestRoom = 5;
   ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;
@@ -295,7 +297,8 @@ fresh();
     && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: DATA.telemetry.benchmarkSince }] }) && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00300' }] })
     && bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00218' }] }) && bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
     && !(DATA.telemetry.endpoint = '', bm.benchmarkDue(p)) && (DATA.telemetry.endpoint = 'https://stats.example'));
-  ok('the prompt quotes the real length', bm.benchmarkSeconds() === 40 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
+  const M = DATA.cards.motion, settle = bm.PHASES.reduce((s, x) => s + DATA.backgrounds.parallax.fadeMs + M.enterDelayMs + M.enterMs + x.enemies.length * M.enterStaggerMs, 0) / 1000;
+  ok('the prompt quotes the real length: the phases plus each room\'s settle (0.00222), rounded up to 5 s', bm.benchmarkSeconds() === Math.ceil((36 + settle) / 5) * 5 && bm.benchmarkSeconds() === 50 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
   const since = DATA.telemetry.benchmarkSince;
   DATA.telemetry.benchmarkSince = DATA.build.version; // this round = the build under test (ship.mjs bumps build.json after the suite's first run)
   const realBody = globalThis.document.body;
@@ -306,7 +309,7 @@ fresh();
   await sleep(1100); // the fade to the hall
   ok('no ask while the hall is still fading in', !dlg());
   await sleep(1300);
-  ok('Great Hall asks once the hall has faded in', !!dlg() && dlg().textContent.includes('about 40 seconds') && dlg().textContent.includes('Continue')
+  ok('Great Hall asks once the hall has faded in', !!dlg() && dlg().textContent.includes(`about ${bm.benchmarkSeconds()} seconds`) && dlg().textContent.includes('Continue')
     && dlg().textContent.includes('[space]'));
   handleKey('escape'); handleKey('d');
   ok('nothing skips it (Esc, the hall\'s hotkeys)', !!dlg() && t().includes('GREAT HALL'));
@@ -314,7 +317,7 @@ fresh();
   ok('Space starts the benchmark', !dlg());
   await sleep(1300);
   ok('the benchmark scene runs', t().includes('Benchmark'));
-  await sleep(45000); // the whole script, in virtual time
+  await sleep(60000); // the whole script, in virtual time
   const res = dlg();
   ok('result shown with thanks; saved', res && res.textContent.includes('Benchmark complete') && res.textContent.includes('Thank you')
     && getProfile().bench.length === 1 && getProfile().bench[0].phases.combat?.fps > 0 && getProfile().history.length === 0);
@@ -333,14 +336,14 @@ fresh();
   globalThis.document.hidden = true;
   for (const fn of globalThis.document.listeners.visibilitychange ?? []) fn();
   globalThis.document.hidden = false;
-  await sleep(45000);
+  await sleep(60000);
   const cut = dlg();
   ok('a benchmark that went to the background is not saved and says so', listening === 1 && cut && cut.textContent.includes('Benchmark interrupted') && cut.textContent.includes('ask again')
     && getProfile().bench.length === 0 && bm.benchmarkDue(getProfile()) && vis() === before);
   handleKey(' ');
   await sleep(1100);
   ok('…and the Great Hall asks again', t().includes('GREAT HALL') && (await sleep(2500), !!dlg() && dlg().textContent.includes('A quick benchmark')));
-  handleKey(' '); await sleep(1300); await sleep(45000); handleKey(' '); await sleep(1100); // let it finish cleanly before the next block
+  handleKey(' '); await sleep(1300); await sleep(60000); handleKey(' '); await sleep(1100); // let it finish cleanly before the next block
   globalThis.document.body = realBody;
   DATA.telemetry.endpoint = ep;
   DATA.telemetry.benchmarkPrompt = bp; DATA.telemetry.benchmarkSince = since;
@@ -377,7 +380,7 @@ fresh();
   confirmPrompt({ title: 'Left over', lines: [], yes: ['Yes', 'y'], no: ['No', 'n'], onYes: () => { throw new Error('acted under the benchmark'); } });
   await sleep(1300);
   ok('the benchmark clears dialogs left on screen', t().includes('Benchmark') && dialogs().length === 0);
-  await sleep(45000);
+  await sleep(60000);
   handleKey(' ');
   await sleep(1100);
   globalThis.document.body = realBody;
@@ -406,4 +409,51 @@ fresh();
   ok('dashboard: a capped run is green against 30 and says so', html.includes('perf-good') && html.includes('capped at 30'));
   ok('dashboard: this browser\'s row shows the device from its collected copy',
     readFileSync('analytics/dashboard.js', 'utf8').includes('device: ownDevice }]'));
+}
+
+// T99: 0.00222 — the refresh rate from the busiest frame interval. The
+// owner's dashboard showed two 120 Hz Macs as "144 Hz" (119.8 fps, amber)
+// and 60 Hz iPhones as "90 / 75 Hz" with 56-61% "dropped" at 59 fps: the
+// fastest 10% of frames, a refresh short on jittered timestamps. Each
+// fixture asserts hz AND drop (the drop is what the owner reads).
+{
+  const pm = await import('../../src/core/perfMonitor.js');
+  const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
+  const s = (pairs) => pm.summarizeFrames(rec(pairs));
+  const K = DATA.telemetry.perf;
+  ok('perf knobs shipped: nearShare, paceShare, goodShare, okFps, hzSince (the build being shipped)', K.nearShare === 0.06 && K.paceShare === 0.15 && K.goodShare === 0.9 && K.okFps === 30 && [0, 1].includes(buildsAhead(K.hzSince)));
+  const mac = s([[8.33, 900], [7.25, 100]]);
+  ok('a 120 Hz Mac with catch-up frames reads 120 Hz, nothing dropped (it read 144)', mac.hz === 120 && mac.drop === 0, JSON.stringify(mac));
+  const phone = s([[16.67, 700], [12, 150], [21, 150]]);
+  ok('a 60 Hz iPhone with jittered timestamps reads 60 Hz, nothing dropped (it read 90, 15%)', phone.hz === 60 && phone.drop === 0, JSON.stringify(phone));
+  const smear = s([[11.5, 120], [14.5, 300], [19, 530], [26, 50]]);
+  ok('the iPhone smear (p95 26 ms) reads 60 Hz with 5% dropped (it read 90, 58%)', smear.hz === 60 && smear.drop === 5, JSON.stringify(smear));
+  ok('144 Hz at full rate still reads 144', s([[6.94, 970], [13.9, 30]]).hz === 144);
+  const d45 = s([[16.67, 2000], [33.33, 1000]]);
+  ok('a 60 Hz display at 45 fps: 60 Hz, a third dropped', d45.hz === 60 && d45.drop === 33.3);
+  const d50 = s([[16.67, 2000], [33.33, 500]]);
+  ok('a 60 Hz display at 50 fps: 60 Hz, a fifth dropped (never 50 Hz)', d50.hz === 60 && d50.drop === 20);
+  const d70 = s([[8.33, 400], [16.67, 500], [25, 100]]);
+  ok('a 120 Hz display mostly taking two refreshes: still 120 Hz, 60% dropped', d70.hz === 120 && d70.drop === 60, JSON.stringify(d70));
+  const alt = s([[11.11, 1000], [22.22, 1000]]);
+  ok('a 90 Hz display dropping alternately reads 90 (a pure alternation is one; the owner\'s rows are smears)', alt.hz === 90 && alt.drop === 50);
+  ok('the knobs are read from the data (a wide pace share lets the average decide)', pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.6 }).hz === 60 && pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.5 }).hz === 90);
+  // stalls and the worst frame's moment (0.00222)
+  const r = rec([[16.7, 600], [120, 2]]); pm.addFrame(r, 130, true);
+  const st2 = pm.summarizeFrames(r);
+  ok('stalls = frames of 100 ms or more; the worst frame remembers it fell in a room change', st2.stalls === 3 && st2.worst === 130 && st2.worstOut === 1 && pm.summarizeFrames(rec([[16.7, 600], [120, 1]])).worstOut === 0);
+  // the dashboard: old rows graded by their fps, their dropped share hidden; trusted rows as they are
+  const pf = await import('../../analytics/perf.js');
+  const row = (build, perf) => [{ player: 'a', at: 1, build, perf: { bg: '3d', q: 0, dpr: 2, vw: 1747, vh: 930, secs: 60, stalls: 1, worstOut: 1, ...perf } }];
+  const pl = [{ key: 'a', label: 'Mac', device: null }];
+  const old = pf.perfTable(pl, row('0.00221', { fps: 119.8, p95: 10, drop: 0.1, worst: 151, hz: 144 }), K);
+  ok('dashboard: a pre-fix 120 Hz Mac row is green and shows no dropped share; stalls and the worst frame\'s moment show', old.includes('perf-good') && old.includes('—') && !old.includes('0.1%') && old.includes('<th>Stalls</th>') && old.includes('room change'));
+  const fresh2 = pf.perfTable(pl, row(K.hzSince, { fps: 73, p95: 20, drop: 30, worst: 90, hz: 120 }), K);
+  ok('dashboard: a trusted row keeps its own grade and dropped share', fresh2.includes('perf-ok') && fresh2.includes('30.0%'));
+  const both = pf.perfRows(pl, [...row('0.00221', { fps: 58.6, p95: 26, drop: 58, worst: 78, hz: 90 }), { ...row(K.hzSince, { fps: 59.5, p95: 18, drop: 3, worst: 60, hz: 60 })[0], at: 2 }], K);
+  ok('dashboard: medians over the trusted runs only, once a player has one', both[0].drop === 3 && both[0].runs === 2 && both[0].misread === false);
+  const bench = pf.benchTable([{ label: 'A', device: null, profile: { bench: pf.sanitizeBench([{ at: 1, build: '0.00220', phases: { idle: { fps: 59.1, p95: 28, drop: 61.3, worst: 80, hz: 90 } } }]) } }], '0.00220', K);
+  ok('dashboard: a pre-fix iPhone benchmark phase is green with its dropped share hidden', bench.includes('perf-good') && !bench.includes('61.3%'));
+  const wk = await import('../../collector/worker.js');
+  ok('collector keeps stalls and worstOut; its version moved with telemetry.json', wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).stalls === 2 && wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).worstOut === 1 && wk.VERSION === DATA.telemetry.collectorVersion);
 }

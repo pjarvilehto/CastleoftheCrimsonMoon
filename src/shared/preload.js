@@ -62,6 +62,16 @@ function warm(url) {
   });
 }
 
+// The room paintings and depth maps (0.00222): fetched into the HTTP
+// cache only — the 3D renderer decodes them itself as a room is entered
+// (core/bg3dGL.js loadPicture, off the main thread), so decoding 34
+// paintings here (~320 MB of pixels) warmed nothing it could reuse. The
+// flat CSS fallback reads the same cache. Resolves, never rejects.
+function fetchOnly(url) {
+  if (typeof fetch !== 'function') return Promise.resolve();
+  return fetch(url, { priority: 'low' }).then((r) => r.arrayBuffer?.(), () => {}).then(() => {}, () => {});
+}
+
 // Load urls, at most `width` at a time (a background download must not
 // starve whatever the current screen is fetching).
 async function pool(urls, width, each) {
@@ -91,7 +101,7 @@ export function preloadRest() {
     restState.total = urls.length;
     await pool(urls, 4, async (url) => { await warm(url); restState.done++; });
     restState.ready = true;
-    pool(roomUrls(), 3, warm); // (the rooms keep coming; nobody waits for them)
+    pool(roomUrls(), 3, fetchOnly); // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
   })();
   return rest;
 }

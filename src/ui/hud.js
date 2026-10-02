@@ -47,15 +47,19 @@ const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '
 // part renders via itemName(), so game logic can name items without DOM.
 // The dungeon log is one element for the whole run — a deep run prints
 // thousands of lines, so only the newest LOG_MAX_LINES stay in the DOM.
+// 0.00222: the newest line is the FIRST child and the box is a reversed
+// flex column (styles.css #combat-log), which the browser keeps scrolled
+// to its end on its own — a scroll-position write here (the element's
+// full height) forced a synchronous layout of the whole room in the middle
+// of every hit's frame.
 const LOG_MAX_LINES = 200;
 
 export function logLine(logEl, content, cls = 'sys') {
   const parts = (Array.isArray(content) ? content : [content])
     .map((p) => (p && typeof p === 'object' && p.item ? itemName(p.item) : p));
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
-  logEl.append(line);
-  while (logEl.children.length > LOG_MAX_LINES) logEl.children[0].remove();
-  logEl.scrollTop = logEl.scrollHeight;
+  logEl.insertBefore(line, logEl.children[0] ?? null);
+  while (logEl.children.length > LOG_MAX_LINES) logEl.children[logEl.children.length - 1].remove();
 }
 
 // Item rarity scheme driven by items.json `tier` (see styles.css):

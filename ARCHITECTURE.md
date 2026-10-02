@@ -59,12 +59,14 @@ src/
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
                         crossfade, jolts/sways/flash lights, quality ladder,
-                        CSS fallback; gpuName(), holdQuality()
+                        CSS fallback; gpuName(), holdQuality(); setPowerSaver() /
+                        powerMode() (BATTERY SAVER, 0.00222), whenPushSettled()
     bg3dGL.js  bg3dMath.js  bg3dTuning.js  bg3dQuality.js  bg3dFog.js
     bg3dPuffs.js  bg3dPuffGL.js  bg3dLights.js
                         its plumbing: shaders, pure math (tested in Node),
                         settings, frame-rate ladder, fog, mist puffs, lights
-    perfMonitor.js      frame-rate recorder (runs + benchmark), device info
+    perfMonitor.js      frame-rate recorder (runs + benchmark), device info; the
+                        refresh-rate estimate (the busiest interval, 0.00222), stalls
   meta/                 PERSISTS across runs (localStorage)
     storage.js          the only file touching the save; base64 save codes
     profile.js          the profile: defaults, lifecycle, small setters
@@ -92,9 +94,11 @@ src/
     data.js             loads assets/data/*.json into DATA
     dataCheck.js        every number the code reads, checked at load
     balance.js          enemy scaling, LV naming, elites
-    preload.js          fetch + decode art (boot set, the essentials, then the rooms)
+    preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
     portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
-    platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp()
+    platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp();
+                        deviceName() / deviceBlock() (a data block's `phone` sub-block merged on a phone — the phone power profile, 0.00222)
+    refreshRates.js     the standard display rates (RATES, snapRate): perfMonitor's hz and the stats page's grades, one copy
     motion.js           the one reduced-motion check (0.00197)
     debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
                         the cadence is difficulty.json levelEvery, passed in —

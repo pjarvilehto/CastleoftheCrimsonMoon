@@ -135,8 +135,10 @@ fresh();
   const { el: mkEl } = await import('../../src/core/dom.js');
   const log = mkEl('div', {});
   for (let i = 0; i < 260; i++) logLine(log, `line ${i}`);
-  ok('combat log capped at 200 lines', log.children.length === 200 && log.children[0].textContent.includes('line 60'));
   const css = readFileSync('styles.css', 'utf8');
+  ok('combat log capped at 200 lines, the newest first (0.00222: a reversed column, no scrollTop write per line)', log.children.length === 200 && log.children[0].textContent.includes('line 259') && log.children[199].textContent.includes('line 60')
+    && !readFileSync('src/ui/hud.js', 'utf8').includes('scrollTop') && !readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('scrollTop') && !readFileSync('src/ui/shrineUI.js', 'utf8').includes('scrollTop')
+    && /#combat-log \{[^}]*flex-direction: column-reverse/.test(css) && css.includes('html.phone #combat-log.docked > :not(:first-child) { display: none; }'));
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
   ok('the battle line carries --n (ui/battleRoom.js, shared by dungeon and benchmark)', readFileSync('src/ui/battleRoom.js', 'utf8').includes('sizing(enemies.length)') && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('mountBattle(run, combat') && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('mountBattle(run, combat'));
@@ -575,7 +577,7 @@ fresh();
   run.potions = 0; upd(low);
   ok('no potions left: no pulse (the bar still glows)', !btn.classList.contains('active') && chip.classList.contains('lowhp'));
   const css = readFileSync('styles.css', 'utf8');
-  ok('the low-HP bar glow is styled', css.includes('.lowhp .hpbar { animation: lowhp-bar'));
+  ok('the low-HP bar glow is a breathing layer of its own (0.00222: opacity, never a box-shadow loop)', css.includes('.lowhp .hpbar::after {') && /\.lowhp \.hpbar::after \{[^}]*animation: glow-breathe/.test(css) && !/@keyframes [\w-]+ \{[^}]*box-shadow/.test(css) && !/@keyframes [\w-]+ \{[^}]*\n[^}]*box-shadow/.test(css));
   fresh();
 }
 
@@ -645,7 +647,7 @@ fresh();
   const sm = playerAttack(cb, 0, true).find((e) => e.type === 'smash');
   const fx = fxFor(sm, { maxHp: run.maxHp });
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
-    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }'));
+    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[i]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }')); // (0.00222: the rects read once, not per victim)
 }
 // T90: 0.129 — the particle renderer stays batched and cheap.
 {
@@ -653,8 +655,10 @@ fresh();
   ok('particles: batched Path2D buckets, cached flash sprite, dirty-box clear, one canvas per session',
     src.includes('function bucket(buckets, glow, stroke, rgb, a, w = 0)') && src.includes('glowSprite(p.color)')
     && src.includes('c.clearRect(box[0], box[1]') && src.includes('if (!shared) {') && !/\.save\(\)|createRadialGradient\(p\./.test(src));
-  ok('particles: 1.25x resolution, 1x once the background stepped down; crowded bursts thin out',
-    src.includes('bgQualityLevel() > 0 ? 1 : 1.25') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);"));
+  ok('particles: the DPR cap, budget and floor are data (a phone has its own), 1x once the background stepped down; crowded bursts thin out',
+    src.includes('bgQualityLevel() > 0 ? 1 : knobs().dprCap') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);") && !/\b(450|300|1\.25)\b/.test(src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))
+    && DATA.cards.particles.budget === 300 && DATA.cards.particles.phone.budget < DATA.cards.particles.budget && DATA.cards.particles.phone.dprCap === 1
+    && src.includes("canvas.style.opacity = '0'") && src.includes("canvas.style.opacity = ''"));
 }
 // T93: 0.132 — splats (slow fades that overlap on the floor) are drawn one
 // by one with smooth alpha: batched, overlapping splats switched between

@@ -30,6 +30,17 @@ export function deviceClass(nav = globalThis.navigator, scr = globalThis.screen,
 }
 export const isPhone = (...args) => deviceClass(...args) === 'phone';
 
+// The phone power profile (0.00222): a data block may carry a `phone`
+// sub-block with the knobs that differ on a phone (backgrounds.json
+// parallax.phone, cards.json fx.phone / particles.phone); deviceBlock()
+// merges it over the block on a phone and returns the block as it is
+// elsewhere. The device is decided once per session (the screen and the
+// user agent do not change; ?desktop keeps the desktop values for testers
+// and the headless checks); tests pass the device by name.
+let device = null;
+export const deviceName = () => (device ??= isPhone() ? 'phone' : 'desktop');
+export const deviceBlock = (block, dev = deviceName()) => (dev === 'phone' && block?.phone ? { ...block, ...block.phone } : block);
+
 // The phone layout (0.00208): a sideways screen under 500px tall — the
 // iPhone and Android phone, never a tablet (an iPad mini is 744 sideways).
 // styles.css's phone layer sits under the same query (a smoke check keeps

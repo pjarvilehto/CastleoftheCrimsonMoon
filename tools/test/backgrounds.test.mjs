@@ -259,7 +259,33 @@ fresh();
   for (let x = 16; x < 48; x++) { top += l(x, 16); bottom += l(x, 44); }
   ok('sprites are lit from above (baked self-shadow)', top > bottom);
   const src = readFileSync('src/core/bg3dPuffGL.js', 'utf8');
-  ok('puffs render at half resolution, then blend over the scene once', src.includes('Math.ceil(w / 2)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)'));
+  ok('puffs render at 1/puffDiv of the canvas (half on the desktop, a third on a phone — data, 0.00222), then blend over the scene once',
+    src.includes('Math.ceil(w / div)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)') && DATA.backgrounds.parallax.puffDiv === 2 && DATA.backgrounds.parallax.phone.puffDiv === 3
+    && readFileSync('src/core/bg3d.js', 'utf8').includes('div: L.tune.puffDiv'));
+  // the phone power profile (0.00222): parallax.phone over the base on a phone, nothing elsewhere; every phone knob exists at the top level
+  const { tuning } = await import('../../src/core/bg3dTuning.js');
+  const { deviceBlock } = await import('../../src/shared/platform.js');
+  const Pp = DATA.backgrounds.parallax;
+  ok('the phone profile: parallax.phone merged over the base on a phone only, every key a real knob',
+    tuning('', 'phone').maxDpr === Pp.phone.maxDpr && tuning('', 'phone').motionMaxFps === Pp.phone.motionMaxFps && tuning('', 'desktop').maxDpr === Pp.maxDpr && tuning('').maxDpr === Pp.maxDpr
+    && Object.keys(Pp.phone).every((k) => k in Pp) && deviceBlock({ a: 1, phone: { a: 2 } }, 'phone').a === 2 && deviceBlock({ a: 1, phone: { a: 2 } }, 'desktop').a === 1
+    && Pp.phone.maxDpr < Pp.maxDpr && Pp.phone.motionMaxFps <= Pp.motionMaxFps && Pp.phone.maxFps <= Pp.maxFps);
+  // the ladder's threshold (0.00222): a struggling device is judged against minFps, a fast display against what the throttle can reach
+  const { slowAt } = await import('../../src/core/bg3dQuality.js');
+  const Q = { minFps: 22, maxFps: 30, quality: { reachShare: 0.9 } };
+  ok('slowAt: a device at 15 rAF/s must reach 22 (it used to be judged against 13.5 and never stepped down); a 40 Hz display against 18; a 60 Hz one 22; no rate yet 22',
+    slowAt(15, Q) === 22 && slowAt(40, Q) === 18 && slowAt(60, Q) === 22 && slowAt(0, Q) === 22 && slowAt(30, Q) === 22 && Pp.quality.reachShare === 0.9
+    && readFileSync('src/core/bg3d.js', 'utf8').includes('return slowAt(rafRate, cfg)'));
+  // the vignette is the shaders' (0.00222): both passes multiply it, the CSS layer hides under the live canvas
+  const glSrc = readFileSync('src/core/bg3dGL.js', 'utf8');
+  ok('the vignette lives in the shaders under the live canvas (both passes), the CSS one only over the flat layers',
+    glSrc.includes('gl_FragColor = vec4(c * vignette(), uAlpha)') && src.includes('gl_FragColor.rgb *= vignette()') && readFileSync('styles.css', 'utf8').includes('#bg-stack.gl ~ #vignette { display: none; }')
+    && glSrc.includes('0.55 + (min(d, 1.0) - 0.75) / 0.25 * 0.35'));
+  // a flash light alone no longer lifts the frame cap (0.00222); the painting arrives decoded off the main thread
+  const bgSrc = readFileSync('src/core/bg3d.js', 'utf8');
+  ok('a flash alone keeps the rest rate; the painting and depth map come through loadPicture (createImageBitmap) and the fill waits a frame',
+    bgSrc.includes('const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps') && bgSrc.includes("loadPicture(`assets/bg/${file}`)") && glSrc.includes('createImageBitmap(blob')
+    && bgSrc.includes('await new Promise((resolve) => requestAnimationFrame(resolve))') && bgSrc.includes('img.close?.()'));
   ok('puffs fade softly into the scene in front of them (depth map)', src.includes('clamp((surf - d) / uSoft, 0.0, 1.0)') && P.soft > 0);
   const Pb = DATA.backgrounds.parallax, wind = (f) => Pb.overrides?.[f]?.fogWind ?? Pb.fogWind;
   const allBg = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, ...DATA.backgrounds.bosses, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms, ...DATA.backgrounds.treasure])];

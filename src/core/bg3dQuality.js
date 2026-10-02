@@ -20,6 +20,16 @@ export function backingSize(cssW, cssH, dpr, maxPixels, scale = 1) {
   return [Math.max(1, Math.round(cssW * s)), Math.max(1, Math.round(cssH * s))];
 }
 
+// The drawn rate a window must reach (0.00197 / 0.00222): minFps, unless
+// the maxFps throttle itself holds the drawn rate under it (a 40 Hz display
+// draws every other frame = 20 fps): then quality.reachShare of what the
+// throttle can reach on this screen. Only a rAF rate ABOVE maxFps is
+// throttled at all; at or below it every frame is drawn and the device's
+// own rate is what counts (0.00222: the share used to apply there too, so a
+// device at 15 rAF/s was judged against 13.5 and never stepped down).
+export const slowAt = (rafRate, { minFps, maxFps, quality: { reachShare } }) =>
+  (!rafRate || rafRate <= maxFps ? minFps : Math.min(minFps, (rafRate / Math.ceil(rafRate / maxFps)) * reachShare));
+
 // Frame-rate windows over drawn frames. A gap longer than gapMs (a hidden
 // tab, a loading hitch) restarts the window instead of counting as slow.
 // Returns the next state: `fps` when a window completes, and `slow` = how

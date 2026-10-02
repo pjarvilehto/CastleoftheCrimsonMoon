@@ -4,7 +4,7 @@
 // sprites are the expensive part), which one pass then blends over the
 // scene. Premultiplied alpha, drawn back to front (the far ones first).
 
-import { program, LIGHT_GLSL } from './bg3dGL.js';
+import { program, LIGHT_GLSL, VIGNETTE_GLSL } from './bg3dGL.js';
 import { puffSprites, puffVertices, puffIndices, PUFF_FLOATS, SHADE } from './bg3dPuffs.js';
 import { fogNoise } from './bg3dFog.js';
 
@@ -65,7 +65,8 @@ void main() { vUv = aQuad * 0.5 + 0.5; gl_Position = vec4(aQuad, 0.0, 1.0); }`;
 const CFS = `
 precision mediump float;
 uniform sampler2D uBuf; uniform float uAlpha; varying vec2 vUv;
-void main() { gl_FragColor = texture2D(uBuf, vUv) * uAlpha; }`;
+${VIGNETTE_GLSL}
+void main() { gl_FragColor = texture2D(uBuf, vUv) * uAlpha; gl_FragColor.rgb *= vignette(); }`; // (premultiplied: darkening the colour alone keeps the mist's cover)
 
 function locate(gl, prog, attribs, uniforms) {
   const loc = {};
@@ -105,7 +106,7 @@ export function createPuffRenderer(gl) {
   if (!prog || !comp) return null;
   const P = locate(gl, prog, ['aPos', 'aUv', 'aExtra'], ['uMVP', 'uSprite', 'uDepthMap', 'uFlow', 'uArt', 'uUvScale', 'uPlane',
     'uDepthScale', 'uPivot', 'uSoft', 'uAmount', 'uFogColor', 'uFlowP', 'uMist', 'uLitTint', 'uShadeTint', 'uLightPos', 'uLightCol', 'uLightR2']);
-  const C = locate(gl, comp, ['aQuad'], ['uBuf', 'uAlpha']);
+  const C = locate(gl, comp, ['aQuad'], ['uBuf', 'uAlpha', 'uRes']);
   const sprite = texture(gl, () => {
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE_ALPHA, 256, 256, 0, gl.LUMINANCE_ALPHA, gl.UNSIGNED_BYTE, puffSprites(128));
@@ -126,8 +127,10 @@ export function createPuffRenderer(gl) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   let fbo = null, buf = null, fw = 0, fh = 0, indexed = 0, verts = null;
 
-  function target(w, h) {
-    const tw = Math.max(1, Math.ceil(w / 2)), th = Math.max(1, Math.ceil(h / 2));
+  // the mist buffer at 1/div of the canvas (parallax.puffDiv, 0.00222: the
+  // 2 was a constant here; a phone draws it at a third)
+  function target(w, h, div) {
+    const tw = Math.max(1, Math.ceil(w / div)), th = Math.max(1, Math.ceil(h / div));
     if (fbo && tw === fw && th === fh) return;
     if (fbo) { gl.deleteFramebuffer(fbo); gl.deleteTexture(buf); }
     [fw, fh] = [tw, th];
@@ -144,10 +147,10 @@ export function createPuffRenderer(gl) {
   // One scene's puffs over what is drawn so far. frame: puffFrame(); u:
   // { mvp, plane, uvScale, depthScale, pivot, depthTex, artTex, mist, lights,
   //   r2, soft, amount, alpha (the layer's crossfade), width, height,
-  //   flow: [t, scale, amount], light: parallax.mist }.
+  //   flow: [t, scale, amount], light: parallax.mist, div: parallax.puffDiv }.
   function draw(frame, u) {
     if (!frame.length) return;
-    target(u.width, u.height);
+    target(u.width, u.height, u.div);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.viewport(0, 0, fw, fh);
     gl.clearColor(0, 0, 0, 0);
@@ -202,6 +205,7 @@ export function createPuffRenderer(gl) {
     gl.bindTexture(gl.TEXTURE_2D, buf);
     gl.uniform1i(C.uBuf, 4);
     gl.uniform1f(C.uAlpha, u.alpha);
+    gl.uniform2f(C.uRes, u.width, u.height);
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
     gl.enableVertexAttribArray(C.aQuad);
     gl.vertexAttribPointer(C.aQuad, 2, gl.FLOAT, false, 0, 0);

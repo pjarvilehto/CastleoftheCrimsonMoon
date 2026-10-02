@@ -32,24 +32,30 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('no WebGL: attachCardFx lights nothing and leaves the card untouched', attachCardFx(card, cardStyle('rat')) === null && card.children.length === 0 && litCards() === 0);
 }
 
-// The battle line: every portrait has its glint copy, right after it, on
-// the same idle loop and phase; the unit carries the band width
+// The battle line: a portrait's glint copy is mounted for a sweep only
+// (0.00222), right after the portrait inside its band, on the same idle
+// loop and phase; the unit carries the band width
 {
-  const { createEnemyUnit, createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createEnemyUnit, createPlayerUnit, unmountGlint } = await import('../../src/ui/battleLine.js');
   const run = createRun();
   const e = { id: 'skeleton', name: 'Skeleton LV2', maxHp: 30, hp: 30, dmg: 3, xp: 1, coins: [1, 1] };
   const u = createEnemyUnit(e, 0, { onAttack() {}, onGone() {} });
+  const before = u.card.children.length;
+  ok('enemy unit: no glint in the card until a sweep asks (six invisible copies used to run all fight)', !u.card.all((n) => n.classList.contains('glint')).length && u.glintEl === null);
+  const band = u.glint;
   const kids = u.card.children;
-  const i = kids.indexOf(u.portrait);
-  ok('enemy unit: the glint follows its portrait, same art, same idle loop and phase, hidden from readers',
-    u.glint && kids[i + 1] === u.glint && u.glint.classList.contains('glint') && u.glint.classList.contains('portrait')
-    && u.glint.classList.contains('idle-prowl') && u.glint.attrs.src === u.portrait.attrs.src
-    && u.glint.style.animationDelay === u.portrait.style.animationDelay && u.glint.attrs['aria-hidden'] === 'true' && u.glint.attrs.alt === '');
+  const i = kids.indexOf(u.portrait), g = band.children[0];
+  ok('the glint mounts as a band right after the portrait: a copy of the art inside, same idle loop and phase, hidden from readers',
+    band.classList.contains('glint-band') && kids[i + 1] === band && kids.length === before + 1 && u.glint === band
+    && g.classList.contains('glint') && g.classList.contains('portrait') && g.classList.contains('idle-prowl') && g.attrs.src === u.portrait.attrs.src
+    && g.style.animationDelay === u.portrait.style.animationDelay && g.attrs['aria-hidden'] === 'true' && g.attrs.alt === '');
+  unmountGlint(u);
+  ok('…and leaves again after the sweep', u.card.children.length === before && u.glintEl === null && !u.card.all((n) => n.classList.contains('glint-band')).length);
   ok('the unit carries the glint band width from cards.json', u.el.attrs.style === `--band:${DATA.cards.glint.band}%`);
   ok('the card\'s first child is its frame layer (the art, the light inside)', u.card.children[0].classList.contains('card-frame'));
   const p = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
-  ok('player unit: a glint too, on the player idle loop', p.glint && p.glint.classList.contains('idle-player') && p.card.children[p.card.children.indexOf(p.portrait) + 1] === p.glint);
-  ok('the glint is a portrait too (the same mask and loops)', css.includes('.portrait.glint {'));
+  ok('player unit: a glint too, on the player idle loop', p.glint.children[0].classList.contains('idle-player') && p.card.children[p.card.children.indexOf(p.portrait) + 1] === p.glint);
+  ok('the band carries the mask and is three cards wide; the copy keeps its brightness', css.includes('.glint-band {\n  position: absolute; top: 0; bottom: 0; left: -100%; width: 300%;') && css.includes('.portrait.glint { filter: brightness(1.9) saturate(0.5); max-width: calc(128% / 3); }') && !/\.portrait\.glint \{[^}]*mask/.test(css));
 }
 
 // The cards in 3D and the effects' wiring (source checks: the shim has no
@@ -75,7 +81,8 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('every level of the line hands its children the camera', css.includes('.battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }'));
   ok('the shader layer screens over the frame art inside the card\'s plate layer', css.includes('.card-fx { position: absolute; inset: 0; width: 100%; height: 100%;') && css.includes('mix-blend-mode: screen; }') && css.includes('.card-frame {\n  position: absolute; inset: 0; z-index: -1;') && !css.includes('.char-card::before'));
   const parts = readFileSync('src/ui/fxParts.js', 'utf8');
-  ok('the glint sweep peaks at the data strength and moves the mask', parts.includes('opacity: DATA.cards.glint.strength, offset: 0.4, maskPosition') && parts.includes("WebkitMaskPosition: `${to} 0`"));
+  ok('the glint sweep peaks at the data strength and slides the band and its copy opposite ways, transforms only (0.00222)', parts.includes("opacity: DATA.cards.glint.strength, offset: 0.4, translate: '0 0'") && parts.includes("img.animate([{ translate: `${-from}px 0` }") && parts.includes("composite: 'add'") && !parts.includes('maskPosition')
+    && parts.includes('if (--band.live <= 0) unmountGlint(u)'));
 }
 
 // Shrine boon and treasure chest cards are lit to their edge
