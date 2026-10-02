@@ -7,7 +7,7 @@
 // reroll: [{ id, n, hint, style } | { id, clean: n }] } for
 // node tools/gen-art.mjs --rerender. Nothing here touches the game.
 
-import { loadData, DATA } from '../../src/shared/data.js';
+import { loadData, DATA, buildQuery } from '../../src/shared/data.js';
 import { createEnemyUnit, createPlayerUnit } from '../../src/ui/battleLine.js';
 import { createRun } from '../../src/run/runState.js';
 import { scaleEnemy } from '../../src/shared/balance.js';
@@ -18,7 +18,7 @@ const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v); } n.append(...kids.filter((k) => k != null && k !== false)); return n; };
 
 await loadData();
-const art = await fetch('assets/data/art.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { chars: {} })).catch(() => ({ chars: {} }));
+const art = await fetch(`assets/data/art.json${buildQuery()}`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { chars: {} })).catch(() => ({ chars: {} }));
 const IDS = ['player', ...Object.keys(DATA.enemies)];
 const nameOf = (id) => (id === 'player' ? 'The Curious Knight' : DATA.enemies[id].name);
 const candidates = (id) => art.chars?.[id]?.candidates ?? [];
@@ -90,8 +90,10 @@ function render() {
   document.body.classList.toggle('fight', S.view === 'fight');
   $('room').style.backgroundImage = `url("assets/bg/${S.painting}")`;
   for (const b of $('views').children) b.classList.toggle('on', b.dataset.view === S.view);
-  ({ compare, lineup, fight })[S.view]();
-  panel();
+  try { ({ compare, lineup, fight })[S.view](); panel(); } catch (e) { // never an empty page: say what broke
+    stage.replaceChildren(el('p', { class: 'hint', style: 'position:absolute; left:16px; top:80px; color:#e0a0a0; font-family:var(--body); text-shadow:0 1px 4px #000; max-width:60ch;' }, `The lab hit an error: ${e.message}. Reload in a minute (a fresh build's data may still be on its way), or open the console.`));
+    console.error(e);
+  }
 }
 
 // ---- the top bar ----

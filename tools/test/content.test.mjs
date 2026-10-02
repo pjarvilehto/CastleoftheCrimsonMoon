@@ -208,6 +208,17 @@ fresh();
   ok('data check names what is missing or not a number', probs.some((p) => p.includes('boss.hpMult')) && probs.some((p) => p.includes('player.baseHp'))
     && probs.some((p) => p.includes('clips.attack.gainDb')), probs.join('; '));
   ok('loadData runs the check', readFileSync('src/shared/data.js', 'utf8').includes('checkData(DATA)'));
+  // 0.187: the data is loaded under ?v=<build> like the code (build.json itself uncached), so a deploy never runs new code on old JSON
+  {
+    const calls = [];
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url, opts) => { calls.push([String(url), opts?.cache]); return orig(url, opts); };
+    await loadData();
+    globalThis.fetch = orig;
+    const v = encodeURIComponent(DATA.build.version);
+    ok('loadData reads build.json uncached first, then every other file under ?v=<build>', calls[0][0] === 'assets/data/build.json' && calls[0][1] === 'no-store'
+      && calls.length === 10 && calls.slice(1).every(([u, c]) => u.endsWith(`.json?v=${v}`) && c === 'no-cache'), JSON.stringify(calls.slice(0, 3)));
+  }
   const leaves = new Set(readFileSync('src/shared/dataCheck.js', 'utf8').match(/'[a-zA-Z.]+'/g).map((s) => s.slice(1, -1).split('.').pop()));
   const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
   const copies = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\.(\w+) \?\? -?[\d.]+/g)]
