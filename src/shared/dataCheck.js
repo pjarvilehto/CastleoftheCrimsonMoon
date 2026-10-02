@@ -86,6 +86,10 @@ export function checkData(data) {
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);
   const bg = data.backgrounds ?? {};
   if (typeof bg.shrineName !== 'string') out.push('backgrounds.json: shrineName');
+  // room 1 is always one of these (0.171): fight paintings, so they're named
+  if (!(bg.entrance?.length > 0) || bg.entrance.some((f) => !bg.rooms?.includes(f))) out.push('backgrounds.json: entrance (fight paintings for room 1)');
+  // the room before each boss is one of these, and only that room (0.171)
+  if (!(bg.antechambers?.length > 0) || bg.antechambers.some((f) => !bg.rooms?.includes(f) || bg.entrance?.includes(f))) out.push('backgrounds.json: antechambers (fight paintings, not entrance ones)');
   for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? [])]) {
     if (typeof bg.roomNames?.[f] !== 'string') out.push(`backgrounds.json: roomNames.${f}`);
   }

@@ -90,9 +90,9 @@ export function dungeonScene() {
       roomStart = { coins: run.coins, xp: run.xp, items: run.itemsFound.length };
       shownCoins = run.coins; // reset counters per room (no tick-up anim)
       shownXp = run.xp;
-      logLine(logEl, firstRoom
-        ? `You enter the castle: ${room.name} (room ${room.number}).`
-        : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
+      logLine(logEl, room.number === null ? `On the way, you come upon ${room.name}.` // a shrine or treasure room (0.171: unnumbered)
+        : firstRoom ? `You enter the castle: ${room.name} (room ${room.number}).`
+          : `You move to the next room... ${room.name} (room ${room.number}).`, 'move');
       render(root);
       narrateRoom(room, firstRoom);
     };
@@ -189,7 +189,7 @@ export function dungeonScene() {
   // ---- treasure (0.155): the shrine's panel, three chests ----
   function renderTreasure(root, room) {
     renderTreasureRoom(root, run, room, {
-      title: [`Room ${room.number} - ${room.name}`, recordTag()],
+      title: [room.name], // (0.171: no number — "The Frozen Tribute")
       logEl, buffBar, coins: shownCoins, xp: shownXp,
       onDeeper: () => nextRoom(root),
       onRetreat: () => endRun(root, 'retreat'),
@@ -200,7 +200,7 @@ export function dungeonScene() {
 
   function renderShrine(root, room) {
     renderShrineRoom(root, run, room, {
-      title: [`Room ${room.number} - ${room.name}`, recordTag()],
+      title: [room.name], // (0.171: no number — "An Ominous Shrine")
       logEl, buffBar, coins: shownCoins, xp: shownXp,
       onDeeper: () => nextRoom(root),
       onRetreat: () => endRun(root, 'retreat'),

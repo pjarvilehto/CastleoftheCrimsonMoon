@@ -35,10 +35,11 @@ export function essentialUrls() {
   return [...art.map(bgUrl), ...art.map(depthUrl), ...chars.map((id) => `assets/chars/${id}.webp`)];
 }
 
-// The room paintings (and their depth maps) not already loaded above.
+// The room paintings (and their depth maps) not already loaded above —
+// the entrance corridors first (0.171: room 1 is always one of them).
 export function roomUrls() {
   const b = DATA.backgrounds, seen = new Set([b.title, b.hub, b.death, b.shrine]);
-  const rooms = [...new Set([...b.rooms, ...b.bosses, ...b.treasure])].filter((f) => !seen.has(f));
+  const rooms = [...new Set([...b.entrance, ...b.rooms, ...b.bosses, ...b.treasure])].filter((f) => !seen.has(f));
   return [...rooms.map(bgUrl), ...rooms.map(depthUrl)];
 }
 

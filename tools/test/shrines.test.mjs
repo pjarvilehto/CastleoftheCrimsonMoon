@@ -7,24 +7,34 @@ import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground
 
 fresh();
 
-// T5: a shrine in every 8-room stretch (rooms 2-7, 10-15, ... — 0.091;
-// it used to be only once per run); boon math
+// T5: a shrine in every 8-room stretch (on the way to rooms 2-7, 10-15, ...
+// — 0.091; it used to be only once per run); boon math. 0.171: only fights
+// are numbered — the shrine is an interlude between them, so a stretch is
+// eight fights, the eighth the boss; room 1 is always an entrance corridor.
 {
   const { enterNextRoom } = await import('../../src/run/runState.js');
-  let placement = true;
+  let placement = true, numbering = true, entrance = true;
   for (let i = 0; i < 40; i++) {
     const r = createRun();
     if (r.shrineRooms[0] < 2 || r.shrineRooms[0] > 7) placement = false;
-    if (generateRoom(r.shrineRooms[0], r).kind !== 'shrine') placement = false;
-    const kinds = [];
-    for (let n = 0; n < 24; n++) kinds.push(enterNextRoom(r).kind);
-    for (let s = 0; s < 3; s++) {
-      const stretch = kinds.slice(s * 8, s * 8 + 8);
-      const at = stretch.indexOf('shrine');
-      if (stretch.filter((k) => k === 'shrine').length !== 1 || at < 1 || at > 6 || stretch[7] !== 'boss') placement = false;
+    const seen = [];
+    while (r.roomNumber < 24) {
+      const room = enterNextRoom(r);
+      seen.push(room);
+      if (room.number === 1 && !DATA.backgrounds.entrance.includes(room.background)) entrance = false;
+      if (room.number && (room.number % 8 === 7) !== DATA.backgrounds.antechambers.includes(room.background)) entrance = false;
+      if (room.kind === 'shrine' || room.kind === 'treasure') { if (room.number !== null || room.depth !== r.roomNumber + 1) numbering = false; }
+      else if (room.number !== r.roomNumber || (room.kind === 'boss') !== (room.number % 8 === 0)) numbering = false;
+    }
+    if (seen.filter((x) => x.number !== null).map((x) => x.number).join() !== Array.from({ length: 24 }, (_, k) => k + 1).join()) numbering = false;
+    for (let st = 0; st < 3; st++) {
+      const shrines = seen.filter((x) => x.kind === 'shrine' && Math.floor((x.depth - 1) / 8) === st);
+      if (shrines.length !== 1 || shrines[0].depth % 8 < 2 || shrines[0].depth % 8 > 7) placement = false;
     }
   }
-  ok('one shrine in every 8-room stretch (2-7, 10-15, 18-23), boss at 8/16/24', placement);
+  ok('fights are numbered 1..24 without gaps, bosses at 8/16/24; shrine and treasure rooms carry no number, only the room they lead to', numbering);
+  ok('room 1 is always an entrance corridor; the room before each boss an antechamber, and only that room', entrance && DATA.backgrounds.entrance.every((f) => /corridor/.test(f)));
+  ok('one shrine in every 8-room stretch (on the way to rooms 2-7, 10-15, 18-23)', placement);
   const run = createRun();
   const [dmg, crit, armor] = shrineOffers();
   const hp0 = run.maxHp, d0 = run.stats.dmg;
@@ -192,11 +202,13 @@ fresh();
     const run = rs.createRun();
     if (run.treasureRoom === null) continue;
     made++;
-    for (let r = 0; r < run.treasureRoom; r++) rs.enterNextRoom(run);
-    if (run.shrineRooms.includes(run.treasureRoom) || run.room.kind !== 'treasure') clash++;
+    while (run.room?.kind !== 'treasure' && run.roomNumber < run.treasureRoom) rs.enterNextRoom(run);
+    if (run.shrineRooms.includes(run.treasureRoom) || run.room.kind !== 'treasure' || run.room.depth !== run.treasureRoom || run.roomNumber !== run.treasureRoom - 1) clash++;
+    if (rs.enterNextRoom(run).number !== run.treasureRoom) clash++; // then the room it led to, numbered
   }
-  ok('treasure: the room is a treasure room (its own painting), the stretch\'s shrine steps aside', made > 50 && clash === 0, `${made} ${clash}`);
-  const room = () => ({ ...generateRoom(12, { treasureRoom: 12 }) });
+  ok('treasure: met on the way to its room (its own painting, no number), the stretch\'s shrine steps aside', made > 50 && clash === 0, `${made} ${clash}`);
+  const { generateInterlude } = await import('../../src/run/roomGen.js');
+  const room = () => ({ ...generateInterlude('treasure', 12, {}) });
   ok('treasure: a treasure room has no enemies and a treasure painting', room().kind === 'treasure' && room().enemies.length === 0 && DATA.backgrounds.treasure.includes(room().background));
   const run1 = rs.createRun(), log = () => {};
   const c0 = run1.coins, got1 = tr.openChest(run1, room(), 'coffer', log);
@@ -213,7 +225,7 @@ fresh();
   let relics = 0;
   for (let i = 0; i < 400; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, room(), 'reliquary', log).itemId]?.tier === 4) relics++; }
   let early = 0;
-  for (let i = 0; i < 200; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, { ...generateRoom(6, { treasureRoom: 6 }) }, 'reliquary', log).itemId]?.tier === 4) early++; }
+  for (let i = 0; i < 200; i++) { const r = rs.createRun(); if (DATA.items[tr.openChest(r, { ...generateInterlude('treasure', 6, {}) }, 'reliquary', log).itemId]?.tier === 4) early++; }
   ok('treasure: the reliquary\'s relic is rare (about relicChance), and never before t4MinRoom', Math.abs(relics / 400 - T.reliquary.relicChance) < 0.06 && early === 0, `${relics} ${early}`);
   Math.random = real;
   // 0.157: a reliquary death leaves no live way on under the YOU DIED dialog

@@ -44,9 +44,12 @@ export function costText(offer, roomNumber) {
   return offer.costDesc;
 }
 
+// Coin prices scale with the room the shrine leads to (0.171: shrines are
+// interludes; run.room.depth), as they did when the shrine had its number.
+const depthOf = (run) => run.room?.depth ?? run.roomNumber;
 const hpFloorOk = (run) => run.maxHp > DATA.shrines.minMaxHp; // keep a sane HP floor
 const dmgFloorOk = (run) => run.stats.dmg > DATA.shrines.minDmg;
-const coinsOk = (run, o) => run.coins >= offerCoinCost(o, run.roomNumber);
+const coinsOk = (run, o) => run.coins >= offerCoinCost(o, depthOf(run));
 
 export function canAffordOffer(run, o) {
   switch (o.id) {
@@ -72,7 +75,7 @@ function payDmg(run, pct) {
   run.stats.dmg = Math.max(1, Math.round(run.stats.dmg * (1 - pct)));
 }
 function payCoins(run, o) {
-  run.coins = Math.max(0, run.coins - offerCoinCost(o, run.roomNumber));
+  run.coins = Math.max(0, run.coins - offerCoinCost(o, depthOf(run)));
 }
 
 // Apply the cost AND the buff. Caller re-renders.

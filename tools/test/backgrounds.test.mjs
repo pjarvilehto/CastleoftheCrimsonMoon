@@ -307,17 +307,21 @@ fresh();
   const thrones = new Set();
   for (let k = 0; k < 40; k++) {
     const run = rs.createRun(), shown = [];
-    for (let n = 0; n < DATA.difficulty.finalBossRoom; n++) {
+    const ante = [];
+    while (run.roomNumber < DATA.difficulty.finalBossRoom) {
       const room = rs.enterNextRoom(run);
       if (room.kind === 'shrine') continue;
+      // the antechambers (0.171) are their own small pool: they repeat only once it's shown out
+      if (DATA.backgrounds.antechambers.includes(room.background)) { ante.push(room.background); continue; }
       shown.push(room.background);
       if (room.isBoss) { thrones.add(room.background); if (!DATA.backgrounds.bosses.includes(room.background)) offPool++; }
     }
     if (new Set(shown).size !== shown.length) repeats++;
+    if (new Set(ante).size !== Math.min(ante.length, DATA.backgrounds.antechambers.length)) repeats++;
   }
   ok('backgrounds: a whole 24-room run shows no painting twice; bosses fight in the throne rooms (all of them, over many runs)',
     repeats === 0 && offPool === 0 && thrones.size === DATA.backgrounds.bosses.length && DATA.backgrounds.bosses.length >= 4, `${repeats} ${offPool} ${thrones.size}`);
   const tiny = { seenBackgrounds: [] };
-  const many = Array.from({ length: DATA.backgrounds.rooms.length + 3 }, (_, i) => generateRoom(i * 8 + 1, tiny).background);
-  ok('backgrounds: a pool shown out starts over rather than failing', many.every(Boolean) && new Set(many).size === DATA.backgrounds.rooms.length);
+  const many = Array.from({ length: DATA.backgrounds.rooms.length + 3 }, (_, i) => generateRoom(i * 8 + 2, tiny).background);
+  ok('backgrounds: a pool shown out starts over rather than failing', many.every(Boolean) && new Set(many).size === DATA.backgrounds.rooms.length - DATA.backgrounds.antechambers.length);
 }

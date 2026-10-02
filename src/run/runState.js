@@ -8,7 +8,7 @@ import { derivedStats, playerLevel } from '../meta/stats.js';
 import { recordRun } from '../meta/history.js';
 import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
 import { equipItems } from '../meta/equipment.js';
-import { generateRoom } from './roomGen.js';
+import { generateRoom, generateInterlude } from './roomGen.js';
 import { rollLoot, potionDrop, takeItem } from './loot.js';
 import { rollTreasureRoom } from './treasure.js';
 import { DATA } from '../shared/data.js';
@@ -16,8 +16,9 @@ import { pick } from '../shared/balance.js';
 
 // One shrine in every stretch of bossEvery rooms (0.091 — it used to be
 // once per run): shrineRoomRange is the room range WITHIN a stretch, so
-// rooms 2-7, 10-15, 18-23, ... Each stretch picks its room on entry —
-// never the run's treasure room (0.155).
+// the shrine comes on the way to room 2-7, 10-15, 18-23, ... (0.171: as an
+// interlude, not in that room's place). Each stretch picks its room on
+// entry — never the one the run's treasure room leads to (0.155).
 function randomShrineRoom(stretch = 0, treasureRoom = null) {
   const [lo, hi] = DATA.difficulty.shrineRoomRange;
   const rooms = [];
@@ -44,8 +45,9 @@ export function createRun() {
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
-    shrineRooms: [randomShrineRoom(0, treasureRoom)], // one per stretch of bossEvery rooms, added on entry
-    treasureRoom,                // the run's treasure room (run/treasure.js), or null
+    shrineRooms: [randomShrineRoom(0, treasureRoom)], // the shrine comes before these rooms: one per stretch, added on entry
+    treasureRoom,                // the treasure room comes before this room (run/treasure.js), or null
+    interludeShown: 0,           // the room whose interlude (shrine / treasure) was already met (0.171)
     seenBackgrounds: [],         // paintings shown this run: none twice while the pool lasts (0.156)
     revive: stats.revive,        // Heart of the Dying Moon — once per run (tryRevive)
     // run history (0.095, meta/history.js): who went in, and the tallies
@@ -62,12 +64,23 @@ export function createRun() {
   };
 }
 
+// The next room: a numbered fight, or first the interlude on the way to
+// it (0.171: shrines and treasure rooms aren't numbered — run.roomNumber
+// counts fights, the boss's included).
 export function enterNextRoom(run) {
-  run.roomNumber += 1;
-  const stretch = Math.floor((run.roomNumber - 1) / DATA.difficulty.bossEvery);
+  const next = run.roomNumber + 1;
+  const stretch = Math.floor((next - 1) / DATA.difficulty.bossEvery);
   run.shrineRooms[stretch] ??= randomShrineRoom(stretch, run.treasureRoom);
   run.tempArmor = 0; // Infusion armor dies with the room
-  run.room = generateRoom(run.roomNumber, run);
+  const interlude = run.interludeShown === next ? null
+    : run.shrineRooms.includes(next) ? 'shrine' : run.treasureRoom === next ? 'treasure' : null;
+  if (interlude) {
+    run.interludeShown = next;
+    run.room = generateInterlude(interlude, next, run);
+  } else {
+    run.roomNumber = next;
+    run.room = generateRoom(next, run);
+  }
   return run.room;
 }
 
