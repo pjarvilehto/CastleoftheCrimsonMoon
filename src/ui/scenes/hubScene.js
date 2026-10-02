@@ -182,13 +182,13 @@ export function hubScene(opts = {}) {
       // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
       // worth the coins, so it gets no enhance button at all (0.068).
       const canForge = !!item && forgeable(id);
-      return el('div', { class: 'item-row' },
-        el('span', { style: 'color:#9a8b6a;flex-shrink:0' }, label),
+      return el('div', { class: 'item-row' }, // (0.00209: classes, not inline styles — the phone layer restyles them)
+        el('span', { class: 'equip-slot' }, label),
         item
           ? el('div', { class: 'equip-right' },
-              el('div', { style: 'text-align:right' },
+              el('div', { class: 'equip-item' },
                 el('div', {}, itemName(item), forgeLvl ? ` +${forgeLvl}` : null),
-                el('div', { style: 'color:#7a6d4f;font-size:0.85rem' }, describeItem(item))),
+                el('div', { class: 'equip-desc' }, describeItem(item))),
               !canForge
               ? null
               : forgeMaxed(id)
@@ -198,7 +198,7 @@ export function hubScene(opts = {}) {
                     disabled: p.coins < forgeCost(id),
                     onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); render(root); },
                   }, `+${forgeCost(id)}c`))
-          : el('span', { style: 'color:#4a4234' }, '— empty —'));
+          : el('span', { class: 'equip-empty' }, '— empty —'));
     };
     const equipSection = el('div', {},
       slotRow('Weapon', eq.weapon),

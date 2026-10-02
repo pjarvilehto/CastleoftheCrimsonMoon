@@ -11,7 +11,8 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~690 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~770 checks, under a second
+node tools/layout-check.mjs          # the layouts, desktop and phone, in a browser (rule 8)
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -153,6 +154,7 @@ labs/                   the testing pages (?debug LABS button): index.html is th
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
+  layout-check.mjs  desktop AND phone: the real game headless at four screens, the layouts' promises asserted (rule 8)
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
   ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197)
   check-bump.mjs        CI: a push to main that changes what players load needs a higher build

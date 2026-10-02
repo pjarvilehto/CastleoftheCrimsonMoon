@@ -62,7 +62,8 @@ before structural changes. This file is the rules and the per-system notes.
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
 node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
-node tools/smoke-test.mjs                    # the suite: ~740 checks, under a second
+node tools/smoke-test.mjs                    # the suite: ~770 checks, under a second
+node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at four screens (rule 8; needs Playwright)
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -134,6 +135,21 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    push (mid-run it waits for the run's end).
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content, new filename.
+8. **Two layouts, one code path (0.00208).** The desktop (tablets too) and
+   the phone share every scene, module and string; the phone differs by
+   `styles.css` section 16 (one media block under `platform.js PHONE_MQ`,
+   overriding the desktop rules screen by screen) and by one assembly
+   (`hubScene.js phoneHall`) plus one wording (`hubText.js` `short`).
+   A change to combat's chrome, the Great Hall, a panel room, a dialog or
+   the corner column is a change to BOTH: find the rule's phone twin in
+   section 16 (the suite fails a phone rule left behind by a rename and a
+   desktop rule removed without its twin), keep new hub rows in the long
+   AND short wording, then run `node tools/layout-check.mjs` — the real
+   game headless at four screens (desktop, tablet, phone, the smallest
+   phone), asserting what each layout promises, screenshots to look at.
+   Never a phone-only feature: a phone wants something, the desktop gets
+   it too (the ☰ column folds, the Attack buttons hide — both are CSS over
+   the one DOM).
 
 ## Working with the owner
 
@@ -594,7 +610,8 @@ Energy Saver), not a slow machine.
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
   combat, shrines, progression, content, backgrounds, audio, sim, history,
-  narration, art, cards),
+  narration, art, cards, layout — the last ties the phone layer to the
+  code and the desktop rules, rule 8),
   each starting from `fresh()`; a test file imports only the harness
   names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim

@@ -348,9 +348,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .loader { max-width: 460px; text-align: center; }
 /* "Mobile platforms not supported yet" (0.125, main.js): the boot stops at
    this card over the title art on phones and tablets */
-.mobile-notice { width: min(460px, calc(100vw - 32px)); box-sizing: border-box; text-align: center; }
-.mobile-notice h1 { font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; }
-.mobile-sub { color: #b8a888; margin: 14px 0 0; text-transform: none; letter-spacing: 0.04em; }
+.mobile-sub { color: #b8a888; margin: 14px 0 0; text-transform: none; letter-spacing: 0.04em; } /* the rotate notice's and the gate's line (the phone notice itself went in 0.00208) */
 .loader-track {
   height: 10px; margin: 18px 0 8px;
   background: #14100c; border: 1px solid var(--gold-dim); border-radius: 6px;
@@ -437,6 +435,10 @@ button.active.potion-remind { animation-duration: 2.2s; }
 
 /* equipment rows with Forge buttons */
 .equip-right { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.equip-slot { color: #9a8b6a; flex-shrink: 0; }
+.equip-item { text-align: right; }
+.equip-desc { color: #7a6d4f; font-size: 0.85rem; }
+.equip-empty { color: #4a4234; }
 .forge-btn { font-size: 0.8rem; padding: 6px 10px; flex-shrink: 0; }
 .forge-max { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.15em; flex-shrink: 0; }
 
@@ -1120,8 +1122,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
   .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
   .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
-  .phone-hub .equip-right > div { display: flex; gap: 6px; align-items: baseline; } /* a slot's name and bonus on one line */
-  .phone-hub .equip-right > div > div:last-child { font-size: 0.7rem !important; }
+  .phone-hub .equip-item { display: flex; gap: 6px; align-items: baseline; } /* a slot's name and bonus on one line */
+  .phone-hub .equip-desc { font-size: 0.7rem; }
   .phone-hub .hub-foot { display: flex; align-items: center; gap: 10px; }
   .phone-hub .hub-foot .records-line { flex: 1; margin: 0; font-size: 0.72rem; text-align: left; letter-spacing: 0.1em; }
   .phone-hub .hub-foot button { min-height: 42px; padding: 0 16px; font-size: 1rem; }
