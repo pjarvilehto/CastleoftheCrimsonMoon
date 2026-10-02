@@ -7,7 +7,12 @@
 // player HP and which enemy cards are down. Each item may carry
 //   snap  — { enemies: [hp...], hp } from the combat event: the view jumps
 //           to it as the line prints, so HP bars move WITH the log
-//   sink  — enemy index whose card goes down one tick after its death line
+//   sink  — enemy index whose card goes down one tick after its death line;
+//           the log then waits (0.00220, the owner's call: the restack used
+//           to land in the middle of the enemies' turn) — onDeath(i) says
+//           when the card has left the row, the row closes up, and after
+//           combatPacing.restackMs the next line prints; deathMaxMs caps the
+//           wait (a hidden tab pauses the animations)
 //   fx    — effect descriptor handed to onFx as the line prints (ui/combatFx.js)
 //   hold  — ms to wait after this item instead of logDelayMs (animations)
 //   sfx   — sound, synced to the printed line
@@ -21,14 +26,17 @@
 //   onSfx(item) — play the line's sound (0.107: the scene places it in
 //                 stereo and times it to the blow — ui/combatSfx.js)
 //   onVo(id)  — say the line's narration (default: the narrator, undelayed)
+//   onDeath(i) — a promise for enemy i's card having left the row (0.00220;
+//                default none: the next tick follows as before)
 
 import { DATA } from '../shared/data.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { logLine } from './hud.js';
 
-export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx), onVo = (id) => narrate(id) }) {
+export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx), onVo = (id) => narrate(id), onDeath = () => null }) {
   let queue = [];
+  let gen = 0;            // bumped by reset(): a death wait from an old room never resumes the new one
   let printing = false;
   let pendingSink = null; // enemy index whose card goes down on the next tick
   let view = null;        // { hp: [], php, dead: [], meters: [] } while printing; null = show real state
@@ -60,6 +68,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
     printing = false;
     pendingSink = null;
     view = null;
+    gen += 1;
   }
 
   function enqueue(item) {
@@ -80,8 +89,17 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         pendingSink = null;
         if (view) view.dead[i] = true;
         onFx({ kind: 'die', to: i });
-        onTick();
-        schedule(step, delay);
+        onTick(); // the card starts its collapse (battleLine.js)
+        // 0.00220: the death is an event of its own — wait for the card to
+        // leave the row, let the row close up, then go on
+        const gone = onDeath(i);
+        if (!gone?.then) { schedule(step, delay); return; }
+        const { restackMs, deathMaxMs } = DATA.difficulty.combatPacing;
+        const g = gen;
+        let resumed = false;
+        const resume = () => { if (resumed || g !== gen) return; resumed = true; schedule(step, restackMs); };
+        gone.then(resume, resume);
+        schedule(resume, deathMaxMs); // (the one timer: the promise's resume cancels it, reset() too)
         return;
       }
       const item = queue.shift();

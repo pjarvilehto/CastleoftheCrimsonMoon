@@ -707,3 +707,49 @@ fresh();
   ok('portraits are not draggable, the battle line cancels drags, its text is unselectable',
     u.portrait.attrs.draggable === 'false' && prevented === 1 && cssL.includes('.battle-line, .unit-actions { user-select: none;') && cssL.includes('.portrait { -webkit-user-drag: none;'));
 }
+
+// T98: 0.00220 (the owner's call) — a death is a playback step of its own:
+// after the death line's sink tick the log waits for the card to leave the
+// row (onDeath's promise), lets the row close up for combatPacing.restackMs,
+// and only then prints the next line; deathMaxMs caps the wait (a hidden
+// tab pauses animations); a reset() while waiting never resumes the old room.
+{
+  const { createPlayback } = await import('../../src/ui/combatPlayback.js');
+  const quiet = { onFx: () => {}, onSfx: () => {}, onVo: () => {} };
+  const log = new El('div');
+  const lines = () => log.children.map((c) => c.textContent);
+  const has = (s) => lines().some((x) => x.includes(s));
+  const { restackMs, deathMaxMs } = DATA.difficulty.combatPacing;
+  const delay = DATA.difficulty.logDelayMs;
+  let leave; const gone = new Promise((r) => { leave = r; });
+  let empty = 0;
+  const pb = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => { empty++; }, onDeath: () => gone });
+  pb.enqueue({ text: 'Rat died!', cls: 'atk', snap: { enemies: [0], hp: 10 }, sink: 0 });
+  pb.enqueue({ text: 'Found 3 coins', cls: 'loot' });
+  pb.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + 10); // the sink tick
+  ok('the death line prints, the card goes down on the next tick, and the next line waits', lines().length === 1 && pb.deadOf(0, 0) === true && pb.isPrinting());
+  await sleep(1500);
+  ok('…for as long as the card is on its way out', lines().length === 1 && pb.isPrinting());
+  leave();
+  await sleep(restackMs - 20);
+  ok('the row closes up for restackMs before the next line', lines().length === 1 && restackMs >= 500);
+  await sleep(40);
+  ok('then the next line prints and the queue drains', lines().length === 2 && (await sleep(delay + 10), empty === 1 && !pb.isPrinting()));
+  const pb2 = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => {}, onDeath: () => new Promise(() => {}) });
+  pb2.enqueue({ text: 'Rat died!', cls: 'atk', sink: 0 }); pb2.enqueue({ text: 'after the cap', cls: 'sys' });
+  pb2.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + deathMaxMs - 50);
+  const held = !has('after the cap');
+  await sleep(100 + restackMs);
+  ok('deathMaxMs caps the wait (an animation that never ends does not hold the fight)', held && has('after the cap') && deathMaxMs >= 2000);
+  let late; const pb3 = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => {}, onDeath: () => new Promise((r) => { late = r; }) });
+  pb3.enqueue({ text: 'Rat died!', cls: 'atk', sink: 0 }); pb3.enqueue({ text: 'stale room', cls: 'sys' });
+  pb3.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + 10);
+  pb3.reset(); // a new room
+  late(); await sleep(restackMs + deathMaxMs + 100);
+  ok('a reset while a card leaves drops the old wait', !has('stale room') && !pb3.isPrinting());
+  ok('the dungeon and the benchmark hand the playback the card\'s leaving (battleRoom.js whenGone)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)')
+    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)'));
+}

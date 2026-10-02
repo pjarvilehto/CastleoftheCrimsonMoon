@@ -19,7 +19,7 @@ const NUM = {
     ...['base', 'perLevel', 'linear', 'tail', 'minStep'].map((k) => `alchemyTracks.efficiency.${k}`),
     'alchemyTracks.infusion.base', 'alchemyTracks.infusion.armorPerLevel',
     ...['baseCost', 'costPerTier', 'statBoostPerLevel', 'maxLevel'].map((k) => `forge.${k}`),
-    ...['playerAttackMs', 'heavyAttackMs', 'enemyAttackMs', 'summonMs'].map((k) => `combatPacing.${k}`),
+    ...['playerAttackMs', 'heavyAttackMs', 'enemyAttackMs', 'summonMs', 'restackMs', 'deathMaxMs'].map((k) => `combatPacing.${k}`),
     'boss.depthBonus', 'boss.hpMult', 'boss.dmgMult',
     ...['every', 'maxAlive', 'hpScale', 'dmgScale', 'depthBonus'].map((k) => `boss.summon.${k}`),
     ...['baseHp', 'hpPerVitality', 'baseDmg', 'dmgPerPower', 'armorPerEndurance', 'baseCrit', 'critCap',

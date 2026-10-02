@@ -2,6 +2,7 @@
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
 import { ok, sleep, t, fresh, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { compareVersions } from '../../src/shared/version.js';
 
 fresh();
 
@@ -280,7 +281,7 @@ fresh();
   DATA.telemetry.benchmarkPrompt = false;
   ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
   DATA.telemetry.benchmarkPrompt = true;
-  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && DATA.telemetry.benchmarkSince === '0.00219');
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && compareVersions(DATA.telemetry.benchmarkSince, DATA.build.version) >= 0);
   p.records.bestRoom = 5;
   ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;

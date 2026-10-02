@@ -62,6 +62,7 @@ export function dungeonScene() {
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
+    onDeath: (i) => ui?.battle.whenGone(i), // the fallen card's leaving and the restack are a step of their own (0.00220)
   });
   const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
 

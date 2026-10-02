@@ -27,10 +27,15 @@ const BOSS_SLOTS = 2;
 
 export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
-  const unit = (i) => createEnemyUnit(combat.enemies[i], i, {
-    onAttack: () => onAttack(i),
-    onGone: () => fit(), // a fallen enemy leaves the row: the slots left grow into the room (0.00216)
-  });
+  const gone = []; // per enemy: resolves once its fallen card has left the row (0.00220: the playback waits for it)
+  const unit = (i) => {
+    let left;
+    gone[i] = new Promise((r) => { left = r; });
+    return createEnemyUnit(combat.enemies[i], i, {
+      onAttack: () => onAttack(i),
+      onGone: () => { fit(); left(); }, // a fallen enemy leaves the row: the slots left grow into the room (0.00216)
+    });
+  };
   const enemies = combat.enemies.map((e, i) => unit(i));
   const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
   // --n drives the card size (styles.css --card-h): crowded rooms shrink
@@ -82,5 +87,6 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
     });
   }
 
-  return { player, enemies, row, line, update, fit };
+  const whenGone = (i) => gone[i] ?? Promise.resolve();
+  return { player, enemies, row, line, update, fit, whenGone };
 }

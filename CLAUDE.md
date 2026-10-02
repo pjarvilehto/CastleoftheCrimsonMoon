@@ -582,7 +582,15 @@ may hear the old one for ~4 hours.
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards
   left grow into the room (`.char-card` eases its height). Combat ends
-  with an empty row.
+  with an empty row. **The death is a step of its own (0.00220, the
+  owner's call — the restack used to land in the middle of the enemies'
+  turn):** after the death line's sink tick the playback waits for the
+  card to leave (`battleRoom.js whenGone(i)` through the scene's
+  `onDeath` hook), lets the row close up for `combatPacing.restackMs`,
+  and only then prints the loot and the enemy phase; `deathMaxMs` caps
+  the wait (a hidden tab pauses animations), `reset()` drops it. A
+  multi-kill does this per victim, in order; an OVERKILL's victims fall
+  together as the replay ends (their kills are silent).
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
   `treasure_*`, names in `backgrounds.json roomNames`) join the 8 castle
   rooms in the random pick. Source PNGs → 2048x1152 JPEG q86 (~370KB);

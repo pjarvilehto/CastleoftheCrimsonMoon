@@ -88,7 +88,9 @@
     "playerAttackMs": 300,
     "heavyAttackMs": 380,
     "enemyAttackMs": 220,
-    "summonMs": 650
+    "summonMs": 650,
+    "restackMs": 550,
+    "deathMaxMs": 2500
   },
   "t4Chance": 0.02,
   "t4MinRoom": 11,
