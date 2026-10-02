@@ -48,17 +48,20 @@ const world = $('world'), map = $('map'), canvas = $('clouds'), pins = $('pins')
 world.style.width = `${W}px`; world.style.height = `${H}px`;
 stage.style.background = '#3a3630'; // under the clouds past the painting: dim, unpainted land (the clouds reach there too)
 map.src = WORLD.image;
-// The cloud layer reaches a whole painting past every edge (0.00214: the
-// world goes on under the clouds past what is painted), at half resolution
-// — the puffs are soft, and a canvas of 3W x 3H at full size would be 11M
-// pixels redrawn every frame. Drawn in picture coordinates: the painting's
-// origin sits at (W, H) of the layer.
-const REACH = 1, CS = 0.5; // paintings past each edge; the canvas scale
+// The cloud layer (0.00215): a canvas the size of the VIEWPORT, redrawn
+// each frame in screen space under the map's current transform (read from
+// the element, so glides and the dive carry it) — never a big canvas CSS-
+// scaled with the map, which the compositor rasterises in tiles whose seams
+// showed as flickering hairlines. It reaches a whole painting past every
+// edge of the picture (the world goes on under the clouds past what is
+// painted), drawn as a repeating pattern slid by the drift.
+const REACH = 1; // paintings past each edge
 const LW = W * (1 + 2 * REACH), LH = H * (1 + 2 * REACH);
-canvas.width = Math.round(LW * CS); canvas.height = Math.round(LH * CS);
-canvas.style.left = `${-REACH * W}px`; canvas.style.top = `${-REACH * H}px`; canvas.style.width = `${LW}px`; canvas.style.height = `${LH}px`;
+let dpr = 1;
+function sizeClouds() { dpr = Math.min(2, globalThis.devicePixelRatio || 1); canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr); }
+sizeClouds();
 const ctx = canvas.getContext('2d');
-let puffs = null; // an offscreen canvas of the clouds, drawn once per density
+let puffs = null, pattern = null; // an offscreen canvas of the clouds, drawn once per density, and the repeating pattern of it (0.00215: tiled by the canvas itself — four drawImage tiles met in a hairline of thinner cloud, whatever the offsets)
 function makePuffs() {
   let s = 7; const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
   const off = document.createElement('canvas'); off.width = W; off.height = H;
@@ -78,6 +81,7 @@ function makePuffs() {
     }
   }
   puffs = off;
+  pattern = ctx.createPattern(off, 'repeat');
 }
 makePuffs();
 const ease = (t) => 1 - Math.pow(1 - t, 3);
@@ -88,12 +92,18 @@ function frame(now) {
   ox = (ox + T.drift * dt) % W; oy = (oy + T.drift * 0.35 * dt) % H;
   // the burns advance
   for (const id of Object.keys(reveal)) if (reveal[id] < 1) reveal[id] = Math.min(1, reveal[id] + dt / T.burn);
-  ctx.setTransform(CS, 0, 0, CS, 0, 0);
-  ctx.clearRect(0, 0, LW, LH);
-  // the tile at whole-pixel offsets (0.00214: fractional ones left hairline seams between the tiles as they drifted)
-  const tx = Math.round(ox), ty = Math.round(oy);
-  for (let i = -1; i <= 1 + 2 * REACH; i++) for (let j = -1; j <= 1 + 2 * REACH; j++) ctx.drawImage(puffs, tx + i * W, ty + j * H);
-  if (T.dark) { ctx.fillStyle = `rgba(20,14,12,${T.dark})`; ctx.fillRect(0, 0, LW, LH); }
+  // the map's transform right now (CSS animates it: the clouds follow the glide and the dive); its affine part — the sky
+  // view's perspective is approximated, the clouds there are in front of the picture anyway
+  const M = new DOMMatrix(getComputedStyle(world).transform);
+  const o = M.transformPoint(new DOMPoint(-W / 2, -H / 2)); // the picture's top-left, relative to the transform origin (the picture's centre, which sits at the screen's centre)
+  const ax = innerWidth / 2 + W / 2 + o.x / (o.w || 1), ay = innerHeight / 2 + H / 2 + o.y / (o.w || 1);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  ctx.setTransform(dpr * M.a, dpr * M.b, dpr * M.c, dpr * M.d, dpr * ax, dpr * ay); // picture px -> device px
+  // the tile as a repeating pattern, slid by the drift: no tile edges, so no seams
+  pattern.setTransform(new DOMMatrix([1, 0, 0, 1, ox, oy]));
+  ctx.fillStyle = pattern; ctx.fillRect(-REACH * W, -REACH * H, LW, LH);
+  if (T.dark) { ctx.fillStyle = `rgba(20,14,12,${T.dark})`; ctx.fillRect(-REACH * W, -REACH * H, LW, LH); }
   ctx.globalCompositeOperation = 'destination-out';
   for (const p of WORLD.places) {
     const st = stateOf(p);
@@ -101,7 +111,7 @@ function frame(now) {
     if (!full) continue;
     const r = full * ease(reveal[p.id] ?? 1) + 6 * Math.sin(time * 0.6 + p.x * 10); // (a slow breath at the edge)
     if (r <= 0) continue;
-    const cx = (p.x + REACH) * W, cy = (p.y + REACH) * H; // (the painting sits one reach in)
+    const cx = p.x * W, cy = p.y * H; // (picture px: the transform above places them)
     const g = ctx.createRadialGradient(cx, cy, r * 0.45, cx, cy, r);
     g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
@@ -221,7 +231,7 @@ $('copy').onclick = async () => {
   $('json').value = json;
   try { await navigator.clipboard.writeText(json); $('status').textContent = 'Copied.'; } catch { $('status').textContent = 'Copy the values from the box.'; }
 };
-addEventListener('resize', () => { if (!document.body.classList.contains('sky')) fitKnown(); });
+addEventListener('resize', () => { sizeClouds(); if (!document.body.classList.contains('sky')) fitKnown(); });
 addEventListener('keydown', (e) => { if (e.key === 'c') $('clear').click(); if (e.key === 'r') $('reset').click(); if (e.key === 'd') { const p = place(picked); if (stateOf(p) === 'open') dive(p); } });
 
 drawPins(); card(); view.tilt = 0; fitKnown();

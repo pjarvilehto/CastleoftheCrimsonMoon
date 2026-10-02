@@ -39,7 +39,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--parchm
   /* the painting's margins fade into the dim land under the clouds, so its rectangle never shows (0.00214) */
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); -webkit-mask-composite: source-in;
   mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); mask-composite: intersect; }
-#clouds { position: absolute; pointer-events: none; } /* its size and place: lab.js (it reaches past the painting) */
+#clouds { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; } /* the viewport's size, drawn in screen space each frame (lab.js): never CSS-scaled — a scaled canvas showed the compositor's raster-tile seams as flickering hairlines (0.00215) */
 #pins { position: absolute; inset: 0; }
 .pin { position: absolute; transform: translate(-50%, -100%); text-align: center; cursor: pointer; transition: opacity 0.6s; }
 .pin.hidden { opacity: 0; pointer-events: none; }
@@ -96,10 +96,10 @@ body.folded #fold { display: block; }
 <div id="stage">
   <div id="world">
     <img class="map" id="map" alt="">
-    <canvas id="clouds"></canvas>
     <div id="pins"></div>
   </div>
 </div>
+<canvas id="clouds"></canvas>
 <div class="redmoon" id="redmoon"></div>
 <div class="scan"></div>
 <div class="vignette"></div>
