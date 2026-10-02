@@ -76,7 +76,7 @@ fresh();
 {
   const lab = readFileSync('labs/art/index.html', 'utf8'), js = readFileSync('labs/art/lab.js', 'utf8');
   ok('art lab: not indexed, resolves from the site root, the game\'s real units over a painting',
-    lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../../">') && lab.includes('src="labs/art/lab.js"')
+    lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../../">') && lab.includes('data-lab="labs/art/lab.js"')
     && js.includes("from '../../src/ui/battleLine.js'") && js.includes('fetch(`assets/data/art.json${buildQuery()}`') && js.includes('assets/bg/${S.painting}'));
   ok('art lab: compare / line-up / fight views, approve / reject with a note, flip, re-rolls, the JSON for the generator',
     ['compare', 'lineup', 'fight'].every((v) => js.includes(`function ${v}()`)) && js.includes("verdict(k, 'ok')") && js.includes("verdict(k, 'no')") && js.includes("'flipped'")

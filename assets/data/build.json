@@ -1,5 +1,5 @@
 {
-  "version": "0.187",
+  "version": "0.188",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -84,6 +84,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.188": [
+      "The labs load the game's modules and their own script under the build number, so a lab never runs the previous build's files after a deploy; an error in a lab is written onto the page"
+    ],
     "0.187": [
       "The game's data files load under the build number like its code, so a fresh build never runs on the old data for the first minutes after a deploy (the Art Lab came up empty in 0.186)"
     ],
@@ -129,9 +132,6 @@
     ],
     "0.174": [
       "Card Lab (test mode, LABS): the combat cards with three ideas to try — a living shader behind each portrait (fog, blood, flames, embers, ether), the cards kicking and turning in 3D, and a glint sweeping the picture as it turns; nothing in the game changes yet"
-    ],
-    "0.173": [
-      "A new swoosh for every room change — the owner's, pitched down to a low rumble, timed so its peak lands in the middle of the crossfade, and a little different every time"
     ]
   }
 }

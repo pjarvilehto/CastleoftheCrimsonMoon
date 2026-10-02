@@ -4,6 +4,7 @@
 import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
   scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
   resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { existsSync } from 'node:fs';
 
 fresh();
 
@@ -245,7 +246,12 @@ fresh();
   const lab = readFileSync('labs/fog/index.html', 'utf8'), js = readFileSync('labs/fog/lab.js', 'utf8');
   ok('fog lab: not indexed, resolves from the site root',
     lab.includes('name="robots" content="noindex"') && lab.includes('<base href="../../">')
-    && lab.includes('id="bg0"') && lab.includes('id="bg1"') && lab.includes('src="labs/fog/lab.js"'));
+    && lab.includes('id="bg0"') && lab.includes('id="bg1"') && lab.includes('data-lab="labs/fog/lab.js"'));
+  // 0.188: every lab that imports the game's modules boots through labs/boot.js (build.json uncached, an import map under ?v=<build>, errors on the page)
+  const boot = readFileSync('labs/boot.js', 'utf8');
+  const labsOnSrc = readdirSync('labs', { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(`labs/${d.name}/lab.js`) && /from '\.\.\/\.\.\/src\//.test(readFileSync(`labs/${d.name}/lab.js`, 'utf8'))).map((d) => d.name);
+  ok('the labs on the game\'s modules load them versioned through labs/boot.js', labsOnSrc.length >= 3 && labsOnSrc.every((d) => readFileSync(`labs/${d}/index.html`, 'utf8').includes(`<script src="labs/boot.js" data-lab="labs/${d}/lab.js"`))
+    && boot.includes("fetch(new URL('assets/data/build.json', document.baseURI).href, { cache: 'no-store' })") && boot.includes("im.type = 'importmap'") && boot.includes("addEventListener('unhandledrejection'"), labsOnSrc.join());
   ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
     js.includes("from '../../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
 }
