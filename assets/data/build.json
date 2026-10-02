@@ -1,5 +1,5 @@
 {
-  "version": "0.00200",
+  "version": "0.00201",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -85,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00201": [
+      "The benchmark no longer asks to run after room 10 (it may come back for testers later)"
+    ],
     "0.00200": [
       "Art Lab: the Vampire Lord's card is twice as wide here too, as in the game since 0.196"
     ],
@@ -130,10 +133,6 @@
     ],
     "0.00187": [
       "The game's data files load under the build number like its code, so a fresh build never runs on the old data for the first minutes after a deploy (the Art Lab came up empty in 0.186)"
-    ],
-    "0.00186": [
-      "Art Lab (test mode, LABS): the portraits redrawn in the room paintings' style on the real cards over any room — current beside the candidates, a line-up of all thirteen, a fight at the game's size; approve, reject, flip, clean, re-roll. A pilot of three (the knight, the rat, the Vampire Lord) is in it; nothing in the game changes yet",
-      "The portrait files are named in the data (enemies.json, cards.json), so a redraw goes in under a new filename"
     ]
   }
 }

@@ -1,4 +1,7 @@
 {
+  "0.00201": [
+    "The benchmark no longer asks to run after room 10 (it may come back for testers later)"
+  ],
   "0.00200": [
     "Art Lab: the Vampire Lord's card is twice as wide here too, as in the game since 0.196"
   ],
