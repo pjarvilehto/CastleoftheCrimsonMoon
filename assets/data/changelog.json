@@ -1,4 +1,7 @@
 {
+  "0.00221": [
+    "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
+  ],
   "0.00220": [
     "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
     "The benchmark round moved with it: a benchmark from an older build is asked again"

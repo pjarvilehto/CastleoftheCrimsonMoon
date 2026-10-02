@@ -1,5 +1,5 @@
 {
-  "version": "0.00220",
+  "version": "0.00221",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00221": [
+      "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
+    ],
     "0.00220": [
       "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
       "The benchmark round moved with it: a benchmark from an older build is asked again"
@@ -138,10 +141,6 @@
     ],
     "0.00207": [
       "The Great Hall's panels fit a laptop screen again without a scrollbar (0.00205's tablet budget was too generous on the desktop)"
-    ],
-    "0.00206": [
-      "Low on health with no potion left, Retreat with Loot pulses red after a cleared room and Push Deeper stays plain (drink one and it flips back)",
-      "Attack buttons breathe faintly in red while it is your move — the recharged Heavy Attack no longer glows alone"
     ]
   }
 }

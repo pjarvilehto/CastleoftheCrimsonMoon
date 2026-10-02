@@ -287,7 +287,7 @@ fresh();
   DATA.telemetry.benchmarkPrompt = false;
   ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
   DATA.telemetry.benchmarkPrompt = true;
-  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && compareVersions(DATA.telemetry.benchmarkSince, DATA.build.version) >= 0);
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && compareVersions(DATA.telemetry.benchmarkSince, DATA.build.version) <= 0); // the round is a shipped build, never one ahead of build.json (ship.mjs runs the suite after the bump)
   p.records.bestRoom = 5;
   ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;
