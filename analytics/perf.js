@@ -6,6 +6,7 @@
 // from other people's browsers: sanitize first, esc() every string.
 
 import { esc } from './charts.js';
+import { compareVersions } from '../src/shared/version.js';
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const str = (v, max) => (v === null || v === undefined ? '' : String(v).slice(0, max).replace(/[\u0000-\u001f\u007f]/g, ''));
@@ -85,13 +86,18 @@ export function sanitizeBench(list) {
   }).filter(Boolean);
 }
 
-export function benchTable(players) {
+// since (0.00221): telemetry.json benchmarkSince, the current round — a result
+// from an older build gets its own Build column mark and a muted row (the
+// script or what it draws changed since, so its numbers do not compare).
+export function benchTable(players, since = '') {
   const rows = players.flatMap((pl) => (pl.profile.bench ?? []).map((b) => ({ pl, b }))).sort((x, y) => y.b.at - x.b.at);
   if (!rows.length) return '<p class="empty">No benchmarks yet: in the game with ?debug, press BENCHMARK (about 40 seconds).</p>';
   const phase = (p) => (p ? `<span class="${grade(p.fps, p.hz)}">${p.fps.toFixed(1)}</span><small>${p.p95} ms · ${p.drop.toFixed(1)}% dropped${capped(p.hz)}</small>` : '—');
-  return `<div class="scroll"><table><tr><th>Player</th><th>When</th>${PHASES.map(([, l]) => `<th>${l}</th>`).join('')}<th>Screen</th><th>Background</th><th>Device</th></tr>${rows.map(({ pl, b }) => {
+  const older = (b) => !!since && compareVersions(b.build, since) < 0;
+  const round = since ? `<p class="help">Build = the game build the benchmark ran on. The current round is build ${esc(since)}: rows from older builds are muted — the scripted fight or what it draws changed since, so their numbers do not compare with the newer ones.</p>` : '';
+  return `${round}<div class="scroll"><table><tr><th>Player</th><th>When</th><th>Build</th>${PHASES.map(([, l]) => `<th>${l}</th>`).join('')}<th>Screen</th><th>Background</th><th>Device</th></tr>${rows.map(({ pl, b }) => {
     const d = pl.device;
-    return `<tr><td>${esc(pl.label)}</td><td>${esc(new Date(b.at).toLocaleString())}<small>build ${esc(b.build)}</small></td>`
+    return `<tr${older(b) ? ' class="bench-old"' : ''}><td>${esc(pl.label)}</td><td>${esc(new Date(b.at).toLocaleString())}</td><td>${esc(b.build)}${older(b) ? '<small>older round</small>' : ''}</td>`
       + PHASES.map(([k]) => `<td>${phase(b.phases[k])}</td>`).join('')
       + `<td>${b.vw}×${b.vh}<small>@${b.dpr}x</small></td><td>${esc(bgText(b))}</td>`
       + `<td>${d ? `<span title="${esc(d.gpu)}">${esc(gpuShort(d.gpu))}</span><small>${esc([d.browser, d.os].filter(Boolean).join(' · '))}</small>` : '<small>not reported</small>'}</td></tr>`;

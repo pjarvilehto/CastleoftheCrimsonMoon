@@ -258,8 +258,14 @@ fresh();
   const pf = await import('../../analytics/perf.js');
   const bench = pf.sanitizeBench([{ at: 7, build: '<i>', bg: '3d', q: 0, dpr: 2, vw: 1440, vh: 900, phases: { idle: { fps: 60, p95: 17, drop: 0, worst: 30, hz: 60 }, combat: { fps: 44, p95: 31, drop: 18, worst: 120, hz: 60 } } }]);
   const html = pf.benchTable([{ label: 'A', profile: { bench }, device: null }]);
-  ok('dashboard: Benchmarks card, escaped, graded per phase', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
-    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown), true)"));
+  ok('dashboard: Benchmarks card, escaped, graded per phase, the build in its own column', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
+    && html.includes('<th>Build</th>') && !html.includes('bench-old')
+    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown, data.benchmarkSince), true)"));
+  // 0.00221: the current round (telemetry.json benchmarkSince) — an older build's row is marked and muted, a newer one is not
+  const two = pf.sanitizeBench([{ at: 1, build: '0.00218', phases: {} }, { at: 2, build: '0.00221', phases: {} }]);
+  const roundHtml = pf.benchTable([{ label: 'A', profile: { bench: two }, device: null }], '0.00220');
+  ok('dashboard: a benchmark from before the current round is marked "older round"', (roundHtml.match(/bench-old/g) ?? []).length === 1 && roundHtml.includes('older round') && roundHtml.includes('current round is build 0.00220')
+    && roundHtml.indexOf('0.00221') < roundHtml.indexOf('0.00218'));
   ok('BENCHMARK sits in the ?debug column and asks first', readFileSync('src/ui/debugToggles.js', 'utf8').includes('benchmarkButton()')
     && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark')"));
   getProfile().bench = [];

@@ -71,6 +71,7 @@ tr.retreat td:nth-child(4) { color: #7bc98a; }
 .empty { color: var(--muted); margin: 6px 0; }
 /* Performance card (0.130): FPS against the screen's refresh rate */
 .perf-good { color: #7bc98a; }
+tr.bench-old td { opacity: 0.55; } /* a benchmark from before the current round (0.00221) */
 .perf-ok { color: #e0b84a; }
 .perf-bad { color: var(--red); }
 @media (max-width: 760px) {
