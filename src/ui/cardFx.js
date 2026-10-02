@@ -79,7 +79,11 @@ void main() {
     float a = (r * 0.7 + r2 * 0.5) * smoothstep(1.05, 0.2, uv.y);
     c = uTint * a * 1.3;
   }
-  gl_FragColor = vec4(c * uAmt * window(uv), 1.0);
+  // premultiplied: the light inside the window, transparent outside it
+  // (0.185: an opaque black outside showed as a rim where the frame art is
+  // transparent — screen blending has nothing to blend with there)
+  float w = window(uv);
+  gl_FragColor = vec4(c * uAmt * w, w);
 }`;
 
 export const LOOKS = ['none', 'fog', 'blood', 'flames', 'embers', 'ether']; // the shader's uLook order
@@ -130,7 +134,7 @@ function sharedGl() {
   try {
     const canvas = document.createElement('canvas');
     canvas.width = SIZE; canvas.height = SIZE;
-    const gl = canvas.getContext?.('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
+    const gl = canvas.getContext?.('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
     if (!gl) { failed = true; return null; }
     const prog = compile(gl);
     gl.useProgram(prog);
@@ -155,6 +159,7 @@ export function attachCardFx(card, style, { window = 'frame', amt } = {}) {
   const ctx = canvas.getContext?.('2d');
   if (!ctx || !sharedGl()) return null;
   canvas.width = 8; canvas.height = 8;
+  ctx.globalCompositeOperation = 'copy'; // each frame replaces the last, alpha included
   card.insertBefore(canvas, card.children[0] ?? null);
   const e = { card, canvas, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? DATA.cards.fx.amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
   entries.push(e);
@@ -181,7 +186,7 @@ function tick(now) {
     if (e.card.classList.contains('dead')) continue; // a dead card keeps its last frame (faint anyway)
     const w = Math.min(SIZE, Math.max(8, Math.round(e.card.clientWidth * F.scale) || 8));
     const h = Math.min(SIZE, Math.max(8, Math.round(e.card.clientHeight * F.scale) || 8));
-    if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; }
+    if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets the context)
     e.t += dt * F.speed;
     gl.viewport(0, SIZE - h, w, h); // the top-left corner of the hidden canvas, as an image
     gl.uniform1f(loc.uT, e.t); gl.uniform1f(loc.uAmt, e.amt);

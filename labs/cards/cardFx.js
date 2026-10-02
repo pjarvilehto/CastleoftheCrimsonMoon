@@ -27,7 +27,7 @@ function program(gl) {
 export function attachCardFx(card, opts = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'card-fx';
-  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: true });
+  const gl = canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true }); // (0.185: transparent outside the window, as in the game)
   if (!gl) return { set() {} };
   const prog = program(gl);
   gl.useProgram(prog);
