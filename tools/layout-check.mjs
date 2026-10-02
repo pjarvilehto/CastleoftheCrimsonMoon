@@ -153,6 +153,9 @@ async function run(name, opts, url) {
     check(name, "hub: Descend starts the descent (its go('dungeon') is not dropped)", started);
     await page.waitForSelector('.battle-line', { state: 'attached', timeout: 150000 });
     await page.waitForTimeout(4500);
+    await settled(page);
+    // the deal (the cards slide in from the sides) must be over before the geometry is read — under software GL it can outlast the wait above (0.00223: a card measured mid-flight)
+    await page.evaluate(() => Promise.race([Promise.all([...document.querySelectorAll('.unit')].flatMap((u) => u.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {})))), new Promise((r) => setTimeout(r, 8000))]));
     const fight = await page.evaluate(() => {
       const r = (e) => e.getBoundingClientRect();
       const atk = [...document.querySelectorAll('.enemy-unit .unit-actions button')].map((b) => r(b));
