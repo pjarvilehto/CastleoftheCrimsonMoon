@@ -1184,6 +1184,9 @@ html.phone .treasure-cards .shrine-card { padding-bottom: 4px; }
 html.phone .update-modal { padding: 14px 22px 12px; max-height: 94svh; overflow-y: auto; }
 html.phone .update-notes { max-height: calc(100svh - 200px); margin-bottom: 8px; } /* what is left after the title, the question and the buttons */
 html.phone .update-title { font-size: 1.25rem; margin-bottom: 8px; }
+html.phone .bench-table { margin: 0 0 8px; } /* the benchmark result (0.00219): its table tighter, so Close stays on the smallest phone's screen */
+html.phone .bench-table td { padding: 3px 8px; }
+html.phone .bench-table th { padding: 2px 8px; font-size: 0.75rem; }
 html.phone .update-overlay:has(.name-input, html.phone .save-code) { align-items: flex-start; padding-top: 6px; }
 html.phone .death-modal { padding: 14px 22px; }
 html.phone #app > .panel.title-panel { padding: 12px 22px; }

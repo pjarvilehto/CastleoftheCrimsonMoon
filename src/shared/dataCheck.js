@@ -113,6 +113,7 @@ export function checkData(data) {
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);
   const bg = data.backgrounds ?? {};
   if (typeof data.telemetry?.benchmarkPrompt !== 'boolean') out.push('telemetry.json: benchmarkPrompt (true / false)');
+  if (!/^\d+(\.\d+)+$/.test(String(data.telemetry?.benchmarkSince))) out.push('telemetry.json: benchmarkSince (a build number: results from older builds do not count)');
   if (typeof bg.shrineName !== 'string') out.push('backgrounds.json: shrineName');
   // room 1 is always one of these (0.171): fight paintings, so they're named
   if (!(bg.entrance?.length > 0) || bg.entrance.some((f) => !bg.rooms?.includes(f))) out.push('backgrounds.json: entrance (fight paintings for room 1)');

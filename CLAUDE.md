@@ -613,16 +613,27 @@ collected players, this browser's save and pasted save codes (untrusted:
 (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's
 quality ladder held; result → `profile.bench` (newest 10, never the run
-history) → the dashboard's Benchmarks card. **The ask is off since
-0.00201** (`telemetry.json benchmarkPrompt: false`, the owner's call —
-back on for testers when needed; the `?debug` button still runs it). When
-on, every player is asked once,
-entering the Great Hall with best room ≥ `benchmarkPromptRoom` (10) and no
-result yet (Continue only; it waits while another dialog is up and never
-interrupts a descent). Changing the script (`PHASES`) changes what the
-numbers mean — say so in the changelist. Reading results: a 30 Hz rate
-means the browser capped the page (macOS Low Power Mode, Chrome / Brave
-Energy Saver), not a slow machine.
+history) → the dashboard's Benchmarks card. **The ask** (`telemetry.json
+benchmarkPrompt`; off 0.00201–0.00218, on again since 0.00219 for the
+phone testers; the `?debug` button runs it either way): every player is
+asked once, entering the Great Hall with best room ≥ `benchmarkPromptRoom`
+(6) and no result from this round yet (Continue only; it waits while
+another dialog is up and never interrupts a descent). **A round** is
+`benchmarkSince` (0.00219): a result from an older build does not count,
+so raising it to the build being shipped asks everyone again — do that
+when the script (`PHASES`) or what it draws changes (the card effects in
+0.183, the fallen cards leaving in 0.00216): the numbers mean something
+else then; say so in the changelist. **Phones (0.00219):** the scene
+holds a screen wake lock for the hands-off 40 s (where the browser has
+the API), and a benchmark that went to the background partway (the
+lock, a call, the home button — no frames are drawn there) is not saved:
+"Benchmark interrupted", and the hall asks again. Reading results: a
+30 Hz rate means the browser capped the page (macOS Low Power Mode, iOS
+Low Power Mode, Chrome / Brave Energy Saver), not a slow machine; every
+iPhone reports its GPU as "Apple GPU" (Android names the real one), so
+the tester name, the screen size and the DPR tell the phones apart; a
+phone that stepped down the quality ladder during the run before the
+hall benchmarks at that step (`q` on the result, shown on the dashboard).
 
 ## Testing notes
 

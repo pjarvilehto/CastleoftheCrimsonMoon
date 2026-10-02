@@ -265,8 +265,8 @@ fresh();
 }
 
 // T94: 0.133 — every player is asked once: entering the Great Hall with a
-// best room of telemetry.json benchmarkPromptRoom (10) or more and no
-// result yet, a dialog offers only Continue; the benchmark plays (virtual
+// best room of telemetry.json benchmarkPromptRoom (6 since 0.00219) or more
+// and no result from this round (benchmarkSince) yet, a dialog offers only Continue; the benchmark plays (virtual
 // time), saves its result and returns to the Great Hall — no second ask.
 {
   const bm = await import('../../src/ui/benchmark.js');
@@ -274,16 +274,23 @@ fresh();
   DATA.telemetry.endpoint = 'https://stats.example';
   fresh();
   const p = getProfile();
-  // 0.00201: the ask is off in the shipped data (the owner's call); the rest of this block turns it on
+  // 0.00201 turned the ask off (the owner's call); 0.00219 turned it on again for the phone testers, from room 6
+  const bp = DATA.telemetry.benchmarkPrompt;
   p.records.bestRoom = 12;
-  ok('the benchmark ask is off as shipped (telemetry.json benchmarkPrompt)', DATA.telemetry.benchmarkPrompt === false && !bm.benchmarkDue(p));
+  DATA.telemetry.benchmarkPrompt = false;
+  ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
   DATA.telemetry.benchmarkPrompt = true;
-  p.records.bestRoom = 9;
-  ok('not due before room 10, or without stats collection', !bm.benchmarkDue(p) && DATA.telemetry.benchmarkPromptRoom === 10);
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && DATA.telemetry.benchmarkSince === '0.00219');
+  p.records.bestRoom = 5;
+  ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;
-  ok('due from room 10 on, until a result exists', bm.benchmarkDue(p) && !bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
+  ok('due from room 6 on, until a result from this round exists (an older build\'s does not count)', bm.benchmarkDue(p)
+    && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: DATA.telemetry.benchmarkSince }] }) && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00300' }] })
+    && bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00218' }] }) && bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
     && !(DATA.telemetry.endpoint = '', bm.benchmarkDue(p)) && (DATA.telemetry.endpoint = 'https://stats.example'));
   ok('the prompt quotes the real length', bm.benchmarkSeconds() === 40 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
+  const since = DATA.telemetry.benchmarkSince;
+  DATA.telemetry.benchmarkSince = DATA.build.version; // this round = the build under test (ship.mjs bumps build.json after the suite's first run)
   const realBody = globalThis.document.body;
   const body = new El('body');
   globalThis.document.body = body;
@@ -307,9 +314,29 @@ fresh();
   handleKey(' ');
   await sleep(1100);
   ok('back to the Great Hall, and it does not ask again', t().includes('GREAT HALL') && (await sleep(2500), !dlg()));
+  // 0.00219 (phones): the benchmark keeps the screen awake where it can, and one that went to the
+  // background partway (a call, the lock) is not saved — the hall asks again
+  getProfile().bench = [];
+  const { benchmarkScene } = await import('../../src/ui/scenes/benchmarkScene.js');
+  const vis = () => (globalThis.document.listeners.visibilitychange ?? []).length; // (other modules listen too: count the benchmark's own)
+  const before = vis();
+  show(benchmarkScene({ returnTo: 'hub' }));
+  await sleep(1300);
+  const listening = vis() - before;
+  globalThis.document.hidden = true;
+  for (const fn of globalThis.document.listeners.visibilitychange ?? []) fn();
+  globalThis.document.hidden = false;
+  await sleep(45000);
+  const cut = dlg();
+  ok('a benchmark that went to the background is not saved and says so', listening === 1 && cut && cut.textContent.includes('Benchmark interrupted') && cut.textContent.includes('ask again')
+    && getProfile().bench.length === 0 && bm.benchmarkDue(getProfile()) && vis() === before);
+  handleKey(' ');
+  await sleep(1100);
+  ok('…and the Great Hall asks again', t().includes('GREAT HALL') && (await sleep(2500), !!dlg() && dlg().textContent.includes('A quick benchmark')));
+  handleKey(' '); await sleep(1300); await sleep(45000); handleKey(' '); await sleep(1100); // let it finish cleanly before the next block
   globalThis.document.body = realBody;
   DATA.telemetry.endpoint = ep;
-  DATA.telemetry.benchmarkPrompt = false;
+  DATA.telemetry.benchmarkPrompt = bp; DATA.telemetry.benchmarkSince = since;
   fresh();
 }
 
@@ -321,7 +348,8 @@ fresh();
   DATA.telemetry.endpoint = 'https://stats.example';
   fresh();
   const p = getProfile();
-  DATA.telemetry.benchmarkPrompt = true; // (off as shipped, 0.00201)
+  const bp = DATA.telemetry.benchmarkPrompt;
+  DATA.telemetry.benchmarkPrompt = true;
   p.records.bestRoom = 12; p.coins = 522; // unspent coins: Descend asks first
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -346,7 +374,7 @@ fresh();
   handleKey(' ');
   await sleep(1100);
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = false;
+  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = bp;
   fresh();
 }
 

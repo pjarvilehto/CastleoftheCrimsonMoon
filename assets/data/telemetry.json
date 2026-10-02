@@ -1,7 +1,8 @@
 {
-  "_doc": "Automatic play stats (0.102): when endpoint is set, the game sends this browser's run history (anonymous random player id, no personal data) to the collector Worker in collector/ after every run and once per session; the /analytics/ dashboard reads it back. Empty endpoint = nothing is sent. Setup: collector/README.md. collectorVersion (0.119): the collector/worker.js VERSION this build expects; the dashboard warns when the deployed Worker reports another (it is updated by pasting collector/worker.js into the Cloudflare dashboard). benchmarkPromptRoom (0.133): once a player's best room reaches this, the Great Hall asks them (once, until a result exists) to run the BENCHMARK (ui/benchmark.js). benchmarkPrompt (0.00201): that ask on or off — off for now (the owner's call: back on for testers when needed); the ?debug BENCHMARK button works either way.",
+  "_doc": "Automatic play stats (0.102): when endpoint is set, the game sends this browser's run history (anonymous random player id, no personal data) to the collector Worker in collector/ after every run and once per session; the /analytics/ dashboard reads it back. Empty endpoint = nothing is sent. Setup: collector/README.md. collectorVersion (0.119): the collector/worker.js VERSION this build expects; the dashboard warns when the deployed Worker reports another (it is updated by pasting collector/worker.js into the Cloudflare dashboard). benchmarkPromptRoom (0.133): once a player's best room reaches this, the Great Hall asks them (once, until a result exists) to run the BENCHMARK (ui/benchmark.js). benchmarkPrompt (0.00201): that ask on or off (off 0.00201–0.00218; on again since 0.00219 for the phone testers, from room 6); the ?debug BENCHMARK button works either way. benchmarkSince (0.00219): a result from a build older than this does not count — raising it to the build being shipped asks everyone again (a new round of benchmarks).",
   "endpoint": "https://castle-stats.petri-jarvilehto.workers.dev",
   "collectorVersion": "0.131",
-  "benchmarkPrompt": false,
-  "benchmarkPromptRoom": 10
+  "benchmarkPrompt": true,
+  "benchmarkPromptRoom": 6,
+  "benchmarkSince": "0.00219"
 }

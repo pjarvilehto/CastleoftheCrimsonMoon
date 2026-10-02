@@ -11,6 +11,11 @@
 //   overkill  a heavier exterior scene, a room-wiping OVERKILL every turn
 // Nothing touches the run history: the result is saved to profile.bench
 // (meta/profile.js recordBenchmark) and goes out with the play stats.
+// Phones (0.00219): the screen is kept awake for the hands-off 40 s (the
+// Wake Lock API, where the browser has it — a locked phone stops the
+// frames), and a benchmark that went to the background partway (a call,
+// the home button, the lock) is not saved: the frames were never drawn,
+// and the Great Hall asks again next time.
 
 import { setBackground, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -47,7 +52,9 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
   const realRandom = Math.random, debugWas = { ...DEBUG }; // restored as it ends
   let run = null, combat = null, ui = null, root = null, logEl = null;
   let phase = -1, rec = null, endsAt = 0, last = 0, done = false, turn = 0, botTimer = null;
+  let wakeLock = null, interrupted = false;
   const results = {};
+  const onVisibility = () => { if (document.hidden) interrupted = true; };
 
   const playback = createPlayback({
     logEl: () => logEl,
@@ -67,6 +74,8 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
       // the knight can't die; the ?debug crit toggles must not change the fight (0.136)
       Object.assign(DEBUG, { invulnerable: true, forceCrit: false, forceMegaCrit: false });
       holdQuality(true); // measure at this machine's current quality; never step it down here
+      document.addEventListener('visibilitychange', onVisibility);
+      navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; if (done) l.release().catch(() => {}); }).catch(() => {}); // a phone's screen stays on
       run = createRun();
       Object.assign(run.stats, { dmg: 12, crit: 0.3, armor: 30, maxHp: 400 });
       run.hp = run.maxHp = 400;
@@ -155,6 +164,9 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     Math.random = realRandom;
     Object.assign(DEBUG, debugWas);
     holdQuality(false);
+    document.removeEventListener('visibilitychange', onVisibility);
+    wakeLock?.release().catch(() => {}); wakeLock = null;
+    if (interrupted || document.hidden) return showBenchmarkResult({ interrupted: true }, () => go(returnTo), returnTo === 'hub'); // not saved: it asks again
     const result = {
       at: Date.now(), build: DATA.build?.version ?? '?',
       bg: isBg3dActive() ? '3d' : 'flat', q: isBg3dActive() ? bgQualityLevel() : -1,

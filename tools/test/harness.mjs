@@ -82,6 +82,7 @@ export class El {
   setAttribute(k, v) { this.attrs[k] = v; }
   removeAttribute(k) { delete this.attrs[k]; }
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); }
+  removeEventListener(t, fn) { this.listeners[t] = (this.listeners[t] ?? []).filter((f) => f !== fn); }
   append(...nodes) {
     for (const n of nodes) {
       if (n instanceof El) { n.parent = this; this.children.push(n); }
@@ -138,6 +139,8 @@ globalThis.document = {
   createTextNode: (t) => ({ text: t, textContent: t, walk() {} }),
   listeners: {},
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); },
+  removeEventListener(t, fn) { this.listeners[t] = (this.listeners[t] ?? []).filter((f) => f !== fn); },
+  hidden: false, // a test sets it and fires document.listeners.visibilitychange (the benchmark, 0.00219)
   // the scene (#app), then the dialogs on body (0.157: the death dialog is one)
   querySelector: (sel) => { let hit = null; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (!hit && match(e, sel)) hit = e; }); return hit; },
   querySelectorAll: (sel) => { const out = []; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (match(e, sel)) out.push(e); }); return out; },

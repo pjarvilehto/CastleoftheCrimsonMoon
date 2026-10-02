@@ -10,6 +10,10 @@
 // benchmarkPromptRoom (10) or more, a dialog explains and offers only
 // Continue; the benchmark then returns to the Great Hall. Closing the tab
 // instead just means the question comes back next visit.
+// 0.00219: on again for the phone testers, from room 6; a result counts
+// only from telemetry.json benchmarkSince on, so raising that knob asks
+// everyone for a fresh round (the script's numbers moved with 0.183's
+// card effects and the phone layer).
 
 import { el } from '../core/dom.js';
 import { go, currentScene } from '../core/scene.js';
@@ -18,6 +22,7 @@ import { confirmPrompt } from './confirmPrompt.js';
 import { shareStats } from '../meta/telemetry.js';
 import { getProfile } from '../meta/profile.js';
 import { DATA } from '../shared/data.js';
+import { compareVersions } from '../shared/version.js';
 
 export function benchmarkButton() {
   return el('button', { class: 'debug-toggle benchmark-toggle', onclick: askBenchmark }, 'BENCHMARK');
@@ -36,10 +41,13 @@ export const PHASES = [
 // rounded up to 5 s.
 export const benchmarkSeconds = () => Math.ceil((PHASES.reduce((s, p) => s + p.secs, 0) + 4) / 5) * 5;
 
-// Due: the ask is on (telemetry.json benchmarkPrompt; off since 0.00201),
-// no result yet, far enough in, and stats are being collected.
+// Due: the ask is on (telemetry.json benchmarkPrompt), no result from this
+// round yet (a build at or after benchmarkSince), far enough in, and stats
+// are being collected.
 export function benchmarkDue(p) {
-  return DATA.telemetry.benchmarkPrompt === true && !!DATA.telemetry?.endpoint && !(p.bench?.length > 0) && p.records.bestRoom >= DATA.telemetry.benchmarkPromptRoom;
+  const t = DATA.telemetry;
+  const fresh = (p.bench ?? []).some((b) => compareVersions(b?.build, t.benchmarkSince) >= 0);
+  return t.benchmarkPrompt === true && !!t.endpoint && !fresh && p.records.bestRoom >= t.benchmarkPromptRoom;
 }
 
 // true = asked; 'wait' = due, but another dialog is up (0.134: it opened on
@@ -55,9 +63,9 @@ export function maybeAskBenchmark() {
     label: 'Benchmark', proceed: start, onClose: () => { asking = false; },
     children: [
       el('h2', { class: 'update-title' }, 'A quick benchmark'),
-      el('p', { class: 'update-ask' }, `The game will sometimes ask you to run a benchmark. It takes about ${benchmarkSeconds()} seconds: a short scripted fight plays by itself while the game measures how smoothly it runs on this computer.`),
+      el('p', { class: 'update-ask' }, `The game will sometimes ask you to run a benchmark. It takes about ${benchmarkSeconds()} seconds: a short scripted fight plays by itself while the game measures how smoothly it runs on this device.`),
       el('p', { class: 'update-ask' }, 'Your save and runs are not touched. Thank you for your patience, it helps make the game run well everywhere.'),
-      el('p', { class: 'update-ask bench-note' }, 'Please keep this window in front and leave the mouse and keyboard alone until it finishes.'),
+      el('p', { class: 'update-ask bench-note' }, 'Please keep the game in front and leave it alone until it finishes: no taps, keys or clicks.'),
       el('div', { class: 'btn-row' }, start),
     ],
     onKey: (k) => { if (k === 'c' || k === 'enter') start.click(); }, // Space: proceed; nothing skips it
@@ -70,7 +78,7 @@ function askBenchmark() {
   confirmPrompt({
     title: 'Benchmark',
     lines: [`About ${benchmarkSeconds()} seconds of scripted combat: the room at rest, a long fight, then OVERKILL after OVERKILL.`,
-      'Keep this window in front and leave the mouse and keyboard alone. Your save and run history are not touched.'],
+      'Keep the game in front and leave it alone: no taps, keys or clicks. Your save and run history are not touched.'],
     yes: ['Start', 's'], no: ['Cancel', 'c'],
     onYes: () => go('benchmark'),
   });
@@ -78,7 +86,23 @@ function askBenchmark() {
 
 const ROWS = [['idle', 'Idle'], ['combat', 'Combat'], ['overkill', 'Overkill']];
 
+// r.interrupted (0.00219): the game went to the background during the
+// benchmark — nothing was measured or saved, and the ask comes back.
 export function showBenchmarkResult(r, onClose, thanks = false) {
+  if (r.interrupted) {
+    const ok = el('button', { class: 'primary active', key: 'c', proceed: true, onclick: () => dlg.close() }, 'Close');
+    const dlg = openDialog({
+      label: 'Benchmark interrupted', proceed: ok, onClose,
+      children: [
+        el('h2', { class: 'update-title' }, 'Benchmark interrupted'),
+        el('p', { class: 'update-ask' }, 'The game went to the background partway through, so nothing was measured or saved.'),
+        el('p', { class: 'update-ask bench-note' }, thanks ? 'The Great Hall will ask again on another visit. Keep the game in front for the whole run.' : 'Run it again and keep the game in front for the whole run.'),
+        el('div', { class: 'btn-row' }, ok),
+      ],
+      onKey: (k, closeIt) => { if (k === 'c' || k === 'enter' || k === 'escape') closeIt(); },
+    });
+    return dlg;
+  }
   shareStats(getProfile()); // the result goes to the stats right away
   const cell = (p, f) => (p ? f(p) : '—');
   const table = el('table', { class: 'bench-table' },
