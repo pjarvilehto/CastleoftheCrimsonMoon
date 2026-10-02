@@ -23,6 +23,8 @@
 //                                                         # shadow, panel and signature painted out by Kontext
 //   node tools/gen-art.mjs --import [--only rat] [--pick rat=2]   # the approved candidate (or the pick)
 //                                                         # into the game under a NEW filename (rat_v2.webp)
+//   node tools/gen-art.mjs --prune [--only rat]           # a character with an approved candidate loses its
+//                                                         # other candidates (files and records); the rest untouched
 //   node tools/gen-art.mjs --manifest                     # rebuild art.json from what is on disk
 //
 // Each candidate: the model's picture as sent back (assets/chars/candidates/
@@ -43,7 +45,7 @@
 // from memory Kontext Pro is about $0.04 and Max about $0.08 a picture
 // (check replicate.com/pricing).
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { keyOut, applyAlpha, bbox, placeOn, dropStray, fillHoles, SHADOW, PAPER } from './cutout.mjs';
@@ -225,6 +227,22 @@ async function main() {
       e.candidates.sort((a, b) => a.n - b.n);
     }
     saveRegistry(reg); console.log(`${REGISTRY.replace(ROOT + '/', '')}: ${Object.values(reg.chars).reduce((s, e) => s + e.candidates.length, 0)} candidates`); return;
+  }
+
+  if (has('--prune')) { // the approved candidate stays, the character's others go (a character without one keeps all)
+    let gone = 0, kept = 0;
+    for (const c of chars) {
+      const e = charEntry(reg, c);
+      if (!e.candidates.some((k) => k.verdict === 'ok')) continue;
+      for (const k of e.candidates) {
+        if (k.verdict === 'ok') { kept++; continue; }
+        for (const f of [k.file, k.raw]) if (existsSync(join(ROOT, f))) unlinkSync(join(ROOT, f));
+        gone++;
+      }
+      e.candidates = e.candidates.filter((k) => k.verdict === 'ok');
+      console.log(`  ${c.id}: kept c${e.candidates.map((k) => k.n).join(', c')}`);
+    }
+    saveRegistry(reg); console.log(`${gone} candidates pruned, ${kept} approved kept`); return;
   }
 
   if (has('--recut')) { // the same picture(s), another key ("all" = every candidate of the --only characters)

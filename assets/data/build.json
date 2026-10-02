@@ -1,5 +1,5 @@
 {
-  "version": "0.193",
+  "version": "0.194",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -84,6 +84,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.194": [
+      "Art Lab: nine portraits approved (the knight, rat, skeleton, Cinderborn, Cult Acolyte, wraith, Crypt Spider, Hollow Hound, Blood Knight); their other candidates pruned. Not in the game yet: four characters remain"
+    ],
     "0.193": [
       "Art Lab: five new Cave Shrieker candidates drawn from the painting with a hint against the rodent look (its style reference no longer borrows the rat's sheet); the Shrieker's portrait file is cave_shrieker.webp"
     ],
@@ -129,9 +132,6 @@
     ],
     "0.180": [
       "Card Lab: a hit kicks the card to its full angle at once and lets it recover slowly"
-    ],
-    "0.179": [
-      "Card Lab: the shader light reaches the frame's border (no dark rim around the plate)"
     ]
   }
 }
