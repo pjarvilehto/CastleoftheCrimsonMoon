@@ -1,5 +1,5 @@
 {
-  "version": "0.190",
+  "version": "0.191",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -84,6 +84,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.191": [
+      "Art Lab: the pilot redrawn once more from the owner's seven style sheets (assets/style/), which the generator now uses as the style reference — twelve new candidates for the knight, the rat and the Vampire Lord"
+    ],
     "0.190": [
       "Art Lab: the cut-out clears enclosed patches of background anywhere in the picture (the loop between an arm and the sword), not only under the figure"
     ],
@@ -129,9 +132,6 @@
     ],
     "0.177": [
       "New painted icons for every shrine boon and treasure chest, the same on every machine"
-    ],
-    "0.176": [
-      "Card Lab: a Replay Entrance button (and E); picking an entrance style plays it at once"
     ]
   }
 }
