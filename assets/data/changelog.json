@@ -1,4 +1,7 @@
 {
+  "0.00204": [
+    "Potions are cheaper: the first costs 10 coins, the second 20, the third 25, then 5 more each — and the price starts over after every run"
+  ],
   "0.00203": [
     "Heavy Attack glows gold when it is charged again: a bright flare as the charge lands, then a steady breathing halo (its old glow was mostly hidden by the button's own style)"
   ],
