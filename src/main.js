@@ -16,7 +16,7 @@ import { loadData, DATA } from './shared/data.js';
 import { preloadAssets, preloadRest } from './shared/preload.js';
 import './ui/scenes/index.js'; // registers the scenes with the router
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
-import { initSfx, sfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
+import { initSfx, sfx, transitionSfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
 import { initNarrator, isNarratorMuted, toggleNarrator } from './audio/narrator.js';
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
@@ -82,7 +82,9 @@ async function boot() {
   // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
   // under ?debug (headless testing); real players on a GPU-less machine,
   // or with reduced motion requested, keep the flat CSS backgrounds.
-  if (initBg3d({ allowSoftware: debugMode })) { onBackgroundChange(showBackground3d); onTransition(bgPush); } // (0.171: the room push)
+  if (initBg3d({ allowSoftware: debugMode })) onBackgroundChange(showBackground3d);
+  // Every transition (0.171/0.173): the swoosh, timed to land mid-way, and the camera's push through the picture.
+  onTransition(() => { transitionSfx(); bgPush(); });
   // Every button in the game clicks (delegated, so dynamically rendered
   // scenes need no per-button wiring).
   document.addEventListener?.('click', (e) => {

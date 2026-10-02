@@ -224,7 +224,12 @@ and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
 sound is one entry. Combat lines go through `ui/combatSfx.js` (panned to the
-card, timed to the blow, crit/mega/overkill sweeteners). Music: five
+card, timed to the blow, crit/mega/overkill sweeteners). The room change's
+swoosh (0.173, `audio.json transition`): the owner's SFX pitched down half
+an octave (`sfx-room-swoosh-v1.mp3`), played by `sfx.js transitionSfx()`
+from `main.js onTransition` so its measured loudest moment (`peakMs`)
+lands `peakAtMs` (2 s, the middle) into every transition, varied a little
+each play (its `variation` entry + `jitterDb`). Music: five
 generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 --suffix vN`, new suffix = new files), each an exact loop with its first
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure

@@ -97,7 +97,7 @@ export function dungeonScene() {
       narrateRoom(room, firstRoom);
     };
     if (instant) setup();
-    else { sfx('whoosh'); transitionTo(setup); } // windows out, bg crossfade, windows in (0.108: a room whoosh)
+    else transitionTo(setup); // windows out, bg crossfade, windows in (the swoosh and the push: main.js onTransition)
   }
 
   // The narrator on a room's threshold (0.161): one line at most, the first

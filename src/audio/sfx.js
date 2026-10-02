@@ -13,7 +13,7 @@
 //     no longer piles up 7 full-level hits;
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb };
-//   - 'ring' / 'boom' / 'whoosh' / strike layers are synthesized (synth.js);
+//   - 'ring' / 'boom' / strike layers are synthesized (synth.js);
 //   - 0.118: every sound is an entry in audio.json clips (the registry);
 //   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
 //     peaking EQ, random tick/thud/slice/clank layers from synth.js);
@@ -112,6 +112,15 @@ export function sfx(name, opts = {}) {
   bufferFor(name)
     .then((buffer) => start(name, buffer, at, opts))
     .catch(() => { /* audio must never break gameplay */ });
+}
+
+// A room change's swoosh (0.173, audio.json transition): the owner's SFX,
+// scheduled so the clip's loudest moment (clips.<clip>.peakMs) lands
+// peakAtMs into the transition — the middle of windows out, crossfade,
+// windows in. Its variation entry and jitterDb vary each play a little.
+export function transitionSfx() {
+  const T = DATA.audio.transition;
+  sfx(T.clip, { delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs) });
 }
 
 export function isMuted() { return muted; }
