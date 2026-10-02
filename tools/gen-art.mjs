@@ -69,7 +69,7 @@ export const DEFAULTS = { n: 4, style: 'dungeon_ossuary.jpg', model: 'pro', aspe
 export const STYLE_DIR = 'assets/style';
 // A character without a sheet borrows the nearest one (a hooded skull for the
 // Vampire Lord, a beast for the beasts, armour for the brutes, bone for the stone).
-export const STYLE_NEAREST = { vampire_lord: 'wraith', bat: 'rat', crypt_spider: 'rat', hollow_hound: 'rat', golem: 'blood_knight', gargoyle: 'skeleton' };
+export const STYLE_NEAREST = { vampire_lord: 'wraith', crypt_spider: 'rat', hollow_hound: 'rat', golem: 'blood_knight', gargoyle: 'skeleton' }; // (not the Shrieker: the rat's sheet made it a rodent, 0.192; the painting keeps its identity)
 export const styleFor = (id, root = ROOT) => {
   for (const s of [id, STYLE_NEAREST[id]]) if (s && existsSync(join(root, STYLE_DIR, `${s}.png`))) return `${STYLE_DIR}/${s}.png`;
   return DEFAULTS.style;
@@ -84,17 +84,25 @@ export const CLEAN = {
 };
 const token = () => process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_KEY;
 
-/** The doc: { style, chars: [{ id, name, file, line }] } (the style block's [FACING] is filled per character). */
-export function parsePrompts(md) {
+/** The doc: { style, chars: [{ id, name, file, line }] } (the style block's [FACING] is filled per character). The File column is the character's current portrait as the data names it (enemies.json art / cards.json player.art), which gives the id (0.193: the Shrieker's file is cave_shrieker.webp, its id stays bat). */
+export function parsePrompts(md, ids = idsByFile()) {
   const block = md.match(/## Style block[\s\S]*?```\n([\s\S]*?)```/);
   if (!block) throw new Error('docs/portrait-prompts.md: no style block');
   const chars = [];
   for (const line of md.split('\n')) {
-    const m = line.match(/^\|\s*(.+?)\s*\|\s*`([a-z_]+)\.webp`\s*\|\s*`(CHARACTER:[^`]+)`\s*\|\s*$/);
-    if (m) chars.push({ name: m[1].replace(/\s*\(boss\)$/, ''), id: m[2], file: `${m[2]}.webp`, line: m[3].trim() });
+    const m = line.match(/^\|\s*(.+?)\s*\|\s*`([a-z_]+\.webp)`\s*\|\s*`(CHARACTER:[^`]+)`\s*\|\s*$/);
+    if (!m) continue;
+    const id = ids[m[2]];
+    if (!id) throw new Error(`docs/portrait-prompts.md: ${m[2]} is no character's portrait in the data`);
+    chars.push({ name: m[1].replace(/\s*\(boss\)$/, ''), id, file: m[2], line: m[3].trim() });
   }
   if (!chars.length) throw new Error('docs/portrait-prompts.md: no character lines');
   return { style: block[1].trim(), chars };
+}
+/** portrait file -> character id, from the data (enemies.json art, cards.json player.art). */
+export function idsByFile(root = ROOT) {
+  const enemies = JSON.parse(readFileSync(join(root, 'assets/data/enemies.json'), 'utf8')), cards = JSON.parse(readFileSync(join(root, 'assets/data/cards.json'), 'utf8'));
+  return { [cards.player.art]: 'player', ...Object.fromEntries(Object.entries(enemies).map(([id, e]) => [e.art, id])) };
 }
 export const facing = (id) => (id === 'player' ? 'facing right' : 'facing left');
 /** The prompt sent for a character: the style block (facing filled in), its line, the facing once more (Kontext mirrors a figure readily; the lab's Flip catches the rest), a re-roll hint. */
