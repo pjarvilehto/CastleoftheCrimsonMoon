@@ -22,6 +22,9 @@ export const snapshot = (combat) => ({
   enemies: combat.enemies.map((e) => e.hp), hp: combat.run.hp, meters: combat.enemies.map((e) => e.summonMeter ?? null),
 });
 
+// The boss card's width in enemy-card widths (styles.css .boss-card aspect-ratio).
+const BOSS_SLOTS = 2;
+
 export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
   const unit = (i) => createEnemyUnit(combat.enemies[i], i, {
@@ -33,8 +36,12 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   // --n drives the card size (styles.css --card-h): crowded rooms shrink
   // their cards to fit the width instead of wrapping (0.078).
   // ondragstart (0.159): no native drag may start from the line — the portraits are images
-  const line = el('div', { class: 'battle-line', style: `--n:${enemies.length}`, ondragstart: (e) => e.preventDefault?.() }, player.el, row);
-  const fit = () => line.setAttribute('style', `--n:${Math.max(1, row.children.length)}`);
+  // The boss's card is twice as wide (0.196, styles.css .boss-card): it
+  // takes two slots of the width budget (--slots), its summons one each.
+  const wide = combat.enemies.some((e) => e.boss) ? BOSS_SLOTS - 1 : 0;
+  const sizing = (n) => `--n:${n};--slots:${n + wide}`;
+  const line = el('div', { class: 'battle-line', style: sizing(enemies.length), ondragstart: (e) => e.preventDefault?.() }, player.el, row);
+  const fit = () => line.setAttribute('style', sizing(Math.max(1, row.children.length)));
 
   // Summons join mid-fight (0.092): each card appears as its summon line
   // prints (the playback view says how many enemies exist yet), in front

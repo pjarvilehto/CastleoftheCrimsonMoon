@@ -431,6 +431,12 @@ may hear the old one for ~4 hours.
   glyph in `icon` is its alt text), on the cards and in the buff bar;
   preloaded with the Descend essentials. New boon = new picture, the
   suite checks every one is on disk.
+- The boss's card is twice as wide (0.196, the owner's call): `.boss-card`
+  aspect 826 / 1106, its frame a 9-slice of `card_enemy.png` (border-image,
+  so corners and border keep their shape); `battleRoom.js BOSS_SLOTS`
+  counts it as two enemy widths in the row's `--slots` (the `--card-h`
+  budget), so the boss and its three summons (`maxAlive`) still fit
+  without shrinking at 16:9. New boss art should suit a wide card.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`).
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /

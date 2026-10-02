@@ -442,7 +442,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
   /* width budget: 100vw - side padding (3.2vw) - player gap (1vw) - enemy
      gaps (0.8vw each) - 2vw slack; card widths are 0.605h (player) and
      0.3734h (enemy) from the art ratios */
-  --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734)));
+  /* --slots: enemy-card widths in the row (the boss's card counts two,
+     battleRoom.js BOSS_SLOTS); --n: cards, for the gaps (0.196) */
+  --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734)));
   --card-font: calc(var(--card-h) * 0.04);
 }
 .enemy-row { display: flex; gap: 0.8vw; align-items: flex-end; flex-wrap: nowrap; justify-content: flex-end; }
@@ -560,6 +562,14 @@ button.active.potion-remind { animation-duration: 2.2s; }
   transform-origin: 0 100%;
 }
 .boss-card .portrait { height: 104%; max-width: 148%; } /* bosses loom */
+/* The boss's card is twice as wide (0.196, the owner's call: more
+   intimidating), 2 x 413 / 1106; battleRoom.js counts it as two slots so
+   the row still fits with its summons. Its frame is drawn as a 9-slice
+   so the rounded corners and the grey border keep their shape (stretched,
+   they went oval and thick): 60 px of the art's 1106 = 1.357em of the
+   card (1em = 4% of --card-h), the plate's gradient stretched across. */
+.boss-card { aspect-ratio: 826 / 1106; }
+.boss-card .card-frame { background: none; border-image: url('assets/chars/card_enemy.png') 60 fill / 1.357em stretch; }
 .enemy-vampire_lord .portrait { height: 113%; max-width: 171%; } /* figure reads small/dark even capped — extra loom */
 /* player.png is WIDE (aspect 1.11): bleed past the sides, not the top —
    the card carries 4 text rows (name/weapon/armor) that must stay clear */

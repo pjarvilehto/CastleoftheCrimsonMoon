@@ -141,7 +141,7 @@ fresh();
   const css = readFileSync('styles.css', 'utf8');
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
-  ok('the battle line carries --n (ui/battleRoom.js, shared by dungeon and benchmark)', readFileSync('src/ui/battleRoom.js', 'utf8').includes('--n:${enemies.length}') && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('mountBattle(run, combat') && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('mountBattle(run, combat'));
+  ok('the battle line carries --n (ui/battleRoom.js, shared by dungeon and benchmark)', readFileSync('src/ui/battleRoom.js', 'utf8').includes('sizing(enemies.length)') && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('mountBattle(run, combat') && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('mountBattle(run, combat'));
 }
 
 // T41: 0.079 — 'active' pulse on Push Deeper after a won fight, the death
@@ -413,7 +413,10 @@ fresh();
   const kids = enemyRow().children;
   ok('summon card appears with its log line, not before', early === 1 && kids.length === 2, `${early} -> ${kids.length}`);
   ok('...in front of the boss, and --n follows', kids[1].all((e) => e.className && e.className.includes('boss-card')).length === 1
-    && kids[0].all((e) => e.className && e.className.includes('enemy-skeleton')).length === 1 && lineStyle() === '--n:2');
+    && kids[0].all((e) => e.className && e.className.includes('enemy-skeleton')).length === 1 && lineStyle() === '--n:2;--slots:3');
+  // 0.196: the boss's card is twice as wide (two slots of the width budget), framed as a 9-slice
+  const css2 = readFileSync('styles.css', 'utf8');
+  ok('the boss card is twice as wide and the row counts it twice', /\.boss-card \{ aspect-ratio: 826 \/ 1106; \}/.test(css2) && css2.includes('var(--slots, var(--n))') && /\.boss-card \.card-frame \{[^}]*border-image:/.test(css2));
   ok('summon line printed in violet', registry.app.all((e) => e.className === 'summon').length === 1);
   DATA.difficulty.bossEvery = every;
   for (let g = 0; g < 3; g++) { handleKey('a'); await sleep(900); } // let timers settle

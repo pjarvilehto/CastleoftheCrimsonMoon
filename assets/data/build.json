@@ -1,5 +1,5 @@
 {
-  "version": "0.195",
+  "version": "0.196",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -84,6 +84,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.196": [
+      "Bosses loom larger: the boss's card is twice as wide, and still fits the row with all its summoned minions"
+    ],
     "0.195": [
       "The cards' plates are see-through again with the glow on them, as in the Card Lab; the glow a little stronger"
     ],
@@ -129,9 +132,6 @@
     ],
     "0.182": [
       "The Treasury is now a treasure room only: it no longer turns up as a fight"
-    ],
-    "0.181": [
-      "Card Lab: a Plate opacity slider fades the card's inside (shader included) under an untouched border"
     ]
   }
 }
