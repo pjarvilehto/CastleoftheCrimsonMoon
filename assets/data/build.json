@@ -1,5 +1,5 @@
 {
-  "version": "0.175",
+  "version": "0.176",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.176": [
+      "Card Lab: a Replay Entrance button (and E); picking an entrance style plays it at once"
+    ],
     "0.175": [
       "The room-change swoosh: a quarter octave lower still and 30% quieter"
     ],
@@ -126,10 +129,6 @@
     ],
     "0.162": [
       "No more fanfare when you retreat to the Great Hall — the Old Wizard's word is enough (the victory dialog keeps its chime)"
-    ],
-    "0.161": [
-      "The Old Wizard speaks: a narrator follows your descent — the first step into the castle, the deeper stretches, OVERKILL and mega crits, low health, shrines, chests, bosses, your deaths and your victory (122 lines, never the same twice in a row)",
-      "NARRATOR: ON/OFF in the corner column, if you'd rather he kept quiet"
     ]
   }
 }
