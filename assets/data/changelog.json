@@ -1,4 +1,7 @@
 {
+  "0.182": [
+    "The Treasury is now a treasure room only: it no longer turns up as a fight"
+  ],
   "0.181": [
     "Card Lab: a Plate opacity slider fades the card's inside (shader included) under an untouched border"
   ],

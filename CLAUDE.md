@@ -337,7 +337,9 @@ may hear the old one for ~4 hours.
   save's best room reaches `unlockRoom` (5; silent), on the way to a room in
   reach (`minRoom`..best room, not a boss room; the stretch's shrine steps
   aside);
-  painted from `backgrounds.json treasure`. Three chests, open one: Iron
+  painted from `backgrounds.json treasure` (7: the six `treasure_*` and,
+  since 0.182, The Treasury — none of them ever a fight room). Three
+  chests, open one: Iron
   Coffer (coins worth `coffer.fights` fights at that depth), Gilded Chest
   (one item of the depth's tier, made for a slot it improves, else
   salvaged), Sealed Reliquary (`hpCost` 20% of max HP as damage — it can

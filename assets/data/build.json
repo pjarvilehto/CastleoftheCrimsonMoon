@@ -1,5 +1,5 @@
 {
-  "version": "0.181",
+  "version": "0.182",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.182": [
+      "The Treasury is now a treasure room only: it no longer turns up as a fight"
+    ],
     "0.181": [
       "Card Lab: a Plate opacity slider fades the card's inside (shader included) under an untouched border"
     ],
@@ -125,9 +128,6 @@
     ],
     "0.168": [
       "Testing tools: one LABS button in the debug column opens a menu of the labs (Fog, VO, Particle), now all at /labs/"
-    ],
-    "0.167": [
-      "The Old Wizard, third pass: 24 more lines approved, 5 re-recorded softer again"
     ]
   }
 }
