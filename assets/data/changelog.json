@@ -1,4 +1,12 @@
 {
+  "0.00222": [
+    "Phones: a lighter picture — the background at a lower resolution and rest rate, a thinner mist buffer, 1x particles, the card glow at 20 fps, the figures without their drop shadow (the same look, fewer pixels; the owner's iPhone ran hot)",
+    "BATTERY SAVER in the corner column: the smallest background and no mist, for a hot phone or a long session; remembered per browser",
+    "The room change no longer stalls the game for a quarter second: the painting is decoded off the main thread, and the heavy work is split over two frames",
+    "The vignette is drawn by the background's shaders, the glint by transforms, the glow loops as breathing layers, the particle layer is hidden between bursts: less work for every screen every frame",
+    "Play stats: the refresh rate is read from the busiest frame interval (120 Hz Macs read 144, iPhones 90 or 75 before, with every ordinary frame 'dropped'); stalls and the worst frame's moment are recorded; old rows are graded by their fps",
+    "The benchmark measures each room at rest — a new round, so everyone is asked again; about 50 seconds now"
+  ],
   "0.00221": [
     "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
   ],
