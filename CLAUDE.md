@@ -301,7 +301,8 @@ may hear the old one for ~4 hours.
   room before each boss (7, 15, 23) always an antechamber from
   `antechambers`, which appear nowhere else (both lists are fight
   paintings, also in `rooms`; the entrance ones load first behind the
-  title; one antechamber so far, more coming from the owner). Saves made
+  title; four antechambers — The Antechamber, The Royal Bedchamber, The
+  Hall of Mirrors, The Iron Gate — so no run repeats one). Saves made
   before 0.171 count shrines in `bestRoom` (one or two rooms high; left
   as is).
 - Treasure rooms (0.155, `run/treasure.js` + `ui/treasureUI.js`, tuning

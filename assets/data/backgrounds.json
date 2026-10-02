@@ -13,7 +13,10 @@
     "corridor_torch_hall.jpg"
   ],
   "antechambers": [
-    "dungeon_antechamber.jpg"
+    "dungeon_antechamber.jpg",
+    "dungeon_royal_bedroom.jpg",
+    "antechamber_hall_of_mirrors.jpg",
+    "antechamber_iron_gate.jpg"
   ],
   "rooms": [
     "castle_entrance.jpg",
@@ -50,7 +53,9 @@
     "corridor_flooded_hall.jpg",
     "corridor_gothic_vault.jpg",
     "corridor_sewer_aqueduct.jpg",
-    "corridor_torch_hall.jpg"
+    "corridor_torch_hall.jpg",
+    "antechamber_hall_of_mirrors.jpg",
+    "antechamber_iron_gate.jpg"
   ],
   "treasure": [
     "treasure_cursed_reliquary.jpg",
@@ -80,6 +85,8 @@
     "castle_great_hall.jpg": "The Feast Hall",
     "castle_throne_room.jpg": "The Throne Room",
     "dungeon_antechamber.jpg": "The Antechamber",
+    "antechamber_hall_of_mirrors.jpg": "The Hall of Mirrors",
+    "antechamber_iron_gate.jpg": "The Iron Gate",
     "dungeon_arcane_library.jpg": "The Forbidden Stacks",
     "dungeon_armory.jpg": "The Armory",
     "dungeon_bell_tower.jpg": "The Bell Tower",
@@ -551,6 +558,14 @@
           0.0,
           0.004
         ]
+      },
+      "antechamber_hall_of_mirrors.jpg": {
+        "fog": 0.3,
+        "fogWind": [0.004, 0.001, 0.0]
+      },
+      "antechamber_iron_gate.jpg": {
+        "fog": 0.38,
+        "fogWind": [0.007, 0.001, 0.002]
       },
       "dungeon_antechamber.jpg": {
         "fog": 0.38,
