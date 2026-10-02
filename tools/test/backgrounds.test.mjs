@@ -1,7 +1,7 @@
 // tools/test/backgrounds.test.mjs — 3D backgrounds: depth maps, tuning sliders, camera math.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, t, fresh, registry, El, DATA, handleKey, generateRoom, hubScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, t, sleep, fresh, registry, El, DATA, handleKey, generateRoom, hubScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -16,8 +16,8 @@ fresh();
   const all = [...new Set([b.title, b.hub, ...b.bosses, b.death, b.shrine, ...b.rooms, ...b.treasure])];
   const missing = all.filter((f) => { try { return !statSync(bg3d.depthUrl(f)).isFile(); } catch { return true; } });
   ok('every background has a depth map', missing.length === 0, missing.join(','));
-  const png = readFileSync(bg3d.depthUrl(b.title));
-  ok('depth maps are 8-bit grayscale PNGs', png.readUInt32BE(16) === 512 && png[24] === 8 && png[25] === 0);
+  const odd = all.filter((f) => { const png = readFileSync(bg3d.depthUrl(f)); return ![512, 1024].includes(png.readUInt32BE(16)) || png[24] !== 8 || png[25] !== 0; });
+  ok('every depth map is an 8-bit grayscale PNG, 512 or 1024 wide (0.00223: the title\'s alone was checked)', odd.length === 0, odd.join(','));
   // Staged preload (0.098): boot = what the title + hub paint; the rest
   // (rooms, boss/shrine/death, portraits) loads after the title shows.
   const pre = await import('../../src/shared/preload.js');
@@ -99,10 +99,22 @@ fresh();
   const pushCfg = DATA.backgrounds.parallax.push;
   ok('a camera dolly pushes into the painting: things move outward, near things faster', off(pushCfg.dist, 0.5) < off(0, 0.5) && (off(0, 0.9) - off(pushCfg.dist, 0.9)) > (off(0, 0.1) - off(pushCfg.dist, 0.1))
     && pushCfg.dist > 0 && pushCfg.dist <= 0.3 && pushCfg.inMs > 0 && pushCfg.outMs > 0);
-  const sc = readFileSync('src/core/scene.js', 'utf8'), b3 = readFileSync('src/core/bg3d.js', 'utf8'), cssP = readFileSync('styles.css', 'utf8');
-  ok('the transition starts the push as the windows fade; the 3D renderer dollies per layer, the flat layer scales (not under reduced motion)',
-    sc.includes("transitionListener?.(fadeOutMs);") && sc.includes("activeBg?.classList.add('push')") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })')
-    && b3.includes('dollyOf(L, now, i === layers.length - 1)') && cssP.includes('.bg-layer.push { transform: scale(') && /prefers-reduced-motion: reduce\) \{ \.bg-layer, \.bg-layer\.push/.test(cssP));
+  const b3 = readFileSync('src/core/bg3d.js', 'utf8'), cssP = readFileSync('styles.css', 'utf8');
+  // the scene side, run (0.00223: it was asserted on source text): the transition tells the renderer as the windows start to fade, the flat layer takes the push
+  const { onTransition, setBackground: setBg, transitionTo: trans } = await import('../../src/core/scene.js');
+  let told = null, ran = false;
+  onTransition((ms) => { told = ms; });
+  setBg('dungeon_a.jpg');
+  await sleep(10);
+  const layer = [registry.bg0, registry.bg1].find((l) => l.dataset.file === 'dungeon_a.jpg');
+  trans(() => { ran = true; setBg('dungeon_b.jpg'); }, 50);
+  const early = { told, ran, push: layer.classList.contains('push') };
+  await sleep(5000);
+  onTransition(null);
+  ok('the transition starts the push as the windows fade: the renderer is told first, the flat layer pushes, and is at rest again after',
+    early.told === 50 && !early.ran && early.push && ran && [registry.bg0, registry.bg1].every((l) => !l.classList.contains('push') && !l.classList.contains('pushed')));
+  ok('the 3D renderer dollies per layer, the flat layer scales (not under reduced motion)',
+    b3.includes('dollyOf(L, now, i === layers.length - 1)') && cssP.includes('.bg-layer.push { transform: scale(') && /prefers-reduced-motion: reduce\) \{ \.bg-layer, \.bg-layer\.push/.test(cssP));
   const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
   ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');

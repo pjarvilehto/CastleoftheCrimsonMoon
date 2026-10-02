@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/smoke-test.mjs — headless smoke suite. Run before every build:
-//   node tools/smoke-test.mjs            (everything; under a second on the virtual clock)
+//   node tools/smoke-test.mjs            (everything; a second or two on the virtual clock)
 //   node tools/smoke-test.mjs combat     (files whose name contains "combat")
 //
 // The tests live in tools/test/*.test.mjs by area (0.098); the shared DOM

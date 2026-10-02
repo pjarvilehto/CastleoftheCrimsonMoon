@@ -18,11 +18,12 @@ const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag)
 
 await loadData();
 
-// ---- the options ----
+// ---- the options (Reset = what the game ships, cards.json — 0.00223; the pre-0.183 proposals before) ----
+const C = DATA.cards;
 const DEFAULTS = {
-  bg: { mode: 'auto', look: 'fog', amt: 0.8, speed: 1, player: 'ether', alpha: 0.85 },
-  motion: { on: true, enter: 'turn', hit: 'tilt', deg: 10, ms: 480, hover: true },
-  glint: { style: 'streak', strength: 0.8, band: 8, withHit: true, withEnter: true },
+  bg: { mode: 'auto', look: 'fog', amt: C.fx.amt, speed: C.fx.speed, player: 'ether', alpha: 0.85 },
+  motion: { on: true, enter: 'turn', hit: 'tilt', deg: C.motion.kickDeg, ms: C.motion.kickMs, hover: true },
+  glint: { style: 'sheen', strength: C.glint.strength, band: C.glint.band, withHit: true, withEnter: true },
 };
 let O = JSON.parse(JSON.stringify(DEFAULTS));
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s?.bg) O = { bg: { ...O.bg, ...s.bg }, motion: { ...O.motion, ...s.motion }, glint: { ...O.glint, ...s.glint } }; } catch { /* fresh */ }
@@ -36,7 +37,7 @@ const tintFor = (e, look) => (e.boss ? [0.9, 0.25, 0.15] : TINTS[look] ?? TINTS.
 const run = createRun();
 const ENEMIES = ['skeleton', 'ghoul', 'wraith', 'vampire_lord'].map((id) => ({ ...scaleEnemy(id, 9), hp: 0 }));
 for (const e of ENEMIES) e.hp = e.maxHp;
-const line = el('div', { class: 'battle-line p3d', style: `--n:${ENEMIES.length}` });
+const line = el('div', { class: 'battle-line p3d', style: `--n:${ENEMIES.length};--slots:${ENEMIES.length + ENEMIES.filter((e) => e.boss).length}` }); // (the boss's card counts two widths, 0.196)
 const player = createPlayerUnit(run, { onHeavy: () => hit(player, 1.6, true), onPotion: () => {} });
 const units = ENEMIES.map((e, i) => createEnemyUnit(e, i, { onAttack: () => hit(unitsAt(i), 1), onGone: () => {} }));
 const unitsAt = (i) => units[i];
@@ -54,11 +55,8 @@ refresh();
 // ---- the shader backgrounds ----
 for (const u of all) {
   u.fx = attachCardFx(u.card);
-  // the glint copy of the portrait inside its band (opacity 0 until a sweep; 0.00222: the band carries the mask, as in the game)
-  const g = u.portrait.cloneNode(false);
-  g.classList.add('glint'); g.alt = ''; g.removeAttribute('draggable'); g.setAttribute('draggable', 'false');
-  const band = document.createElement('div'); band.className = 'glint-band'; band.append(g);
-  u.portrait.after(band); u.glint = g; u.band = band;
+  // the unit's own glint (battleLine.js mountGlint: the band carrying the mask, the bright copy inside it — 0.00223, the lab used to clone a second one)
+  u.band = u.glint; u.copy = u.band.firstElementChild;
 }
 function applyBg() {
   line.style.setProperty('--plate-alpha', O.bg.alpha);
@@ -74,13 +72,13 @@ function applyBg() {
 const can = (n) => !!n?.animate;
 function applyMotion() {
   line.classList.toggle('p3d', O.motion.on);
-  for (const u of all) u.glint.className = `portrait glint ${O.glint.style === 'foil' ? 'foil' : O.glint.style === 'sheen' ? 'sheen' : ''} idle-${u === player ? 'player' : IDLE_FAMILY[u.enemy.id] ?? 'prowl'}`.trim();
-  for (const u of all) { u.glint.style.animationDelay = u.portrait.style.animationDelay; u.band.style.setProperty('--band', `${O.glint.band}%`); }
+  for (const u of all) u.copy.className = `portrait glint ${['foil', 'sheen', 'streak'].includes(O.glint.style) ? O.glint.style : ''} idle-${u === player ? 'player' : IDLE_FAMILY[u.enemy.id] ?? 'prowl'}`.trim();
+  for (const u of all) { u.copy.style.animationDelay = u.portrait.style.animationDelay; u.band.style.setProperty('--band', `${O.glint.band}%`); }
 }
 // A sweep of the glint over `ms`, the band crossing the portrait with the turn.
 function sweep(u, ms, dir = 1) {
-  if (O.glint.style === 'none' || !can(u.glint)) return;
-  const g = u.glint, w = u.card.clientWidth, from = (dir > 0 ? 1.6 : -1.6) * w, to = -from; // (0.00222: the band slides, the copy slides back — the game's sweep)
+  if (O.glint.style === 'none' || !can(u.copy)) return;
+  const g = u.copy, w = u.card.clientWidth, from = (dir > 0 ? 1.6 : -1.6) * w, to = -from; // (0.00222: the band slides, the copy slides back — the game's sweep)
   const timing = { duration: ms, easing: 'ease-out' };
   const frames = [{ opacity: 0, translate: `${from}px 0` }, { opacity: O.glint.strength, offset: 0.4, translate: '0 0' }, { opacity: 0, translate: `${to}px 0` }];
   const copy = [{ translate: `${-from}px 0` }, { translate: '0 0', offset: 0.4 }, { translate: `${-to}px 0` }];

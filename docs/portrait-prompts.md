@@ -1,25 +1,24 @@
-# Portrait prompts for Kimi: knight and enemies in the room style
+# Portrait prompts: the knight and enemies in the room style
 
 Goal: redraw the 13 character portraits (the knight and 12 enemies) in the
 style of the room paintings, "Mike Mignola meets Darkest Dungeon 2", keeping
 each character's identity, pose and colour accent so the game's animations
 and hit effects still fit.
 
-## How to use
+## How it is used
 
-1. Attach **two reference images** to each request:
-   - **Image 1:** the character's current portrait from `assets/chars/`, for
-     the design and pose.
-   - **Image 2:** one room painting from `assets/bg/`, for the style.
-     `dungeon_ossuary.jpg` (warm) or `castle_courtyard.jpg` (cold) suit
-     most characters.
-2. Paste the **style block** below, then that character's **character
-   line**.
-3. Ask for a **2:3 portrait** (vertical). Generate 2–4 variants and keep the
-   best.
-4. Start with the pilot of three: **the Curious Knight, the Giant Rat and the
-   Vampire Lord**. Once those look right in the game, do the rest with the
-   same wording.
+`tools/gen-art.mjs` reads the style block below (`[FACING]` becomes
+"facing left" for an enemy, "facing right" for the knight) and one
+CHARACTER line per portrait from the table, keyed by `enemies.json art` /
+`cards.json player.art`. Per candidate it sends the current portrait plus a
+style reference (`assets/style/<id>.png`, the owner's finished sheet, else
+`dungeon_ossuary.jpg`) and the prompt to FLUX Kontext on Replicate, keeps
+the model's picture and a cut-out under `assets/chars/candidates/`, and
+records seed, prompt, style and cut in `assets/data/art.json`. Review in
+the Art Lab (`labs/art/`), `--rerender art-rerender.json` for the
+verdicts and re-rolls, then `--import` puts the pick in the game under a
+new filename (rule 7). Keep the wording identical between characters; a
+re-roll hint goes through the lab.
 
 ## Style block (the same for every character)
 
@@ -79,7 +78,3 @@ and **facing right** for the knight.
   flat background is what lets the figure be cut out cleanly.
 - Keep the wording identical between characters, so the set stays
   consistent.
-
-When the images are ready, upload them to GitHub (or the chat) named by
-the file column, e.g. `rat.png`. The import trims and cuts out each one,
-and it goes into the game under a new file name.

@@ -10,6 +10,7 @@ import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summa
   boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 import { perfTable, benchTable, sanitizeDevice, PERF_DEFAULTS } from './perf.js';
+import { compareVersions } from '../src/shared/version.js';
 import { buildTable, playersTable, runsTable, pct } from './tables.js';
 
 const STORE = 'castle-analytics-players-v1';
@@ -125,9 +126,12 @@ function serverCard() {
     key: 'Enter the stats key (the collector’s READ_KEY) to see collected players.',
     error: 'Could not reach the stats collector — showing this browser and pasted codes only.',
   }[server.status];
-  // the deployed collector is pasted in by hand: say when it's behind the repo
-  const stale = server.status === 'ok' && data.collectorVersion && server.version !== data.collectorVersion
-    ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>` : '';
+  // the deployed collector is pasted in by hand: say when it's behind the repo — and when it is AHEAD of this page
+  // (0.00223: a newer Worker used to be called out of date, with the paste instruction; the `?? '0'` is load-bearing: compareVersions(null, x) is 0)
+  const cmp = server.status === 'ok' && data.collectorVersion ? compareVersions(server.version ?? '0', data.collectorVersion) : 0;
+  const stale = cmp < 0
+    ? `<p class="help warn">The stats collector is out of date (deployed: ${esc(server.version ?? 'before 0.119')}, current: ${esc(data.collectorVersion)}) — paste collector/worker.js into the Worker's Edit code and deploy.</p>`
+    : cmp > 0 ? `<p class="help">The deployed collector (${esc(server.version)}) is newer than this page expects (${esc(data.collectorVersion)}) — this page is behind main; reload in a few minutes or pull main.</p>` : '';
   return `<section class="card add">
     <h2>Testers</h2>${stale}
     <p class="help">${esc(text)} Every tester playing the live site is included automatically — no save export needed. Players show the name they typed in the game. To see who is who, give them a tester name in the Players table; it shows before the name they play under, and stays in this browser.</p>
@@ -165,7 +169,11 @@ const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
 // what the tables need to name things (analytics/tables.js)
 const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
 
+// a bad field in one record must not leave the page at "Loading play stats…" (0.00223)
 function render() {
+  try { renderInner(); } catch (e) { document.getElementById('dash').innerHTML = `<p class="help warn">Could not draw the stats: ${esc(String(e?.message ?? e))}</p>`; console.error(e); }
+}
+function renderInner() {
   const runsAll = allRuns(players);
   const builds = [...new Set(runsAll.map((r) => r.build))].sort().reverse();
   const runs = filterRuns(runsAll, view);
@@ -268,8 +276,12 @@ function wire() {
 }
 
 async function boot() {
-  const get = (f) => fetch(`../assets/data/${f}.json`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-  const [enemies, items, shrines, build, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'build', 'telemetry', 'difficulty'].map(get));
+  // the build first (index.html fetched it uncached and left it here), then every data file under ?v=<build>: a bare
+  // URL's copy at the CDN is up to 10 minutes old after a deploy (0.00223: this page read the old telemetry.json then)
+  const build = globalThis.__castleBuild ?? await fetch(`../assets/data/build.json?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+  const q = build?.version ? `?v=${encodeURIComponent(build.version)}` : `?t=${Date.now()}`;
+  const get = (f) => fetch(`../assets/data/${f}.json${q}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+  const [enemies, items, shrines, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'telemetry', 'difficulty'].map(get));
   Object.assign(data, {
     enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''), benchmarkSince: String(telemetry?.benchmarkSince ?? ''), perf: { ...PERF_DEFAULTS, ...(telemetry?.perf ?? {}) }, // (the page's own fallbacks, as finalRoom above)
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),

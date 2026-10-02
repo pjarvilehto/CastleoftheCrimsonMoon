@@ -29,13 +29,21 @@ export function decodeSave(code) {
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const str = (v, max = 40) => (v === null || v === undefined ? null : String(v).slice(0, max));
 const ITEM_SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
+// a count: whole, never negative, capped (0.00223: a fractional or huge room
+// in one run record — a pasted code, or anyone's POST to the collector —
+// made endRooms throw and left the page at "Loading play stats…")
+export const MAX_ROOM = 999;
+const int = (v, max = 1e6) => Math.min(max, Math.max(0, Math.floor(num(v))));
+const COUNTS = { room: MAX_ROOM, kills: 1e6, bosses: 1e6, potions: 1e6, items: 1e6, level: 1e6, turns: 1e6 };
+// a run record's numbers (collector/worker.js RUN_NUMS, pasted by hand, lists the same — a test keeps them equal)
+export const RUN_FIELDS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
 
 function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
     perf: sanitizePerf(r.perf) }; // 0.130: frame rate (analytics/perf.js)
-  for (const k of ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor']) out[k] = num(r[k]);
+  for (const k of RUN_FIELDS) out[k] = k in COUNTS ? int(r[k], COUNTS[k]) : num(r[k]);
   return out;
 }
 
@@ -97,9 +105,9 @@ export function countBy(runs, key) {
 
 // Room -> { death, retreat } for every room up to the deepest one.
 export function endRooms(runs) {
-  const max = Math.max(0, ...runs.map((r) => r.room));
+  const max = Math.min(MAX_ROOM, Math.max(0, ...runs.map((r) => Math.floor(r.room) || 0)));
   const rows = Array.from({ length: max }, (_, i) => ({ room: i + 1, death: 0, retreat: 0 }));
-  for (const r of runs) if (r.room >= 1) rows[r.room - 1][r.outcome === 'death' ? 'death' : 'retreat'] += 1;
+  for (const r of runs) if (r.room >= 1 && r.room <= rows.length) rows[Math.floor(r.room) - 1][r.outcome === 'death' ? 'death' : 'retreat'] += 1;
   return rows;
 }
 

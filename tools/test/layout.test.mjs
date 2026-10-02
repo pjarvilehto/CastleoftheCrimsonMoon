@@ -24,7 +24,10 @@ import { join } from 'node:path';
   const block = strip(phone.slice(phone.indexOf(marker) + marker.length));
   // every rule head after the marker: html.phone first, then the desktop rule's own selector
   const heads = [...block.matchAll(/([^{}@]+)\{/g)].map((m) => m[1].trim()).filter((h) => !/^\d+%|^from$|^to$|^(media|supports|keyframes)\b/.test(h));
-  const sels = heads.flatMap((h) => h.split(',').map((x) => x.trim())).filter(Boolean);
+  // (split on top-level commas only: a :has(a, b) list is one selector — 0.00223, the save dialogs' twin repeated the prefix inside it to pass here and never matched)
+  const splitTop = (h) => { const out = []; let d = 0, cur = ''; for (const ch of h) { if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur); cur = ''; } else cur += ch; } return [...out, cur]; };
+  const sels = heads.flatMap((h) => splitTop(h).map((x) => x.trim())).filter(Boolean);
+  ok('a :has() list inside a twin is one selector, prefixed once', sels.includes('html.phone .update-overlay:has(.name-input, .save-code)') && !/:(has|is|where|not)\([^)]*html\.phone/.test(block));
   const unprefixed = sels.filter((x) => !/^html\.phone(\s|$)/.test(x));
   ok('every rule in the layer is an html.phone rule', sels.length > 60 && unprefixed.length === 0, unprefixed.join(' | '));
   // every twin still has its desktop rule above it — derived from the block itself, so a new override is checked the day it
@@ -44,4 +47,13 @@ import { join } from 'node:path';
   ok('reduced motion stops the sheets\' lift and the log\'s flash', phone.includes('@media (prefers-reduced-motion: reduce)') && /prefers-reduced-motion[\s\S]*transition: none[\s\S]*animation: none/.test(phone));
   // the one number the layer and the code share: the card budget's ratios and the corner column's reach live in :root
   ok('the card ratios and the corner reach are declared once', (base.match(/--ratio-p: 0\.605/g) || []).length === 1 && !/0\.605 \+/.test(css) && !/padding-right: (calc\(1\.6vw \+ )?150px/.test(css));
+  // every loop in the stylesheet is compositor-only (0.00223): a box-shadow, text-shadow or filter loop repaints its
+  // element every frame it is on screen — the hall's rarity lines, the low-HP chip, the death and victory titles did
+  const blocks = {}; const kf = /@keyframes ([\w-]+)\s*\{/g; let m;
+  while ((m = kf.exec(css))) { let d = 1, i = kf.lastIndex; while (d && i < css.length) { if (css[i] === '{') d++; else if (css[i] === '}') d--; i++; } blocks[m[1]] = css.slice(kf.lastIndex, i - 1); }
+  const loops = [...new Set([...strip(css).matchAll(/animation:([^;]*infinite[^;]*);/g)].flatMap((x) => x[1].split(',').map((a) => a.trim().split(/\s+/)[0])))];
+  const props = (b) => [...b.matchAll(/([a-z-]+)\s*:/g)].map((x) => x[1]);
+  const bad = loops.filter((n) => !blocks[n] || props(blocks[n]).some((p) => !['opacity', 'transform', 'translate', 'rotate', 'scale'].includes(p)));
+  ok('every infinite loop animates opacity or a transform only', loops.length >= 10 && bad.length === 0, bad.join(', ') || `${loops.length} loops`);
+  ok('the one-column hall scrolls inside its container under 1000px, Descend reachable (0.00223)', /@media \(max-width: 1000px\) \{[^}]*\}[\s\S]*?\.hub-container:not\(\.phone-hub\) \{ max-height: 100%; overflow-y: auto; \}/.test(css));
 }

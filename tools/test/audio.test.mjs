@@ -1,7 +1,7 @@
 // tools/test/audio.test.mjs — music, sound effects, the corner toggles.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, DATA, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, DATA, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, readdirSync, statSync, withSeedAsync } from './harness.mjs';
 
 fresh();
 
@@ -129,7 +129,8 @@ fresh();
     && Math.abs(loud('attack') + 12) <= 2 && Math.abs(loud('hurt') + 12) <= 2 && loud('click') > -30 && loud('death') > loud('attack'));
 
   const mx = await import('../../src/audio/mixer.js');
-  ok('mixer: no graph without Web Audio; default volumes from data', mx.mixer() === null && mx.getVolumes().master === A.volumes.master);
+  const mxFresh = await import('../../src/audio/mixer.js?order-proof'); // (0.00223: an instance of its own — the shared one may hold a graph from a block that ran before)
+  ok('mixer: no graph without Web Audio; default volumes from data', mxFresh.mixer() === null && mxFresh.getVolumes().master === A.volumes.master);
   mx.setVolume('music', 0.5);
   ok('volume sliders persist and set the bus (squared curve)', JSON.parse(localStorage.getItem('castle-audio-volumes')).music === 0.5
     && Math.abs(mx.busGain('music') - A.musicLevel * 0.25) < 1e-9);
@@ -138,12 +139,8 @@ fresh();
   mx.setBusMuted('sfx', true);
   ok('the SOUND toggle silences the effects bus, keeping the slider', mx.busGain('sfx') === 0 && mx.getVolumes().sfx === 1);
   mx.setBusMuted('sfx', false);
-  const mxSrc = read('src/audio/mixer.js');
-  ok('graph: music -> duck -> master, effects -> master, master -> limiter -> speakers', mxSrc.includes('music.connect(duck)') && mxSrc.includes('duck.connect(master)')
-    && mxSrc.includes('sfx.connect(master)') && mxSrc.includes('master.connect(limiter)') && mxSrc.includes('limiter.connect(ctx.destination)')
-    && mxSrc.includes('createDynamicsCompressor()') && A.limiter.threshold < 0);
-  ok('audio pauses in a hidden tab', mxSrc.includes("visibilityState === 'hidden') ctx.suspend"));
-  ok('stingers duck the music', ['death', 'victory', 'rare'].every((c) => A.duck.clips[c] > 0) && A.duck.db < 0 && read('src/audio/sfx.js').includes('duckMusic(duck, t)'));
+  // (the graph, the hidden-tab pause and the gesture resume are driven for real in T83 below, 0.00223)
+  ok('stingers duck the music', ['death', 'victory', 'rare'].every((c) => A.duck.clips[c] > 0) && A.duck.db < 0 && A.limiter.threshold < 0);
   // combat sounds: placed on their card, timed to the blow, tiered
   const { combatSfx } = await import('../../src/ui/combatSfx.js');
   const { strikeMs } = await import('../../src/ui/combatFx.js');
@@ -186,7 +183,6 @@ fresh();
   ok('room swoosh: a measured file clip with its loudest moment, no generated whoosh', T.clip === 'room_swoosh' && /sfx-room-swoosh-v2\.mp3$/.test(c.file)
     && statSync(c.file).size > 20 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0 && !A.clips.whoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
   ok('room swoosh: its peak lands mid-transition (2 s), a little varied each play', T.peakAtMs === 2000 && T.peakAtMs - c.peakMs > 0
-    && readFileSync('src/audio/sfx.js', 'utf8').includes('delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs)')
     && A.variation.room_swoosh.rate[0] < 1 && A.variation.room_swoosh.rate[1] > 1 && A.variation.room_swoosh.eq.lo < A.variation.room_swoosh.eq.hi && c.jitterDb > 0);
   ok('room swoosh sits well under the hits in the mix (0.175 and 0.177: 30% quieter twice)', c.measuredDb + c.gainDb <= -18 && c.measuredDb + c.gainDb > -22);
 }
@@ -213,8 +209,7 @@ fresh();
   const syn = readFileSync('src/audio/synth.js', 'utf8'), sfxSrc = readFileSync('src/audio/sfx.js', 'utf8');
   ok('strike layers are generated: tick, thud, slice (yours), clank, thud (on the knight)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && A.clips[n]?.synth)
     && A.variation.attack.layers.map((l) => l.name).join() === 'tick,thud,slice' && A.variation.hurt.layers.map((l) => l.name).join() === 'clank,thud');
-  ok('sfx: a random peaking EQ and the layers on every strike', sfxSrc.includes("eq.type = 'peaking'") && sfxSrc.includes('planVariation(A.variation?.[name])')
-    && sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,'));
+  ok('sfx: the layers on every strike go through start()', sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,')); // (the EQ, the pitch and a layer are heard in T83)
   ok('coin jingle 3 dB quieter (0.110)', Math.abs(A.clips.loot.gainDb - 0.9) < 1e-9);
 }
 
@@ -297,12 +292,24 @@ fresh();
   const bedsFetched = () => bedFiles.filter((f) => fetched.includes(f)).length;
   music.toggleMuted(); // MUSIC: OFF before the first gesture
   sfxMod.initSfx(); music.initMusic();
+  const visBefore = (document.listeners.visibilitychange ?? []).length; // (the mixer's own listener joins at the first gesture)
   fa.gesture();
   const ctx = fa.ctx();
   const dec = ctx.decodeAudioData.bind(ctx);
   ctx.decodeAudioData = async (raw) => { const b = await dec(raw); b.tag = raw.byteLength; return b; };
   await sleep(10);
   ok('first gesture: one shared context, mixer built', !!ctx && ctx.nodes.some((n) => n.kind === 'compressor') && mx.mixer() !== null);
+  const g = mx.mixer();
+  ok('graph: music -> duck -> master, effects -> master, master -> limiter -> speakers, the limiter set from data (0.00223: the nodes, not the source)',
+    g.music.outs[0] === g.duck && g.duck.outs[0] === g.master && g.sfx.outs[0] === g.master && g.master.outs[0] === g.limiter && g.limiter.outs[0] === ctx.destination
+    && g.limiter.kind === 'compressor' && g.limiter.threshold.value === A.limiter.threshold && g.limiter.ratio.value === A.limiter.ratio);
+  const visNew = (document.listeners.visibilitychange ?? []).slice(visBefore);
+  document.hidden = true; for (const fn of visNew) fn(); await sleep(0);
+  const paused = ctx.state;
+  document.hidden = false; for (const fn of visNew) fn(); await sleep(0);
+  ok('audio pauses in a hidden tab and comes back with it', visNew.length === 1 && paused === 'suspended' && ctx.state === 'running');
+  ctx.state = 'suspended'; fa.gesture('pointerup'); await sleep(0);
+  ok('a suspended context resumes on a later gesture — a touch\'s end too (0.00209)', ctx.state === 'running');
   ok('MUSIC: OFF at the first gesture downloads no bed (0.00223)', bedsFetched() === 0 && fetched.some((u) => u.includes('assets/audio/')));
   music.toggleMuted(); // ON: the title bed starts and the score warms
   await sleep(10);
@@ -347,6 +354,18 @@ fresh();
   sfxMod.sfx('loot'); sfxMod.sfx('loot');
   await sleep(10);
   ok('a repeat inside the retrigger window is dropped', ctx.started.length === n1 + 1);
+  // the room swoosh (0.173): scheduled so its loudest moment lands peakAtMs into the transition (0.00223: the start time, not the source)
+  ctx.currentTime += 5;
+  const nT = ctx.started.length, TR = A.transition, cTR = A.clips[TR.clip];
+  sfxMod.transitionSfx();
+  await sleep(10);
+  const sw = ctx.started.slice(nT).find((s) => s.kind === 'buffer');
+  ok('the room swoosh starts peakAtMs - peakMs after the transition begins', !!sw && Math.abs(sw.started[0] - (ctx.currentTime + (TR.peakAtMs - cTR.peakMs) / 1000)) < 1e-9, sw && `${sw.started[0]} vs ${ctx.currentTime + (TR.peakAtMs - cTR.peakMs) / 1000}`);
+  // variation (0.110) heard: a peaking EQ, a pitch off 1 and a synthesized layer on the strikes
+  const nN = ctx.nodes.length, nS = ctx.started.length;
+  await withSeedAsync(5, async () => { for (let i = 0; i < 10; i++) { ctx.currentTime += 1; sfxMod.sfx('attack'); await sleep(5); } });
+  ok('every strike varies: a random peaking EQ, a pitch off 1, a generated layer', ctx.nodes.slice(nN).some((n) => n.kind === 'biquad' && n.type === 'peaking')
+    && ctx.started.slice(nS).some((s) => s.kind === 'buffer' && s.playbackRate.value !== 1) && ctx.started.slice(nS).some((s) => s.kind === 'osc'));
 
   // music: the bed loops exactly, at its level, through the music bus
   music.play('combat');
@@ -385,5 +404,17 @@ fresh();
   ok('VOLUME master: squared slider curve on the master bus', Math.abs(m.master.gain.events.at(-1)[1] - 0.25) < 1e-9);
   mx.setVolume('master', 1);
   ok('no audio errors anywhere', ctx.errors.length === 0, ctx.errors.join('; '));
+  fa.restore();
+}
+
+// 0.00209 / 0.00223: the first gesture counts a touch's END too (pointerup, touchend), and once only
+{
+  const { installFakeAudio } = await import('./fakeAudio.mjs');
+  const fa = installFakeAudio();
+  const { onFirstGesture, GESTURE_EVENTS } = await import('../../src/audio/audioCore.js');
+  let fired = 0;
+  onFirstGesture(() => fired++);
+  fa.gesture('touchend'); fa.gesture('touchend'); fa.gesture('pointerdown'); fa.gesture('keydown');
+  ok('a touch\'s end is the first gesture, and the callback runs once whatever follows', GESTURE_EVENTS.includes('touchend') && GESTURE_EVENTS.includes('pointerup') && fired === 1);
   fa.restore();
 }

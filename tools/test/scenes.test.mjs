@@ -16,7 +16,10 @@ fresh();
 // T2: background crossfade
 setBackground('medieval_castle.png');
 setBackground('castle_great_hall.png');
-ok('bg crossfade swaps layers', registry.bg1.style.opacity === '1' && registry.bg0.style.opacity === '0');
+{ // (0.00223: relative — whichever layer is up holds the newer painting, the other the older, faded)
+  const up = [registry.bg0, registry.bg1].find((l) => l.style.opacity === '1'), down = [registry.bg0, registry.bg1].find((l) => l !== up);
+  ok('bg crossfade swaps layers', !!up && up.dataset.file === 'castle_great_hall.png' && down.style.opacity === '0' && down.dataset.file === 'medieval_castle.png');
+}
 
 // T3: title -> hub -> dungeon transition path
 {
@@ -133,6 +136,12 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   registry.app.append(btn);
   transitionTo(() => {}, 50);
   ok('hotkeys ignored during a transition', handleKey('r') === false && clicked === 0);
+  // 0.00223: a dialog opened mid-transition hears the keyboard (the trap comes before the guard; a dialog used to be deaf until the windows were back)
+  const { openDialog } = await import('../../src/ui/dialog.js');
+  const { isTransitioning } = await import('../../src/core/scene.js');
+  const heard = [];
+  const dlgMid = openDialog({ label: 'mid', children: [], onKey: (k, close) => { heard.push({ k, mid: isTransitioning() }); if (k === 'escape') close(); } });
+  ok('a dialog opened mid-transition hears the keyboard; the scene\'s own keys stay off', handleKey('escape') === true && heard.length === 1 && heard[0].k === 'escape' && heard[0].mid && !dlgMid.isOpen() && handleKey('r') === false && clicked === 0);
   await sleep(100);
   ok('hotkeys work again after the transition', handleKey('r') === true && clicked === 1);
 
@@ -671,5 +680,20 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('Import Save: a bad code is refused in the dialog', anyDialogOpen() && dlg2.textContent.includes('valid save') && getProfile().coins !== 4242);
   ta2.value = code; load.listeners.click[0]();
   ok('...a good code loads and closes it', !anyDialogOpen() && getProfile().coins === 4242);
+  // 0.00223: the save dialogs from the keyboard — Escape closes, Space is the way on (Done / Load Save)
+  btn(/Export Save/).listeners.click[0]();
+  ok('Export Save: Escape closes it', anyDialogOpen() && handleKey('escape') === true && !anyDialogOpen());
+  btn(/Export Save/).listeners.click[0]();
+  ok('...and Space (Done is the way on)', anyDialogOpen() && handleKey(' ') === true && !anyDialogOpen());
+  resetProfile(); getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg3 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  dlg3.all((n) => n.tagName === 'textarea')[0].value = 'not a code';
+  ok('Import Save: a bad value closes on Escape without loading', handleKey('escape') === true && !anyDialogOpen() && getProfile().coins !== 4242);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg4 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  dlg4.all((n) => n.tagName === 'textarea')[0].value = code;
+  ok('Import Save: Space loads a good code (Load Save is the way on)', handleKey(' ') === true && !anyDialogOpen() && getProfile().coins === 4242);
   closeAllDialogs(); fresh();
 }

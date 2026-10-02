@@ -2,7 +2,7 @@
    face as the game; plain responsive grid. */
 @font-face {
   font-family: 'DIN Condensed';
-  src: url('../assets/fonts/DINCondensedBold.ttf') format('truetype');
+  src: url('../assets/fonts/DINCondensedBold.woff2') format('woff2'), url('../assets/fonts/DINCondensedBold.ttf') format('truetype');
   font-display: swap;
 }
 :root {

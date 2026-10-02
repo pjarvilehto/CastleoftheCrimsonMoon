@@ -1,13 +1,14 @@
 // tools/test/combat.test.mjs — combat engine + the battle line: attacks, spill, SMASH, death, playback, animation, summons.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync } from './harness.mjs';
 
 fresh();
 
 // T4: combat attack kills something, log drips (default profile needs
-// a few swings — keep attacking until the first kill lands)
-{
+// a few swings — keep attacking until the first kill lands; seeded since 0.00223)
+{ // (0.00223: under a seed — the walk below is one fight, the same every run; the order of the Math.random calls is part of it)
+await withSeedAsync(4, async () => {
   show(dungeonScene()); // (was entered by T3 before the 0.098 split)
   await sleep(1100);
   let killed = false;
@@ -46,6 +47,7 @@ fresh();
     }
     ok('T4 death settled (end screen mounted, no late timers)', settled);
   }
+});
 }
 
 // T7: multi-kill spill — heavy attacks only (0.049: basic attacks are
@@ -387,6 +389,9 @@ fresh();
   const fill = bu.el.all((e) => e.className === 'summon-fill')[0];
   ok('boss card has a summon bar that fills', !!fill && fill.style.width === `${Math.round((200) / cfg.every)}%`);
   ok('regular cards have no summon bar', createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack() {} }).el.all((e) => e.className === 'summon-line').length === 0);
+  const star = (u) => u.el.all((x) => x.className === 'elite-star' || /^aura/.test(x.className ?? '')).length;
+  const big = { ...sk, maxHp: DATA.difficulty.eliteMinHp + 1, hp: DATA.difficulty.eliteMinHp + 1 };
+  ok('a summon is never elite — no star, no aura — however big it scales; the same card unsummoned is (0.00223)', star(createEnemyUnit(big, 1, { onAttack() {} })) === 0 && star(createEnemyUnit({ ...big, summoned: false }, 1, { onAttack() {} })) === 2 && star(bu) === 2);
   let gone = 0;
   const row = new El('div');
   const su = createEnemyUnit(sk, 1, { onAttack() {}, onGone: () => gone++ });
@@ -515,6 +520,13 @@ fresh();
     && /\.fx-crit\.fx-mega\.fx-overkill \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8'))
     && DATA.backgrounds.parallax.lights.overkill.strength > DATA.backgrounds.parallax.lights.megacrit.strength);
   ok('mega crits: one crit in five (0.106)', DATA.difficulty.combat.megaCritChance === 0.2);
+  // 0.00223: the banner and the flash are placed from the victims' LIVE cards, read once (a fallen unit's detached card reads 0x0 and used to pull the box to the origin)
+  const { unionRect, overkillArea } = await import('../../src/ui/combatFx.js');
+  const rects = [{ left: 800, top: 200, width: 100, height: 100 }, { left: 850, top: 250, right: 1050, bottom: 500, width: 200, height: 250 }, { left: 0, top: 0, width: 0, height: 0 }];
+  const u = unionRect(rects);
+  const area = overkillArea({ victims: [0, 1, 2] }, { unit: (i) => ({ card: { getBoundingClientRect: () => rects[i] } }) });
+  ok('OVERKILL\'s area is the box around the victims\' live cards, empty ones dropped', u.left === 800 && u.top === 200 && u.width === 250 && u.height === 300
+    && JSON.stringify(area) === JSON.stringify(u) && unionRect([null, rects[2]]) === null && overkillArea({ victims: [] }, { unit: () => null }) === null);
 }
 
 // T72: 0.109's faint dead cards went in 0.00216 — a fallen enemy leaves the row (the check above, and 'a fallen summon leaves the row').
@@ -541,7 +553,7 @@ fresh();
   DEBUG.invulnerable = true;
   getProfile().stats.power = 5000;
   ok('a new save has not seen the victory', getProfile().victorySeen === false);
-  await killBoss();
+  await withSeedAsync(7, killBoss); // (0.00223: seeded)
   const said = body.textContent;
   ok('victory dialog after the final boss', victoryShown() && said.includes('Victory!') && said.includes('won the game')
     && said.includes('Start a New Game'));
@@ -550,7 +562,7 @@ fresh();
   ok('dialog owns the keys', victoryShown() && t().includes('Push Deeper'));
   handleKey('enter');
   ok('Enter closes the victory dialog', !victoryShown() && t().includes('Push Deeper'));
-  await killBoss();
+  await withSeedAsync(8, killBoss);
   ok('victory dialog shows only once', !victoryShown() && t().includes('Push Deeper'));
   Object.assign(d, saved);
   DEBUG.invulnerable = false;
@@ -576,8 +588,12 @@ fresh();
   ok('low health + potions: Drink Potion pulses red', btn.classList.contains('active') && btn.classList.contains('active-red'));
   run.potions = 0; upd(low);
   ok('no potions left: no pulse (the bar still glows)', !btn.classList.contains('active') && chip.classList.contains('lowhp'));
+  const bl = readFileSync('src/ui/battleLine.js', 'utf8');
+  ok('the line writes only what changed (0.00223: every tick used to rewrite every card\'s text and classes)', bl.includes('if (hp === lastHp && maxHp === lastMax) return;') && bl.includes('classList.toggle(') && /const setText = /.test(bl));
   const css = readFileSync('styles.css', 'utf8');
   ok('the low-HP bar glow is a breathing layer of its own (0.00222: opacity, never a box-shadow loop)', css.includes('.lowhp .hpbar::after {') && /\.lowhp \.hpbar::after \{[^}]*animation: glow-breathe/.test(css) && !/@keyframes [\w-]+ \{[^}]*box-shadow/.test(css) && !/@keyframes [\w-]+ \{[^}]*\n[^}]*box-shadow/.test(css));
+  ok('...the bar lets the layer show, its text glow is static, and Drink Potion\'s quicker pulse sits on the glow layer (0.00223)', /\.lowhp \.hpbar \{[^}]*overflow: visible/.test(css) && /\.lowhp \{ text-shadow:[^}]*\}/.test(css) && !css.includes('lowhp-pulse')
+    && css.includes('button.active.potion-remind::after { animation-duration: 2.2s; }') && !/button\.active\.potion-remind \{/.test(css));
   fresh();
 }
 
@@ -681,9 +697,7 @@ fresh();
   Math.random = seeded(42); const b = JSON.stringify(spawnParticles('dust', 0, 0, { kind: 'crit' }));
   Math.random = real;
   ok('particles follow a seeded Math.random', a === b);
-  const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
-  ok('benchmark: crit toggles off while it runs, every debug flag restored after',
-    bs.includes('forceCrit: false, forceMegaCrit: false') && bs.includes('Object.assign(DEBUG, debugWas);'));
+  // (the benchmark's own flags — crits off while it runs, everything restored after — are driven for real in history.test T94)
   const hub = readFileSync('src/ui/scenes/hubScene.js', 'utf8');
   ok('no benchmark ask once a descent has started (it can wait for the art)', hub.includes('leaving = true;') && hub.includes('!leaving && maybeAskBenchmark()'));
 }

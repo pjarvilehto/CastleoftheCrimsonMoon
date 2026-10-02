@@ -522,8 +522,8 @@ setInterval(() => {
 setMaterial('blood');
 // every room background from the game's data, so a look can be judged on the darkest and brightest rooms
 const roomSel = document.getElementById('room');
-fetch('../../assets/data/backgrounds.json', { cache: 'no-cache' }).then((r) => r.json()).then((bg) => {
-  for (const f of [...(bg.rooms ?? []), bg.boss, bg.shrine].filter(Boolean)) {
+fetch(`../../assets/data/backgrounds.json?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.json()).then((bg) => { // (0.00223: uncached, and the lists as named since 0.156)
+  for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? []), bg.shrine].filter(Boolean)) {
     const o = document.createElement('option'); o.value = f; o.textContent = bg.roomNames?.[f] ?? f; roomSel.append(o);
   }
   roomSel.value = 'castle_chapel_interior.jpg';

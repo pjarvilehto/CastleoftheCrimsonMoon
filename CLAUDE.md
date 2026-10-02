@@ -46,7 +46,14 @@ before structural changes. This file is the rules and the per-system notes.
     `card_*_border.png` / `card_*_plate.png`; the game's one PNG is 0.85).
     COPY JSON gives the picks back; the owner's picks shipped in 0.183
     (see "Card effects" below). The lab draws the game's shader
-    (`src/ui/cardFx.js`), so a look changed there changes here too.
+    (`src/ui/cardFx.js`) and the units' own glint, so a look changed there
+    changes here too; Reset is cards.json's shipped picks and the boss
+    sits on the 0.196 double-wide card (0.00223). The Card and Art labs
+    load styles.css versioned through `labs/boot.js` (`data-versioned`
+    links, 0.00223); the Fog Lab's saved state merges knob by knob over
+    the shipped values; the Particle Lab's room list has the throne and
+    treasure paintings (its 'shipped mix' stage is still a pre-0.136
+    copy — see the Backlog).
   - **Art Lab (0.184):** `labs/art/` — the portraits redrawn in the room
     paintings' style (see "Portraits" below) on the real card units over
     any room painting: COMPARE (one character, current beside every
@@ -67,11 +74,7 @@ before structural changes. This file is the rules and the per-system notes.
     cartographer's-table look was dropped as unimmersive) and DESCEND, the
     dive through the clouds to the place's first room. Drag, wheel and
     pinch; CLEAR fakes progress; COPY JSON gives the data and tuning back.
-    Nothing touches the save. The design (0.00209's thread): a scene between
-    the Great Hall and the dungeon; a place is a dungeon with its own boss,
-    room count, paintings and curve; clearing its last boss marks it in the
-    profile at settle time (rule 1) and the save gains a world record (rule
-    3); the hall's Descend goes to the last place chosen with a MAP beside.
+    Nothing touches the save; the design it prototypes is in the Backlog.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -80,8 +83,8 @@ before structural changes. This file is the rules and the per-system notes.
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
 node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
-node tools/smoke-test.mjs                    # the suite: ~770 checks, under a second
-node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at four screens (rule 8; needs Playwright)
+node tools/smoke-test.mjs                    # the suite: ~870 checks, a second or two on the virtual clock
+node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at five screens (rule 8; needs Playwright)
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -122,14 +125,19 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
-   After the steps `migrateProfile` makes an imported code whole (gear
-   slots, numbers, lists; 0.00197) — a malformed paste used to break the
-   Great Hall on every entry.
+   After the steps `migrateProfile` makes an imported code whole (0.00197;
+   0.00223 says exactly what): the gear slots checked against items.json
+   (an unknown worn id — a retired item, a foreign code — becomes empty),
+   every number in the top level and in the stats / alchemy / records
+   tables, the two lists, `forged` pruned to known items. A malformed
+   paste used to break the Great Hall on every entry, and an unknown id
+   made `settleRun` and kill loot throw.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot; only
    upgrades land in `run.itemsFound` — one path, `run/loot.js takeItem`,
    for kill loot and treasure chests (the Heart's revive is one too:
-   `runState.tryRevive`). One shrine per stretch of `bossEvery`
+   `loot.tryRevive`, there since 0.00223 so runState and treasure share no
+   import cycle). One shrine per stretch of `bossEvery`
    rooms (`run.shrineRooms`: on the way to rooms 2-7, 10-15, ...); coin
    boons can have a flat price (`flatCost`, else priced by the room the
    shrine leads to).
@@ -159,29 +167,35 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    (0.127). **From push to player (0.00197):** GitHub Pages deploys `main`
    in 45-70 s; every `build.json` fetch carries `?t=<now>` (the boot, the
    data loader, the labs, the stats page), so the CDN's 10-minute copy is
-   never served; the update prompt polls every minute and on tab focus,
-   so a player sees "Build available" within about two minutes of the
-   push (mid-run it waits for the run's end).
+   never served; the update prompt polls every minute while the tab is
+   visible, and once when it comes back (0.00223: a hidden tab used to
+   poll on), so a player sees "Build available" within about two minutes
+   of the push (mid-run it waits for the run's end).
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content, new filename.
 8. **Two layouts, one code path (0.00208 / 0.00209).** The desktop (tablets
    too) and the phone share every scene, module and string. The phone
    differs in three places, and only there: `styles.css` section 16 — a set
    of `html.phone` rules, each `html.phone` + the DESKTOP rule's own
-   selector (so it always outranks it; `main.js watchPhoneLayout` puts the
-   class on `<html>` from the one query, `platform.js PHONE_MQ`, and
-   re-lays the scene out when it flips); `hubScene.js phoneHall`, a second
-   assembly of the SAME table of sections the desktop's columns come from;
-   and `hubText.js`'s `short` wording beside each long line. A change to
+   selector (so it always outranks it; `platform.js watchPhoneLayout`,
+   called from main.js with the relayout closure, puts the class on
+   `<html>` from the one query, `platform.js PHONE_MQ`, and re-lays the
+   scene out when it flips); `hubScene.js phoneHall`, a second assembly of
+   the SAME table of sections the desktop's columns come from (the rows
+   themselves are built in `ui/hubSections.js`, 0.00223); and
+   `hubText.js`'s `short` wording beside each long line. A change to
    combat's chrome, the Great Hall, a panel room, a dialog or the corner
    column is a change to BOTH: find the rule's twin in section 16 (the
    suite fails a rule without the prefix, a class nothing produces, and a
    desktop rule removed without its twin), a new hub row gets its long and
    short line, a new section is a row in the hall's table — then
-   `node tools/layout-check.mjs`: the real game headless at four screens
-   (desktop, tablet, phone, the smallest phone), what each layout promises
-   asserted, screenshots to look at. The labs never set `html.phone`, so
-   the layer never reaches them.
+   `node tools/layout-check.mjs`: the real game headless at five screens
+   (desktop, a 960x720 narrow desktop window, tablet, phone, the smallest
+   phone), what each layout promises asserted (0.00223: the save dialogs
+   up top, the room title clear of the counters, the boons clear of a
+   panel room's log, Descend reachable in the narrow window's one-column
+   hall), screenshots to look at. The labs never set `html.phone`, so the
+   layer never reaches them.
 
 ## Working with the owner
 
@@ -193,7 +207,12 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
   Cloudflare dashboard (Edit code → Deploy; copy the raw file — GitHub's
   normal view can truncate a selection). Until then the dashboard warns
   that the collector is older, and the old Worker drops new fields (saves
-  keep them; they arrive with the next upload).
+  keep them; they arrive with the next upload). A Worker NEWER than the
+  page's telemetry.json gets a neutral note instead (0.00223: it used to
+  be told to roll back). The Worker to paste as of 0.00223 carries the
+  phone power / stall fields (0.00222) and the run-record clamp (a run
+  whose `room` is not a whole number up to 999 is dropped, the counts
+  clamped; one such record used to break the whole dashboard).
 - The collector's `READ_KEY` is the owner's secret: never ask for it. Cloud
   sessions can't reach the collector anyway; **play-stats data arrives as
   screenshots of the dashboard.**
@@ -218,8 +237,10 @@ sound effects; `analytics/` is the separate static stats page.
 ## Systems
 
 **Combat and pacing.** A turn (`run/combat.js playerAttack`) runs in phases:
-rollHit → SMASH/OVERKILL (a heavy blow covering every living enemy's HP) or
-strike (a heavy blow = `combat.heavyMult` x damage, 2.3 since 0.00198,
+rollHit → OVERKILL (a heavy blow covering every living enemy's HP; the
+event, the fx kind, the sound key and the benchmark act are all
+`overkill` since 0.00223 — the narration id `smash` is the multi-kill,
+the script's own name) or strike (a heavy blow = `combat.heavyMult` x damage, 2.3 since 0.00198,
 and its cooldown `player.baseHeavyCd` counts ORDINARY turns — the
 heavy's own turn used to count too, so a cooldown of 3 was back after
 two blows and two Quicken boons made it every turn; the fix cost the
@@ -227,8 +248,10 @@ room-24 boss most of its clears in the simulator (30% → 3%), 2.3 bought
 back the run depth and coins and leaves that boss at ~9%) (+ spill: heavies of `spillThreshold` x the target's HP sweep on) →
 lifesteal → enemy phase (dodge, armor, thorns, revive) → boss summons →
 cleared. Its events become playback items (`ui/combatQueue.js`) printed
-with their state snapshot, effect and sound; pacing in `difficulty.json
-combatPacing`. Boss summons (0.092): `boss.summon` (every N turns,
+with their state snapshot, effect and sound — per printed line: tick,
+line, sound, effect — pacing in `difficulty.json combatPacing`; `hit()`
+measures the struck card once per line and OVERKILL's banner and light
+come from the victims' live cards (0.00222 / 0.00223). Boss summons (0.092): `boss.summon` (every N turns,
 maxAlive, scaling); summons give no rewards and join the line in front of
 the boss. The win (0.121): beating the boss of `finalBossRoom` (24) shows
 `ui/victoryModal.js` once per save; move the knob when deeper content lands.
@@ -274,7 +297,8 @@ screen-blended over the frame's dark plate INSIDE the card's plate layer —
 see-through opacity, so the plate stays as transparent as the lab's
 (0.195) — masked to the frame's window or a panel's rounded edge; a WebGL context per card would run the browser
 out of them as rooms come and go). Drawn at `fx.scale` of the card's
-pixels at `fx.fps`, dead cards frozen; off with the particles (flat
+pixels at `fx.fps`, a fallen card lit until its unit leaves the row
+(0.00216); off with the particles (flat
 background, reduced motion). The cards in 3D: `perspective` on
 `.battle-line`, `.enemy-row` and `.unit` (each level hands its children
 the camera), `combatFx.js kick` turns a struck card `kickDeg` away from
@@ -449,8 +473,14 @@ art-rerender.json` (verdicts in, re-rolls out, a hint per character) →
 `--import` (the approved candidate, or `--pick rat=3`, to
 `assets/chars/<id>_v<k>.webp` and the data) → bump, ship. `sharp` is the
 one npm dependency (`package.json`, `npm install`; the suite runs
-without it). Pilot (0.184): the knight, the rat and the Vampire Lord,
-four candidates each, for the owner's verdict. Later: a style LoRA
+without it). State (0.00223): every character has candidates from the
+owner's style sheets (0.191–0.194): nine approved and pruned to the pick
+(verdict `ok` in art.json — the knight, the rat, the skeleton, the
+Cinderborn, the Cult Acolyte, the wraith, the Crypt Spider, the Hollow
+Hound, the Blood Knight), four undecided keep every candidate (the Cave
+Shrieker `bat`, the Fellblade `golem`, the gargoyle, the Vampire Lord);
+nothing is imported — the data still names the original files until
+`--import` writes `assets/chars/<id>_v<k>.webp`. Later: a style LoRA
 trained on the ~50 room paintings (`ostris/flux-dev-lora-trainer`) for
 the plain FLUX text-to-image path.
 
@@ -465,10 +495,18 @@ the tap's END, pointerdown counts for a mouse only (0.00209: a phone's
 first tap used to leave the context suspended). Downloads go through `audioCore.fetchBytes`'s pool
 (0.00197: two at a time, a sound about to play first — the beds, every
 narrator take and the clip set used to start together at the title,
-against the Descend essentials). Muting the music stops the bed and
-frees its decoded buffer; the narrator's lines decode in the order they
-were asked for (a death and the first-death line, a chest and its
-relic). Combat lines go through `ui/combatSfx.js` (panned to the
+against the Descend essentials; 0.00223: a file already queued is moved
+to the front when it is asked to play — the title's welcome take used to
+wait behind the whole score — and a MUSIC: OFF / NARRATOR: OFF player no
+longer downloads the beds or the takes, turning either on warms them
+then). Muting the music stops the bed and frees its decoded buffer (two
+asks for one bed inside its decode start one loop, and a bed asked for
+while MUSIC went OFF and ON is the one that plays — 0.00223); the
+narrator's lines decode in the order they were asked for (a death and
+the first-death line, a chest and its relic). The three on/off toggles
+share `shared/prefs.js mutePref` (0.00223). A second duck under a
+longer one keeps the longer release (0.00223: a short stinger under a
+narrator line used to bring the music back early). Combat lines go through `ui/combatSfx.js` (panned to the
 card, timed to the blow, crit/mega/overkill sweeteners). The room change's
 swoosh (0.173, `audio.json transition`): the owner's SFX pitched down three
 quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.178), played by `sfx.js transitionSfx()`
@@ -497,10 +535,12 @@ script's SMASH, mega crit, revive, summon, room cleared, low HP) to items'
 `vo`, said as the line prints (+ `combatDelayMs`). A room's threshold says
 one line at most (boss / shrine / treasure, else descent, `stretch_N`,
 new record, elite; `roomEntryDelayMs` so it lands with the painting). One
-line at a time: a second waits (`gapS`) or is dropped past `maxWaitS`;
-every take levelled to `targetDb` through the effects bus, the music
-ducking under it; no take twice in a row; NARRATOR: ON/OFF in the corner
-column. Once-per-save lines (victory, first death) are gated by their
+line at a time: a second waits (`gapS`) or is dropped past `maxWaitS` —
+a dropped line spends no once-per rule (0.00223); every take levelled to
+`targetDb` through the effects bus, the music ducking under it (SOUND:
+OFF, or its slider at 0, skips a line entirely: no take, no duck); no
+take twice in a row; NARRATOR: ON/OFF in the corner column — OFF stops
+the line playing and drops the ones waiting (0.00223). Once-per-save lines (victory, first death) are gated by their
 callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
 audio.json, a `narrate()` call — the suite checks the three agree.
 **Reviewing takes** (0.163): the VO Lab (`labs/vo/`) plays each take as the
@@ -512,8 +552,12 @@ narration.json (`approved`), re-renders the disapproved takes nudged from
 the settings they were rendered at (`settings`, recorded per take; a redo
 gets a fresh seed), measures them, bumps and ships as usual — the owner
 can paste the JSON into the chat for that. A re-rendered take comes back
-unapproved. Edge caches: a re-rendered take keeps its filename, so players
-may hear the old one for ~4 hours.
+unapproved. Edge caches: a re-rendered take keeps its filename, but
+`--rerender` stamps it (`rendered` in narration.json) and `narrator.js
+urlOf` fetches it as `<file>?r=<stamp>`, so no cache serves the old take
+(rule 7 holds by the query, not the name). A take re-rendered by
+deleting its file and running plain `gen-vo.mjs` gets no stamp and may
+be served stale for ~4 hours.
 
 **UI conventions.**
 - Every dialog: `ui/dialog.js openDialog({ label, children, onKey, proceed })`
@@ -533,15 +577,30 @@ may hear the old one for ~4 hours.
   upgrades and nothing to spend; 0.00200). Buy Potion pulses whenever a
   potion can be bought (0.00216; it used to wait for the stock to run low).
   **A purchase's feedback (0.00216):** every hub row carries `data-row`;
-  a handler calls `bought(root, row)` and after the re-render
-  `settleFlash` glows, grows and flashes the row's label at its new level
-  (one `element.animate`, 0.8 s). A new player is asked their
+  a handler calls `flashNext(row)` and then its own `render(root)`, and
+  `settleFlash(root)`, run at the end of both assemblies, finds the row
+  by `data-row` and glows, grows and flashes its label at its new level
+  (`fx.js pulseNumber`, one `element.animate`, 0.8 s). The three
+  sections' rows (Train, Alchemy, Equipment) are built in
+  `ui/hubSections.js` (0.00223); `hubScene.js` keeps the hall's table,
+  the two assemblies, Descend and the flash. A new player is asked their
   name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —
   that repaints every frame for as long as it is on screen; loops animate
   opacity / transform (the idle loops' translate / rotate / scale).
 - Hotkeys (`core/hotkeys.js`): a dialog's key trap takes every key but
-  F-keys and Tab (0.00197: a dialog used to swallow F5 and F12).
+  F-keys and Tab (0.00197: a dialog used to swallow F5 and F12), and it
+  is served before the transition guard, so a dialog opened mid-transition
+  hears the keyboard (0.00223); the scene-change listener (the update
+  prompt) fires once the windows are back.
+- A scene whose `enter()` throws shows a "Something went wrong" panel with
+  a Reload button Space presses (0.00223; the home-screen app has no
+  reload control of its own) instead of an empty, un-hidden `#app`.
+- Loops animate opacity or a transform, nowhere else in the stylesheet
+  either (0.00223): the rarity lines, the low-HP chip, the record tag, the
+  summon bar, the death and victory titles all breathe on opacity over a
+  static glow; a smoke check parses every infinite `@keyframes`. The
+  panel rooms' HP number and bar turn red at `lowHpShare` like the chip.
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, LABS (the menu page),
@@ -595,11 +654,13 @@ may hear the old one for ~4 hours.
   the elite star) has no touch path yet (backlog).
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
-  death art, portraits); the 34 room paintings (0.153, ~13MB) keep
+  death art, portraits); the 47 room, throne and treasure paintings
+  (~17MB; `preload.js roomUrls`, the entrance corridors first) keep
   loading behind — a room whose painting isn't in yet keeps the last one up
   (0.00222: into the HTTP cache only, `fetchOnly` — the renderer decodes a
   painting itself as the room is entered; decoding 34 of them here warmed
-  nothing it could reuse).
+  nothing it could reuse). The display font ships as WOFF2 (~68KB,
+  0.00223) with the TTF (212KB) as the fallback and for the labs.
 - **Only fights are numbered (0.171, the owner's call):** `run.roomNumber`
   counts fights (the boss's included), so room 8 is always the throne room.
   The shrine and the treasure room are interludes met on the way to a
@@ -710,8 +771,16 @@ history) → the dashboard's Benchmarks card. **The ask** (`telemetry.json
 benchmarkPrompt`; off 0.00201–0.00218, on again since 0.00219 for the
 phone testers; the `?debug` button runs it either way): every player is
 asked once, entering the Great Hall with best room ≥ `benchmarkPromptRoom`
-(6) and no result from this round yet (Continue only; it waits while
-another dialog is up and never interrupts a descent). **A round** is
+(6) and no result from this round yet (Continue only; it waits for the
+hall's windows — never mid-transition — and while another dialog is up,
+never interrupts a descent, and asks only where stats are sent:
+`telemetryEnabled`, an endpoint and not localhost; the `?debug` button
+returns to the scene it was pressed on — 0.00223). On a phone the
+benchmark budgets its cards like the dungeon (`fit()` on `#app`). The
+dashboard's Benchmarks card (0.00221, `analytics/perf.js benchTable`)
+reads the same knob: each result shows its build in a Build column, and
+a result from before `benchmarkSince` is marked there and its row muted,
+so an old round never reads as the current one. **A round** is
 `benchmarkSince` (0.00219): a result from an older build does not count,
 so raising it to the build being shipped asks everyone again — do that
 when the script (`PHASES`) or what it draws changes (the card effects in
@@ -762,7 +831,20 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
 - Browser checks: Playwright with Chromium at `/opt/pw-browsers/chromium`
   (`--use-gl=angle --use-angle=swiftshader` for WebGL; it's slow, so judge
   relative numbers only). Use a fresh context; disable CSS transitions for
-  stills if a fade gets in the way.
+  stills if a fade gets in the way. `tools/layout-check.mjs` and
+  `tools/audio-check.mjs` both read `PLAYWRIGHT_PATH` and `CHROMIUM`,
+  defaulting to the cloud container's /opt paths.
+- The harness (0.00223) has `withSeedAsync(seed, fn)` — the scene fights
+  are seeded; re-pick a seed when the room build or the combat path gains
+  a `Math.random()` call — and `withAnimations(fn)`, an opt-in Web
+  Animations recorder (`el.animations`; the kick, the deal and the glint
+  sweep are asserted through it; keep it off for the instant collapse /
+  vanish checks). Test files may not assume a module singleton (the
+  mixer, scene.js's active layer) is untouched by an earlier file: read
+  the state relative to what is there. The `check-bump` check runs on a
+  throwaway git repository of its own (the live repo's answer depends on
+  where in a ship it runs), and an orphan-asset check guards the folders
+  players download.
 - CI (`.github/workflows/test-and-deploy.yml`) runs the suite on every push
   and PR. Its deploy job is off until the repo opts in (Pages source "GitHub
   Actions" + repo variable `DEPLOY_VIA_ACTIONS=true`); until then Pages
@@ -802,10 +884,11 @@ sometimes — fetch all branches to find it.
 - Repo: **https://github.com/pjarvilehto/CastleoftheCrimsonMoon** (`main` =
   the live site; everything shipped is there).
 - Start from the latest `main`: `git fetch origin main` and branch from
-  `origin/main`. The last working branches, `claude/busy-hawking-blufll`
-  (cleanup, fog) and `claude/sweet-franklin-bwkdsh` (voice-over), both
-  end on `main` at 0.170. Treat them as finished: use the branch the new
-  session is given.
+  `origin/main`. `tools/ship.mjs` pushes every build to `main` AND to the
+  branch the session is given, so every `claude/*` branch that shipped
+  ends on `main` (the latest, `claude/busy-hawking-blufll`, carried
+  0.00205–0.00223). Never pick an old branch up by name: use the branch
+  the new session is given.
 - Ship with `node tools/ship.mjs --note "..."` (rule 6): it is the
   bump-suite-fetch-merge-push loop with the collision handling two
   threads need. No PRs unless the owner asks. **Two sessions may ship at
@@ -813,13 +896,15 @@ sometimes — fetch all branches to find it.
   each taken twice): never pick a build number by hand, and read the
   suite's exit code, never its last line through a pipe.
 
-## State at handover (0.00197)
+## State at handover (0.00223)
 
 - Live: the card effects from the Card Lab (0.183–0.195: a glow behind
   every portrait by material, the cards in 3D, the glint, see-through
   plates), the room push and swoosh (0.171–0.178), the Old Wizard
   (0.161–0.188), the Fog Lab's living mist (0.164–0.169), treasure rooms,
-  the Art Lab's redrawn portraits (0.186–0.194, the other thread; four
+  the Art Lab (0.184–0.194, the other thread: 38 candidates, nine
+  approved in 0.194, none imported — the game still draws the original
+  portraits; `node tools/gen-art.mjs --import` is the next step, four
   characters still undecided), build numbers with five decimals.
 - 0.00197 was a review of the whole project (three audits, every file
   read, plus a headless profile): the JavaScript side of a five-enemy
@@ -857,38 +942,97 @@ sometimes — fetch all branches to find it.
   on Alchemy, the title's save boxes under a phone's keyboard, ship.mjs
   renumbering main's lines and crashing on a refused push, CI's bump
   guard reading one commit, number copies in the renderer and synth.
-- Left as found: `icon.png` (374KB) at the root referenced by nothing;
+- 0.00210–0.00221: the World Lab prototype (0.00210–0.00215), CI's bump
+  check repaired (0.00211–0.00212), the fallen cards leaving the row, the
+  purchase flash and Buy Potion pulsing (0.00216), the changelist
+  scrolling inside the build prompt (0.00217), equal-height equipment
+  rows on phones (0.00218), the benchmark ask back with rounds and the
+  wake lock (0.00219), the death as its own playback step (0.00220), the
+  Benchmarks card's build column (0.00221).
+- 0.00222: the phone power profile (`deviceBlock`, lower DPR / fps / fewer
+  puffs on a phone, BATTERY SAVER), the refresh-rate reading judged by
+  the frame-time modes with stalls and the worst frame's moment recorded,
+  the benchmark's phases starting at rest, the shader vignette, the glint
+  mounted on demand, the glow loops as opacity layers, the newest log line
+  first.
+- 0.00223 was the review after the phone work and the dashboard rounds
+  (eleven read-only audits, adversarial verification, then every
+  confirmed fix applied by hand in thirteen batches; the simulator's
+  output is byte-identical to 0.00222). Fixed: the reliquary death
+  settling at the fights so far (now the room it led to), a potion drunk
+  between rooms arming the knight, an unknown item id breaking settle and
+  loot, a scene whose enter() throws leaving an empty window, a dialog
+  opened mid-transition deaf to the keyboard, the benchmark ask landing
+  mid-fade and its Continue dropped, the ?debug BENCHMARK always returning
+  to the title, the hidden tab polling for builds, OVERKILL's banner
+  placed from a fallen card's 0x0 rect, five layouts forced per printed
+  line, every card rewritten per tick, summons marked elite, the welcome
+  take queued behind the score, muted players downloading the beds and
+  the takes, two loops of one bed, MUSIC: OFF forgetting the bed asked
+  for, NARRATOR: OFF playing on, a dropped line spending its once-per
+  rule, SOUND: OFF still ducking, a second duck cutting the first's
+  release, the rarity / low-HP / death / victory text-shadow loops,
+  Drink Potion's dead quicker pulse, the save dialogs' twin that never
+  matched, the one-column hall with Descend unreachable, the boons over
+  a panel room's log on phones, a long room title into the counters, a
+  cut-off Push Deeper on phones, a fractional or huge room killing the
+  dashboard, the collector's and the dashboard's run sanitizers
+  disagreeing, the dashboard reading the CDN's old telemetry.json, a
+  newer Worker told to roll back, a GL shader leak, the ladder's step
+  past the end, the Card Lab's second glint and stale defaults, the Fog
+  Lab's saved state spread whole, the Particle Lab's `bg.boss`, the World
+  Lab rebuilding its clouds per input tick, ship.mjs hiding a crashed
+  suite, the two Playwright tools disagreeing on paths. New:
+  `ui/hubSections.js`, `prefs.js mutePref`, `loot.tryRevive`, the
+  `overkill` event name, the WOFF2 font, the labs' versioned stylesheets,
+  the narrow-window layout profile, `withSeedAsync` / `withAnimations`,
+  the check-bump fixture, the orphan-asset check, a dozen behavioural
+  checks in place of source greps.
+- Left as found: `icon.png` (374KB, 512x512) at the root is the
+  manifest's home-screen icon (`manifest.webmanifest`, purpose `any
+  maskable`; index.html links only `icon-64.png` as the favicon by
+  design — a padded maskable variant would be the owner's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
   `assets/chars/candidates` (12.6MB) and `assets/style` (9MB) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
-  not quality: re-encoding saved 3%).
+  not quality: re-encoding saved 3%). The `.pyc` cache file under
+  `tools/__pycache__` is no longer tracked (0.00223).
 
-## Backlog (as of 0.00197)
+## Backlog (as of 0.00223)
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
-  key is the owner's (quota per key) · a dropped line (queued past
-  `maxWaitS`) still spends its once-per rule.
+  key is the owner's (quota per key).
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
   against scaled enemy HP · more room kinds · a portrait phone layout
   (0.00208 plays sideways only) · the reliquary's revive is not narrated
-  · treasure rooms are not in the play stats.
-- Engineering: rename the `smash` combat event to `overkill` (engine,
-  sound keys, narration ids and the script disagree on the name) · the
-  mute pattern is copied in music / sfx / narrator (`shared/prefs.js
-  mutePref`) · `go()` is silently dropped during a transition (queue it)
-  · `hubScene.render` is ~150 lines · seed the two unseeded fight tests
-  (`withSeed` from `simCore.mjs`) · ~75 checks assert on source text
-  rather than behaviour (inject recording stubs instead) · `fresh()` does
-  not restore `DATA` after a test patches it · the Actions deploy job
-  (off until the owner opts in) should exclude `assets/chars/candidates`,
-  `assets/style`, `tools`, `docs`, `collector` · font as WOFF2 (212KB
-  TTF) · the Particle Lab can go once nobody is experimenting with looks.
+  · treasure rooms are not in the play stats · the world map (the World
+  Lab's design, 0.00210: a scene between the Great Hall and the dungeon;
+  a place = a dungeon with its own boss, room count, paintings and curve;
+  clearing its last boss marks it in the profile at settle time (rule 1)
+  and the save gains a world record (rule 3); the hall's Descend goes to
+  the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
+  the shape of the future `world.json`).
+- Engineering: `go()` is silently dropped during a transition (queue it)
+  · ~60 checks still assert on source text rather than behaviour (inject
+  recording stubs instead) · `fresh()` does not restore `DATA` after a
+  test patches it · the Actions deploy job (off until the owner opts in)
+  should exclude `assets/chars/candidates`, `assets/style`, `tools`,
+  `docs`, `collector` · import the nine approved portraits
+  (`gen-art.mjs --import`) once the owner decides the last four ·
+  ship.mjs: one commit per ship (the work commit carries the previous
+  build's number; rehearse against a bare scratch remote) · the Particle
+  Lab's shipped-mix stage: rewire to `particleLooks.spawnParticles` or
+  retire the lab (the owner's call) · WebP room paintings under new names
+  (~49% smaller at q80; the owner judges q80 / q85 in the Fog Lab;
+  `bg3dPuffs seedOf` should hash the stem first) · `combatFx.js` could
+  hand kick / enter / deal to a `cardMotion.js` of its own (contested:
+  the kick is part of the hit's choreography).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget

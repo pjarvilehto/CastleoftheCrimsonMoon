@@ -61,7 +61,7 @@ let dpr = 1;
 function sizeClouds() { dpr = Math.min(2, globalThis.devicePixelRatio || 1); canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr); }
 sizeClouds();
 const ctx = canvas.getContext('2d');
-let puffs = null, pattern = null; // an offscreen canvas of the clouds, drawn once per density, and the repeating pattern of it (0.00215: tiled by the canvas itself — four drawImage tiles met in a hairline of thinner cloud, whatever the offsets)
+let puffs = null, pattern = null, puffsDirty = false; // an offscreen canvas of the clouds, drawn once per density, and the repeating pattern of it (0.00215: tiled by the canvas itself — four drawImage tiles met in a hairline of thinner cloud, whatever the offsets)
 function makePuffs() {
   let s = 7; const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
   const off = document.createElement('canvas'); off.width = W; off.height = H;
@@ -88,6 +88,7 @@ const ease = (t) => 1 - Math.pow(1 - t, 3);
 let last = performance.now(), ox = 0, oy = 0, time = 0;
 function frame(now) {
   requestAnimationFrame(frame);
+  if (puffsDirty) { puffsDirty = false; makePuffs(); } // (0.00223: the density slider rebuilt the sheet on every input tick)
   const dt = Math.min(0.1, (now - last) / 1000); last = now; time += dt;
   ox = (ox + T.drift * dt) % W; oy = (oy + T.drift * 0.35 * dt) % H;
   // the burns advance
@@ -117,8 +118,10 @@ function frame(now) {
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
-  $('redmoon').style.opacity = String(T.red * Math.max(0, 1 - cleared.length / 3));
 }
+// the red moon fades as places are cleared: written when that changes, not every frame (0.00223)
+const moon = () => { $('redmoon').style.opacity = String(T.red * Math.max(0, 1 - cleared.length / 3)); };
+moon();
 requestAnimationFrame(frame);
 
 // ---- the pins and the card ----
@@ -214,17 +217,17 @@ function clearPlace(id) {
   if (cleared.includes(id)) return;
   cleared.push(id); reveal[id] = 0;
   for (const p of WORLD.places) if (p.needs === id && !(p.id in reveal)) reveal[p.id] = 0; // the roads it opens burn in too
-  drawPins(); card(); $('status').textContent = `${place(id).name} cleared — the clouds lift.`;
+  drawPins(); card(); moon(); $('status').textContent = `${place(id).name} cleared — the clouds lift.`;
   setTimeout(fitKnown, 400);
 }
 $('clear').onclick = () => { const next = WORLD.places.find((p) => stateOf(p) === 'open'); if (next) clearPlace(next.id); else $('status').textContent = 'Every place is cleared.'; };
-$('reset').onclick = () => { cleared = []; for (const k of Object.keys(reveal)) delete reveal[k]; picked = 'castle'; drawPins(); card(); fitKnown(); $('status').textContent = ''; };
+$('reset').onclick = () => { cleared = []; for (const k of Object.keys(reveal)) delete reveal[k]; picked = 'castle'; drawPins(); card(); moon(); fitKnown(); $('status').textContent = ''; };
 $('viewA').onclick = fitKnown; $('viewB').onclick = () => sky(place(picked)); $('fit').onclick = fitKnown;
 $('hide').onclick = () => { $('side').classList.add('folded'); document.body.classList.add('folded'); };
 $('fold').onclick = () => { $('side').classList.remove('folded'); document.body.classList.remove('folded'); };
 for (const k of Object.keys(DEFAULTS)) {
   const input = $(k); input.value = T[k]; $(`v-${k}`).textContent = T[k];
-  input.oninput = () => { T[k] = Number(input.value); $(`v-${k}`).textContent = T[k]; if (k === 'density') makePuffs(); if (k === 'tilt' || k === 'skyZoom') { if (document.body.classList.contains('sky')) sky(place(picked)); } save(); };
+  input.oninput = () => { T[k] = Number(input.value); $(`v-${k}`).textContent = T[k]; if (k === 'density') puffsDirty = true; if (k === 'red') moon(); if (k === 'tilt' || k === 'skyZoom') { if (document.body.classList.contains('sky')) sky(place(picked)); } save(); };
 }
 $('copy').onclick = async () => {
   const json = JSON.stringify({ world: WORLD, clouds: { density: T.density, drift: T.drift, dark: T.dark }, reveal: { cleared: T.cleared, open: T.open, burnS: T.burn, red: T.red }, sky: { tilt: T.tilt, zoom: T.skyZoom } }, null, 2);

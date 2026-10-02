@@ -98,9 +98,15 @@ for (let round = 1; round <= ROUNDS; round++) {
   // 4. bump, suite, commit
   execFileSync('node', ['tools/bump.mjs', version, ...notes.flatMap((n) => ['--note', n])], { cwd: ROOT, stdio: 'inherit' });
   claimed = version;
-  const suite = spawnSync('node', ['tools/smoke-test.mjs'], { cwd: ROOT, encoding: 'utf8' });
-  const tail = suite.stdout.trim().split('\n').slice(-1)[0];
-  if (suite.status !== 0) { console.error(suite.stdout.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); fail(`the suite failed (${tail}); nothing pushed — the bump and the merge are in the tree`); }
+  const suite = spawnSync('node', ['tools/smoke-test.mjs'], { cwd: ROOT, encoding: 'utf8' }); // (piped: a passing suite writes a deliberate stack to stderr)
+  const last = suite.stdout.trim().split('\n').pop() || '(no output)';
+  const tail = /^──/.test(last) ? `crashed in ${last}` : last; // (a section header as the last line: the suite died inside it — 0.00223, it used to read as "the suite failed (── zz ──)")
+  if (suite.status !== 0) {
+    console.error(suite.stdout.split('\n').filter((l) => l.startsWith('FAIL')).join('\n'));
+    const err = suite.stderr.trim();
+    if (err) console.error(err.split('\n').slice(-15).join('\n')); // (the crash itself)
+    fail(`the suite failed (${tail}); nothing pushed — the bump and the merge are in the tree`);
+  }
   console.log(`ship: suite ${tail}`);
   git('add', '-A');
   if (git('status', '--porcelain')) git('commit', '-q', '-m', message(version));

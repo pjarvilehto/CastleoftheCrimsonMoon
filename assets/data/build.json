@@ -1,5 +1,5 @@
 {
-  "version": "0.00222",
+  "version": "0.00223",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -88,6 +88,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00223": [
+      "Review build (notes to come)"
+    ],
     "0.00222": [
       "Phones: a lighter picture — the background at a lower resolution and rest rate, a thinner mist buffer, 1x particles, the card glow at 20 fps, the figures without their drop shadow (the same look, fewer pixels; the owner's iPhone ran hot)",
       "BATTERY SAVER in the corner column: the smallest background and no mist, for a hot phone or a long session; remembered per browser",
@@ -143,11 +146,6 @@
       "The 3D background draws at no more than 2x pixel density on sharp phone screens (cooler, smoother)",
       "Export Save and Import Save open as dialogs; the Great Hall's dot on EQUIPMENT lights when something can be forged (it used to light ALCHEMY)",
       "Fixes: a failed load says so and a tap retries; a room change on a flat background waits for the painting; music muted during its first load stays silent; a rare freeze after an effect error; the equipment rows' styles"
-    ],
-    "0.00208": [
-      "Phones play: hold your phone sideways — one line of big cards, Heavy Attack and Drink Potion under the knight, a one-line log, the corner buttons behind ☰, and PLAY / INSTALL before the title for the full screen",
-      "The Great Hall on a phone: a strip of your stats and TRAIN, ALCHEMY and EQUIPMENT as three stacked sheets — tap a tab or a sheet's edge to lift it; a green dot marks a sheet with something to buy",
-      "The boons' icons sit on top of the knight's card on a phone; the shrine and treasure rooms fit the shortest screens"
     ]
   }
 }

@@ -1,9 +1,11 @@
 // tools/test/history.test.mjs — run history (profile) and the /analytics/ dashboard.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
 import { compareVersions } from '../../src/shared/version.js';
-// how many builds past build.json a build number is (0 = shipped already, 1 = the one being shipped)
+import { DEBUG } from '../../src/shared/debug.js';
+import { currentScene } from '../../src/core/scene.js';
+// how many builds past build.json a build number is (<= 0 = shipped already, 1 = the one being shipped; ship.mjs bumps build.json after the suite's first run)
 const buildsAhead = (v) => Number(String(v).split('.')[1]) - Number(DATA.build.version.split('.')[1]);
 
 fresh();
@@ -84,6 +86,9 @@ fresh();
   ok('charts render lines + columns', ch.lines(st.depthSeries(players, runs)).includes('<path') && ch.columns([{ x: 1, parts: [1, 2] }], { names: ['a', 'b'] }).includes('<rect'));
   const html = readFileSync('analytics/index.html', 'utf8');
   ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));
+  const dashSrc = readFileSync('analytics/dashboard.js', 'utf8');
+  ok('the dashboard reads the build index.html fetched and every data file under ?v=<build> (0.00223: a bare URL served the CDN\'s old copy)', html.includes('window.__castleBuild = b') && dashSrc.includes('globalThis.__castleBuild') && dashSrc.includes('.json${q}') && !dashSrc.includes("'build', 'telemetry'"));
+  ok('a record the page cannot draw shows why instead of "Loading play stats…"', /function render\(\) \{\n  try \{ renderInner\(\); \} catch/.test(dashSrc));
   resetProfile();
 
   // CRIT! caption
@@ -140,6 +145,14 @@ fresh();
   const bad = await Promise.all([post('nope'), post({ playerId: '../x', profile: { history: [] } }), post({ playerId: 'abcd', profile: {} }),
     post({ playerId: 'abcd', profile: { history: [], pad: 'x'.repeat(300000) } })]);
   ok('collector rejects bad json, ids, payloads and oversize bodies', bad.map((r) => r.status).join() === '400,400,400,413' && kv.size === 1);
+  // 0.00223: a fractional or huge room in one record used to break the whole dashboard — the collector drops it, the page clamps it
+  const st = await import('../../analytics/stats.js');
+  const odd = st.sanitizeProfile({ playerId: 'abcd', history: [{ at: 1, room: 3.5 }, { at: 2, room: 1e9, kills: -4 }] }).history;
+  ok('the dashboard keeps rooms and counts whole, never negative, rooms at most 999; endRooms copes', odd[0].room === 3 && odd[1].room === 999 && odd[1].kills === 0 && st.endRooms(odd).length === 999
+    && wk.cleanRun({ at: 1, room: 1e9 }) === null && wk.cleanRun({ at: 1, room: 3.5 }) === null && wk.cleanRun({ at: 1, room: 7 }).room === 7);
+  const numsLine = readFileSync('collector/worker.js', 'utf8').match(/const RUN_NUMS = (\[[^\]]*\]);/)[1];
+  ok('the collector and the dashboard keep the same run fields and read an unknown outcome the same way', JSON.stringify(JSON.parse(numsLine.replace(/'/g, '"'))) === JSON.stringify(st.RUN_FIELDS)
+    && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === st.sanitizeProfile({ history: [{ at: 1, outcome: 'victory' }] }).history[0].outcome && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === 'death');
   const locked = await wk.default.fetch(new Request('https://w/players'), env);
   const open = await wk.default.fetch(new Request('https://w/players?key=k'), env);
   const list = await open.json();
@@ -166,6 +179,8 @@ fresh();
   ok('GET /version names the deployed collector, matching what the dashboard expects', ver.version === wk.VERSION && DATA.telemetry.collectorVersion === wk.VERSION);
   const dash = readFileSync('analytics/dashboard.js', 'utf8');
   ok('dashboard: collected players, deduped by player id, tester names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes('write(TESTERS, all)'));
+  const paste = dash.indexOf('paste collector/worker.js'), lt = dash.indexOf('const stale = cmp < 0'), gt = dash.indexOf('cmp > 0 ?');
+  ok('dashboard: a collector behind this page asks for the paste; one ahead of it says the page is behind main (0.00223)', dash.includes("compareVersions(server.version ?? '0', data.collectorVersion)") && lt > 0 && paste > lt && gt > paste && dash.lastIndexOf('paste collector/worker.js') === paste);
   ok('dashboard: tester names (0.136) show beside the typed name, never replace it; old renames fold in; codes keep their own label',
     dash.includes("label: tester ? `${tester} · ${pl.base}` : pl.base") && dash.includes('base: `${profile.name ||') && dash.includes('t[id] ??= String(n)')
     && dash.includes('({ key, label: base, profile, importedAt })') && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
@@ -238,9 +253,8 @@ fresh();
     PHASES.map((p) => p.id).join() === 'idle,combat,overkill' && PHASES.every((p) => p.enemies.every((id) => DATA.enemies[id]) && DATA.backgrounds.rooms.includes(p.bg))
     && ['rat', 'skeleton', 'ghoul', 'wraith'].every((id) => PHASES[1].enemies.includes(id)));
   const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
-  ok('benchmark: seeded and invulnerable while it runs, everything restored after; quality ladder held',
-    bs.includes('Math.random = seeded(') && bs.includes('Math.random = realRandom;') && bs.includes('Object.assign(DEBUG, debugWas);')
-    && bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
+  ok('benchmark: the quality ladder held while it runs; nothing settled or recorded as a run (its flags are driven in T94)',
+    bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
   const { recordBenchmark, BENCH_MAX } = await import('../../src/meta/profile.js');
   const histBefore = getProfile().history.length;
   for (let i = 0; i < BENCH_MAX + 2; i++) recordBenchmark({ at: i, build: '0.131', phases: {} });
@@ -290,7 +304,7 @@ fresh();
   DATA.telemetry.benchmarkPrompt = false;
   ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
   DATA.telemetry.benchmarkPrompt = true;
-  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && [0, 1].includes(buildsAhead(DATA.telemetry.benchmarkSince))); // the round is a shipped build or the one being shipped (ship.mjs bumps build.json after the suite's first run)
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && buildsAhead(DATA.telemetry.benchmarkSince) <= 1); // the round is a shipped build or the one being shipped
   p.records.bestRoom = 5;
   ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;
@@ -309,6 +323,7 @@ fresh();
   const body = new El('body');
   globalThis.document.body = body;
   const dlg = () => body.children.find((c) => /update-overlay/.test(c.className ?? ''));
+  const realRnd = Math.random; DEBUG.forceCrit = true; // (a ?debug toggle left on: the benchmark must switch it off and put it back)
   show(hubScene());
   await sleep(1100); // the fade to the hall
   ok('no ask while the hall is still fading in', !dlg());
@@ -321,13 +336,18 @@ fresh();
   ok('Space starts the benchmark', !dlg());
   await sleep(1300);
   ok('the benchmark scene runs', t().includes('Benchmark'));
+  const n0 = bm.PHASES[0].enemies.length;
+  ok('while it runs: a seeded Math.random, invulnerable, the crit toggles off, the line sized on #app (0.00223: driven, not read from the source)',
+    Math.random !== realRnd && DEBUG.invulnerable && !DEBUG.forceCrit && !DEBUG.forceMegaCrit && registry.app.style['--n'] === String(n0) && Number(registry.app.style['--slots']) >= n0, `${registry.app.style['--n']} ${registry.app.style['--slots']}`);
   await sleep(60000); // the whole script, in virtual time
   const res = dlg();
   ok('result shown with thanks; saved', res && res.textContent.includes('Benchmark complete') && res.textContent.includes('Thank you')
     && getProfile().bench.length === 1 && getProfile().bench[0].phases.combat?.fps > 0 && getProfile().history.length === 0);
+  ok('after it: the real Math.random and every debug flag back as they were', Math.random === realRnd && DEBUG.forceCrit === true && !DEBUG.invulnerable && !DEBUG.forceMegaCrit);
+  DEBUG.forceCrit = false;
   handleKey(' ');
   await sleep(1100);
-  ok('back to the Great Hall, and it does not ask again', t().includes('GREAT HALL') && (await sleep(2500), !dlg()));
+  ok('back to the Great Hall (the scene by name), and it does not ask again', t().includes('GREAT HALL') && currentScene()?.name === 'hub' && (await sleep(2500), !dlg()));
   // 0.00219 (phones): the benchmark keeps the screen awake where it can, and one that went to the
   // background partway (a call, the lock) is not saved — the hall asks again
   getProfile().bench = [];
@@ -426,7 +446,7 @@ fresh();
   const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
   const s = (pairs) => pm.summarizeFrames(rec(pairs));
   const K = DATA.telemetry.perf;
-  ok('perf knobs shipped: nearShare, paceShare, goodShare, okFps, hzSince (the build being shipped)', K.nearShare === 0.06 && K.paceShare === 0.15 && K.goodShare === 0.9 && K.okFps === 30 && [0, 1].includes(buildsAhead(K.hzSince)));
+  ok('perf knobs shipped: nearShare, paceShare, goodShare, okFps, hzSince (the build being shipped)', K.nearShare === 0.06 && K.paceShare === 0.15 && K.goodShare === 0.9 && K.okFps === 30 && buildsAhead(K.hzSince) <= 1);
   const mac = s([[8.33, 900], [7.25, 100]]);
   ok('a 120 Hz Mac with catch-up frames reads 120 Hz, nothing dropped (it read 144)', mac.hz === 120 && mac.drop === 0, JSON.stringify(mac));
   const phone = s([[16.67, 700], [12, 150], [21, 150]]);

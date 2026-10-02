@@ -222,6 +222,12 @@ fresh();
   const probs = checkData(broken);
   ok('data check names what is missing or not a number', probs.some((p) => p.includes('boss.hpMult')) && probs.some((p) => p.includes('player.baseHp'))
     && probs.some((p) => p.includes('clips.attack.gainDb')), probs.join('; '));
+  const broken2 = structuredClone({ ...DATA });
+  broken2.backgrounds.bosses = []; broken2.difficulty.potions.priceSteps[1] = 'x'; broken2.shrines.dealCount = 99; broken2.telemetry.benchmarkSince = '9.99999';
+  for (const e of Object.values(broken2.enemies)) if (e.tier === 1) e.tier = 2;
+  const probs2 = checkData(broken2);
+  ok('data check: the painting lists, the price ladder, the deal count, a tier-1 enemy for room 1 and the benchmark round (0.00223)',
+    ['bosses is empty', 'priceSteps', 'dealCount above the offers', 'no tier-1 enemy', 'benchmarkSince is more than one build above'].every((m) => probs2.some((p) => p.includes(m))), probs2.join('; '));
   ok('loadData runs the check', readFileSync('src/shared/data.js', 'utf8').includes('checkData(DATA)'));
   // 0.187: the data is loaded under ?v=<build> like the code (build.json itself uncached), so a deploy never runs new code on old JSON
   {
@@ -268,6 +274,8 @@ fresh();
     && boot.includes("fetch(new URL('assets/data/build.json?t=' + Date.now(), document.baseURI).href, { cache: 'no-store' })") && boot.includes("im.type = 'importmap'") && boot.includes("addEventListener('unhandledrejection'"), labsOnSrc.join());
   ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
     js.includes("from '../../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
+  ok('the fog lab hides the flat layers under the live canvas and merges its saved state knob by knob (0.00223)', lab.includes('#bg-stack.gl .bg-layer { visibility: hidden; }')
+    && js.includes("for (const k of ['puffs', 'mist', 'haze', 'push', 'light'])") && !js.includes('{ ...shipped(), ...saved }'));
 }
 
 // T88: the Particle Lab lives at labs/particles/; it loads the game's real
@@ -278,6 +286,7 @@ fresh();
   ok('particle lab: no URL forward from the game', !/particle_lab/i.test(idx));
   const refs = [...lab.matchAll(/\.\.\/\.\.\/assets\/[\w/.-]+\.(?:webp|ttf|jpg|json)/g)].map((m) => m[0].slice(6));
   ok('particle lab: every asset it loads exists', refs.length >= 6 && refs.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }), refs.join(', '));
+  ok('particle lab: the room list reads the lists as named since 0.156, uncached (0.00223)', lab.includes('bg.bosses') && lab.includes('bg.treasure') && !lab.includes('bg.boss,') && lab.includes('backgrounds.json?t=${Date.now()}'));
   // the VO Lab (0.163): every take, its text, when and how often; verdicts -> tools/gen-vo.mjs --rerender
   const vo = readFileSync('labs/vo/index.html', 'utf8'), voJs = readFileSync('labs/vo/lab.js', 'utf8');
   ok('VO lab: a standalone page on the registry and the rules',
@@ -303,11 +312,64 @@ fresh();
 
 // 0.00210: CI's bump guard runs — against the last commit, an unknown ref
 // and the all-zero ref a first push carries (0.00209 shipped it crashing on
-// an undefined name; every push to main went red).
+// an undefined name; every push to main went red). 0.00223: on the live
+// repo it may say yes or no (a checkpoint commit between ships); what it
+// must never do is crash. Its verdicts are checked on a repository of its own.
 {
   const { spawnSync } = await import('node:child_process');
   const run = (ref) => spawnSync('node', ['tools/check-bump.mjs', ...(ref ? [ref] : [])], { encoding: 'utf8' });
   const a = run('HEAD~1'), b = run('0000000000000000000000000000000000000000'), c = run('no-such-ref');
   // (CI's smoke job checks out one commit: HEAD~1 is unknown there and the guard compares HEAD with itself)
-  ok('check-bump runs against the last commit and falls back from an unknown or all-zero base', [a, b, c].every((r) => r.status === 0 && /^check-bump:/.test(r.stdout) && !r.stderr.includes('Error')), [a, b, c].map((r) => r.stderr.split('\n')[0]).join(' | '));
+  ok('check-bump runs against the last commit and falls back from an unknown or all-zero base, never crashing', [a, b, c].every((r) => [0, 1].includes(r.status) && /^check-bump:/.test(r.stdout + r.stderr) && !/Error|    at /.test(r.stderr)), [a, b, c].map((r) => r.stderr.split('\n')[0]).join(' | '));
+  const { mkdtempSync, rmSync, writeFileSync, mkdirSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join, resolve } = await import('node:path');
+  const tool = resolve('tools/check-bump.mjs');
+  if (spawnSync('git', ['--version']).status !== 0) ok('check-bump fixture skipped: no git here', true);
+  else {
+    const tmp = mkdtempSync(join(tmpdir(), 'castle-bump-'));
+    try {
+      const git = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { cwd: tmp, encoding: 'utf8' });
+      const guard = (...a) => spawnSync('node', [tool, ...a], { cwd: tmp, encoding: 'utf8' });
+      const build = (v) => writeFileSync(join(tmp, 'assets/data/build.json'), JSON.stringify({ version: v }));
+      git('init', '-q'); mkdirSync(join(tmp, 'assets/data'), { recursive: true }); mkdirSync(join(tmp, 'src'));
+      build('0.00001'); writeFileSync(join(tmp, 'src/a.js'), '1'); git('add', '-A'); git('commit', '-qm', 'one');
+      writeFileSync(join(tmp, 'src/a.js'), '2'); git('add', '-A'); git('commit', '-qm', 'two');
+      const red = guard('HEAD~1');
+      build('0.00002'); git('add', '-A'); git('commit', '-qm', 'three');
+      const green = guard('HEAD~2');
+      writeFileSync(join(tmp, 'README.md'), 'x'); git('add', '-A'); git('commit', '-qm', 'docs');
+      const docs = guard('HEAD~1');
+      ok('check-bump: a src change without a bump fails naming the build; a bump passes; a docs-only commit needs none',
+        red.status === 1 && /build is still 0\.00001/.test(red.stderr) && green.status === 0 && /0\.00001 -> 0\.00002/.test(green.stdout) && docs.status === 0 && /nothing players load changed/.test(docs.stdout),
+        [red.stderr, green.stdout, docs.stdout].map((x) => x.trim().split('\n')[0]).join(' | '));
+      ok('...the all-zero ref and an unknown ref fall back to the last commit', guard('0000000000000000000000000000000000000000').status === 0 && guard('no-such-ref').status === 0);
+    } finally { rmSync(tmp, { recursive: true, force: true }); }
+  }
+  const none = spawnSync('node', ['tools/smoke-test.mjs', 'no-such-area'], { encoding: 'utf8' });
+  ok('the runner refuses a filter no test file matches, naming the areas', none.status === 1 && /no test file matches no-such-area/.test(none.stderr) && /areas: scenes/.test(none.stderr));
+}
+
+// 0.00223: every file under the game's asset folders is one the game names
+// (a painting, its depth map, a sound, a take, a portrait or frame, an
+// icon) — an orphan is weight every clone and deploy carries for nothing.
+// (assets/style, assets/chars/candidates and assets/world are the labs' and
+// the owner's, outside this check; assets/fonts is the one font.)
+{
+  const bg = DATA.backgrounds;
+  const { depthUrl } = await import('../../src/core/bg3d.js');
+  const { portraitFile } = await import('../../src/shared/portraits.js');
+  const { CHEST_ICONS } = await import('../../src/run/treasure.js');
+  const base = (f) => f.split('/').pop();
+  const paintings = [...new Set([bg.title, bg.hub, bg.death, bg.shrine, ...bg.rooms, ...bg.bosses, ...bg.treasure])];
+  const want = {
+    'assets/bg': new Set(paintings),
+    'assets/bg/depth': new Set(paintings.map((f) => base(depthUrl(f)))),
+    'assets/audio': new Set([...Object.values(DATA.audio.clips).map((c) => c.file), ...Object.values(DATA.audio.music.tracks).map((x) => x.file)].filter(Boolean).map(base)),
+    'assets/audio/vo': new Set(Object.values(DATA.narration.lines).flat().map((x) => base(x.file))),
+    'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
+    'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
+  };
+  const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
+  ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame and icon on disk is one the game names', orphans.length === 0, orphans.join(', '));
 }

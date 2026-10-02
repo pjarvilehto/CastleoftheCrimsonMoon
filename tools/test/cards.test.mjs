@@ -4,7 +4,7 @@
 // Run via tools/smoke-test.mjs.
 
 import { readFileSync } from 'node:fs';
-import { ok, fresh, sleep, DATA, createRun, El } from './harness.mjs';
+import { ok, fresh, sleep, DATA, createRun, scaleEnemy, El, withAnimations } from './harness.mjs';
 
 fresh();
 const css = readFileSync('styles.css', 'utf8');
@@ -25,6 +25,13 @@ const { attachCardFx, cardStyle, styleNamed, SHRINE_STYLE, CHEST_STYLE, LOOKS, W
 
 // The lab draws the game's shader, not a copy of it (0.183)
 ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/cards/cardFx.js', 'utf8').includes("import { VS, FS, LOOKS, TINTS, WINDOW } from '../../src/ui/cardFx.js'"));
+{
+  const lab = readFileSync('labs/cards/lab.js', 'utf8'), page = readFileSync('labs/cards/index.html', 'utf8');
+  ok('the Card Lab uses the units\' own glint and resets to the shipped tuning (0.00223)', lab.includes('u.band = u.glint') && !lab.includes('cloneNode') && lab.includes('C.fx.amt') && lab.includes('C.motion.kickDeg') && lab.includes('C.glint.band')
+    && !page.includes('.portrait.glint {') && page.includes('.portrait.glint.streak {') && page.includes('#stage .boss-card .card-frame {') && lab.includes('--slots:${ENEMIES.length + ENEMIES.filter((e) => e.boss).length}'));
+  ok('the Card and Art labs reload the stylesheet under the build with their modules', page.includes('href="styles.css" data-versioned') && readFileSync('labs/art/index.html', 'utf8').includes('href="styles.css" data-versioned')
+    && readFileSync('labs/boot.js', 'utf8').includes('link[rel="stylesheet"][data-versioned]'));
+}
 
 // Without WebGL (the shim: no canvas contexts) a card is left as it is
 {
@@ -58,17 +65,45 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('the band carries the mask and is three cards wide; the copy keeps its brightness', css.includes('.glint-band {\n  position: absolute; top: 0; bottom: 0; left: -100%; width: 300%;') && css.includes('.portrait.glint { filter: brightness(1.9) saturate(0.5); max-width: calc(128% / 3); }') && !/\.portrait\.glint \{[^}]*mask/.test(css));
 }
 
-// The cards in 3D and the effects' wiring (source checks: the shim has no
-// Web Animations)
+// The cards in 3D, played (0.00223: the harness lends Web Animations for a
+// block — these used to be checks on the source text)
 {
-  const fx = readFileSync('src/ui/combatFx.js', 'utf8');
-  ok('the kick: full angle at 6% of the kick, slow recovery, added over the card\'s own transform',
-    fx.includes("offset: 0.06, easing: 'cubic-bezier(0.45, 0.05, 0.35, 1)'") && fx.includes("duration: M.kickMs, delay, easing: 'linear', composite: 'add'")
-    && fx.includes('kick(u, fx.mega || fx.crit ? M.critKick : fx.heavy ? M.heavyKick : 1, away, delay + stop)'));
-  ok('the deal brings the cards in turned, the glint crossing each', fx.includes('rotateY(${-side * 62}deg) rotateZ(${side * 9}deg) scale(0.92)') && fx.includes('glintSweep(u, G.enterMs, side, delay + 120)'));
-  ok('the units wait unseen from the room\'s build to the deal, and the scenes deal once the windows are back (0.184)',
-    fx.includes("case 'deal': return deal(ctx);") && fx.includes("if (can(u?.el)) u.el.style.opacity = '0';")
-    && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes("whenWindowsBack().then(() => { if (ui === built) playFx({ kind: 'deal' }, fxCtx); });")
+  const { playFx } = await import('../../src/ui/combatFx.js');
+  const { createEnemyUnit, createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const M = DATA.cards.motion, G = DATA.cards.glint;
+  await withAnimations(async () => {
+    const run = createRun();
+    const player = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+    const foes = ['rat', 'skeleton', 'wraith'].map((id, i) => createEnemyUnit(scaleEnemy(id, 1), i, { onAttack() {} }));
+    const row = new El('div'); row.append(...foes.map((u) => u.el));
+    const line = new El('div'); line.append(player.el, row);
+    const ctx = { unit: (w) => (w === 'player' ? player : foes[w] ?? null), layer: null };
+    const all = [player, ...foes];
+    playFx({ kind: 'attack', from: 'player', to: 0, dmg: 9, crit: true }, ctx);
+    const kick = foes[0].card.animations?.[0], band = foes[0].glintEl;
+    ok('a crit kicks the struck card: the full angle (kickDeg x critKick) at 6% of the kick, added over the card\'s own transform, kickMs long',
+      !!kick && kick.kf[1].offset === 0.06 && kick.kf[1].transform === `rotateY(${-M.kickDeg * M.critKick}deg)` && kick.opts.composite === 'add' && kick.opts.duration === M.kickMs && kick.kf.at(-1).transform === 'rotateY(0deg)');
+    ok('...and the glint sweeps the figure at the data strength, the copy sliding back over its own transform', !!band && band.animations?.[0].kf[1].opacity === G.strength && band.animations[0].opts.duration === G.hitMs
+      && band.children[0].animations?.[0].opts.composite === 'add');
+    playFx({ kind: 'enter' }, ctx);
+    const hidden = all.every((u) => u.el.style.opacity === '0');
+    playFx({ kind: 'deal' }, ctx);
+    const dealt = all.every((u, n) => { const a = u.el.animations?.at(-1); const i = u === player ? 0 : n - 1; return a && a.kf[0].transform.includes('rotateY(') && a.kf[0].opacity === 0 && a.opts.delay === M.enterDelayMs + i * M.enterStaggerMs && a.opts.duration === M.enterMs; });
+    await sleep(M.enterDelayMs + foes.length * M.enterStaggerMs + 10);
+    ok('the units wait unseen from the room\'s build (enter) to the deal, then come in turned and tilted, staggered, and stay shown', hidden && dealt && all.every((u) => u.el.style.opacity === ''));
+    const kicks = (n) => (foes[n].card.animations ?? []).length;
+    const before = foes.map((_, n) => kicks(n));
+    playFx({ kind: 'overkill', dmg: 999, victims: [0, 1, 2] }, ctx);
+    await sleep(5); // (the first victim's own task)
+    const at0 = kicks(0) === before[0] + 1 && kicks(1) === before[1];
+    await sleep(70);
+    const at1 = kicks(1) === before[1] + 1 && kicks(2) === before[2];
+    await sleep(70);
+    ok('OVERKILL kicks every victim, rippling down the line 70 ms apart', at0 && at1 && kicks(2) === before[2] + 1 && foes[2].card.animations.at(-1).kf[1].transform === `rotateY(${-M.kickDeg * M.overkillKick}deg)`);
+    await sleep(3000); // (the effects' own timers run out inside the block)
+  });
+  ok('the scenes deal once the windows are back (0.184)',
+    readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes("whenWindowsBack().then(() => { if (ui === built) playFx({ kind: 'deal' }, fxCtx); });")
     && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes("whenWindowsBack().then(() => playFx({ kind: 'deal' }, fxCtx));"));
   // whenWindowsBack: at once when idle, after the windows return during a transition
   const { whenWindowsBack, transitionTo } = await import('../../src/core/scene.js');
@@ -85,12 +120,22 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
     && parts.includes('if (--band.live <= 0) unmountGlint(u)'));
 }
 
-// Shrine boon and treasure chest cards are lit to their edge
+// Shrine boon and treasure chest cards are lit to their edge (0.00223: the rooms rendered, not their source read)
 {
-  ok('shrine cards go through litCard with the boon\'s style', readFileSync('src/ui/shrineUI.js', 'utf8').includes("litCard(SHRINE_STYLE[o.id], el('div', { class: 'shrine-card' }")
-    && readFileSync('src/ui/shrineUI.js', 'utf8').includes("{ window: 'panel', amt: DATA.cards.fx.panelAmt, into: plate }"));
-  ok('treasure chests go through litCard with the chest\'s style', readFileSync('src/ui/treasureUI.js', 'utf8').includes('litCard(CHEST_STYLE[kind], el'));
-  ok('a panel card\'s gradient is a plate layer holding its light', css.includes('.shrine-card .card-plate { position: absolute; inset: 0; z-index: -1;') && readFileSync('src/ui/shrineUI.js', 'utf8').includes("const plate = el('div', { class: 'card-plate' });"));
+  const { renderShrineRoom } = await import('../../src/ui/shrineUI.js');
+  const { renderTreasureRoom } = await import('../../src/ui/treasureUI.js');
+  const { generateInterlude } = await import('../../src/run/roomGen.js');
+  const { dealOffers } = await import('../../src/run/shrine.js');
+  const hooks = { title: ['T'], logEl: new El('div'), buffBar: new El('div'), coins: 0, xp: 0, onDeeper() {}, onRetreat() {}, refresh() {}, onDeath() {} };
+  const run = createRun();
+  const shrine = generateInterlude('shrine', 3, run); shrine.dealtOffers = dealOffers(run, shrine);
+  const root = new El('div'); renderShrineRoom(root, run, shrine, hooks);
+  const boons = root.all((n) => /\bshrine-card\b/.test(n.className ?? ''));
+  ok('every dealt boon is a card with its plate layer first (lit through litCard)', boons.length === DATA.shrines.dealCount && boons.every((c) => c.children[0]?.classList.contains('card-plate')));
+  const root2 = new El('div'); renderTreasureRoom(root2, createRun(), generateInterlude('treasure', 6, createRun()), hooks);
+  const chests = root2.all((n) => /\bshrine-card\b/.test(n.className ?? ''));
+  ok('the three chests are cards with their plate layer first', chests.length === 3 && chests.every((c) => c.children[0]?.classList.contains('card-plate')));
+  ok('a panel card\'s gradient is a plate layer holding its light', css.includes('.shrine-card .card-plate { position: absolute; inset: 0; z-index: -1;') && readFileSync('src/ui/shrineUI.js', 'utf8').includes("{ window: 'panel', amt: DATA.cards.fx.panelAmt, into: plate }"));
   // litCard hands the card back (the light is a no-op in the shim)
   const { litCard } = await import('../../src/ui/shrineUI.js');
   const c = new El('div');

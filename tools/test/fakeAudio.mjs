@@ -4,9 +4,12 @@
 // an AudioParam refuses non-finite values: the error is thrown AND logged
 // in ctx.errors (the engine swallows audio errors, the tests must not).
 //
-// installFakeAudio() -> { ctx(), gesture(), restore() }: installs
-// globalThis.AudioContext, captures the first-gesture listeners the
-// engine registers, and stubs fetch for audio files.
+// installFakeAudio() -> { ctx(), gesture(type), restore() }: installs
+// globalThis.AudioContext, captures the window listeners the engine
+// registers (by event type; removeEventListener is real, so a once-only
+// listener leaves — 0.00223: every first-gesture callback used to fire
+// twice, and a touch's pointerup / touchend were dropped), and stubs fetch
+// for audio files. gesture('touchend') fires that type's listeners.
 
 export class FakeParam {
   constructor(ctx, v = 0) { this.ctx = ctx; this.v = v; this.events = []; }
@@ -75,17 +78,17 @@ export class FakeAudioContext {
 
 export function installFakeAudio() {
   const saved = { AudioContext: globalThis.AudioContext, add: globalThis.addEventListener, remove: globalThis.removeEventListener, fetch: globalThis.fetch };
-  const gestures = [];
+  const gestures = []; // { type, fn }
   globalThis.AudioContext = FakeAudioContext;
-  globalThis.addEventListener = (type, fn) => { if (type === 'pointerdown' || type === 'keydown') gestures.push(fn); };
-  globalThis.removeEventListener = () => {};
+  globalThis.addEventListener = (type, fn) => { gestures.push({ type, fn }); };
+  globalThis.removeEventListener = (type, fn) => { const i = gestures.findIndex((g) => g.type === type && g.fn === fn); if (i >= 0) gestures.splice(i, 1); };
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => (String(url).includes('assets/audio/')
     ? { ok: true, arrayBuffer: async () => new ArrayBuffer(16) }
     : realFetch(url));
   return {
     ctx: () => FakeAudioContext.last,
-    gesture: () => { for (const fn of gestures.splice(0)) fn(); },
+    gesture: (type = 'pointerdown') => { for (const g of gestures.filter((g) => g.type === type)) g.fn(); }, // (a copy: the mixer registers its resume listeners during the first gesture)
     restore: () => {
       globalThis.AudioContext = saved.AudioContext; globalThis.fetch = saved.fetch;
       globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;

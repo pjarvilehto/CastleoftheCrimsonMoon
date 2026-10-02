@@ -25,7 +25,7 @@
 // screen); the latest device is kept on the player. 0.131: the profile's
 // `bench` — ?debug BENCHMARK results (idle / combat / overkill phases).
 
-export const VERSION = '0.00222'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
+export const VERSION = '0.00223'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -43,9 +43,12 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 
 // ---- what may be stored: the dashboard's fields, typed and capped ----
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const int = (v, max = 1e6) => Math.min(max, Math.max(0, Math.floor(num(v)))); // a count: whole, never negative, capped (0.00223)
 const str = (v, max) => (v === null || v === undefined ? null : String(v).slice(0, max));
 const pick = (o, keys, f) => Object.fromEntries(keys.map((k) => [k, f(o?.[k])]));
-const RUN_NUMS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor'];
+const MAX_ROOM = 999;
+const RUN_NUMS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'items', 'bosses', 'potions', 'turns', 'ms', 'level', 'maxHp', 'dmg', 'armor']; // (analytics/stats.js RUN_FIELDS lists the same)
+const RUN_COUNTS = { room: MAX_ROOM, kills: 1e6, bosses: 1e6, potions: 1e6, items: 1e6, level: 1e6, turns: 1e6 };
 const SLOTS = ['weapon', 'armor', 'boots', 'trinket', 'amulet'];
 const POWER = new Set(['saver', 'phone', 'full']); // the picture's power mode (0.00222: the battery saver, the phone profile, or neither)
 const PERF_NUMS = ['fps', 'p95', 'drop', 'worst', 'worstOut', 'stalls', 'hz', 'secs', 'q', 'dpr', 'vw', 'vh']; // (worstOut, stalls: 0.00222)
@@ -73,11 +76,14 @@ export function cleanDevice(d) {
 
 export function cleanRun(r) {
   if (!r || typeof r !== 'object' || !Number.isFinite(r.at)) return null;
+  const room = r.room === undefined ? 0 : Number(r.room); // (absent reads as 0, like every other number)
+  if (!Number.isInteger(room) || room < 0 || room > MAX_ROOM) return null; // (0.00223: one such record, anyone's POST, broke the dashboard for everyone)
   return {
     ...pick(r, RUN_NUMS, num),
-    build: str(r.build, 12), outcome: r.outcome === 'death' ? 'death' : 'retreat',
+    ...Object.fromEntries(Object.entries(RUN_COUNTS).map(([k, max]) => [k, int(r[k], max)])),
+    build: str(r.build, 12), outcome: r.outcome === 'retreat' ? 'retreat' : 'death', // (a run that is not a retreat ended in death — as the dashboard reads it)
     relic: !!r.relic, killedBy: str(r.killedBy, 40),
-    boons: Array.isArray(r.boons) ? r.boons.slice(0, 24).map((b) => str(b, 24)) : [],
+    boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [], // (the dashboard keeps 12)
     perf: cleanPerf(r.perf),
   };
 }

@@ -112,7 +112,7 @@ export function analyze(agg) {
   // with kills, so only flag when consumption doesn't outpace the drops.
   const foundPerRun = agg.potionsFound / agg.runs.length;
   if (foundPerRun > 5 && agg.potionsDrunk < agg.potionsFound) {
-    const rate = agg.potionDropChance ?? 0.05;
+    const rate = agg.potionDropChance; // (simulate() always sets it)
     flags.push({ level: 'MED', text: `${foundPerRun.toFixed(1)} potions found per run (${rate}/kill) and only ${agg.potionsDrunk} drunk vs ${agg.potionsFound} found — drops outpace consumption; buying potions is pointless.` });
   }
 

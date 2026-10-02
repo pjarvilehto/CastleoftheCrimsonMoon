@@ -14,25 +14,28 @@
 //
 // Usage:  node tools/audio-check.mjs
 // Needs Playwright + a Chromium:  npm install --no-save playwright
-// (CHROMIUM=/path/to/chrome to use a specific browser; in Claude's cloud
-// sandbox it is /opt/pw-browsers/chromium). Exit code 1 if a clip drifted
+// (PLAYWRIGHT_PATH / CHROMIUM name them, as for tools/layout-check.mjs; the
+// cloud container's /opt paths are the defaults, 0.00223). Exit code 1 if a clip drifted
 // more than 2 dB (the 0.107 trims used slightly different windows; death
 // and swoosh re-measure +1.5) from its measuredDb, a restart is worse than -20 dB or
 // a restart jumps more than 1 dB.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.mp3': 'audio/mpeg' };
 
+const PW = process.env.PLAYWRIGHT_PATH ?? '/opt/node-tools/node_modules/playwright/index.mjs';
+const CHROMIUM = process.env.CHROMIUM ?? '/opt/pw-browsers/chromium';
 let chromium;
 try {
-  ({ chromium } = await import(process.env.PLAYWRIGHT ?? 'playwright'));
+  ({ chromium } = await import(existsSync(PW) ? PW : 'playwright'));
 } catch {
-  console.error('Playwright not found: npm install --no-save playwright (or PLAYWRIGHT=/path/to/playwright/index.mjs)');
+  console.error('Playwright not found: npm install --no-save playwright (or PLAYWRIGHT_PATH=/path/to/playwright/index.mjs)');
   process.exit(2);
 }
 
@@ -46,7 +49,7 @@ const server = createServer(async (req, res) => {
 }).listen(0);
 const base = `http://localhost:${server.address().port}`;
 
-const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+const browser = await chromium.launch(existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {});
 const page = await browser.newPage();
 await page.goto(`${base}/assets/data/audio.json`);
 const result = await page.evaluate(async () => {

@@ -48,6 +48,16 @@ fresh();
   resetProfile();
   ok('importSave restores coins from code', typeof code === 'string' && importSave(code) === true && getProfile().coins === 777);
   ok('importSave rejects garbage', importSave('not-a-save-code') === false && getProfile().coins === 777);
+  // 0.00223: an unknown item id (a retired item, a foreign code), a foreign forge entry and a numeric string are made whole — settleRun and kill loot used to throw on them
+  const { settleRun, createRun: newRun } = await import('../../src/run/runState.js');
+  const base = JSON.parse(JSON.stringify(getProfile()));
+  const odd = { ...base, equipment: { ...base.equipment, weapon: 'no_such_item', rings: ['x', null] }, forged: { no_such_item: 2, [Object.keys(DATA.items)[0]]: '3' }, stats: { ...base.stats, power: '3' }, potions: 'two' };
+  let threw = null;
+  ok('importSave makes an odd code whole: unknown ids off, numbers numbers, the rest at their defaults', importSave(Buffer.from(JSON.stringify(odd)).toString('base64')) === true && getProfile().equipment.weapon === null
+    && getProfile().equipment.rings[0] === null && !('no_such_item' in getProfile().forged) && getProfile().forged[Object.keys(DATA.items)[0]] === 3 && getProfile().stats.power === 3 && getProfile().potions === 2);
+  try { settleRun(newRun(), 'retreat'); } catch (e) { threw = e; }
+  ok('...and a run settles on it', threw === null, threw && threw.message);
+  resetProfile();
 }
 
 // T17: alchemy tracks — escalating costs, potency drives heal, legacy save migrates
@@ -151,6 +161,9 @@ fresh();
   ok('infusion: temp armor applied', sip.armor === 60 && run.tempArmor === 60);
   enterNextRoom(run);
   ok('infusion: temp armor clears next room', run.tempArmor === 0);
+  run.hp = 100; run.potions = 2;
+  const late = drinkPotion(run, false); // between rooms (after the win)
+  ok('infusion: no armor from a potion drunk between rooms (0.00223: it used to arm the knight for a room that never came)', late.armor === 0 && run.tempArmor === 0 && run.hp > 100);
 }
 
 // T24: The Forge — per-item enhancement, escalating cost, derived stats boosted
@@ -456,11 +469,12 @@ fresh();
   // Death toll knob
   const { settleRun } = await import('../../src/run/runState.js');
   resetProfile();
+  const toll = DATA.difficulty.deathCoinToll; // (restored after — 0.00223: the test used to put 0.5 back by hand and read the file to check it)
   DATA.difficulty.deathCoinToll = 0.25;
   const dr = createRun(); dr.coins = 100; dr.roomNumber = 3;
   settleRun(dr, 'death');
-  DATA.difficulty.deathCoinToll = 0.5;
-  ok('death toll comes from difficulty.json', dr.coinsLost === 25 && dr.coinsRetrieved === 75 && JSON.parse(readFileSync('assets/data/difficulty.json', 'utf8')).deathCoinToll === 0.5);
+  DATA.difficulty.deathCoinToll = toll;
+  ok('death toll comes from difficulty.json', dr.coinsLost === 25 && dr.coinsRetrieved === 75 && toll > 0 && toll < 1);
   resetProfile();
 
   // Blur gone, small favicon, dead code gone
