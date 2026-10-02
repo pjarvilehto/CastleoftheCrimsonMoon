@@ -396,7 +396,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
   max-width: 1320px;
 }
 /* compact hub chrome so the Great Hall fits a single viewport */
-.hub-wrap .panel { width: auto; max-width: none; max-height: min(746px, calc(100vh - 200px)); /* 76% of design height; a 768px-tall tablet keeps Descend on screen (0.00205) */ overflow-y: auto; padding: 18px 24px; }
+.hub-wrap .panel { width: auto; max-width: none; max-height: min(746px, calc(100vh - 124px)); /* 76% of design height; a 768px-tall tablet keeps Descend on screen (0.00205). 124px = what sits around the panels: #app's 48px of padding, the Descend row's 20px margin and 51px height, 5px slack — 0.00205 took 200px, which put a scrollbar on a MacBook's Great Hall whose 686px of panel used to fit (0.00207) */ overflow-y: auto; padding: 18px 24px; }
 .hub-wrap h1 { font-size: 2.2rem; margin-bottom: 4px; }
 .hub-wrap .subtitle { margin-bottom: 12px; }
 .hub-wrap .stat-grid { gap: 8px; margin: 10px 0; }
@@ -413,7 +413,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
   .hub-wrap .panel { max-height: 60vh; }
 }
 /* middle column: alchemy panel + records panel stacked */
-.hub-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; max-height: min(746px, calc(100vh - 200px)); } /* the stacked column as a whole keeps Descend on screen (0.00205) */
+.hub-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; max-height: min(746px, calc(100vh - 124px)); } /* the stacked column as a whole keeps Descend on screen (0.00205; the same budget as the panels') */
 .hub-col > .panel { min-height: 0; } /* so the alchemy panel shrinks and scrolls, the records panel stays whole */
 .records-line { margin-bottom: 0; }
 
