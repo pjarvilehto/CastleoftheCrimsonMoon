@@ -33,7 +33,7 @@ function portrait(id, alt, family) {
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }
-// The glint (0.182): a second copy of the portrait, bright and masked to a
+// The glint (0.183): a second copy of the portrait, bright and masked to a
 // band (styles.css .portrait.glint) that fxParts.js glintSweep sweeps across
 // the figure as the card turns. It runs the same idle loop at the same
 // phase, so it sits on the figure; the 'dead' class hides both.
@@ -131,7 +131,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     shine,
     chip,
     potions);
-  attachCardFx(card, cardStyle('player')); // the shader light behind the knight (0.182)
+  attachCardFx(card, cardStyle('player')); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
@@ -187,7 +187,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     el('div', { class: 'skull' }, '☠'),
     hp.line,
     meterLine);
-  attachCardFx(card, cardStyle(e.id, !!e.boss)); // the shader light behind the figure, by its material (0.182)
+  attachCardFx(card, cardStyle(e.id, !!e.boss)); // the shader light behind the figure, by its material (0.183)
   // Dead cards keep their slot: the button row stays mounted with the
   // button hidden (ghost-btn), so the bottom-aligned card can't shift.
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');

@@ -1,4 +1,4 @@
-// tools/test/cards.test.mjs — the card effects (0.182, the Card Lab's picks
+// tools/test/cards.test.mjs — the card effects (0.183, the Card Lab's picks
 // in the game): the shader light behind every portrait (ui/cardFx.js), the
 // cards in 3D (the kick, the dealt entrance) and the glint.
 // Run via tools/smoke-test.mjs.
@@ -23,7 +23,7 @@ const { attachCardFx, cardStyle, styleNamed, SHRINE_STYLE, CHEST_STYLE, LOOKS, W
     FS.includes('uniform vec2 uWin') && WINDOW.frame[0] === 0.013 && WINDOW.panel[0] === 0);
 }
 
-// The lab draws the game's shader, not a copy of it (0.182)
+// The lab draws the game's shader, not a copy of it (0.183)
 ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/cards/cardFx.js', 'utf8').includes("import { VS, FS, LOOKS, TINTS, WINDOW } from '../../src/ui/cardFx.js'"));
 
 // Without WebGL (the shim: no canvas contexts) a card is left as it is

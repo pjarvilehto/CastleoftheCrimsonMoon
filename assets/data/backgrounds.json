@@ -44,7 +44,6 @@
     "dungeon_sewer_passage.jpg",
     "dungeon_tomb_vault.jpg",
     "dungeon_torch_corridor.jpg",
-    "dungeon_treasury.jpg",
     "dungeon_war_room.jpg",
     "dungeon_wine_cellar.jpg",
     "corridor_bone_passage.jpg",
@@ -63,7 +62,8 @@
     "treasure_frozen_tribute.jpg",
     "treasure_regalia_chamber.jpg",
     "treasure_smugglers_cache.jpg",
-    "treasure_sunken_vault.jpg"
+    "treasure_sunken_vault.jpg",
+    "dungeon_treasury.jpg"
   ],
   "bosses": [
     "castle_throne_room.jpg",

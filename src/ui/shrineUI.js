@@ -83,7 +83,7 @@ function shrineBody(run, room, { log, refresh }) {
         }, 'Accept'))))));
 }
 
-// A panel card lit by the shader (0.182): the look named for its boon or
+// A panel card lit by the shader (0.183): the look named for its boon or
 // chest (cardFx.js SHRINE_STYLE / CHEST_STYLE), to the card's rounded edge.
 export function litCard(styleName, card) {
   attachCardFx(card, styleNamed(styleName), { window: 'panel', amt: DATA.cards.fx.panelAmt });

@@ -92,7 +92,7 @@ function overkill(fx, ctx) {
   const area = { left, top, width: right - left, height: bottom - top };
   bgLight('overkill', area);
   floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
-  // every enemy the blow wiped bursts as a kill and takes the kick, rippling down the line (0.128, 0.182)
+  // every enemy the blow wiped bursts as a kill and takes the kick, rippling down the line (0.128, 0.183)
   (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
 }
 
@@ -134,7 +134,7 @@ function attack(fx, ctx) {
   if (fx.to === 'player' && fx.share >= big) setTimeout(() => bgSway((0.8 * fx.share) / big, -1), strike);
 }
 
-// The kick (0.182, the Card Lab's pick): the card turns around its axis
+// The kick (0.183, the Card Lab's pick): the card turns around its axis
 // away from the blow — at its full angle within the first 6% of the kick
 // (about two frames) and recovering slowly, a small counter-swing on the
 // way. composite: 'add' lays it over the card's own transform. The glint
@@ -260,7 +260,7 @@ function revive(ctx) {
   bgLight('revive', p?.card?.getBoundingClientRect?.()); // golden light in the scene (0.100)
 }
 
-// Room entrance (0.182: dealt, the Card Lab's pick): the cards come in
+// Room entrance (0.183: dealt, the Card Lab's pick): the cards come in
 // from above and the side, turned and tilted like cards dealt to a table,
 // the enemies from the right, staggered, the player from the left; the
 // glint crosses each as it turns. Starts while the windows are still

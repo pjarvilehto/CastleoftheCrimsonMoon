@@ -13,7 +13,7 @@ export const can = (node) => !!node?.animate;
 // a forced style resolution, and it happened on every blow (0.157).
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
 
-// The glint (0.182): the unit's bright masked copy of its portrait
+// The glint (0.183): the unit's bright masked copy of its portrait
 // (battleLine.js glint) sweeps its band across the figure over `ms`, in
 // `dir` (1 = left to right), peaking at cards.json glint.strength.
 export function glintSweep(u, ms, dir = 1, delay = 0) {

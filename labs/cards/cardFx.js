@@ -5,7 +5,7 @@
 // to the frame's window. Rendered at a third of the card's
 // pixels (soft looks need no sharp pixels) at ~30 fps. Looks: fog, blood
 // (a pulsing crimson fog), flames, embers (sparks rising through heat),
-// ether (ridged violet wisps). The shader itself is the game's (0.182,
+// ether (ridged violet wisps). The shader itself is the game's (0.183,
 // src/ui/cardFx.js: one shared context there); one context per card is fine
 // for a lab.
 

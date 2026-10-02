@@ -43,7 +43,7 @@ before structural changes. This file is the rules and the per-system notes.
     0.181: a Plate opacity slider fades the card's dark inside and its
     light under an untouched border (the frame art cut in two for the lab,
     `card_*_border.png` / `card_*_plate.png`; the game's one PNG is 0.85).
-    COPY JSON gives the picks back; the owner's picks shipped in 0.182
+    COPY JSON gives the picks back; the owner's picks shipped in 0.183
     (see "Card effects" below). The lab draws the game's shader
     (`src/ui/cardFx.js`), so a look changed there changes here too.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
@@ -170,7 +170,7 @@ isLowHp`).
 items, and use `element.animate` so they never restart the CSS idle loops
 (per enemy FAMILY: `battleLine.js IDLE_FAMILY` + `.idle-<family>`; loops
 animate only translate/rotate/scale, never filter). **Card effects
-(0.182, the owner's picks from the Card Lab; tuning `cards.json`):**
+(0.183, the owner's picks from the Card Lab; tuning `cards.json`):**
 `ui/cardFx.js` lights every card from behind — a slow fog, blood, flames,
 embers or ether by the enemy's particle material (`cardStyle`: bone fog,
 embers flames, the wraith ether, flesh blood; the boss flames, the knight
@@ -191,7 +191,7 @@ victims too — and `enter` deals the cards in, turned and tilted. The
 glint: `battleLine.js glint` is a second, bright copy of each portrait
 masked to a band (`--band` on the unit; `.portrait.glint`) that
 `fxParts.js glintSweep` sweeps across the figure on a hit and the
-entrance. The benchmark draws all of it from 0.182 on (its numbers moved
+entrance. The benchmark draws all of it from 0.183 on (its numbers moved
 with it). **Particles** (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
@@ -362,7 +362,9 @@ may hear the old one for ~4 hours.
   save's best room reaches `unlockRoom` (5; silent), on the way to a room in
   reach (`minRoom`..best room, not a boss room; the stretch's shrine steps
   aside);
-  painted from `backgrounds.json treasure`. Three chests, open one: Iron
+  painted from `backgrounds.json treasure` (7: the six `treasure_*` and,
+  since 0.182, The Treasury — none of them ever a fight room). Three
+  chests, open one: Iron
   Coffer (coins worth `coffer.fights` fights at that depth), Gilded Chest
   (one item of the depth's tier, made for a slot it improves, else
   salvaged), Sealed Reliquary (`hpCost` 20% of max HP as damage — it can

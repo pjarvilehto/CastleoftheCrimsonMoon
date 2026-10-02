@@ -1,5 +1,5 @@
 {
-  "version": "0.182",
+  "version": "0.183",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -83,10 +83,13 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
-    "0.182": [
+    "0.183": [
       "The Card Lab's picks are in the game: a slow glow behind every portrait (fog, blood, flames, embers or ether by the creature), the cards in 3D (a hit kicks the card around its axis, the room deals the cards in) and a sheen crossing the figure as it turns",
       "Shrine boons and treasure chests glow too, each its own way",
       "Benchmark results from this build on include the card effects"
+    ],
+    "0.182": [
+      "The Treasury is now a treasure room only: it no longer turns up as a fight"
     ],
     "0.181": [
       "Card Lab: a Plate opacity slider fades the card's inside (shader included) under an untouched border"
@@ -128,9 +131,6 @@
     ],
     "0.169": [
       "The mist toned down: a gentler drift and wander, smaller breathing, every room's wind eased by a third"
-    ],
-    "0.168": [
-      "Testing tools: one LABS button in the debug column opens a menu of the labs (Fog, VO, Particle), now all at /labs/"
     ]
   }
 }

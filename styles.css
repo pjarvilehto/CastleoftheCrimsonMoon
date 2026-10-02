@@ -472,7 +472,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .battle-line, .unit-actions { user-select: none; -webkit-user-select: none; }
 .portrait { -webkit-user-drag: none; user-drag: none; }
 
-/* The cards in 3D (0.182, the Card Lab's picks): a hit kicks the card
+/* The cards in 3D (0.183, the Card Lab's picks): a hit kicks the card
    around its axis (combatFx.js kick) and the room deals the cards in
    (enter). Each level hands its children the camera — perspective applies
    to direct children only — so the unit turns in the row and the card in
@@ -749,7 +749,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
    stylisation (panel scenes stay in tuned px, per convention) */
 .shrine-cards { display: flex; gap: 20px; justify-content: center; margin: 12px 0 8px; }
 .shrine-card {
-  position: relative; isolation: isolate; /* 0.182: its shader light (.card-fx at -1) sits over the card's own gradient, under its content */
+  position: relative; isolation: isolate; /* 0.183: its shader light (.card-fx at -1) sits over the card's own gradient, under its content */
   width: 200px; min-height: 380px;
   background: linear-gradient(180deg, rgba(72,31,23,0.94), rgba(44,19,14,0.94));
   border: 1px solid rgba(216,201,163,0.55);

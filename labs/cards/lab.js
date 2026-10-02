@@ -200,7 +200,7 @@ panel.append(
     slider(O.bg, 'amt', 'Intensity', 0, 2, 0.05, 'how much light it adds', applyBg),
     slider(O.bg, 'speed', 'Speed', 0, 4, 0.1, 'how fast it moves', applyBg),
     slider(O.bg, 'alpha', 'Plate opacity', 0, 1, 0.05, 'the card\'s dark inside and its light; the border stays (the game: 0.85)', applyBg),
-    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark plate (cut out of the frame art so Plate opacity can fade it under the border). In the game (0.182): one shared WebGL canvas draws every card, each card copies its picture out.')),
+    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark plate (cut out of the frame art so Plate opacity can fade it under the border). In the game (0.183): one shared WebGL canvas draws every card, each card copies its picture out.')),
   group('Card motion', 'the cards in 3D', true,
     check(O.motion, 'on', '3D on', applyMotion),
     choice(O.motion, 'enter', 'Entrance', [['slide', 'slide (today)'], ['turn', 'slide with a turn'], ['deal', 'dealt: from above, turning']], () => { applyMotion(); enter(); }),
@@ -222,7 +222,7 @@ async function copy() { const j = JSON.stringify(O, null, 2); code.value = j; tr
 function ideas() {
   const d = el('div', { class: 'ideas' });
   d.innerHTML = `<ol>
-  <li><b>Background shader.</b> Fog and blood read as atmosphere; flames and embers as heat (the ghoul, the boss); ether as the wraith's unlife. In the game (0.182): one hidden WebGL canvas draws every card at a third of its pixels and each card's 2D canvas copies its picture out — about the cost of the mist puffs. The frame art keeps its texture because the shader only adds light.</li>
+  <li><b>Background shader.</b> Fog and blood read as atmosphere; flames and embers as heat (the ghoul, the boss); ether as the wraith's unlife. In the game (0.183): one hidden WebGL canvas draws every card at a third of its pixels and each card's 2D canvas copies its picture out — about the cost of the mist puffs. The frame art keeps its texture because the shader only adds light.</li>
   <li><b>3D motion.</b> The kick is cheap (a transform on the card). "Kick + tilt" reads best on a blow from the side; "wobble" suits crits and kills. "Dealt" entrances feel like a card game; "slide with a turn" keeps today's pace. The mouse tilt is a nice touch for the enemy you are about to hit, but it fights the click-to-attack if it moves the target — off by default in the game, or only on the hovered card's top half.</li>
   <li><b>Glint.</b> The streak shows the turn; the sheen is subtler and suits the knight; the foil is loud — relics and bosses only, if at all. All three cost one extra image layer per card and no shader.</li>
   <li><b>Further:</b> a specular rim that follows the card's angle (needs the rotation in a CSS variable), the background shader reacting to a hit (a pulse of brightness through the look), card edges catching light on the turn (a thin gradient on the frame), and the dead card's skull swap done as a flip.</li>

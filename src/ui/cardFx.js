@@ -1,4 +1,4 @@
-// ui/cardFx.js — the shader light behind every card's portrait (0.182, the
+// ui/cardFx.js — the shader light behind every card's portrait (0.183, the
 // owner's picks from the Card Lab): slow fog, blood, flames, embers or ether
 // by the enemy's particle material, ADDED over the frame's dark plate (the
 // card's canvas blends with mix-blend-mode: screen, styles.css .card-fx) and
@@ -10,7 +10,7 @@
 // fx.fps (cards.json; soft looks need no sharp pixels), dead cards frozen.
 // Off when the 3D background is (no WebGL, software GL, the quality
 // ladder's flat step — the renderer's weak-device signal, as for the
-// particles) and under reduced motion: the cards then look as before 0.182.
+// particles) and under reduced motion: the cards then look as before 0.183.
 // The Card Lab (labs/cards/cardFx.js) imports this shader: one copy.
 
 import { DATA } from '../shared/data.js';

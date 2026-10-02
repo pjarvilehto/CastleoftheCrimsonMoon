@@ -325,3 +325,7 @@ fresh();
   const many = Array.from({ length: DATA.backgrounds.rooms.length + 3 }, (_, i) => generateRoom(i * 8 + 2, tiny).background);
   ok('backgrounds: a pool shown out starts over rather than failing', many.every(Boolean) && new Set(many).size === DATA.backgrounds.rooms.length - DATA.backgrounds.antechambers.length);
 }
+
+// 0.182: the treasure paintings (The Treasury included) are only ever treasure rooms
+ok('backgrounds: no treasure painting is in the fight pool', DATA.backgrounds.treasure.includes('dungeon_treasury.jpg')
+  && DATA.backgrounds.treasure.every((f) => !DATA.backgrounds.rooms.includes(f)));

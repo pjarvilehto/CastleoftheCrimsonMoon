@@ -89,7 +89,7 @@ fresh();
   const cards = registry.app.all((e) => e.className && e.className.startsWith('char-card'));
   const hpLines = registry.app.all((e) => e.className === 'hp-line');
   const actRows = registry.app.all((e) => e.className === 'unit-actions');
-  const portraits = registry.app.all((e) => e.tagName === 'img' && e.attrs.src && e.attrs.src.includes('assets/chars/') && !e.classList.contains('glint')); // (0.182: each portrait has a glint copy)
+  const portraits = registry.app.all((e) => e.tagName === 'img' && e.attrs.src && e.attrs.src.includes('assets/chars/') && !e.classList.contains('glint')); // (0.183: each portrait has a glint copy)
   const atkBtns = registry.app.all((e) => e.tagName === 'button' && e.attrs['data-key'] === 'a' && e.attrs.disabled === undefined);
   const nEnemies = cards.length - 1;
   ok('T11 card structure: units/cards/hp-lines/portraits/actions',
