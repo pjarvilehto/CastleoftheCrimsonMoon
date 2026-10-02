@@ -300,3 +300,13 @@ fresh();
   ok('the places: the castle first with no road in, every other road from a place that exists', ids[0] === 'castle' && ids.length >= 3 && needs.every((n) => ids.includes(n)) && !/id: 'castle'[^}]*needs:/.test(js));
   ok('the two looks and the dive', js.includes('function fitKnown()') && js.includes('function sky(p)') && js.includes('async function dive(p)') && js.includes("'destination-out'"));
 }
+
+// 0.00210: CI's bump guard runs — against the last commit, an unknown ref
+// and the all-zero ref a first push carries (0.00209 shipped it crashing on
+// an undefined name; every push to main went red).
+{
+  const { spawnSync } = await import('node:child_process');
+  const run = (ref) => spawnSync('node', ['tools/check-bump.mjs', ...(ref ? [ref] : [])], { encoding: 'utf8' });
+  const a = run('HEAD~1'), b = run('0000000000000000000000000000000000000000'), c = run('no-such-ref');
+  ok('check-bump runs against the last commit and falls back from an unknown or all-zero base', [a, b, c].every((r) => r.status === 0 && /^check-bump:/.test(r.stdout) && !r.stderr.includes('Error')), [a, b, c].map((r) => r.stderr.split('\n')[0]).join(' | '));
+}

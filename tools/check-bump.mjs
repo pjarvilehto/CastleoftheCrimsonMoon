@@ -11,7 +11,7 @@ import { compareVersions } from '../src/shared/version.js';
 
 const arg = process.argv[2];
 // the push's first parent (CI passes github.event.before); an unknown or all-zero ref (a branch's first push) falls back to the last commit
-const known = (ref) => ref && !/^0+$/.test(ref) && spawnSync('git', ['cat-file', '-e', `${ref}^{commit}`], { cwd: ROOT }).status === 0;
+const known = (ref) => !!ref && !/^0+$/.test(ref) && spawnSync('git', ['cat-file', '-e', `${ref}^{commit}`]).status === 0; // (0.00210: it named a ROOT that did not exist and crashed every run on main)
 const base = known(arg) ? arg : 'HEAD~1';
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
 const changed = git('diff', '--name-only', base, 'HEAD').split('\n').filter(Boolean);
