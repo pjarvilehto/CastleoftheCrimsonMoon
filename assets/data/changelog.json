@@ -1,4 +1,9 @@
 {
+  "0.00205": [
+    "Tablets are in: the game plays on an iPad or Android tablet held sideways (phones still get the notice) — tap-sized buttons, no double-tap zoom, no hotkey hints on touch, the Great Hall fits a 1024-wide screen, the corner buttons keep clear of the cards",
+    "Add the game to your home screen for a fullscreen, landscape app (Safari's Share, Add to Home Screen; Chrome's Install)",
+    "The play stats name iPads, iPhones and Android devices as themselves (an iPad used to read as macOS)"
+  ],
   "0.00204": [
     "Potions are cheaper: the first costs 10 coins, the second 20, the third 25, then 5 more each — and the price starts over after every run"
   ],
