@@ -1,5 +1,5 @@
 {
-  "version": "0.00201",
+  "version": "0.00202",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -85,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00202": [
+      "First steps: the title shows before the castle asks your name (it asks on Enter the Castle), the shrine says its boon lasts this run, and the Great Hall's Descend button pulses while there is nothing to spend yet"
+    ],
     "0.00201": [
       "The benchmark no longer asks to run after room 10 (it may come back for testers later)"
     ],
@@ -130,9 +133,6 @@
     ],
     "0.00188": [
       "The Old Wizard has five more things to say about an OVERKILL, so he repeats himself less on a long run"
-    ],
-    "0.00187": [
-      "The game's data files load under the build number like its code, so a fresh build never runs on the old data for the first minutes after a deploy (the Art Lab came up empty in 0.186)"
     ]
   }
 }
