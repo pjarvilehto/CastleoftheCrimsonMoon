@@ -139,6 +139,8 @@ labs/                   the testing pages (?debug LABS button): index.html is th
                         game's own renderer (base href = the site root)
   vo/                   review the narrator's takes: play, approve, disapprove ->
                         vo-rerender.json for tools/gen-vo.mjs --rerender
+  cards/                the combat cards' proposals on the real units: shader
+                        backgrounds (cardFx.js), 3D hit / entrance motion, glint
   particles/            standalone particle-look experiments
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/

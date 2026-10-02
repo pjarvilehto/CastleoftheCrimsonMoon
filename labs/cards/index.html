@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Card Lab</title>
+<!-- labs/cards/: the combat cards' looks, on the game's REAL card units
+     (src/ui/battleLine.js + styles.css): a shader behind each portrait (fog,
+     blood, flames, embers, ether — per enemy material), the cards in 3D
+     (a kick when hit, a turn as they slide in, a tilt under the mouse) and
+     a glint on the portrait that shows as it turns. Mix the options, fire
+     hits and entrances, read the frame rate; COPY JSON gives the picks back.
+     The base href keeps the game's relative paths (assets/..., styles.css). -->
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+:root { --panel: rgba(16, 11, 8, 0.88); --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818;
+  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif; --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif; }
+html, body { overflow: hidden; }
+#room { position: fixed; inset: 0; background: #0d0808 url("assets/bg/castle_chapel_interior.jpg") center / cover no-repeat; }
+#room::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.1), rgba(0,0,0,0.65)); }
+/* the stage keeps clear of the panel; the game's --n sizing still runs off the viewport */
+#stage .battle-line { right: 420px; }
+/* ---- the lab's additions to the cards ---- */
+.card-fx { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; mix-blend-mode: screen; }
+.battle-line.p3d { perspective: 1400px; perspective-origin: 50% 35%; }
+.battle-line.p3d .unit, .battle-line.p3d .char-card { transform-style: preserve-3d; }
+.battle-line.p3d .char-card { backface-visibility: hidden; }
+/* the glint: a second copy of the portrait, bright, masked to a band that sweeps as the card turns */
+.portrait.glint { pointer-events: none; opacity: 0; mix-blend-mode: screen; z-index: 1;
+  filter: brightness(2.6) saturate(0.35) contrast(1.15);
+  -webkit-mask-image: linear-gradient(115deg, transparent 0%, transparent calc(50% - var(--band, 8%)), white 50%, transparent calc(50% + var(--band, 8%)), transparent 100%);
+  mask-image: linear-gradient(115deg, transparent 0%, transparent calc(50% - var(--band, 8%)), white 50%, transparent calc(50% + var(--band, 8%)), transparent 100%);
+  -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: var(--glint-x, -100%) 0; mask-position: var(--glint-x, -100%) 0; }
+.portrait.glint.foil { filter: brightness(1.9) saturate(3) contrast(1.1) hue-rotate(var(--hue, 0deg)); }
+.portrait.glint.sheen { filter: brightness(1.9) saturate(0.5); }
+/* ---- the panel ---- */
+.top { position: fixed; left: 16px; top: 14px; z-index: 5; display: flex; gap: 10px; align-items: center; }
+.top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
+.top .hint { color: var(--muted); font-size: 0.85rem; text-shadow: 0 1px 4px #000; font-family: var(--body); }
+.top a { color: var(--gold); font-family: var(--display); letter-spacing: 0.1em; text-decoration: none; text-shadow: 0 2px 6px #000; }
+#fps { font-family: var(--display); color: var(--parchment); letter-spacing: 0.08em; text-shadow: 0 2px 6px #000; }
+#panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(400px, 92vw); z-index: 60; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); backdrop-filter: blur(6px); padding: 14px 16px 40px; box-sizing: border-box; font-family: var(--body); font-size: 15px; color: var(--parchment); }
+#panel.hidden { display: none; }
+#panel button, #panel select { font-family: var(--display); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 6px 12px 4px; cursor: pointer; min-width: 0; }
+#panel button:hover, #panel select:hover { border-color: var(--gold); color: #fff; }
+#panel button.fire { border-color: var(--blood); }
+#panel select { text-transform: none; letter-spacing: 0.04em; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
+details { border-top: 1px solid var(--line); padding: 8px 0 4px; }
+summary { font-family: var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-size: 1.05rem; cursor: pointer; list-style: none; display: flex; justify-content: space-between; }
+summary::after { content: "+"; color: var(--muted); } details[open] summary::after { content: "−"; }
+summary small { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.1em; margin-left: 8px; }
+label.s { display: grid; grid-template-columns: 9em 1fr 4em; gap: 8px; align-items: center; font-size: 0.9rem; margin: 3px 0; }
+label.s input[type=range] { width: 100%; accent-color: var(--gold); margin: 0; }
+label.s .v { font-family: var(--display); color: var(--gold); text-align: right; font-size: 1rem; }
+label.c { display: grid; grid-template-columns: 9em 1fr; gap: 8px; align-items: center; font-size: 0.9rem; margin: 4px 0; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 2px 0 8px; }
+textarea { width: 100%; box-sizing: border-box; background: #0a0705; color: var(--parchment); border: 1px solid var(--line); border-radius: 4px; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; padding: 6px; }
+.ideas ol { padding-left: 1.2em; margin: 4px 0; } .ideas li { margin: 4px 0; font-size: 0.9rem; } .ideas b { color: var(--parchment); }
+#status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="stage"></div>
+<div class="top">
+  <a class="labs-link" href="labs/">‹ Labs</a>
+  <h1>Card Lab</h1>
+  <span id="fps">— fps</span>
+  <span class="hint">E enter · H hit · C crit · K kill · L loop · P panel</span>
+</div>
+<aside id="panel"></aside>
+<script type="module" src="labs/cards/lab.js"></script>
+</body>
+</html>

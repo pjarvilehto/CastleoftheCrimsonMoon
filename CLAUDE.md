@@ -34,6 +34,13 @@ before structural changes. This file is the rules and the per-system notes.
     (see "Audio").
   - **Particle Lab:** `labs/particles/` — trying particle looks (see
     "Effects").
+  - **Card Lab (0.174):** `labs/cards/` — the game's real card units
+    (`battleLine.js` + `styles.css`) with three proposals on top, each with
+    options: a shader behind each portrait (`cardFx.js`: fog, blood,
+    flames, embers, ether, by the enemy's particle material), the cards in
+    3D (hit kicks, turning or dealt entrances, a mouse tilt) and a glint
+    sweeping the bitmap as it turns (a bright masked copy of the portrait).
+    Nothing of it is in the game yet: COPY JSON gives the picks back.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
