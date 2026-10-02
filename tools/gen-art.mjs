@@ -8,7 +8,9 @@
 //
 //   node tools/gen-art.mjs --dry-run                      # what would be sent, and to which model
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
-//   node tools/gen-art.mjs --style castle_courtyard.jpg   # another painting as the style reference
+//   node tools/gen-art.mjs --style castle_courtyard.jpg   # another painting as the style reference, or any
+//                                                         # picture by path (assets/style/rat.png: a finished
+//                                                         # character sheet in the target style steers best)
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
@@ -105,8 +107,8 @@ const headers = () => ({ Authorization: `Bearer ${token()}` });
 async function inline(path) {
   const S = await sharp();
   const img = S(path), meta = await img.metadata();
-  const buf = path.endsWith('.jpg') ? await img.resize({ width: 1024 }).jpeg({ quality: 85 }).toBuffer()
-    : meta.height > 1024 ? await img.resize({ height: 1024 }).webp({ quality: 90, alphaQuality: 100 }).toBuffer() : readFileSync(path);
+  const buf = path.endsWith('.jpg') ? await img.resize({ width: 1024, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
+    : meta.height > 1024 || !path.endsWith('.webp') ? await img.resize({ height: 1024, withoutEnlargement: true }).webp({ quality: 90, alphaQuality: 100 }).toBuffer() : readFileSync(path);
   return `data:${path.endsWith('.jpg') ? 'image/jpeg' : 'image/webp'};base64,${buf.toString('base64')}`;
 }
 async function upload(path) {
@@ -266,7 +268,8 @@ async function main() {
   }
   for (const j of jobs) {
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
-    if (!existsSync(join(ROOT, 'assets/bg', j.style))) throw new Error(`no such painting: assets/bg/${j.style}`);
+    j.stylePath = existsSync(join(ROOT, 'assets/bg', j.style)) ? join(ROOT, 'assets/bg', j.style) : existsSync(join(ROOT, j.style)) ? join(ROOT, j.style) : null;
+    if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
   }
   const cost = jobs.reduce((s, j) => s + (j.from ? CLEAN.priceUsd : model.priceUsd), 0);
@@ -289,7 +292,7 @@ async function main() {
         const use = j.from ? CLEAN.model : model.model;
         const input = j.from
           ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
-          : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(join(ROOT, 'assets/bg', j.style)), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+          : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);

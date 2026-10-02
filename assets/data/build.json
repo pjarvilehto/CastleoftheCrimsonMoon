@@ -1,5 +1,5 @@
 {
-  "version": "0.185",
+  "version": "0.186",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -44,6 +44,7 @@
     "src/shared/debug.js",
     "src/shared/level.js",
     "src/shared/platform.js",
+    "src/shared/portraits.js",
     "src/shared/prefs.js",
     "src/shared/preload.js",
     "src/shared/version.js",
@@ -83,6 +84,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.186": [
+      "Art Lab (test mode, LABS): the portraits redrawn in the room paintings' style on the real cards over any room — current beside the candidates, a line-up of all thirteen, a fight at the game's size; approve, reject, flip, clean, re-roll. A pilot of three (the knight, the rat, the Vampire Lord) is in it; nothing in the game changes yet",
+      "The portrait files are named in the data (enemies.json, cards.json), so a redraw goes in under a new filename"
+    ],
     "0.185": [
       "No black rim outside the cards' white border"
     ],
@@ -127,11 +132,6 @@
     ],
     "0.172": [
       "Room changes move through the picture: the camera pushes into the painting as the windows fade, and the next room appears close and settles back — one movement, the same timing as before"
-    ],
-    "0.171": [
-      "Only fights are numbered now: the shrine and treasure rooms come between rooms, so room 8 is always the throne room (\"An Ominous Shrine\" instead of \"Room 3 - The Shrine\")",
-      "Every descent starts in a corridor, and an antechamber always leads to the throne room — two new ones, the Hall of Mirrors and the Iron Gate, with the Royal Bedchamber joining them",
-      "The Crimson Nave is now the Crimson Cathedral"
     ]
   }
 }

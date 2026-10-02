@@ -25,7 +25,7 @@ fresh();
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image'"));
   ok('the models take two pictures (the portrait and the painting); candidates are numbered, never overwritten',
     MODELS.pro.model === 'flux-kontext-apps/multi-image-kontext-pro' && MODELS.max.model.endsWith('-max') && DEFAULTS.n === 4 && DEFAULTS.aspect === '2:3' && candidateFile('rat', 3) === 'rat_c3'
-    && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(join(ROOT, 'assets/bg', j.style))") && readFileSync('tools/gen-art.mjs', 'utf8').includes('while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++'));
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath)") && readFileSync('tools/gen-art.mjs', 'utf8').includes('while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++'));
 }
 
 // The cut-out: the background keyed from the border, grey INSIDE the figure kept, a lighter paper panel gone, a dark shadow bar
