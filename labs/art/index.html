@@ -26,8 +26,8 @@ html, body { overflow: hidden; }
 #room::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); }
 /* the stage: the game's battle line, kept clear of the panel (its --card-h budget loses the panel's width) */
 #stage .battle-line { right: var(--panel-w); padding-bottom: 9vh; justify-content: center; overflow: visible;
-  --card-h: min(50vh, calc((100vw - var(--panel-w) - 5vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734))); }
-body.fight #stage .battle-line { right: 0; padding-bottom: 17.5vh; justify-content: space-between; --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--n) * 0.3734))); }
+  --card-h: min(50vh, calc((100vw - var(--panel-w) - 5vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
+body.fight #stage .battle-line { right: 0; padding-bottom: 17.5vh; justify-content: space-between; --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
 body.fight #panel { display: none; }
 #stage .enemy-row { justify-content: center; }
 body:not(.fight) #stage .unit-actions { display: none; }
@@ -37,6 +37,7 @@ body:not(.fight) #stage .unit-actions { display: none; }
 /* a unit is exactly its card's width (the game's art ratios), never squeezed or widened by its caption */
 #stage .unit { min-width: 0; flex: 0 0 auto; width: calc(var(--card-h) * 0.3734); }
 #stage .player-unit { width: calc(var(--card-h) * 0.605); }
+#stage .boss-unit { width: calc(var(--card-h) * 0.7468); } /* the boss's card is twice as wide (0.196: 826 / 1106) */
 .lab-cap b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); font-size: 1.2em; }
 .lab-cap .meta { color: var(--muted); font-size: 0.85em; }
 .lab-cap .verdict { display: flex; flex-wrap: wrap; gap: 0.3em; justify-content: center; }

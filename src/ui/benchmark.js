@@ -36,9 +36,10 @@ export const PHASES = [
 // rounded up to 5 s.
 export const benchmarkSeconds = () => Math.ceil((PHASES.reduce((s, p) => s + p.secs, 0) + 4) / 5) * 5;
 
-// Due: no result yet, far enough in, and stats are being collected.
+// Due: the ask is on (telemetry.json benchmarkPrompt; off since 0.00201),
+// no result yet, far enough in, and stats are being collected.
 export function benchmarkDue(p) {
-  return !!DATA.telemetry?.endpoint && !(p.bench?.length > 0) && p.records.bestRoom >= DATA.telemetry.benchmarkPromptRoom;
+  return DATA.telemetry.benchmarkPrompt === true && !!DATA.telemetry?.endpoint && !(p.bench?.length > 0) && p.records.bestRoom >= DATA.telemetry.benchmarkPromptRoom;
 }
 
 // true = asked; 'wait' = due, but another dialog is up (0.134: it opened on

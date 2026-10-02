@@ -519,7 +519,10 @@ collected players, this browser's save and pasted save codes (untrusted:
 (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's
 quality ladder held; result → `profile.bench` (newest 10, never the run
-history) → the dashboard's Benchmarks card. Every player is asked once,
+history) → the dashboard's Benchmarks card. **The ask is off since
+0.00201** (`telemetry.json benchmarkPrompt: false`, the owner's call —
+back on for testers when needed; the `?debug` button still runs it). When
+on, every player is asked once,
 entering the Great Hall with best room ≥ `benchmarkPromptRoom` (10) and no
 result yet (Continue only; it waits while another dialog is up and never
 interrupts a descent). Changing the script (`PHASES`) changes what the
