@@ -27,16 +27,19 @@ float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
 float fbm(vec2 p) { float a = 0.0, w = 0.55; for (int i = 0; i < 4; i++) { a += w * noise(p); p = p * 2.03 + 17.0; w *= 0.5; } return a; }
 // the card's window, in units of the card's height: uWin = (inset, corner
-// radius). A battle card's frame art has its grey border 1.3% of the height
-// in from every edge (measured on card_enemy.png and card_player.png: 11-14
-// px of 1106), corners rounded by 4%, and the plate behind the portrait
-// reaches the border, so the light must too (0.179: an inset left a dark
-// rim); a shrine or treasure card is lit to its rounded edge (inset 0).
+// radius). A battle card's frame art has its grey border 1.0-1.3% of the
+// height in from every edge (measured on card_enemy.png and card_player.png:
+// 11-14 px of 1106), corners rounded by 4%, and the plate behind the
+// portrait reaches the border, so the light must too: the window's edge sits
+// on the middle of the border and is full 0.3% in, i.e. right where the
+// plate starts (0.184; a softer edge starting at the plate left a dark rim
+// a few pixels wide, plain on a Retina screen). A shrine or treasure card
+// is lit to its rounded edge (inset 0).
 float window(vec2 uv) {
   vec2 halfSize = vec2(uAspect, 1.0) * 0.5; float r = uWin.y;
   vec2 c = abs(vec2(uv.x * uAspect, uv.y) - halfSize) - (halfSize - uWin.x) + r;
   float d = length(max(c, 0.0)) - r;
-  return 1.0 - smoothstep(-0.006, 0.003, d);
+  return 1.0 - smoothstep(-0.003, 0.003, d);
 }
 void main() {
   vec2 uv = v; vec2 p = vec2(uv.x * uAspect, uv.y); float t = uT;
@@ -102,7 +105,7 @@ export function cardStyle(id, boss = false) {
 export const SHRINE_STYLE = { dmg: 'blood', crit: 'embers', armor: 'fog', leech: 'blood', bulwark: 'fog', secondwind: 'goldFog', quicken: 'ether', greed: 'goldEmbers', glasscannon: 'flames' };
 export const CHEST_STYLE = { coffer: 'goldFog', gilded: 'goldEmbers', reliquary: 'ether' };
 // The lit window per card kind: [inset, corner radius] in card heights.
-export const WINDOW = { frame: [0.013, 0.04], panel: [0, 0.037] };
+export const WINDOW = { frame: [0.0113, 0.04], panel: [0, 0.037] };
 
 const SIZE = 512; // the hidden canvas: a card is never drawn larger than this
 let shared = null, failed = false; // { canvas, gl, loc }

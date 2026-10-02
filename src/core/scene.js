@@ -70,6 +70,13 @@ export function go(name, ...args) {
 // Told at the start of every transition (0.171): the background's push.
 export function onTransition(fn) { transitionListener = fn; }
 
+// Resolves once the current transition's windows are back (fading in);
+// at once when none is under way. The dungeon deals its cards then (0.184):
+// a room is rendered while the windows are fully out, so anything played
+// at render time happens unseen.
+let windowWaiters = [];
+export const whenWindowsBack = () => (transitioning ? new Promise((resolve) => windowWaiters.push(resolve)) : Promise.resolve());
+
 export function transitionTo(work, fadeOutMs = 1000) {
   if (transitioning) return;
   transitioning = true;
@@ -90,6 +97,8 @@ export function transitionTo(work, fadeOutMs = 1000) {
       void el.offsetWidth; // reflow, so the fade-in animates reliably
       el.classList.remove('hidden');
       transitioning = false;
+      const waiting = windowWaiters; windowWaiters = [];
+      for (const resolve of waiting) resolve();
     }
   }, fadeOutMs);
 }

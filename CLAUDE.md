@@ -187,7 +187,12 @@ background, reduced motion). The cards in 3D: `perspective` on
 the camera), `combatFx.js kick` turns a struck card `kickDeg` away from
 the blow — at its full angle within the first 6% and recovering slowly,
 `composite: 'add'` over the idle loop; a crit `critKick` times, OVERKILL
-victims too — and `enter` deals the cards in, turned and tilted. The
+victims too — and the cards are dealt in turned and tilted (`enter` at
+the room's build hides the units; `deal` plays once `scene.js
+whenWindowsBack` says the windows are back — a room is rendered while
+they are fully faded out, so anything played at render time is never
+seen; 0.184). The light's window edge sits on the middle of the frame's
+border (a softer edge from the plate's own edge left a dark rim, 0.184). The
 glint: `battleLine.js glint` is a second, bright copy of each portrait
 masked to a band (`--band` on the unit; `.portrait.glint`) that
 `fxParts.js glintSweep` sweeps across the figure on a hit and the

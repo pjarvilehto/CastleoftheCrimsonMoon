@@ -12,7 +12,7 @@
 // Nothing touches the run history: the result is saved to profile.bench
 // (meta/profile.js recordBenchmark) and goes out with the play stats.
 
-import { setBackground, go } from '../../core/scene.js';
+import { setBackground, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { createRun } from '../../run/runState.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
@@ -140,6 +140,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     root.append(title, battle.line, layer, logEl);
     ui = { battle, player: battle.player, enemies: battle.enemies, layer, title };
     playFx({ kind: 'enter' }, fxCtx);
+    whenWindowsBack().then(() => playFx({ kind: 'deal' }, fxCtx)); // (0.184)
     update();
   }
 

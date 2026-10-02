@@ -4,7 +4,7 @@
 // Run via tools/smoke-test.mjs.
 
 import { readFileSync } from 'node:fs';
-import { ok, fresh, DATA, createRun, El } from './harness.mjs';
+import { ok, fresh, sleep, DATA, createRun, El } from './harness.mjs';
 
 fresh();
 const css = readFileSync('styles.css', 'utf8');
@@ -20,7 +20,7 @@ const { attachCardFx, cardStyle, styleNamed, SHRINE_STYLE, CHEST_STYLE, LOOKS, W
     DATA.shrines.offers.every((o) => SHRINE_STYLE[o.id]) && ['coffer', 'gilded', 'reliquary'].every((k) => CHEST_STYLE[k])
     && all.every((n) => LOOKS.includes(styleNamed(n).look) && styleNamed(n).tint.length === 3));
   ok('the shader draws the lit window per card kind (frame: the measured border; panel: to the edge)',
-    FS.includes('uniform vec2 uWin') && WINDOW.frame[0] === 0.013 && WINDOW.panel[0] === 0);
+    FS.includes('uniform vec2 uWin') && WINDOW.frame[0] === 0.0113 && WINDOW.panel[0] === 0 && FS.includes('smoothstep(-0.003, 0.003, d)'));
 }
 
 // The lab draws the game's shader, not a copy of it (0.183)
@@ -58,7 +58,19 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('the kick: full angle at 6% of the kick, slow recovery, added over the card\'s own transform',
     fx.includes("offset: 0.06, easing: 'cubic-bezier(0.45, 0.05, 0.35, 1)'") && fx.includes("duration: M.kickMs, delay, easing: 'linear', composite: 'add'")
     && fx.includes('kick(u, fx.mega || fx.crit ? M.critKick : fx.heavy ? M.heavyKick : 1, away, delay + stop)'));
-  ok('the entrance deals the cards in, turned, the glint crossing each', fx.includes('rotateY(${-side * 62}deg) rotateZ(${side * 9}deg) scale(0.92)') && fx.includes('glintSweep(u, G.enterMs, side, delay + 120)'));
+  ok('the deal brings the cards in turned, the glint crossing each', fx.includes('rotateY(${-side * 62}deg) rotateZ(${side * 9}deg) scale(0.92)') && fx.includes('glintSweep(u, G.enterMs, side, delay + 120)'));
+  ok('the units wait unseen from the room\'s build to the deal, and the scenes deal once the windows are back (0.184)',
+    fx.includes("case 'deal': return deal(ctx);") && fx.includes("if (can(u?.el)) u.el.style.opacity = '0';")
+    && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes("whenWindowsBack().then(() => { if (ui === built) playFx({ kind: 'deal' }, fxCtx); });")
+    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes("whenWindowsBack().then(() => playFx({ kind: 'deal' }, fxCtx));"));
+  // whenWindowsBack: at once when idle, after the windows return during a transition
+  const { whenWindowsBack, transitionTo } = await import('../../src/core/scene.js');
+  let idle = false; whenWindowsBack().then(() => { idle = true; });
+  await sleep(0);
+  let back = false; transitionTo(() => {}); whenWindowsBack().then(() => { back = true; });
+  await sleep(500); const early = back;
+  await sleep(700);
+  ok('whenWindowsBack resolves at once when idle, and when a transition\'s windows return', idle && !early && back);
   ok('every level of the line hands its children the camera', css.includes('.battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }'));
   ok('the shader layer screens over the frame art, under the figure', css.includes('.card-fx { position: absolute; inset: 0; z-index: 0;') && css.includes('mix-blend-mode: screen; }'));
   const parts = readFileSync('src/ui/fxParts.js', 'utf8');
