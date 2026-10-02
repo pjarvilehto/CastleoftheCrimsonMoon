@@ -184,7 +184,7 @@ const rowOf = (...k) => el('div', { class: 'row' }, ...k);
 const applyAll = () => { applyBg(); applyMotion(); };
 const code = el('textarea', { rows: 7, readonly: '' });
 panel.append(
-  rowOf(button('Enter', enter), button('Hit', () => hitRandom(1), 'fire'), button('Crit', () => hitRandom(1.7), 'fire'), button('Knight hit', () => hit(player, 1, true), 'fire'), button('Kill', kill), button('Revive', revive), button('Loop', toggleLoop)),
+  rowOf(button('Replay entrance', enter, 'fire'), button('Hit', () => hitRandom(1), 'fire'), button('Crit', () => hitRandom(1.7), 'fire'), button('Knight hit', () => hit(player, 1, true), 'fire'), button('Kill', kill), button('Revive', revive), button('Loop', toggleLoop)),
   group('Background', 'a shader behind the portrait', true,
     choice(O.bg, 'mode', 'Enemies', [['auto', 'By material (flesh blood · bone fog · ember flames · wraith ether · boss flames)'], ['fixed', 'One look for all'], ['off', 'Off']], applyBg),
     choice(O.bg, 'look', 'Fixed look', LOOKS.filter((l) => l !== 'none').map((l) => [l, l]), applyBg),
@@ -194,7 +194,7 @@ panel.append(
     note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark window (the frame art stays). In the game: one shared canvas for every card, not one each.')),
   group('Card motion', 'the cards in 3D', true,
     check(O.motion, 'on', '3D on', applyMotion),
-    choice(O.motion, 'enter', 'Entrance', [['slide', 'slide (today)'], ['turn', 'slide with a turn'], ['deal', 'dealt: from above, turning']], applyMotion),
+    choice(O.motion, 'enter', 'Entrance', [['slide', 'slide (today)'], ['turn', 'slide with a turn'], ['deal', 'dealt: from above, turning']], () => { applyMotion(); enter(); }),
     choice(O.motion, 'hit', 'On a hit', [['none', 'nothing (today)'], ['kick', 'kick around its axis'], ['tilt', 'kick + tilt'], ['wobble', 'kick + wobble out']], applyMotion),
     slider(O.motion, 'deg', 'Kick degrees', 0, 30, 1, 'a crit kicks 1.7x, a kill 1.4x', applyMotion),
     slider(O.motion, 'ms', 'Kick ms', 150, 1200, 10, 'the spring back', applyMotion),

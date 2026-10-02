@@ -9,7 +9,7 @@ export function createBuffBar() {
   return el('div', { id: 'buffs', style: 'display:none' });
 }
 
-// A boon's or chest's picture (0.176: painted icons in assets/icons/, the
+// A boon's or chest's picture (0.177: painted icons in assets/icons/, the
 // same on every machine — the glyph stays as its text alternative).
 export const iconArt = (img, glyph) => el('img', { class: 'icon-art', src: img, alt: glyph, draggable: 'false' });
 

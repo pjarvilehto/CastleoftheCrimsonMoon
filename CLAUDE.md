@@ -341,7 +341,7 @@ may hear the old one for ~4 hours.
   kill, `killedBy: 'reliquary'`; inside, a relic with `relicChance` from
   t4MinRoom, one per run, else a tier-3 item). Shares the shrine's panel
   (`shrineUI.js renderPanelRoom`); the sim's bot opens the gilded chest.
-- Painted icons (0.176, the owner's art): every shrine boon (`shrines.json
+- Painted icons (0.177, the owner's art): every shrine boon (`shrines.json
   offers[].img`) and treasure chest (`treasureUI.js LOOK`) shows a picture
   from `assets/icons/` (192px WebP with alpha, `buffs.js iconArt`; the
   glyph in `icon` is its alt text), on the cards and in the buff bar;

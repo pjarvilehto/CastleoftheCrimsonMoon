@@ -250,7 +250,7 @@ fresh();
   fresh();
 }
 
-// 0.176: painted icons — every boon and chest has its picture on disk, the
+// 0.177: painted icons — every boon and chest has its picture on disk, the
 // cards and the buff bar show it (the glyph is its text alternative)
 {
   const { iconArt } = await import('../../src/ui/buffs.js');

@@ -32,7 +32,7 @@ export function essentialUrls() {
   const b = DATA.backgrounds, first = new Set([b.title, b.hub]);
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
-  const icons = [...DATA.shrines.offers.map((o) => o.img), ...['coffer', 'gilded', 'reliquary'].map((c) => `assets/icons/chest_${c}.webp`)]; // (0.176)
+  const icons = [...DATA.shrines.offers.map((o) => o.img), ...['coffer', 'gilded', 'reliquary'].map((c) => `assets/icons/chest_${c}.webp`)]; // (0.177)
   return [...art.map(bgUrl), ...art.map(depthUrl), ...chars.map((id) => `assets/chars/${id}.webp`), ...icons];
 }
 

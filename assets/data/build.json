@@ -1,5 +1,5 @@
 {
-  "version": "0.176",
+  "version": "0.177",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,8 +82,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
-    "0.176": [
+    "0.177": [
       "New painted icons for every shrine boon and treasure chest, the same on every machine"
+    ],
+    "0.176": [
+      "Card Lab: a Replay Entrance button (and E); picking an entrance style plays it at once"
     ],
     "0.175": [
       "The room-change swoosh: a quarter octave lower still and 30% quieter"
@@ -126,9 +129,6 @@
     ],
     "0.163": [
       "Testing tools (?debug): VO LAB — listen through every line of the Old Wizard, approve or disapprove each take (too volatile? too shouty?) and hand the verdicts to the re-render tool"
-    ],
-    "0.162": [
-      "No more fanfare when you retreat to the Great Hall — the Old Wizard's word is enough (the victory dialog keeps its chime)"
     ]
   }
 }
