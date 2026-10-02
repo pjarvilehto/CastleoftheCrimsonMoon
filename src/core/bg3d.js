@@ -42,6 +42,34 @@ let monitor = false;
 let held = false;      // holdQuality(): the benchmark measures without stepping down (0.131)
 let firstFrame = null;
 let flashes = [];     // live flash lights: { t0, pos, color, strength, fade, life }
+let push = null;      // the room transition's camera push (0.171): { t0, rel } — rel: eased back, no new painting came
+
+// The windows started fading for a room change (scene.js transitionTo):
+// the camera starts pushing into the painting now, so the new one can
+// appear pushed in and pull back — one movement (parallax.push).
+export function bgPush() {
+  if (!gl || view === 'flat' || !(cfg.push.dist > 0)) return;
+  push = { t0: performance.now(), rel: null };
+}
+
+const easeIn = (t) => t * t, easeOut = (t) => 1 - (1 - t) * (1 - t);
+const unit = (t) => Math.min(1, Math.max(0, t));
+// How far the camera is into layer L's picture right now.
+function dollyOf(L, now, last) {
+  if (!push) return 0;
+  const { dist, inMs, outMs } = cfg.push;
+  if (last && L.born > push.t0) return dist * (1 - easeOut(unit((now - L.born) / outMs))); // the new painting pulls back to rest
+  const d = dist * easeIn(unit((now - push.t0) / inMs));
+  return push.rel ? d * (1 - easeOut(unit((now - push.rel) / outMs))) : d; // the old one keeps going in (or eases back)
+}
+// Over? (the new painting is at rest, or the old one eased back)
+function settlePush(now) {
+  const { inMs, outMs } = cfg.push;
+  const incoming = layers.length > 1 || layers[0]?.born > push.t0 ? layers[layers.length - 1] : null;
+  if (incoming && incoming.born > push.t0) { if (now - incoming.born >= outMs) push = null; return; }
+  if (!push.rel && now - push.t0 > inMs + cfg.fadeMs) push.rel = now; // no new painting came: ease back
+  if (push.rel && now - push.rel >= outMs) push = null;
+}
 
 // A big hit kicks the background camera (0.088). strength 1 = joltDeg.
 export function bgJolt(strength = 1) {
@@ -182,7 +210,7 @@ function frame(now) {
   if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
   if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
   // full frame rate while a jolt/sway/flash plays — at 30fps it would stutter
-  if (!layers.length || (!jolts.length && !sways.length && !flashes.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
+  if (!layers.length || (!push && !jolts.length && !sways.length && !flashes.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
   lastDraw = now;
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); } // rest pose = the CSS image
   else { const dt = Math.min(PAUSE_S, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
@@ -197,9 +225,9 @@ function frame(now) {
   o.pitch += j.pitch;
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
-  const f = { mvp: mvp(o.yaw, o.pitch, fov, aspect), plane: [Math.tan(fov / 2) * aspect, Math.tan(fov / 2)],
+  if (push) settlePush(now);
+  const f = { mvp: null, plane: [Math.tan(fov / 2) * aspect, Math.tan(fov / 2)],
     lights: activeLights(view === '3d' ? flashes : [], now), r2: cfg.lights.radius ** 2 };
-  gl.uniformMatrix4fv(loc.uMVP, false, f.mvp);
   gl.uniform2fv(loc.uPlane, f.plane);
   gl.uniform1f(loc.uShowDepth, view === 'depth' ? 1 : 0);
   fogIn = Math.min(1, (now - firstFrame) / cfg.fogFadeMs); // the mist rises after the handover
@@ -210,6 +238,8 @@ function frame(now) {
   layers.forEach((L, i) => {
     // crossfade like the CSS layers (2s ease-in-out): new layer over old
     const t = i === 0 ? 1 : Math.min(1, (now - L.born) / cfg.fadeMs), ease = t * t * (3 - 2 * t);
+    f.mvp = mvp(o.yaw, o.pitch, fov, aspect, dollyOf(L, now, i === layers.length - 1)); // each layer its own camera distance (the push)
+    gl.uniformMatrix4fv(loc.uMVP, false, f.mvp);
     gl.clear(gl.DEPTH_BUFFER_BIT); // each layer is its own 3D scene
     draw(L, ease);
     drawPuffs(L, ease, f);
@@ -348,7 +378,7 @@ function shutdown() {
     clearTimeout(resizeTimer);
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
-  t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = [];
+  t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null;
   canvas?.remove();
   canvas = null;
 }

@@ -96,6 +96,15 @@ fresh();
     && readFileSync('src/core/bg3dMath.js', 'utf8').includes('Math.max(0.4, 1 + c.depthScale'));
   const fov = (base.fovDeg * Math.PI) / 180;
   ok('no geometry behind the camera at max sliders', bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9), 0.5, 0.5, 1, 16 / 9, extreme).every(Number.isFinite));
+  // the room push (0.171): a dolly moves the camera into the picture — a point off centre lands further out, near ones more than far ones
+  const off = (dolly, depth) => bm.projectVertex(bm.mvp(0, 0, fov, 16 / 9, dolly), 0.25, 0.5, depth, 16 / 9, base)[0];
+  const pushCfg = DATA.backgrounds.parallax.push;
+  ok('a camera dolly pushes into the painting: things move outward, near things faster', off(pushCfg.dist, 0.5) < off(0, 0.5) && (off(0, 0.9) - off(pushCfg.dist, 0.9)) > (off(0, 0.1) - off(pushCfg.dist, 0.1))
+    && pushCfg.dist > 0 && pushCfg.dist <= 0.3 && pushCfg.inMs > 0 && pushCfg.outMs > 0);
+  const sc = readFileSync('src/core/scene.js', 'utf8'), b3 = readFileSync('src/core/bg3d.js', 'utf8'), cssP = readFileSync('styles.css', 'utf8');
+  ok('the transition starts the push as the windows fade; the 3D renderer dollies per layer, the flat layer scales (not under reduced motion)',
+    sc.includes("transitionListener?.(fadeOutMs);") && sc.includes("activeBg?.classList.add('push')") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })')
+    && b3.includes('dollyOf(L, now, i === layers.length - 1)') && cssP.includes('.bg-layer.push { transform: scale(') && /prefers-reduced-motion: reduce\) \{ \.bg-layer, \.bg-layer\.push/.test(cssP));
   const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
   ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');

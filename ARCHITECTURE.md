@@ -47,8 +47,10 @@ src/
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally; strictly in
                         order: windows out, swap, the new painting fully in,
-                        windows back), bg crossfader (setBackground returns a
-                        promise), router: registerScene() / go(name, ...)
+                        windows back; onTransition() tells the renderer to
+                        push through the picture, 0.171), bg crossfader
+                        (setBackground returns a promise), router:
+                        registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
@@ -137,6 +139,8 @@ labs/                   the testing pages (?debug LABS button): index.html is th
                         game's own renderer (base href = the site root)
   vo/                   review the narrator's takes: play, approve, disapprove ->
                         vo-rerender.json for tools/gen-vo.mjs --rerender
+  cards/                the combat cards' proposals on the real units: shader
+                        backgrounds (cardFx.js), 3D hit / entrance motion, glint
   particles/            standalone particle-look experiments
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/

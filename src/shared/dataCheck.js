@@ -30,7 +30,7 @@ const NUM = {
   ],
   shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg'],
   audio: [
-    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'volumes.master', 'volumes.music', 'volumes.sfx',
+    'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'transition.peakAtMs', 'volumes.master', 'volumes.music', 'volumes.sfx',
     'voices.maxPerClip', 'voices.maxTotal', 'voices.retriggerMs', 'voices.stackDb',
     ...['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => `limiter.${k}`),
     'duck.db', 'duck.attack', 'duck.release',
@@ -46,6 +46,7 @@ const NUM = {
       'turbulence', 'turbulencePeriod', 'pulse', 'pulsePeriod', 'flow', 'flowScale', 'flowAmount'].map((k) => `parallax.puffs.${k}`),
     ...['shade', 'litTint.0', 'litTint.1', 'litTint.2', 'shadeTint.0', 'shadeTint.1', 'shadeTint.2', 'sceneLight', 'nearBright'].map((k) => `parallax.mist.${k}`),
     ...['density', 'curve', 'high', 'strength', 'max'].map((k) => `parallax.haze.${k}`),
+    'parallax.push.dist', 'parallax.push.inMs', 'parallax.push.outMs',
     ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],
@@ -80,6 +81,9 @@ export function checkData(data) {
     }
   }
   for (const name of Object.keys(data.audio?.duck?.clips ?? {})) if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
+  // the room change's swoosh (0.173): a file clip with its loudest moment measured
+  const tr = data.audio?.transition?.clip;
+  if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clip (${tr}) must be a file clip with peakMs`);
   // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
   const summon = data.difficulty?.boss?.summon?.enemy;
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);
@@ -112,7 +116,7 @@ export function checkData(data) {
   };
   for (const o of data.shrines?.offers ?? []) {
     for (const k of NEEDS[o.id] ?? []) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
-    if (typeof o.img !== 'string') out.push(`shrines.json: ${o.id}.img (its icon picture, 0.172)`);
+    if (typeof o.img !== 'string') out.push(`shrines.json: ${o.id}.img (its icon picture, 0.176)`);
   }
   return out;
 }

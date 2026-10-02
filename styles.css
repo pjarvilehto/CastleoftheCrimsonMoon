@@ -62,8 +62,15 @@ h1, h2, button, .subtitle, .run-hud, .stat-box .label,
   background-size: cover;
   background-position: center;
   opacity: 0;
-  transition: opacity 2s ease-in-out; /* background crossfade length */
+  /* opacity first: scene.js reads the crossfade length from it. The flat
+     fallback's room push (0.171): the old painting scales up as the
+     windows fade (3s accelerating), the new one settles from scaled (3s) */
+  transition: opacity 2s ease-in-out, transform 3s ease-out; /* background crossfade length */
+  transform-origin: 50% 55%;
 }
+.bg-layer.push { transform: scale(1.14); transition: opacity 2s ease-in-out, transform 3s ease-in; }
+.bg-layer.pushed { transform: scale(1.14); transition: none; }
+@media (prefers-reduced-motion: reduce) { .bg-layer, .bg-layer.push, .bg-layer.pushed { transform: none; } }
 /* 3D background canvas (0.083, core/bg3d.js): sits over the CSS layers
    once its first frame is drawn — that frame is the rest pose, identical
    to the CSS image, so the handover is invisible. */

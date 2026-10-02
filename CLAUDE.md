@@ -34,6 +34,13 @@ before structural changes. This file is the rules and the per-system notes.
     (see "Audio").
   - **Particle Lab:** `labs/particles/` — trying particle looks (see
     "Effects").
+  - **Card Lab (0.174):** `labs/cards/` — the game's real card units
+    (`battleLine.js` + `styles.css`) with three proposals on top, each with
+    options: a shader behind each portrait (`cardFx.js`: fog, blood,
+    flames, embers, ether, by the enemy's particle material), the cards in
+    3D (hit kicks, turning or dealt entrances, a mouse tilt) and a glint
+    sweeping the bitmap as it turns (a bright masked copy of the portrait).
+    Nothing of it is in the game yet: COPY JSON gives the picks back.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -202,6 +209,18 @@ spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
 the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
 the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
+**The room push (0.171, `parallax.push`):** a room change moves the
+camera through the picture — `scene.js transitionTo` tells the renderer
+(`onTransition` → `bg3d.bgPush`) as the windows start to fade, the old
+painting dollies in (`dist` world units over `inMs`, accelerating; `mvp`
+takes a dolly), the new one appears pushed in and pulls back to rest
+over `outMs` (decelerating) through the crossfade and the windows'
+return; each layer gets its own camera. A push with no new painting
+eases back. The flat fallback scales the CSS layers the same way
+(`.bg-layer.push` / `.pushed`, off under reduced motion). The Fog Lab's
+arrows play the game's sequence (push, a second, the painting) with the
+three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
+1 s in) are the owner's and unchanged.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
@@ -212,7 +231,12 @@ and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
 sound is one entry. Combat lines go through `ui/combatSfx.js` (panned to the
-card, timed to the blow, crit/mega/overkill sweeteners). Music: five
+card, timed to the blow, crit/mega/overkill sweeteners). The room change's
+swoosh (0.173, `audio.json transition`): the owner's SFX pitched down three
+quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173), played by `sfx.js transitionSfx()`
+from `main.js onTransition` so its measured loudest moment (`peakMs`)
+lands `peakAtMs` (2 s, the middle) into every transition, varied a little
+each play (its `variation` entry + `jitterDb`). Music: five
 generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 --suffix vN`, new suffix = new files), each an exact loop with its first
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
@@ -317,7 +341,7 @@ may hear the old one for ~4 hours.
   kill, `killedBy: 'reliquary'`; inside, a relic with `relicChance` from
   t4MinRoom, one per run, else a tier-3 item). Shares the shrine's panel
   (`shrineUI.js renderPanelRoom`); the sim's bot opens the gilded chest.
-- Painted icons (0.172, the owner's art): every shrine boon (`shrines.json
+- Painted icons (0.176, the owner's art): every shrine boon (`shrines.json
   offers[].img`) and treasure chest (`treasureUI.js LOOK`) shows a picture
   from `assets/icons/` (192px WebP with alpha, `buffs.js iconArt`; the
   glyph in `icon` is its alt text), on the cards and in the buff bar;

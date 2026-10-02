@@ -3,8 +3,6 @@
 //   ring — a short metallic "shing" (three inharmonic partials) on crits;
 //          pitched down and louder on MEGA CRITS
 //   boom — a deep falling thump (sine sweep + filtered noise) on OVERKILL
-//   whoosh — moving to the next room (0.108): a band of noise sweeping up
-//          and back down while it travels left to right, with a low gust
 //   tick / thud / slice / clank — strike articulations (0.110), layered at
 //          random under the attack and hurt clips so no two hits sound the
 //          same: a blade's metallic tick, a body thud, the air cut by the
@@ -72,46 +70,6 @@ function boom(ctx, out, t, rate) {
   n.start(t);
   n.stop(t + 0.4);
   return { dur, sources: [o, n] };
-}
-
-function whoosh(ctx, out, t, rate) {
-  const dur = 0.95 / rate;
-  const n = ctx.createBufferSource();
-  n.buffer = noiseBuffer(ctx);
-  const bp = ctx.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.Q.value = 1.1;
-  bp.frequency.setValueAtTime(260 * rate, t);
-  bp.frequency.exponentialRampToValueAtTime(2600 * rate, t + dur * 0.48);
-  bp.frequency.exponentialRampToValueAtTime(420 * rate, t + dur);
-  const g = ctx.createGain(); // swells in, falls away
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(1, t + dur * 0.42);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  n.connect(bp);
-  bp.connect(g);
-  let tail = g;
-  if (ctx.createStereoPanner) { // travels left -> right: deeper into the castle
-    const p = ctx.createStereoPanner();
-    p.pan.setValueAtTime(-0.6, t);
-    p.pan.linearRampToValueAtTime(0.6, t + dur);
-    g.connect(p);
-    tail = p;
-  }
-  tail.connect(out);
-  const gust = ctx.createBufferSource(); // the low air under it
-  gust.buffer = noiseBuffer(ctx);
-  const lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 180;
-  const gg = envelope(ctx, out, t, dur * 0.4, dur);
-  gust.connect(lp);
-  lp.connect(gg);
-  n.start(t);
-  n.stop(t + dur + 0.05);
-  gust.start(t);
-  gust.stop(t + dur + 0.05);
-  return { dur, sources: [n, gust] };
 }
 
 // A few inharmonic partials, struck: blade ticks and armour clanks.
@@ -196,7 +154,7 @@ function clank(ctx, out, t, rate) {
   return p;
 }
 
-const PLAYERS = { ring, boom, whoosh, tick, thud, slice, clank };
+const PLAYERS = { ring, boom, tick, thud, slice, clank };
 
 export function playSynth(ctx, name, out, t, rate = 1) {
   return PLAYERS[name] ? PLAYERS[name](ctx, out, t, rate) : null; // null: no such generated sound

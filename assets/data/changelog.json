@@ -1,6 +1,18 @@
 {
-  "0.172": [
+  "0.176": [
     "New painted icons for every shrine boon and treasure chest, the same on every machine"
+  ],
+  "0.175": [
+    "The room-change swoosh: a quarter octave lower still and 30% quieter"
+  ],
+  "0.174": [
+    "Card Lab (test mode, LABS): the combat cards with three ideas to try — a living shader behind each portrait (fog, blood, flames, embers, ether), the cards kicking and turning in 3D, and a glint sweeping the picture as it turns; nothing in the game changes yet"
+  ],
+  "0.173": [
+    "A new swoosh for every room change — the owner's, pitched down to a low rumble, timed so its peak lands in the middle of the crossfade, and a little different every time"
+  ],
+  "0.172": [
+    "Room changes move through the picture: the camera pushes into the painting as the windows fade, and the next room appears close and settles back — one movement, the same timing as before"
   ],
   "0.171": [
     "Only fights are numbered now: the shrine and treasure rooms come between rooms, so room 8 is always the throne room (\"An Ominous Shrine\" instead of \"Room 3 - The Shrine\")",

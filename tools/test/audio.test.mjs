@@ -81,7 +81,7 @@ fresh();
   for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'death', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
     ok(`sfx clip registered + on disk: ${c}`, C[c]?.file === `assets/audio/sfx-${c}.mp3` && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
   }
-  ok('generated sounds registered as synth', ['whoosh', 'ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
+  ok('generated sounds registered as synth', ['ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
   ok('combat sounds jittered', ['attack', 'kill', 'hurt', 'loot'].every((n) => C[n].rate?.length === 2 && C[n].jitterDb > 0));
 
   const read = (f) => readFileSync(f, 'utf8'); // cwd = repo root (harness)
@@ -91,7 +91,7 @@ fresh();
   const q = read('src/ui/combatQueue.js'); // event -> queue mapping (0.098)
   ok('dungeon maps combat events to sfx', q.includes("atk: 'attack'") && q.includes("dmg: 'hurt'") && q.includes("kill: 'kill'"));
   ok('dungeon: rare vs common loot sounds', q.includes("cls === 'relic' ? 'rare' : 'loot'"));
-  ok('dungeon: room whoosh/death/potion wired', d.includes("sfx('whoosh'); transitionTo(setup)") && d.includes("sfx('death')") && d.includes("combatSfx({ sfx: 'heal'"));
+  ok('dungeon: death/potion wired; the room swoosh moved to every transition (main.js, 0.173)', !d.includes("sfx('whoosh')") && d.includes("sfx('death')") && d.includes("combatSfx({ sfx: 'heal'") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })'));
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/scenes/hubScene.js');
   ok('hub: levelup + forge wired', h.includes("sfx('levelup')") && h.includes("sfx('forge')"));
@@ -178,16 +178,18 @@ fresh();
     && read('src/main.js').includes('volumeToggle(),'));
 }
 
-// T70: 0.108 — a dedicated whoosh between rooms (generated: sweeps up and
-// down while travelling left -> right), audible in the mix; the escape
-// fanfare 30% quieter.
+// T70: 0.173 — the room change's swoosh: the owner's SFX pitched down half
+// an octave, then a quarter more and 30% quieter (0.175, a new file), played so its loudest moment lands in the middle
+// of the transition (1 s out + 2 s crossfade + 1 s in = 2 s), with a little
+// random pitch, tone and level each time; the generated whoosh is gone.
 {
-  const A = DATA.audio;
-  const syn = readFileSync('src/audio/synth.js', 'utf8');
-  ok('room whoosh: generated, sweeps, travels left -> right', DATA.audio.clips.whoosh.synth === true && syn.includes("p.pan.setValueAtTime(-0.6, t)")
-    && syn.includes('p.pan.linearRampToValueAtTime(0.6, t + dur)') && syn.includes("bp.frequency.exponentialRampToValueAtTime(2600"));
-  ok('room whoosh sits with the hits in the mix', Math.abs(A.clips.whoosh.measuredDb + A.clips.whoosh.gainDb + 12) <= 1);
-  ok('escape fanfare 30% quieter (-3.1 dB)', Math.abs(A.clips.victory.gainDb - (1.4 + 20 * Math.log10(0.7))) < 0.05);
+  const A = DATA.audio, T = A.transition, c = A.clips[T.clip];
+  ok('room swoosh: a measured file clip with its loudest moment, no generated whoosh', T.clip === 'room_swoosh' && /sfx-room-swoosh-v2\.mp3$/.test(c.file)
+    && statSync(c.file).size > 20 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0 && !A.clips.whoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
+  ok('room swoosh: its peak lands mid-transition (2 s), a little varied each play', T.peakAtMs === 2000 && T.peakAtMs - c.peakMs > 0
+    && readFileSync('src/audio/sfx.js', 'utf8').includes('delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs)')
+    && A.variation.room_swoosh.rate[0] < 1 && A.variation.room_swoosh.rate[1] > 1 && A.variation.room_swoosh.eq.lo < A.variation.room_swoosh.eq.hi && c.jitterDb > 0);
+  ok('room swoosh sits well under the hits in the mix (0.175: 30% quieter)', c.measuredDb + c.gainDb <= -15 && c.measuredDb + c.gainDb > -19);
 }
 
 // T73: 0.110 — strikes vary every hit (pitch, a random tone colour,
