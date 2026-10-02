@@ -91,14 +91,15 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
 
 /**
  * Enclosed holes: a connected piece of unreached PAPER pixels (light,
- * unsaturated, within `tolerance` of the background — a lighter paper
- * counts) in the picture's lower half (`fromY`) and at least `minArea` of
- * the picture is cleared: the paper between the legs, walled in by the
- * shadow. A skull face sits in the upper half; a tooth is far too small.
- * (Pale stone in a figure's lower half would go too: --holes 0 then.)
- * Returns how many went.
+ * unsaturated, within `tolerance` of the background's own tone) at least
+ * `minArea` of the picture is cleared: the loop between an arm, the torso
+ * and the sword, the paper between the legs walled in by the shadow.
+ * Measured on the pilot: such loops sit 1-27 from the border's colour; a
+ * skull face is off that tone (and no face showed up as paper-like at
+ * all); a tooth is far too small. (Pale stone of the paper's own tone
+ * would go too: --holes 0 then.) Returns how many went.
  */
-export const HOLES = { tolerance: 60, minArea: 0.003, fromY: 0.5 };
+export const HOLES = { tolerance: 40, minArea: 0.003, fromY: 0 };
 export function fillHoles(data, alpha, w, h, bg, opts = {}) {
   const { tolerance, minArea, fromY } = { ...HOLES, ...opts };
   const n = w * h, label = new Int32Array(n).fill(-1), yFrom = h * fromY;

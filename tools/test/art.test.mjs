@@ -28,7 +28,7 @@ fresh();
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath)") && readFileSync('tools/gen-art.mjs', 'utf8').includes('while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++'));
 }
 
-// The cut-out: the background keyed from the border, grey INSIDE the figure kept, a lighter paper panel gone, a dark shadow bar
+// The cut-out: the background keyed from the border, grey INSIDE the figure kept (off the paper's tone), a lighter paper panel gone (the hole between the legs is of that tone), a dark shadow bar
 // kept (it is as dark as the figure: the clean pass is for that), the enclosed hole of paper between the legs cleared, a stray
 // mark in the bottom band dropped, the figure's box, the placement on the old canvas
 {
@@ -39,7 +39,7 @@ fresh();
       const i = (y * w + x) * 4;
       const body = x >= 20 && x < 40 && y >= 10 && y < 60, legs = y >= 60 && y < 70 && ((x >= 20 && x < 26) || (x >= 34 && x < 40)), shadowBar = y >= 70 && y < 73 && x >= 18 && x < 42;
       const patch = x >= 25 && x < 35 && y >= 30 && y < 40, panel = x >= 8 && x < 52 && y >= 4 && y < 76, mark = y >= 76 && y < 79 && x >= 50 && x < 55;
-      const c = patch ? [200, 200, 200] : body || legs || mark ? [40, 30, 20] : shadowBar ? [70, 60, 45] : panel ? [228, 226, 222] : [198 + (x % 3), 201, 202];
+      const c = patch ? [150, 150, 150] : body || legs || mark ? [40, 30, 20] : shadowBar ? [70, 60, 45] : panel ? [222, 220, 216] : [198 + (x % 3), 201, 202];
       d.set([...c, 255], i);
     }
   }

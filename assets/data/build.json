@@ -1,5 +1,5 @@
 {
-  "version": "0.189",
+  "version": "0.190",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -84,6 +84,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.190": [
+      "Art Lab: the cut-out clears enclosed patches of background anywhere in the picture (the loop between an arm and the sword), not only under the figure"
+    ],
     "0.189": [
       "The labs load the game's modules and their own script under the build number, so a lab never runs the previous build's files after a deploy; an error in a lab is written onto the page"
     ],
@@ -129,9 +132,6 @@
     ],
     "0.176": [
       "Card Lab: a Replay Entrance button (and E); picking an entrance style plays it at once"
-    ],
-    "0.175": [
-      "The room-change swoosh: a quarter octave lower still and 30% quieter"
     ]
   }
 }
