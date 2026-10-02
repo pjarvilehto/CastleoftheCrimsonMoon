@@ -1,5 +1,5 @@
 {
-  "version": "0.00211",
+  "version": "0.00212",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00212": [
+      "Housekeeping: the build-number check also runs in the one-commit checkout the test job uses"
+    ],
     "0.00211": [
       "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
     ],
@@ -136,13 +139,6 @@
     ],
     "0.00198": [
       "Heavy Attack: its cooldown now counts the ordinary turns between heavies (the heavy's own turn used to count, so a cooldown of 3 was back after two blows and two Quicken boons made it every turn); a heavy blow does 2.3x damage, up from 2x, to make up for it in part"
-    ],
-    "0.00197": [
-      "Build numbers now read 0.00197 (five decimals), inside and out",
-      "A new build reaches you within about two minutes of its release: the game checks every minute and never reads a stale copy",
-      "Smoother fights: the background holds 60 fps while a blow plays instead of running at the screen's full rate, the card glow no longer stalls the GPU, the pulsing buttons no longer repaint every frame, and a 40 Hz screen no longer loses the 3D background",
-      "Fixed: the narrator could say two lines in the wrong order; muted music kept playing silently; a dialog swallowed F5 and F12; a malformed save code broke the Great Hall; the changelist could miss the newest build; a chest could pay out twice",
-      "Under the hood: a review of the whole project — tuning moved into the data files, the ladder's and the lights' numbers too, dead code and stale comments out, a one-command release tool"
     ]
   }
 }

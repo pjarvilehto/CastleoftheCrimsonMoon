@@ -1,4 +1,7 @@
 {
+  "0.00212": [
+    "Housekeeping: the build-number check also runs in the one-commit checkout the test job uses"
+  ],
   "0.00211": [
     "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
   ],
