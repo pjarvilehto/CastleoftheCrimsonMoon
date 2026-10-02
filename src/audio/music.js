@@ -50,7 +50,7 @@ async function startTrack(name) {
   pending = name;
   let buffer;
   try { buffer = await bufferFor(b.file); } catch { return; } // never block the game on audio
-  if (pending !== name) return; // a newer request superseded this decode
+  if (pending !== name || muted) return; // a newer request superseded this decode, or MUSIC went OFF meanwhile (0.00209: the bed used to start behind the muted bus and hold its buffer)
   currentName = name;
 
   const gain = ctx.createGain();

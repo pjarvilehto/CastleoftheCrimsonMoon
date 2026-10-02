@@ -55,12 +55,13 @@ void main() {
 }`;
 
 // The art at 64x36 for the fog colour (bg3dFog.js fogColor).
-export function smallPixels(img, w = 64, h = 36) {
+export const SMALL = { w: 64, h: 36 };
+export function smallPixels(img, w = SMALL.w, h = SMALL.h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const cx = c.getContext('2d', { willReadFrequently: true });
   cx.drawImage(img, 0, 0, w, h);
-  return cx.getImageData(0, 0, w, h).data;
+  return { data: cx.getImageData(0, 0, w, h).data, w, h };
 }
 
 export function program(gl, vs, fs) {

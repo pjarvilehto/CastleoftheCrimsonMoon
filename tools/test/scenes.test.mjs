@@ -452,9 +452,9 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && deviceClass(android, { width: 800, height: 1280 }, '') === 'tablet' && deviceClass(mac, { width: 1440, height: 900 }, '') === 'desktop'
     && deviceClass(iphone, { width: 390, height: 844 }, '?desktop') === 'desktop' && TABLET_MIN_PX === 1000 && isPhone(iphone, { width: 390, height: 844 }, '') && !isPhone(ipad, { width: 1024, height: 1366 }, ''));
   const m = readFileSync('src/main.js', 'utf8');
-  // 0.00208: phones play — the gate before the title instead of the old notice
+  // 0.00208: phones play — the gate before the title instead of the old notice (0.00209: the narrator armed and the audio resumed on its tap)
   ok('boot mounts the rotate notice for a handheld held upright, and the play / install gate on a phone', !m.includes('Phones are not supported yet')
-    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{ await phoneGate\(\); regateOnExit\(\); \}\s*go\('title'\)/.test(m));
+    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{[\s\S]*armOnGesture\('title_welcome'\)[\s\S]*await phoneGate\(\{ onPlay[\s\S]*regateOnExit\(\);\s*\}\s*go\('title'\)/.test(m));
   const css = readFileSync('styles.css', 'utf8');
   ok('touch: no double-tap zoom, no image callout, 44px targets and no hotkey hints on a coarse pointer, hover styles only where hover exists, a rotate notice in portrait',
     css.includes('html { touch-action: manipulation; }') && css.includes('img { -webkit-touch-callout: none; }') && css.includes('@media (pointer: coarse) {') && css.includes('min-height: 44px;')
@@ -498,63 +498,104 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   onBackgroundChange(() => undefined);
 }
 
-// T89: 0.00208 — phones play. The phone layout query is one constant shared
-// by the stylesheet and the hub; the Great Hall's phone assembly is a stats
-// strip, three stacked sheets under their tabs (the pick lifts one and lasts
-// a re-render), the records line and the way on; the short wording carries
-// the data's numbers; the play / install gate resolves on PLAY and skips a
-// home-screen app.
+// T90: 0.00208 — phones play. The phone layout is <html class="phone">, set
+// by the boot from the one query (platform.js PHONE_MQ) and re-rendering the
+// hall when it flips; the Great Hall's phone assembly is a stats strip,
+// three stacked sheets under their tabs (the pick lifts one and lasts a
+// re-render; a dot per sheet by what IT sells), the records line and the way
+// on; the short wording carries the data's numbers; the play / install gate
+// is a dialog that resolves on PLAY and skips a home-screen app.
 {
-  const { PHONE_MQ, phoneLayout, standaloneApp } = await import('../../src/shared/platform.js');
-  const { statDesc, alchemyDesc, potionDesc, satchelDesc } = await import('../../src/ui/hubText.js');
+  const { PHONE_MQ, phoneLayout, standaloneApp, isIos, fullscreenOn } = await import('../../src/shared/platform.js');
+  const { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
   const { phoneGate } = await import('../../src/ui/phoneGate.js');
-  const css = readFileSync('styles.css', 'utf8');
-  ok('the phone layer sits under the platform query, and matchMedia decides the layout', css.includes(`@media ${PHONE_MQ} {`) && !phoneLayout(undefined)
-    && phoneLayout((q) => ({ matches: q === PHONE_MQ })) && !phoneLayout((q) => ({ matches: q !== PHONE_MQ })));
-  ok('a home-screen app is standalone by display-mode or Safari\'s flag', standaloneApp((q) => ({ matches: q === '(display-mode: standalone)' }), {}) && standaloneApp(undefined, { standalone: true })
-    && !standaloneApp((q) => ({ matches: false }), {}));
+  const { anyDialogOpen } = await import('../../src/ui/dialog.js');
+  const { canSpendAlchemy, canForgeAny, canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
+  const { forgeCost, alchemyCost, ALCHEMY_DEFS } = await import('../../src/meta/leveling.js');
+  const css = readFileSync('styles.css', 'utf8'), m = readFileSync('src/main.js', 'utf8');
+  ok('the boot sets html.phone from the platform query and re-lays the scene out when it flips; the layer\'s rules are html.phone twins',
+    /matchMedia\?\.\(PHONE_MQ\)/.test(m) && m.includes("classList.toggle('phone', mq.matches)") && m.includes('relayout?.(app)') && css.includes('html.phone #app > .panel {') && css.includes('html.phone .battle-line {')
+    && !phoneLayout(undefined) && phoneLayout((q) => ({ matches: q === PHONE_MQ })) && !phoneLayout((q) => ({ matches: q !== PHONE_MQ })));
+  ok('a home-screen app is standalone by display-mode or Safari\'s flag; iOS and fullscreen read the right fields', standaloneApp((q) => ({ matches: q === '(display-mode: standalone)' }), {}) && standaloneApp(undefined, { standalone: true })
+    && !standaloneApp((q) => ({ matches: false }), {}) && isIos({ userAgent: 'iPhone' }) && isIos({ userAgent: 'Macintosh', maxTouchPoints: 5 }) && !isIos({ userAgent: 'Android' }) && !fullscreenOn({}) && fullscreenOn({ webkitFullscreenElement: {} }));
   const pl = DATA.difficulty.player, tr = DATA.difficulty.alchemyTracks;
   ok('the short wording carries the data\'s numbers', statDesc('power', 0, true) === `+${pl.dmgPerPower} dmg / lv` && statDesc('vitality', 0, true) === `+${pl.hpPerVitality} hp / lv`
     && statDesc('endurance', 0, true) === `+${pl.armorPerEndurance} armor / lv` && /^\+[\d.]+% crit, \+[\d.]+% crit dmg$/.test(statDesc('precision', 0, true)) && statDesc('fortune', 0, true) === 'better loot'
     && alchemyDesc('potency', true) === `+${tr.potency.healPerLevel} heal / lv (now ${DATA.difficulty.potionHeal})` && alchemyDesc('infusion', true) === `potion armor +0 (+${tr.infusion.armorPerLevel} / lv)`
+    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} per level`) // (the long line carries it too, 0.00209)
     && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === '2/4 — price climbs per buy'
     && satchelDesc({ potionCap: 4 }, false, true) === '+1 capacity (now 4)' && satchelDesc({ potionCap: 6 }, true, true) === 'carries 6 (max)'
-    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level`); // the desktop's line as before
+    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
+  // coins buy in two places: the dots follow each (0.00209)
+  fresh();
+  const forge = getProfile(); forge.equipment.weapon = 'knights_blade'; forge.potions = forge.potionCap; forge.coins = forgeCost('knights_blade');
+  ok('a forge price in the purse dots Equipment, and Alchemy only if a track is that cheap', canForgeAny(forge) && canSpendCoins(forge) && canSpendAlchemy(forge) === Object.keys(ALCHEMY_DEFS).some((t) => forge.coins >= alchemyCost(t)));
   // the hub, under the phone query
   fresh();
   const prof = getProfile(); prof.coins = 95; prof.xp = 40;
   const mmBefore = globalThis.matchMedia; globalThis.matchMedia = (q) => ({ matches: q === PHONE_MQ });
   try {
-    hubScene().enter(registry.app);
+    const scene = hubScene(); scene.enter(registry.app);
     const hub = registry.app.all((n) => /\bphone-hub\b/.test(n.className ?? ''))[0];
     const tabs = hub && hub.all((n) => n.className?.startsWith('tabs'))[0];
     const body = hub && hub.all((n) => n.className?.startsWith('tab-body'))[0];
     ok('the phone hall: a head with the stats, three tabs, three sheets, a foot with the records and the way on', hub && tabs && body && tabs.children.length === 3 && body.children.length === 3
       && tabs.children.map((b) => b.textContent).join('|') === 'Train|Alchemy|Equipment' && hub.all((n) => /\brecords-line\b/.test(n.className ?? '')).length === 1
-      && hub.all((n) => n.tagName === 'button' && /Descend/.test(n.textContent)).length === 1 && hub.all((n) => /\bhub-stats\b/.test(n.className ?? '')).length === 1);
-    ok('the first sheet is up; the tabs with something to buy carry the dot', tabs.children[0].classList.contains('on') && body.children[0].classList.contains('on') && body.className === 'tab-body pick-1'
+      && hub.all((n) => n.tagName === 'button' && /Descend/.test(n.textContent)).length === 1 && hub.all((n) => /\bhub-stats\b/.test(n.className ?? '')).length === 1 && typeof scene.relayout === 'function');
+    ok('the first sheet is up; the tabs with something to buy carry the dot (XP for Train, a potion for Alchemy, nothing to forge)', tabs.children[0].classList.contains('on') && body.children[0].classList.contains('on') && body.className === 'tab-body pick-1'
       && tabs.children[0].classList.contains('spend') && tabs.children[1].classList.contains('spend') && !tabs.children[2].classList.contains('spend'));
     tabs.children[2].listeners.click[0]();
     ok('a tab lifts its sheet and the stacking order follows', tabs.children[2].classList.contains('on') && body.children[2].classList.contains('on') && !body.children[0].classList.contains('on') && body.className === 'tab-body pick-3');
     hubScene().enter(registry.app); // a purchase re-renders: the pick stays
     const tabs2 = registry.app.all((n) => n.className?.startsWith('tabs'))[0];
     ok('the pick lasts a re-render', tabs2.children[2].classList.contains('on'));
-    tabs2.children[0].listeners.click[0](); // (leave the first sheet up for the next test)
+    globalThis.matchMedia = (q) => ({ matches: false }); scene.relayout(registry.app); // the query flipped back: the desktop assembly
+    ok('relayout swaps the assembly when the query flips', !registry.app.all((n) => /\bphone-hub\b/.test(n.className ?? '')).length && registry.app.all((n) => /\bhub-wrap\b/.test(n.className ?? '')).length === 1);
+    globalThis.matchMedia = (q) => ({ matches: q === PHONE_MQ }); scene.relayout(registry.app);
+    tabs2.children[0].listeners.click[0]?.(); // (the old tabs: no effect; leave the first sheet up for the next test)
     const row = registry.app.all((n) => /\bitem-row\b/.test(n.className ?? ''))[0];
     ok('the sheets carry the short wording', row && row.textContent.includes('dmg / lv'));
   } finally { globalThis.matchMedia = mmBefore; }
-  // the gate: PLAY resolves and runs onPlay; a home-screen app gets no card
-  const body = new El('body'); let played = 0;
-  const doc = { body, documentElement: {}, fullscreenEnabled: false, addEventListener() {} };
-  const p1 = phoneGate({ onPlay: () => played++, doc, nav: { userAgent: 'iPhone', maxTouchPoints: 5 } });
-  const gate = body.children[0];
-  const playBtn = gate && gate.all((n) => n.tagName === 'button' && n.textContent === 'Play')[0];
-  ok('the gate: a card with PLAY and the iPhone\'s way to the full screen', gate && /\bphone-gate\b/.test(gate.className) && playBtn && gate.textContent.includes('Add to Home Screen'));
-  playBtn.listeners.click[0]();
-  ok('PLAY runs onPlay and takes the card away', (await p1) === true && played === 1 && body.children.length === 0);
-  const nav2 = { standalone: true, userAgent: 'iPhone' }; const navBefore = globalThis.navigator;
-  Object.defineProperty(globalThis, 'navigator', { value: nav2, configurable: true, writable: true });
-  try { ok('a home-screen app gets no card', (await phoneGate({ onPlay: () => played++, doc })) === false && played === 2 && body.children.length === 0); }
-  finally { Object.defineProperty(globalThis, 'navigator', { value: navBefore, configurable: true, writable: true }); }
   fresh();
+  // the gate: a dialog; PLAY resolves and runs onPlay; a home-screen app gets no card
+  let played = 0;
+  const doc = { fullscreenEnabled: false, documentElement: {}, addEventListener() {} };
+  const p1 = phoneGate({ onPlay: () => played++, doc, nav: { userAgent: 'iPhone', maxTouchPoints: 5 } });
+  const gate = registry.body.children.find((n) => /\bphone-gate\b/.test(n.className ?? ''));
+  const playBtn = gate && gate.all((n) => n.tagName === 'button' && /^Play/.test(n.textContent))[0]; // (proceed: true adds the [space] hint to the label)
+  ok('the gate: a dialog (key trap, anyDialogOpen) with PLAY and the iPhone\'s way to the full screen', gate && anyDialogOpen() && playBtn && gate.textContent.includes('Add to Home Screen'));
+  playBtn.listeners.click[0]();
+  ok('PLAY runs onPlay and takes the card away', (await p1) === true && played === 1 && !anyDialogOpen() && !registry.body.children.some((n) => /\bphone-gate\b/.test(n.className ?? '')));
+  ok('a home-screen app gets no card', (await phoneGate({ onPlay: () => played++, doc, nav: { standalone: true, userAgent: 'iPhone' } })) === false && played === 2 && !anyDialogOpen());
+  fresh();
+}
+
+// T91: 0.00209 — Export / Import Save are dialogs (the title used to expand a
+// textarea at its foot, under a phone's keyboard): Export shows the code
+// and closes on Done; Import loads a pasted code or says it is not one.
+{
+  const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
+  const { exportSave } = await import('../../src/meta/profile.js');
+  fresh();
+  getProfile().coins = 4242; getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  const btn = (re) => registry.app.all((n) => n.tagName === 'button' && re.test(n.textContent))[0];
+  btn(/Export Save/).listeners.click[0]();
+  const dlg = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  const ta = dlg && dlg.all((n) => n.tagName === 'textarea')[0];
+  ok('Export Save opens a dialog holding the save code', anyDialogOpen() && ta && ta.textContent === exportSave() && /save-code/.test(ta.className));
+  dlg.all((n) => n.tagName === 'button' && /^Done/.test(n.textContent))[0].listeners.click[0]();
+  ok('...Done closes it', !anyDialogOpen());
+  const code = exportSave();
+  resetProfile(); getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg2 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  const ta2 = dlg2.all((n) => n.tagName === 'textarea')[0];
+  const load = dlg2.all((n) => n.tagName === 'button' && /Load Save/.test(n.textContent))[0];
+  ta2.value = 'not a code'; load.listeners.click[0]();
+  ok('Import Save: a bad code is refused in the dialog', anyDialogOpen() && dlg2.textContent.includes('valid save') && getProfile().coins !== 4242);
+  ta2.value = code; load.listeners.click[0]();
+  ok('...a good code loads and closes it', !anyDialogOpen() && getProfile().coins === 4242);
+  closeAllDialogs(); fresh();
 }

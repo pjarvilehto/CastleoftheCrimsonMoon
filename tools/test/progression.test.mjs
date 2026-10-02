@@ -490,12 +490,13 @@ fresh();
   ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
   // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
   getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
-  const { canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
+  const { canSpendCoins, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');
   hubScene().enter(registry.app);
   ok('maxed efficiency: MAX, not trainable, not counted as spendable', lv.alchemyMaxed('efficiency') && !lv.trainAlchemy('efficiency')
     && getProfile().coins === 1e6 && (await import('../../src/ui/hubText.js')).efficiencyDesc().includes('max') && registry.app.textContent.includes('MAX')
     && !lv.alchemyMaxed('potency') && !lv.alchemyMaxed('infusion'));
-  ok('canSpendCoins skips maxed tracks', canSpendCoins.toString().includes('!alchemyMaxed(t) && p.coins >= alchemyCost(t)'));
+  getProfile().alchemy.potency = 1e9; getProfile().alchemy.infusion = 1e9; getProfile().potions = getProfile().potionCap; getProfile().potionCap = DATA.difficulty.potions.maxCap; getProfile().potions = getProfile().potionCap;
+  ok('canSpendCoins skips maxed tracks (0.00209: by behaviour — every track maxed or priced out, the satchel full and maxed: nothing to buy)', !canSpendAlchemy(getProfile()) && !canSpendCoins(getProfile()));
   const { critMultiplier } = await import('../../src/run/combat.js');
   const src = readFileSync('src/run/combat.js', 'utf8');
   ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: tune.critMult + combat.run.stats.critBonus')

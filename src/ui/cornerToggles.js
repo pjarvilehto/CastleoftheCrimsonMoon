@@ -43,6 +43,8 @@ export function cornerBar(items) {
   const bar = el('div', { class: 'corner-bar' });
   const menu = el('button', { class: 'menu-toggle', 'aria-label': 'Menu', onclick: () => bar.classList.toggle('open') }, '☰');
   bar.append(menu, ...items.filter(Boolean));
-  document.addEventListener?.('click', (e) => { if (bar.classList.contains('open') && !bar.contains?.(e.target)) bar.classList.remove('open'); });
+  document.addEventListener?.('click', (e) => { // (capture: the tap that closes the menu must not also strike a card underneath)
+    if (bar.classList.contains('open') && !bar.contains?.(e.target)) { bar.classList.remove('open'); e.stopPropagation?.(); e.preventDefault?.(); }
+  }, true);
   return bar;
 }

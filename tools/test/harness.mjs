@@ -91,6 +91,7 @@ export class El {
     }
   }
   remove() { if (this.parent) { const i = this.parent.children.indexOf(this); if (i >= 0) this.parent.children.splice(i, 1); } }
+  contains(n) { for (let x = n; x; x = x.parent) if (x === this) return true; return false; }
   insertBefore(n, ref) {
     if (n.remove) n.remove();
     n.parent = this;

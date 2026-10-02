@@ -41,7 +41,14 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const wide = combat.enemies.some((e) => e.boss) ? BOSS_SLOTS - 1 : 0;
   const sizing = (n) => `--n:${n};--slots:${n + wide}`;
   const line = el('div', { class: 'battle-line', style: sizing(enemies.length), ondragstart: (e) => e.preventDefault?.() }, player.el, row);
-  const fit = () => line.setAttribute('style', sizing(Math.max(1, row.children.length)));
+  // 0.00209: the line's parent (#app) gets the two numbers too — the phone's
+  // card budget is computed there, so the log strip and the boons' bar
+  // follow the cards' real height (dungeonScene calls fit() once the line is in)
+  const fit = () => {
+    const n = Math.max(1, row.children.length);
+    line.setAttribute('style', sizing(n));
+    line.parentElement?.style?.setProperty?.('--n', n); line.parentElement?.style?.setProperty?.('--slots', n + wide);
+  };
 
   // Summons join mid-fight (0.092): each card appears as its summon line
   // prints (the playback view says how many enemies exist yet), in front
@@ -75,5 +82,5 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
     });
   }
 
-  return { player, enemies, row, line, update };
+  return { player, enemies, row, line, update, fit };
 }

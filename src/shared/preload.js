@@ -56,10 +56,9 @@ function warm(url) {
   if (typeof Image === 'undefined') return Promise.resolve(); // no images to warm (Node tests)
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => resolve();
     img.src = url;
-    if (img.decode) img.decode().then(resolve, resolve);
+    if (img.decode) img.decode().then(resolve, resolve); // (0.00209: decode alone — onload used to resolve first, before the pixels were ready)
+    else { img.onload = () => resolve(); img.onerror = () => resolve(); }
   });
 }
 

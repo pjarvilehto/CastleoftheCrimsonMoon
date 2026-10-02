@@ -45,3 +45,18 @@ export function standaloneApp(mm = globalThis.matchMedia, nav = globalThis.navig
   if (nav?.standalone) return true; // iOS Safari's own flag
   return typeof mm === 'function' && ['fullscreen', 'standalone', 'minimal-ui'].some((m) => !!mm(`(display-mode: ${m})`)?.matches);
 }
+
+// iPhone / iPad Safari (iPadOS says Macintosh with touch points): no page
+// fullscreen, no orientation lock, no install prompt — the gate's hint path.
+export const isIos = (nav = globalThis.navigator) => /iPhone|iPod|iPad/.test(String(nav?.userAgent ?? '')) || (/Macintosh/.test(String(nav?.userAgent ?? '')) && (nav?.maxTouchPoints ?? 0) > 1);
+
+// Page fullscreen, with Safari's prefixed names (iPad has them; 0.00205).
+export const fullscreenOn = (d = globalThis.document) => !!(d?.fullscreenElement || d?.webkitFullscreenElement);
+export const canFullscreen = (d = globalThis.document) => !!(d?.fullscreenEnabled || d?.webkitFullscreenEnabled);
+export function enterFullscreen(d = globalThis.document) {
+  const root = d.documentElement;
+  return Promise.resolve((root.requestFullscreen ?? root.webkitRequestFullscreen)?.call(root)).catch(() => {}); // denied / unavailable (an iframe): the game plays windowed
+}
+export function exitFullscreen(d = globalThis.document) {
+  return Promise.resolve((d.exitFullscreen ?? d.webkitExitFullscreen)?.call(d)).catch(() => {});
+}

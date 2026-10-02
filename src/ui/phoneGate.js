@@ -10,62 +10,59 @@
 // Toolbar) and PLAY just goes on. Opened from the home screen
 // (standaloneApp) there is no card at all. Leaving fullscreen on Android
 // (the back gesture) brings the card back, so the game is never played
-// behind the browser's bars by accident. The gate is the audio gesture too.
+// behind the browser's bars by accident. 0.00209: a dialog like every
+// other (ui/dialog.js — the key trap, anyDialogOpen, closeAllDialogs; the
+// gate used to let Space reach Descend underneath), and onPlay is the
+// moment of the first gesture: main.js resumes the audio there.
 
 import { el } from '../core/dom.js';
-import { standaloneApp } from '../shared/platform.js';
+import { openDialog } from './dialog.js';
+import { standaloneApp, isIos, canFullscreen, fullscreenOn, enterFullscreen } from '../shared/platform.js';
 
 let installPrompt = null; // the browser's deferred install prompt (Chromium only)
 let installed = false;
 globalThis.addEventListener?.('beforeinstallprompt', (e) => { e.preventDefault?.(); installPrompt = e; });
 globalThis.addEventListener?.('appinstalled', () => { installed = true; installPrompt = null; });
 
-const fullscreenOn = (d = document) => !!(d.fullscreenElement || d.webkitFullscreenElement);
-const canFullscreen = (d = document) => !!(d.fullscreenEnabled || d.webkitFullscreenEnabled);
-const isIos = (nav = globalThis.navigator) => /iPhone|iPod/.test(String(nav?.userAgent ?? '')) || (/Macintosh/.test(String(nav?.userAgent ?? '')) && (nav?.maxTouchPoints ?? 0) > 1);
-
-// Request the full screen and the landscape lock; never throws (denied,
-// unavailable, or a browser without the orientation API).
-export async function goFullscreen(d = document, scr = globalThis.screen) {
-  try {
-    const root = d.documentElement;
-    await (root.requestFullscreen ?? root.webkitRequestFullscreen)?.call(root);
-    await scr?.orientation?.lock?.('landscape');
-  } catch { /* fine: the game plays windowed */ }
+// The full screen and the landscape lock (only possible once fullscreen);
+// never throws — a browser without the orientation API just stays as it is.
+export async function goFullscreen(d = globalThis.document, scr = globalThis.screen) {
+  await enterFullscreen(d);
+  try { await scr?.orientation?.lock?.('landscape'); } catch { /* not lockable here */ }
 }
 
-// Mount the gate over the page; resolves when the player taps PLAY. onPlay
-// runs on that tap (the audio gesture); the overlay fades off.
-export function phoneGate({ onPlay = () => {}, doc = document, nav = globalThis.navigator } = {}) {
-  if (standaloneApp()) { onPlay(); return Promise.resolve(false); }
+// Mount the gate; resolves true when the player taps PLAY (false at once
+// for a home-screen app, with onPlay still run — the game goes straight on).
+export function phoneGate({ onPlay = () => {}, doc = globalThis.document, nav = globalThis.navigator } = {}) {
+  if (standaloneApp(undefined, nav)) { onPlay(); return Promise.resolve(false); }
   const ios = isIos(nav), fs = canFullscreen(doc);
   return new Promise((resolve) => {
-    const play = el('button', { class: 'primary active', onclick: () => { if (fs) goFullscreen(doc); done(); } }, 'Play');
-    const install = installPrompt && !installed ? el('button', { onclick: async () => {
-      try { installPrompt.prompt(); const r = await installPrompt.userChoice; if (r?.outcome === 'accepted') installed = true; } catch { /* no sheet */ }
-      installPrompt = null; render();
-    } }, 'Install the game') : null;
-    const hint = installed ? 'The castle is on your home screen — open it from there for the full screen.'
-      : ios ? 'For the full screen: tap Share, then Add to Home Screen — or aA, then Hide Toolbar.'
-      : fs ? 'Play goes full screen. Install for a home-screen icon that always does.'
-      : 'Add the castle to your home screen for the full screen.';
-    const card = el('div', { class: 'panel gate-card' });
-    const overlay = el('div', { class: 'phone-gate', role: 'dialog', 'aria-label': 'Play' }, card);
-    function render() {
+    const play = el('button', { class: 'primary active', proceed: true, onclick: () => { if (fs) goFullscreen(doc); onPlay(); dlg.close(); } }, 'Play');
+    const card = el('div');
+    const render = () => { // (INSTALL and the hint are rebuilt each time: after an install the card says so, and a used prompt is gone)
+      const install = installPrompt && !installed ? el('button', { onclick: async () => {
+        const prompt = installPrompt; installPrompt = null;
+        try { prompt.prompt(); if ((await prompt.userChoice)?.outcome === 'accepted') installed = true; } catch { /* no sheet */ }
+        render();
+      } }, 'Install the game') : null;
+      const hint = installed ? 'The castle is on your home screen — open it from there for the full screen.'
+        : ios ? 'For the full screen: tap Share, then Add to Home Screen — or aA, then Hide Toolbar.'
+        : install ? 'Play goes full screen. Install for a home-screen icon that always does.'
+        : fs ? 'Play goes full screen.'
+        : 'Add the castle to your home screen for the full screen.';
       card.innerHTML = '';
       card.append(el('h1', {}, 'CASTLE OF THE CRIMSON MOON'), el('p', { class: 'mobile-sub' }, hint), el('div', { class: 'btn-row' }, play, install));
-    }
-    function done() { onPlay(); overlay.remove(); resolve(true); }
+    };
     render();
-    doc.body.append(overlay);
+    const dlg = openDialog({ label: 'Play', children: [card], overlayClass: 'phone-gate', modalClass: 'panel gate-card', proceed: play, onClose: () => resolve(true) });
   });
 }
 
 // After the first PLAY: Android's back gesture leaves fullscreen — the card
-// returns (a second tap goes back in). Not on iOS: there is no fullscreen to
-// leave. Returns the unhook.
-export function regateOnExit(doc = document, nav = globalThis.navigator) {
-  if (isIos(nav) || !canFullscreen(doc) || standaloneApp()) return () => {};
+// returns (a second tap goes back in). Not on iOS (no fullscreen to leave)
+// and not for a home-screen app. Returns the unhook.
+export function regateOnExit(doc = globalThis.document, nav = globalThis.navigator) {
+  if (isIos(nav) || !canFullscreen(doc) || standaloneApp(undefined, nav)) return () => {};
   let open = false;
   const onChange = () => { if (!fullscreenOn(doc) && !open) { open = true; phoneGate({ doc, nav }).then(() => { open = false; }); } };
   doc.addEventListener?.('fullscreenchange', onChange);

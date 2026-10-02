@@ -41,7 +41,7 @@ export const R = () => Math.random();
 export const rr = (a, b) => a + R() * (b - a);
 
 // The particles of one burst (pure; the smoke suite checks the looks).
-export function spawnParticles(material, x, y, { dir = 0, size = 400, big = false, kind = big ? 'kill' : 'hit', floor = null } = {}) {
+export function spawnParticles(material, x, y, { dir = 0, size, big = false, kind = big ? 'kill' : 'hit', floor = null } = {}) { // (size: the card's, every caller passes it)
   const h = { x, y, dir, kind, mult: MULT[kind] ?? 1, floor, mat: material };
   if (material === 'heal') return heal(h, size / 400);
   // the looks were tuned in the lab on a card ~290px tall at u = 1

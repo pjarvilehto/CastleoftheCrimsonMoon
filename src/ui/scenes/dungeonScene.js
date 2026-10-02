@@ -46,7 +46,7 @@ export function dungeonScene() {
   let currentRoot = null;
   let shownCoins = 0;    // animated HUD counter values (tick up to reality)
   let shownXp = 0;
-  let buffBar = null;    // bottom-left shrine blessing bar
+  let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
 
@@ -165,6 +165,7 @@ export function dungeonScene() {
       proceed);
     logEl.className = 'docked';
     logEl.scrollTop = logEl.scrollHeight;
+    battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
     ui = { root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };

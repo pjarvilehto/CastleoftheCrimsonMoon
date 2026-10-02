@@ -40,7 +40,7 @@ const NUM = {
   backgrounds: [
     ...['depthScale', 'pivot', 'yawDeg', 'pitchDeg', 'yawPeriodS', 'pitchPeriodS', 'speed', 'joltDeg', 'swayDeg', 'swayHitShare', 'fovDeg', 'overscan',
       'grid.0', 'grid.1', 'maxFps', 'motionMaxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
-      'lights.dist', 'lights.radius', 'lights.rise', 'quality.windowMs', 'quality.gapMs', 'quality.slowWindows'].map((k) => `parallax.${k}`),
+      'maxDpr', 'lights.dist', 'lights.radius', 'lights.rise', 'quality.windowMs', 'quality.gapMs', 'quality.slowWindows'].map((k) => `parallax.${k}`),
     ...['count', 'size.0', 'size.1', 'y.0', 'y.1', 'width', 'near', 'far', 'nearBand', 'farBand', 'soft', 'opacity',
       'drift.0', 'drift.1', 'rock.0', 'rock.1', 'period.0', 'period.1', 'bob', 'breathe', 'shadeVar.0', 'shadeVar.1', 'alphaVar.0', 'alphaVar.1',
       'turbulence', 'turbulencePeriod', 'pulse', 'pulsePeriod', 'flow', 'flowScale', 'flowAmount'].map((k) => `parallax.puffs.${k}`),

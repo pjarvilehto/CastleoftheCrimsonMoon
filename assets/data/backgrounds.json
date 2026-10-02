@@ -214,6 +214,7 @@
       "max": 0.85
     },
     "maxPixels": 2100000,
+    "maxDpr": 2,
     "minFps": 22,
     "lights": {
       "enabled": true,

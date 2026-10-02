@@ -41,10 +41,13 @@ index.html              versioned boot: reads build.json, loads styles.css +
                         every module under ?v=<version> (import map)
 styles.css              all styling, grouped by screen (index at the top)
 src/
-  main.js               boot: rotate notice -> loader panel -> loadData ->
-                        preloadAssets -> hotkeys, corner column (+ ?debug
-                        tools), 3D backgrounds, audio, update check ->
-                        title; the rest of the art loads in the background
+  main.js               boot: html.phone from platform.js PHONE_MQ (and a
+                        re-layout when it flips) -> rotate notice -> loader
+                        panel -> loadData -> preloadAssets -> hotkeys, corner
+                        column (+ ?debug tools), 3D backgrounds, audio, update
+                        check -> (a phone: the play / install gate) -> title;
+                        the rest of the art loads in the background; a failed
+                        boot says so and a tap reloads
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally; strictly in
                         order: windows out, swap, the new painting fully in,
@@ -121,7 +124,8 @@ src/
     cardFx.js           the shader light behind every card (one GL context,
                         a 2D canvas per card); looks per enemy / boon / chest
     shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
-    buffs.js  hud.js  fx.js  hubText.js
+    buffs.js  hud.js  fx.js
+    hubText.js          the Great Hall's lines from the data: statDesc / precisionDesc / efficiencyDesc / alchemyDesc / potionDesc / satchelDesc (each long, or `short` for the phone's 45%-wide sheets), recordsLine
     dialog.js           openDialog(): overlay + keyboard; open-dialog registry
     confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
@@ -208,7 +212,11 @@ primary button. While a dialog is open it owns the keyboard.
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
 
-Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mouse-only.
+Corner toggles (MUSIC, FULLSCREEN, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug
+tools) are mouse-only; on a phone they fold behind ☰ (FULLSCREEN is not
+offered there: the gate is the way in). The phone hall's tabs have no keys;
+the hotkeys of the rows on the sheets behind still fire (p, v, f, r, e, u,
+x, a, y, n), as on the desktop where every panel shows.
 
 ## Editing conventions
 
@@ -228,6 +236,12 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
   browser's `confirm()`.
 - **Combat layout is fluid** (vh/vw, cards 50vh): never fixed px in that
   block of styles.css; panel scenes stay in px. Card internals are `em`.
+  The phone layer (section 16) is the exception by design: its strips and
+  buttons are tap-sized in px (40 / 52px) against a 72svh card.
+- **Two layouts, one code path** (CLAUDE.md rule 8): a phone rule is
+  `html.phone` + the desktop rule's own selector, in section 16; the hub's
+  two assemblies come from one table; `node tools/layout-check.mjs` holds
+  both layouts in a browser.
 - **Card art:** frame on the card's `.card-frame` layer (opacity 0.85, the shader light inside it); portraits are
   absolute, bottom-anchored and larger than the card; text rows sit above.
 - **Button labels** centre their capitals (`text-box: trim-both cap

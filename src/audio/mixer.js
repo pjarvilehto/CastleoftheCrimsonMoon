@@ -13,7 +13,7 @@
 // call is a no-op; volumes still load/persist.
 
 import { DATA } from '../shared/data.js';
-import { hasAudio, ensureCtx } from './audioCore.js';
+import { hasAudio, ensureCtx, GESTURE_EVENTS } from './audioCore.js';
 import { dbToGain, sliderGain } from './audioMath.js';
 import { getJsonPref, setJsonPref } from '../shared/prefs.js';
 
@@ -116,7 +116,7 @@ function watchVisibility(ctx) {
     if (doc.visibilityState === 'hidden') ctx.suspend?.().catch?.(() => {});
     else ctx.resume?.().catch?.(() => {});
   });
-  globalThis.addEventListener?.('pointerdown', () => {
+  for (const t of GESTURE_EVENTS) globalThis.addEventListener?.(t, () => { // (0.00209: the tap's end too — a touch activates there)
     if (ctx.state !== 'running' && doc?.visibilityState !== 'hidden') ctx.resume?.().catch?.(() => {});
   });
 }

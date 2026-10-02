@@ -120,6 +120,8 @@ export const WINDOW = { frame: [0.0113, 0.04], panel: [0, 0.037] };
 const SIZE = 512; // the hidden canvas: a card is never drawn larger than this
 let shared = null, failed = false; // { canvas, gl, loc }
 let entries = [], running = false, last = 0;
+// each card's size, kept by one observer (0.00209: clientWidth/Height per card per tick was a layout read 30 times a second — the pattern particles.js dropped in 0.135)
+const sizes = typeof ResizeObserver === 'function' ? new ResizeObserver((recs) => { for (const r of recs) { const e = entries.find((x) => x.card === r.target); if (e) { e.w = r.contentRect.width; e.h = r.contentRect.height; } } }) : null;
 
 const enabled = () => isBg3dActive() && !reducedMotion();
 
@@ -167,6 +169,7 @@ export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) 
   host.insertBefore(canvas, host.children[0] ?? null);
   const e = { card, canvas, bmp, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? DATA.cards.fx.amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
   entries.push(e);
+  sizes?.observe(card);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
   return e;
 }
@@ -178,7 +181,7 @@ function stop() {
 
 function tick(now) {
   if (!running) return;
-  entries = entries.filter((e) => e.canvas.isConnected); // the last room's cards
+  entries = entries.filter((e) => e.canvas.isConnected || (sizes?.unobserve(e.card), false)); // the last room's cards
   if (!entries.length) { running = false; return; }
   requestAnimationFrame(tick);
   if (!enabled() || !shared) { stop(); return; } // the background fell back to flat mid-session
@@ -188,8 +191,8 @@ function tick(now) {
   const { gl, loc, canvas: src } = shared;
   for (const e of entries) {
     if (e.card.classList.contains('dead')) continue; // a dead card keeps its last frame (faint anyway)
-    const w = Math.min(SIZE, Math.max(8, Math.round(e.card.clientWidth * F.scale) || 8));
-    const h = Math.min(SIZE, Math.max(8, Math.round(e.card.clientHeight * F.scale) || 8));
+    const w = Math.min(SIZE, Math.max(8, Math.round((e.w ?? e.card.clientWidth) * F.scale) || 8));
+    const h = Math.min(SIZE, Math.max(8, Math.round((e.h ?? e.card.clientHeight) * F.scale) || 8));
     if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; if (e.ctx) e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets a 2D context)
     e.t += dt * F.speed;
     gl.viewport(0, SIZE - h, w, h); // the top-left corner of the hidden canvas, as an image

@@ -16,6 +16,8 @@
    12 Run end
    13 Dialogs: YOU DIED, new build available
    14 Corner column (toggles, panels, ?debug tools)
+   15 Touch (coarse pointers: tap targets, the tablet's corner reservation)
+   16 Phones: the phone layer — html.phone, every rule the twin of a desktop rule above (rule 8)
 
    Order matters where two rules of equal specificity style the same
    element: buttons come before the combat block (.unit-actions button
@@ -31,6 +33,8 @@
   --ink: #0a0908;
   --panel: rgba(12, 10, 8, 0.82);
   --panel-border: rgba(201, 162, 39, 0.35);
+  --ratio-p: 0.605; --ratio-e: 0.3734; /* the cards' width / height (the card art: player 669/1106, enemy 413/1106) — the --card-h budget, desktop, tablet and phone (0.00209: one copy) */
+  --corner-w: 150px; /* the corner column's reach over the right edge (the tablet's reservation) */
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; background: var(--ink); }
@@ -346,8 +350,6 @@ button.active.potion-remind { animation-duration: 2.2s; }
 
 /* Boot loader (main.js) — after .panel: the loader IS a panel */
 .loader { max-width: 460px; text-align: center; }
-/* "Mobile platforms not supported yet" (0.125, main.js): the boot stops at
-   this card over the title art on phones and tablets */
 .mobile-sub { color: #b8a888; margin: 14px 0 0; text-transform: none; letter-spacing: 0.04em; } /* the rotate notice's and the gate's line (the phone notice itself went in 0.00208) */
 .loader-track {
   height: 10px; margin: 18px 0 8px;
@@ -404,7 +406,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .hub-wrap .item-row { padding: 6px 12px; margin: 4px 0; font-size: 0.95rem; gap: 12px; }
 .hub-wrap .item-row button { padding: 8px 14px; font-size: 1rem; flex-shrink: 0; }
 /* the corner column overlaps the right panel on a tablet: keep clear of it (0.00205) */
-@media (max-width: 1400px) { .hub-container { padding-right: 150px; box-sizing: border-box; } }
+@media (max-width: 1400px) { .hub-container { padding-right: var(--corner-w); box-sizing: border-box; } }
 @media (max-width: 1000px) {
   .hub-container { padding-right: 0; }
   .hub-wrap { grid-template-columns: minmax(0, 720px); }
@@ -473,8 +475,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
      0.3734h (enemy) from the art ratios */
   /* --slots: enemy-card widths in the row (the boss's card counts two,
      battleRoom.js BOSS_SLOTS); --n: cards, for the gaps (0.196) */
-  --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734)));
-  --card-h: min(50svh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); /* the small viewport: Safari's toolbars make vh taller than the screen (0.00205; browsers without svh keep the line above) */
+  --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (var(--ratio-p) + var(--slots, var(--n)) * var(--ratio-e))));
+  --card-h: min(50svh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (var(--ratio-p) + var(--slots, var(--n)) * var(--ratio-e)))); /* the small viewport: Safari's toolbars make vh taller than the screen (0.00205; browsers without svh keep the line above) */
   --card-font: calc(var(--card-h) * 0.04);
 }
 .enemy-row { display: flex; gap: 0.8vw; align-items: flex-end; flex-wrap: nowrap; justify-content: flex-end; }
@@ -1025,6 +1027,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 
 /* ---- touch, the overrides (0.00205; last in the file so they win over the
    rules above at the same specificity: the corner buttons, the hints) ---- */
+/* ================= 15 Touch (0.00205) ================= */
 @media (pointer: coarse) {
   .key-hint { display: none; } /* hotkey hints mean nothing to a finger */
   button u, .btn-label u { text-decoration: none; }
@@ -1032,145 +1035,154 @@ button.active.potion-remind { animation-duration: 2.2s; }
   .corner-bar { gap: 8px; }
   .debug-toggle { padding: 9px 14px; font-size: 0.85rem; opacity: 0.7; }
 }
-/* a tablet's corner column reached over the last card: the battle line keeps clear of it, and the card budget knows (0.00205) */
-@media (pointer: coarse) and (max-width: 1400px) {
-  .battle-line { padding-right: calc(1.6vw + 150px + env(safe-area-inset-right, 0px)); }
-  .battle-line { --card-h: min(50svh, calc((93.8vw - 150px - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
+/* a tablet's corner column reached over the last card: the battle line keeps clear of it, and the card budget knows (0.00205).
+   min-height 501: the complement of the phone query (platform.js PHONE_MQ) — a phone folds the column instead (section 16) */
+@media (pointer: coarse) and (max-width: 1400px) and (min-height: 501px) {
+  .battle-line { padding-right: calc(1.6vw + var(--corner-w) + env(safe-area-inset-right, 0px)); --card-h: min(50svh, calc((93.8vw - var(--corner-w) - (var(--n) - 1) * 0.8vw) / (var(--ratio-p) + var(--slots, var(--n)) * var(--ratio-e)))); }
 }
 
 /* ================= 16 Phones (0.00208) ================= */
-/* A sideways phone: under 500px tall (platform.js PHONE_MQ — the same query;
-   an iPad mini is 744). Designed with the owner over mockups (0.00207's
-   thread): combat as ONE line of big cards with the knight's buttons under
-   his card and a one-line log; the Great Hall as three stacked sheets under
-   their tabs; the corner column folded into ☰; the panel rooms and dialogs
-   compacted; a dialog with a text field at the top (the keyboard takes the
-   lower half). Portrait keeps the rotate notice; the play / install gate is
-   ui/phoneGate.js. */
-@media (max-height: 500px) and (orientation: landscape) {
-  :root { --knight-w: calc(72svh * 0.605); } /* the knight's card width: the card is 72svh tall here and the height branch always wins on a phone (five foes at 852 wide would allow 320px, the height gives 283) */
-  /* ---- combat: one line of cards, the knight's buttons hanging under his card, the log a strip beside them ---- */
-  .battle-line {
-    --card-h: min(72svh, calc((96vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734)));
-    --card-font: calc(var(--card-h) * 0.048);
-    padding: 0 calc(1vw + env(safe-area-inset-right, 0px)) calc(52px + env(safe-area-inset-bottom, 0px)) calc(1vw + env(safe-area-inset-left, 0px)); gap: 1vw;
-  }
-  .enemy-unit .unit-actions { display: none; }           /* the card is the button (0.155) */
-  .player-unit { position: relative; }
-  .player-unit .unit-actions { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; } /* under the card, outside the row: every card bottom on one line */
-  .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }
-  .hud-chip .hpbar { width: 64px; }
-  .room-title { top: 6px; font-size: 1.05rem; letter-spacing: 0.08em; }
-  #combat-log.docked {                                     /* one line: the latest, flashed in; the strip beside the knight's buttons */
-    left: calc(1vw + env(safe-area-inset-left, 0px) + var(--knight-w) + 10px); right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-    transform: none; width: auto; min-width: 0; height: 40px; min-height: 0; box-sizing: border-box;
-    padding: 0 14px; font-size: 14px; border-radius: 6px; background: rgba(10, 6, 5, 0.8);
-    display: flex; flex-direction: column; justify-content: center; overflow: hidden; white-space: nowrap;
-  }
-  #combat-log.docked > :not(:last-child) { display: none; }
-  #combat-log.docked > :last-child { animation: log-flash 0.5s ease-out; overflow: hidden; text-overflow: ellipsis; }
-  #app:has(.combat-proceed > button) #combat-log.docked { right: calc(1vw + env(safe-area-inset-right, 0px) + 300px); } /* the room cleared: the log makes way for Push Deeper / Retreat */
-  .resources { bottom: auto; top: 7px; left: 130px; font-size: 0.75rem; display: flex; gap: 10px; } /* XP and coins up beside the build tag: the knight's buttons own the bottom-left */
-  .resources .res-row { display: flex; gap: 4px; }
-  .res-label { width: auto; }
-  #buffs { left: calc(1vw + env(safe-area-inset-left, 0px)); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 52px + 72svh + 4px); width: var(--knight-w); max-width: none; gap: 4px; flex-wrap: wrap; justify-content: flex-start; } /* the boons as small icons on top of the knight's card (the owner's call) */
-  .buff { width: 30px; }
-  .combat-proceed { right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); flex-direction: row; gap: 8px; }
-  .combat-proceed button { min-height: 40px; padding: 0 14px; font-size: 0.9rem; }
-  /* ---- the corner column folded into ☰: a dropdown under the button, closed by a tap elsewhere (cornerToggles.js) ---- */
-  .corner-bar > .menu-toggle { display: block; font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
-  .corner-bar:not(.open) > :not(.menu-toggle) { display: none; }
-  .corner-bar.open { padding: 6px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-  .corner-bar.open .debug-toggle { min-height: 40px; padding: 0 14px; font-size: 0.85rem; opacity: 0.85; }
-  .build-tag { font-size: 0.6rem; }
-  /* ---- the Great Hall (hubScene.js phoneHall): a stats strip, three stacked sheets under their tabs, the way on fixed at the bottom ---- */
-  #app { padding: 20px 10px calc(6px + env(safe-area-inset-bottom, 0px)); justify-content: flex-start; } /* the build tag keeps the top-left */
-  .hub-container.phone-hub { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; align-items: stretch; justify-items: stretch; height: 100%; width: 100%; padding: 0; gap: 5px; box-sizing: border-box; }
-  .phone-hub .hub-head { display: flex; align-items: center; gap: 10px; padding: 0 64px 0 2px; }
-  .phone-hub .hub-head h1 { font-size: 1.15rem; margin: 0; white-space: nowrap; letter-spacing: 0.06em; }
-  .phone-hub .hub-stats { display: flex; gap: 6px; flex: 1; margin: 0; }
-  .phone-hub .hub-stats .stat-box { flex: 1; padding: 4px 8px; display: flex; flex-direction: row; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; min-height: 0; }
-  .phone-hub .hub-stats .stat-box .label, .phone-hub .hub-stats .stat-box .value { align-self: auto; }
-  .phone-hub .hub-stats .stat-box .label { font-size: 0.55rem; }
-  .phone-hub .hub-stats .stat-box .value { font-size: 1rem; line-height: 1; }
-  /* the tabs are the sheets' top edges: the same widths, positions and stacking as the sheets below, the active one
-     joined to its sheet (no bottom edge, the sheet's colour, reaching over the sheet's top border) */
-  .phone-hub .tabs { position: relative; height: 36px; z-index: 4; }
-  .phone-hub .tabs button { position: absolute; top: 0; width: 45%; height: 36px; padding: 0 10px; font-size: 0.9rem; letter-spacing: 0.08em;
-    border-radius: 6px 6px 0 0; background: #130e0b; filter: brightness(0.5); transition: filter 0.22s ease, height 0.22s ease; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
-  .phone-hub .tabs button:nth-child(1) { left: 0; z-index: 2; }
-  .phone-hub .tabs button:nth-child(2) { left: 27.5%; z-index: 1; }
-  .phone-hub .tabs button:nth-child(3) { left: 55%; z-index: 0; }
-  .phone-hub .tabs.pick-3 button:nth-child(1) { z-index: 0; }
-  .phone-hub .tabs.pick-3 button:nth-child(2) { z-index: 1; }
-  .phone-hub .tabs button.on { z-index: 3; filter: none; height: 42px; border-color: rgba(201,162,39,0.5); border-bottom: none; color: #fff4d0; box-shadow: 0 -6px 16px rgba(0,0,0,0.7); }
-  .phone-hub .tabs button.spend::after { content: ''; display: inline-block; vertical-align: middle; margin-left: 8px; width: 7px; height: 7px; border-radius: 50%; background: #6fe07a; box-shadow: 0 0 8px rgba(111,224,122,0.8); } /* something here can be bought */
-  /* the three sheets: each 45% wide at its tab's position (left / middle / right), the picked one lifted to the front with a
-     deep shadow, the others darkened a notch behind it (opaque: the sheets behind must not show through); a tap on a sheet's edge lifts it */
-  .phone-hub .tab-body { position: relative; min-height: 0; }
-  .phone-hub .tab-body > .panel { position: absolute; top: 0; bottom: 0; width: 45%; padding: 4px 8px; max-height: none; max-width: none; margin: 0; box-sizing: border-box; overflow-y: auto; background: #130e0b;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease; transform: translateY(5px) scale(0.985); filter: brightness(0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.6); cursor: pointer; }
-  .phone-hub .tab-body > .panel:nth-child(1) { left: 0; z-index: 2; }
-  .phone-hub .tab-body > .panel:nth-child(2) { left: 27.5%; z-index: 1; }
-  .phone-hub .tab-body > .panel:nth-child(3) { left: 55%; z-index: 0; }
-  .phone-hub .tab-body.pick-3 > .panel:nth-child(1) { z-index: 0; }
-  .phone-hub .tab-body.pick-3 > .panel:nth-child(2) { z-index: 1; }
-  .phone-hub .tab-body > .panel.on { z-index: 3; transform: none; filter: none; cursor: auto; border-color: rgba(201,162,39,0.5); border-top-left-radius: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.9), 0 0 22px rgba(0,0,0,0.8); }
-  .phone-hub .tab-body > .panel:nth-child(3).on { border-top-left-radius: 6px; border-top-right-radius: 0; }
-  .phone-hub .tab-body > .panel:not(.on) > * { pointer-events: none; } /* a tap on a sheet behind lifts it, nothing more */
-  .phone-hub .tab-body h1, .phone-hub .tab-body h2, .phone-hub .tab-body .subtitle { display: none; }
-  .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
-  .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
-  .phone-hub .equip-item { display: flex; gap: 6px; align-items: baseline; } /* a slot's name and bonus on one line */
-  .phone-hub .equip-desc { font-size: 0.7rem; }
-  .phone-hub .hub-foot { display: flex; align-items: center; gap: 10px; }
-  .phone-hub .hub-foot .records-line { flex: 1; margin: 0; font-size: 0.72rem; text-align: left; letter-spacing: 0.1em; }
-  .phone-hub .hub-foot button { min-height: 42px; padding: 0 16px; font-size: 1rem; }
-  /* ---- the panel rooms (shrine, chests): the whole screen, three short cards ---- */
-  .panel { max-height: 100svh; padding: 6px 14px; max-width: 98vw; }
-  .panel > h1 { font-size: 1.35rem; margin: 0 0 2px; }
-  .panel > .subtitle { font-size: 0.8rem; margin: 2px 0; }
-  .run-hud { gap: 12px; margin-bottom: 4px; font-size: 0.8rem; }
-  .shrine-cards { gap: 10px; margin: 6px 0 4px; }
-  .shrine-card { width: 180px; min-height: 0; padding: 6px 10px 6px; gap: 4px; }
-  .shrine-buff { font-size: 0.9rem; min-height: 1.3em; }
-  .shrine-icon { width: 46px; height: 46px; border-radius: 9px; font-size: 1.2rem; }
-  .shrine-cost-label { display: inline; margin-right: 4px; }
-  .shrine-card button { padding: 8px 0; font-size: 0.9rem; min-height: 40px; }
-  .shrine-cost { font-size: 0.78rem; }
-  .treasure-hint { display: none; } /* the chests' flavour line goes: the three cards must fit above Push Deeper */
-  .treasure-cards .shrine-card { padding-bottom: 4px; }
-  @media (max-height: 380px) { /* the shortest phones (360): the panel rooms tighter still, so Push Deeper stays on screen */
-    .panel > h1 { font-size: 1.1rem; }
-    .panel > .subtitle { display: none; }
-    .run-hud { font-size: 0.72rem; margin-bottom: 2px; }
-    .shrine-cards { margin: 4px 0 2px; }
-    .shrine-icon { width: 36px; height: 36px; }
-    .shrine-card button { min-height: 36px; padding: 5px 0; }
-    .shrine-card { gap: 3px; padding: 4px 8px; }
-    .shrine-buff { font-size: 0.85rem; min-height: 1.2em; }
-    .shrine-cost { font-size: 0.72rem; }
-    .panel { padding: 4px 14px; }
-    .btn-row { margin-top: 4px; }
-  }
-  /* ---- dialogs and the end screen: shorter, scrollable; one with a text field sits high (the on-screen keyboard takes the lower half) ---- */
-  .update-modal { padding: 14px 22px 12px; max-height: 94svh; overflow-y: auto; }
-  .update-title { font-size: 1.25rem; margin-bottom: 8px; }
-  .update-overlay:has(.name-input, .save-code) { align-items: flex-start; padding-top: 6px; }
-  .death-modal { padding: 14px 22px; }
-  .title-panel { padding: 12px 22px; }
-  .title-panel h1 { font-size: 1.5rem; }
-  /* ---- the play / install gate (ui/phoneGate.js) ---- */
-  .gate-card { text-align: center; max-width: 560px; padding: 14px 24px; }
-  .gate-card h1 { font-size: 1.5rem; margin: 0 0 6px; }
-  .gate-card .btn-row { margin-top: 12px; }
-  .gate-card .btn-row button { min-height: 44px; padding: 0 22px; font-size: 1.05rem; }
-}
-.phone-gate { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center; background: rgba(10, 6, 5, 0.88); padding: 16px; } /* (under the rotate notice: turn the phone first) */
-.gate-card { text-align: center; }
+/* THE PHONE LAYER. main.js puts `phone` on <html> while platform.js PHONE_MQ
+   matches (a sideways screen under 500px tall — the iPhone and Android
+   phone, never a tablet; an iPad mini is 744) and re-renders the scene when
+   it flips. Every rule below is `html.phone` + the DESKTOP rule's own
+   selector (so it always outranks it, whatever the order — a plain .panel
+   lost to `#app > .panel` and the shrine kept its desktop padding, 0.00209;
+   the suite checks the mirroring, tools/layout-check.mjs the geometry).
+   Designed with the owner over mockups (0.00207's thread): combat as ONE
+   line of big cards with the knight's buttons under his card and a
+   one-line log; the Great Hall as three stacked sheets under their tabs
+   (hubScene.js phoneHall); the corner column folded into ☰; the panel
+   rooms and dialogs compacted; a dialog with a text field at the top (the
+   keyboard takes the lower half). Portrait keeps the rotate notice; the
+   play / install gate is ui/phoneGate.js. */
 @keyframes log-flash { 0% { opacity: 0; transform: translateY(6px); } 35% { opacity: 1; } 100% { transform: none; } }
+.phone-gate { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center; background: rgba(10, 6, 5, 0.88); padding: 16px; } /* ui/phoneGate.js mounts it on a phone only (under the rotate notice: turn the phone first) */
+.gate-card { text-align: center; }
 @media (prefers-reduced-motion: reduce) {
   .phone-hub .tabs button, .phone-hub .tab-body > .panel { transition: none; }
   #combat-log.docked > :last-child { animation: none; }
 }
+/* -- html.phone: the desktop rules' twins -- */
+html.phone { --tag-w: 110px; } /* the build tag's width on a phone ("build v0.00NNN" at 0.6rem) */
+/* the card budget on a phone: 72svh tall, or what the width allows (six foes, a narrow phone) — on #app, where battleRoom.js
+   sets --n / --slots too, so the log strip (--knight-w) and the boons' bar read the SAME height the cards get */
+html.phone #app { --app-card-h: min(72svh, calc((96vw - (var(--n, 1) - 1) * 0.8vw) / (var(--ratio-p) + var(--slots, var(--n, 1)) * var(--ratio-e)))); --knight-w: calc(var(--app-card-h) * var(--ratio-p)); }
+/* ---- combat: one line of cards, the knight's buttons hanging under his card, the log a strip beside them ---- */
+html.phone .battle-line {
+  --card-h: var(--app-card-h);
+  --card-font: calc(var(--card-h) * 0.048);
+  padding: 0 calc(1vw + env(safe-area-inset-right, 0px)) calc(52px + env(safe-area-inset-bottom, 0px)) calc(1vw + env(safe-area-inset-left, 0px)); gap: 1vw;
+}
+html.phone .enemy-unit .unit-actions { display: none; }           /* the card is the button (0.155) */
+html.phone .player-unit { position: relative; }
+html.phone .player-unit .unit-actions { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; } /* under the card, outside the row: every card bottom on one line */
+html.phone .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }
+html.phone .hud-chip .hpbar { width: 64px; }
+html.phone .room-title { top: 6px; font-size: 1.05rem; letter-spacing: 0.08em; }
+html.phone #combat-log.docked {                                     /* one line: the latest, flashed in; the strip beside the knight's buttons */
+  left: calc(1vw + env(safe-area-inset-left, 0px) + var(--knight-w) + 10px); right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  transform: none; width: auto; min-width: 0; height: 40px; min-height: 0; box-sizing: border-box;
+  padding: 0 14px; font-size: 14px; border-radius: 6px; background: rgba(10, 6, 5, 0.8);
+  display: flex; flex-direction: column; justify-content: center; overflow: hidden; white-space: nowrap;
+}
+html.phone #combat-log.docked > :not(:last-child) { display: none; }
+html.phone #combat-log.docked > :last-child { animation: log-flash 0.5s ease-out; overflow: hidden; text-overflow: ellipsis; }
+html.phone #app:has(.combat-proceed > button) #combat-log.docked { right: calc(1vw + env(safe-area-inset-right, 0px) + 300px); } /* the room cleared: the log makes way for Push Deeper / Retreat */
+html.phone .resources { bottom: auto; top: 7px; left: calc(12px + var(--tag-w) + 8px); display: flex; gap: 10px; } /* XP and coins up beside the build tag: the knight's buttons own the bottom-left */
+html.phone .resources .res-row { display: flex; gap: 4px; font-size: 0.75rem; } /* (the size sits on the row in the base, so it is set here, not on .resources) */
+html.phone .res-label { width: auto; }
+html.phone #app:has(.battle-line) #buffs { left: calc(1vw + env(safe-area-inset-left, 0px)); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 52px + var(--app-card-h) + 4px); width: var(--knight-w); max-width: none; gap: 4px; flex-wrap: wrap; justify-content: flex-start; } /* the boons as small icons on top of the knight's card (the owner's call) */
+html.phone .buff { width: 30px; }
+html.phone .combat-proceed { right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); flex-direction: row; gap: 8px; }
+html.phone .combat-proceed button { min-height: 40px; padding: 0 14px; font-size: 0.9rem; }
+/* ---- the corner column folded into ☰: a dropdown under the button, closed by a tap elsewhere (cornerToggles.js) ---- */
+html.phone .corner-bar > .menu-toggle { display: block; font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
+html.phone .corner-bar:not(.open) > :not(.menu-toggle) { display: none; }
+html.phone .corner-bar.open { padding: 6px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+html.phone .corner-bar.open .debug-toggle { min-height: 40px; padding: 0 14px; font-size: 0.85rem; opacity: 0.85; }
+html.phone .build-tag { font-size: 0.6rem; width: var(--tag-w); overflow: hidden; white-space: nowrap; } /* a fixed width: XP and coins sit right after it */
+/* ---- the Great Hall (hubScene.js phoneHall): a stats strip, three stacked sheets under their tabs, the way on fixed at the bottom ---- */
+html.phone #app { padding: 20px calc(10px + env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) calc(10px + env(safe-area-inset-left, 0px)); justify-content: flex-start; } /* (the notch, as the base) */ /* the build tag keeps the top-left */
+html.phone .hub-container.phone-hub { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; align-items: stretch; justify-items: stretch; height: 100%; width: 100%; padding: 0; gap: 5px; box-sizing: border-box; }
+html.phone .phone-hub .hub-head { display: flex; align-items: center; gap: 10px; padding: 0 64px 0 2px; }
+html.phone .phone-hub .hub-head h1 { font-size: 1.15rem; margin: 0; white-space: nowrap; letter-spacing: 0.06em; }
+html.phone .phone-hub .hub-stats { display: flex; gap: 6px; flex: 1; margin: 0; }
+html.phone .phone-hub .hub-stats .stat-box { flex: 1; padding: 4px 8px; display: flex; flex-direction: row; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; min-height: 0; }
+html.phone .phone-hub .hub-stats .stat-box .label, html.phone .phone-hub .hub-stats .stat-box .value { align-self: auto; }
+html.phone .phone-hub .hub-stats .stat-box .label { font-size: 0.55rem; }
+html.phone .phone-hub .hub-stats .stat-box .value { font-size: 1rem; line-height: 1; }
+/* the tabs are the sheets' top edges: the same widths, positions and stacking as the sheets below, the active one
+   joined to its sheet (no bottom edge, the sheet's colour, reaching over the sheet's top border) */
+html.phone .phone-hub .tabs { position: relative; height: 36px; z-index: 4; }
+html.phone .phone-hub .tabs button { position: absolute; top: 0; width: 45%; height: 36px; padding: 0 10px; font-size: 0.9rem; letter-spacing: 0.08em;
+  border-radius: 6px 6px 0 0; background: #130e0b; filter: brightness(0.5); transition: filter 0.22s ease, height 0.22s ease; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
+html.phone .phone-hub .tabs button:nth-child(1) { left: 0; z-index: 2; }
+html.phone .phone-hub .tabs button:nth-child(2) { left: 27.5%; z-index: 1; }
+html.phone .phone-hub .tabs button:nth-child(3) { left: 55%; z-index: 0; }
+html.phone .phone-hub .tabs.pick-3 button:nth-child(1) { z-index: 0; }
+html.phone .phone-hub .tabs.pick-3 button:nth-child(2) { z-index: 1; }
+html.phone .phone-hub .tabs button.on { z-index: 3; filter: none; height: 42px; border-color: rgba(201,162,39,0.5); border-bottom: none; color: #fff4d0; box-shadow: 0 -6px 16px rgba(0,0,0,0.7); }
+html.phone .phone-hub .tabs button.spend::after { content: ''; display: inline-block; vertical-align: middle; margin-left: 8px; width: 7px; height: 7px; border-radius: 50%; background: #6fe07a; box-shadow: 0 0 8px rgba(111,224,122,0.8); } /* something here can be bought */
+/* the three sheets: each 45% wide at its tab's position (left / middle / right), the picked one lifted to the front with a
+   deep shadow, the others darkened a notch behind it (opaque: the sheets behind must not show through); a tap on a sheet's edge lifts it */
+html.phone .phone-hub .tab-body { position: relative; min-height: 0; }
+html.phone .phone-hub .tab-body > .panel { position: absolute; top: 0; bottom: 0; width: 45%; padding: 4px 8px; max-height: none; max-width: none; margin: 0; box-sizing: border-box; overflow-y: auto; background: #130e0b;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease; transform: translateY(5px) scale(0.985); filter: brightness(0.5); box-shadow: 0 4px 14px rgba(0,0,0,0.6); cursor: pointer; }
+html.phone .phone-hub .tab-body > .panel:nth-child(1) { left: 0; z-index: 2; }
+html.phone .phone-hub .tab-body > .panel:nth-child(2) { left: 27.5%; z-index: 1; }
+html.phone .phone-hub .tab-body > .panel:nth-child(3) { left: 55%; z-index: 0; }
+html.phone .phone-hub .tab-body.pick-3 > .panel:nth-child(1) { z-index: 0; }
+html.phone .phone-hub .tab-body.pick-3 > .panel:nth-child(2) { z-index: 1; }
+html.phone .phone-hub .tab-body > .panel.on { z-index: 3; transform: none; filter: none; cursor: auto; border-color: rgba(201,162,39,0.5); border-top-left-radius: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.9), 0 0 22px rgba(0,0,0,0.8); }
+html.phone .phone-hub .tab-body > .panel:nth-child(3).on { border-top-left-radius: 6px; border-top-right-radius: 0; }
+html.phone .phone-hub .tab-body > .panel:not(.on) > * { pointer-events: none; } /* a tap on a sheet behind lifts it, nothing more */
+html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle { display: none; }
+html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
+html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
+html.phone .phone-hub .equip-item { display: flex; gap: 6px; align-items: baseline; } /* a slot's name and bonus on one line */
+html.phone .phone-hub .equip-desc { font-size: 0.7rem; }
+html.phone .phone-hub .hub-foot { display: flex; align-items: center; gap: 10px; }
+html.phone .phone-hub .hub-foot .records-line { flex: 1; margin: 0; font-size: 0.72rem; text-align: left; letter-spacing: 0.1em; }
+html.phone .phone-hub .hub-foot button { min-height: 42px; padding: 0 16px; font-size: 1rem; }
+/* ---- the panel rooms (shrine, chests): the whole screen, three short cards ---- */
+html.phone #app > .panel { max-height: 100svh; padding: 6px 14px; max-width: 98vw; }
+  html.phone #app > .panel #combat-log { height: 56px; margin: 4px 0; font-size: 0.8rem; } /* the panel rooms' own log */
+html.phone #app > .panel h1 { font-size: 1.35rem; margin: 0 0 2px; }
+html.phone #app > .panel > .subtitle { font-size: 0.8rem; margin: 2px 0; }
+html.phone #app > .panel .run-hud { gap: 12px; margin-bottom: 4px; font-size: 0.8rem; }
+html.phone .shrine-cards { gap: 10px; margin: 6px 0 4px; }
+html.phone .shrine-card { width: 180px; min-height: 0; padding: 6px 10px 6px; gap: 4px; }
+html.phone .shrine-buff { font-size: 0.9rem; min-height: 1.3em; }
+html.phone .shrine-icon { width: 46px; height: 46px; border-radius: 9px; font-size: 1.2rem; }
+html.phone .shrine-cost-label { display: inline; margin-right: 4px; }
+html.phone .shrine-card button { padding: 8px 0; font-size: 0.9rem; min-height: 40px; }
+html.phone .shrine-cost { font-size: 0.78rem; }
+html.phone .treasure-hint { display: none; } /* the chests' flavour line goes: the three cards must fit above Push Deeper */
+html.phone .treasure-cards .shrine-card { padding-bottom: 4px; }
+@media (max-height: 380px) { /* the shortest phones (360): the panel rooms tighter still, so Push Deeper stays on screen */
+  html.phone #app > .panel h1 { font-size: 1.1rem; }
+  html.phone #app > .panel > .subtitle { display: none; }
+  html.phone #app > .panel .run-hud { font-size: 0.72rem; margin-bottom: 2px; }
+  html.phone .shrine-cards { margin: 4px 0 2px; }
+  html.phone .shrine-icon { width: 36px; height: 36px; }
+  html.phone .shrine-card button { min-height: 36px; padding: 5px 0; }
+  html.phone .shrine-card { gap: 3px; padding: 4px 8px; }
+  html.phone .shrine-buff { font-size: 0.85rem; min-height: 1.2em; }
+  html.phone .shrine-cost { font-size: 0.72rem; }
+  html.phone #app > .panel { padding: 4px 14px; }
+  html.phone #app > .panel .btn-row { margin-top: 4px; }
+}
+/* ---- dialogs and the end screen: shorter, scrollable; one with a text field sits high (the on-screen keyboard takes the lower half) ---- */
+html.phone .update-modal { padding: 14px 22px 12px; max-height: 94svh; overflow-y: auto; }
+html.phone .update-title { font-size: 1.25rem; margin-bottom: 8px; }
+html.phone .update-overlay:has(.name-input, html.phone .save-code) { align-items: flex-start; padding-top: 6px; }
+html.phone .death-modal { padding: 14px 22px; }
+html.phone #app > .panel.title-panel { padding: 12px 22px; }
+html.phone #app > .panel.title-panel h1 { font-size: 1.5rem; }
+/* ---- the play / install gate (ui/phoneGate.js) ---- */
+html.phone .gate-card { max-width: 560px; padding: 14px 24px; }
+html.phone .gate-card h1 { font-size: 1.5rem; margin: 0 0 6px; }
+html.phone .gate-card .btn-row { margin-top: 12px; }
+html.phone .gate-card .btn-row button { min-height: 44px; padding: 0 22px; font-size: 1.05rem; }

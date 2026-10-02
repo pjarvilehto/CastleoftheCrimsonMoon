@@ -61,13 +61,15 @@ export async function decode(url) {
   return ctx.decodeAudioData(raw.slice(0));
 }
 
-// Run fn on the first user gesture (pointerdown or keydown), once.
+// Run fn on the first user gesture, once. 0.00209: pointerup and touchend
+// too — a touch counts as activation at the tap's END (pointerdown does for
+// a mouse only), so on a phone the first tap used to leave the context
+// suspended until the second.
+export const GESTURE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'keydown'];
 export function onFirstGesture(fn) {
   const once = () => {
-    globalThis.removeEventListener?.('pointerdown', once);
-    globalThis.removeEventListener?.('keydown', once);
+    for (const t of GESTURE_EVENTS) globalThis.removeEventListener?.(t, once);
     fn();
   };
-  globalThis.addEventListener?.('pointerdown', once);
-  globalThis.addEventListener?.('keydown', once);
+  for (const t of GESTURE_EVENTS) globalThis.addEventListener?.(t, once);
 }

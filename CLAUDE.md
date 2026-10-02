@@ -135,21 +135,24 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    push (mid-run it waits for the run's end).
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content, new filename.
-8. **Two layouts, one code path (0.00208).** The desktop (tablets too) and
-   the phone share every scene, module and string; the phone differs by
-   `styles.css` section 16 (one media block under `platform.js PHONE_MQ`,
-   overriding the desktop rules screen by screen) and by one assembly
-   (`hubScene.js phoneHall`) plus one wording (`hubText.js` `short`).
-   A change to combat's chrome, the Great Hall, a panel room, a dialog or
-   the corner column is a change to BOTH: find the rule's phone twin in
-   section 16 (the suite fails a phone rule left behind by a rename and a
-   desktop rule removed without its twin), keep new hub rows in the long
-   AND short wording, then run `node tools/layout-check.mjs` — the real
-   game headless at four screens (desktop, tablet, phone, the smallest
-   phone), asserting what each layout promises, screenshots to look at.
-   Never a phone-only feature: a phone wants something, the desktop gets
-   it too (the ☰ column folds, the Attack buttons hide — both are CSS over
-   the one DOM).
+8. **Two layouts, one code path (0.00208 / 0.00209).** The desktop (tablets
+   too) and the phone share every scene, module and string. The phone
+   differs in three places, and only there: `styles.css` section 16 — a set
+   of `html.phone` rules, each `html.phone` + the DESKTOP rule's own
+   selector (so it always outranks it; `main.js watchPhoneLayout` puts the
+   class on `<html>` from the one query, `platform.js PHONE_MQ`, and
+   re-lays the scene out when it flips); `hubScene.js phoneHall`, a second
+   assembly of the SAME table of sections the desktop's columns come from;
+   and `hubText.js`'s `short` wording beside each long line. A change to
+   combat's chrome, the Great Hall, a panel room, a dialog or the corner
+   column is a change to BOTH: find the rule's twin in section 16 (the
+   suite fails a rule without the prefix, a class nothing produces, and a
+   desktop rule removed without its twin), a new hub row gets its long and
+   short line, a new section is a row in the hall's table — then
+   `node tools/layout-check.mjs`: the real game headless at four screens
+   (desktop, tablet, phone, the smallest phone), what each layout promises
+   asserted, screenshots to look at. The labs never set `html.phone`, so
+   the layer never reaches them.
 
 ## Working with the owner
 
@@ -169,7 +172,7 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
 
 ## Architecture in one paragraph
 
-`src/main.js` boots: mobile check → load all data JSONs into `DATA` →
+`src/main.js` boots: `html.phone` from the query, the rotate notice → load all data JSONs into `DATA` →
 preload the title + Great Hall art → title scene (the rest of the art loads
 behind it). `core/scene.js` is the scene manager (`show()`, fades,
 background crossfader) and router (`go('hub')`; scenes register in
@@ -280,7 +283,9 @@ a copy for experiments: keep it in step when a look changes.
 `backgrounds.json parallax`, per-file `overrides`, `enabled: false` = kill
 switch): the art on a depth-displaced mesh with a slowly swaying camera;
 flat CSS fallback with no WebGL, software GL, context loss or reduced
-motion. Frame rate: at most `maxPixels` (2.1M), redrawn at `maxFps` (30)
+motion. Frame rate: at most `maxPixels` (2.1M) and `maxDpr` (2 — a DPR-3
+phone drew 1080p's pixels at 60 fps and never stepped down, 0.00209),
+redrawn at `maxFps` (30)
 when nothing moves, and all session a device under `minFps` (22) steps
 down — resolution x0.8, x0.64, no fog, flat (`core/bg3dQuality.js`;
 `parallax.quality` = the window, the pause gap and how many slow
@@ -373,7 +378,10 @@ sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
 and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
-sound is one entry. Downloads go through `audioCore.fetchBytes`'s pool
+sound is one entry. The first gesture (`audioCore.onFirstGesture`, the
+mixer's resume) counts pointerup and touchend too — a touch activates at
+the tap's END, pointerdown counts for a mouse only (0.00209: a phone's
+first tap used to leave the context suspended). Downloads go through `audioCore.fetchBytes`'s pool
 (0.00197: two at a time, a sound about to play first — the beds, every
 narrator take and the clip set used to start together at the title,
 against the Descend essentials). Muting the music stops the bed and
@@ -459,7 +467,8 @@ may hear the old one for ~4 hours.
   fully faded in: bg3d's `fadeMs`, or the CSS layer's own fade, after the
   image loads; 4s at most) before the windows return.
 - Combat layout (styles.css) is fluid (vh/vw) on purpose — no fixed px
-  there; panel scenes stay in px. Card size is `--card-h` (min of 50vh and
+  there (the phone layer's tap-sized strips are the designed exception);
+  panel scenes stay in px. Card size is `--card-h` (min of 50vh and
   what fits `--n` enemies); card internals are `em`. Card frame art on
   the card's `.card-frame` layer (opacity 0.85; 0.195: a real element,
   the shader light inside it); portraits overflow the frame;
@@ -480,43 +489,23 @@ may hear the old one for ~4 hours.
   Safari has no page fullscreen and ignores the orientation; the
   FULLSCREEN toggle also speaks Safari's prefixed API). `?desktop` skips
   the device check (testers, the headless checks).
-  **The phone layer (0.00208, designed with the owner over mockups):**
-  `styles.css` section 16 under `PHONE_MQ` (`(max-height: 500px) and
-  (orientation: landscape)` — an iPad mini is 744 sideways; a smoke check
-  keeps the stylesheet and `platform.js` on the same query). Combat: ONE
-  line of cards 72svh tall (the knight's card and the foes' share a
-  baseline), Heavy Attack / Drink Potion hanging under the knight's card
-  (`.player-unit .unit-actions` absolute), the foes' Attack buttons gone
-  (the card is the button, 0.155), the log a one-line strip beside the
-  buttons (`#combat-log.docked`: the last line only, flashed in by
-  `log-flash`; it makes way for Push Deeper / Retreat through `:has()`),
-  XP and coins up by the build tag, the boons as small icons on top of
-  the knight's card (`#buffs`). The corner column folds into ☰
-  (`cornerToggles.js cornerBar`'s `.menu-toggle`, shown only by the phone
-  layer; `.corner-bar.open` is the dropdown, a tap elsewhere closes it).
-  The Great Hall (`hubScene.js phoneHall`): a strip of stat chips beside
-  the title, TRAIN / ALCHEMY / EQUIPMENT as three stacked sheets under
-  their tabs — each 45% wide at its tab's position, the picked one
-  lifted to the front (opaque, a deep shadow), the others dimmed behind,
-  the tabs stacked the same way and the active one joined to its sheet;
-  a tap on a sheet's edge or its tab lifts it (a sheet behind takes no
-  other taps); a green dot on a tab = something there can be bought; the
-  pick lasts the session — and the records line with Descend / Back
-  fixed along the bottom. The rows carry the phone's short wording
-  (`hubText.js` `short`: "+3 dmg / lv", "potion not spent: 0% (+8%)";
-  the suite checks the numbers come from the data). Panel rooms: compact
-  cards, the chests' flavour line hidden, a tighter step under 380px (the
-  360-tall Androids). Dialogs: compact, scrollable; one with a text field
-  (`.name-input`, `.save-code`) sits at the top — the on-screen keyboard
-  takes the lower half. **The gate (`ui/phoneGate.js`):** a phone in a
-  browser tab gets one card before the title — PLAY (requests page
-  fullscreen and the landscape lock where the browser allows: Android),
-  INSTALL when the browser offered (`beforeinstallprompt`, caught at
-  module load), or the iPhone's way (Share → Add to Home Screen, or aA →
-  Hide Toolbar; Safari has neither API); a home-screen app
-  (`standaloneApp`) gets no card; leaving fullscreen on Android brings it
-  back (`regateOnExit`). iOS: the home-screen app has its OWN storage —
-  a save made in Safari is not there (the title's save code carries it).
+  **The phone layer (0.00208; rule 8 says how it is kept):** `styles.css`
+  section 16 says what it does, screen by screen (combat as one line of
+  72svh cards with the knight's buttons under his card and a one-line
+  log; the Great Hall as three stacked sheets under their tabs, 45% wide,
+  the picked one lifted, a green dot per sheet by what IT sells —
+  `canSpendXp` / `canSpendAlchemy` / `canForgeAny`; the corner column
+  folded behind ☰; the panel rooms and dialogs compacted, a text field's
+  dialog at the top for the keyboard; `--n` / `--slots` on `#app` too, so
+  the log strip and the boons' bar read the cards' real height).
+  `ui/phoneGate.js` is the PLAY / INSTALL card before the title (a
+  dialog; its tap is the audio gesture and the narrator's welcome; Android
+  goes fullscreen and locks landscape, iPhone gets the Share → Add to Home
+  Screen line; a home-screen app skips it; leaving fullscreen on Android
+  brings it back). iOS: the home-screen app has its OWN storage — a save
+  made in Safari is not there (the title's save code carries it; Export /
+  Import are dialogs since 0.00209). Hover-only text (a boon's full line,
+  the elite star) has no touch path yet (backlog).
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep
@@ -610,8 +599,8 @@ Energy Saver), not a slow machine.
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
   combat, shrines, progression, content, backgrounds, audio, sim, history,
-  narration, art, cards, layout — the last ties the phone layer to the
-  code and the desktop rules, rule 8),
+  narration, art, cards, layout — the last checks the phone layer's
+  `html.phone` twins against the code and the desktop rules, rule 8),
   each starting from `fresh()`; a test file imports only the harness
   names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
@@ -715,11 +704,21 @@ sometimes — fetch all branches to find it.
   2.3 to compensate in part; the simulator's baseline moved with it (run
   depth 16.0 → 15.8, coins level, the room-24 boss 30% → ~10% clears — the
   wall the backlog names got taller).
-- 0.00205–0.00208 (this thread): tablets, then phones (the phone layer,
+- 0.00205–0.00209 (this thread): tablets, then phones (the phone layer,
   the stacked Great Hall, the gate), the Retreat advice and the Attack
-  breathing (0.00206), the hub's height budget (0.00207). The phone
-  mockups' prototype lived in the session's scratchpad; the shipped CSS
-  is the record.
+  breathing (0.00206), the hub's height budget (0.00207). 0.00209 was
+  the review after the phone work (three audits): the phone layer became
+  `html.phone` twins (a plain `.panel` lost to `#app > .panel` and the
+  shrine kept its desktop padding on phones), the hall's two assemblies
+  one table, `tools/layout-check.mjs` and the `layout` test area; fixed:
+  the boot with no catch, the windows not waiting for the CSS crossfade
+  once the renderer was gone, the audio gesture on touch, the DPR-3
+  phone drawing 1080p's pixels, a bed starting behind the muted bus, the
+  preload not waiting for decode, a throwing effect soft-locking a room,
+  the gate as a dialog with INSTALL rebuilt per render, the Forge's dot
+  on Alchemy, the title's save boxes under a phone's keyboard, ship.mjs
+  renumbering main's lines and crashing on a refused push, CI's bump
+  guard reading one commit, number copies in the renderer and synth.
 - Left as found: `icon.png` (374KB) at the root referenced by nothing;
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
@@ -752,6 +751,10 @@ sometimes — fetch all branches to find it.
   (off until the owner opts in) should exclude `assets/chars/candidates`,
   `assets/style`, `tools`, `docs`, `collector` · font as WOFF2 (212KB
   TTF) · the Particle Lab can go once nobody is experimenting with looks.
+- Phone: a tap-to-show for hover-only text (a boon's full line, the elite
+  star, the summon note) · the labs under a short window get no phone
+  layer (by design) but the Card Lab's side panel and a 96vw budget
+  disagree · a real-device pass (the owner's) is still owed.
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.
 

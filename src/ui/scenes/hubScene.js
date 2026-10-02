@@ -16,7 +16,7 @@ import {
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
-import { statDesc, alchemyDesc, potionDesc, satchelDesc } from '../hubText.js';
+import { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } from '../hubText.js';
 import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
@@ -29,13 +29,18 @@ export function canSpendXp(p) {
   return Object.keys(STAT_DEFS).some((k) => p.xp >= statCost(p.stats[k]).xp);
 }
 
-export function canSpendCoins(p) {
+// Coins buy in two places: the alchemy panel (potions, the satchel, the
+// tracks) and the Forge (equipment). The phone's tabs dot each by its own
+// (0.00209: Alchemy used to carry the Forge's dot).
+export function canSpendAlchemy(p) {
   if (!satchelFull(p) && p.coins >= potionCost()) return true;
   if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
-  if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
-  return equippedItemIds(p.equipment)
-    .some((id) => forgeable(id) && !forgeMaxed(id) && p.coins >= forgeCost(id));
+  return Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t));
 }
+export function canForgeAny(p) {
+  return equippedItemIds(p.equipment).some((id) => forgeable(id) && !forgeMaxed(id) && p.coins >= forgeCost(id));
+}
+export const canSpendCoins = (p) => canSpendAlchemy(p) || canForgeAny(p);
 
 // Buy Potion gets the pulsing 'active' glow below potions.lowShare of the satchel.
 export function potionsLow(p) {
@@ -58,6 +63,7 @@ export function hubScene(opts = {}) {
       const ask = () => { if (currentScene() === scene && !leaving && maybeAskBenchmark() === 'wait') setTimeout(ask, 1000); };
       setTimeout(ask, 1200);
     },
+    relayout(root) { render(root); }, // the phone query flipped (main.js watchPhoneLayout): the other assembly
   };
   return scene;
 
@@ -211,33 +217,32 @@ export function hubScene(opts = {}) {
 
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
+    // The hall's three sections, ONE table for both assemblies (0.00209): the
+    // desktop lays them out as three columns, the phone as three stacked
+    // sheets under tabs (phoneHall). A new section is a row here and nothing
+    // else. spend: something in it can be bought now (the phone's tab dot).
+    const hall = [
+      { tab: 'Train', title: 'THE GREAT HALL', subtitle: 'Your war camp at the castle gates', body: trainSection, spend: canSpendXp(p) },
+      { tab: 'Alchemy', body: alchemySection, spend: canSpendAlchemy(p) },
+      { tab: 'Equipment', title: 'EQUIPMENT', subtitle: 'What you carry into the dark — the Forge enhances it for coins', body: equipSection, spend: canForgeAny(p) },
+    ];
+    const records = el('div', { class: 'subtitle records-line' }, recordsLine(p));
+    const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
-    if (phone) { root.append(phoneHall({ p, statsRow, trainSection, alchemySection, equipSection, descendBtn })); return; }
+    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); return; }
+    const [train, alchemy, equipment] = hall;
     root.append(
       el('div', { class: 'hub-container' },
         el('div', { class: 'hub-wrap' },
           // Left: the Great Hall — resources and disciplines.
-          el('div', { class: 'panel' },
-            el('h1', {}, 'THE GREAT HALL'),
-            el('div', { class: 'subtitle' }, 'Your war camp at the castle gates'),
-            statsRow,
-            trainSection),
+          el('div', { class: 'panel' }, el('h1', {}, train.title), el('div', { class: 'subtitle' }, train.subtitle), statsRow, train.body),
           // Middle: alchemy (coins) with lifetime records beneath.
           el('div', { class: 'hub-col' },
-            el('div', { class: 'panel' }, alchemySection),
-            el('div', { class: 'panel' },
-              el('h2', {}, 'RECORDS'),
-              el('div', { class: 'subtitle records-line' },
-                `${p.records.runs} runs, ${p.records.kills} kills, deepest room ${p.records.bestRoom}.`))),
+            el('div', { class: 'panel' }, alchemy.body),
+            el('div', { class: 'panel' }, el('h2', {}, 'RECORDS'), records)),
           // Right: equipment slots with per-item Forge enhancement.
-          el('div', { class: 'panel' },
-            el('h1', {}, 'EQUIPMENT'),
-            el('div', { class: 'subtitle' }, 'What you carry into the dark — the Forge enhances it for coins'),
-            equipSection)),
-        el('div', { class: 'btn-row' },
-          descendBtn,
-          el('button', { key: 'b', onclick: () => go('title') }, 'Back')))
-    );
+          el('div', { class: 'panel' }, el('h1', {}, equipment.title), el('div', { class: 'subtitle' }, equipment.subtitle), equipment.body)),
+        el('div', { class: 'btn-row' }, ...wayOn)));
   }
 }
 
@@ -250,27 +255,31 @@ export function hubScene(opts = {}) {
 // something there can be bought (the desktop shows all three panels at
 // once; a phone shows one). The pick lasts the session, so a purchase's
 // re-render stays on the same sheet.
-let phonePick = 0;
-function phoneHall({ p, statsRow, trainSection, alchemySection, equipSection, descendBtn }) {
-  const sheets = [['Train', trainSection, canSpendXp(p)], ['Alchemy', alchemySection, canSpendCoins(p)], ['Equipment', equipSection, false]];
+let phonePick = 0, phoneScroll = 0; // the picked sheet and how far it was scrolled (a purchase re-renders: the sheet stays put)
+function phoneHall(hall, statsRow, records, wayOn) {
   const tabs = el('div', { class: 'tabs' });
   const body = el('div', { class: 'tab-body' });
   const pick = (i) => {
+    if (phonePick !== i) phoneScroll = 0;
     phonePick = i;
     [...tabs.children].forEach((b, j) => b.classList.toggle('on', j === i));
     [...body.children].forEach((q, j) => q.classList.toggle('on', j === i));
     tabs.className = `tabs pick-${i + 1}`; body.className = `tab-body pick-${i + 1}`; // the stacking order (styles.css)
   };
-  sheets.forEach(([name, section, spend], i) => {
-    tabs.append(el('button', { class: spend ? 'spend' : '', onclick: () => pick(i) }, name));
-    body.append(el('div', { class: 'panel', onclick: () => { if (phonePick !== i) pick(i); } }, section)); // (a sheet behind: the tap only lifts it — its buttons take no taps, styles.css)
+  hall.forEach(({ tab, body: section, spend }, i) => {
+    tabs.append(el('button', { class: spend ? 'spend' : '', onclick: () => pick(i) }, tab));
+    const sheet = el('div', { class: 'panel', onclick: () => { if (phonePick !== i) pick(i); } }, section); // (a sheet behind: the tap only lifts it — its buttons take no taps, styles.css)
+    sheet.addEventListener?.('scroll', () => { if (phonePick === i) phoneScroll = sheet.scrollTop; });
+    body.append(sheet);
   });
-  pick(Math.min(phonePick, sheets.length - 1));
+  pick(Math.min(phonePick, hall.length - 1));
   return el('div', { class: 'hub-container phone-hub' },
-    el('div', { class: 'hub-head' }, el('h1', {}, 'THE GREAT HALL'), statsRow),
+    el('div', { class: 'hub-head' }, el('h1', {}, hall[0].title), statsRow),
     tabs, body,
-    el('div', { class: 'hub-foot' },
-      el('div', { class: 'subtitle records-line' }, `${p.records.runs} runs, ${p.records.kills} kills, deepest room ${p.records.bestRoom}.`),
-      descendBtn,
-      el('button', { key: 'b', onclick: () => go('title') }, 'Back')));
+    el('div', { class: 'hub-foot' }, records, ...wayOn));
+}
+// after the phone hall is in the DOM: the picked sheet back where it was scrolled
+function settleSheet(root) {
+  const sheet = root.querySelector?.('.phone-hub .tab-body > .panel.on');
+  if (sheet && phoneScroll) sheet.scrollTop = phoneScroll;
 }

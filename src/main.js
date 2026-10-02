@@ -4,7 +4,7 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { onBackgroundChange, onTransition, go } from './core/scene.js';
+import { onBackgroundChange, onTransition, go, currentScene } from './core/scene.js';
 import { el } from './core/dom.js';
 import { initHotkeys } from './core/hotkeys.js';
 import { initBg3d, showBackground3d, bgPush } from './core/bg3d.js';
@@ -21,8 +21,10 @@ import { initNarrator, isNarratorMuted, toggleNarrator } from './audio/narrator.
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
-import { isPhone } from './shared/platform.js';
+import { isPhone, PHONE_MQ, fullscreenOn, enterFullscreen, exitFullscreen } from './shared/platform.js';
 import { phoneGate, regateOnExit } from './ui/phoneGate.js';
+import { ensureCtx } from './audio/audioCore.js';
+import { armOnGesture } from './audio/narrator.js';
 
 async function boot() {
   // The display font is a lazily-fetched @font-face (font-display: swap) —
@@ -36,6 +38,7 @@ async function boot() {
   // fade out from yet, and #app starts hidden in index.html.
   const app = document.getElementById('app');
   app.classList.remove('hidden');
+  watchPhoneLayout(app); // <html class="phone"> while platform.js PHONE_MQ matches: styles.css section 16 (0.00209)
   // Handhelds play sideways (0.00205 tablets, 0.00208 phones): a device held
   // upright gets styles.css .rotate-notice over everything.
   document.body.append(el('div', { class: 'rotate-notice' }, el('div', { class: 'panel' }, el('h1', {}, 'Turn your device sideways'), el('p', { class: 'mobile-sub' }, 'The castle is played in landscape.'))));
@@ -66,7 +69,7 @@ async function boot() {
   document.body.append(tag, cornerBar([
     debugMode && invulnerableToggle(),
     onOffToggle('MUSIC', { cls: 'music-toggle', get: () => !isMuted(), flip: () => !toggleMuted() }),
-    fullscreenToggle(),
+    !isPhone() && fullscreenToggle(), // (a phone: the gate is the way to the full screen; iPhone has none, and on Android OFF would only bring the gate back)
     onOffToggle('SOUND', { cls: 'sfx-toggle', get: () => !sfxMuted(), flip: () => !toggleSfx() }),
     onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.161)
     volumeToggle(),
@@ -90,7 +93,11 @@ async function boot() {
   initUpdateCheck(); // "Build 0.0NN available" prompt (0.094)
   // A phone in a browser tab (0.00208): PLAY (full screen and landscape where
   // the browser allows), INSTALL where it offers, before the title.
-  if (isPhone()) { await phoneGate(); regateOnExit(); }
+  if (isPhone()) {
+    armOnGesture('title_welcome'); // the gate's tap is the session's first gesture (the title arms it too, for everyone else)
+    await phoneGate({ onPlay: () => ensureCtx()?.resume?.().catch?.(() => {}) }); // a touch activates on the tap's end: resume the context in the gesture itself
+    regateOnExit();
+  }
   go('title');
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
   shareStats(getProfile()); // play stats: history from before this session too (0.102)
@@ -101,13 +108,10 @@ async function boot() {
 function fullscreenToggle() {
   const btn = onOffToggle('FULLSCREEN', {
     cls: 'fs-toggle',
-    get: () => !!(document.fullscreenElement || document.webkitFullscreenElement),
-    flip: () => {
-      // (0.00205: Safari's prefixed names too — iPad Safari has them, iPhone Safari has no page fullscreen at all; there the home-screen app is fullscreen, manifest.webmanifest)
-      const d = document, root = d.documentElement;
-      const req = (d.fullscreenElement || d.webkitFullscreenElement) ? (d.exitFullscreen ?? d.webkitExitFullscreen)?.call(d) : (root.requestFullscreen ?? root.webkitRequestFullscreen)?.call(root);
-      Promise.resolve(req).catch(() => { /* denied/unavailable (e.g. iframe) */ }).finally(() => btn.sync());
-      return !!(d.fullscreenElement || d.webkitFullscreenElement);
+    get: () => fullscreenOn(),
+    flip: () => { // (platform.js: Safari's prefixed names too — iPad Safari has them)
+      (fullscreenOn() ? exitFullscreen() : enterFullscreen()).finally(() => btn.sync());
+      return fullscreenOn();
     },
   });
   document.addEventListener?.('fullscreenchange', () => btn.sync());
@@ -115,4 +119,22 @@ function fullscreenToggle() {
   return btn;
 }
 
-boot();
+// The phone layout is a class on <html> set from the one query (platform.js
+// PHONE_MQ), so the stylesheet needs no media query of its own and a scene
+// can re-lay itself out when the query flips (a desktop window dragged
+// across 500px tall, a phone turned during a transition): scenes may offer
+// relayout(root) — the Great Hall does, its phone assembly is a different DOM.
+function watchPhoneLayout(app) {
+  const mq = globalThis.matchMedia?.(PHONE_MQ);
+  if (!mq) return;
+  const apply = () => document.documentElement.classList.toggle('phone', mq.matches);
+  apply();
+  mq.addEventListener?.('change', () => { apply(); currentScene()?.relayout?.(app); });
+}
+
+boot().catch((e) => { // a failed data or art fetch: say so, and a tap reloads (the home-screen app has no reload button)
+  console.error(e);
+  const pct = document.querySelector('.loader-pct');
+  if (pct) pct.textContent = 'The castle could not load — tap to try again.';
+  document.addEventListener?.('click', () => globalThis.location?.reload(), { once: true });
+});

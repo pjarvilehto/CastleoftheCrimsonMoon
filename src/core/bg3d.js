@@ -158,8 +158,9 @@ export function initBg3d({ allowSoftware = false } = {}) {
 // most recent request becomes visible. First one appears instantly.
 // Resolves once the new layer has fully faded in (0.154: the windows wait
 // for it, scene.js transitionTo).
-export async function showBackground3d(file) {
-  if (!gl) return;
+// null when the renderer is off (shut down, never started): scene.js then waits for its CSS layer instead (0.00209)
+export function showBackground3d(file) { return gl ? show3d(file) : null; }
+async function show3d(file) {
   wanted = file;
   let layer;
   try { layer = await loadLayer(file); } catch { return; } // flat CSS keeps showing
@@ -176,7 +177,8 @@ async function loadLayer(file) {
   const depth = dimg ? readDepth(dimg) : null;
   const tune = tuning(file);
   // the mist takes the colour of the scene's own distance (0.099)
-  const mist = tune.fogColor ?? fogColor(smallPixels(img), 64, 36, (u, v) => (depth ? sampleDepth(depth, u, v) : 0.5));
+  const small = smallPixels(img);
+  const mist = tune.fogColor ?? fogColor(small.data, small.w, small.h, (u, v) => (depth ? sampleDepth(depth, u, v) : tune.pivot)); // (no map: the pivot depth, as fillDepth)
   const tex = makeTexture(gl, img);
   const layer = { file, tex, depth, mist, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune,
     depthTex: depthTexture(gl, dimg, tune.pivot), puffs: makePuffs(seedOf(file), tune.puffs) };
@@ -328,7 +330,7 @@ function resize() {
   // Backing store: device pixels, but at most maxPixels (the art is 2048
   // wide), times the quality ladder's scale (core/bg3dQuality.js).
   [canvas.width, canvas.height] = backingSize(canvas.clientWidth, canvas.clientHeight,
-    globalThis.devicePixelRatio, cfg.maxPixels, LADDER[level].scale);
+    Math.min(globalThis.devicePixelRatio || 1, cfg.maxDpr), cfg.maxPixels, LADDER[level].scale); // (maxDpr, 0.00209: a DPR-3 phone drew 1080p's pixels at 60 fps and never stepped down)
   gl.viewport(0, 0, canvas.width, canvas.height);
   refit();
   layers.forEach(fillDepth);

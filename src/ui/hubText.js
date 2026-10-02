@@ -43,7 +43,7 @@ export function efficiencyDesc(short = false) {
 export function alchemyDesc(track, short = false) {
   const t = DATA.difficulty.alchemyTracks;
   if (track === 'potency') return short ? `+${t.potency.healPerLevel} heal / lv (now ${potionHealAmount()})` : `+${t.potency.healPerLevel} potion healing per level (now ${potionHealAmount()} HP)`;
-  if (track === 'infusion') return short ? `potion armor +${infusionArmor()} (+${t.infusion.armorPerLevel} / lv)` : `potions grant armor until the room ends (now +${infusionArmor()})`;
+  if (track === 'infusion') return short ? `potion armor +${infusionArmor()} (+${t.infusion.armorPerLevel} / lv)` : `potions grant armor until the room ends (now +${infusionArmor()}, +${t.infusion.armorPerLevel} per level)`;
   return efficiencyDesc(short);
 }
 export function potionDesc(p, short = false) {
@@ -54,3 +54,7 @@ export function satchelDesc(p, maxed, short = false) {
   if (maxed) return short ? `carries ${p.potionCap} (max)` : `carries ${p.potionCap} potions (max)`;
   return short ? `+1 capacity (now ${p.potionCap})` : `+1 potion capacity (now ${p.potionCap})`;
 }
+
+// The lifetime records, one line (the hub's RECORDS panel, the phone hall's
+// foot, the title's welcome — one copy, 0.00209).
+export const recordsLine = (p) => `${p.records.runs} runs, ${p.records.kills} kills, deepest room ${p.records.bestRoom}.`;

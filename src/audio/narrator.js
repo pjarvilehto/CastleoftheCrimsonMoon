@@ -88,7 +88,6 @@ export function narrate(id, { delayMs = 0 } = {}) {
     busyUntil = at + buffer.duration + N.gapS;
     duckMusic(buffer.duration + N.gapS, at);
   }).catch(() => { /* audio must never break gameplay */ });
-  queue = queue.catch(() => {});
   return true;
 }
 

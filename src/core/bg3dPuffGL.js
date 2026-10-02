@@ -86,7 +86,7 @@ function texture(gl, setup) {
 
 // A layer's depth map on the GPU (the puffs' soft occlusion). No map: one
 // texel at the pivot depth (a flat scene).
-export function depthTexture(gl, img, pivot = 0.5) {
+export function depthTexture(gl, img, pivot) { // (the layer's tune.pivot; no default copy, rule 2)
   return texture(gl, () => {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     if (img) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);

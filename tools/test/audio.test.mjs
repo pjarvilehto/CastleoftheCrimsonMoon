@@ -60,7 +60,8 @@ fresh();
 {
   const mainSrc = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
   ok('fullscreen toggle requests/exits fullscreen, label synced to fullscreenchange', mainSrc.includes("onOffToggle('FULLSCREEN'")
-    && mainSrc.includes('requestFullscreen') && mainSrc.includes('exitFullscreen') && mainSrc.includes("'fullscreenchange', () => btn.sync()"));
+    && mainSrc.includes('enterFullscreen()') && mainSrc.includes('exitFullscreen()') && mainSrc.includes("'fullscreenchange', () => btn.sync()")
+    && readFileSync(new URL('../../src/shared/platform.js', import.meta.url), 'utf8').includes('requestFullscreen ?? root.webkitRequestFullscreen')); // (0.00209: the prefixed calls live in platform.js, shared with the phone gate)
 }
 
 // T35: 0.070 — sound effects: module no-op safety, all clips on disk, and
@@ -240,7 +241,7 @@ fresh();
   bar.children[0].listeners.click[0]();
   ok('☰ opens the folded column (the phone), a second tap closes it', bar.classList.contains('open') && (bar.children[0].listeners.click[0](), !bar.classList.contains('open')));
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
-  ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*fullscreenToggle\(\),\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
+  ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*!isPhone\(\) && fullscreenToggle\(\),[^\n]*\n\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
     && css.includes('.corner-bar {') && !/toggle \{ top: \d+px; \}/.test(css));
 }
 

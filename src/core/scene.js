@@ -96,7 +96,7 @@ export function transitionTo(work, fadeOutMs = 1000) {
     try {
       work();
       if (bgChanges !== changes) await Promise.race([bgShown, later(BG_WAIT_MAX_MS)]);
-    } finally {
+    } catch (e) { console.error(e); } finally {
       // Never leave the UI stuck hidden / the guard latched, even if
       // the scene's render throws mid-transition.
       void el.offsetWidth; // reflow, so the fade-in animates reliably
@@ -142,7 +142,7 @@ export function setBackground(file) {
   activeBg?.classList.remove('push'); // (the old layer: it is faded out; the class goes with it)
   activeBg = next;
   bgChanges++;
-  bgShown = Promise.resolve(bgListener ? bgListener(file) : cssFaded(next, file)).catch(() => {});
+  bgShown = Promise.resolve(bgListener?.(file) ?? cssFaded(next, file)).catch(() => {}); // (0.00209: a shut-down renderer answers null and the CSS layer's own fade is waited for, as the strict order wants)
   return bgShown;
 }
 
