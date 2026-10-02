@@ -43,7 +43,9 @@ before structural changes. This file is the rules and the per-system notes.
     0.181: a Plate opacity slider fades the card's dark inside and its
     light under an untouched border (the frame art cut in two for the lab,
     `card_*_border.png` / `card_*_plate.png`; the game's one PNG is 0.85).
-    Nothing of it is in the game yet: COPY JSON gives the picks back.
+    COPY JSON gives the picks back; the owner's picks shipped in 0.182
+    (see "Card effects" below). The lab draws the game's shader
+    (`src/ui/cardFx.js`), so a look changed there changes here too.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
@@ -167,7 +169,30 @@ isLowHp`).
 `ui/combatFx.js` + `fxParts.js`, driven by `fx` descriptors on playback
 items, and use `element.animate` so they never restart the CSS idle loops
 (per enemy FAMILY: `battleLine.js IDLE_FAMILY` + `.idle-<family>`; loops
-animate only translate/rotate/scale, never filter). **Particles** (looks
+animate only translate/rotate/scale, never filter). **Card effects
+(0.182, the owner's picks from the Card Lab; tuning `cards.json`):**
+`ui/cardFx.js` lights every card from behind — a slow fog, blood, flames,
+embers or ether by the enemy's particle material (`cardStyle`: bone fog,
+embers flames, the wraith ether, flesh blood; the boss flames, the knight
+ether), the shrine's boons and the treasure chests each their own
+(`SHRINE_STYLE` / `CHEST_STYLE`, through `shrineUI.js litCard`). ONE
+WebGL context for the session draws every card in turn into a hidden
+canvas and each card's own 2D canvas copies its picture out (`.card-fx`,
+screen-blended over the frame's dark plate, masked to the frame's window
+or a panel's rounded edge; a WebGL context per card would run the browser
+out of them as rooms come and go). Drawn at `fx.scale` of the card's
+pixels at `fx.fps`, dead cards frozen; off with the particles (flat
+background, reduced motion). The cards in 3D: `perspective` on
+`.battle-line`, `.enemy-row` and `.unit` (each level hands its children
+the camera), `combatFx.js kick` turns a struck card `kickDeg` away from
+the blow — at its full angle within the first 6% and recovering slowly,
+`composite: 'add'` over the idle loop; a crit `critKick` times, OVERKILL
+victims too — and `enter` deals the cards in, turned and tilted. The
+glint: `battleLine.js glint` is a second, bright copy of each portrait
+masked to a band (`--band` on the unit; `.portrait.glint`) that
+`fxParts.js glintSweep` sweeps across the figure on a hit and the
+entrance. The benchmark draws all of it from 0.182 on (its numbers moved
+with it). **Particles** (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
 blood = Ink & Gore (ink slash, stretched blobs, floor splats); bone,

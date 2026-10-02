@@ -115,6 +115,8 @@ src/
     combatSfx.js        a line's sound, panned to its card, timed to the blow
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
+    cardFx.js           the shader light behind every card (one GL context,
+                        a 2D canvas per card); looks per enemy / boon / chest
     shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
     buffs.js  hud.js  fx.js  hubText.js
     dialog.js           openDialog(): overlay + keyboard; open-dialog registry

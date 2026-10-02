@@ -472,6 +472,29 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .battle-line, .unit-actions { user-select: none; -webkit-user-select: none; }
 .portrait { -webkit-user-drag: none; user-drag: none; }
 
+/* The cards in 3D (0.182, the Card Lab's picks): a hit kicks the card
+   around its axis (combatFx.js kick) and the room deals the cards in
+   (enter). Each level hands its children the camera — perspective applies
+   to direct children only — so the unit turns in the row and the card in
+   the unit; 130vh ~ the lab's 1400px on the owner's screen. */
+.battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }
+.char-card { backface-visibility: hidden; }
+/* The shader light behind the portrait (ui/cardFx.js): a canvas under
+   everything in the card, screened over the frame's dark plate (the
+   ::before art at -1); the text rows and the figure paint above it. */
+.card-fx { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; mix-blend-mode: screen; }
+/* The glint (battleLine.js glint, fxParts.js glintSweep): a bright copy of
+   the portrait masked to a soft band (--band = its half-width, cards.json)
+   that sweeps across the figure as the card turns; opacity 0 at rest. */
+.portrait.glint {
+  pointer-events: none; opacity: 0; mix-blend-mode: screen; z-index: 1;
+  filter: brightness(1.9) saturate(0.5);
+  -webkit-mask-image: linear-gradient(115deg, transparent 0%, transparent calc(50% - var(--band, 12%)), white 50%, transparent calc(50% + var(--band, 12%)), transparent 100%);
+  mask-image: linear-gradient(115deg, transparent 0%, transparent calc(50% - var(--band, 12%)), white 50%, transparent calc(50% + var(--band, 12%)), transparent 100%);
+  -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: -100% 0; mask-position: -100% 0;
+}
+
 /* cards: aspect-ratio derives shape from the source card art */
 .char-card {
   height: var(--card-h); aspect-ratio: 413 / 1106;
@@ -726,6 +749,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
    stylisation (panel scenes stay in tuned px, per convention) */
 .shrine-cards { display: flex; gap: 20px; justify-content: center; margin: 12px 0 8px; }
 .shrine-card {
+  position: relative; isolation: isolate; /* 0.182: its shader light (.card-fx at -1) sits over the card's own gradient, under its content */
   width: 200px; min-height: 380px;
   background: linear-gradient(180deg, rgba(72,31,23,0.94), rgba(44,19,14,0.94));
   border: 1px solid rgba(216,201,163,0.55);
@@ -752,6 +776,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .shrine-cost { text-align: center; color: #9a8b6a; margin-top: auto; }
 .shrine-cost-label { color: var(--parchment); letter-spacing: 2px; margin-bottom: 2px; }
 .shrine-card button { width: 100%; padding: 10px 0; font-size: 1.1rem; letter-spacing: 2px; }
+.shrine-card .card-fx { z-index: -1; }
 /* treasure rooms (0.155, ui/treasureUI.js): the shrine's cards, a hint
    instead of a boon, the reliquary's blood price in red when it would kill */
 .treasure-hint { text-align: center; color: #b8a888; font-style: italic; margin: 6px 0 10px; }

@@ -11,6 +11,7 @@ import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
 import { DATA } from '../shared/data.js';
+import { attachCardFx, cardStyle } from './cardFx.js';
 
 const ART = (id) => `assets/chars/${id}.webp`;
 
@@ -32,6 +33,17 @@ function portrait(id, alt, family) {
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }
+// The glint (0.182): a second copy of the portrait, bright and masked to a
+// band (styles.css .portrait.glint) that fxParts.js glintSweep sweeps across
+// the figure as the card turns. It runs the same idle loop at the same
+// phase, so it sits on the figure; the 'dead' class hides both.
+function glint(id, family, img) {
+  const g = el('img', { class: `portrait glint idle-${family}`, src: ART(id), alt: '', draggable: 'false', 'aria-hidden': 'true' });
+  g.style.animationDelay = img.style.animationDelay;
+  return g;
+}
+// --band: the glint's half-width (cards.json), on the unit for its two portraits.
+const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 
 // Death collapse (0.087): sink, flash red, fade — then the card turns
 // into the skull. Without the Web Animations API (tests) it's instant.
@@ -92,6 +104,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const chip = el('div', { class: 'hud-chip' }, hp.line);
   const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
   const img = portrait('player', 'player', 'player');
+  const shine = glint('player', 'player', img);
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
@@ -115,12 +128,14 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
         : el('span', { class: 'no-item' }, 'NO ARMOR'),
       armorVal),
     img,
+    shine,
     chip,
     potions);
+  attachCardFx(card, cardStyle('player')); // the shader light behind the knight (0.182)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
-  const unit = el('div', { class: 'unit player-unit' }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
+  const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
     const low = isLowHp(s.hp, run.maxHp);
@@ -139,7 +154,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(potionBtn, 'active-red', remind);
     setClass(potionBtn, 'potion-remind', remind);
   };
-  return { el: unit, card, portrait: img, id: 'player', update };
+  return { el: unit, card, portrait: img, glint: shine, id: 'player', update };
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })
@@ -148,6 +163,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
   const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
+  const shine = glint(e.id, IDLE_FAMILY[e.id] ?? 'prowl', img);
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
@@ -167,13 +183,15 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
+    shine,
     el('div', { class: 'skull' }, '☠'),
     hp.line,
     meterLine);
+  attachCardFx(card, cardStyle(e.id, !!e.boss)); // the shader light behind the figure, by its material (0.182)
   // Dead cards keep their slot: the button row stays mounted with the
   // button hidden (ghost-btn), so the bottom-aligned card can't shift.
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
-  const unit = el('div', { class: 'unit enemy-unit' }, card, el('div', { class: 'unit-actions' }, atk));
+  const unit = el('div', { class: 'unit enemy-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
   let canHit = false; // the Attack button is live (the card clicks through to it)
   const update = (s) => {
@@ -197,7 +215,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     canHit = !(s.dead || s.combatOver || s.printing);
     setClass(card, 'targetable', canHit);
   };
-  return { el: unit, card, portrait: img, id: e.id, summoned: !!e.summoned, update };
+  return { el: unit, card, portrait: img, glint: shine, id: e.id, summoned: !!e.summoned, update };
 }
 
 // One-shot builder (tests): an enemy unit in a given state.

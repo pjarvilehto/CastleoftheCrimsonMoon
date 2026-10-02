@@ -9,6 +9,8 @@ import { narrate } from '../audio/narrator.js';
 import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 import { hpBar, logLine, isLowHp, potionLevel } from './hud.js';
 import { updateBuffs, iconArt } from './buffs.js';
+import { attachCardFx, styleNamed, SHRINE_STYLE } from './cardFx.js';
+import { DATA } from '../shared/data.js';
 
 // HP color scale: <=25% red, <=75% yellow, above green.
 const hpColor = (cur, max) => {
@@ -61,7 +63,7 @@ function shrineBody(run, room, { log, refresh }) {
   return el('div', {},
     el('div', { class: 'subtitle' }, 'A shrine hums with dark power. Accept one boon — or walk away.'),
     el('div', { class: 'shrine-cards' },
-      ...room.dealtOffers.map((o, i) => el('div', { class: 'shrine-card' },
+      ...room.dealtOffers.map((o, i) => litCard(SHRINE_STYLE[o.id], el('div', { class: 'shrine-card' },
         el('div', { class: 'shrine-buff' }, o.buff),
         el('div', { class: 'shrine-icon' }, iconArt(o.img, o.icon)),
         el('div', { class: 'shrine-cost' },
@@ -78,5 +80,12 @@ function shrineBody(run, room, { log, refresh }) {
             log(`The shrine takes its price. ${o.buff} is yours.`);
             refresh();
           },
-        }, 'Accept')))));
+        }, 'Accept'))))));
+}
+
+// A panel card lit by the shader (0.182): the look named for its boon or
+// chest (cardFx.js SHRINE_STYLE / CHEST_STYLE), to the card's rounded edge.
+export function litCard(styleName, card) {
+  attachCardFx(card, styleNamed(styleName), { window: 'panel', amt: DATA.cards.fx.panelAmt });
+  return card;
 }

@@ -3,6 +3,7 @@
 // which event, lunges, hit timing). Everything here is a no-op without
 // the Web Animations API (the smoke-test shim) or with reduced motion.
 
+import { DATA } from '../shared/data.js';
 import { burst, materialOf } from './particles.js';
 
 export const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -11,6 +12,20 @@ export const can = (node) => !!node?.animate;
 // tint on. Read once per unit: getComputedStyle on an animating element is
 // a forced style resolution, and it happened on every blow (0.157).
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
+
+// The glint (0.182): the unit's bright masked copy of its portrait
+// (battleLine.js glint) sweeps its band across the figure over `ms`, in
+// `dir` (1 = left to right), peaking at cards.json glint.strength.
+export function glintSweep(u, ms, dir = 1, delay = 0) {
+  const g = u?.glint;
+  if (!can(g) || reduced()) return;
+  const from = dir > 0 ? '-100%' : '200%', to = dir > 0 ? '200%' : '-100%';
+  g.animate([
+    { opacity: 0, maskPosition: `${from} 0`, WebkitMaskPosition: `${from} 0` },
+    { opacity: DATA.cards.glint.strength, offset: 0.4, maskPosition: '50% 0', WebkitMaskPosition: '50% 0' },
+    { opacity: 0, maskPosition: `${to} 0`, WebkitMaskPosition: `${to} 0` },
+  ], { duration: ms, delay, easing: 'ease-out' });
+}
 
 // Particles out of a struck (or dying) unit, by what it's made of.
 export function spray(u, dir, power = 1, big = false) {

@@ -20,7 +20,7 @@
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter } from './fxParts.js';
+import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep } from './fxParts.js';
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
@@ -92,8 +92,8 @@ function overkill(fx, ctx) {
   const area = { left, top, width: right - left, height: bottom - top };
   bgLight('overkill', area);
   floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
-  // every enemy the blow wiped bursts as a kill, rippling down the line (0.128)
-  (fx.victims ?? []).forEach((i, n) => setTimeout(() => spray(ctx.unit(i), 0, 0, true), n * OVERKILL_STAGGER_MS));
+  // every enemy the blow wiped bursts as a kill and takes the kick, rippling down the line (0.128, 0.182)
+  (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
 }
 
 function attack(fx, ctx) {
@@ -134,11 +134,32 @@ function attack(fx, ctx) {
   if (fx.to === 'player' && fx.share >= big) setTimeout(() => bgSway((0.8 * fx.share) / big, -1), strike);
 }
 
+// The kick (0.182, the Card Lab's pick): the card turns around its axis
+// away from the blow — at its full angle within the first 6% of the kick
+// (about two frames) and recovering slowly, a small counter-swing on the
+// way. composite: 'add' lays it over the card's own transform. The glint
+// sweeps the figure with the turn.
+function kick(u, power, away, delay = 0) {
+  const M = DATA.cards.motion, G = DATA.cards.glint;
+  if (can(u?.card) && !reduced()) {
+    const deg = M.kickDeg * power, dir = -away; // a blow from the left pushes the left edge back
+    u.card.animate([
+      { transform: 'rotateY(0deg)', easing: 'cubic-bezier(0.1, 0.9, 0.3, 1)' },
+      { transform: `rotateY(${dir * deg}deg)`, offset: 0.06, easing: 'cubic-bezier(0.45, 0.05, 0.35, 1)' },
+      { transform: `rotateY(${-dir * deg * 0.12}deg)`, offset: 0.72, easing: 'ease-in-out' },
+      { transform: 'rotateY(0deg)' },
+    ], { duration: M.kickMs, delay, easing: 'linear', composite: 'add' });
+  }
+  glintSweep(u, G.hitMs, away, delay);
+}
+
 // Defender: knockback shake + flash + floating number, after `delay` ms
 // (the lunge's strike moment); the knockback waits out any hit-stop.
 function hit(u, fx, delay, ctx, stop = 0) {
   if (!u) return;
   const away = u === ctx.unit('player') ? -1 : 1; // knocked back, away from the attacker's side
+  const M = DATA.cards.motion;
+  kick(u, fx.mega || fx.crit ? M.critKick : fx.heavy ? M.heavyKick : 1, away, delay + stop);
   if (can(u.el) && !reduced()) {
     const k = (fx.heavy ? 1.6 : 1) * u.el.getBoundingClientRect().width * 0.03;
     u.el.animate([
@@ -239,18 +260,24 @@ function revive(ctx) {
   bgLight('revive', p?.card?.getBoundingClientRect?.()); // golden light in the scene (0.100)
 }
 
-// Room entrance: enemies slide in from the right, staggered; the player
-// from the left. Starts while the windows are still fading in.
+// Room entrance (0.182: dealt, the Card Lab's pick): the cards come in
+// from above and the side, turned and tilted like cards dealt to a table,
+// the enemies from the right, staggered, the player from the left; the
+// glint crosses each as it turns. Starts while the windows are still
+// fading in.
 function enter(ctx) {
   if (reduced()) return;
+  const M = DATA.cards.motion, G = DATA.cards.glint;
   const units = [];
   for (let i = 0; ctx.unit(i); i++) units.push([ctx.unit(i), 1, i]);
   units.unshift([ctx.unit('player'), -1, 0]);
   for (const [u, side, i] of units) {
     if (!can(u?.el)) continue;
+    const delay = M.enterDelayMs + i * M.enterStaggerMs;
     u.el.animate([
-      { opacity: 0, transform: `translateX(${side * 60}px)` },
-      { opacity: 1, transform: 'translateX(0)' },
-    ], { duration: 520, delay: 250 + i * 90, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)', fill: 'backwards' });
+      { opacity: 0, transform: `translate(${side * 100}px, -50px) rotateY(${-side * 62}deg) rotateZ(${side * 9}deg) scale(0.92)` },
+      { opacity: 1, transform: 'translate(0, 0) rotateY(0deg) rotateZ(0deg) scale(1)' },
+    ], { duration: M.enterMs, delay, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)', fill: 'backwards' });
+    glintSweep(u, G.enterMs, side, delay + 120);
   }
 }

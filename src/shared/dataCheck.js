@@ -51,6 +51,11 @@ const NUM = {
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],
   telemetry: ['benchmarkPromptRoom'],
+  cards: [ // the card effects (0.182): ui/cardFx.js, combatFx.js, fxParts.js
+    ...['amt', 'speed', 'scale', 'fps', 'panelAmt'].map((k) => `fx.${k}`),
+    ...['kickDeg', 'kickMs', 'critKick', 'heavyKick', 'overkillKick', 'enterMs', 'enterDelayMs', 'enterStaggerMs'].map((k) => `motion.${k}`),
+    ...['strength', 'band', 'hitMs', 'enterMs'].map((k) => `glint.${k}`),
+  ],
 };
 
 const at = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);

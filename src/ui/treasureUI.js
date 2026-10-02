@@ -7,7 +7,8 @@ import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { CHESTS, openChest, reliquaryCost } from '../run/treasure.js';
-import { renderPanelRoom } from './shrineUI.js';
+import { renderPanelRoom, litCard } from './shrineUI.js';
+import { CHEST_STYLE } from './cardFx.js';
 import { iconArt } from './buffs.js';
 import { logLine } from './hud.js';
 import { DATA } from '../shared/data.js';
@@ -27,7 +28,7 @@ export function renderTreasureRoom(root, run, room, h) {
       el('div', { class: 'subtitle' }, 'Three chests in the gloom. Open one — the others stay shut.'),
       el('div', { class: 'shrine-cards treasure-cards' }, ...CHESTS.map((kind, i) => {
         const L = LOOK[kind], cost = kind === 'reliquary' ? reliquaryCost(run) : 0, lethal = cost >= run.hp;
-        return el('div', { class: `shrine-card treasure-card treasure-${kind}` },
+        return litCard(CHEST_STYLE[kind], el('div', { class: `shrine-card treasure-card treasure-${kind}` },
           el('div', { class: 'shrine-buff' }, L.name),
           el('div', { class: 'shrine-icon' }, iconArt(L.img, L.icon)),
           el('div', { class: 'treasure-hint' }, L.hint),
@@ -46,7 +47,7 @@ export function renderTreasureRoom(root, run, room, h) {
               narrate(`chest_${kind}`);
               if (DATA.items[got.itemId]?.tier === 4) narrate('relic_found'); // follows the chest line
             },
-          }, 'Open'));
+          }, 'Open')));
       })));
   renderPanelRoom(root, run, room, h, body);
 }

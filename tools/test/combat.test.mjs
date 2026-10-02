@@ -89,7 +89,7 @@ fresh();
   const cards = registry.app.all((e) => e.className && e.className.startsWith('char-card'));
   const hpLines = registry.app.all((e) => e.className === 'hp-line');
   const actRows = registry.app.all((e) => e.className === 'unit-actions');
-  const portraits = registry.app.all((e) => e.tagName === 'img' && e.attrs.src && e.attrs.src.includes('assets/chars/'));
+  const portraits = registry.app.all((e) => e.tagName === 'img' && e.attrs.src && e.attrs.src.includes('assets/chars/') && !e.classList.contains('glint')); // (0.182: each portrait has a glint copy)
   const atkBtns = registry.app.all((e) => e.tagName === 'button' && e.attrs['data-key'] === 'a' && e.attrs.disabled === undefined);
   const nEnemies = cards.length - 1;
   ok('T11 card structure: units/cards/hp-lines/portraits/actions',
@@ -610,7 +610,7 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const sm = playerAttack(cb, 0, true).find((e) => e.type === 'smash');
   const fx = fxFor(sm, { maxHp: run.maxHp });
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
-    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => spray(ctx.unit(i), 0, 0, true)'));
+    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }'));
 }
 // T90: 0.129 — the particle renderer stays batched and cheap.
 {
