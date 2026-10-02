@@ -85,7 +85,8 @@ function rollHit(combat, heavy) {
   const tune = DATA.difficulty.combat;
   const crit = DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < combat.run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
-  let dmg = combat.run.stats.dmg * (heavy ? tune.heavyMult : 1);
+  // whole numbers always (0.00199): a heavy at heavyMult 2.3 printed 358.79999 on an OVERKILL
+  let dmg = Math.round(combat.run.stats.dmg * (heavy ? tune.heavyMult : 1));
   if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus }, megaCrit));
   return { dmg: Math.max(1, dmg), crit, megaCrit, heavy };
 }

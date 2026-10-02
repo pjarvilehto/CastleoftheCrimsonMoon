@@ -47,6 +47,12 @@ fresh();
   attack(cd, 0, false); const afterOne = cd.heavyCd;
   attack(cd, 0, false); const afterTwo = cd.heavyCd;
   ok('heavy cooldown 2 = two ordinary turns between heavies (the heavy turn itself does not count)', afterHeavy === 2 && afterOne === 1 && afterTwo === 0);
+  // damage is always a whole number (0.00199: 156 x 2.3 printed as 358.79999)
+  run.stats.dmg = 156; run.stats.crit = 0;
+  const cw = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x', name: 'T', enemies: [wall()] });
+  useHeavy(cw);
+  const heavyEv = attack(cw, 0, true).find((e) => e.type === 'atk');
+  ok('a heavy blow\'s damage is a whole number', Number.isInteger(heavyEv.dmg) && heavyEv.dmg === Math.round(156 * DATA.difficulty.combat.heavyMult), String(heavyEv?.dmg));
 
   // greed: kill coins multiplied x1.4
   const { applyLoot } = await import('../../src/run/runState.js');

@@ -630,7 +630,7 @@ sometimes — fetch all branches to find it.
 - 0.00198 fixed the heavy attack's off-by-one cooldown (the heavy's own
   turn no longer counts as recharge) and raised `combat.heavyMult` 2 →
   2.3 to compensate in part; the simulator's baseline moved with it (run
-  depth 16.0 → 15.9, coins level, the room-24 boss 30% → 9% clears — the
+  depth 16.0 → 15.8, coins level, the room-24 boss 30% → ~10% clears — the
   wall the backlog names got taller).
 - Left as found: `icon.png` (374KB) at the root referenced by nothing;
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
