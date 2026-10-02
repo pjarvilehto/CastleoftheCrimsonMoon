@@ -1,5 +1,5 @@
 {
-  "version": "0.00197",
+  "version": "0.00198",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -85,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00198": [
+      "Heavy Attack: its cooldown now counts the ordinary turns between heavies (the heavy's own turn used to count, so a cooldown of 3 was back after two blows and two Quicken boons made it every turn); a heavy blow does 2.3x damage, up from 2x, to make up for it in part"
+    ],
     "0.00197": [
       "Build numbers now read 0.00197 (five decimals), inside and out",
       "A new build reaches you within about two minutes of its release: the game checks every minute and never reads a stale copy",
@@ -132,11 +135,6 @@
     "0.00184": [
       "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
       "The card glow reaches the frame's border: no dark rim around the plate"
-    ],
-    "0.00183": [
-      "The Card Lab's picks are in the game: a slow glow behind every portrait (fog, blood, flames, embers or ether by the creature), the cards in 3D (a hit kicks the card around its axis, the room deals the cards in) and a sheen crossing the figure as it turns",
-      "Shrine boons and treasure chests glow too, each its own way",
-      "Benchmark results from this build on include the card effects"
     ]
   }
 }

@@ -275,7 +275,7 @@ fresh();
   // the VO Lab (0.163): every take, its text, when and how often; verdicts -> tools/gen-vo.mjs --rerender
   const vo = readFileSync('labs/vo/index.html', 'utf8'), voJs = readFileSync('labs/vo/lab.js', 'utf8');
   ok('VO lab: a standalone page on the registry and the rules',
-    vo.includes('data-lab="labs/vo/lab.js"') && vo.includes('<base href="../../">') && voJs.includes("['narration', 'audio'].map((f) => fetch(`assets/data/${f}.json${q}`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]')); // (0.00197: booted versioned like the other labs)
+    vo.includes('data-lab="labs/vo/lab.js"') && vo.includes('<base href="../../">') && voJs.includes("['narration', 'audio'].map((f) => fetch(`assets/data/${f}.json${q}`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]')); // (0.00198: booted versioned like the other labs)
   ok('VO lab: plays a take levelled like the game, approve / disapprove, volatility and shouty nudges, re-render JSON', voJs.includes('10 ** ((N.targetDb - t.measuredDb) / 20)')
     && voJs.includes("setVerdict(k, 'ok')") && voJs.includes("setVerdict(k, 'no')") && voJs.includes("nb('Less', 'volatility', -1)") && voJs.includes("nb('More', 'shouty', 1)")
     && voJs.includes('out.rerender.push({ file: t.file, id: t.id, take: t.take, volatility:') && readFileSync('tools/gen-vo.mjs', 'utf8').includes("args.indexOf('--rerender')"));
