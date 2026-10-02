@@ -1,7 +1,8 @@
 // labs/cards/cardFx.js — the Card Lab's shader backgrounds: a small WebGL
 // canvas inside each card, between the frame art and the portrait, that
-// ADDS light (mix-blend-mode: screen over the frame's dark interior) and
-// is masked to the frame's window. Rendered at a third of the card's
+// ADDS light (mix-blend-mode: screen over the frame's dark plate, a cut-out
+// of the frame art the lab fades with its Plate opacity slider) and is masked
+// to the frame's window. Rendered at a third of the card's
 // pixels (soft looks need no sharp pixels) at ~30 fps. Looks: fog, blood
 // (a pulsing crimson fog), flames, embers (sparks rising through heat),
 // ether (ridged violet wisps). One context per card is fine for a lab; in
@@ -94,7 +95,13 @@ export function attachCardFx(card, opts = {}) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const a = gl.getAttribLocation(prog, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
   const loc = Object.fromEntries(['uT', 'uAmt', 'uLook', 'uAspect', 'uTint'].map((n) => [n, gl.getUniformLocation(prog, n)]));
-  card.prepend(canvas); // under the portrait and text (z-index 0 in the lab's CSS), over the frame art (-1)
+  // 0.181: the canvas sits in a plate wrapper that carries the frame's interior
+  // (the lab's cut-out card_*_plate.png; the frame art itself is border-only
+  // here) so one opacity (--plate-alpha) fades the plate and its light together
+  // while the border stays as it is; the plate is a stacking context (opacity),
+  // so the screen blend meets the plate, not the room
+  const plate = document.createElement('div'); plate.className = 'card-plate'; plate.append(canvas);
+  card.prepend(plate); // under the portrait and text (z-index 0 in the lab's CSS), over the border art (-1)
   const entry = { card, canvas, gl, loc, look: 'fog', tint: TINTS.fog, amt: 0.8, speed: 1, ...opts };
   cards.push(entry);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }

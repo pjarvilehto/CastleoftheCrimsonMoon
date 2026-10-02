@@ -25,7 +25,14 @@ html, body { overflow: hidden; }
 /* the stage keeps clear of the panel; the game's --n sizing still runs off the viewport */
 #stage .battle-line { right: 420px; }
 /* ---- the lab's additions to the cards ---- */
-.card-fx { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; mix-blend-mode: screen; }
+/* the frame art split in two (cut from assets/chars/card_*.png): the border stays as the game draws it,
+   the plate (its dark interior) is a layer of its own, faded by --plate-alpha together with the shader inside it */
+#stage .char-card::before { background-image: url("labs/cards/card_enemy_border.png"); }
+#stage .player-card::before { background-image: url("labs/cards/card_player_border.png"); }
+.card-plate { position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: var(--plate-alpha, 0.85); isolation: isolate;
+  background: url("labs/cards/card_enemy_plate.png") center / 100% 100% no-repeat; }
+.player-card .card-plate { background-image: url("labs/cards/card_player_plate.png"); }
+.card-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
 .battle-line.p3d { perspective: 1400px; perspective-origin: 50% 35%; }
 .battle-line.p3d .unit, .battle-line.p3d .char-card { transform-style: preserve-3d; }
 .battle-line.p3d .char-card { backface-visibility: hidden; }

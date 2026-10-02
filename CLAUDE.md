@@ -40,6 +40,9 @@ before structural changes. This file is the rules and the per-system notes.
     flames, embers, ether, by the enemy's particle material), the cards in
     3D (hit kicks, turning or dealt entrances, a mouse tilt) and a glint
     sweeping the bitmap as it turns (a bright masked copy of the portrait).
+    0.181: a Plate opacity slider fades the card's dark inside and its
+    light under an untouched border (the frame art cut in two for the lab,
+    `card_*_border.png` / `card_*_plate.png`; the game's one PNG is 0.85).
     Nothing of it is in the game yet: COPY JSON gives the picks back.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.

@@ -20,7 +20,7 @@ await loadData();
 
 // ---- the options ----
 const DEFAULTS = {
-  bg: { mode: 'auto', look: 'fog', amt: 0.8, speed: 1, player: 'ether' },
+  bg: { mode: 'auto', look: 'fog', amt: 0.8, speed: 1, player: 'ether', alpha: 0.85 },
   motion: { on: true, enter: 'turn', hit: 'tilt', deg: 10, ms: 480, hover: true },
   glint: { style: 'streak', strength: 0.8, band: 8, withHit: true, withEnter: true },
 };
@@ -60,6 +60,7 @@ for (const u of all) {
   u.portrait.after(g); u.glint = g;
 }
 function applyBg() {
+  line.style.setProperty('--plate-alpha', O.bg.alpha);
   for (const u of all) {
     const e = u.enemy;
     const look = O.bg.mode === 'off' ? 'none' : u === player ? O.bg.player : O.bg.mode === 'auto' ? lookFor(e) : O.bg.look;
@@ -198,7 +199,8 @@ panel.append(
     choice(O.bg, 'player', 'The knight', [['ether', 'ether (blue)'], ['fog', 'fog (gold)'], ['none', 'none']], applyBg),
     slider(O.bg, 'amt', 'Intensity', 0, 2, 0.05, 'how much light it adds', applyBg),
     slider(O.bg, 'speed', 'Speed', 0, 4, 0.1, 'how fast it moves', applyBg),
-    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark window (the frame art stays). In the game: one shared canvas for every card, not one each.')),
+    slider(O.bg, 'alpha', 'Plate opacity', 0, 1, 0.05, 'the card\'s dark inside and its light; the border stays (the game: 0.85)', applyBg),
+    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark plate (cut out of the frame art so Plate opacity can fade it under the border). In the game: one shared canvas for every card, not one each.')),
   group('Card motion', 'the cards in 3D', true,
     check(O.motion, 'on', '3D on', applyMotion),
     choice(O.motion, 'enter', 'Entrance', [['slide', 'slide (today)'], ['turn', 'slide with a turn'], ['deal', 'dealt: from above, turning']], () => { applyMotion(); enter(); }),

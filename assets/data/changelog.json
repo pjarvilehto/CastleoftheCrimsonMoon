@@ -1,4 +1,7 @@
 {
+  "0.181": [
+    "Card Lab: a Plate opacity slider fades the card's inside (shader included) under an untouched border"
+  ],
   "0.180": [
     "Card Lab: a hit kicks the card to its full angle at once and lets it recover slowly"
   ],
