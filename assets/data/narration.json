@@ -626,7 +626,8 @@
           "style": 0,
           "speed": 0.85,
           "use_speaker_boost": true
-        }
+        },
+        "approved": true
       },
       {
         "take": 6,
@@ -639,7 +640,8 @@
           "style": 0,
           "speed": 0.85,
           "use_speaker_boost": true
-        }
+        },
+        "approved": true
       },
       {
         "take": 7,
@@ -652,7 +654,8 @@
           "style": 0,
           "speed": 0.85,
           "use_speaker_boost": true
-        }
+        },
+        "approved": true
       },
       {
         "take": 8,
@@ -665,7 +668,8 @@
           "style": 0,
           "speed": 0.85,
           "use_speaker_boost": true
-        }
+        },
+        "approved": true
       },
       {
         "take": 9,
@@ -678,7 +682,8 @@
           "style": 0,
           "speed": 0.85,
           "use_speaker_boost": true
-        }
+        },
+        "approved": true
       }
     ],
     "smash": [
