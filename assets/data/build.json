@@ -1,5 +1,5 @@
 {
-  "version": "0.00213",
+  "version": "0.00214",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00214": [
+      "World Lab: the clouds drift without seams (whole-pixel tiles), they reach a whole painting past every edge with the painting's margins fading into the clouded land beneath, and the map zooms out far enough to see it"
+    ],
     "0.00213": [
       "World Lab: the owner's cloud picks — sparser, darker and faster clouds with the world dim beneath them, tighter windows around what is cleared, the sky view a touch lower and steeper"
     ],
@@ -136,9 +139,6 @@
     ],
     "0.00200": [
       "Art Lab: the Vampire Lord's card is twice as wide here too, as in the game since 0.196"
-    ],
-    "0.00199": [
-      "Fixed: a heavy blow could print its damage with a fraction (-358.79999) since the 2.3x multiplier — damage is always a whole number again"
     ]
   }
 }
