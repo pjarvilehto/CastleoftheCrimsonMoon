@@ -36,7 +36,7 @@ function portrait(id, alt, family) {
 // The glint (0.183): a second copy of the portrait, bright and masked to a
 // band (styles.css .portrait.glint) that fxParts.js glintSweep sweeps across
 // the figure as the card turns. It runs the same idle loop at the same
-// phase, so it sits on the figure; the 'dead' class hides both.
+// phase, so it sits on the figure.
 function glint(id, family, img) {
   const g = el('img', { class: `portrait glint idle-${family}`, src: ART(id), alt: '', draggable: 'false', 'aria-hidden': 'true' });
   g.style.animationDelay = img.style.animationDelay;
@@ -50,7 +50,7 @@ const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 const frame = () => el('div', { class: 'card-frame' });
 
 // Death collapse (0.087): sink, flash red, fade — then the card turns
-// into the skull. Without the Web Animations API (tests) it's instant.
+// and away. Without the Web Animations API (tests) it's instant.
 const COLLAPSE_MS = 700;
 function collapse(img, done) {
   if (!img.animate || reducedMotion()) { done(); return; }
@@ -63,8 +63,9 @@ function collapse(img, done) {
   ], { duration: COLLAPSE_MS, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
 }
 
-// A fallen summon's whole unit fades out and leaves the row (0.092) —
-// a long boss fight would otherwise fill the line with skulls.
+// A fallen enemy's whole unit fades out and leaves the row (summons since
+// 0.092 — a long boss fight filled the line with skulls; every enemy since
+// 0.00216).
 function vanish(unit, done) {
   const out = () => { unit.remove(); done?.(); };
   if (!unit.animate) { out(); return; }
@@ -178,8 +179,9 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
   const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
-  // Portrait and skull both live in the card; the 'dead' class swaps them
-  // (styles.css), so the card never has to be rebuilt.
+  // A fallen enemy's figure collapses, then the whole unit fades and leaves
+  // the row (0.00216, the owner's call: the faint skull cards went; the row
+  // restacks and the cards grow into the room — fit() through onGone).
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
   const plate = frame();
@@ -192,7 +194,6 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     aura,
     img,
     shine,
-    el('div', { class: 'skull' }, '☠'),
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
@@ -211,11 +212,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     if (s.dead && !down) {
       down = true;
       setClass(card, 'dying', true);
-      collapse(img, () => {
-        setClass(card, 'dying', false);
-        if (e.summoned) vanish(unit, onGone); // no skull slot: summons crumble away
-        else setClass(card, 'dead', true);
-      });
+      collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); });
     }
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);

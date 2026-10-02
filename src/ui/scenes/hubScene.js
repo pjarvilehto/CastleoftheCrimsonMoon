@@ -22,6 +22,7 @@ import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 import { narrate } from '../../audio/narrator.js';
+import { pulseNumber } from '../fx.js';
 
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
@@ -42,7 +43,7 @@ export function canForgeAny(p) {
 }
 export const canSpendCoins = (p) => canSpendAlchemy(p) || canForgeAny(p);
 
-// Buy Potion gets the pulsing 'active' glow below potions.lowShare of the satchel.
+// Below potions.lowShare of the satchel (the HUD's red count; the Buy glow needs no low stock since 0.00216).
 export function potionsLow(p) {
   return p.potions < p.potionCap * DATA.difficulty.potions.lowShare;
 }
@@ -124,7 +125,7 @@ export function hubScene(opts = {}) {
         const lvl = p.stats[key];
         const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
         const desc = statDesc(key, lvl, phone);
-        return el('div', { class: 'item-row' },
+        return el('div', { class: 'item-row', 'data-row': key },
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
             el('span', {}, `Lv ${lvl}${star} — ${desc}`)),
@@ -136,7 +137,7 @@ export function hubScene(opts = {}) {
               const lv = playerLevel(getProfile());
               buyStat(key);
               if (playerLevel(getProfile()) > lv) narrate('level_up'); // a character level (every 5 trained levels)
-              render(root);
+              flashNext(key); render(root);
             },
           }, `Train (${statCost(lvl).xp}xp)`));
       }));
@@ -145,17 +146,17 @@ export function hubScene(opts = {}) {
     const alchemySection = el('div', {},
       el('h2', {}, 'Alchemy (coins)'),
       // 0.080: potions are a persistent stock; the satchel caps it.
-      el('div', { class: 'item-row' },
+      el('div', { class: 'item-row', 'data-row': 'potion' },
         el('div', {}, el('b', {}, 'Healing Potion '),
           el('span', {}, potionDesc(p, phone))),
         el('button', {
           disabled: p.coins < potionCost() || satchelFull(p),
-          // running low and able to buy: the obvious next step (0.090)
-          class: potionsLow(p) && p.coins >= potionCost() && !satchelFull(p) ? 'active' : '',
+          // able to buy one: the obvious next step (0.00216: it used to wait for the stock to run low, 0.090 — a player at 3/4 with the coins expected the glow)
+          class: p.coins >= potionCost() && !satchelFull(p) ? 'active' : '',
           key: 'u', // b-u-y
-          onclick: () => { restockPotion(); render(root); },
+          onclick: () => { restockPotion(); flashNext('potion'); render(root); },
         }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
-      el('div', { class: 'item-row' },
+      el('div', { class: 'item-row', 'data-row': 'satchel' },
         el('div', {}, el('b', {}, phone ? 'Satchel ' : 'Potion Satchel '),
           el('span', {}, satchelDesc(p, satchelMaxed(p), phone))),
         satchelMaxed(p)
@@ -163,11 +164,11 @@ export function hubScene(opts = {}) {
           : el('button', {
               disabled: p.coins < satchelCost(p),
               key: 'x', // e-x-pand
-              onclick: () => { sfx('levelup'); expandSatchel(); render(root); },
+              onclick: () => { sfx('levelup'); expandSatchel(); flashNext('satchel'); render(root); },
             }, `Expand (${satchelCost(p)}c)`)),
       ...Object.entries(ALCHEMY_DEFS).map(([track, def]) => {
         const lvl = p.alchemy[track] ?? 0;
-        return el('div', { class: 'item-row' },
+        return el('div', { class: 'item-row', 'data-row': track },
           el('div', {},
             el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
             el('span', {}, `Lv ${lvl} — ${alchemyDesc(track, phone)}`)), // (efficiency: 0.112's tapering, the next level's gain)
@@ -176,7 +177,7 @@ export function hubScene(opts = {}) {
             : el('button', {
               disabled: p.coins < alchemyCost(track),
               key: def.key,
-              onclick: () => { sfx('levelup'); trainAlchemy(track); render(root); },
+              onclick: () => { sfx('levelup'); trainAlchemy(track); flashNext(track); render(root); },
             }, `Train (${alchemyCost(track)}c)`));
       }));
 
@@ -188,7 +189,7 @@ export function hubScene(opts = {}) {
       // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
       // worth the coins, so it gets no enhance button at all (0.068).
       const canForge = !!item && forgeable(id);
-      return el('div', { class: 'item-row' }, // (0.00209: classes, not inline styles — the phone layer restyles them)
+      return el('div', { class: 'item-row', 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
         el('span', { class: 'equip-slot' }, label),
         item
           ? el('div', { class: 'equip-right' },
@@ -202,7 +203,7 @@ export function hubScene(opts = {}) {
                 : el('button', {
                     class: 'forge-btn',
                     disabled: p.coins < forgeCost(id),
-                    onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); render(root); },
+                    onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); flashNext(`slot-${label}`); render(root); },
                   }, `+${forgeCost(id)}c`))
           : el('span', { class: 'equip-empty' }, '— empty —'));
     };
@@ -229,7 +230,7 @@ export function hubScene(opts = {}) {
     const records = el('div', { class: 'subtitle records-line' }, recordsLine(p));
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
-    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); return; }
+    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); return; }
     const [train, alchemy, equipment] = hall;
     root.append(
       el('div', { class: 'hub-container' },
@@ -243,6 +244,7 @@ export function hubScene(opts = {}) {
           // Right: equipment slots with per-item Forge enhancement.
           el('div', { class: 'panel' }, el('h1', {}, equipment.title), el('div', { class: 'subtitle' }, equipment.subtitle), equipment.body)),
         el('div', { class: 'btn-row' }, ...wayOn)));
+    settleFlash(root);
   }
 }
 
@@ -255,6 +257,18 @@ export function hubScene(opts = {}) {
 // something there can be bought (the desktop shows all three panels at
 // once; a phone shows one). The pick lasts the session, so a purchase's
 // re-render stays on the same sheet.
+// A purchase's feedback (0.00216, the owner's ask): the row just bought
+// re-renders at its new level and its label glows, grows a little and
+// flashes — Precision LV2 to LV3, 3/4 potions to 4/4. The handlers name
+// the row (data-row) before the re-render; settleFlash finds it after.
+let flashRow = null;
+const flashNext = (row) => { flashRow = row; }; // (then the handler's own render(root))
+function settleFlash(root) {
+  if (!flashRow) return;
+  const row = root.querySelector?.(`[data-row="${flashRow}"]`); flashRow = null;
+  const label = row?.querySelector?.('.equip-item') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus)
+  if (label) { label.style.display = 'inline-block'; label.style.transformOrigin = 'left center'; pulseNumber(label); } // (a block would scale around its own centre, off the row)
+}
 let phonePick = 0, phoneScroll = 0; // the picked sheet and how far it was scrolled (a purchase re-renders: the sheet stays put)
 function phoneHall(hall, statsRow, records, wayOn) {
   const tabs = el('div', { class: 'tabs' });

@@ -190,7 +190,6 @@ function tick(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   const { gl, loc, canvas: src } = shared;
   for (const e of entries) {
-    if (e.card.classList.contains('dead')) continue; // a dead card keeps its last frame (faint anyway)
     const w = Math.min(SIZE, Math.max(8, Math.round((e.w ?? e.card.clientWidth) * F.scale) || 8));
     const h = Math.min(SIZE, Math.max(8, Math.round((e.h ?? e.card.clientHeight) * F.scale) || 8));
     if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; if (e.ctx) e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets a 2D context)

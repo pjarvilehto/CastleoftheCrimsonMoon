@@ -201,7 +201,8 @@ fresh();
   scene.enter(registry.app);
   await sleep(50);
   const line = registry.app.all((e) => e.className === 'battle-line')[0];
-  const firstEnemyCard = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0];
+  const cardsAtStart = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'));
+  const enemiesAtStart = cardsAtStart.length;
   const playerHpText = () => registry.app.all((e) => e.className === 'hp-text')[0].textContent;
   const before = playerHpText();
   handleKey('a');
@@ -209,16 +210,17 @@ fresh();
   await sleep(3000); // drain
   const after = playerHpText();
   const lineAfter = registry.app.all((e) => e.className === 'battle-line')[0];
-  ok('battle line is not rebuilt during playback', line === lineAfter
-    && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0] === firstEnemyCard);
+  ok('battle line is not rebuilt during playback (the cards left are the ones dealt; a fallen one has gone, 0.00216)', line === lineAfter
+    && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char')).every((c) => cardsAtStart.includes(c)));
   ok('player HP holds until the enemy hit prints', duringFirstLine === before, `${before} / ${duringFirstLine} / ${after}`);
   ok('HP settles on the real value after playback', after.startsWith('HP ') && after.includes(`/`));
-  const deadCards = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char') && e.classList.contains('dead'));
-  ok('dead cards keep their portrait node (CSS swaps in the skull)', deadCards.every((c) => c.children.some((k) => k.tagName === 'img')));
-  const css = readFileSync('styles.css', 'utf8');
-  ok('portrait/skull swap is CSS-driven', /\n\.char-card\.dead \.skull \{[^}]*display: block;/.test(css) && /\n\.char-card\.dead \.portrait \{[^}]*display: none;/.test(css));
   // Drain the fight so no timers leak into later tests.
   for (let g = 0; g < 40 && !t().includes('Push Deeper') && !t().includes('YOU DIED'); g++) { handleKey('a'); await sleep(900); }
+  await sleep(1500);
+  // 0.00216: a fallen enemy leaves the row (no skull card), the slots left grow (fit: --n follows the row)
+  const rowNow = registry.app.all((e) => e.className === 'enemy-row')[0];
+  if (rowNow) ok('fallen enemies have left the row (no skull cards) and the line counts the living', rowNow.children.length < enemiesAtStart && !registry.app.all((e) => e.className === 'skull').length
+    && String(lineAfter.attrs.style).includes(`--n:${Math.max(1, rowNow.children.length)}`), `${rowNow.children.length} of ${enemiesAtStart} cards, ${lineAfter.attrs.style}`);
 }
 
 // T48: 0.087 — character animation: every enemy has an idle family with a
@@ -513,8 +515,7 @@ fresh();
   ok('mega crits: one crit in five (0.106)', DATA.difficulty.combat.megaCritChance === 0.2);
 }
 
-// T72: 0.109 — dead enemy cards fade almost away (10%).
-ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacity: 0\.2;/.test(readFileSync('styles.css', 'utf8')));
+// T72: 0.109's faint dead cards went in 0.00216 — a fallen enemy leaves the row (the check above, and 'a fallen summon leaves the row').
 
 // T84: 0.121 — beating the final boss (difficulty.json finalBossRoom) shows
 // the "you've won" dialog once per save; it owns the keys while open, and

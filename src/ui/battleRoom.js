@@ -29,7 +29,7 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
   const unit = (i) => createEnemyUnit(combat.enemies[i], i, {
     onAttack: () => onAttack(i),
-    onGone: () => fit(), // a fallen summon crumbles away, freeing its slot
+    onGone: () => fit(), // a fallen enemy leaves the row: the slots left grow into the room (0.00216)
   });
   const enemies = combat.enemies.map((e, i) => unit(i));
   const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));

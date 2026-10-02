@@ -563,7 +563,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const p1 = phoneGate({ onPlay: () => played++, doc, nav: { userAgent: 'iPhone', maxTouchPoints: 5 } });
   const gate = registry.body.children.find((n) => /\bphone-gate\b/.test(n.className ?? ''));
   const playBtn = gate && gate.all((n) => n.tagName === 'button' && /^Play/.test(n.textContent))[0]; // (proceed: true adds the [space] hint to the label)
-  ok('the gate: a dialog (key trap, anyDialogOpen) with PLAY and the iPhone\'s way to the full screen', gate && anyDialogOpen() && playBtn && gate.textContent.includes('Add to Home Screen'));
+  ok('the gate: a dialog (key trap, anyDialogOpen) with PLAY and the iPhone\'s way to the full screen', gate && anyDialogOpen() && playBtn && gate.textContent.includes('Add to Home Screen') && !gate.textContent.includes('aA'));
   playBtn.listeners.click[0]();
   ok('PLAY runs onPlay and takes the card away', (await p1) === true && played === 1 && !anyDialogOpen() && !registry.body.children.some((n) => /\bphone-gate\b/.test(n.className ?? '')));
   ok('a home-screen app gets no card', (await phoneGate({ onPlay: () => played++, doc, nav: { standalone: true, userAgent: 'iPhone' } })) === false && played === 2 && !anyDialogOpen());

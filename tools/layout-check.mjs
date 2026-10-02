@@ -154,6 +154,16 @@ async function run(name, opts, url) {
     await page.waitForTimeout(1500);
     await shot('6-fight-hit');
     // the panel rooms, rendered in place (a shrine is rooms away)
+    // the run's end (0.00216: its button clipped on a phone)
+    await page.evaluate(async () => {
+      const [{ runEndScene }, { show }, { createRun }] = await Promise.all([import('/src/ui/scenes/runEndScene.js'), import('/src/core/scene.js'), import('/src/run/runState.js')]);
+      const run = createRun(); Object.assign(run, { roomNumber: 2, kills: 6, coins: 43, coinsRetrieved: 22, coinsLost: 21, tollPct: 0.5, xp: 40, itemsFound: [{ id: 'ring_of_might' }], potions: 4, equipSummary: { equipped: [{ name: 'Ring of Might', tier: 2 }], salvaged: [], coins: 0 } });
+      show(runEndScene(run, 'death'));
+    });
+    await page.waitForTimeout(1800);
+    const end = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /Great Hall/.test(x.textContent)); const r = b?.getBoundingClientRect(); const p = document.querySelector('#app > .panel'); return r ? { bottom: r.bottom, h: innerHeight, scroll: p ? p.scrollHeight - p.clientHeight : 0 } : null; });
+    check(name, 'run end: Return to the Great Hall on screen, nothing to scroll', end && end.bottom <= end.h + 0.5 && end.scroll <= 0, end ? `bottom ${Math.round(end.bottom)} of ${end.h}, ${end.scroll}px hidden` : 'no button');
+    await shot('6b-runend');
     for (const kind of ['shrine', 'treasure']) {
       await page.evaluate(async (kind) => {
         const [{ renderShrineRoom }, { renderTreasureRoom }, { generateInterlude }, { createRun }, { el }, { dealOffers }] = await Promise.all([import('/src/ui/shrineUI.js'), import('/src/ui/treasureUI.js'), import('/src/run/roomGen.js'), import('/src/run/runState.js'), import('/src/core/dom.js'), import('/src/run/shrine.js')]);

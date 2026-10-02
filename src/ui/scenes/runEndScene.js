@@ -46,9 +46,9 @@ export function runEndScene(run, outcome) {
                 ` (+${run.equipSummary.coins} coins)`)
             : null,
           outcome === 'death'
-            ? el('div', { style: 'text-align:center;color:#e07b7b;margin-top:8px' },
+            ? el('div', { class: 'toll-line' },
                 run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round(run.tollPct * 100)}%).` : null)
-            : el('div', { style: 'text-align:center;color:#c9a227;margin-top:8px' },
+            : el('div', { class: 'retrieved-line' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },
             el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub', { fromRun: true }) }, 'Return to the Great Hall'))

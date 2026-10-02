@@ -49,7 +49,7 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('the card\'s first child is its frame layer (the art, the light inside)', u.card.children[0].classList.contains('card-frame'));
   const p = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
   ok('player unit: a glint too, on the player idle loop', p.glint && p.glint.classList.contains('idle-player') && p.card.children[p.card.children.indexOf(p.portrait) + 1] === p.glint);
-  ok('the dead class hides the glint with the portrait (both are .portrait)', css.includes('.char-card.dead .portrait { display: none; }') && css.includes('.portrait.glint {'));
+  ok('the glint is a portrait too (the same mask and loops)', css.includes('.portrait.glint {'));
 }
 
 // The cards in 3D and the effects' wiring (source checks: the shim has no

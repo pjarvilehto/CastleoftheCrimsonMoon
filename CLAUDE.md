@@ -467,7 +467,12 @@ may hear the old one for ~4 hours.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
   `'active active-red'`. The Great Hall's Descend pulses while nothing
   there can be bought (a new player's first visit: three panels of
-  upgrades and nothing to spend; 0.00200). A new player is asked their
+  upgrades and nothing to spend; 0.00200). Buy Potion pulses whenever a
+  potion can be bought (0.00216; it used to wait for the stock to run low).
+  **A purchase's feedback (0.00216):** every hub row carries `data-row`;
+  a handler calls `bought(root, row)` and after the re-render
+  `settleFlash` glows, grows and flashes the row's label at its new level
+  (one `element.animate`, 0.8 s). A new player is asked their
   name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —
   that repaints every frame for as long as it is on screen; loops animate
@@ -519,7 +524,8 @@ may hear the old one for ~4 hours.
   `ui/phoneGate.js` is the PLAY / INSTALL card before the title (a
   dialog; its tap is the audio gesture and the narrator's welcome; Android
   goes fullscreen and locks landscape, iPhone gets the Share → Add to Home
-  Screen line; a home-screen app skips it; leaving fullscreen on Android
+  Screen line (0.00216: no "aA, then Hide Toolbar" — that menu is Safari's
+  own; the owner tests in Brave); a home-screen app skips it; leaving fullscreen on Android
   brings it back). iOS: the home-screen app has its OWN storage — a save
   made in Safari is not there (the title's save code carries it; Export /
   Import are dialogs since 0.00209). Hover-only text (a boon's full line,
@@ -571,7 +577,12 @@ may hear the old one for ~4 hours.
   budget), so the boss and its three summons (`maxAlive`) still fit
   without shrinking at 16:9. New boss art should suit a wide card.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
-  would and only while it could (`.targetable`).
+  would and only while it could (`.targetable`). A fallen enemy's figure
+  collapses and its whole card leaves the row (0.00216, the owner's call —
+  the faint skull cards went; summons did this since 0.092): `battleLine.js
+  vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards
+  left grow into the room (`.char-card` eases its height). Combat ends
+  with an empty row.
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
   `treasure_*`, names in `backgrounds.json roomNames`) join the 8 castle
   rooms in the random pick. Source PNGs → 2048x1152 JPEG q86 (~370KB);

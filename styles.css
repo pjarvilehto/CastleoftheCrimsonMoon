@@ -542,9 +542,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
   -webkit-mask-position: -100% 0; mask-position: -100% 0;
 }
 
-/* cards: aspect-ratio derives shape from the source card art */
+/* cards: aspect-ratio derives shape from the source card art; the height eases when the row restacks (a fallen enemy's slot, 0.00216) */
 .char-card {
-  height: var(--card-h); aspect-ratio: 413 / 1106;
+  height: var(--card-h); aspect-ratio: 413 / 1106; transition: height 0.5s ease;
   border-radius: 1em;
   position: relative; /* anchor for the .card-frame art layer and the portrait */
   padding: 1em 0.5em 0.8em; box-sizing: border-box;
@@ -568,7 +568,6 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .player-card .card-frame { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
-.char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.2; } /* 0.112: faint (0.109: 0.1, was 0.5) */
 
 .card-head { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.3em; }
 /* text rows stay above the overflowing portrait art (0.075) */
@@ -623,13 +622,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
 
-/* persistent cards (0.086): portrait and skull both live in the card; the
-   'dead' class swaps them instead of rebuilding the card */
-.skull { font-size: 4.5em; color: #6b5a4a; margin: auto; text-shadow: 0 2px 8px #000; }
-.char-card .skull { display: none; }
-.char-card.dead .skull { display: block; animation: skull-in 0.45s ease-out; }
-.char-card.dead .portrait { display: none; }
-@keyframes skull-in { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
+/* persistent cards (0.086): the card is never rebuilt mid-fight — HP and
+   state are patched in place; a fallen enemy's card leaves the row (0.00216) */
 
 /* single-line health: "HP 26/92" left, green bar filling the rest.
    Overlays the portrait's lower edge; shadow keeps it readable. */
@@ -679,7 +673,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
   animation-duration: 5.5s;
 }
 @keyframes aura-pulse { 0%, 100% { opacity: 0.35; scale: 0.94; } 50% { opacity: 0.85; scale: 1.04; } }
-.char-card.dying .aura, .char-card.dead .aura { opacity: 0; animation: none; transition: opacity 0.5s; }
+.char-card.dying .aura { opacity: 0; animation: none; transition: opacity 0.5s; }
 @media (prefers-reduced-motion: reduce) { .aura { animation: none; opacity: 0.6; } }
 
 /* ================= 9 Combat: HUD ================= */
@@ -724,7 +718,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .resources { position: fixed; left: 1.4vw; bottom: 2.5vh; z-index: 4; }
 .res-row { display: flex; gap: 1vw; align-items: baseline; font-size: 2vh; }
 .res-label { color: #9a8b6a; letter-spacing: 0.25vh; width: 5em; }
-.res-row b { color: var(--parchment); font-size: 1.2em; }
+.res-row b { color: var(--parchment); font-size: 1.2em; display: inline-block; transform-origin: left center; } /* (the pulse when a number changes, fx.js pulseNumber, grows from the left) */
 
 /* Active shrine blessings (0.096): equal compact cells in the gap between
    XP/COINS and the docked log (left 50% - max(23vw, 170px)); extra rows
@@ -847,6 +841,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .equipped-line { color: #7bc98a; }
 .salvaged-line { color: #9a8b6a; }
 .loot-summary .salvaged { opacity: 0.65; font-weight: normal; }
+.toll-line { text-align: center; color: #e07b7b; margin-top: 8px; }
+.retrieved-line { text-align: center; color: #c9a227; margin-top: 8px; }
 
 /* ================= 13 Dialogs ================= */
 /* YOU DIED (0.067) */
@@ -1152,6 +1148,12 @@ html.phone #app > .panel { max-height: 100svh; padding: 6px 14px; max-width: 98v
 html.phone #app > .panel h1 { font-size: 1.35rem; margin: 0 0 2px; }
 html.phone #app > .panel > .subtitle { font-size: 0.8rem; margin: 2px 0; }
 html.phone #app > .panel .run-hud { gap: 12px; margin-bottom: 4px; font-size: 0.8rem; }
+/* the run's end (0.00216: Return to the Great Hall clipped at the bottom on a phone): the five boxes in one row, a size down */
+html.phone #app > .panel .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+html.phone #app > .panel .stat-box { padding: 4px 8px; font-size: 0.75rem; }
+html.phone #app > .panel .stat-box .value { font-size: 1.15rem; }
+html.phone #app > .panel .loot-summary, html.phone #app > .panel .toll-line, html.phone #app > .panel .retrieved-line { font-size: 0.85rem; margin-top: 4px; }
+html.phone #app > .panel .btn-row { margin-top: 8px; }
 html.phone .shrine-cards { gap: 10px; margin: 6px 0 4px; }
 html.phone .shrine-card { width: 180px; min-height: 0; padding: 6px 10px 6px; gap: 4px; }
 html.phone .shrine-buff { font-size: 0.9rem; min-height: 1.3em; }
