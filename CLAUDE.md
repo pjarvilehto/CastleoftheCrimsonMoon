@@ -192,7 +192,10 @@ the room's build hides the units; `deal` plays once `scene.js
 whenWindowsBack` says the windows are back — a room is rendered while
 they are fully faded out, so anything played at render time is never
 seen; 0.184). The light's window edge sits on the middle of the frame's
-border (a softer edge from the plate's own edge left a dark rim, 0.184). The
+border, and the canvas is transparent outside it (0.185: an opaque black
+there showed as a rim outside the border, where the frame art is
+transparent and the unit's isolated 3D group has nothing behind to
+screen with). The
 glint: `battleLine.js glint` is a second, bright copy of each portrait
 masked to a band (`--band` on the unit; `.portrait.glint`) that
 `fxParts.js glintSweep` sweeps across the figure on a hit and the
