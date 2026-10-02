@@ -1,5 +1,5 @@
 {
-  "version": "0.00198",
+  "version": "0.00199",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -85,6 +85,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00199": [
+      "Fixed: a heavy blow could print its damage with a fraction (-358.79999) since the 2.3x multiplier — damage is always a whole number again"
+    ],
     "0.00198": [
       "Heavy Attack: its cooldown now counts the ordinary turns between heavies (the heavy's own turn used to count, so a cooldown of 3 was back after two blows and two Quicken boons made it every turn); a heavy blow does 2.3x damage, up from 2x, to make up for it in part"
     ],
@@ -131,10 +134,6 @@
     ],
     "0.00185": [
       "No black rim outside the cards' white border"
-    ],
-    "0.00184": [
-      "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
-      "The card glow reaches the frame's border: no dark rim around the plate"
     ]
   }
 }
