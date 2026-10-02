@@ -179,17 +179,17 @@ fresh();
 }
 
 // T70: 0.173 — the room change's swoosh: the owner's SFX pitched down half
-// an octave (a new file), played so its loudest moment lands in the middle
+// an octave, then a quarter more and 30% quieter (0.175, a new file), played so its loudest moment lands in the middle
 // of the transition (1 s out + 2 s crossfade + 1 s in = 2 s), with a little
 // random pitch, tone and level each time; the generated whoosh is gone.
 {
   const A = DATA.audio, T = A.transition, c = A.clips[T.clip];
-  ok('room swoosh: a measured file clip with its loudest moment, no generated whoosh', T.clip === 'room_swoosh' && /sfx-room-swoosh-v1\.mp3$/.test(c.file)
+  ok('room swoosh: a measured file clip with its loudest moment, no generated whoosh', T.clip === 'room_swoosh' && /sfx-room-swoosh-v2\.mp3$/.test(c.file)
     && statSync(c.file).size > 20 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0 && !A.clips.whoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
   ok('room swoosh: its peak lands mid-transition (2 s), a little varied each play', T.peakAtMs === 2000 && T.peakAtMs - c.peakMs > 0
     && readFileSync('src/audio/sfx.js', 'utf8').includes('delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs)')
     && A.variation.room_swoosh.rate[0] < 1 && A.variation.room_swoosh.rate[1] > 1 && A.variation.room_swoosh.eq.lo < A.variation.room_swoosh.eq.hi && c.jitterDb > 0);
-  ok('room swoosh sits just under the hits in the mix', c.measuredDb + c.gainDb <= -12 && c.measuredDb + c.gainDb > -16);
+  ok('room swoosh sits well under the hits in the mix (0.175: 30% quieter)', c.measuredDb + c.gainDb <= -15 && c.measuredDb + c.gainDb > -19);
 }
 
 // T73: 0.110 — strikes vary every hit (pitch, a random tone colour,
