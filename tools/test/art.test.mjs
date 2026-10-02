@@ -12,12 +12,12 @@ fresh();
 // The doc and the generator: 13 characters, every one a portrait on disk, the facing rule
 {
   const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor } = await import('../gen-art.mjs');
-  ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('nobody') === DEFAULTS.style
+  ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('bat') === DEFAULTS.style && styleFor('nobody') === DEFAULTS.style
     && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));
   const ids = ['player', ...Object.keys(DATA.enemies)].sort();
-  ok('the prompts doc has a line for the knight and every enemy, each with its portrait on disk',
-    doc.chars.map((c) => c.id).sort().join() === ids.join() && doc.chars.every((c) => existsSync(`assets/chars/${c.file}`) && c.line.startsWith('CHARACTER:')), doc.chars.map((c) => c.id).join());
+  ok('the prompts doc has a line for the knight and every enemy, each with its portrait on disk, the id from the data (the Shrieker\'s file is cave_shrieker.webp)',
+    doc.chars.map((c) => c.id).sort().join() === ids.join() && doc.chars.every((c) => existsSync(`assets/chars/${c.file}`) && c.line.startsWith('CHARACTER:')) && doc.chars.find((c) => c.id === 'bat').file === 'cave_shrieker.webp', doc.chars.map((c) => c.id).join());
   ok('the style block fills in the facing: enemies face left, the knight right', doc.style.includes('[FACING]')
     && promptFor(doc, doc.chars.find((c) => c.id === 'rat')).includes('Three-quarter view, facing left.') && promptFor(doc, doc.chars.find((c) => c.id === 'player')).includes('Three-quarter view, facing right.')
     && facing('vampire_lord') === 'facing left');
