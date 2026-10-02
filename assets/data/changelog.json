@@ -1,4 +1,8 @@
 {
+  "0.00220": [
+    "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
+    "The benchmark round moved with it: a benchmark from an older build is asked again"
+  ],
   "0.00219": [
     "The benchmark ask is back for everyone: once your best room reaches 6, the Great Hall asks once for a 40-second scripted fight (a new round, so a benchmark from an older build is asked again)",
     "Phones: the benchmark keeps the screen awake, and one that went to the background partway is not saved (the game asks again)"

@@ -1,5 +1,5 @@
 {
-  "version": "0.00219",
+  "version": "0.00220",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00220": [
+      "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
+      "The benchmark round moved with it: a benchmark from an older build is asked again"
+    ],
     "0.00219": [
       "The benchmark ask is back for everyone: once your best room reaches 6, the Great Hall asks once for a 40-second scripted fight (a new round, so a benchmark from an older build is asked again)",
       "Phones: the benchmark keeps the screen awake, and one that went to the background partway is not saved (the game asks again)"
@@ -138,11 +142,6 @@
     "0.00206": [
       "Low on health with no potion left, Retreat with Loot pulses red after a cleared room and Push Deeper stays plain (drink one and it flips back)",
       "Attack buttons breathe faintly in red while it is your move — the recharged Heavy Attack no longer glows alone"
-    ],
-    "0.00205": [
-      "Tablets are in: the game plays on an iPad or Android tablet held sideways (phones still get the notice) — tap-sized buttons, no double-tap zoom, no hotkey hints on touch, the Great Hall fits a 1024-wide screen, the corner buttons keep clear of the cards",
-      "Add the game to your home screen for a fullscreen, landscape app (Safari's Share, Add to Home Screen; Chrome's Install)",
-      "The play stats name iPads, iPhones and Android devices as themselves (an iPad used to read as macOS)"
     ]
   }
 }
