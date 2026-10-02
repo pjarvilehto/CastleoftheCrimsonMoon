@@ -479,10 +479,10 @@ button.active.potion-remind { animation-duration: 2.2s; }
    the unit; 130vh ~ the lab's 1400px on the owner's screen. */
 .battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }
 .char-card { backface-visibility: hidden; }
-/* The shader light behind the portrait (ui/cardFx.js): a canvas under
-   everything in the card, screened over the frame's dark plate (the
-   ::before art at -1); the text rows and the figure paint above it. */
-.card-fx { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; mix-blend-mode: screen; }
+/* The shader light behind the portrait (ui/cardFx.js): a canvas inside the
+   card's plate layer (.card-frame / .card-plate), screened over the art
+   there; the text rows and the figure paint above the layer. */
+.card-fx { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; mix-blend-mode: screen; }
 /* The glint (battleLine.js glint, fxParts.js glintSweep): a bright copy of
    the portrait masked to a soft band (--band = its half-width, cards.json)
    that sweeps across the figure as the card turns; opacity 0 at rest. */
@@ -504,18 +504,21 @@ button.active.potion-remind { animation-duration: 2.2s; }
   display: flex; flex-direction: column; align-items: center;
   font-size: var(--card-font); /* fluid type base — everything inside the card is em */
 }
-/* Card art lives on a pseudo-element so it can be slightly transparent
-   (room art shows through) without dimming text/portrait/HP (0.074).
-   z-index:-1 is safe: .battle-line is the stacking context, and it has
-   no background of its own to hide behind. */
-.char-card::before {
-  content: ''; position: absolute; inset: 0; z-index: -1;
-  border-radius: inherit;
+/* Card art lives on its own layer so it can be slightly transparent
+   (room art shows through) without dimming text/portrait/HP (0.074). A
+   real element since 0.193 (battleLine.js frame(), was a ::before): the
+   shader light (.card-fx) sits inside it, screened over the art within
+   this layer's own group, so the plate keeps its 15% see-through with the
+   light on it — exactly the Card Lab's plate. z-index:-1 is safe: the unit
+   is the stacking context, and it has no background of its own. */
+.card-frame {
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
   background: url('assets/chars/card_enemy.png') center/100% 100% no-repeat;
   opacity: 0.85;
 }
 .player-card { height: var(--card-h); aspect-ratio: 669 / 1106; }
-.player-card::before { background-image: url('assets/chars/card_player.png'); }
+.player-card .card-frame { background-image: url('assets/chars/card_player.png'); }
 /* Dead cards: dimmed AND half-transparent — the room's background art
    stays partially visible through them */
 .char-card.dead { filter: grayscale(0.9) brightness(0.55); opacity: 0.2; } /* 0.112: faint (0.109: 0.1, was 0.5) */
@@ -749,9 +752,8 @@ button.active.potion-remind { animation-duration: 2.2s; }
    stylisation (panel scenes stay in tuned px, per convention) */
 .shrine-cards { display: flex; gap: 20px; justify-content: center; margin: 12px 0 8px; }
 .shrine-card {
-  position: relative; isolation: isolate; /* 0.183: its shader light (.card-fx at -1) sits over the card's own gradient, under its content */
+  position: relative; /* its gradient is the .card-plate layer below (0.193), the shader light inside it */
   width: 200px; min-height: 380px;
-  background: linear-gradient(180deg, rgba(72,31,23,0.94), rgba(44,19,14,0.94));
   border: 1px solid rgba(216,201,163,0.55);
   border-radius: 14px;
   padding: 24px 16px 18px;
@@ -776,7 +778,9 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .shrine-cost { text-align: center; color: #9a8b6a; margin-top: auto; }
 .shrine-cost-label { color: var(--parchment); letter-spacing: 2px; margin-bottom: 2px; }
 .shrine-card button { width: 100%; padding: 10px 0; font-size: 1.1rem; letter-spacing: 2px; }
-.shrine-card .card-fx { z-index: -1; }
+/* the panel card's plate (shrineUI.js litCard, 0.193): its old gradient as a layer at the same 94%, the shader light screened inside it */
+.shrine-card .card-plate { position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0.94;
+  background: linear-gradient(180deg, rgb(72,31,23), rgb(44,19,14)); }
 /* treasure rooms (0.155, ui/treasureUI.js): the shrine's cards, a hint
    instead of a boon, the reliquary's blood price in red when it would kill */
 .treasure-hint { text-align: center; color: #b8a888; font-style: italic; margin: 6px 0 10px; }

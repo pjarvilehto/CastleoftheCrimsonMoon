@@ -46,6 +46,7 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
     && u.glint.classList.contains('idle-prowl') && u.glint.attrs.src === u.portrait.attrs.src
     && u.glint.style.animationDelay === u.portrait.style.animationDelay && u.glint.attrs['aria-hidden'] === 'true' && u.glint.attrs.alt === '');
   ok('the unit carries the glint band width from cards.json', u.el.attrs.style === `--band:${DATA.cards.glint.band}%`);
+  ok('the card\'s first child is its frame layer (the art, the light inside)', u.card.children[0].classList.contains('card-frame'));
   const p = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
   ok('player unit: a glint too, on the player idle loop', p.glint && p.glint.classList.contains('idle-player') && p.card.children[p.card.children.indexOf(p.portrait) + 1] === p.glint);
   ok('the dead class hides the glint with the portrait (both are .portrait)', css.includes('.char-card.dead .portrait { display: none; }') && css.includes('.portrait.glint {'));
@@ -72,7 +73,7 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   await sleep(700);
   ok('whenWindowsBack resolves at once when idle, and when a transition\'s windows return', idle && !early && back);
   ok('every level of the line hands its children the camera', css.includes('.battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }'));
-  ok('the shader layer screens over the frame art, under the figure', css.includes('.card-fx { position: absolute; inset: 0; z-index: 0;') && css.includes('mix-blend-mode: screen; }'));
+  ok('the shader layer screens over the frame art inside the card\'s plate layer', css.includes('.card-fx { position: absolute; inset: 0; width: 100%; height: 100%;') && css.includes('mix-blend-mode: screen; }') && css.includes('.card-frame {\n  position: absolute; inset: 0; z-index: -1;') && !css.includes('.char-card::before'));
   const parts = readFileSync('src/ui/fxParts.js', 'utf8');
   ok('the glint sweep peaks at the data strength and moves the mask', parts.includes('opacity: DATA.cards.glint.strength, offset: 0.4, maskPosition') && parts.includes("WebkitMaskPosition: `${to} 0`"));
 }
@@ -80,11 +81,11 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 // Shrine boon and treasure chest cards are lit to their edge
 {
   ok('shrine cards go through litCard with the boon\'s style', readFileSync('src/ui/shrineUI.js', 'utf8').includes("litCard(SHRINE_STYLE[o.id], el('div', { class: 'shrine-card' }")
-    && readFileSync('src/ui/shrineUI.js', 'utf8').includes("{ window: 'panel', amt: DATA.cards.fx.panelAmt }"));
+    && readFileSync('src/ui/shrineUI.js', 'utf8').includes("{ window: 'panel', amt: DATA.cards.fx.panelAmt, into: plate }"));
   ok('treasure chests go through litCard with the chest\'s style', readFileSync('src/ui/treasureUI.js', 'utf8').includes('litCard(CHEST_STYLE[kind], el'));
-  ok('a panel card isolates its light under its content', css.includes('.shrine-card {\n  position: relative; isolation: isolate;') && css.includes('.shrine-card .card-fx { z-index: -1; }'));
+  ok('a panel card\'s gradient is a plate layer holding its light', css.includes('.shrine-card .card-plate { position: absolute; inset: 0; z-index: -1;') && readFileSync('src/ui/shrineUI.js', 'utf8').includes("const plate = el('div', { class: 'card-plate' });"));
   // litCard hands the card back (the light is a no-op in the shim)
   const { litCard } = await import('../../src/ui/shrineUI.js');
   const c = new El('div');
-  ok('litCard returns the card it lit', litCard('blood', c) === c && c.children.length === 0);
+  ok('litCard gives the card its plate layer first and hands it back', litCard('blood', c) === c && c.children.length === 1 && c.children[0].classList.contains('card-plate'));
 }

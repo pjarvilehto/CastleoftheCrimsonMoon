@@ -148,19 +148,25 @@ function sharedGl() {
   return shared;
 }
 
-// Light a card: its 2D canvas goes in under everything else in it. style:
-// { look, tint } (cardStyle / styleNamed); window: 'frame' | 'panel'; amt:
-// the light (default fx.amt). Returns the entry (null when off: the card
-// is left as it is), with set(o) to change its look.
-export function attachCardFx(card, style, { window = 'frame', amt } = {}) {
-  if (!card?.insertBefore || !enabled()) return null;
+// Light a card: its 2D canvas goes into `into` — the card's plate layer
+// (battleLine.js .card-frame, shrineUI.js .card-plate: the art or gradient
+// behind everything, with the card's see-through opacity on it, so the
+// light and the plate fade together and the plate stays as transparent as
+// the Card Lab's; 0.193 — a canvas screened straight over the card made
+// the plate opaque), else the card itself. style: { look, tint }
+// (cardStyle / styleNamed); window: 'frame' | 'panel'; amt: the light
+// (default fx.amt). Returns the entry (null when off: the card is left as
+// it is), with set(o) to change its look.
+export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) {
+  const host = into ?? card;
+  if (!host?.insertBefore || !enabled()) return null;
   const canvas = document.createElement('canvas');
   canvas.className = 'card-fx';
   const ctx = canvas.getContext?.('2d');
   if (!ctx || !sharedGl()) return null;
   canvas.width = 8; canvas.height = 8;
   ctx.globalCompositeOperation = 'copy'; // each frame replaces the last, alpha included
-  card.insertBefore(canvas, card.children[0] ?? null);
+  host.insertBefore(canvas, host.children[0] ?? null);
   const e = { card, canvas, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? DATA.cards.fx.amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
   entries.push(e);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }

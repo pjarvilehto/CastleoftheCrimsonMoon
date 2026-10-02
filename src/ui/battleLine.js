@@ -43,6 +43,10 @@ function glint(id, family, img) {
 }
 // --band: the glint's half-width (cards.json), on the unit for its two portraits.
 const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
+// The card's frame art (0.193: a layer instead of a ::before, so the shader
+// light can live inside it — styles.css .card-frame carries the art and
+// the card's see-through opacity; the light screens over the art within it).
+const frame = () => el('div', { class: 'card-frame' });
 
 // Death collapse (0.087): sink, flash red, fade — then the card turns
 // into the skull. Without the Web Animations API (tests) it's instant.
@@ -108,7 +112,9 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
   const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
+  const plate = frame();
   const card = el('div', { class: 'char-card player-card' },
+    plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, 'THE CURIOUS KNIGHT'),
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`)),
@@ -130,7 +136,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     shine,
     chip,
     potions);
-  attachCardFx(card, cardStyle('player')); // the shader light behind the knight (0.183)
+  attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
@@ -175,7 +181,9 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // (styles.css), so the card never has to be rebuilt.
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
+  const plate = frame();
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
+    plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
         isElite(e) ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
@@ -186,7 +194,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     el('div', { class: 'skull' }, '☠'),
     hp.line,
     meterLine);
-  attachCardFx(card, cardStyle(e.id, !!e.boss)); // the shader light behind the figure, by its material (0.183)
+  attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
   // Dead cards keep their slot: the button row stays mounted with the
   // button hidden (ghost-btn), so the bottom-aligned card can't shift.
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');

@@ -27,8 +27,8 @@ html, body { overflow: hidden; }
 /* ---- the lab's additions to the cards ---- */
 /* the frame art split in two (cut from assets/chars/card_*.png): the border stays as the game draws it,
    the plate (its dark interior) is a layer of its own, faded by --plate-alpha together with the shader inside it */
-#stage .char-card::before { background-image: url("labs/cards/card_enemy_border.png"); }
-#stage .player-card::before { background-image: url("labs/cards/card_player_border.png"); }
+#stage .card-frame { background-image: url("labs/cards/card_enemy_border.png"); }
+#stage .player-card .card-frame { background-image: url("labs/cards/card_player_border.png"); }
 .card-plate { position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: var(--plate-alpha, 0.85); isolation: isolate;
   background: url("labs/cards/card_enemy_plate.png") center / 100% 100% no-repeat; }
 .player-card .card-plate { background-image: url("labs/cards/card_player_plate.png"); }
