@@ -1,6 +1,20 @@
 {
   "title": "medieval_castle.jpg",
   "hub": "castle_great_hall.jpg",
+  "entrance": [
+    "dungeon_prison_corridor.jpg",
+    "dungeon_torch_corridor.jpg",
+    "corridor_bone_passage.jpg",
+    "corridor_cavern_chasm.jpg",
+    "corridor_crypt_walkway.jpg",
+    "corridor_flooded_hall.jpg",
+    "corridor_gothic_vault.jpg",
+    "corridor_sewer_aqueduct.jpg",
+    "corridor_torch_hall.jpg"
+  ],
+  "antechambers": [
+    "dungeon_antechamber.jpg"
+  ],
   "rooms": [
     "castle_entrance.jpg",
     "castle_courtyard.jpg",
@@ -54,7 +68,7 @@
   ],
   "death": "castle_chapel_exterior.jpg",
   "shrine": "castle_shrine_gold.jpg",
-  "shrineName": "The Shrine",
+  "shrineName": "An Ominous Shrine",
   "roomNames": {
     "castle_entrance.jpg": "The Gatehouse",
     "castle_courtyard.jpg": "The Courtyard",
@@ -69,7 +83,7 @@
     "dungeon_arcane_library.jpg": "The Forbidden Stacks",
     "dungeon_armory.jpg": "The Armory",
     "dungeon_bell_tower.jpg": "The Bell Tower",
-    "dungeon_cathedral_nave.jpg": "The Crimson Nave",
+    "dungeon_cathedral_nave.jpg": "The Crimson Cathedral",
     "dungeon_cistern.jpg": "The Drowned Cistern",
     "dungeon_conservatory.jpg": "The Withered Conservatory",
     "dungeon_kitchen.jpg": "The Kitchens",

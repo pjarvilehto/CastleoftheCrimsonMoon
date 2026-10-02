@@ -75,8 +75,9 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    upgrades land in `run.itemsFound` — one path, `run/loot.js takeItem`,
    for kill loot and treasure chests (the Heart's revive is one too:
    `runState.tryRevive`). One shrine per stretch of `bossEvery`
-   rooms (`run.shrineRooms`: 2-7, 10-15, ...); coin boons can have a flat
-   price (`flatCost`).
+   rooms (`run.shrineRooms`: on the way to rooms 2-7, 10-15, ...); coin
+   boons can have a flat price (`flatCost`, else priced by the room the
+   shrine leads to).
 5. **Potions persist** (0.080): a run draws the profile's stock and
    `settleRun()` writes back what's left, capped by `potionCap`; pickups go
    through `runState.addPotion()` (sold when the satchel is full).
@@ -288,10 +289,26 @@ may hear the old one for ~4 hours.
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep
   loading behind — a room whose painting isn't in yet keeps the last one up.
+- **Only fights are numbered (0.171, the owner's call):** `run.roomNumber`
+  counts fights (the boss's included), so room 8 is always the throne room.
+  The shrine and the treasure room are interludes met on the way to a
+  numbered room (`runState.enterNextRoom`, `roomGen.generateInterlude`):
+  `number: null`, `depth` = the room they lead to (prices and loot),
+  titled by name alone ("An Ominous Shrine", "The Frozen Tribute"), no
+  record tag. A stretch is now eight fights, not seven + the shrine (the
+  sim: ~20% more coins per run, bosses a little easier — 0.171's notes).
+  Room 1 is always a corridor from `backgrounds.json entrance`, and the
+  room before each boss (7, 15, 23) always an antechamber from
+  `antechambers`, which appear nowhere else (both lists are fight
+  paintings, also in `rooms`; the entrance ones load first behind the
+  title; one antechamber so far, more coming from the owner). Saves made
+  before 0.171 count shrines in `bestRoom` (one or two rooms high; left
+  as is).
 - Treasure rooms (0.155, `run/treasure.js` + `ui/treasureUI.js`, tuning
   `difficulty.json treasure`): a run gets one with `chance` (30%) once the
-  save's best room reaches `unlockRoom` (5; silent), at a room in reach
-  (`minRoom`..best room, no boss rooms; the stretch's shrine steps aside);
+  save's best room reaches `unlockRoom` (5; silent), on the way to a room in
+  reach (`minRoom`..best room, not a boss room; the stretch's shrine steps
+  aside);
   painted from `backgrounds.json treasure`. Three chests, open one: Iron
   Coffer (coins worth `coffer.fights` fights at that depth), Gilded Chest
   (one item of the depth's tier, made for a slot it improves, else
@@ -395,7 +412,8 @@ see 0.153), convert to 2048x1152 JPEG q86 in `assets/bg/` (new names, never
 replace), `python3 tools/gen-depth.py <model.onnx> <file>.jpg` for each (the
 model URL is in the script's header; download it to /tmp in a new session),
 name them in `backgrounds.json roomNames` ("The …", unique), add them to
-the right list (`rooms` / `bosses` / `treasure`), `git rm` the PNGs, check a
+the right list (`rooms` / `bosses` / `treasure`; a corridor or an
+antechamber also goes in `entrance` / `antechambers`), `git rm` the PNGs, check a
 few in the game, bump, ship. The upload lands outside the working branch
 sometimes — fetch all branches to find it.
 

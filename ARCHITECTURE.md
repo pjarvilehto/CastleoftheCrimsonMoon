@@ -73,7 +73,8 @@ src/
     runState.js         run object, rooms, potions, loot routing, tryRevive(),
                         settleRun()
     roomGen.js          threat-budget rooms, boss every 8 (a throne room of 4),
-                        one shrine per stretch, the treasure room; paintings
+                        room 1 an entrance corridor; generateInterlude = the
+                        shrine / treasure room between fights (unnumbered); paintings
                         never repeat in a run (pickFresh, run.seenBackgrounds)
     combat.js           one action in phases: rollHit -> smash | strike(+spill)
                         -> lifesteal -> enemyPhase -> summons -> cleared

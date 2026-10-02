@@ -28,7 +28,7 @@ export function renderShrineRoom(root, run, room, h) {
 export function renderPanelRoom(root, run, room, h, body) {
   const lowhp = isLowHp(run.hp, run.maxHp) ? ' lowhp' : '';
   const header = el('div', { class: 'run-hud' },
-    el('span', {}, 'Room ', el('b', {}, String(room.number))),
+    el('span', {}, 'Rooms cleared ', el('b', {}, String(run.roomNumber))),
     el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${hpColor(run.hp, run.maxHp)}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, hpColor(run.hp, run.maxHp))),
     el('span', {}, 'Coins ', el('b', { id: 'hud-coins' }, String(h.coins))),
     el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(h.xp))),
@@ -66,7 +66,7 @@ function shrineBody(run, room, { log, refresh }) {
         el('div', { class: 'shrine-icon' }, o.icon),
         el('div', { class: 'shrine-cost' },
           el('div', { class: 'shrine-cost-label' }, 'COST:'),
-          el('div', {}, costText(o, run.roomNumber))),
+          el('div', {}, costText(o, room.depth))),
         el('button', {
           disabled: !canAffordOffer(run, o),
           key: String(i + 1),

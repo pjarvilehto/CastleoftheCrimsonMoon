@@ -1,8 +1,12 @@
 // run/roomGen.js — procedural room generation via threat budget.
 // Each combat room has a budget; we spend it on scaled enemies whose
 // tier matches the room's depth. Boss rooms every bossEvery rooms.
-// One shrine in every stretch of bossEvery rooms (run.shrineRooms: rooms
-// 2-7, 10-15, ...), so there's always one before each boss (0.091).
+// Only fights are numbered (0.171): a shrine (one per stretch of bossEvery
+// rooms, 0.091) or a treasure room is an interlude BETWEEN numbered rooms
+// (generateInterlude), so room 8 is always the throne room. Room 1, the
+// way in from the Great Hall, is always a corridor (backgrounds.json
+// entrance); the room before each throne room an antechamber
+// (antechambers, 0.171) — and only that room.
 
 import { DATA } from '../shared/data.js';
 import { scaleEnemy, roomTier, pick } from '../shared/balance.js';
@@ -15,6 +19,16 @@ function pickFresh(pool, run) {
   const bg = pick(fresh.length ? fresh : pool);
   seen?.push(bg);
   return bg;
+}
+
+// Which paintings a fight room draws from (0.171): the entrance corridors
+// for room 1, an antechamber before each boss, else every fight painting
+// but the antechambers.
+function fightPool(roomNumber) {
+  const b = DATA.backgrounds, every = DATA.difficulty.bossEvery;
+  if (roomNumber === 1) return b.entrance;
+  if (roomNumber % every === every - 1) return b.antechambers;
+  return b.rooms.filter((f) => !b.antechambers.includes(f));
 }
 
 function roomNameFor(bgFile) {
@@ -37,27 +51,8 @@ export function generateRoom(roomNumber, run = {}) {
     };
   }
 
-  // The guaranteed pre-boss shrine.
-  if (run.shrineRooms?.includes(roomNumber)) {
-    return {
-      number: roomNumber,
-      kind: 'shrine',
-      isBoss: false,
-      taken: false,
-      name: DATA.backgrounds.shrineName,
-      enemies: [],
-      background: DATA.backgrounds.shrine,
-    };
-  }
-
-  // A treasure room (0.155, run/treasure.js): three chests, no fight.
-  if (run.treasureRoom === roomNumber) {
-    const bg = pickFresh(DATA.backgrounds.treasure, run);
-    return { number: roomNumber, kind: 'treasure', isBoss: false, opened: null, name: roomNameFor(bg), enemies: [], background: bg };
-  }
-
   const enemies = roomEnemies(roomNumber); // rolled before the painting (seeded runs depend on the order)
-  const bg = pickFresh(DATA.backgrounds.rooms, run);
+  const bg = pickFresh(fightPool(roomNumber), run);
   return {
     number: roomNumber,
     kind: 'combat',
@@ -66,6 +61,18 @@ export function generateRoom(roomNumber, run = {}) {
     enemies,
     background: bg,
   };
+}
+
+// An interlude (0.171): the stretch's shrine or the run's treasure room,
+// met on the way to room `before`. It has no number; `depth` (the room it
+// leads to) prices what's inside.
+export function generateInterlude(kind, before, run = {}) {
+  if (kind === 'shrine') {
+    return { number: null, depth: before, kind, isBoss: false, taken: false, name: DATA.backgrounds.shrineName, enemies: [], background: DATA.backgrounds.shrine };
+  }
+  // A treasure room (0.155, run/treasure.js): three chests, no fight.
+  const bg = pickFresh(DATA.backgrounds.treasure, run);
+  return { number: null, depth: before, kind: 'treasure', isBoss: false, opened: null, name: roomNameFor(bg), enemies: [], background: bg };
 }
 
 // A combat room's line: the threat budget spent on enemies of the depth's

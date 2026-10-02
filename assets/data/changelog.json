@@ -1,4 +1,9 @@
 {
+  "0.171": [
+    "Only fights are numbered now: the shrine and treasure rooms come between rooms, so room 8 is always the throne room (\"An Ominous Shrine\" instead of \"Room 3 - The Shrine\")",
+    "Every descent starts in a corridor, and an antechamber always leads to the throne room",
+    "The Crimson Nave is now the Crimson Cathedral"
+  ],
   "0.170": [
     "The narrator, when switched off, no longer uses up a take he never said — switching him back on, the lines vary as they should"
   ],

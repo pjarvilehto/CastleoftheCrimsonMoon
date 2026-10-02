@@ -1,5 +1,5 @@
 {
-  "version": "0.170",
+  "version": "0.171",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -82,6 +82,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.171": [
+      "Only fights are numbered now: the shrine and treasure rooms come between rooms, so room 8 is always the throne room (\"An Ominous Shrine\" instead of \"Room 3 - The Shrine\")",
+      "Every descent starts in a corridor, and an antechamber always leads to the throne room",
+      "The Crimson Nave is now the Crimson Cathedral"
+    ],
     "0.170": [
       "The narrator, when switched off, no longer uses up a take he never said — switching him back on, the lines vary as they should"
     ],
@@ -130,10 +135,6 @@
       "Start a New Game asks in the game's own dialog (W wipes, K keeps)",
       "The 3D background no longer lurches after a hidden tab or a sleep, and cleans up fully when it steps down to flat",
       "Under the hood: a cleanup pass over the whole game — every tuning number now comes from the data files, shared code paths, leaner frames; no gameplay changes"
-    ],
-    "0.156": [
-      "7 new corridors to fight in, and the bosses now hold court in one of four throne rooms — the Ember, Obsidian and Rose Thrones join the old one",
-      "No room looks the same twice in a run"
     ]
   }
 }

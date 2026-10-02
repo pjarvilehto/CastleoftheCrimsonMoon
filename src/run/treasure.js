@@ -5,7 +5,8 @@
 // the save's best room has reached `treasure.unlockRoom` (a silent unlock),
 // at a room between `treasure.minRoom` and the save's best room (so it's
 // within reach), never a boss room; the stretch's shrine steps aside
-// (runState.js). It takes a fight's place in the room count.
+// (runState.js). 0.171: an interlude on the way to that room, outside the
+// room count; room.depth (the room it leads to) sets what's inside.
 // What: an Iron Coffer (a haul of coins, `coffer.fights` fights' worth at
 // that depth), a Gilded Chest (one piece of gear of the depth's tier, made
 // for a slot it improves — salvaged if none can be) or a Sealed Reliquary
@@ -54,14 +55,14 @@ export function openChest(run, room, kind, log) {
   if (kind === 'coffer') {
     const fights = randInt(t.coffer.fights);
     let coins = 0;
-    for (let i = 0; i < fights; i++) for (const e of roomEnemies(room.number)) coins += rollCoins(e);
+    for (let i = 0; i < fights; i++) for (const e of roomEnemies(room.depth)) coins += rollCoins(e);
     coins = Math.round(coins * (1 + run.stats.fortuneBonus) * run.coinMult);
     run.coins += coins;
     log(`The coffer spills its hoard: +${coins} coins!`, 'multi');
     return { kind, coins };
   }
   if (kind === 'gilded') {
-    const tier = room.number >= t.gilded.tier3Room ? 3 : 2;
+    const tier = room.depth >= t.gilded.tier3Room ? 3 : 2;
     return { kind, ...takeItem(run, gearFor(run, tier), log) };
   }
   // the reliquary: blood first
@@ -78,7 +79,7 @@ export function openChest(run, room, kind, log) {
       return { kind, died: true };
     }
   }
-  const relicOk = room.number >= DATA.difficulty.t4MinRoom && !run.relicFound;
+  const relicOk = room.depth >= DATA.difficulty.t4MinRoom && !run.relicFound;
   if (relicOk && Math.random() < t.reliquary.relicChance + run.stats.fortuneBonus) {
     return { kind, ...takeItem(run, pick(relicIds()), log) };
   }

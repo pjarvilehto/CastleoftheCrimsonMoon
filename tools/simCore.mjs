@@ -137,7 +137,7 @@ export async function loadSim() {
       }
       if (room.kind === 'shrine') {
         const boon = takeShrine(run, shrine, agg);
-        if (rec.shrineRoom === null) { rec.shrineRoom = room.number; rec.boon = boon; } // the run's FIRST shrine
+        if (rec.shrineRoom === null) { rec.shrineRoom = room.depth; rec.boon = boon; } // the run's FIRST shrine
         rec.depth = run.roomNumber;
         continue;
       }
