@@ -23,6 +23,7 @@ const cfg = () => DATA.audio;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 let nodes = null;                         // { ctx, music, duck, sfx, master, limiter }
+let duckUntil = 0;                        // context time the latest duck releases (a running max, never reset)
 const muted = { music: false, sfx: false }; // the corner toggles (music.js / sfx.js own their persistence)
 let volumes = null;
 
@@ -97,15 +98,19 @@ export const musicInput = () => mixer()?.music ?? null;
 export const sfxInput = () => mixer()?.sfx ?? null;
 
 // The music dips by duck.db under a stinger starting at `at` (context
-// time) and comes back after `seconds`.
+// time) and comes back after `seconds` — or when the longest duck still
+// running ends (0.00223: the hold drops every later event, the earlier
+// duck's release included, so a short stinger under a narrator line used
+// to bring the music back early).
 export function duckMusic(seconds, at = 0) {
   if (!nodes) return;
   const d = cfg().duck;
   const g = nodes.duck.gain;
   const t = Math.max(at, nodes.ctx.currentTime);
+  duckUntil = Math.max(duckUntil, t + seconds);
   hold(g, t);
   g.setTargetAtTime(dbToGain(d.db), t, d.attack / 3);
-  g.setTargetAtTime(1, t + seconds, d.release / 3);
+  g.setTargetAtTime(1, duckUntil, d.release / 3);
 }
 
 // A hidden tab goes quiet (and stops using the CPU for audio); it comes back

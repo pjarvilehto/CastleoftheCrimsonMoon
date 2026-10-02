@@ -1,22 +1,24 @@
 // ui/scenes/hubScene.js — the meta game: disciplines, shop, alchemy, forge.
 // Currency split (0.059): XP trains disciplines; coins buy potions,
-// alchemy tracks, and Forge item enhancements.
+// alchemy tracks, and Forge item enhancements. The three sections' rows
+// are built in ui/hubSections.js (0.00223); this file keeps the hall's
+// table, the two assemblies (rule 8), Descend and the purchase flash.
 
-import { setBackground, currentScene, go } from '../../core/scene.js';
+import { setBackground, currentScene, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { preloadRest, restProgress } from '../../shared/preload.js';
-import { sfx } from '../../audio/sfx.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile } from '../../meta/profile.js';
-import { derivedStats, itemWithForge, playerLevel } from '../../meta/stats.js';
+import { derivedStats, playerLevel } from '../../meta/stats.js';
 import { equippedItemIds } from '../../meta/equipment.js';
 import {
-  STAT_DEFS, statCost, canAfford, buyStat,
-  restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
-  ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
-  forgeCost, forgeMaxed, forgeItem, forgeable } from '../../meta/leveling.js';
-import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
-import { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } from '../hubText.js';
+  STAT_DEFS, statCost,
+  potionCost, satchelFull, satchelCost, satchelMaxed,
+  ALCHEMY_DEFS, alchemyCost, alchemyMaxed,
+  forgeCost, forgeMaxed, forgeable } from '../../meta/leveling.js';
+import { statBox, potionLevel } from '../hud.js';
+import { recordsLine } from '../hubText.js';
+import { trainSection, alchemySection, equipSection } from '../hubSections.js'; // the three sections (0.00223)
 import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
@@ -43,11 +45,6 @@ export function canForgeAny(p) {
 }
 export const canSpendCoins = (p) => canSpendAlchemy(p) || canForgeAny(p);
 
-// Below potions.lowShare of the satchel (the HUD's red count; the Buy glow needs no low stock since 0.00216).
-export function potionsLow(p) {
-  return p.potions < p.potionCap * DATA.difficulty.potions.lowShare;
-}
-
 // opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.161)
 export function hubScene(opts = {}) {
   let leaving = false;
@@ -61,8 +58,10 @@ export function hubScene(opts = {}) {
       // 0.134: never over another dialog — it waits its turn
       // 0.136: …and never once a descent has started ("Gathering shadows…"
       // waits for the art; the run would start under the prompt and be lost)
+      // 0.00223: …and only once the hall's windows are back (enter() runs inside the
+      // transition; the ask used to open mid-fade and its Continue's go() was dropped)
       const ask = () => { if (currentScene() === scene && !leaving && maybeAskBenchmark() === 'wait') setTimeout(ask, 1000); };
-      setTimeout(ask, 1200);
+      whenWindowsBack().then(() => setTimeout(ask, 1200));
     },
     relayout(root) { render(root); }, // the phone query flipped (main.js watchPhoneLayout): the other assembly
   };
@@ -103,7 +102,6 @@ export function hubScene(opts = {}) {
   function render(root) {
     const p = getProfile();
     const stats = derivedStats(p);
-    const every = DATA.difficulty.breakthroughEvery;
     const phone = phoneLayout(); // 0.00208: the phone's assembly and wording (below)
 
     // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
@@ -117,104 +115,9 @@ export function hubScene(opts = {}) {
       statBox('Armor', stats.armor),
       statBox('Potions', `${p.potions}/${p.potionCap}`, `stat-potions ${potionLevel(p)}`));
 
-    // ---- TRAIN: five disciplines, XP-only. Breakthrough ★ every 5th level. ----
-    const trainSection = el('div', {},
-      el('h2', {}, 'Train (permanent upgrades)'),
-      el('div', { class: 'subtitle' }, 'XP only — every 5th level is a ★ breakthrough and counts double'),
-      ...Object.entries(STAT_DEFS).map(([key, def]) => {
-        const lvl = p.stats[key];
-        const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
-        const desc = statDesc(key, lvl, phone);
-        return el('div', { class: 'item-row', 'data-row': key },
-          el('div', {},
-            el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
-            el('span', {}, `Lv ${lvl}${star} — ${desc}`)),
-          el('button', {
-            disabled: !canAfford(key),
-            key: def.key,
-            onclick: () => {
-              sfx('levelup');
-              const lv = playerLevel(getProfile());
-              buyStat(key);
-              if (playerLevel(getProfile()) > lv) narrate('level_up'); // a character level (every 5 trained levels)
-              flashNext(key); render(root);
-            },
-          }, `Train (${statCost(lvl).xp}xp)`));
-      }));
-
-    // ---- ALCHEMY: potions + three coin tracks. ----
-    const alchemySection = el('div', {},
-      el('h2', {}, 'Alchemy (coins)'),
-      // 0.080: potions are a persistent stock; the satchel caps it.
-      el('div', { class: 'item-row', 'data-row': 'potion' },
-        el('div', {}, el('b', {}, 'Healing Potion '),
-          el('span', {}, potionDesc(p, phone))),
-        el('button', {
-          disabled: p.coins < potionCost() || satchelFull(p),
-          // able to buy one: the obvious next step (0.00216: it used to wait for the stock to run low, 0.090 — a player at 3/4 with the coins expected the glow)
-          class: p.coins >= potionCost() && !satchelFull(p) ? 'active' : '',
-          key: 'u', // b-u-y
-          onclick: () => { restockPotion(); flashNext('potion'); render(root); },
-        }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
-      el('div', { class: 'item-row', 'data-row': 'satchel' },
-        el('div', {}, el('b', {}, phone ? 'Satchel ' : 'Potion Satchel '),
-          el('span', {}, satchelDesc(p, satchelMaxed(p), phone))),
-        satchelMaxed(p)
-          ? el('span', { class: 'forge-max' }, 'MAX')
-          : el('button', {
-              disabled: p.coins < satchelCost(p),
-              key: 'x', // e-x-pand
-              onclick: () => { sfx('levelup'); expandSatchel(); flashNext('satchel'); render(root); },
-            }, `Expand (${satchelCost(p)}c)`)),
-      ...Object.entries(ALCHEMY_DEFS).map(([track, def]) => {
-        const lvl = p.alchemy[track] ?? 0;
-        return el('div', { class: 'item-row', 'data-row': track },
-          el('div', {},
-            el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
-            el('span', {}, `Lv ${lvl} — ${alchemyDesc(track, phone)}`)), // (efficiency: 0.112's tapering, the next level's gain)
-          alchemyMaxed(track)
-            ? el('span', { class: 'forge-max' }, 'MAX')
-            : el('button', {
-              disabled: p.coins < alchemyCost(track),
-              key: def.key,
-              onclick: () => { sfx('levelup'); trainAlchemy(track); flashNext(track); render(root); },
-            }, `Train (${alchemyCost(track)}c)`));
-      }));
-
-    // ---- EQUIPMENT with per-item Forge enhancement. ----
-    const eq = p.equipment;
-    const slotRow = (label, id) => {
-      const item = id ? itemWithForge(id, p) : null;
-      const forgeLvl = id ? (p.forged[id] ?? 0) : 0;
-      // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
-      // worth the coins, so it gets no enhance button at all (0.068).
-      const canForge = !!item && forgeable(id);
-      return el('div', { class: 'item-row', 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
-        el('span', { class: 'equip-slot' }, label),
-        item
-          ? el('div', { class: 'equip-right' },
-              el('div', { class: 'equip-item' },
-                el('div', {}, itemName(item), forgeLvl ? ` +${forgeLvl}` : null),
-                el('div', { class: 'equip-desc' }, describeItem(item))),
-              !canForge
-              ? null
-              : forgeMaxed(id)
-                ? el('span', { class: 'forge-max' }, 'MAX')
-                : el('button', {
-                    class: 'forge-btn',
-                    disabled: p.coins < forgeCost(id),
-                    onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); flashNext(`slot-${label}`); render(root); },
-                  }, `+${forgeCost(id)}c`))
-          : el('span', { class: 'equip-empty' }, '— empty —'));
-    };
-    const equipSection = el('div', {},
-      slotRow('Weapon', eq.weapon),
-      slotRow('Armor', eq.armor),
-      slotRow('Boots', eq.boots),
-      slotRow('Ring I', eq.rings[0]),
-      slotRow('Ring II', eq.rings[1]),
-      slotRow('Trinket', eq.trinket),
-      slotRow('Amulet', eq.amulet));
+    // the three sections (ui/hubSections.js); done = a purchase landed: the row flashes after the re-render
+    const done = (row) => { flashNext(row); render(root); };
+    const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done), alchemySection(p, phone, done), equipSection(p, done)];
 
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
@@ -223,9 +126,9 @@ export function hubScene(opts = {}) {
     // sheets under tabs (phoneHall). A new section is a row here and nothing
     // else. spend: something in it can be bought now (the phone's tab dot).
     const hall = [
-      { tab: 'Train', title: 'THE GREAT HALL', subtitle: 'Your war camp at the castle gates', body: trainSection, spend: canSpendXp(p) },
-      { tab: 'Alchemy', body: alchemySection, spend: canSpendAlchemy(p) },
-      { tab: 'Equipment', title: 'EQUIPMENT', subtitle: 'What you carry into the dark — the Forge enhances it for coins', body: equipSection, spend: canForgeAny(p) },
+      { tab: 'Train', title: 'THE GREAT HALL', subtitle: 'Your war camp at the castle gates', body: trainBody, spend: canSpendXp(p) },
+      { tab: 'Alchemy', body: alchemyBody, spend: canSpendAlchemy(p) },
+      { tab: 'Equipment', title: 'EQUIPMENT', subtitle: 'What you carry into the dark — the Forge enhances it for coins', body: equipBody, spend: canForgeAny(p) },
     ];
     const records = el('div', { class: 'subtitle records-line' }, recordsLine(p));
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];

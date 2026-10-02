@@ -19,7 +19,7 @@ import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
 import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
-import { LADDER, backingSize, fpsWindow, slowAt } from './bg3dQuality.js';
+import { LADDER, backingSize, fpsWindow, slowAt, nextStep } from './bg3dQuality.js';
 import { reducedMotion } from '../shared/motion.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
@@ -49,7 +49,7 @@ let push = null;      // the room transition's camera push (0.171): { t0, rel } 
 // the camera starts pushing into the painting now, so the new one can
 // appear pushed in and pull back — one movement (parallax.push).
 export function bgPush() {
-  if (!gl || view === 'flat' || !(cfg.push.dist > 0)) return;
+  if (!gl || !layers.length || view === 'flat' || !(cfg.push.dist > 0)) return; // no painting on screen yet (the boot's first transition, or a first layer that failed to load): nothing to push through — the flat fallback skips it too (scene.js, activeBg null); 0.00223: the title painting zoomed in 16% and back out over eight seconds
   push = { t0: performance.now(), rel: null };
 }
 
@@ -59,15 +59,15 @@ const unit = (t) => Math.min(1, Math.max(0, t));
 function dollyOf(L, now, last) {
   if (!push) return 0;
   const { dist, inMs, outMs } = cfg.push;
-  if (last && L.born > push.t0) return dist * (1 - easeOut(unit((now - L.born) / outMs))); // the new painting pulls back to rest
+  if (last && L.born > push.t0 && !(push.rel && L.born >= push.rel)) return dist * (1 - easeOut(unit((now - L.born) / outMs))); // the new painting pulls back to rest (one that came after the ease-back began rides it with the old one, 0.00223: it used to appear at full depth over a painting at rest and pull back a second time — transitionTo gives the windows back at BG_WAIT_MAX_MS, the push eases back at inMs + fadeMs, and a streaming room painting can land between)
   const d = dist * easeIn(unit((now - push.t0) / inMs));
   return push.rel ? d * (1 - easeOut(unit((now - push.rel) / outMs))) : d; // the old one keeps going in (or eases back)
 }
 // Over? (the new painting is at rest, or the old one eased back)
 function settlePush(now) {
   const { inMs, outMs } = cfg.push;
-  const incoming = layers.length > 1 || layers[0]?.born > push.t0 ? layers[layers.length - 1] : null;
-  if (incoming && incoming.born > push.t0) { if (now - incoming.born >= outMs) push = null; return; }
+  const top = layers[layers.length - 1];
+  if (!push.rel && top?.born > push.t0) { if (now - top.born >= outMs) push = null; return; } // (a layer born after the ease-back began no longer restarts the push's life, 0.00223)
   if (!push.rel && now - push.t0 > inMs + cfg.fadeMs) push.rel = now; // no new painting came: ease back
   if (push.rel && now - push.rel >= outMs) push = null;
 }
@@ -347,10 +347,10 @@ export const whenPushSettled = () => new Promise((resolve) => { const check = ()
 // Too slow: one step down the quality ladder (core/bg3dQuality.js).
 // false = past the last step, back to the flat backgrounds.
 function degrade() {
-  level++;
+  const step = nextStep(++level);
   fpsW = null; // measure the new step afresh
-  if (level >= LADDER.length) { shutdown(); return false; }
-  fogOn = LADDER[level].fog;
+  if (!step) { shutdown(); return false; } // past the last step: back to the flat backgrounds
+  fogOn = step.fog;
   resize();
   return true;
 }

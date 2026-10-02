@@ -12,6 +12,8 @@
 //   - The very first background appears instantly (windows fade in over it).
 //   - Re-renders WITHIN a scene (combat updates, hub training) stay instant.
 
+import { el as build } from './dom.js'; // (dom.js imports nothing: no cycle)
+
 const app = () => document.getElementById('app');
 
 let current = null;
@@ -39,19 +41,33 @@ export function onBackgroundChange(fn) {
 
 export function show(scene) {
   transitionTo(() => {
-    const el = app();
-    el.innerHTML = '';
+    const root = app();
+    root.innerHTML = '';
     current = scene;
-    scene.enter(el);
-    sceneListener?.(scene);
+    // 0.00223: a scene whose enter() throws used to leave an empty, un-hidden
+    // #app with no way forward — now a panel with a Reload button (the
+    // home-screen app has no reload control of its own; main.js's boot
+    // catch does the same)
+    try { scene.enter(root); } catch (e) {
+      console.error(e);
+      root.innerHTML = '';
+      root.append(build('div', { class: 'panel' }, build('h1', {}, 'Something went wrong'), build('button', { class: 'primary', proceed: true, onclick: () => globalThis.location?.reload?.() }, 'Reload')));
+      return;
+    }
+    // the listener (the update prompt) is told once the new scene's windows
+    // are back (0.00223: it fired 1 s into the fade, with the windows
+    // hidden — the prompt opened over a black screen)
+    whenWindowsBack().then(() => { if (current === scene) sceneListener?.(scene); });
   });
 }
 
 // The scene on screen, and a listener for scene switches (0.094: the
-// update prompt waits for a run to end — scenes mid-run set inRun).
+// update prompt waits for a run to end — scenes mid-run set inRun), told
+// once the new scene's windows are back.
 export const currentScene = () => current;
 export function onSceneChange(fn) { sceneListener = fn; }
-// Mid-fade: the outgoing scene is still in the DOM (hotkeys.js ignores keys).
+// Mid-fade: the outgoing scene is still in the DOM (hotkeys.js ignores its
+// keys; a dialog keeps the keyboard, 0.00223).
 export const isTransitioning = () => transitioning;
 
 // The router (0.117): scenes switch by name — go('hub'), go('runEnd', run,
@@ -62,7 +78,9 @@ const scenes = {};
 export function registerScene(name, factory) { scenes[name] = factory; }
 export function go(name, ...args) {
   if (!scenes[name]) throw new Error(`unknown scene: ${name}`);
-  show(scenes[name](...args));
+  const scene = scenes[name](...args);
+  scene.name ??= name; // (0.00223: a scene knows its name — the ?debug BENCHMARK returns to where it was pressed; one shown by show() directly stays unnamed)
+  show(scene);
 }
 
 // Fade the windows out, run `work()` (swap content and/or background),
@@ -70,8 +88,8 @@ export function go(name, ...args) {
 // running — this is what makes rapid hotkey presses safe.
 // 0.154 (the owner's call): strictly in order — the windows fade out
 // fully before the background changes, and when work() changed it, the
-// windows come back only once the new painting has fully faded in (keys
-// stay ignored meanwhile: isTransitioning()).
+// windows come back only once the new painting has fully faded in (the
+// scene's keys stay ignored meanwhile: isTransitioning(); a dialog's work).
 // Told at the start of every transition (0.171): the background's push.
 export function onTransition(fn) { transitionListener = fn; }
 
@@ -109,15 +127,18 @@ export function transitionTo(work, fadeOutMs = 1000) {
 }
 
 // Crossfade between the two stacked background layers. Same file = no-op.
-// First background ever: instant (the windows fade in over it). Returns a
-// promise that resolves once the new painting is fully in (0.154): the 3D
-// renderer's crossfade when it runs, else the CSS layer's own fade, each
-// after the image has loaded.
+// First background ever: instant (the windows fade in over it) — and its
+// promise resolves at once on BOTH paths (0.00223: the CSS layer is painted
+// under `transition: none`, so the stylesheet's 2 s was dead time holding
+// the windows). Every later one returns a promise that resolves once the
+// new painting is fully in (0.154): the 3D renderer's crossfade when it
+// runs, else the CSS layer's own fade, each after the image has loaded.
 export function setBackground(file) {
   const a = document.getElementById('bg0');
   const b = document.getElementById('bg1');
   const url = `url("assets/bg/${file}")`;
   if (activeBg && activeBg.dataset.file === file) return Promise.resolve();
+  const first = !activeBg;
   const next = activeBg === a ? b : a;
   next.dataset.file = file;
   // the flat layer's push (0.171): the new painting appears pushed in and
@@ -142,14 +163,14 @@ export function setBackground(file) {
   activeBg?.classList.remove('push'); // (the old layer: it is faded out; the class goes with it)
   activeBg = next;
   bgChanges++;
-  bgShown = Promise.resolve(bgListener?.(file) ?? cssFaded(next, file)).catch(() => {}); // (0.00209: a shut-down renderer answers null and the CSS layer's own fade is waited for, as the strict order wants)
+  bgShown = Promise.resolve(bgListener?.(file) ?? cssFaded(next, file, first)).catch(() => {}); // (0.00209: a shut-down renderer answers null and the CSS layer's own fade is waited for, as the strict order wants)
   return bgShown;
 }
 
-// the CSS layer's crossfade: the image loaded, then its transition's length
-function cssFaded(layer, file) {
+// the CSS layer's crossfade: the image loaded, then its transition's length (none for the first painting, shown instantly)
+function cssFaded(layer, file, instant = false) {
   const css = globalThis.getComputedStyle?.(layer)?.transitionDuration ?? '0s';
-  const ms = parseFloat(css) * (/ms/.test(css) ? 1 : 1000) || 0;
+  const ms = instant ? 0 : parseFloat(css) * (/ms/.test(css) ? 1 : 1000) || 0;
   const loaded = typeof Image === 'undefined' ? Promise.resolve() : new Promise((resolve) => {
     const img = new Image();
     img.onload = img.onerror = () => resolve();

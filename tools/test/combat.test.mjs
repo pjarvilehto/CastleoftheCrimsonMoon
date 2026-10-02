@@ -107,7 +107,7 @@ fresh();
   const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
   const evs = playerAttack(cb, 0, true);
   const kills = evs.filter((e) => e.type === 'kill');
-  ok('smash wipes room in one silent event', evs.some((e) => e.type === 'smash')
+  ok('OVERKILL wipes room in one silent event', evs.some((e) => e.type === 'overkill')
     && kills.length === 3 && kills.every((e) => e.silent)
     && !evs.some((e) => e.type === 'atk' || e.type === 'spill' || e.type === 'multi')
     && cb.over && cb.victory && cb.enemies.every((e) => e.hp === 0));
@@ -187,7 +187,7 @@ fresh();
     && hits[1].snap.hp === run.hp && hits[0].snap.hp === run.hp + hits[1].taken);
   const big = createRun(); big.stats.dmg = 500; big.stats.crit = 0;
   const cb2 = createCombat(big, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
-  const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'smash');
+  const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'overkill');
   ok('SMASH snapshot shows the wiped room', sm && sm.snap.enemies.every((h) => h === 0));
   ok('the room-wipe line reads OVERKILL (0.095)', sm.text === 'OVERKILL! Everyone dies!');
   const { fxFor } = await import('../../src/ui/combatFx.js');
@@ -291,7 +291,7 @@ fresh();
   try {
     for (const fx of [{ kind: 'attack', from: 'player', to: 0, dmg: 9, crit: true, heavy: true }, { kind: 'attack', from: 0, to: 'player', dmg: 3 },
       { kind: 'hit', to: 0, dmg: 2, thorns: true }, { kind: 'dodge', from: 0, to: 'player' }, { kind: 'heal', to: 'player', amount: 5 },
-      { kind: 'revive', to: 'player' }, { kind: 'smash', dmg: 99 }, { kind: 'multi' }, { kind: 'enter' }, { kind: 'die', to: 0 }]) playFx(fx, ctx);
+      { kind: 'revive', to: 'player' }, { kind: 'overkill', dmg: 99 }, { kind: 'multi' }, { kind: 'enter' }, { kind: 'die', to: 0 }]) playFx(fx, ctx);
   } catch (e) { threw = e.message; }
   ok('every effect kind is safe without Web Animations', threw === null, threw ?? '');
   ok('bgJolt is a no-op without WebGL', bg3d.bgJolt(1) === undefined);
@@ -510,7 +510,7 @@ fresh();
 // T68: 0.106 — OVERKILL gets the mega-crit treatment across the enemy line.
 {
   const fx = readFileSync('src/ui/combatFx.js', 'utf8');
-  ok('OVERKILL: banner over the whole enemy line, red-hot flash, big sway', fx.includes("case 'smash': return overkill(fx, ctx);")
+  ok('OVERKILL: banner over the whole enemy line, red-hot flash, big sway', fx.includes("case 'overkill': return overkill(fx, ctx);")
     && fx.includes("floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!')") && fx.includes("bgLight('overkill', area)")
     && /\.fx-crit\.fx-mega\.fx-overkill \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8'))
     && DATA.backgrounds.parallax.lights.overkill.strength > DATA.backgrounds.parallax.lights.megacrit.strength);
@@ -644,10 +644,10 @@ fresh();
   const run = createRun();
   run.stats.dmg = 500; run.stats.crit = 0;
   const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
-  const sm = playerAttack(cb, 0, true).find((e) => e.type === 'smash');
+  const sm = playerAttack(cb, 0, true).find((e) => e.type === 'overkill');
   const fx = fxFor(sm, { maxHp: run.maxHp });
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
-    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[i]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }')); // (0.00222: the rects read once, not per victim)
+    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[n]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }')); // (0.00222: the rects read once, not per victim; 0.00223: by the victim's place in the list)
 }
 // T90: 0.129 — the particle renderer stays batched and cheap.
 {

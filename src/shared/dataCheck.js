@@ -7,6 +7,8 @@
 // non-numeric one is reported at boot (console) and fails the smoke suite.
 // New knob in the data? Add its path here.
 
+import { compareVersions } from './version.js';
+
 const NUM = {
   difficulty: [
     'hpGrowth', 'dmgGrowth', 'xpGrowth', 'tierRooms', 'budgetBase', 'budgetPerRoom', 'enemyCost.1', 'enemyCost.2', 'enemyCost.3',
@@ -14,7 +16,7 @@ const NUM = {
     'statTrainXpBase', 'levelEvery', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus', 'salvagePerTier',
     ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'gilded.tierBefore', 'gilded.tierFrom', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
-    ...['startCount', 'startCap', 'maxCap', 'priceSteps.0', 'priceStep', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins', 'lowShare', 'lowShareHud'].map((k) => `potions.${k}`),
+    ...['startCount', 'startCap', 'maxCap', 'priceStep', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins', 'lowShareHud'].map((k) => `potions.${k}`), // (priceSteps: the whole list, below; lowShare went with hubScene.potionsLow, 0.00223)
     'alchemyTracks.potency.base', 'alchemyTracks.potency.healPerLevel',
     ...['base', 'perLevel', 'linear', 'tail', 'minStep'].map((k) => `alchemyTracks.efficiency.${k}`),
     'alchemyTracks.infusion.base', 'alchemyTracks.infusion.armorPerLevel',
@@ -91,6 +93,7 @@ export function checkData(data) {
     if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
     if (!c?.file === !c?.synth) out.push(`audio.json: clips.${id} needs a file or synth: true (one of them)`);
     if (c?.rate && !(c.rate.length === 2 && c.rate.every(isNum) && c.rate[0] > 0)) out.push(`audio.json: clips.${id}.rate (two numbers above 0)`); // (a 0 rate = a voice of infinite length, 0.00197)
+    if (c?.jitterDb !== undefined && !isNum(c.jitterDb)) out.push(`audio.json: clips.${id}.jitterDb (a number of dB; a NaN there throws on the gain and the clip is silently dropped)`);
   }
   for (const [id, t] of Object.entries(data.audio?.music?.tracks ?? {})) {
     if (typeof t?.file !== 'string' || !['loopS', 'tailS', 'gainDb'].every((k) => isNum(t[k]))) out.push(`audio.json: music.tracks.${id} (file, loopS, tailS, gainDb)`);
@@ -122,6 +125,17 @@ export function checkData(data) {
   if (!(bg.entrance?.length > 0) || bg.entrance.some((f) => !bg.rooms?.includes(f))) out.push('backgrounds.json: entrance (fight paintings for room 1)');
   // the room before each boss is one of these, and only that room (0.171)
   if (!(bg.antechambers?.length > 0) || bg.antechambers.some((f) => !bg.rooms?.includes(f) || bg.entrance?.includes(f))) out.push('backgrounds.json: antechambers (fight paintings, not entrance ones)');
+  // the paintings the code reads whole (0.00223): the four named ones, the three lists, a fight painting outside the antechambers
+  for (const k of ['title', 'hub', 'death', 'shrine']) if (typeof bg[k] !== 'string' || !bg[k]) out.push(`backgrounds.json: ${k}`);
+  for (const k of ['rooms', 'bosses', 'treasure']) if (!(bg[k]?.length > 0)) out.push(`backgrounds.json: ${k} is empty`);
+  if (bg.rooms?.length && bg.rooms.every((f) => bg.antechambers?.includes(f))) out.push('backgrounds.json: rooms has no fight painting outside antechambers');
+  // the potions' price ladder is read whole; the shrine deals from its offers; room 1 needs a tier-1 enemy; the benchmark round is a build at most one ahead of this one
+  const steps = data.difficulty?.potions?.priceSteps;
+  if (!(Array.isArray(steps) && steps.length > 0 && steps.every(isNum))) out.push('difficulty.json: potions.priceSteps (a non-empty list of numbers)');
+  if (!(data.shrines?.dealCount <= data.shrines?.offers?.length)) out.push('shrines.json: dealCount above the offers');
+  if (!Object.values(data.enemies ?? {}).some((e) => e?.tier === 1 && !e.boss)) out.push('enemies.json: no tier-1 enemy for room 1');
+  const nextBuild = (v) => { const [a, b] = String(v).split('.'); return `${a}.${String(Number(b) + 1).padStart(b?.length ?? 5, '0')}`; }; // (the build about to ship: the suite runs before ship.mjs bumps)
+  if (data.build?.version && data.telemetry?.benchmarkSince && compareVersions(data.telemetry.benchmarkSince, nextBuild(data.build.version)) > 0) out.push('telemetry.json: benchmarkSince is more than one build above this one');
   for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? [])]) {
     if (typeof bg.roomNames?.[f] !== 'string') out.push(`backgrounds.json: roomNames.${f}`);
   }

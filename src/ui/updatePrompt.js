@@ -1,6 +1,7 @@
 // ui/updatePrompt.js — "a new build is out" (0.094). Testers play the live
 // site while builds keep landing; this polls build.json (uncached) every
-// minute and when the tab comes back into view. When a newer build is
+// minute while the tab is visible, and once more when it comes back into
+// view (0.00223: it polled hidden tabs too). When a newer build is
 // up it offers a reload, with the changelist of every build since this one
 // (build.json `changelog`, written by tools/bump.mjs --note).
 //
@@ -76,9 +77,10 @@ function showPrompt({ version, notes }) {
 
 // Registered once from main.js (pollMs 0 = no timer: tests).
 export function initUpdateCheck(pollMs = POLL_MS) {
-  if (pollMs > 0) setInterval(checkForUpdate, pollMs);
+  const timer = pollMs > 0 ? setInterval(() => { if (!document.hidden) checkForUpdate(); }, pollMs) : 0;
   document.addEventListener?.('visibilitychange', () => {
     if (document.visibilityState === 'visible') checkForUpdate();
   });
   onSceneChange(() => maybeShow());
+  return () => clearInterval(timer); // (tests: the harness never clears timers)
 }

@@ -49,6 +49,19 @@ export const PHONE_MQ = '(max-height: 500px) and (orientation: landscape)';
 export function phoneLayout(mm = globalThis.matchMedia) {
   return typeof mm === 'function' ? !!mm(PHONE_MQ)?.matches : false;
 }
+// The phone layout is a class on <html> set from the one query, so the
+// stylesheet needs no media query of its own and a scene can re-lay itself
+// out when the query flips (a desktop window dragged across 500px tall, a
+// phone turned during a transition): onFlip runs then (main.js hands it the
+// current scene's relayout). 0.00223: here from main.js, with the query and
+// the document injectable, so the suite can run it.
+export function watchPhoneLayout(onFlip, mm = globalThis.matchMedia, doc = globalThis.document) {
+  const mq = typeof mm === 'function' ? mm(PHONE_MQ) : null;
+  if (!mq) return;
+  const apply = () => doc.documentElement.classList.toggle('phone', mq.matches);
+  apply();
+  mq.addEventListener?.('change', () => { apply(); onFlip?.(); });
+}
 
 // Opened from the home screen (the manifest's fullscreen app, 0.00205) —
 // no browser bars, so the play / install gate has nothing to offer.

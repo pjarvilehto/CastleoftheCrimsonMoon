@@ -30,7 +30,7 @@ export function statsPayload(p) {
   };
 }
 
-function telemetryEnabled() {
+export function telemetryEnabled() {
   const host = globalThis.location?.hostname;
   return !!DATA.telemetry?.endpoint && typeof host === 'string' && !LOCAL_HOST.test(host);
 }

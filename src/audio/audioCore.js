@@ -1,8 +1,9 @@
 // audio/audioCore.js — the ONE AudioContext shared by music.js and sfx.js
 // (0.078: each used to create its own), plus a cached fetch of compressed
 // audio bytes. Browsers block audio before a user gesture, so the context
-// is created lazily from the first pointerdown/keydown. Without a Web Audio
-// implementation (tests), hasAudio() is false and callers no-op.
+// is created lazily from the first gesture (GESTURE_EVENTS: pointerdown for
+// a mouse, pointerup / touchend for a touch, keydown; 0.00209). Without a
+// Web Audio implementation (tests), hasAudio() is false and callers no-op.
 
 // Looked up when needed (not at load), so the smoke suite can install its
 // fake AudioContext (tools/test/fakeAudio.mjs, 0.118).
@@ -20,28 +21,35 @@ export function ensureCtx() {
 
 // Compressed bytes stay cached (small: ~1MB per music bed); decodes are
 // the caller's choice, since a decoded 60s stereo bed is ~23MB of floats.
-// At most LANES audio files download at once (0.00197): the beds (10MB),
+// At most LANES audio files download at once (0.00197): the beds (~6 MB),
 // every narrator take (4MB) and the clip set used to start together at the
-// title, against the Descend essentials on a slow link. A sound that is
-// about to play (decode) goes to the front of the line.
+// title, against the Descend essentials on a slow link (a muted bed set or
+// narrator is not warmed until switched on, 0.00223). A sound that is about
+// to play (decode) goes to the front of the line — a file already queued by
+// a warm-up is moved up too (0.00223: the title's welcome take used to wait
+// behind the whole score).
 const LANES = 2;
 let active = 0;
-const line = []; // [start, front]
+const line = []; // [start, url]
 function next() {
   while (active < LANES && line.length) { active++; line.shift()[0](); }
 }
-function queued(task, front) {
+function queued(task, front, url) {
   return new Promise((resolve, reject) => {
     const start = () => task().then(resolve, reject).finally(() => { active--; next(); });
-    if (front) line.unshift([start]); else line.push([start]);
+    if (front) line.unshift([start, url]); else line.push([start, url]);
     next();
   });
 }
 export function fetchBytes(url, front = false) {
+  if (front && bytes[url]) { // queued already: to the front (an entry in flight is off the line; the call still gets the cached promise)
+    const i = line.findIndex((e) => e[1] === url);
+    if (i > 0) line.unshift(...line.splice(i, 1));
+  }
   return cached(bytes, url, () => queued(() => fetch(url).then((res) => {
     if (!res.ok) throw new Error(`audio ${url}: ${res.status}`);
     return res.arrayBuffer();
-  }), front));
+  }), front, url));
 }
 
 // A promise per key, shared by concurrent callers; a failed one is

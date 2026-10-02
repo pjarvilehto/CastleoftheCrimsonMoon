@@ -12,6 +12,8 @@ export const LADDER = [
   { scale: 0.64, fog: true },
   { scale: 0.64, fog: false },
 ]; // one step past the end: back to the flat backgrounds
+// The ladder's rung at `level`, or null past its end (bg3d.js degrade; pure, tested — 0.00223).
+export const nextStep = (level, ladder = LADDER) => ladder[level] ?? null;
 
 // Backing-store size for a canvas of cssW x cssH CSS px: device pixels,
 // but at most maxPixels in total, times the ladder's scale.

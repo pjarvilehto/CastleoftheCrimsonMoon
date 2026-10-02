@@ -12,10 +12,10 @@ import { updateBuffs, iconArt } from './buffs.js';
 import { attachCardFx, styleNamed, SHRINE_STYLE } from './cardFx.js';
 import { DATA } from '../shared/data.js';
 
-// HP color scale: <=25% red, <=75% yellow, above green.
+// HP colour scale: red at or under difficulty.json lowHpShare (the chip's lowhp glow, 0.126; 0.00223: the number turned red at 25% while the chip glowed from 35%), yellow to 75% (a look constant), green above.
 const hpColor = (cur, max) => {
   const pct = cur / max;
-  return pct <= 0.25 ? '#c14b4b' : pct <= 0.75 ? '#d8c95a' : '#7bc98a';
+  return pct <= DATA.difficulty.lowHpShare ? '#c14b4b' : pct <= 0.75 ? '#d8c95a' : '#7bc98a';
 };
 
 // The whole shrine room (0.098: moved out of dungeonScene). h: { title
@@ -29,9 +29,10 @@ export function renderShrineRoom(root, run, room, h) {
 // HUD, the room's own body, the log, and the way on — Retreat once taken.
 export function renderPanelRoom(root, run, room, h, body) {
   const lowhp = isLowHp(run.hp, run.maxHp) ? ' lowhp' : '';
+  const col = hpColor(run.hp, run.maxHp);
   const header = el('div', { class: 'run-hud' },
     el('span', {}, 'Rooms cleared ', el('b', {}, String(run.roomNumber))),
-    el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${hpColor(run.hp, run.maxHp)}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, hpColor(run.hp, run.maxHp))),
+    el('span', { class: `hud-chip${lowhp}`, id: 'hud-hp' }, 'HP ', el('b', { style: `color:${col}` }, `${run.hp}/${run.maxHp}`), hpBar(run.hp, run.maxHp, col)),
     el('span', {}, 'Coins ', el('b', { id: 'hud-coins' }, String(h.coins))),
     el('span', {}, 'XP ', el('b', { id: 'hud-xp' }, String(h.xp))),
     el('span', {}, 'Potions ', el('b', { class: potionLevel(run) }, `${run.potions}/${run.potionCap}`)));

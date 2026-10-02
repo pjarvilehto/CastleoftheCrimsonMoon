@@ -20,8 +20,7 @@ import { getProfile } from '../meta/profile.js';
 import { equipItems } from '../meta/equipment.js';
 import { rollCoins, randInt, pick } from '../shared/balance.js';
 import { roomEnemies } from './roomGen.js';
-import { takeItem, relicIds } from './loot.js';
-import { tryRevive } from './runState.js';
+import { takeItem, relicIds, tryRevive } from './loot.js';
 
 const T = () => DATA.difficulty.treasure;
 

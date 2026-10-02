@@ -315,7 +315,7 @@ fresh();
   const v1 = { ...JSON.parse(JSON.stringify(p)), saveVersion: 1, potions: 7, potionsBought: 5 };
   delete v1.potionCap;
   ok('v1 save migrates: count becomes a full satchel', importSave(Buffer.from(JSON.stringify(v1)).toString('base64'))
-    && getProfile().potionCap === 7 && getProfile().potions === 7 && getProfile().potionsBought === undefined
+    && getProfile().potionCap === 7 && getProfile().potions === 7 && getProfile().potionsBought === 0 // (the v2 step drops the old count; the whole-making puts the 0.00204 field back at its default)
     && getProfile().saveVersion === SAVE_VERSION);
   const v1small = { ...v1, potions: 2 };
   importSave(Buffer.from(JSON.stringify(v1small)).toString('base64'));

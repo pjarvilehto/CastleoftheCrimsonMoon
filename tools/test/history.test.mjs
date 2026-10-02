@@ -269,7 +269,7 @@ fresh();
   ok('dashboard: a benchmark from before the current round is marked "older round"', (roundHtml.match(/bench-old/g) ?? []).length === 1 && roundHtml.includes('older round') && roundHtml.includes('current round is build 0.00220')
     && roundHtml.indexOf('0.00221') < roundHtml.indexOf('0.00218'));
   ok('BENCHMARK sits in the ?debug column and asks first', readFileSync('src/ui/debugToggles.js', 'utf8').includes('benchmarkButton()')
-    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark')"));
+    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark', { returnTo: currentScene()?.name === 'hub' ? 'hub' : 'title' })"));
   getProfile().bench = [];
 }
 
@@ -281,6 +281,7 @@ fresh();
   const bm = await import('../../src/ui/benchmark.js');
   const ep = DATA.telemetry.endpoint;
   DATA.telemetry.endpoint = 'https://stats.example';
+  const realLoc94 = globalThis.location; globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; // (0.00223: the ask only where stats are sent)
   fresh();
   const p = getProfile();
   // 0.00201 turned the ask off (the owner's call); 0.00219 turned it on again for the phone testers, from room 6
@@ -293,6 +294,9 @@ fresh();
   p.records.bestRoom = 5;
   ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
   p.records.bestRoom = 12;
+  globalThis.location = { hostname: 'localhost' };
+  ok('never on localhost, where nothing is sent (0.00223)', !bm.benchmarkDue(p));
+  globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
   ok('due from room 6 on, until a result from this round exists (an older build\'s does not count)', bm.benchmarkDue(p)
     && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: DATA.telemetry.benchmarkSince }] }) && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00300' }] })
     && bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00218' }] }) && bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
@@ -345,7 +349,7 @@ fresh();
   ok('…and the Great Hall asks again', t().includes('GREAT HALL') && (await sleep(2500), !!dlg() && dlg().textContent.includes('A quick benchmark')));
   handleKey(' '); await sleep(1300); await sleep(60000); handleKey(' '); await sleep(1100); // let it finish cleanly before the next block
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep;
+  DATA.telemetry.endpoint = ep; globalThis.location = realLoc94;
   DATA.telemetry.benchmarkPrompt = bp; DATA.telemetry.benchmarkSince = since;
   fresh();
 }
@@ -356,6 +360,7 @@ fresh();
 {
   const ep = DATA.telemetry.endpoint;
   DATA.telemetry.endpoint = 'https://stats.example';
+  const realLoc95 = globalThis.location; globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
   fresh();
   const p = getProfile();
   const bp = DATA.telemetry.benchmarkPrompt;
@@ -384,7 +389,7 @@ fresh();
   handleKey(' ');
   await sleep(1100);
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = bp;
+  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = bp; globalThis.location = realLoc95;
   fresh();
 }
 

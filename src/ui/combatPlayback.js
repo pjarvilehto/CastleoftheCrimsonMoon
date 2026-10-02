@@ -115,9 +115,9 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         view.php = item.snap.hp;
         if (item.snap.meters) view.meters = [...item.snap.meters];
       }
-      if (item.text) logLine(logEl(), item.text, item.cls); // (scrolls the log)
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
-      onTick(); // before the effect: a summon's card must exist to animate in
+      onTick(); // before the effect (a summon's card must exist to animate in) and before the log line (0.00223: one layout after the tick's writes, not one per read)
+      if (item.text) logLine(logEl(), item.text, item.cls);
       try { // (0.00209: a throw here left printing = true and the room taking no input)
         if (item.text && item.sfx) onSfx(item); // synced to the printed line, not the click
         if (item.vo) onVo(item.vo);

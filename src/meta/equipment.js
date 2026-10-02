@@ -39,7 +39,8 @@ export function itemValue(id) {
 }
 
 export function salvageValue(id) {
-  return DATA.items[id].tier * DATA.difficulty.salvagePerTier;
+  const it = DATA.items[id];
+  return it ? it.tier * DATA.difficulty.salvagePerTier : 0; // (an unknown id salvages for nothing, 0.00223)
 }
 
 // Auto-equip a list of item ids into the profile. Returns a summary
@@ -104,6 +105,7 @@ function swapOut(arr, idx, newId, summary) {
 
 function salvage(id, summary) {
   const it = DATA.items[id];
+  if (!it) return; // an item the data no longer lists (0.00223): nothing to sell
   summary.salvaged.push({ name: it.name, tier: it.tier });
   summary.coins += salvageValue(id);
 }

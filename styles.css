@@ -723,7 +723,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 #combat-log .thorns { color: #ff6b4a; }
 #combat-log .revive { color: var(--gold); font-weight: bold; }
 /* SMASH / OVERKILL: heavy attack room-wipe, one snappy line */
-#combat-log .smash { color: #ffd700; font-weight: bold; letter-spacing: 0.08em; font-size: 1.05em; }
+#combat-log .overkill { color: #ffd700; font-weight: bold; letter-spacing: 0.08em; font-size: 1.05em; } /* (the event's name since 0.00223) */
 /* EPIC ITEM line (0.063) */
 #combat-log .relic {
   color: #ffb066; font-weight: bold; font-size: 1.12em; letter-spacing: 0.05em;

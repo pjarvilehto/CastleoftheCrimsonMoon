@@ -19,15 +19,18 @@ export function releaseKeyTrap(fn) {
 export const activeKeyTrap = () => keyTraps.at(-1) ?? null;
 
 export function handleKey(key) {
+  const k = key.toLowerCase();
+  if (/^(f\d{1,2}|tab)$/.test(k)) return false; // F5, F11, F12, Tab: the browser's, dialog or not (0.00197: a dialog swallowed them)
+  // A dialog keeps the keyboard through a transition and under the debug
+  // "hide foreground" (0.00223): dialogs live above the scenes (0.157) —
+  // #app.hidden and body.fg-hidden hide only #app, the dialog stays visible.
+  if (keyTraps.length) return keyTraps.at(-1)(k);
   // The outgoing scene is still in the DOM while it fades — its buttons
   // must not fire (0.077: a second R during the fade re-banked the run).
   if (isTransitioning()) return false;
   // Debug "hide foreground" (0.083): the UI is invisible, so its hotkeys
   // must not click unseen buttons.
   if (document.body?.classList?.contains('fg-hidden')) return false;
-  const k = key.toLowerCase();
-  if (/^(f\d{1,2}|tab)$/.test(k)) return false; // F5, F11, F12, Tab: the browser's, dialog or not (0.00197: a dialog swallowed them)
-  if (keyTraps.length) return keyTraps.at(-1)(k);
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');
     if (primary) { primary.click(); return true; }

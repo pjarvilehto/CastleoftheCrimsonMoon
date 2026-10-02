@@ -11,7 +11,9 @@
 // missing). Cards are
 // built and torn down every room, and a WebGL context each would run the
 // browser out of them (about 16). Drawn at fx.scale of the card's pixels at
-// fx.fps (cards.json; soft looks need no sharp pixels), dead cards frozen.
+// fx.fps (cards.json; soft looks need no sharp pixels); a fallen card stays
+// lit until its unit leaves the row (0.00216), then tick's isConnected
+// filter drops its entry.
 // Off when the 3D background is (no WebGL, software GL, the quality
 // ladder's flat step — the renderer's weak-device signal, as for the
 // particles) and under reduced motion: the cards then look as before 0.183.
@@ -175,7 +177,7 @@ export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) 
   canvas.width = 8; canvas.height = 8;
   if (ctx) ctx.globalCompositeOperation = 'copy'; // each frame replaces the last, alpha included
   host.insertBefore(canvas, host.children[0] ?? null);
-  const e = { card, canvas, bmp, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? fxKnobs().amt, t: Math.random() * 100, set(o) { Object.assign(e, o); } };
+  const e = { card, canvas, bmp, ctx, look: style.look, tint: style.tint, win: WINDOW[window] ?? WINDOW.frame, amt: amt ?? fxKnobs().amt, t: Math.random() * 100 };
   entries.push(e);
   sizes?.observe(card);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
@@ -184,6 +186,7 @@ export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) 
 
 function stop() {
   for (const e of entries) { if (e.bmp) e.bmp.transferFromImageBitmap(null); else e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height); }
+  sizes?.disconnect(); // (tidying: the browsers hold observed elements weakly)
   entries = []; running = false;
 }
 
@@ -191,8 +194,8 @@ function tick(now) {
   if (!running) return;
   entries = entries.filter((e) => e.canvas.isConnected || (sizes?.unobserve(e.card), false)); // the last room's cards
   if (!entries.length) { running = false; return; }
-  requestAnimationFrame(tick);
   if (!enabled() || !shared) { stop(); return; } // the background fell back to flat mid-session
+  requestAnimationFrame(tick); // (after the check: nothing pending once stopped, 0.00223)
   const F = fxKnobs();
   if (now - last < 1000 / (saver ? F.saverFps : F.fps) - 2) return;
   const dt = Math.min(0.1, (now - last) / 1000); last = now;

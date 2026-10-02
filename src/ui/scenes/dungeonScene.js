@@ -139,7 +139,7 @@ export function dungeonScene() {
         // 0.080: potions persist, so topping up between rooms is allowed
         // (after a win) — never while dead or mid-playback.
         if ((combat.over && !combat.victory) || playback.isPrinting()) return;
-        const sip = drinkPotion(run);
+        const sip = drinkPotion(run, !combat.over); // (between rooms: no Infusion armor the next room would discard, 0.00223)
         if (sip) {
           combatSfx({ sfx: 'heal', fx: { kind: 'heal', to: 'player' } }, fxCtx);
           narrate('potion');

@@ -12,7 +12,7 @@ import { isLowHp } from './hud.js';
 const EV_SFX = {
   atk: 'attack', spill: 'attack', thorns: 'attack',
   dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
-  kill: 'kill', multi: 'kill', smash: 'kill', revive: 'shrine', summon: 'shrine',
+  kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'shrine', summon: 'shrine',
 };
 
 // Combat event -> narrator line (audio/narrator.js decides whether it is
@@ -20,8 +20,8 @@ const EV_SFX = {
 // relic, a boss summon, the room cleared (not a boss's: that fight has its
 // own line) and the knight's HP falling low.
 export function voFor(ev, { run, combat }) {
-  if (ev.type === 'smash') return 'overkill';
-  if (ev.type === 'multi') return 'smash';
+  if (ev.type === 'overkill') return 'overkill';
+  if (ev.type === 'multi') return 'smash'; // (the narration id and the script's name for a multi-kill)
   if (ev.type === 'atk' && ev.megaCrit) return 'mega_crit';
   if (ev.type === 'revive') return 'revive';
   if (ev.type === 'summon') return 'boss_summon';
@@ -33,7 +33,7 @@ export function voFor(ev, { run, combat }) {
 export function queueEvents(events, { run, combat, playback }) {
   for (const ev of events) {
     if (ev.type === 'kill' && ev.enemy) {
-      // SMASH kill: loot silently — the one OVERKILL line plus the
+      // OVERKILL kill: loot silently — the one OVERKILL line plus the
       // room-cleared summary carry the whole event.
       if (ev.silent) { applyLoot(run, ev.enemy, () => {}); continue; }
       // Death line prints on one tick; the card goes down on the next.

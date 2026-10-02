@@ -20,14 +20,13 @@ import { preloadAssets, preloadRest } from './shared/preload.js';
 import './ui/scenes/index.js'; // registers the scenes with the router
 import { initMusic, isMuted, toggleMuted } from './audio/music.js';
 import { initSfx, sfx, transitionSfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from './audio/sfx.js';
-import { initNarrator, isNarratorMuted, toggleNarrator } from './audio/narrator.js';
+import { initNarrator, isNarratorMuted, toggleNarrator, armOnGesture } from './audio/narrator.js';
 import { initUpdateCheck } from './ui/updatePrompt.js';
 import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
-import { isPhone, PHONE_MQ, fullscreenOn, enterFullscreen, exitFullscreen } from './shared/platform.js';
+import { isPhone, watchPhoneLayout, fullscreenOn, enterFullscreen, exitFullscreen } from './shared/platform.js';
 import { phoneGate, regateOnExit } from './ui/phoneGate.js';
 import { ensureCtx } from './audio/audioCore.js';
-import { armOnGesture } from './audio/narrator.js';
 
 const SAVER_KEY = 'castle-power-saver'; // BATTERY SAVER (0.00222), this browser's choice
 
@@ -43,7 +42,7 @@ async function boot() {
   // fade out from yet, and #app starts hidden in index.html.
   const app = document.getElementById('app');
   app.classList.remove('hidden');
-  watchPhoneLayout(app); // <html class="phone"> while platform.js PHONE_MQ matches: styles.css section 16 (0.00209)
+  watchPhoneLayout(() => currentScene()?.relayout?.(app)); // <html class="phone"> while platform.js PHONE_MQ matches: styles.css section 16 (0.00209); scenes may offer relayout(root) — the Great Hall does, its phone assembly is a different DOM
   // Handhelds play sideways (0.00205 tablets, 0.00208 phones): a device held
   // upright gets styles.css .rotate-notice over everything.
   document.body.append(el('div', { class: 'rotate-notice' }, el('div', { class: 'panel' }, el('h1', {}, 'Turn your device sideways'), el('p', { class: 'mobile-sub' }, 'The castle is played in landscape.'))));
@@ -124,19 +123,6 @@ function fullscreenToggle() {
   document.addEventListener?.('fullscreenchange', () => btn.sync());
   document.addEventListener?.('webkitfullscreenchange', () => btn.sync());
   return btn;
-}
-
-// The phone layout is a class on <html> set from the one query (platform.js
-// PHONE_MQ), so the stylesheet needs no media query of its own and a scene
-// can re-lay itself out when the query flips (a desktop window dragged
-// across 500px tall, a phone turned during a transition): scenes may offer
-// relayout(root) — the Great Hall does, its phone assembly is a different DOM.
-function watchPhoneLayout(app) {
-  const mq = globalThis.matchMedia?.(PHONE_MQ);
-  if (!mq) return;
-  const apply = () => document.documentElement.classList.toggle('phone', mq.matches);
-  apply();
-  mq.addEventListener?.('change', () => { apply(); currentScene()?.relayout?.(app); });
 }
 
 boot().catch((e) => { // a failed data or art fetch: say so, and a tap reloads (the home-screen app has no reload button)

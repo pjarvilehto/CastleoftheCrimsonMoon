@@ -6,6 +6,7 @@
 // became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
 import { el } from '../core/dom.js';
+import { DEATH_TINT } from './fxParts.js';
 import { hpBar, rarityClass, isLowHp } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
@@ -74,7 +75,7 @@ const COLLAPSE_MS = 700;
 function collapse(img, done, u = null) {
   if (!img.animate || reducedMotion()) { done(); return; }
   const base = u ? (u.baseFilter ??= getComputedStyle(img).filter) : getComputedStyle(img).filter;
-  const red = `${base === 'none' ? '' : base} sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)`;
+  const red = `${base === 'none' ? '' : base} ${DEATH_TINT}`;
   img.animate([
     { translate: '0 0', opacity: 1, filter: base },
     { translate: '0 4%', opacity: 1, filter: red, offset: 0.3 },
@@ -103,16 +104,23 @@ function hpLine(cur, max) {
   const text = el('span', { class: 'hp-text' }, `HP ${cur}/${max}`);
   const bar = hpBar(cur, max);
   const line = el('div', { class: 'hp-line' }, text, bar);
+  let lastHp = cur, lastMax = max;
   const set = (hp, maxHp = max) => {
+    if (hp === lastHp && maxHp === lastMax) return; // (0.00223: no write when nothing changed)
+    lastHp = hp; lastMax = maxHp;
     text.textContent = `HP ${hp}/${maxHp}`;
     bar.children[0].style.width = `${Math.max(0, Math.round((hp / maxHp) * 100))}%`;
   };
   return { line, set };
 }
 
-// Class toggling that also works in the smoke-test DOM shim (no toggle()).
-const setClass = (node, cls, on) => (on ? node.classList.add(cls) : node.classList.remove(cls));
-const setDisabled = (btn, on) => (on ? btn.setAttribute('disabled', '') : btn.removeAttribute('disabled'));
+// Idempotent writes (0.00223: every playback tick rewrote every unit's
+// text, buttons and classes even when nothing changed): toggle with force
+// runs no update steps on a present token; text and attributes compare
+// first; a button's disabled state is remembered per button.
+const setClass = (node, cls, on) => node.classList.toggle(cls, !!on);
+const setText = (node, s) => { if (node.textContent !== s) node.textContent = s; };
+const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) return; cur = on; on ? btn.setAttribute('disabled', '') : btn.removeAttribute('disabled'); }; };
 
 // ---- persistent units (0.086) ----
 // The battle line is built ONCE per room; playback ticks only patch it
@@ -160,17 +168,18 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
+  const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
     const low = isLowHp(s.hp, run.maxHp);
     setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
-    potions.textContent = `POTIONS ${run.potions}/${run.potionCap}`;
-    armorVal.textContent = armorText();
-    cd.textContent = s.heavyCd > 0 ? ` (${s.heavyCd})` : '';
+    setText(potions, `POTIONS ${run.potions}/${run.potionCap}`);
+    setText(armorVal, armorText());
+    setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
-    setDisabled(heavyBtn, !s.heavyReady);
+    heavyDisabled(!s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
-    setDisabled(potionBtn, s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
+    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
     // Low on health with potions left: Drink Potion pulses red (0.126) —
     // kept on while a turn prints, so the glow doesn't restart every blow.
     const remind = low && !s.dead && run.potions > 0;
@@ -195,7 +204,8 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'summon-text' }, 'SUMMON'), el('div', { class: 'summon-bar' }, meterFill))
     : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
-  const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
+  const elite = isElite(e) && !e.summoned; // summons are never elite: applyLoot carries nothing for them (0.092; 0.00223 — they wore the star and the aura)
+  const aura = elite ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
   // A fallen enemy's figure collapses, then the whole unit fades and leaves
   // the row (0.00216, the owner's call: the faint skull cards went; the row
   // restacks and the cards grow into the room — fit() through onGone).
@@ -206,23 +216,26 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
-        isElite(e) ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
+        elite ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
-  // Dead cards keep their slot: the button row stays mounted with the
-  // button hidden (ghost-btn), so the bottom-aligned card can't shift.
+  // A fallen enemy's Attack button stays mounted but hidden (ghost-btn)
+  // through the collapse, so the bottom-aligned card can't shift before
+  // vanish() removes the whole unit (0.00216).
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
   let canHit = false; // the Attack button is live (the card clicks through to it)
+  const atkDisabled = disabler(atk);
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
     if (meterFill && s.meter != null) {
-      meterFill.style.width = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
+      const w = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
+      if (meterFill.style.width !== w) meterFill.style.width = w;
       setClass(meterLine, 'full', s.meter >= e.summonEvery);
     }
     if (s.dead && !down) {
@@ -231,7 +244,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
     setClass(atk, 'ghost-btn', s.dead);
-    setDisabled(atk, s.dead || s.combatOver || s.printing);
+    atkDisabled(s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);
     setClass(card, 'targetable', canHit);
   };

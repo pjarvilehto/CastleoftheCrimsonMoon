@@ -129,8 +129,6 @@ fresh();
   ok('nothing to spend: no green', !hub.canSpendXp(p) && !hub.canSpendCoins(p));
   p.xp = 1000; p.coins = DATA.difficulty.potions.priceSteps[0];
   ok('XP/coins green when something is affordable', hub.canSpendXp(p) && hub.canSpendCoins(p));
-  ok('potions read low below 30% of the satchel', hub.potionsLow({ potions: 1, potionCap: 4 }) && !hub.potionsLow({ potions: 2, potionCap: 4 })
-    && hub.potionsLow({ potions: 2, potionCap: 8 }) && !hub.potionsLow({ potions: 3, potionCap: 8 }));
   p.potions = 1; p.potionCap = 4;
   const root = new El('main');
   hub.hubScene().enter(root);
@@ -318,8 +316,8 @@ fresh();
   ok('quality ladder: resolution first, then fog, then flat', q.LADDER[0].scale === 1 && q.LADDER[0].fog
     && q.LADDER.findIndex((s) => s.scale < 1) < q.LADDER.findIndex((s) => !s.fog) && !q.LADDER.at(-1).fog);
   const src = readFileSync('src/core/bg3d.js', 'utf8');
-  ok('past the last step: back to the flat backgrounds', src.includes('if (level >= LADDER.length) { shutdown(); return false; }')
-    && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
+  ok('past the last step: back to the flat backgrounds (nextStep, 0.00223)', q.nextStep(q.LADDER.length) === null && q.nextStep(q.LADDER.length - 1).fog === false && q.nextStep(0).scale === 1
+    && src.includes('const step = nextStep(++level)') && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
 }
 
 // 0.156 — no painting twice in a run (while the pool lasts), and the boss

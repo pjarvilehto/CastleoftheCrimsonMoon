@@ -7,7 +7,7 @@
 //
 // 0.133: every player is asked once. When a player who has no result yet
 // enters the Great Hall with a best room of telemetry.json
-// benchmarkPromptRoom (10) or more, a dialog explains and offers only
+// benchmarkPromptRoom or more (10 then, 6 since 0.00219), a dialog explains and offers only
 // Continue; the benchmark then returns to the Great Hall. Closing the tab
 // instead just means the question comes back next visit.
 // 0.00219: on again for the phone testers, from room 6; a result counts
@@ -16,10 +16,10 @@
 // card effects and the phone layer).
 
 import { el } from '../core/dom.js';
-import { go, currentScene } from '../core/scene.js';
+import { go, currentScene, isTransitioning } from '../core/scene.js';
 import { openDialog, anyDialogOpen } from './dialog.js';
 import { confirmPrompt } from './confirmPrompt.js';
-import { shareStats } from '../meta/telemetry.js';
+import { shareStats, telemetryEnabled } from '../meta/telemetry.js';
 import { getProfile } from '../meta/profile.js';
 import { DATA } from '../shared/data.js';
 import { compareVersions } from '../shared/version.js';
@@ -34,7 +34,7 @@ const LINE = ['rat', 'skeleton', 'ghoul', 'wraith', 'crypt_spider']; // blood, b
 export const PHASES = [
   { id: 'idle', label: 'Idle', secs: 6, bg: 'castle_chapel_interior.jpg', enemies: LINE, act: null },
   { id: 'combat', label: 'Combat', secs: 20, bg: 'castle_chapel_interior.jpg', enemies: LINE, act: 'fight' },
-  { id: 'overkill', label: 'Overkill', secs: 10, bg: 'castle_courtyard.jpg', enemies: [...LINE, 'gargoyle'], act: 'smash' },
+  { id: 'overkill', label: 'Overkill', secs: 10, bg: 'castle_courtyard.jpg', enemies: [...LINE, 'gargoyle'], act: 'overkill' },
 ];
 
 // About how long a benchmark takes: its phases plus each room's settle
@@ -47,20 +47,22 @@ export const benchmarkSeconds = () => {
 
 // Due: the ask is on (telemetry.json benchmarkPrompt), no result from this
 // round yet (a build at or after benchmarkSince), far enough in, and stats
-// are being collected.
+// are being sent from this host (telemetryEnabled: an endpoint and not
+// localhost — 0.00223: it asked on localhost, where nothing is sent).
 export function benchmarkDue(p) {
   const t = DATA.telemetry;
   const fresh = (p.bench ?? []).some((b) => compareVersions(b?.build, t.benchmarkSince) >= 0);
-  return t.benchmarkPrompt === true && !!t.endpoint && !fresh && p.records.bestRoom >= t.benchmarkPromptRoom;
+  return t.benchmarkPrompt === true && telemetryEnabled() && !fresh && p.records.bestRoom >= t.benchmarkPromptRoom;
 }
 
 // true = asked; 'wait' = due, but another dialog is up (0.134: it opened on
-// top of "Descend Now?", which then stayed up over the benchmark) — the
-// Great Hall tries again shortly; false = not due.
+// top of "Descend Now?", which then stayed up over the benchmark) or a
+// transition is running (0.00223: Continue's go() was dropped mid-fade) —
+// the Great Hall tries again shortly; false = not due.
 let asking = false;
 export function maybeAskBenchmark() {
   if (asking || !benchmarkDue(getProfile())) return false;
-  if (anyDialogOpen()) return 'wait';
+  if (anyDialogOpen() || isTransitioning()) return 'wait';
   asking = true;
   const start = el('button', { class: 'primary active', key: 'c', proceed: true, onclick: () => { dlg.close(); if (!currentScene()?.inRun) go('benchmark', { returnTo: 'hub' }); } }, 'Continue'); // never out of a run
   const dlg = openDialog({
@@ -84,7 +86,7 @@ function askBenchmark() {
     lines: [`About ${benchmarkSeconds()} seconds of scripted combat: the room at rest, a long fight, then OVERKILL after OVERKILL.`,
       'Keep the game in front and leave it alone: no taps, keys or clicks. Your save and run history are not touched.'],
     yes: ['Start', 's'], no: ['Cancel', 'c'],
-    onYes: () => go('benchmark'),
+    onYes: () => go('benchmark', { returnTo: currentScene()?.name === 'hub' ? 'hub' : 'title' }), // (0.00223: back to where it was pressed)
   });
 }
 

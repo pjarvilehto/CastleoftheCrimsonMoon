@@ -13,6 +13,9 @@ export const can = (node) => !!node?.animate;
 // The portrait's CSS filter (its drop shadow), which every flash layers a
 // tint on. Read once per unit: getComputedStyle on an animating element is
 // a forced style resolution, and it happened on every blow (0.157).
+// The two red tints of a struck and a dying figure (0.00223: literal strings in two files before; side by side, both the shipped look).
+export const HIT_TINT = 'sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.15)';
+export const DEATH_TINT = 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)';
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
 
 // The glint (0.183): the unit's bright masked copy of its portrait sweeps
@@ -106,9 +109,10 @@ export function glow(u, tint, ms) {
 // A number that pops out of the card and drifts up. Lives in the fx layer
 // (not the card), positioned from the card's on-screen box. tag: a small
 // caption above the number ("CRIT!", 0.095).
-export function floatNumber(ctx, u, text, cls, delay = 0, tag = null) {
+// rect (0.00223): the card's rect when the caller has read it already
+export function floatNumber(ctx, u, text, cls, delay = 0, tag = null, rect = null) {
   if (!ctx.layer || !can(u?.card)) return;
-  const r = u.card.getBoundingClientRect();
+  const r = rect ?? u.card.getBoundingClientRect();
   const n = document.createElement('div');
   n.className = `fx-num ${cls}`;
   n.textContent = text;

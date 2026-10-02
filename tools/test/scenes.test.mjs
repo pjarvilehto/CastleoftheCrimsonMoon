@@ -41,6 +41,59 @@ process.on('uncaughtException', (e) => {
   transitionTo(() => { throw new Error('intentional'); });
   await sleep(1300);
   ok('transitionTo try/finally recovery', !registry.app.classList.contains('hidden'));
+  // 0.00223: a scene whose enter() throws shows a panel with a Reload button Space presses (an empty, un-hidden #app before)
+  const realLoc = globalThis.location; let reloads = 0;
+  globalThis.location = { reload: () => { reloads++; } };
+  show({ enter() { throw new Error('intentional'); } });
+  await sleep(1100);
+  const reload = registry.app.all((e) => e.tagName === 'button' && e.attrs['data-key2'] === ' ');
+  ok('a throwing enter() leaves a Reload button Space can press', !registry.app.classList.contains('hidden') && reload.length === 1 && reload[0].textContent.includes('Reload') && handleKey(' ') === true && reloads === 1);
+  globalThis.location = realLoc;
+  // 0.00223: a dialog opened mid-transition hears the keyboard; the scene's own keys stay deaf
+  const { openDialog } = await import('../../src/ui/dialog.js');
+  const { isTransitioning, onSceneChange, whenWindowsBack } = await import('../../src/core/scene.js');
+  const { el: mk } = await import('../../src/core/dom.js');
+  let dlgKeys = 0, sceneClicks = 0;
+  registry.app.append(mk('button', { key: 'z', onclick: () => { sceneClicks++; } }, 'Z'));
+  transitionTo(() => {}, 500);
+  const mid = isTransitioning();
+  const sceneKeyMid = handleKey('z');
+  const dlg = openDialog({ label: 'Mid', children: [], onKey: () => { dlgKeys++; } });
+  const dlgKeyMid = handleKey('escape');
+  dlg.close();
+  await sleep(700);
+  ok('a dialog opened mid-transition hears the keyboard, the scene\'s keys stay deaf (the 0.077 guard holds)', mid && sceneKeyMid === false && sceneClicks === 0 && dlgKeyMid === true && dlgKeys === 1);
+  // 0.00223: the scene listener fires once the windows are back, never mid-fade or for a bare room change
+  const fired = [];
+  onSceneChange((s) => fired.push({ s, mid: isTransitioning(), hidden: registry.app.classList.contains('hidden') }));
+  const sceneX = { enter() {} };
+  show(sceneX);
+  await sleep(500);
+  const early = fired.length;
+  await sleep(700);
+  transitionTo(() => {}, 100);
+  await sleep(300);
+  ok('onSceneChange fires once the windows are back, once per scene switch, never for a bare transition', early === 0 && fired.length === 1 && fired[0].s === sceneX && !fired[0].mid && !fired[0].hidden);
+  onSceneChange(null);
+  // 0.00223: go() names its scene
+  const { go } = await import('../../src/core/scene.js');
+  go('hub'); await sleep(1100);
+  ok('go() names the scene it shows', (await import('../../src/core/scene.js')).currentScene().name === 'hub');
+  fresh(); // (the hub and the 'z' button must not reach the hotkey checks below)
+  // 0.00223: the very first painting resolves at once on the flat path (it is painted under transition: none); later ones wait the CSS fade
+  const realGcs = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = () => ({ transitionDuration: '2s' });
+  try {
+    const first = await import('../../src/core/scene.js?first'); // a fresh instance: no painting yet
+    let doneA = false, doneB = false;
+    first.setBackground('castle_a.jpg').then(() => { doneA = true; });
+    await sleep(50);
+    first.setBackground('castle_b.jpg').then(() => { doneB = true; });
+    await sleep(1900);
+    const held = !doneB;
+    await sleep(300);
+    ok('the first painting resolves at once on the flat path; the next waits the layer\'s 2 s fade', doneA && held && doneB);
+  } finally { globalThis.getComputedStyle = realGcs; }
 }
 
 // T14: space = "proceed further" (el() proceed: true; 0.124 everywhere).
@@ -158,6 +211,17 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   ok('the prompt owns the keyboard', !!prompt() && t() === hubText && reloaded === 0);
   handleKey('n');
   ok('N puts it off', !prompt() && reloaded === 0);
+  // 0.00223: no poll while the tab is hidden; a visibility change re-checks
+  let hits = 0;
+  globalThis.fetch = async (url) => { if (String(url).includes('build.json')) hits++; return { ok: true, json: async () => served }; };
+  const stop = up.initUpdateCheck(60000);
+  globalThis.document.hidden = true;
+  await sleep(120000);
+  const hiddenHits = hits;
+  globalThis.document.hidden = false;
+  await sleep(60000);
+  stop();
+  ok('the build poll skips a hidden tab and resumes when it shows', hiddenHits === 0 && hits === 1);
   await up.checkForUpdate();
   ok('...and that version stays quiet this session', !prompt());
   served = { version: '9.002', changelog: { '9.002': ['More'], '9.001': ['Bosses dance'] } };
@@ -513,8 +577,18 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const { canSpendAlchemy, canForgeAny, canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
   const { forgeCost, alchemyCost, ALCHEMY_DEFS } = await import('../../src/meta/leveling.js');
   const css = readFileSync('styles.css', 'utf8'), m = readFileSync('src/main.js', 'utf8');
+  // 0.00223: the watcher lives in platform.js with the query and the document injectable — run it
+  const { watchPhoneLayout } = await import('../../src/shared/platform.js');
+  const flips = [];
+  const classes = new Set();
+  const fakeDoc = { documentElement: { classList: { toggle: (c, on) => { on ? classes.add(c) : classes.delete(c); } } } };
+  let mq = null;
+  const fakeMm = (q) => (mq = { matches: q === PHONE_MQ, listeners: [], addEventListener(t, fn) { this.listeners.push(fn); } });
+  watchPhoneLayout(() => flips.push(1), fakeMm, fakeDoc);
+  const wasPhone = classes.has('phone');
+  mq.matches = false; mq.listeners.forEach((fn) => fn());
   ok('the boot sets html.phone from the platform query and re-lays the scene out when it flips; the layer\'s rules are html.phone twins',
-    /matchMedia\?\.\(PHONE_MQ\)/.test(m) && m.includes("classList.toggle('phone', mq.matches)") && m.includes('relayout?.(app)') && css.includes('html.phone #app > .panel {') && css.includes('html.phone .battle-line {')
+    wasPhone && !classes.has('phone') && flips.length === 1 && m.includes('watchPhoneLayout(() => currentScene()?.relayout?.(app))') && css.includes('html.phone #app > .panel {') && css.includes('html.phone .battle-line {')
     && !phoneLayout(undefined) && phoneLayout((q) => ({ matches: q === PHONE_MQ })) && !phoneLayout((q) => ({ matches: q !== PHONE_MQ })));
   ok('a home-screen app is standalone by display-mode or Safari\'s flag; iOS and fullscreen read the right fields', standaloneApp((q) => ({ matches: q === '(display-mode: standalone)' }), {}) && standaloneApp(undefined, { standalone: true })
     && !standaloneApp((q) => ({ matches: false }), {}) && isIos({ userAgent: 'iPhone' }) && isIos({ userAgent: 'Macintosh', maxTouchPoints: 5 }) && !isIos({ userAgent: 'Android' }) && !fullscreenOn({}) && fullscreenOn({ webkitFullscreenElement: {} }));

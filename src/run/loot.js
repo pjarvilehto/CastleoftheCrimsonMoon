@@ -70,3 +70,15 @@ export function potionDrop() {
   // ~16 potions/run and made the shop pointless.
   return Math.random() < DATA.difficulty.potionDropChance;
 }
+
+// The Heart of the Dying Moon (a T4 relic): a killing blow — in combat or
+// the reliquary's blood price — leaves the knight at player.reviveHpPct of
+// max HP instead, once per run. Returns the log line, or null when it
+// could not save him.
+export function tryRevive(run) { // (0.00223: here from runState.js — treasure.js and runState.js imported each other)
+  if (!run.revive) return null;
+  const pct = DATA.difficulty.player.reviveHpPct;
+  run.revive = false;
+  run.hp = Math.ceil(run.maxHp * pct);
+  return `The Heart of the Dying Moon beats again! You rise at ${pct === 0.5 ? 'half' : `${Math.round(pct * 100)}% of full`} health.`;
+}

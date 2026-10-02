@@ -82,17 +82,24 @@ export function smallPixels(img, w = SMALL.w, h = SMALL.h) {
   return { data: cx.getImageData(0, 0, w, h).data, w, h };
 }
 
+// A linked program, or null. 0.00223: the shader objects are deleted once
+// linked (GL keeps them while the program lives) and everything built so
+// far is deleted on a failure — they used to leak with every program.
 export function program(gl, vs, fs) {
   const p = gl.createProgram();
+  const shaders = [];
+  const fail = () => { for (const s of shaders) gl.deleteShader(s); gl.deleteProgram(p); return null; };
   for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
     const s = gl.createShader(type);
+    shaders.push(s);
     gl.shaderSource(s, src);
     gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null;
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return fail();
     gl.attachShader(p, s);
   }
   gl.linkProgram(p);
-  return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
+  for (const s of shaders) gl.deleteShader(s);
+  return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : (gl.deleteProgram(p), null);
 }
 
 export function buffer(gl, target, data) {

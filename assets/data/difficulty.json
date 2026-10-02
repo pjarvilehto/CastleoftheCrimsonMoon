@@ -23,7 +23,6 @@
     "capUpgradeBase": 300,
     "capUpgradeGrowth": 2,
     "fullSatchelSellCoins": 10,
-    "lowShare": 0.3,
     "lowShareHud": 0.25,
     "priceSteps": [
       10,
@@ -60,8 +59,8 @@
     "maxLevel": 3
   },
   "salvagePerTier": 8,
-  "_treasure": "Treasure rooms (0.155, run/treasure.js): a run gets one with `chance` once the save's best room reaches `unlockRoom` (silent), placed at a room from `minRoom` to the best room (no boss rooms; the shrine steps aside). Three chests, open one: coffer = coins worth `fights` [lo, hi] fights at that depth (fortune and Greed count); gilded = one item of tier 2, tier 3 from room `tier3Room`, made for a slot it improves (else salvaged); reliquary = `hpCost` of max HP as damage (can kill; max HP untouched), then a crimson relic with `relicChance` (+ fortune; room t4MinRoom on, one per run) else a tier `itemTier` item.",
   "treasure": {
+    "_doc": "Treasure rooms (0.155, run/treasure.js): a run gets one with `chance` once the save's best room reaches `unlockRoom` (silent), placed at a room from `minRoom` to the best room (no boss rooms; the shrine steps aside). Three chests, open one: coffer = coins worth `fights` [lo, hi] fights at that depth (fortune and Greed count); gilded = one item of tier `tierBefore`, tier `tierFrom` from room `tier3Room`, made for a slot it improves (else salvaged); reliquary = `hpCost` of max HP as damage (can kill; max HP untouched), then a crimson relic with `relicChance` (+ fortune; room t4MinRoom on, one per run) else a tier `itemTier` item.",
     "chance": 0.3,
     "unlockRoom": 5,
     "minRoom": 2,

@@ -149,9 +149,12 @@ export function potionHealAmount() {
     + (p.alchemy.potency ?? 0) * trackData('potency').healPerLevel;
 }
 
-// Chance a drunk potion is not consumed. 0.112: tapers (stats.taper:
-// +8% for the first 3 levels, then smaller and smaller steps toward the
-// track's max) — it used to stop dead at 40% while the price kept rising.
+// Chance a drunk potion is not consumed. 0.112: tapers (stats.taper with
+// the data's `tail`; 0.113: +8% for the first `linear` levels, then a
+// shrinking power-law step with no ceiling — the track shows MAX once a
+// level adds less than `minStep`, alchemyMaxed below; `max` is an optional
+// ceiling the data does not set) — it used to stop dead at 40% while the
+// price kept rising.
 export function efficiencyChance(level = getProfile().alchemy.efficiency ?? 0) {
   const t = trackData('efficiency');
   return taper(level, { perLevel: t.perLevel, linear: t.linear, tail: t.tail, max: t.max });

@@ -47,7 +47,8 @@ const SLEEP_MS = 5000;
 // Seeded Math.random (Park-Miller): the same fight on every machine.
 const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
-// returnTo: the scene to go back to ('title' from the ?debug button; the
+// returnTo: the scene to go back to ('title' from the ?debug button on the
+// title, 'hub' from the hall or its ask — 0.00223; the
 // Great Hall's prompt passes 'hub', 0.133).
 export function benchmarkScene({ returnTo = 'title' } = {}) {
   const realRandom = Math.random, debugWas = { ...DEBUG }; // restored as it ends
@@ -130,7 +131,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     if (performance.now() >= endsAt) return nextPhase();
     if (combat.over) { newRoom(); botTimer = setTimeout(bot, 600); return; }
     turn += 1;
-    if (ph.act === 'smash') { // every turn a room-wiping heavy
+    if (ph.act === 'overkill') { // every turn a room-wiping heavy
       run.stats.dmg = 100000; combat.heavyCd = 0;
       useHeavy(combat); act(() => playerAttack(combat, heavyTarget(combat), true));
     } else if (canHeavy(combat) && turn % 3 === 0) {
@@ -159,6 +160,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     const layer = el('div', { class: 'fx-layer' });
     root.innerHTML = '';
     root.append(title, battle.line, layer, logEl);
+    battle.fit(); // (as dungeonScene: the line is in #app now, whose --n / --slots the phone's card budget reads; 0.00223 — a phone benchmark drew one-enemy-sized cards)
     ui = { battle, player: battle.player, enemies: battle.enemies, layer, title };
     playFx({ kind: 'enter' }, fxCtx);
     whenWindowsBack().then(() => playFx({ kind: 'deal' }, fxCtx)); // (0.184)
