@@ -1,4 +1,8 @@
 {
+  "0.00206": [
+    "Low on health with no potion left, Retreat with Loot pulses red after a cleared room and Push Deeper stays plain (drink one and it flips back)",
+    "Attack buttons breathe faintly in red while it is your move — the recharged Heavy Attack no longer glows alone"
+  ],
   "0.00205": [
     "Tablets are in: the game plays on an iPad or Android tablet held sideways (phones still get the notice) — tap-sized buttons, no double-tap zoom, no hotkey hints on touch, the Great Hall fits a 1024-wide screen, the corner buttons keep clear of the cards",
     "Add the game to your home screen for a fullscreen, landscape app (Safari's Share, Add to Home Screen; Chrome's Install)",
