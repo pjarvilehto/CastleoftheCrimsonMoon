@@ -1,5 +1,5 @@
 {
-  "version": "0.00208",
+  "version": "0.00209",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,13 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00209": [
+      "Review after the phone work: the shrine, treasure and title panels now get the phone's compact layout (a desktop rule used to win), the hall keeps clear of the notch, XP and coins are readable, the boons sit on top of the knight's card, and FULLSCREEN leaves the phone's menu — PLAY is the way in",
+      "A phone's first tap starts the music and the narrator's welcome (a touch counts at the tap's end); PLAY is a proper dialog and INSTALL works more than once",
+      "The 3D background draws at no more than 2x pixel density on sharp phone screens (cooler, smoother)",
+      "Export Save and Import Save open as dialogs; the Great Hall's dot on EQUIPMENT lights when something can be forged (it used to light ALCHEMY)",
+      "Fixes: a failed load says so and a tap retries; a room change on a flat background waits for the painting; music muted during its first load stays silent; a rare freeze after an effect error; the equipment rows' styles"
+    ],
     "0.00208": [
       "Phones play: hold your phone sideways — one line of big cards, Heavy Attack and Drink Potion under the knight, a one-line log, the corner buttons behind ☰, and PLAY / INSTALL before the title for the full screen",
       "The Great Hall on a phone: a strip of your stats and TRAIN, ALCHEMY and EQUIPMENT as three stacked sheets — tap a tab or a sheet's edge to lift it; a green dot marks a sheet with something to buy",
@@ -136,9 +143,6 @@
     ],
     "0.00195": [
       "The cards' plates are see-through again with the glow on them, as in the Card Lab; the glow a little stronger"
-    ],
-    "0.00194": [
-      "Art Lab: nine portraits approved (the knight, rat, skeleton, Cinderborn, Cult Acolyte, wraith, Crypt Spider, Hollow Hound, Blood Knight); their other candidates pruned. Not in the game yet: four characters remain"
     ]
   }
 }
