@@ -614,6 +614,71 @@
           "use_speaker_boost": true
         },
         "approved": true
+      },
+      {
+        "take": 5,
+        "file": "assets/audio/vo/vo_overkill_5.mp3",
+        "text": "A devastating blow…",
+        "measuredDb": -12.7,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 6,
+        "file": "assets/audio/vo/vo_overkill_6.mp3",
+        "text": "Overpowered…",
+        "measuredDb": -14.4,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 7,
+        "file": "assets/audio/vo/vo_overkill_7.mp3",
+        "text": "Nothing left standing.",
+        "measuredDb": -12.5,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 8,
+        "file": "assets/audio/vo/vo_overkill_8.mp3",
+        "text": "Such… excess.",
+        "measuredDb": -10.7,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 9,
+        "file": "assets/audio/vo/vo_overkill_9.mp3",
+        "text": "Overkill… and then some.",
+        "measuredDb": -8.2,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
       }
     ],
     "smash": [

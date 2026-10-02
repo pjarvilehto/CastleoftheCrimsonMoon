@@ -64,7 +64,7 @@ transitions, and they wear better on the hundredth hearing.
 
 | ID | Line | When | How often |
 |---|---|---|---|
-| `overkill` | 1. "Overkill!" 2. "Overkill…" 3. "*(dry chuckle)* Overkill." 4. "Overkill… magnificent." | OVERKILL | First in each room, then 25% |
+| `overkill` | 1. "Overkill!" 2. "Overkill…" 3. "*(dry chuckle)* Overkill." 4. "Overkill… magnificent." 5. "A devastating blow…" 6. "Overpowered…" 7. "Nothing left standing." 8. "Such… excess." 9. "Overkill… and then some." | OVERKILL | First in each room, then 25% |
 | `smash` | 1. "Smash!" 2. "Shattered!" 3. "Crushed!" 4. "Broken…" | SMASH | Sometimes (30%) |
 | `mega_crit` | 1. "Devastating!" 2. "*Ha!*" 3. "What a blow!" 4. "They felt that in the walls…" | Mega crit | Sometimes (50%) |
 | `room_cleared` | 1. "Silence…" 2. "For now…" 3. "The room is yours." 4. "Still… at last." | Room cleared | Sometimes (20%) |
@@ -112,6 +112,6 @@ transitions, and they wear better on the hundredth hearing.
 
 ---
 
-**Count:** 32 IDs and 122 takes in all (four takes each; the two
-once-per-save lines have one), about 3 minutes of audio. Most lines are two
-to five words.
+**Count:** 32 IDs and 127 takes in all (four takes each; OVERKILL, the
+most frequent line, has nine since 0.188; the two once-per-save lines have
+one), about 3 minutes of audio. Most lines are two to five words.

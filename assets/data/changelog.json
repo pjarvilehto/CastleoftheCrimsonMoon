@@ -1,4 +1,7 @@
 {
+  "0.188": [
+    "The Old Wizard has five more things to say about an OVERKILL, so he repeats himself less on a long run"
+  ],
   "0.187": [
     "The game's data files load under the build number like its code, so a fresh build never runs on the old data for the first minutes after a deploy (the Art Lab came up empty in 0.186)"
   ],
@@ -50,11 +53,6 @@
   ],
   "0.172": [
     "Room changes move through the picture: the camera pushes into the painting as the windows fade, and the next room appears close and settles back — one movement, the same timing as before"
-  ],
-  "0.171": [
-    "Only fights are numbered now: the shrine and treasure rooms come between rooms, so room 8 is always the throne room (\"An Ominous Shrine\" instead of \"Room 3 - The Shrine\")",
-    "Every descent starts in a corridor, and an antechamber always leads to the throne room — two new ones, the Hall of Mirrors and the Iron Gate, with the Royal Bedchamber joining them",
-    "The Crimson Nave is now the Crimson Cathedral"
   ],
   "0.170": [
     "The narrator, when switched off, no longer uses up a take he never said — switching him back on, the lines vary as they should"

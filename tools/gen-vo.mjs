@@ -143,9 +143,9 @@ async function main() {
   const req = reqArg >= 0 ? JSON.parse(readFileSync(args[reqArg + 1], 'utf8')) : null;
   const redo = Object.fromEntries((req?.rerender ?? []).map((r) => [r.file, r]));
   const approved = new Set(req?.approved ?? []);
+  // every take of every line (the registry always covers the whole script); --only narrows the rendering
   const jobs = [];
   for (const { id, takes } of script) {
-    if (only && !only.includes(id)) continue;
     for (const t of takes) {
       const file = fileFor(id, t.take);
       const web = `${WEB}/${file}`;
@@ -155,7 +155,7 @@ async function main() {
       jobs.push({ id, ...t, file, web, exists: existsSync(join(OUT, file)) && !r, settings: own, seed: r ? (Date.now() % 1000000) + jobs.length : undefined });
     }
   }
-  const todo = manifestOnly ? [] : jobs.filter((j) => !j.exists);
+  const todo = manifestOnly ? [] : jobs.filter((j) => !j.exists && (!only || only.includes(j.id)));
   for (const j of todo) if (j.settings) console.log(`  redo ${j.file}: ${JSON.stringify(j.settings)}`);
   const chars = todo.reduce((n, j) => n + j.text.length, 0);
   console.log(`${script.length} IDs, ${jobs.length} takes, ${todo.length} to render (${chars} characters)`);
