@@ -46,6 +46,7 @@ const NUM = {
       'turbulence', 'turbulencePeriod', 'pulse', 'pulsePeriod', 'flow', 'flowScale', 'flowAmount'].map((k) => `parallax.puffs.${k}`),
     ...['shade', 'litTint.0', 'litTint.1', 'litTint.2', 'shadeTint.0', 'shadeTint.1', 'shadeTint.2', 'sceneLight', 'nearBright'].map((k) => `parallax.mist.${k}`),
     ...['density', 'curve', 'high', 'strength', 'max'].map((k) => `parallax.haze.${k}`),
+    'parallax.push.dist', 'parallax.push.inMs', 'parallax.push.outMs',
     ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],

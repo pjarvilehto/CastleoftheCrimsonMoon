@@ -7,7 +7,7 @@
 
 import { loadData, DATA } from '../../src/shared/data.js';
 import { onBackgroundChange, setBackground } from '../../src/core/scene.js';
-import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgJolt, bgSway, isBg3dActive } from '../../src/core/bg3d.js';
+import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgJolt, bgSway, bgPush, isBg3dActive } from '../../src/core/bg3d.js';
 
 const KEY = 'castle-fog-lab';
 const $ = (id) => document.getElementById(id);
@@ -21,7 +21,7 @@ const nameOf = (f) => B.roomNames?.[f] ?? (f === B.title ? 'Title' : f === B.hub
 const sceneFog = (f) => ({ fog: base.overrides?.[f]?.fog ?? base.fog, fogWind: [...(base.overrides?.[f]?.fogWind ?? base.fogWind)] });
 
 // ---- the state: one object of everything the sliders drive ----
-const shipped = () => ({ fogScale: base.fogScale, fogSpeed: base.fogSpeed, puffs: clone(base.puffs), mist: clone(base.mist), haze: clone(base.haze), scene: {}, ownFog: true,
+const shipped = () => ({ fogScale: base.fogScale, fogSpeed: base.fogSpeed, puffs: clone(base.puffs), mist: clone(base.mist), haze: clone(base.haze), push: clone(base.push), scene: {}, ownFog: true,
   light: { warm: 0, lit: 1, cool: 0, shade: 1 } });
 let S = shipped();
 let file = scenes[0];
@@ -34,7 +34,7 @@ const tints = ({ warm, lit, cool, shade }) => ({
 });
 function apply() {
   const own = S.ownFog ? sceneFog(file) : (S.scene[file] ?? sceneFog(file));
-  setLiveTuning({ fogScale: S.fogScale, fogSpeed: S.fogSpeed, puffs: clone(S.puffs), haze: clone(S.haze),
+  setLiveTuning({ fogScale: S.fogScale, fogSpeed: S.fogSpeed, puffs: clone(S.puffs), haze: clone(S.haze), push: clone(S.push),
     mist: { ...S.mist, ...tints(S.light) }, fog: own.fog, fogWind: own.fogWind });
   try { localStorage.setItem(KEY, JSON.stringify({ ...S, file })); } catch { /* private mode */ }
 }
@@ -92,7 +92,7 @@ function preset(name) {
   const p = PRESETS[name]();
   S = { ...shipped(), scene: S.scene, ownFog: S.ownFog };
   Object.assign(S, { fogScale: p.fogScale ?? S.fogScale, fogSpeed: p.fogSpeed ?? S.fogSpeed });
-  for (const k of ['puffs', 'mist', 'haze', 'light']) Object.assign(S[k], p[k] ?? {});
+  for (const k of ['puffs', 'mist', 'haze', 'light', 'push']) Object.assign(S[k], p[k] ?? {});
   syncs.forEach((f) => f()); apply();
   status.textContent = `Preset: ${name}.`;
 }
@@ -101,7 +101,7 @@ function preset(name) {
 function patch() {
   const out = {};
   for (const k of ['fogScale', 'fogSpeed']) if (S[k] !== base[k]) out[k] = S[k];
-  for (const k of ['puffs', 'haze']) { const d = {}; for (const [kk, v] of Object.entries(S[k])) if (JSON.stringify(v) !== JSON.stringify(base[k][kk])) d[kk] = v; if (Object.keys(d).length) out[k] = d; }
+  for (const k of ['puffs', 'haze', 'push']) { const d = {}; for (const [kk, v] of Object.entries(S[k])) if (JSON.stringify(v) !== JSON.stringify(base[k][kk])) d[kk] = v; if (Object.keys(d).length) out[k] = d; }
   const m = { ...S.mist, ...tints(S.light) }, dm = {};
   for (const [kk, v] of Object.entries(m)) if (JSON.stringify(v) !== JSON.stringify(base.mist[kk])) dm[kk] = Array.isArray(v) ? v.map((x) => Math.round(x * 1000) / 1000) : v;
   if (Object.keys(dm).length) out.mist = dm;
@@ -113,6 +113,11 @@ const code = document.createElement('textarea'); code.rows = 8; code.readOnly = 
 panel.append(
   row(...Object.keys(PRESETS).map((n) => button(n, () => preset(n)))),
   row(button('Flash', () => flash('crit'), 'fire'), button('Mega', () => flash('megacrit'), 'fire'), button('Potion', () => flash('potion')), button('Jolt', () => bgJolt(1)), button('Sway', () => bgSway(1.5, 1))),
+  group('Room change', 'the push through the picture (← → play it as the game does)', true,
+    slider('push.dist', 'Push distance', 0, 0.3, 0.01, 'how far the camera dollies into the painting (the focal plane is 1 away)'),
+    slider('push.inMs', 'Push in ms', 500, 6000, 100, 'from the windows starting to fade until the next painting is fully in'),
+    slider('push.outMs', 'Pull out ms', 500, 6000, 100, 'the next painting settling back to rest'),
+    note('The game: windows fade 1 s, then the crossfade (2 s), then the windows return (1 s). ← → here waits that first second before the next painting, like the game.')),
   group('Amount', 'how much mist', true,
     slider('fogScale', 'Fog ×', 0, 2.5, 0.05, 'mist amount, × each painting\'s own'),
     slider('puffs.opacity', 'Puff opacity', 0, 1, 0.02),
@@ -205,13 +210,16 @@ function ideas() {
 // ---- the scenes ----
 const sel = $('sceneSel');
 for (const f of scenes) { const o = document.createElement('option'); o.value = f; o.textContent = nameOf(f); sel.append(o); }
-function show(f) {
+let pending = null;
+function show(f, { push = false } = {}) {
   file = f; sel.value = f; $('sceneName').textContent = nameOf(f);
-  setBackground(f);
+  clearTimeout(pending);
+  if (push) { bgPush(); pending = setTimeout(() => setBackground(f), 1000); } // the game's order: the push starts as the windows fade, the painting changes a second later
+  else setBackground(f);
   syncs.forEach((g) => g()); apply();
 }
 sel.onchange = () => show(sel.value);
-const step = (d) => show(scenes[(scenes.indexOf(file) + d + scenes.length) % scenes.length]);
+const step = (d) => show(scenes[(scenes.indexOf(file) + d + scenes.length) % scenes.length], { push: true });
 $('prev').onclick = () => step(-1);
 $('next').onclick = () => step(1);
 $('hide').onclick = () => panel.classList.toggle('hidden');

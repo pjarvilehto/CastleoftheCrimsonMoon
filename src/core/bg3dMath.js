@@ -69,8 +69,11 @@ function perspective(fovY, aspect, near, far) {
 }
 // Rotate the scene about the pivot plane's centre (0,0,-1) = the camera
 // orbiting it; at yaw = pitch = 0 this is the plain projection.
-export function mvp(yaw, pitch, fovY, aspect) {
-  const view = mul(translateZ(-1), mul(rotX(pitch), mul(rotY(yaw), translateZ(1))));
+// dolly (0.171): the camera moved that far toward the scene (world units;
+// the focal plane is 1 away) before the sway — the room transition's push.
+export function mvp(yaw, pitch, fovY, aspect, dolly = 0) {
+  const sway = mul(translateZ(-1), mul(rotX(pitch), mul(rotY(yaw), translateZ(1))));
+  const view = dolly ? mul(sway, translateZ(dolly)) : sway;
   return mul(perspective(fovY, aspect, 0.05, 10), view);
 }
 

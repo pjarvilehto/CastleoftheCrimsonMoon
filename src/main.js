@@ -4,10 +4,10 @@
 // starts loading when first rendered — without preloading, backgrounds
 // and portraits painted half-drawn on first view.
 
-import { onBackgroundChange, go, setBackground } from './core/scene.js';
+import { onBackgroundChange, onTransition, go, setBackground } from './core/scene.js';
 import { el } from './core/dom.js';
 import { initHotkeys } from './core/hotkeys.js';
-import { initBg3d, showBackground3d } from './core/bg3d.js';
+import { initBg3d, showBackground3d, bgPush } from './core/bg3d.js';
 import { volumeToggle } from './ui/volumePanel.js';
 import { changelogToggle } from './ui/changelog.js';
 import { cornerBar, onOffToggle } from './ui/cornerToggles.js';
@@ -82,7 +82,7 @@ async function boot() {
   // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
   // under ?debug (headless testing); real players on a GPU-less machine,
   // or with reduced motion requested, keep the flat CSS backgrounds.
-  if (initBg3d({ allowSoftware: debugMode })) onBackgroundChange(showBackground3d);
+  if (initBg3d({ allowSoftware: debugMode })) { onBackgroundChange(showBackground3d); onTransition(bgPush); } // (0.171: the room push)
   // Every button in the game clicks (delegated, so dynamically rendered
   // scenes need no per-button wiring).
   document.addEventListener?.('click', (e) => {

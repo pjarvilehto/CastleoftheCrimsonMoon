@@ -23,6 +23,7 @@ let bgChanges = 0;         // how many there have been (did work() change it?)
 const BG_WAIT_MAX_MS = 4000; // never hold the windows longer than this for a painting (a slow load)
 const later = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let sceneListener = null;  // the update check (0.094): told after every scene switch
+let transitionListener = null; // the 3D renderer's push (0.171): told as the windows start to fade
 
 // Tell a listener (core/bg3d.js) about every background change; it is
 // told the current one immediately.
@@ -66,11 +67,18 @@ export function go(name, ...args) {
 // fully before the background changes, and when work() changed it, the
 // windows come back only once the new painting has fully faded in (keys
 // stay ignored meanwhile: isTransitioning()).
+// Told at the start of every transition (0.171): the background's push.
+export function onTransition(fn) { transitionListener = fn; }
+
 export function transitionTo(work, fadeOutMs = 1000) {
   if (transitioning) return;
   transitioning = true;
   const el = app();
   el.classList.add('hidden');
+  // the push (0.171): the current painting starts moving as the windows
+  // fade — the 3D renderer dollies in; the flat layer scales (styles.css)
+  transitionListener?.(fadeOutMs);
+  activeBg?.classList.add('push');
   setTimeout(async () => {
     const changes = bgChanges;
     try {
@@ -98,6 +106,11 @@ export function setBackground(file) {
   if (activeBg && activeBg.dataset.file === file) return Promise.resolve();
   const next = activeBg === a ? b : a;
   next.dataset.file = file;
+  // the flat layer's push (0.171): the new painting appears pushed in and
+  // settles (CSS transition) while the old one keeps pushing as it fades
+  next.classList.add('pushed'); next.classList.remove('push');
+  void next.offsetWidth;
+  next.classList.remove('pushed');
   if (!activeBg) {
     next.style.transition = 'none';
     next.style.backgroundImage = url;
@@ -109,6 +122,7 @@ export function setBackground(file) {
     next.style.opacity = '1';
     activeBg.style.opacity = '0';
   }
+  activeBg?.classList.remove('push'); // (the old layer: it is faded out; the class goes with it)
   activeBg = next;
   bgChanges++;
   bgShown = Promise.resolve(bgListener ? bgListener(file) : cssFaded(next, file)).catch(() => {});

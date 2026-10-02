@@ -47,8 +47,10 @@ src/
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally; strictly in
                         order: windows out, swap, the new painting fully in,
-                        windows back), bg crossfader (setBackground returns a
-                        promise), router: registerScene() / go(name, ...)
+                        windows back; onTransition() tells the renderer to
+                        push through the picture, 0.171), bg crossfader
+                        (setBackground returns a promise), router:
+                        registerScene() / go(name, ...)
     dom.js              el(tag, attrs, ...children): key / proceed hotkeys
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,

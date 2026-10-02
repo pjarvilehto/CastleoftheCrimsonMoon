@@ -201,6 +201,18 @@ spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
 the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
 the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
+**The room push (0.171, `parallax.push`):** a room change moves the
+camera through the picture — `scene.js transitionTo` tells the renderer
+(`onTransition` → `bg3d.bgPush`) as the windows start to fade, the old
+painting dollies in (`dist` world units over `inMs`, accelerating; `mvp`
+takes a dolly), the new one appears pushed in and pulls back to rest
+over `outMs` (decelerating) through the crossfade and the windows'
+return; each layer gets its own camera. A push with no new painting
+eases back. The flat fallback scales the CSS layers the same way
+(`.bg-layer.push` / `.pushed`, off under reduced motion). The Fog Lab's
+arrows play the game's sequence (push, a second, the painting) with the
+three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
+1 s in) are the owner's and unchanged.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
