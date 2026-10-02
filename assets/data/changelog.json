@@ -1,4 +1,7 @@
 {
+  "0.00215": [
+    "World Lab: the clouds are drawn in screen space each frame, never scaled with the map — the flickering hairlines were the browser seaming the raster tiles of a scaled canvas"
+  ],
   "0.00214": [
     "World Lab: the clouds drift without seams (whole-pixel tiles), they reach a whole painting past every edge with the painting's margins fading into the clouded land beneath, and the map zooms out far enough to see it"
   ],
