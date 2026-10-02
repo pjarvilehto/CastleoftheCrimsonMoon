@@ -1,5 +1,5 @@
 {
-  "version": "0.00217",
+  "version": "0.00218",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -86,6 +86,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00218": [
+      "Phone: the equipment sheet's rows are all the same height, so every slot fits on the sheet (a forgeable slot's row used to be taller)"
+    ],
     "0.00217": [
       "The build-available prompt keeps Reload and Later on screen: a long changelist scrolls inside it (it pushed the buttons off a phone's screen)"
     ],
@@ -139,9 +142,6 @@
     ],
     "0.00204": [
       "Potions are cheaper: the first costs 10 coins, the second 20, the third 25, then 5 more each — and the price starts over after every run"
-    ],
-    "0.00203": [
-      "Heavy Attack glows gold when it is charged again: a bright flare as the charge lands, then a steady breathing halo (its old glow was mostly hidden by the button's own style)"
     ]
   }
 }

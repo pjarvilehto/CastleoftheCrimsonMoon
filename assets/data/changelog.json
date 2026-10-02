@@ -1,4 +1,7 @@
 {
+  "0.00218": [
+    "Phone: the equipment sheet's rows are all the same height, so every slot fits on the sheet (a forgeable slot's row used to be taller)"
+  ],
   "0.00217": [
     "The build-available prompt keeps Reload and Later on screen: a long changelist scrolls inside it (it pushed the buttons off a phone's screen)"
   ],
