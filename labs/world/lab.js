@@ -30,7 +30,7 @@ const WORLD = {
       blurb: 'Where the sea turns to stone and the stone remembers.' },
   ],
 };
-const DEFAULTS = { density: 1.1, drift: 6, dark: 0.1, cleared: 330, open: 150, burn: 2.5, red: 0.55, tilt: 12, skyZoom: 2.4 };
+const DEFAULTS = { density: 0.4, drift: 23, dark: 0.5, cleared: 220, open: 130, burn: 2.5, red: 0.55, tilt: 14, skyZoom: 2.5 }; // the owner's picks (0.00213: sparser, darker, faster clouds; tighter windows)
 let T = { ...DEFAULTS };
 try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.T) T = { ...DEFAULTS, ...saved.T }; } catch { /* fresh */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ T })); } catch { /* private mode */ } };
