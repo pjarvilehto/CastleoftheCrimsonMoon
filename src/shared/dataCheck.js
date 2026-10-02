@@ -14,7 +14,7 @@ const NUM = {
     'statTrainXpBase', 'levelEvery', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus', 'salvagePerTier',
     ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'gilded.tierBefore', 'gilded.tierFrom', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
-    ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins', 'lowShare', 'lowShareHud'].map((k) => `potions.${k}`),
+    ...['startCount', 'startCap', 'maxCap', 'priceSteps.0', 'priceStep', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins', 'lowShare', 'lowShareHud'].map((k) => `potions.${k}`),
     'alchemyTracks.potency.base', 'alchemyTracks.potency.healPerLevel',
     ...['base', 'perLevel', 'linear', 'tail', 'minStep'].map((k) => `alchemyTracks.efficiency.${k}`),
     'alchemyTracks.infusion.base', 'alchemyTracks.infusion.armorPerLevel',

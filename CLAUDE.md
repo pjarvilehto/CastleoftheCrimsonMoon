@@ -105,7 +105,11 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    shrine leads to).
 5. **Potions persist** (0.080): a run draws the profile's stock and
    `settleRun()` writes back what's left, capped by `potionCap`; pickups go
-   through `runState.addPotion()` (sold when the satchel is full).
+   through `runState.addPotion()` (sold when the satchel is full). Their
+   price climbs with each one bought between runs (`potions.priceSteps`
+   10, 20, 25, then `priceStep` 5 more each; `profile.potionsBought`,
+   reset by `settleRun()`; 0.00204 — a ladder that never reset starved the
+   simulator's meta: 27,000 coins on potions in a campaign).
    **`run.stats` is a snapshot** taken at run start; mid-run loot does
    nothing until `settleRun()` auto-equips it.
 6. **Every game or stats-page change ships as a numbered build:**

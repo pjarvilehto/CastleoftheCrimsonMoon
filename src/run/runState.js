@@ -159,6 +159,7 @@ export function settleRun(run, outcome) {
   // Potions are a persistent stock (0.080): what you didn't drink comes
   // home — on retreat AND on death (the toll only takes coins).
   p.potions = Math.max(0, Math.min(run.potions, p.potionCap));
+  p.potionsBought = 0; // the potion price ladder starts over after every run (0.00204: 10, 20, 25, +5 each; meta/leveling.js potionCost)
   // Items auto-equip into their slots at run end (kept even on death);
   // replaced/weaker items are salvaged for coins.
   const equip = equipItems(p, run.itemsFound);

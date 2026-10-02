@@ -20,12 +20,18 @@
     "startCount": 2,
     "startCap": 4,
     "maxCap": 10,
-    "price": 30,
     "capUpgradeBase": 300,
     "capUpgradeGrowth": 2,
     "fullSatchelSellCoins": 10,
     "lowShare": 0.3,
-    "lowShareHud": 0.25
+    "lowShareHud": 0.25,
+    "priceSteps": [
+      10,
+      20,
+      25
+    ],
+    "priceStep": 5,
+    "_doc": "0.00204: the price climbs with each potion bought between runs — priceSteps for the first ones (10, 20, 25), then priceStep more each (30, 35, ...); profile.potionsBought counts them and every settled run starts the ladder over."
   },
   "statTrainXpBase": 15,
   "levelEvery": 5,

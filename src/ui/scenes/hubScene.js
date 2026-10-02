@@ -144,7 +144,7 @@ export function hubScene(opts = {}) {
       // 0.080: potions are a persistent stock; the satchel caps it.
       el('div', { class: 'item-row' },
         el('div', {}, el('b', {}, 'Healing Potion '),
-          el('span', {}, `${p.potions}/${p.potionCap} carried — unused potions come home after a run`)),
+          el('span', {}, `${p.potions}/${p.potionCap} carried — unused potions come home after a run; the price climbs with each bought and starts over after a run`)),
         el('button', {
           disabled: p.coins < potionCost() || satchelFull(p),
           // running low and able to buy: the obvious next step (0.090)

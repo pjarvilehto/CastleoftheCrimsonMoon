@@ -127,7 +127,7 @@ fresh();
   const p = getProfile();
   p.xp = 0; p.coins = 0;
   ok('nothing to spend: no green', !hub.canSpendXp(p) && !hub.canSpendCoins(p));
-  p.xp = 1000; p.coins = DATA.difficulty.potions.price;
+  p.xp = 1000; p.coins = DATA.difficulty.potions.priceSteps[0];
   ok('XP/coins green when something is affordable', hub.canSpendXp(p) && hub.canSpendCoins(p));
   ok('potion glow below 30% of the satchel', hub.potionsLow({ potions: 1, potionCap: 4 }) && !hub.potionsLow({ potions: 2, potionCap: 4 })
     && hub.potionsLow({ potions: 2, potionCap: 8 }) && !hub.potionsLow({ potions: 3, potionCap: 8 }));

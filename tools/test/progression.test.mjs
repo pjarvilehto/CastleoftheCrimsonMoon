@@ -25,8 +25,11 @@ fresh();
   ok('fresh profile: 2/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
   p.coins = 1000;
   const c0 = potionCost();
-  restockPotion(); restockPotion();
-  ok('potion price is flat', c0 === pc.price && potionCost() === pc.price && p.potions === 4 && p.coins === 1000 - 2 * pc.price);
+  restockPotion(); const c1 = potionCost(); restockPotion();
+  ok('potion price climbs: 10, 20, then 25 and +5 each (0.00204)', c0 === 10 && c1 === 20 && potionCost() === 25 && p.potions === 4 && p.coins === 1000 - 30
+    && p.potionsBought === 2 && potionCost({ potionsBought: 3 }) === 30 && potionCost({ potionsBought: 10 }) === 65 && potionCost({}) === 10);
+  { const { settleRun } = await import('../../src/run/runState.js'); const r = createRun(); settleRun(r, 'retreat'); }
+  ok('the price ladder starts over after a run', getProfile().potionsBought === 0 && potionCost() === 10);
   ok('cannot buy past the cap', restockPotion() === false && p.potions === 4);
   const s0 = satchelCost();
   expandSatchel();
