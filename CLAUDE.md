@@ -252,7 +252,7 @@ spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
 the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
 the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
-**The room push (0.171, `parallax.push`):** a room change moves the
+**The room push (0.188, `parallax.push`):** a room change moves the
 camera through the picture — `scene.js transitionTo` tells the renderer
 (`onTransition` → `bg3d.bgPush`) as the windows start to fade, the old
 painting dollies in (`dist` world units over `inMs`, accelerating; `mvp`
@@ -321,7 +321,7 @@ for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
 **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (32 lines,
-four takes each), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
 sends "!" as "." and drops a leading "…", never overwrites a take — delete
 the file to re-render it, `--stability/--style/--speed` for a steadier
@@ -390,21 +390,21 @@ may hear the old one for ~4 hours.
   Hall art only; the hub's Descend waits only for the essentials (shrine /
   death art, portraits); the 34 room paintings (0.153, ~13MB) keep
   loading behind — a room whose painting isn't in yet keeps the last one up.
-- **Only fights are numbered (0.171, the owner's call):** `run.roomNumber`
+- **Only fights are numbered (0.188, the owner's call):** `run.roomNumber`
   counts fights (the boss's included), so room 8 is always the throne room.
   The shrine and the treasure room are interludes met on the way to a
   numbered room (`runState.enterNextRoom`, `roomGen.generateInterlude`):
   `number: null`, `depth` = the room they lead to (prices and loot),
   titled by name alone ("An Ominous Shrine", "The Frozen Tribute"), no
   record tag. A stretch is now eight fights, not seven + the shrine (the
-  sim: ~20% more coins per run, bosses a little easier — 0.171's notes).
+  sim: ~20% more coins per run, bosses a little easier — 0.188's notes).
   Room 1 is always a corridor from `backgrounds.json entrance`, and the
   room before each boss (7, 15, 23) always an antechamber from
   `antechambers`, which appear nowhere else (both lists are fight
   paintings, also in `rooms`; the entrance ones load first behind the
   title; four antechambers — The Antechamber, The Royal Bedchamber, The
   Hall of Mirrors, The Iron Gate — so no run repeats one). Saves made
-  before 0.171 count shrines in `bestRoom` (one or two rooms high; left
+  before 0.188 count shrines in `bestRoom` (one or two rooms high; left
   as is).
 - Treasure rooms (0.155, `run/treasure.js` + `ui/treasureUI.js`, tuning
   `difficulty.json treasure`): a run gets one with `chance` (30%) once the

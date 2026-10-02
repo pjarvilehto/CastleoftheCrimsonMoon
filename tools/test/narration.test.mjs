@@ -18,7 +18,7 @@ const LINES = DATA.narration.lines;
   const { parseScript, cleanTake } = await import('../gen-vo.mjs');
   const script = parseScript(read('docs/narration-script.md'));
   const ids = script.map((l) => l.id);
-  ok('the script has 32 lines in 122 takes', ids.length === 32 && script.reduce((n, l) => n + l.takes.length, 0) === 122);
+  ok('the script has 32 lines in 127 takes (OVERKILL nine since 0.188)', ids.length === 32 && script.reduce((n, l) => n + l.takes.length, 0) === 127 && script.find((l) => l.id === 'overkill').takes.length === 9);
   ok('every line of the script is in narration.json with every take', script.every((l) => l.takes.every((t) => LINES[l.id]?.some((x) => x.take === t.take && x.text === t.text))));
   ok('narration.json has no line the script lacks', Object.keys(LINES).every((id) => ids.includes(id)));
   const takes = Object.values(LINES).flat();
@@ -30,6 +30,7 @@ const LINES = DATA.narration.lines;
   ok('the script\'s frequencies: every / sometimes / once rules', N.lines.descent_begin.chance === 1 && N.lines.hall_return.chance === 0.4 && N.lines.room_cleared.chance === 0.2
     && N.lines.overkill.firstInRoom && N.lines.overkill.chance === 0.25 && N.lines.low_hp.oncePerRoom && N.lines.low_hp.cooldownMs === 30000
     && N.lines.new_record.oncePerRun && N.lines.boss_summon.oncePerRoom && N.lines.forge.oncePerSession);
+  ok('gen-vo: --only narrows the rendering, never the registry (0.188: it truncated narration.json to one line)', read('tools/gen-vo.mjs').includes('(!only || only.includes(j.id))') && !read('tools/gen-vo.mjs').includes('if (only && !only.includes(id)) continue;'));
   ok('data check covers the narration', read('src/shared/dataCheck.js').includes('narration.lines') && read('src/shared/data.js').includes("'narration'"));
 }
 
