@@ -89,7 +89,16 @@
   ],
   "changelog": {
     "0.00223": [
-      "Review build (notes to come)"
+      "A death in a Sealed Reliquary now counts the room it led to, in your records and on the end screen.",
+      "A potion drunk between rooms no longer leaves phantom armor for the next fight; summons are never marked elite.",
+      "Benchmark: the Great Hall's ask waits for the hall to settle and its Continue always starts it; the ?debug button returns where it was pressed.",
+      "Music and narrator: MUSIC OFF or NARRATOR OFF no longer downloads the score or the takes; NARRATOR OFF stops the line playing; the welcome line no longer waits behind the music; a bed asked for while the music was switched off and on is the one that plays.",
+      "Narrator: a line dropped for waiting too long can still play later; with SOUND OFF no line is spent; a short sound under a narrator line no longer cuts the music's return short.",
+      "Phones: the save dialogs sit at the top for the keyboard; long room titles stay clear of XP and COINS; the boons sit beside the menu in shrine and treasure rooms; Push Deeper fits on every phone.",
+      "A narrow desktop window scrolls the Great Hall to Descend; the treasure room fits a MacBook-height window without a scrollbar.",
+      "Smoother: the glowing text (rare items, low health, the death and victory titles) no longer repaints every frame; the battle line writes only what changed; OVERKILL's banner is placed from the cards still standing.",
+      "If a screen fails to open, a Reload button appears instead of a blank window; a dialog opened mid-fade hears the keyboard; the display font is a third of its size.",
+      "Play stats: a bad run record no longer blanks the dashboard, and the collector agrees with the page on every field (Worker 0.00223 to paste)."
     ],
     "0.00222": [
       "Phones: a lighter picture — the background at a lower resolution and rest rate, a thinner mist buffer, 1x particles, the card glow at 20 fps, the figures without their drop shadow (the same look, fewer pixels; the owner's iPhone ran hot)",
