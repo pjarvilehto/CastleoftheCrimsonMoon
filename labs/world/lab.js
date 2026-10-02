@@ -46,9 +46,17 @@ const reveal = {}; // id -> 0..1, how far its burn has gone (1 = done)
 const W = WORLD.w, H = WORLD.h;
 const world = $('world'), map = $('map'), canvas = $('clouds'), pins = $('pins'), stage = $('stage');
 world.style.width = `${W}px`; world.style.height = `${H}px`;
-stage.style.background = 'radial-gradient(ellipse at center, #cfc9bf 0%, #9d968c 60%, #5a544d 100%)'; // past the picture's edge: more sky (the painting will be bigger than this one)
+stage.style.background = '#3a3630'; // under the clouds past the painting: dim, unpainted land (the clouds reach there too)
 map.src = WORLD.image;
-canvas.width = W; canvas.height = H;
+// The cloud layer reaches a whole painting past every edge (0.00214: the
+// world goes on under the clouds past what is painted), at half resolution
+// — the puffs are soft, and a canvas of 3W x 3H at full size would be 11M
+// pixels redrawn every frame. Drawn in picture coordinates: the painting's
+// origin sits at (W, H) of the layer.
+const REACH = 1, CS = 0.5; // paintings past each edge; the canvas scale
+const LW = W * (1 + 2 * REACH), LH = H * (1 + 2 * REACH);
+canvas.width = Math.round(LW * CS); canvas.height = Math.round(LH * CS);
+canvas.style.left = `${-REACH * W}px`; canvas.style.top = `${-REACH * H}px`; canvas.style.width = `${LW}px`; canvas.style.height = `${LH}px`;
 const ctx = canvas.getContext('2d');
 let puffs = null; // an offscreen canvas of the clouds, drawn once per density
 function makePuffs() {
@@ -80,9 +88,12 @@ function frame(now) {
   ox = (ox + T.drift * dt) % W; oy = (oy + T.drift * 0.35 * dt) % H;
   // the burns advance
   for (const id of Object.keys(reveal)) if (reveal[id] < 1) reveal[id] = Math.min(1, reveal[id] + dt / T.burn);
-  ctx.clearRect(0, 0, W, H);
-  ctx.drawImage(puffs, ox, oy); ctx.drawImage(puffs, ox - W, oy); ctx.drawImage(puffs, ox, oy - H); ctx.drawImage(puffs, ox - W, oy - H);
-  if (T.dark) { ctx.fillStyle = `rgba(20,14,12,${T.dark})`; ctx.fillRect(0, 0, W, H); }
+  ctx.setTransform(CS, 0, 0, CS, 0, 0);
+  ctx.clearRect(0, 0, LW, LH);
+  // the tile at whole-pixel offsets (0.00214: fractional ones left hairline seams between the tiles as they drifted)
+  const tx = Math.round(ox), ty = Math.round(oy);
+  for (let i = -1; i <= 1 + 2 * REACH; i++) for (let j = -1; j <= 1 + 2 * REACH; j++) ctx.drawImage(puffs, tx + i * W, ty + j * H);
+  if (T.dark) { ctx.fillStyle = `rgba(20,14,12,${T.dark})`; ctx.fillRect(0, 0, LW, LH); }
   ctx.globalCompositeOperation = 'destination-out';
   for (const p of WORLD.places) {
     const st = stateOf(p);
@@ -90,9 +101,10 @@ function frame(now) {
     if (!full) continue;
     const r = full * ease(reveal[p.id] ?? 1) + 6 * Math.sin(time * 0.6 + p.x * 10); // (a slow breath at the edge)
     if (r <= 0) continue;
-    const g = ctx.createRadialGradient(p.x * W, p.y * H, r * 0.45, p.x * W, p.y * H, r);
+    const cx = (p.x + REACH) * W, cy = (p.y + REACH) * H; // (the painting sits one reach in)
+    const g = ctx.createRadialGradient(cx, cy, r * 0.45, cx, cy, r);
     g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x * W, p.y * H, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
   $('redmoon').style.opacity = String(T.red * Math.max(0, 1 - cleared.length / 3));
@@ -173,7 +185,7 @@ let drag = null; const pts = new Map();
 stage.addEventListener('pointerdown', (e) => { if (e.target.closest('.pin')) return; pts.set(e.pointerId, e); if (pts.size === 1) { drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; stage.classList.add('dragging'); stage.setPointerCapture(e.pointerId); } });
 stage.addEventListener('pointermove', (e) => {
   if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e);
-  if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (drag?.pinch) { view.zoom = Math.max(0.9, Math.min(4, drag.z * d / drag.pinch)); apply(); } else drag = { pinch: d, z: view.zoom }; return; }
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (drag?.pinch) { view.zoom = Math.max(0.45, Math.min(4, drag.z * d / drag.pinch)); apply(); } else drag = { pinch: d, z: view.zoom }; return; }
   if (!drag || drag.pinch) return;
   view.x = drag.vx - (e.clientX - drag.x) / (view.zoom * W); view.y = drag.vy - (e.clientY - drag.y) / (view.zoom * H); apply();
 });
@@ -181,7 +193,7 @@ const up = (e) => { pts.delete(e.pointerId); if (!pts.size) { drag = null; stage
 stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
 stage.addEventListener('wheel', (e) => {
   e.preventDefault();
-  const z = Math.max(0.9, Math.min(4, view.zoom * Math.exp(-e.deltaY * 0.0015)));
+  const z = Math.max(0.45, Math.min(4, view.zoom * Math.exp(-e.deltaY * 0.0015)));
   // zoom around the cursor: the picture point under it stays put
   const px = view.x + (e.clientX - innerWidth / 2) / (view.zoom * W), py = view.y + (e.clientY - innerHeight / 2) / (view.zoom * H);
   view.x = px - (e.clientX - innerWidth / 2) / (z * W); view.y = py - (e.clientY - innerHeight / 2) / (z * H); view.zoom = z; apply();
