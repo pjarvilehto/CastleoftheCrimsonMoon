@@ -43,17 +43,20 @@ function unitFor(id, i, k = null) {
   if (id === 'player') u.update({ hp: run.hp, printing: false, heavyReady: true, heavyCd: 0, dead: false });
   else u.update({ hp: scaleEnemy(id, 9).maxHp, dead: false, printing: false, combatOver: false });
   u.card.style.position = 'relative';
+  if (id !== 'player' && DATA.enemies[id].boss) u.el.classList.add('boss-unit'); // twice as wide (0.196)
   if (k) { u.portrait.src = k.file; u.glint.src = k.file; }
   const flip = k && verdictOf(k)?.flip;
   u.portrait.classList.toggle('flipped', !!flip); u.glint.classList.toggle('flipped', !!flip);
   return u;
 }
 const stage = $('stage');
-function line(n, units) {
-  stage.replaceChildren(el('div', { class: 'battle-line', style: `--n:${n}` }, el('div', { class: 'enemy-row' }, ...units.map((u) => u.el))));
+// The game's --card-h budget is one knight card + --slots enemy-card widths (--n cards for the gaps; 0.196: the boss's
+// card counts two slots, battleRoom.js). A row of any cards: their widths in enemy-card units, less the knight the budget already holds.
+const width = (u) => (u.el.classList.contains('player-unit') ? 0.605 / 0.3734 : u.el.classList.contains('boss-unit') ? 2 : 1);
+const sizing = (rowUnits, allUnits = rowUnits) => `--n:${rowUnits.length};--slots:${Math.max(1, Math.ceil(allUnits.reduce((s, u) => s + width(u), 0) - 0.605 / 0.3734))}`;
+function line(units) {
+  stage.replaceChildren(el('div', { class: 'battle-line', style: sizing(units) }, el('div', { class: 'enemy-row' }, ...units.map((u) => u.el))));
 }
-// cards per row: the game's --card-h budget counts one knight card + n enemy cards
-const nFor = (players, enemies) => Math.max(1, Math.ceil((players * 0.605 + enemies * 0.3734 - 0.605) / 0.3734));
 
 // ---- views ----
 function compare() {
@@ -73,17 +76,17 @@ function compare() {
     u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, `Candidate ${k.n}`), el('span', { class: 'meta' }, `${k.from ? `clean of c${k.from} · ` : ''}${(k.model ?? '').split('/').pop()} · seed ${k.seed ?? '?'} · ${(k.style ?? '').replace('.jpg', '')}${k.hint ? ` · "${k.hint}"` : ''}`),
       el('div', { class: 'verdict' }, bOk, bNo, bFlip, k.from ? null : bClean), note));
   });
-  line(id === 'player' ? nFor(units.length, 0) : nFor(0, units.length), units);
+  line(units);
   if (!cs.length) stage.firstChild.append(el('p', { class: 'hint', style: 'position:absolute; left:50%; top:30%; transform:translateX(-50%); color:#9a8b6a; font-family:var(--body); text-shadow:0 1px 4px #000;' }, `No candidates for ${nameOf(id)} yet: node tools/gen-art.mjs --only ${id}`));
 }
 function lineup() {
   const units = IDS.map((id, i) => { const k = S.fresh ? chosen(id) : null; const u = unitFor(id, i, k); u.el.classList.toggle('chosen', !!k && verdictOf(k)?.v === 'ok');
     u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, nameOf(id)), el('span', { class: 'meta' }, k ? `candidate ${k.n}${verdictOf(k)?.v === 'ok' ? ' · approved' : ''}` : S.fresh ? 'current (no candidate)' : 'current'))); return u; });
-  line(12, units);
+  line(units);
 }
 function fight() {
   const units = ['player', ...S.fight].map((id, i) => unitFor(id, i, S.fresh ? chosen(id) : null));
-  stage.replaceChildren(el('div', { class: 'battle-line', style: '--n:4' }, units[0].el, el('div', { class: 'enemy-row' }, ...units.slice(1).map((u) => u.el))));
+  stage.replaceChildren(el('div', { class: 'battle-line', style: sizing(units.slice(1), units) }, units[0].el, el('div', { class: 'enemy-row' }, ...units.slice(1).map((u) => u.el))));
 }
 function verdict(k, v) { const cur = verdictOf(k) ?? {}; S.verdicts[k.file] = { ...cur, v: cur.v === v ? null : v, at: Date.now() }; if (!S.verdicts[k.file].v) delete S.verdicts[k.file]; save(); render(); }
 function render() {
