@@ -1,4 +1,7 @@
 {
+  "0.00200": [
+    "Art Lab: the Vampire Lord's card is twice as wide here too, as in the game since 0.196"
+  ],
   "0.00199": [
     "Fixed: a heavy blow could print its damage with a fraction (-358.79999) since the 2.3x multiplier — damage is always a whole number again"
   ],
