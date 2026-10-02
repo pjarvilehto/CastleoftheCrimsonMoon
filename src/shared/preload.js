@@ -14,6 +14,7 @@
 // keep loading behind (a room whose painting isn't in yet keeps the last
 // one up until it is: bg3d swaps only once a layer has loaded).
 
+import { CHEST_ICONS } from '../run/treasure.js';
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
 import { portraitUrl } from './portraits.js';
@@ -33,7 +34,7 @@ export function essentialUrls() {
   const b = DATA.backgrounds, first = new Set([b.title, b.hub]);
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
-  const icons = [...DATA.shrines.offers.map((o) => o.img), ...['coffer', 'gilded', 'reliquary'].map((c) => `assets/icons/chest_${c}.webp`)]; // (0.177)
+  const icons = [...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)]; // (0.177; one table, run/treasure.js)
   return [...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons];
 }
 

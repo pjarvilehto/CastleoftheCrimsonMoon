@@ -25,8 +25,10 @@ export function backingSize(cssW, cssH, dpr, maxPixels, scale = 1) {
 // Returns the next state: `fps` when a window completes, and `slow` = how
 // many windows in a row came in under minFps (step down at SLOW_WINDOWS —
 // one bad window is a hitch, two are the device).
-export const SLOW_WINDOWS = 2;
-export function fpsWindow(w, now, minFps, { windowMs = 3000, gapMs = 400 } = {}) {
+// q: parallax.quality (0.00197: data, was 3000 / 400 / 2 in here) — windowMs,
+// gapMs (a longer gap between frames is a pause: the window restarts),
+// slowWindows (bg3d.js: that many slow windows in a row step down).
+export function fpsWindow(w, now, minFps, { windowMs, gapMs }) {
   if (!w || now - w.last > gapMs) return { since: now, last: now, frames: 0, slow: 0 };
   const frames = w.frames + 1;
   if (now - w.since < windowMs) return { since: w.since, last: now, frames, slow: w.slow };

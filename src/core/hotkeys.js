@@ -26,6 +26,7 @@ export function handleKey(key) {
   // must not click unseen buttons.
   if (document.body?.classList?.contains('fg-hidden')) return false;
   const k = key.toLowerCase();
+  if (/^(f\d{1,2}|tab)$/.test(k)) return false; // F5, F11, F12, Tab: the browser's, dialog or not (0.00197: a dialog swallowed them)
   if (keyTraps.length) return keyTraps.at(-1)(k);
   if (k === 'enter') {
     const primary = document.querySelector('button.primary:not([disabled])');

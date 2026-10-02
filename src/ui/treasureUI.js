@@ -6,7 +6,7 @@
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
-import { CHESTS, openChest, reliquaryCost } from '../run/treasure.js';
+import { CHESTS, CHEST_ICONS, openChest, reliquaryCost } from '../run/treasure.js';
 import { renderPanelRoom, litCard } from './shrineUI.js';
 import { CHEST_STYLE } from './cardFx.js';
 import { iconArt } from './buffs.js';
@@ -14,9 +14,9 @@ import { logLine } from './hud.js';
 import { DATA } from '../shared/data.js';
 
 const LOOK = {
-  coffer: { name: 'Iron Coffer', icon: '💰', img: 'assets/icons/chest_coffer.webp', hint: 'Heavy with coin.' },
-  gilded: { name: 'Gilded Chest', icon: '⚜', img: 'assets/icons/chest_gilded.webp', hint: 'Fine gear, made for you.' },
-  reliquary: { name: 'Sealed Reliquary', icon: '⚱', img: 'assets/icons/chest_reliquary.webp', hint: 'Something old sleeps within.' },
+  coffer: { name: 'Iron Coffer', icon: '💰', img: CHEST_ICONS.coffer, hint: 'Heavy with coin.' },
+  gilded: { name: 'Gilded Chest', icon: '⚜', img: CHEST_ICONS.gilded, hint: 'Fine gear, made for you.' },
+  reliquary: { name: 'Sealed Reliquary', icon: '⚱', img: CHEST_ICONS.reliquary, hint: 'Something old sleeps within.' },
 };
 
 // h: as renderShrineRoom, plus onDeath() (the reliquary's price can kill)

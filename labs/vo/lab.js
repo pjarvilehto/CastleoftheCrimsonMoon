@@ -1,5 +1,5 @@
 // labs/vo/lab.js — the VO Lab (see index.html). Loads the registry
-// (../../assets/data/narration.json) and the rules (../../assets/data/audio.json),
+// (assets/data/narration.json) and the rules (assets/data/audio.json),
 // lists every take, plays it as the game would (levelled to
 // narration.targetDb through one AudioContext) and keeps the owner's
 // verdicts in localStorage: { [file]: { v: 'ok' | 'no', volatility: -1|0|1, shouty: -1|0|1, at: ms } }.
@@ -20,7 +20,8 @@ const el = (tag, attrs = {}, ...kids) => {
   return n;
 };
 
-const [reg, audio] = await Promise.all(['narration', 'audio'].map((f) => fetch(`../../assets/data/${f}.json`, { cache: 'no-cache' }).then((r) => r.json())));
+const q = globalThis.__castleBuild?.version ? `?v=${encodeURIComponent(globalThis.__castleBuild.version)}` : ''; // (labs/boot.js read build.json; 0.00197: the data under the build, like the game's)
+const [reg, audio] = await Promise.all(['narration', 'audio'].map((f) => fetch(`assets/data/${f}.json${q}`, { cache: 'no-cache' }).then((r) => r.json())));
 const N = audio.narration;
 const takes = []; // flat, in script order: { id, take, file, text, measuredDb, settings, approved, row }
 for (const [id, list] of Object.entries(reg.lines)) for (const t of list) takes.push({ id, ...t });
@@ -43,7 +44,7 @@ async function play(i) {
   ctx ??= new (globalThis.AudioContext || globalThis.webkitAudioContext)();
   await ctx.resume?.();
   stopSound();
-  buffers[t.file] ??= fetch(`../../${t.file}${t.rendered ? `?r=${encodeURIComponent(t.rendered)}` : ''}`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b));
+  buffers[t.file] ??= fetch(`${t.file}${t.rendered ? `?r=${encodeURIComponent(t.rendered)}` : ''}`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b));
   let buffer;
   try { buffer = await buffers[t.file]; } catch { delete buffers[t.file]; return; }
   const gain = ctx.createGain();

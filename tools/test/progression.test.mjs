@@ -1,9 +1,7 @@
 // tools/test/progression.test.mjs — the meta game: settle, potions, saves, alchemy, disciplines, forge, hub, loot, 0.097 fixes.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, t, fresh, registry, El, DATA, show, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 

@@ -1,7 +1,7 @@
 // ui/dialog.js — every dialog layered over a scene (0.115): the update
 // prompt, yes/no confirms, the name prompt, the changelist. One overlay +
-// modal, and the keyboard: while open the dialog owns it (scene.js key
-// trap stack), so the scene's hotkeys can't fire underneath; closing hands
+// modal, and the keyboard: while open the dialog owns it (core/hotkeys.js
+// key trap stack), so the scene's hotkeys can't fire underneath; closing hands
 // it back to whatever was below, even another dialog.
 //
 // openDialog({ label, children, onKey(k, close), backdropCloses,

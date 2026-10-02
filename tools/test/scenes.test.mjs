@@ -1,9 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
 
 fresh();
 
@@ -105,7 +103,7 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
   ok('build.json module list matches src/ (run tools/bump.mjs)', JSON.stringify(b.modules) === JSON.stringify(listModules()));
   const html = readFileSync('index.html', 'utf8');
-  ok('index.html boots versioned', html.includes("fetch('assets/data/build.json', { cache: 'no-store' })")
+  ok('index.html boots versioned', html.includes("fetch('assets/data/build.json?t=' + Date.now(), { cache: 'no-store' })")
     && html.includes("im.type = 'importmap'") && html.includes("'styles.css' + q") && html.includes("'src/main.js' + q")
     && !html.includes('<script type="module" src="src/main.js">'));
   const css = readFileSync('styles.css', 'utf8');
@@ -114,7 +112,7 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
     return [...block.matchAll(/box-shadow:([^;]*);/g)].map((m) => m[1].split(/,(?![^(]*\))/).length);
   };
   const y = layers('active-glow'), r = layers('active-glow-red');
-  ok('glow keyframes have matching shadow counts (smooth fade)', y.length === 2 && y[0] === y[1] && r.length === 2 && r[0] === r[1], `${y} / ${r}`);
+  ok('the active glow is a layer whose opacity animates (0.00197: no box-shadow repaint per frame)', css.includes('button.active::after {') && /@keyframes active-glow \{ 0%, 100% \{ opacity: 0; \} 50% \{ opacity: 1; \} \}/.test(css) && css.includes('button.active.active-red::after {') && !/@keyframes active-glow-red/.test(css), `${y} / ${r}`);
 }
 
 // T56: 0.094 — update prompt: version compare, changelist since this
@@ -183,7 +181,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const full = JSON.parse(readFileSync('assets/data/changelog.json', 'utf8'));
   const b = JSON.parse(readFileSync('assets/data/build.json', 'utf8'));
   const vs = Object.keys(full);
-  ok('changelog.json: every build back to 0.073, newest first, superset of build.json', vs[0] === b.version && vs.at(-1) === '0.073'
+  ok('changelog.json: every build back to 0.073, newest first, superset of build.json', vs[0] === b.version && vs.at(-1) === '0.00073'
     && vs.every((v, i) => !i || up2(vs[i - 1], v)) && Object.keys(b.changelog).every((v) => JSON.stringify(full[v]) === JSON.stringify(b.changelog[v]))
     && vs.every((v) => Array.isArray(full[v]) && full[v].length > 0 && full[v].every((n) => typeof n === 'string' && n.length > 0)));
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
@@ -202,8 +200,8 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   btn.listeners.click[0]();
   await sleep(10);
   const text = dlg()?.textContent ?? '';
-  ok('the dialog lists every build, newest first, current one marked', !!dlg() && text.includes(`Build ${b.version} — this build`) && text.includes('Build 0.073')
-    && text.indexOf(`Build ${b.version}`) < text.indexOf('Build 0.073') && text.includes(full['0.094'][0]));
+  ok('the dialog lists every build, newest first, current one marked', !!dlg() && text.includes(`Build ${b.version} — this build`) && text.includes('Build 0.00073')
+    && text.indexOf(`Build ${b.version}`) < text.indexOf('Build 0.00073') && text.includes(full['0.00094'][0]));
   const hubText = t();
   handleKey('e'); handleKey('1');
   ok('it owns the keyboard', !!dlg() && t() === hubText);

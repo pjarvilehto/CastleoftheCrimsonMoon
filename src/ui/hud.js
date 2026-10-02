@@ -12,7 +12,7 @@ export const isLowHp = (hp, maxHp) => hp > 0 && hp / maxHp <= DATA.difficulty.lo
 // Hall's stat box and the panel rooms' HUD (styles.css .potions-*).
 export function potionLevel(p) {
   if (p.potions >= p.potionCap) return 'potions-full';
-  if (p.potions <= Math.max(1, Math.floor(p.potionCap / 4))) return 'potions-low';
+  if (p.potions <= Math.max(1, Math.floor(p.potionCap * DATA.difficulty.potions.lowShareHud))) return 'potions-low';
   return 'potions-ok';
 }
 
@@ -48,7 +48,8 @@ export function logLine(logEl, content, cls = 'sys') {
 }
 
 // Item rarity scheme driven by items.json `tier` (see styles.css):
-// T1 worn ash, T2 rare azure (soft pulse), T3 epic amethyst (strong pulse).
+// T1 worn ash, T2 rare azure (soft pulse), T3 epic amethyst (strong pulse),
+// T4 crimson relics (rarityClass clamps at 4).
 export function rarityClass(item) {
   const t = Math.min(4, Math.max(1, item.tier || 1));
   return `rarity-${t}`;

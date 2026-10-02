@@ -12,6 +12,7 @@ import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
 import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
+import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
@@ -52,7 +53,7 @@ const frame = () => el('div', { class: 'card-frame' });
 // into the skull. Without the Web Animations API (tests) it's instant.
 const COLLAPSE_MS = 700;
 function collapse(img, done) {
-  if (!img.animate || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+  if (!img.animate || reducedMotion()) { done(); return; }
   const base = getComputedStyle(img).filter;
   const red = `${base === 'none' ? '' : base} sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)`;
   img.animate([
@@ -216,7 +217,6 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
         else setClass(card, 'dead', true);
       });
     }
-    setClass(unit, 'dead-unit', s.dead);
     setClass(atk, 'ghost-btn', s.dead);
     setDisabled(atk, s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);

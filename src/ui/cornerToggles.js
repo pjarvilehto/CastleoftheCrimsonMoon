@@ -1,5 +1,5 @@
 // ui/cornerToggles.js — the upper-right column (0.115): MUSIC, FULLSCREEN,
-// SOUND, VOLUME, CHANGELIST, plus the ?debug tools below them. One
+// SOUND, NARRATOR, VOLUME, CHANGELIST, plus the ?debug tools below them. One
 // flex column (.corner-bar), so adding a button is one line here — no
 // hand-placed pixel offsets — and a panel a button opens (VOLUME, BG
 // TUNING) sits right under its button, pushing the rest down.

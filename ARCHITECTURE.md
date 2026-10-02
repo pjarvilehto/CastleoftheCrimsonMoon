@@ -91,6 +91,7 @@ src/
     preload.js          fetch + decode art (boot set, the essentials, then the rooms)
     portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
     platform.js         isMobile() (the boot's "not supported yet" notice)
+    motion.js           the one reduced-motion check (0.00197)
     debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
                         the cadence is difficulty.json levelEvery, passed in —
                         the analytics page has no DATA)
@@ -152,6 +153,8 @@ particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
+  ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197)
+  check-bump.mjs        CI: a push to main that changes what players load needs a higher build
   bump.mjs              build number + module list + changelist notes
   audio-check.mjs       clip loudness + loops measured in Chromium
   gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
@@ -222,7 +225,7 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
   browser's `confirm()`.
 - **Combat layout is fluid** (vh/vw, cards 50vh): never fixed px in that
   block of styles.css; panel scenes stay in px. Card internals are `em`.
-- **Card art:** frame on `.char-card::before` (opacity 0.85); portraits are
+- **Card art:** frame on the card's `.card-frame` layer (opacity 0.85, the shader light inside it); portraits are
   absolute, bottom-anchored and larger than the card; text rows sit above.
 - **Button labels** centre their capitals (`text-box: trim-both cap
   alphabetic`); the `[space]` hint sits in the bottom padding, out of flow.
@@ -239,11 +242,15 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
 serving `main` (repo root = site root, all paths relative) behind
 Cloudflare DNS; pushing to `main` redeploys in about a minute. `CNAME` pins
 the domain; DNS and HTTPS details are in CLAUDE.md. Players get a "Build
-0.NNN available" prompt (`updatePrompt.js`) shortly after.
+0.00NNN available" prompt (`updatePrompt.js`) shortly after.
 
-**Release loop:** edit -> `node tools/bump.mjs 0.NNN --note "..."` ->
-`node tools/smoke-test.mjs` (all green) -> check visual changes in Chromium
--> commit -> push to `main` and the working branch.
+**Release loop:** edit -> check visual changes in Chromium ->
+`node tools/ship.mjs --note "..."` (commits, merges `origin/main`, picks
+the number above main's, bumps, runs the suite by exit code, pushes to
+`main` and the working branch; retries when main moves). Push to live:
+GitHub Pages deploys in 45-70 s; `build.json` is always fetched with a
+fresh `?t=` so the CDN's 10-minute copy never hides a build; the update
+prompt polls every minute.
 
 **Saves are per origin** (localStorage): the title screen's export/import
 save codes carry a save between origins.

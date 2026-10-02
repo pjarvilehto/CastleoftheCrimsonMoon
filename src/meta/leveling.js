@@ -183,7 +183,7 @@ export function forgeMaxed(itemId) {
 export function forgeItem(itemId) {
   const p = getProfile();
   if (!DATA.items[itemId] || forgeMaxed(itemId)) return false;
-  if (DATA.items[itemId].tier < 2) return false; // tier 1 gear is not forgeable (0.068)
+  if (!forgeable(itemId)) return false; // tier 1 gear is not forgeable (0.068)
   const cost = forgeCost(itemId);
   if (p.coins < cost) return false;
   p.coins -= cost;
@@ -191,3 +191,6 @@ export function forgeItem(itemId) {
   persist();
   return true;
 }
+
+// Tier 1 is never forged (0.00197: one rule; it used to be spelled out in three places).
+export const forgeable = (id) => DATA.items[id]?.tier > 1;

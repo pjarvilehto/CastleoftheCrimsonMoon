@@ -17,7 +17,7 @@
 //   logEl()   — the persistent log element
 //   onTick()  — patch the battle line from the current view
 //   onEmpty() — queue drained: victory counters, death flash, etc.
-//   onFx(fx)  — play an effect (no-op until effects exist)
+//   onFx(fx)  — play an effect (ui/combatFx.js)
 //   onSfx(item) — play the line's sound (0.107: the scene places it in
 //                 stereo and times it to the blow — ui/combatSfx.js)
 //   onVo(id)  — say the line's narration (default: the narrator, undelayed)

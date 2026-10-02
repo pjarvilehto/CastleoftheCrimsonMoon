@@ -20,11 +20,28 @@ export function ensureCtx() {
 
 // Compressed bytes stay cached (small: ~1MB per music bed); decodes are
 // the caller's choice, since a decoded 60s stereo bed is ~23MB of floats.
-export function fetchBytes(url) {
-  return cached(bytes, url, () => fetch(url).then((res) => {
+// At most LANES audio files download at once (0.00197): the beds (10MB),
+// every narrator take (4MB) and the clip set used to start together at the
+// title, against the Descend essentials on a slow link. A sound that is
+// about to play (decode) goes to the front of the line.
+const LANES = 2;
+let active = 0;
+const line = []; // [start, front]
+function next() {
+  while (active < LANES && line.length) { active++; line.shift()[0](); }
+}
+function queued(task, front) {
+  return new Promise((resolve, reject) => {
+    const start = () => task().then(resolve, reject).finally(() => { active--; next(); });
+    if (front) line.unshift([start]); else line.push([start]);
+    next();
+  });
+}
+export function fetchBytes(url, front = false) {
+  return cached(bytes, url, () => queued(() => fetch(url).then((res) => {
     if (!res.ok) throw new Error(`audio ${url}: ${res.status}`);
     return res.arrayBuffer();
-  }));
+  }), front));
 }
 
 // A promise per key, shared by concurrent callers; a failed one is
@@ -40,7 +57,7 @@ export function cached(map, key, make) {
 // Decode from the cached bytes. decodeAudioData detaches its input, so it
 // gets a copy — the cached compressed bytes survive for the next decode.
 export async function decode(url) {
-  const raw = await fetchBytes(url);
+  const raw = await fetchBytes(url, true); // (about to play: ahead of the warm-up)
   return ctx.decodeAudioData(raw.slice(0));
 }
 

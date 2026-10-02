@@ -153,6 +153,7 @@ globalThis.localStorage = {
 };
 // Strip the ?v= cache stamps the versioned boot adds — a browser-cache
 // concern, not a file on disk.
+globalThis.__castleFetchStub = 'harness'; // (0.00197: simCore.mjs leaves this one in place)
 globalThis.fetch = async (url) => ({ ok: true, json: async () => JSON.parse(readFileSync(String(url).split('?')[0], 'utf8')) });
 
 // ---------- boot ----------

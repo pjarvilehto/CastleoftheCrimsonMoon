@@ -14,8 +14,7 @@ import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy, potionHealAmount, infusionArmor,
-  forgeCost, forgeMaxed, forgeItem,
-} from '../../meta/leveling.js';
+  forgeCost, forgeMaxed, forgeItem, forgeable } from '../../meta/leveling.js';
 import { statBox, describeItem, itemName, potionLevel } from '../hud.js';
 import { statDesc, efficiencyDesc } from '../hubText.js';
 import { play } from '../../audio/music.js';
@@ -34,12 +33,12 @@ export function canSpendCoins(p) {
   if (!satchelMaxed(p) && p.coins >= satchelCost(p)) return true;
   if (Object.keys(ALCHEMY_DEFS).some((t) => !alchemyMaxed(t) && p.coins >= alchemyCost(t))) return true;
   return equippedItemIds(p.equipment)
-    .some((id) => DATA.items[id]?.tier > 1 && !forgeMaxed(id) && p.coins >= forgeCost(id));
+    .some((id) => forgeable(id) && !forgeMaxed(id) && p.coins >= forgeCost(id));
 }
 
-// Buy Potion gets the pulsing 'active' glow below 30% of the satchel.
+// Buy Potion gets the pulsing 'active' glow below potions.lowShare of the satchel.
 export function potionsLow(p) {
-  return p.potions < p.potionCap * 0.3;
+  return p.potions < p.potionCap * DATA.difficulty.potions.lowShare;
 }
 
 // opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.161)
@@ -185,7 +184,7 @@ export function hubScene(opts = {}) {
       const forgeLvl = id ? (p.forged[id] ?? 0) : 0;
       // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
       // worth the coins, so it gets no enhance button at all (0.068).
-      const forgeable = !!item && item.tier > 1;
+      const canForge = !!item && forgeable(id);
       return el('div', { class: 'item-row' },
         el('span', { style: 'color:#9a8b6a;flex-shrink:0' }, label),
         item
@@ -193,7 +192,7 @@ export function hubScene(opts = {}) {
               el('div', { style: 'text-align:right' },
                 el('div', {}, itemName(item), forgeLvl ? ` +${forgeLvl}` : null),
                 el('div', { style: 'color:#7a6d4f;font-size:0.85rem' }, describeItem(item))),
-              !forgeable
+              !canForge
               ? null
               : forgeMaxed(id)
                 ? el('span', { class: 'forge-max' }, 'MAX')

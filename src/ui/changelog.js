@@ -10,7 +10,7 @@
 
 import { el } from '../core/dom.js';
 import { openDialog } from './dialog.js';
-import { DATA } from '../shared/data.js';
+import { DATA, buildQuery } from '../shared/data.js';
 import { compareVersions } from '../shared/version.js';
 
 let dialog = null;
@@ -18,7 +18,7 @@ let opening = false;
 
 async function loadChangelog() {
   try {
-    const r = await fetch('assets/data/changelog.json', { cache: 'no-cache' });
+    const r = await fetch(`assets/data/changelog.json${buildQuery()}`, { cache: 'no-cache' }); // under the build (0.00197): the CDN's copy could lack this build's own notes
     if (!r.ok) throw new Error(`changelog ${r.status}`);
     return await r.json();
   } catch {

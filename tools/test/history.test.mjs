@@ -1,9 +1,7 @@
 // tools/test/history.test.mjs — run history (profile) and the /analytics/ dashboard.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
 
 fresh();
 
@@ -82,7 +80,7 @@ fresh();
   }
   ok('charts render lines + columns', ch.lines(st.depthSeries(players, runs)).includes('<path') && ch.columns([{ x: 1, parts: [1, 2] }], { names: ['a', 'b'] }).includes('<rect'));
   const html = readFileSync('analytics/index.html', 'utf8');
-  ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json', { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));
+  ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));
   resetProfile();
 
   // CRIT! caption

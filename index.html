@@ -48,9 +48,16 @@
         // Start the game once the stylesheet is in (no unstyled flash).
         css.onload = css.onerror = function () { document.body.appendChild(main); };
       }
-      fetch('assets/data/build.json', { cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .then(function (b) { boot(b.version, b.modules); })
+      // ?t= (0.00197): a fresh URL every boot, so the CDN (GitHub Pages caches
+      // for 10 minutes) cannot hand back the previous build's build.json —
+      // no-store alone only bypasses the browser's own cache
+      // The one read of build.json per boot (0.00197): the data loader
+      // (src/shared/data.js) takes this copy instead of fetching its own,
+      // so the code and the data can never come from two different builds.
+      // A failed read is tried once more before the unpinned fallback.
+      function read() { return fetch('assets/data/build.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }); }
+      read().catch(read)
+        .then(function (b) { window.__castleBuild = b; boot(b.version, b.modules); })
         .catch(function () { boot('', null); }); // never block the game
     })();
   </script>

@@ -1,4 +1,4 @@
-// ui/scenes/index.js — the four scenes, registered by name with the router
+// ui/scenes/index.js — the scenes (title, hub, dungeon, run end, benchmark), registered by name with the router
 // (core/scene.js go(), 0.117). Scenes switch with go('hub') etc. and never
 // import each other; main.js (and the test harness) import this once.
 

@@ -33,7 +33,7 @@
         main.src = 'dashboard.js' + q;
         css.onload = css.onerror = function () { document.body.appendChild(main); };
       }
-      fetch('../assets/data/build.json', { cache: 'no-store' })
+      fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' }) // (0.00197: past the CDN's copy too)
         .then(function (r) { return r.json(); })
         .then(function (b) { boot(b.version); })
         .catch(function () { boot(''); });

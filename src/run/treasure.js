@@ -48,9 +48,15 @@ function gearFor(run, tier) {
   return pick(better.length ? better : ids);
 }
 
+// The chests' pictures (assets/icons/, 0.177): read here by the treasure
+// room's cards (ui/treasureUI.js) and warmed with the Descend essentials
+// (shared/preload.js) — one table since 0.00197.
+export const CHEST_ICONS = Object.fromEntries(CHESTS.map((k) => [k, `assets/icons/chest_${k}.webp`]));
+
 // Open one chest. Returns { kind, coins?, itemId?, kept?, died? }.
 export function openChest(run, room, kind, log) {
   const t = T();
+  if (room.opened) return { kind: room.opened }; // (0.00197: a second call pays nothing again — the rule layer guards, not only the re-render)
   room.opened = kind;
   if (kind === 'coffer') {
     const fights = randInt(t.coffer.fights);
@@ -62,7 +68,7 @@ export function openChest(run, room, kind, log) {
     return { kind, coins };
   }
   if (kind === 'gilded') {
-    const tier = room.depth >= t.gilded.tier3Room ? 3 : 2;
+    const tier = room.depth >= t.gilded.tier3Room ? t.gilded.tierFrom : t.gilded.tierBefore;
     return { kind, ...takeItem(run, gearFor(run, tier), log) };
   }
   // the reliquary: blood first

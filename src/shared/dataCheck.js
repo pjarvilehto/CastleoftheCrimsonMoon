@@ -13,8 +13,8 @@ const NUM = {
     'maxEnemies', 'spillThreshold', 'bossEvery', 'finalBossRoom', 'shrineRoomRange.0', 'shrineRoomRange.1', 'dropChance', 'potionHeal', 'lowHpShare',
     'statTrainXpBase', 'levelEvery', 'breakthroughEvery', 'deathCoinToll', 'logDelayMs', 't4Chance', 't4MinRoom',
     'potionDropChance', 'eliteMinHp', 'tier2LootMinHp', 'fortuneLootBonus', 'salvagePerTier',
-    ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
-    ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins'].map((k) => `potions.${k}`),
+    ...['chance', 'unlockRoom', 'minRoom', 'coffer.fights.0', 'coffer.fights.1', 'gilded.tier3Room', 'gilded.tierBefore', 'gilded.tierFrom', 'reliquary.hpCost', 'reliquary.relicChance', 'reliquary.itemTier'].map((k) => `treasure.${k}`),
+    ...['startCount', 'startCap', 'maxCap', 'price', 'capUpgradeBase', 'capUpgradeGrowth', 'fullSatchelSellCoins', 'lowShare', 'lowShareHud'].map((k) => `potions.${k}`),
     'alchemyTracks.potency.base', 'alchemyTracks.potency.healPerLevel',
     ...['base', 'perLevel', 'linear', 'tail', 'minStep'].map((k) => `alchemyTracks.efficiency.${k}`),
     'alchemyTracks.infusion.base', 'alchemyTracks.infusion.armorPerLevel',
@@ -28,7 +28,7 @@ const NUM = {
     ...['heavyMult', 'critMult', 'critJitter', 'megaCritChance', 'megaCritMult', 'armorMinTakenPct', 'enemyDmgJitter'].map((k) => `combat.${k}`),
     ...['tier', 'dmg', 'armor', 'hp', 'lifesteal', 'crit'].map((k) => `itemValue.${k}`),
   ],
-  shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg'],
+  shrines: ['coinCostGrowthPerRoom', 'minMaxHp', 'minDmg', 'dealCount'],
   audio: [
     'musicLevel', 'sfxLevel', 'pan.width', 'music.fadeS', 'transition.peakAtMs', 'volumes.master', 'volumes.music', 'volumes.sfx',
     'voices.maxPerClip', 'voices.maxTotal', 'voices.retriggerMs', 'voices.stackDb',
@@ -39,8 +39,8 @@ const NUM = {
   ],
   backgrounds: [
     ...['depthScale', 'pivot', 'yawDeg', 'pitchDeg', 'yawPeriodS', 'pitchPeriodS', 'speed', 'joltDeg', 'swayDeg', 'swayHitShare', 'fovDeg', 'overscan',
-      'grid.0', 'grid.1', 'maxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
-      'lights.dist', 'lights.radius'].map((k) => `parallax.${k}`),
+      'grid.0', 'grid.1', 'maxFps', 'motionMaxFps', 'fadeMs', 'maxPixels', 'minFps', 'fog', 'fogScale', 'fogSpeed', 'fogWind.0', 'fogWind.1', 'fogWind.2', 'fogFadeMs',
+      'lights.dist', 'lights.radius', 'lights.rise', 'quality.windowMs', 'quality.gapMs', 'quality.slowWindows'].map((k) => `parallax.${k}`),
     ...['count', 'size.0', 'size.1', 'y.0', 'y.1', 'width', 'near', 'far', 'nearBand', 'farBand', 'soft', 'opacity',
       'drift.0', 'drift.1', 'rock.0', 'rock.1', 'period.0', 'period.1', 'bob', 'breathe', 'shadeVar.0', 'shadeVar.1', 'alphaVar.0', 'alphaVar.1',
       'turbulence', 'turbulencePeriod', 'pulse', 'pulsePeriod', 'flow', 'flowScale', 'flowAmount'].map((k) => `parallax.puffs.${k}`),
@@ -69,26 +69,42 @@ export function checkData(data) {
   }
   // per-entry numbers: every item has a tier, every clip a trim, every
   // shrine boon the numbers its case in run/shrine.js reads
-  for (const [id, it] of Object.entries(data.items ?? {})) if (!isNum(it?.tier)) out.push(`items.json: ${id}.tier`);
+  const SLOTS = new Set(['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet']);
+  for (const [id, it] of Object.entries(data.items ?? {})) {
+    if (!isNum(it?.tier)) out.push(`items.json: ${id}.tier`);
+    if (!SLOTS.has(it?.slot)) out.push(`items.json: ${id}.slot (${it?.slot}) is not a slot`); // (0.00197: an unknown slot made a find vanish on equip)
+  }
+  // every enemy's numbers and its coin range (run/combat.js, run/loot.js read them without fallbacks)
+  for (const [id, e] of Object.entries(data.enemies ?? {})) {
+    if (!['hp', 'dmg', 'xp'].every((k) => isNum(e?.[k]))) out.push(`enemies.json: ${id} hp / dmg / xp`);
+    if (!(e?.coins?.length === 2 && e.coins.every(isNum))) out.push(`enemies.json: ${id}.coins ([lo, hi])`);
+  }
+  // the boss and the knight's first gear (0.00197: data, were names in src)
+  if (!data.enemies?.[data.difficulty?.boss?.enemy]) out.push(`difficulty.json: boss.enemy (${data.difficulty?.boss?.enemy}) is not in enemies.json`);
+  for (const slot of ['weapon', 'armor']) if (!data.items?.[data.difficulty?.player?.startingGear?.[slot]]) out.push(`difficulty.json: player.startingGear.${slot} is not an item`);
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
   for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
   for (const [id, c] of Object.entries(data.audio?.clips ?? {})) {
     if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
     if (!c?.file === !c?.synth) out.push(`audio.json: clips.${id} needs a file or synth: true (one of them)`);
-    if (c?.rate && !(c.rate.length === 2 && c.rate.every(isNum))) out.push(`audio.json: clips.${id}.rate`);
+    if (c?.rate && !(c.rate.length === 2 && c.rate.every(isNum) && c.rate[0] > 0)) out.push(`audio.json: clips.${id}.rate (two numbers above 0)`); // (a 0 rate = a voice of infinite length, 0.00197)
   }
   for (const [id, t] of Object.entries(data.audio?.music?.tracks ?? {})) {
     if (typeof t?.file !== 'string' || !['loopS', 'tailS', 'gainDb'].every((k) => isNum(t[k]))) out.push(`audio.json: music.tracks.${id} (file, loopS, tailS, gainDb)`);
   }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
+    if (v.rate && !(v.rate.length === 2 && v.rate.every(isNum) && v.rate[0] > 0)) out.push(`audio.json: variation.${id}.rate`);
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
     if (v.layers) {
       if (!(v.layerRate?.length === 2 && v.layerRate.every(isNum) && isNum(v.layerDb))) out.push(`audio.json: variation.${id} layerRate / layerDb`);
       for (const l of v.layers) if (!data.audio.clips?.[l.name]?.synth || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a synth clip, p, db)`);
     }
   }
-  for (const name of Object.keys(data.audio?.duck?.clips ?? {})) if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
+  for (const [name, secs] of Object.entries(data.audio?.duck?.clips ?? {})) {
+    if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
+    if (!isNum(secs)) out.push(`audio.json: duck.clips.${name} must be seconds`); // (mixer.js: a NaN there dropped the sound, 0.00197)
+  }
   // the room change's swoosh (0.173): a file clip with its loudest moment measured
   const tr = data.audio?.transition?.clip;
   if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clip (${tr}) must be a file clip with peakMs`);
@@ -115,7 +131,7 @@ export function checkData(data) {
   }
   for (const [id, takes] of Object.entries(lines)) {
     if (!rules[id]) out.push(`audio.json: narration.lines.${id} missing (narration.json has takes)`);
-    for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb)) out.push(`narration.json: ${id} take ${t?.take} needs file + measuredDb`);
+    for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb) || !isNum(t?.take)) out.push(`narration.json: ${id} take ${t?.take} needs take + file + measuredDb`);
   }
   const NEEDS = {
     dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],

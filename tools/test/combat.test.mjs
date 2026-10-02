@@ -1,9 +1,7 @@
 // tools/test/combat.test.mjs — combat engine + the battle line: attacks, spill, SMASH, death, playback, animation, summons.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
 
 fresh();
 

@@ -1,9 +1,7 @@
 // tools/test/sim.test.mjs — the balance simulator and shrine study.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, fresh, DATA, resetProfile } from './harness.mjs';
 
 fresh();
 

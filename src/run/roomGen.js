@@ -99,7 +99,7 @@ function makeBoss(roomNumber) {
   // rooms). They now scale as if {depthBonus} rooms deeper, with an extra
   // HP/damage spike on top. Name still comes from scaleEnemy.
   const b = DATA.difficulty.boss;
-  const boss = scaleEnemy('vampire_lord', roomNumber + b.depthBonus);
+  const boss = scaleEnemy(b.enemy, roomNumber + b.depthBonus); // (difficulty.json boss.enemy, 0.00197)
   boss.maxHp = Math.round(boss.maxHp * b.hpMult);
   boss.dmg = Math.round(boss.dmg * b.dmgMult);
   // Summoner (0.092): its meter fills each turn; see combat.js summonPhase.

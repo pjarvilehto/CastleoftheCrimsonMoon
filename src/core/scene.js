@@ -18,6 +18,11 @@ let current = null;
 let activeBg = null;   // the bg-layer element currently opaque
 let transitioning = false; // re-entry guard (rapid keys during a fade)
 let bgListener = null;     // the 3D background renderer, when running (0.083)
+// The 3D canvas is drawing over the CSS layers (bg3d.js marks #bg-stack
+// .gl from its first frame to its shutdown): their push is skipped and
+// styles.css hides them — they still get every painting, as the fallback
+// the moment the renderer gives up (0.00197).
+const glCovers = () => !!document.getElementById('bg-stack')?.classList?.contains('gl');
 let bgShown = null;        // the latest background change, resolved once fully faded in (0.154)
 let bgChanges = 0;         // how many there have been (did work() change it?)
 const BG_WAIT_MAX_MS = 4000; // never hold the windows longer than this for a painting (a slow load)
@@ -52,7 +57,7 @@ export const isTransitioning = () => transitioning;
 // The router (0.117): scenes switch by name — go('hub'), go('runEnd', run,
 // outcome) — instead of importing each other (title <-> hub, hub ->
 // dungeon -> run end -> hub was an import cycle). ui/scenes/index.js
-// registers the four scenes.
+// registers the scenes (title, hub, dungeon, run end, benchmark).
 const scenes = {};
 export function registerScene(name, factory) { scenes[name] = factory; }
 export function go(name, ...args) {
@@ -85,7 +90,7 @@ export function transitionTo(work, fadeOutMs = 1000) {
   // the push (0.171): the current painting starts moving as the windows
   // fade — the 3D renderer dollies in; the flat layer scales (styles.css)
   transitionListener?.(fadeOutMs);
-  activeBg?.classList.add('push');
+  if (!glCovers()) activeBg?.classList.add('push'); // the flat fallback's push; under the live canvas it animated for nobody (0.00197)
   setTimeout(async () => {
     const changes = bgChanges;
     try {
@@ -116,10 +121,13 @@ export function setBackground(file) {
   const next = activeBg === a ? b : a;
   next.dataset.file = file;
   // the flat layer's push (0.171): the new painting appears pushed in and
-  // settles (CSS transition) while the old one keeps pushing as it fades
-  next.classList.add('pushed'); next.classList.remove('push');
-  void next.offsetWidth;
-  next.classList.remove('pushed');
+  // settles (CSS transition) while the old one keeps pushing as it fades —
+  // only when the layers are what the player sees (0.00197)
+  if (!glCovers()) {
+    next.classList.add('pushed'); next.classList.remove('push');
+    void next.offsetWidth;
+    next.classList.remove('pushed');
+  }
   if (!activeBg) {
     next.style.transition = 'none';
     next.style.backgroundImage = url;

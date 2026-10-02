@@ -71,6 +71,9 @@ h1, h2, button, .subtitle, .run-hud, .stat-box .label,
 .bg-layer.push { transform: scale(1.14); transition: opacity 2s ease-in-out, transform 3s ease-in; }
 .bg-layer.pushed { transform: scale(1.14); transition: none; }
 @media (prefers-reduced-motion: reduce) { .bg-layer, .bg-layer.push, .bg-layer.pushed { transform: none; } }
+/* under the live 3D canvas (opaque; bg3d.js marks the stack .gl) the layers are not painted at all — they
+   still carry every painting, ready the instant the renderer gives up (0.00197) */
+#bg-stack.gl .bg-layer { visibility: hidden; }
 /* 3D background canvas (0.083, core/bg3d.js): sits over the CSS layers
    once its first frame is drawn — that frame is the rest pose, identical
    to the CSS image, so the handover is invisible. */
@@ -179,26 +182,27 @@ button.ready {
    state in blood red (Accept Your Fate). */
 button.active {
   border-color: #e8c45c; color: #fff4d0;
-  /* slow breathe (0.082): a steady 4s slide dim -> max and 4s back.
-     LINEAR on purpose — ease-in-out bunched each change into ~1s and
-     then held at the extremes, which read as blink-wait-blink. */
+  position: relative; isolation: isolate; /* the glow layer below sits over the button's own background, under its label */
+  box-shadow: 0 0 6px rgba(232,196,92,0.35), inset 0 0 4px rgba(232,196,92,0.15); /* the dim state, static */
+}
+/* The breathing glow (0.082) as a layer of its own whose OPACITY animates
+   (compositor only; 0.00197 — animating box-shadow repainted the button
+   every frame for as long as it was on screen, the whole hub visit). Slow
+   breathe: a steady 4s slide dim -> max and 4s back, LINEAR on purpose —
+   ease-in-out bunched each change into ~1s and then held at the extremes,
+   which read as blink-wait-blink. */
+button.active::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; z-index: -1; pointer-events: none;
+  box-shadow: 0 0 24px rgba(232,196,92,0.95), 0 0 46px rgba(232,196,92,0.35), inset 0 0 10px rgba(232,196,92,0.3);
   animation: active-glow 8s linear infinite;
 }
-/* Both keyframes MUST list the same number of shadows (0.082): browsers
-   can't blend shadow lists of different lengths, so a 2-vs-3 mismatch
-   made the glow SNAP at the midpoint instead of fading. The dim state's
-   middle layer is a zero-size transparent placeholder. */
-@keyframes active-glow {
-  0%, 100% { box-shadow: 0 0 6px rgba(232,196,92,0.35), 0 0 0 rgba(232,196,92,0), inset 0 0 4px rgba(232,196,92,0.15); }
-  50%      { box-shadow: 0 0 24px rgba(232,196,92,0.95), 0 0 46px rgba(232,196,92,0.35), inset 0 0 10px rgba(232,196,92,0.3); }
-}
+@keyframes active-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 button.active.active-red {
   border-color: #e03030; color: #ffe0e0;
-  animation-name: active-glow-red;
+  box-shadow: 0 0 6px rgba(224,48,48,0.4), inset 0 0 4px rgba(224,48,48,0.15);
 }
-@keyframes active-glow-red {
-  0%, 100% { box-shadow: 0 0 6px rgba(224,48,48,0.4), 0 0 0 rgba(224,48,48,0), inset 0 0 4px rgba(224,48,48,0.15); }
-  50%      { box-shadow: 0 0 24px rgba(224,48,48,1), 0 0 46px rgba(224,48,48,0.4), inset 0 0 10px rgba(224,48,48,0.3); }
+button.active.active-red::after {
+  box-shadow: 0 0 24px rgba(224,48,48,1), 0 0 46px rgba(224,48,48,0.4), inset 0 0 10px rgba(224,48,48,0.3);
 }
 button:disabled { opacity: 0.35; cursor: not-allowed; }
 button.danger { border-color: var(--blood); }
@@ -501,7 +505,7 @@ button.active.potion-remind { animation-duration: 2.2s; }
 .char-card {
   height: var(--card-h); aspect-ratio: 413 / 1106;
   border-radius: 1em;
-  position: relative; /* anchor for the ::before card art */
+  position: relative; /* anchor for the .card-frame art layer and the portrait */
   padding: 1em 0.5em 0.8em; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center;
   font-size: var(--card-font); /* fluid type base — everything inside the card is em */

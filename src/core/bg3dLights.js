@@ -27,12 +27,13 @@ export function flashAt(kind, rect, w, h, fovDeg, lights, now) {
   const k = lights?.[kind];
   if (!lights?.enabled || !k || !rect) return null;
   const pos = screenToWorld(rect.left + rect.width / 2, rect.top + rect.height * 0.45, w, h, fovDeg, lights.dist);
-  return { t0: now, pos, color: k.color, strength: k.strength, fade: k.fade, life: k.life };
+  return { t0: now, pos, color: k.color, strength: k.strength, rise: lights.rise, fade: k.fade, life: k.life };
 }
 
 // Brightness over time: a quick rise, then an exponential fade.
-// t in seconds; 0 once the light is spent.
-export function envelope(t, { rise = 0.08, fade = 0.35, life = 1.4 } = {}) {
+// t in seconds; 0 once the light is spent. rise / fade / life come with the
+// light (parallax.lights; 0.00197: no default copies of them here).
+export function envelope(t, { rise, fade, life }) {
   if (t < 0 || t > life) return 0;
   return t < rise ? t / rise : Math.exp(-(t - rise) / fade);
 }

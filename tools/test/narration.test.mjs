@@ -5,7 +5,7 @@
 // one line at a time, dropped when the wait is too long, ducking, mute);
 // and every moment in the game wired to its line.
 
-import { ok, sleep, fresh, registry, DATA, dungeonScene, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, fresh, registry, DATA, dungeonScene, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 

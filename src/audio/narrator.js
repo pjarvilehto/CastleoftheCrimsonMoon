@@ -28,6 +28,7 @@ const urlOf = (t) => (t.rendered ? `${t.file}?r=${encodeURIComponent(t.rendered)
 
 let ctx = null;
 let muted = getPref(MUTE_KEY) === '1';
+let queue = Promise.resolve(); // the lines' decodes, in order (0.00197)
 let armed = null;     // a line to play on the first gesture (the title screen's welcome)
 let busyUntil = 0;    // context time the current line (and its gap) ends
 const state = { room: new Set(), run: new Set(), session: new Set(), lastAt: {}, lastTake: {} };
@@ -70,7 +71,9 @@ export function narrate(id, { delayMs = 0 } = {}) {
   const take = pickTake(takes, state.lastTake[id]);
   state.lastTake[id] = take.take;
   const N = cfg();
-  decode(urlOf(take)).then((buffer) => {
+  // one chain (0.00197): two lines asked for in the same tick (a death and
+  // the first-death line, a chest and its relic) used to race on decode
+  queue = queue.then(() => decode(urlOf(take))).then((buffer) => {
     const now = ctx.currentTime;
     const at = Math.max(now + delayMs / 1000, busyUntil);
     if (at - now > N.maxWaitS) return; // too long a queue: the moment has passed
@@ -85,6 +88,7 @@ export function narrate(id, { delayMs = 0 } = {}) {
     busyUntil = at + buffer.duration + N.gapS;
     duckMusic(buffer.duration + N.gapS, at);
   }).catch(() => { /* audio must never break gameplay */ });
+  queue = queue.catch(() => {});
   return true;
 }
 

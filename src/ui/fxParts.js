@@ -4,9 +4,10 @@
 // the Web Animations API (the smoke-test shim) or with reduced motion.
 
 import { DATA } from '../shared/data.js';
+import { reducedMotion } from '../shared/motion.js';
 import { burst, materialOf } from './particles.js';
 
-export const reduced = () => !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+export const reduced = reducedMotion; // (shared/motion.js, 0.00197)
 export const can = (node) => !!node?.animate;
 // The portrait's CSS filter (its drop shadow), which every flash layers a
 // tint on. Read once per unit: getComputedStyle on an animating element is

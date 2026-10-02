@@ -1,9 +1,7 @@
 // tools/test/content.test.mjs — data/art integrity, relics, elite markers, CSS integrity.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, t, fresh, registry, DATA, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
 import { existsSync } from 'node:fs';
 
 fresh();
@@ -217,7 +215,7 @@ fresh();
     await loadData();
     globalThis.fetch = orig;
     const v = encodeURIComponent(DATA.build.version);
-    ok('loadData reads build.json uncached first, then every other file under ?v=<build>', calls[0][0] === 'assets/data/build.json' && calls[0][1] === 'no-store'
+    ok('loadData reads build.json uncached first, then every other file under ?v=<build>', /^assets\/data\/build\.json\?t=\d+$/.test(calls[0][0]) && calls[0][1] === 'no-store'
       && calls.length === 10 && calls.slice(1).every(([u, c]) => u.endsWith(`.json?v=${v}`) && c === 'no-cache'), JSON.stringify(calls.slice(0, 3)));
   }
   const leaves = new Set(readFileSync('src/shared/dataCheck.js', 'utf8').match(/'[a-zA-Z.]+'/g).map((s) => s.slice(1, -1).split('.').pop()));
@@ -251,7 +249,7 @@ fresh();
   const boot = readFileSync('labs/boot.js', 'utf8');
   const labsOnSrc = readdirSync('labs', { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(`labs/${d.name}/lab.js`) && /from '\.\.\/\.\.\/src\//.test(readFileSync(`labs/${d.name}/lab.js`, 'utf8'))).map((d) => d.name);
   ok('the labs on the game\'s modules load them versioned through labs/boot.js', labsOnSrc.length >= 3 && labsOnSrc.every((d) => readFileSync(`labs/${d}/index.html`, 'utf8').includes(`<script src="labs/boot.js" data-lab="labs/${d}/lab.js"`))
-    && boot.includes("fetch(new URL('assets/data/build.json', document.baseURI).href, { cache: 'no-store' })") && boot.includes("im.type = 'importmap'") && boot.includes("addEventListener('unhandledrejection'"), labsOnSrc.join());
+    && boot.includes("fetch(new URL('assets/data/build.json?t=' + Date.now(), document.baseURI).href, { cache: 'no-store' })") && boot.includes("im.type = 'importmap'") && boot.includes("addEventListener('unhandledrejection'"), labsOnSrc.join());
   ok('the fog lab drives the real renderer and never touches the game\'s saved tuning',
     js.includes("from '../../src/core/bg3d.js'") && js.includes('setLiveTuning(') && !js.includes('saveLiveTuning') && !js.includes('resetLiveTuning') && js.includes("'castle-fog-lab'"));
 }
@@ -267,7 +265,7 @@ fresh();
   // the VO Lab (0.163): every take, its text, when and how often; verdicts -> tools/gen-vo.mjs --rerender
   const vo = readFileSync('labs/vo/index.html', 'utf8'), voJs = readFileSync('labs/vo/lab.js', 'utf8');
   ok('VO lab: a standalone page on the registry and the rules',
-    vo.includes('src="lab.js"') && voJs.includes("['narration', 'audio'].map((f) => fetch(`../../assets/data/${f}.json`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]'));
+    vo.includes('data-lab="labs/vo/lab.js"') && vo.includes('<base href="../../">') && voJs.includes("['narration', 'audio'].map((f) => fetch(`assets/data/${f}.json${q}`") && voJs.includes('reg.meta?.[id]') && voJs.includes('N.lines?.[id]')); // (0.00197: booted versioned like the other labs)
   ok('VO lab: plays a take levelled like the game, approve / disapprove, volatility and shouty nudges, re-render JSON', voJs.includes('10 ** ((N.targetDb - t.measuredDb) / 20)')
     && voJs.includes("setVerdict(k, 'ok')") && voJs.includes("setVerdict(k, 'no')") && voJs.includes("nb('Less', 'volatility', -1)") && voJs.includes("nb('More', 'shouty', 1)")
     && voJs.includes('out.rerender.push({ file: t.file, id: t.id, take: t.take, volatility:') && readFileSync('tools/gen-vo.mjs', 'utf8').includes("args.indexOf('--rerender')"));

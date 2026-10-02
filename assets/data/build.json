@@ -1,5 +1,5 @@
 {
-  "version": "0.196",
+  "version": "0.00197",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -43,6 +43,7 @@
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
     "src/shared/level.js",
+    "src/shared/motion.js",
     "src/shared/platform.js",
     "src/shared/portraits.js",
     "src/shared/prefs.js",
@@ -84,54 +85,54 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
-    "0.196": [
+    "0.00197": [
+      "Build numbers now read 0.00197 (five decimals), inside and out"
+    ],
+    "0.00196": [
       "Bosses loom larger: the boss's card is twice as wide, and still fits the row with all its summoned minions"
     ],
-    "0.195": [
+    "0.00195": [
       "The cards' plates are see-through again with the glow on them, as in the Card Lab; the glow a little stronger"
     ],
-    "0.194": [
+    "0.00194": [
       "Art Lab: nine portraits approved (the knight, rat, skeleton, Cinderborn, Cult Acolyte, wraith, Crypt Spider, Hollow Hound, Blood Knight); their other candidates pruned. Not in the game yet: four characters remain"
     ],
-    "0.193": [
+    "0.00193": [
       "Art Lab: five new Cave Shrieker candidates drawn from the painting with a hint against the rodent look (its style reference no longer borrows the rat's sheet); the Shrieker's portrait file is cave_shrieker.webp"
     ],
-    "0.192": [
+    "0.00192": [
       "Art Lab: candidates for the other ten characters (four each from the style sheets; the Shrieker, Fellblade, gargoyle and Hollow Hound also two from the ossuary painting); the knight's and the rat's picks recorded"
     ],
-    "0.191": [
+    "0.00191": [
       "Art Lab: the pilot redrawn once more from the owner's seven style sheets (assets/style/), which the generator now uses as the style reference — twelve new candidates for the knight, the rat and the Vampire Lord"
     ],
-    "0.190": [
+    "0.00190": [
       "Art Lab: the cut-out clears enclosed patches of background anywhere in the picture (the loop between an arm and the sword), not only under the figure"
     ],
-    "0.189": [
+    "0.00189": [
       "The labs load the game's modules and their own script under the build number, so a lab never runs the previous build's files after a deploy; an error in a lab is written onto the page"
     ],
-    "0.188": [
+    "0.00188": [
       "The Old Wizard has five more things to say about an OVERKILL, so he repeats himself less on a long run"
     ],
-    "0.187": [
+    "0.00187": [
       "The game's data files load under the build number like its code, so a fresh build never runs on the old data for the first minutes after a deploy (the Art Lab came up empty in 0.186)"
     ],
-    "0.186": [
+    "0.00186": [
       "Art Lab (test mode, LABS): the portraits redrawn in the room paintings' style on the real cards over any room — current beside the candidates, a line-up of all thirteen, a fight at the game's size; approve, reject, flip, clean, re-roll. A pilot of three (the knight, the rat, the Vampire Lord) is in it; nothing in the game changes yet",
       "The portrait files are named in the data (enemies.json, cards.json), so a redraw goes in under a new filename"
     ],
-    "0.185": [
+    "0.00185": [
       "No black rim outside the cards' white border"
     ],
-    "0.184": [
+    "0.00184": [
       "The cards are dealt in once the room is on screen (the entrance used to play unseen behind the fade)",
       "The card glow reaches the frame's border: no dark rim around the plate"
     ],
-    "0.183": [
+    "0.00183": [
       "The Card Lab's picks are in the game: a slow glow behind every portrait (fog, blood, flames, embers or ether by the creature), the cards in 3D (a hit kicks the card around its axis, the room deals the cards in) and a sheen crossing the figure as it turns",
       "Shrine boons and treasure chests glow too, each its own way",
       "Benchmark results from this build on include the card effects"
-    ],
-    "0.182": [
-      "The Treasury is now a treasure room only: it no longer turns up as a fight"
     ]
   }
 }

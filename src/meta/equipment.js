@@ -7,15 +7,16 @@
 
 import { DATA } from '../shared/data.js';
 
-function emptyEquipment() {
+export function emptyEquipment() {
   return { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
 }
 
 // What a new knight carries (0.116: moved here from profile.js).
 export function startingEquipment() {
   const eq = emptyEquipment();
-  eq.weapon = 'rusty_sword';
-  eq.armor = 'oak_shield';
+  const g = DATA.difficulty.player.startingGear; // (data since 0.00197)
+  eq.weapon = g.weapon;
+  eq.armor = g.armor;
   return eq;
 }
 

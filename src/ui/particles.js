@@ -8,6 +8,7 @@
 
 import { isBg3dActive, bgQualityLevel } from '../core/bg3d.js';
 import { spawnParticles, R, rr } from './particleLooks.js';
+import { reducedMotion } from '../shared/motion.js';
 
 export { MATERIAL, materialOf, STYLE_OF, spawnParticles } from './particleLooks.js';
 
@@ -17,7 +18,7 @@ let canvas = null, ctx2d = null, parts = [], running = false, last = 0, scale = 
 let box = null; // last frame's painted area, device px: [x0, y0, x1, y1]
 
 function particlesEnabled() {
-  return isBg3dActive() && !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return isBg3dActive() && !reducedMotion();
 }
 
 // Attach the canvas to a combat room's fx layer. One canvas for the whole

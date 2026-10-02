@@ -106,6 +106,12 @@ export function toggleMuted() {
   muted = !muted;
   setPref(MUTE_KEY, muted ? '1' : '0');
   setBusMuted('music', muted);
+  if (muted && current) { // 0.00197: the bed stops (it kept scheduling its loop and holding its decoded buffer, ~20MB, behind a silent bus)
+    const old = current;
+    try { old.loop.stop(); old.gain.disconnect(); } catch { /* already gone */ }
+    current = null; pending = currentName; currentName = null;
+    for (const f of Object.keys(buffers)) delete buffers[f];
+  }
   if (!muted) {
     initCtx();
     if (ctx) {

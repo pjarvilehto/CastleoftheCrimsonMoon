@@ -35,8 +35,8 @@
     s.src = new URL(lab + q, document.baseURI).href;
     document.body.appendChild(s);
   }
-  fetch(new URL('assets/data/build.json', document.baseURI).href, { cache: 'no-store' })
+  fetch(new URL('assets/data/build.json?t=' + Date.now(), document.baseURI).href, { cache: 'no-store' }) // (0.00197: past the CDN's copy too)
     .then(function (r) { return r.json(); })
-    .then(function (b) { boot(b.version, b.modules); })
+    .then(function (b) { window.__castleBuild = b; boot(b.version, b.modules); }) // (the game's data loader takes this copy, 0.00197)
     .catch(function () { boot('', null); });
 })();

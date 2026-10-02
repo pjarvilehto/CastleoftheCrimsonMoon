@@ -28,6 +28,19 @@ jobs:
           node-version: 22
       - run: node tools/smoke-test.mjs
 
+  # Rule 6 (0.00197): a push to main that changes what players load must carry a new build number
+  bumped:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/check-bump.mjs HEAD~1
   deploy:
     needs: smoke
     if: vars.DEPLOY_VIA_ACTIONS == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'

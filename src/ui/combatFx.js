@@ -116,7 +116,7 @@ function attack(fx, ctx) {
       { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25, easing: 'ease-in' },
       { transform: `translateX(${reach}px)`, offset: STRIKE_AT, easing: 'ease-out' },
       { transform: 'translateX(0)' },
-    ], { duration: dur, easing: 'ease-in-out' });
+    ], { duration: dur, easing: 'ease-in-out', composite: 'add' }); // add (0.00197): over the deal still settling the unit, not instead of it
     // Hit-stop: freeze the attacker at the moment of impact.
     if (stop) setTimeout(() => { lunge.pause(); setTimeout(() => lunge.play(), stop); }, strike);
   }
@@ -171,7 +171,7 @@ function hit(u, fx, delay, ctx, stop = 0) {
       { transform: `translateX(${-away * k * 0.45}px)` },
       { transform: `translateX(${away * k * 0.2}px)` },
       { transform: 'translateX(0)' },
-    ], { duration: 240, delay: delay + stop, easing: 'ease-out' });
+    ], { duration: 240, delay: delay + stop, easing: 'ease-out', composite: 'add' });
   }
   if (can(u.portrait)) {
     const base = baseFilter(u);
@@ -201,12 +201,12 @@ function dodge(fx, ctx) {
       { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25 },
       { transform: `translateX(${reach * 1.15}px)`, offset: STRIKE_AT },
       { transform: 'translateX(0)' },
-    ], { duration: LUNGE_MS, easing: 'ease-in-out' });
+    ], { duration: LUNGE_MS, easing: 'ease-in-out', composite: 'add' });
     p.el.animate([
       { transform: 'translate(0, 0)' },
       { transform: `translate(${-rp.width * 0.08}px, ${-rp.height * 0.015}px)`, offset: 0.4 },
       { transform: 'translate(0, 0)' },
-    ], { duration: 320, delay: LUNGE_MS * STRIKE_AT * 0.6, easing: 'ease-out' });
+    ], { duration: 320, delay: LUNGE_MS * STRIKE_AT * 0.6, easing: 'ease-out', composite: 'add' });
   }
   floatNumber(ctx, p, 'MISS', 'fx-miss', LUNGE_MS * STRIKE_AT);
 }

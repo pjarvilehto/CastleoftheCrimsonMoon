@@ -19,7 +19,8 @@ import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
 import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
-import { LADDER, SLOW_WINDOWS, backingSize, fpsWindow } from './bg3dQuality.js';
+import { LADDER, backingSize, fpsWindow } from './bg3dQuality.js';
+import { reducedMotion } from '../shared/motion.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
 
@@ -120,7 +121,7 @@ export function setBgView(v) { view = v; }
 export function initBg3d({ allowSoftware = false } = {}) {
   cfg = tuning('');
   if (!cfg.enabled || gl) return !!gl;
-  if (!allowSoftware && globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false;
+  if (!allowSoftware && reducedMotion()) return false;
   canvas = document.createElement('canvas');
   canvas.id = 'bg3d';
   const opts = { alpha: false, antialias: false, depth: true, premultipliedAlpha: false,
@@ -197,27 +198,45 @@ function fillDepth(L) {
   gl.bufferData(gl.ARRAY_BUFFER, a, gl.STATIC_DRAW);
 }
 
-// A gap longer than this between frames (a hidden tab, a sleeping laptop)
-// is a pause, not motion: the sway and fog clocks skip it instead of
-// jumping the camera (0.157; the frame-rate windows treat it the same way).
-const PAUSE_S = 0.4;
+// A gap longer than parallax.quality.gapMs between frames (a hidden tab, a
+// sleeping laptop) is a pause, not motion: the sway and fog clocks skip it
+// instead of jumping the camera (0.157; the frame-rate windows treat it
+// the same way — one knob since 0.00197).
+
+// The screen's own frame rate, from the rAF calls (0.00197): the ladder
+// measures the drawn rate against what the maxFps throttle can reach on
+// this screen — a 40 Hz display draws every other frame = 20 fps, which
+// used to count as "slow" (minFps 22) and walked a capable machine down
+// to the flat backgrounds within seconds.
+let rafT0 = 0, rafN = 0, rafRate = 0;
+function slowBelow(now) {
+  rafN++;
+  if (now - rafT0 >= 1000) { if (rafT0) rafRate = (rafN * 1000) / (now - rafT0); rafT0 = now; rafN = 0; }
+  if (!rafRate) return cfg.minFps;
+  const reachable = rafRate / Math.ceil(rafRate / cfg.maxFps);
+  return Math.min(cfg.minFps, reachable * 0.9);
+}
 
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
+  const slowAt = slowBelow(now); // (counts this rAF call, drawn or not)
   // (filtered only while something plays: the quiet frame makes no garbage)
   if (jolts.length) jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
   if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
   if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
-  // full frame rate while a jolt/sway/flash plays — at 30fps it would stutter
-  if (!layers.length || (!push && !jolts.length && !sways.length && !flashes.length && now - lastDraw < 1000 / cfg.maxFps - 2)) return;
+  // maxFps when nothing moves; motionMaxFps while a jolt / sway / flash /
+  // push plays (at 30 fps those stutter; uncapped, 0.00197, they ran the
+  // whole scene at the display's rate through most of a fight)
+  const cap = push || jolts.length || sways.length || flashes.length ? cfg.motionMaxFps : cfg.maxFps;
+  if (!layers.length || now - lastDraw < 1000 / cap - 2) return;
   lastDraw = now;
-  if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); } // rest pose = the CSS image
-  else { const dt = Math.min(PAUSE_S, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
+  if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
+  else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
   if (monitor && !held) {
-    fpsW = fpsWindow(fpsW, now, cfg.minFps);
-    if (fpsW.slow >= SLOW_WINDOWS && !degrade()) return;
+    fpsW = fpsWindow(fpsW, now, slowAt, cfg.quality);
+    if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
   const j = joltOffset(jolts, now);
@@ -379,6 +398,8 @@ function shutdown() {
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
   t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null;
+  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; // (0.00197: clean for a later initBg3d, as promised)
+  document.getElementById('bg-stack')?.classList.remove('gl'); // the CSS layers show again
   canvas?.remove();
   canvas = null;
 }

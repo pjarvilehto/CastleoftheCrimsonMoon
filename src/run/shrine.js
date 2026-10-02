@@ -20,7 +20,7 @@ export function dealOffers() {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return pool.slice(0, 3);
+  return pool.slice(0, DATA.shrines.dealCount);
 }
 
 // Coin-priced boons scale with depth (0.072): at room 1 the price is the

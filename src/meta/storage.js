@@ -25,7 +25,7 @@ export function loadProfile() {
 }
 
 export function wipeProfile() {
-  localStorage.removeItem(KEY);
+  try { localStorage.removeItem(KEY); } catch { /* refused storage (0.00197): the fresh profile still takes over in memory */ }
 }
 
 // ---- save transfer ----

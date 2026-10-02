@@ -33,11 +33,17 @@ if (!globalThis.localStorage) {
   };
 }
 // Node 20+ has a global fetch (undici) that rejects the game's relative
-// asset URLs — always replace it with a file loader rooted at the repo.
-globalThis.fetch = async (url) => ({
-  ok: true,
-  json: async () => JSON.parse(readFileSync(join(ROOT, String(url).split('?')[0]), 'utf8')),
-});
+// asset URLs — replace it with a file loader rooted at the repo, unless the
+// test harness already installed its own (0.00197: the suite imports this
+// module mid-run; swapping the harness's loader out from under it would
+// hide any feature the harness gives its fetch).
+if (!globalThis.__castleFetchStub) {
+  globalThis.__castleFetchStub = 'simCore';
+  globalThis.fetch = async (url) => ({
+    ok: true,
+    json: async () => JSON.parse(readFileSync(join(ROOT, String(url).split('?')[0]), 'utf8')),
+  });
+}
 
 // ── Deterministic RNG (mulberry32) ──
 export function mulberry32(a) {

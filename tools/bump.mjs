@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // tools/bump.mjs — set the build number AND the module manifest in
 // assets/data/build.json. Run for every player-facing build:
-//   node tools/bump.mjs 0.083 --note "Bosses summon skeletons" --note "..."
+//   node tools/bump.mjs 0.00083 --note "Bosses summon skeletons" --note "..."
+// (0.00197: the number has five decimals — 0.00197, was 0.197 — inside and
+// out; shared/version.js compares the parts as numbers, so the two forms
+// order correctly against each other and old saves and keys still read)
 //
 // --note lines (0.094) go into build.json `changelog` under that version:
 // the in-game update prompt (ui/updatePrompt.js) shows players the notes
@@ -65,7 +68,7 @@ if (invokedDirectly) {
   const notes = [];
   for (let i = args.indexOf('--note'); i >= 0; i = args.indexOf('--note', i + 1)) notes.push(args[i + 1]);
   const version = args[0] && !args[0].startsWith('--') ? args[0] : current.version;
-  if (!/^\d+\.\d{3}$/.test(version)) { console.error(`bad version: ${version} (expected e.g. 0.083)`); process.exit(1); }
+  if (!/^\d+\.\d{5}$/.test(version)) { console.error(`bad version: ${version} (expected e.g. 0.00083)`); process.exit(1); }
   if (notes.some((n) => !n)) { console.error('--note needs a text'); process.exit(1); }
   const next = nextBuild(current, version, notes);
   writeFileSync(FILE, JSON.stringify(next, null, 2) + '\n');

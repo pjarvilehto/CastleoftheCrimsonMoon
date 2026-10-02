@@ -28,7 +28,8 @@ before structural changes. This file is the rules and the per-system notes.
   - **Fog Lab (0.164):** `labs/fog/` — the game's real 3D renderer on every
     painting with every fog knob as a live slider, presets, the flash lights
     on demand, and COPY JSON for a `parallax` patch (see "3D backgrounds").
-  - **VO Lab:** `labs/vo/` — every narrator take with its text, when it
+  - **VO Lab:** `labs/vo/` — (booted through `labs/boot.js` like the
+    others since 0.00197) every narrator take with its text, when it
     plays and how often; Play / Approve / Disapprove (+ volatility and shouty
     nudges); RE-RENDER gives a JSON for `node tools/gen-vo.mjs --rerender`
     (see "Audio").
@@ -60,7 +61,8 @@ before structural changes. This file is the rules and the per-system notes.
 
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
-node tools/smoke-test.mjs                    # the suite: ~690 checks, under a second
+node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
+node tools/smoke-test.mjs                    # the suite: ~740 checks, under a second
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -83,12 +85,16 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    fallback copies (they drifted, 0.116; the renderer's and the audio's
    whole-block copies went in 0.157): every number the code reads is
    listed in `shared/dataCheck.js` and checked at load — new knob, new
-   line (a smoke check also greps `src/` for `.knob ?? N`). What stays in
-   `src/`: the look — animation durations, shader constants, synth
-   instrument definitions.
+   line (a smoke check also greps `src/` for `.knob ?? N`; a default
+   parameter `{ fade = 0.35 }` is the same copy in another coat — the
+   flash lights had three, 0.00197). What stays in `src/`: the look —
+   animation durations, shader constants, synth instrument definitions.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
    now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
+   After the steps `migrateProfile` makes an imported code whole (gear
+   slots, numbers, lists; 0.00197) — a malformed paste used to break the
+   Great Hall on every entry.
 4. **Loot (0.091):** a drop that can't beat the gear (as it will be after
    this run's finds, `run.gearPreview`) is salvaged on the spot; only
    upgrades land in `run.itemsFound` — one path, `run/loot.js takeItem`,
@@ -102,14 +108,25 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
    through `runState.addPotion()` (sold when the satchel is full).
    **`run.stats` is a snapshot** taken at run start; mid-run loot does
    nothing until `settleRun()` auto-equips it.
-6. **Every game or stats-page change ships as a numbered build:** `node tools/bump.mjs 0.NNN
-   --note "..."` (version + module list + the changelist in
-   `build.json` / `changelog.json`), the smoke suite green, then push to
-   `main` and the working branch. Notes are player-facing (the "Build
-   0.NNN available" prompt and the CHANGELIST button): short, one `--note`
-   per change. **Bump for every `src/` or `analytics/` change, debug-only
-   ones too:** both pages load their modules under `?v=<build>`, so an
-   unbumped change stays cached in players' browsers (0.127).
+6. **Every game or stats-page change ships as a numbered build:**
+   `node tools/ship.mjs --note "..." [--trailer "Co-Authored-By: ..."]`
+   (0.00197) does the whole loop — commits the tree, merges `origin/main`
+   (taking main's `build.json` / `changelog.json` on a conflict), picks
+   the next build number above main's (and rewrites the old number's
+   mentions in the files this branch changed), runs `tools/bump.mjs`
+   (version + module list + the changelist) and the smoke suite by exit
+   code, commits, fetches once more and pushes to `main` and the working
+   branch; main moved meanwhile = another round. Notes are player-facing
+   (the "Build 0.00NNN available" prompt and the CHANGELIST button): short,
+   one `--note` per change. **Bump for every `src/` or `analytics/`
+   change, debug-only ones too:** both pages load their modules under
+   `?v=<build>`, so an unbumped change stays cached in players' browsers
+   (0.127). **From push to player (0.00197):** GitHub Pages deploys `main`
+   in 45-70 s; every `build.json` fetch carries `?t=<now>` (the boot, the
+   data loader, the labs, the stats page), so the CDN's 10-minute copy is
+   never served; the update prompt polls every minute and on tab focus,
+   so a player sees "Build available" within about two minutes of the
+   push (mid-run it waits for the run's end).
 7. **Never replace an asset file in place** (edge caches hold ~4 hours) —
    new content, new filename.
 
@@ -184,7 +201,10 @@ embers flames, the wraith ether, flesh blood; the boss flames, the knight
 ether), the shrine's boons and the treasure chests each their own
 (`SHRINE_STYLE` / `CHEST_STYLE`, through `shrineUI.js litCard`). ONE
 WebGL context for the session draws every card in turn into a hidden
-canvas and each card's own 2D canvas copies its picture out (`.card-fx`,
+canvas and each card's own canvas takes its picture as an ImageBitmap
+(a `bitmaprenderer` context; a `drawImage` into a small 2D canvas was a
+GPU readback per card per frame, 0.00197; 2D stays as the fallback)
+(`.card-fx`,
 screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
 see-through opacity, so the plate stays as transparent as the lab's
@@ -230,8 +250,18 @@ switch): the art on a depth-displaced mesh with a slowly swaying camera;
 flat CSS fallback with no WebGL, software GL, context loss or reduced
 motion. Frame rate: at most `maxPixels` (2.1M), redrawn at `maxFps` (30)
 when nothing moves, and all session a device under `minFps` (22) steps
-down — resolution x0.8, x0.64, no fog, flat (`core/bg3dQuality.js`). Keep
-per-pixel shader work minimal; slowly varying terms go per vertex. Fog:
+down — resolution x0.8, x0.64, no fog, flat (`core/bg3dQuality.js`;
+`parallax.quality` = the window, the pause gap and how many slow
+windows step down; a window is slow only against the rate the `maxFps`
+throttle can reach on this screen, so a 40 Hz display is not punished —
+0.00197). While a jolt, sway, flash or push plays the cap is
+`motionMaxFps` (60), not the display's rate (0.00197; it was uncapped
+then, 144 fps through most of a fight). The flat CSS layers are hidden
+while the canvas draws (`#bg-stack.gl`, set from the first frame to
+`shutdown()`) and get no push then; they keep every painting as the
+fallback. `shutdown()` resets the ladder, the clocks and the view, so a
+later `initBg3d` starts clean. Keep per-pixel shader work minimal;
+slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
 revive): `bgLight(kind, rect)`, settings in `parallax.lights`. Big-hit sway:
@@ -311,7 +341,13 @@ sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
 and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
-sound is one entry. Combat lines go through `ui/combatSfx.js` (panned to the
+sound is one entry. Downloads go through `audioCore.fetchBytes`'s pool
+(0.00197: two at a time, a sound about to play first — the beds, every
+narrator take and the clip set used to start together at the title,
+against the Descend essentials). Muting the music stops the bed and
+frees its decoded buffer; the narrator's lines decode in the order they
+were asked for (a death and the first-death line, a chest and its
+relic). Combat lines go through `ui/combatSfx.js` (panned to the
 card, timed to the blow, crit/mega/overkill sweeteners). The room change's
 swoosh (0.173, `audio.json transition`): the owner's SFX pitched down three
 quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.178), played by `sfx.js transitionSfx()`
@@ -371,7 +407,12 @@ may hear the old one for ~4 hours.
   under its label; in a dialog pass it as `openDialog({ proceed })`).
   Yes/no prompts and text fields don't get one. A held Space steps once.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
-  `'active active-red'`.
+  `'active active-red'`. Its glow is a `::after` layer whose opacity
+  animates (0.00197): never animate `box-shadow` or `filter` in a loop —
+  that repaints every frame for as long as it is on screen; loops animate
+  opacity / transform (the idle loops' translate / rotate / scale).
+- Hotkeys (`core/hotkeys.js`): a dialog's key trap takes every key but
+  F-keys and Tab (0.00197: a dialog used to swallow F5 and F12).
 - Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
   `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
   (INVULNERABLE, background views and tuning, FORCE CRITS, LABS (the menu page),
@@ -481,8 +522,10 @@ Energy Saver), not a slow machine.
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
   combat, shrines, progression, content, backgrounds, audio, sim, history,
-  narration — new files join at the end),
-  each starting from `fresh()`. `tools/test/harness.mjs` holds the DOM shim
+  narration, art, cards),
+  each starting from `fresh()`; a test file imports only the harness
+  names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
+  that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
   and a **virtual clock** (timers, rAF, Date.now, performance.now; `sleep(ms)`
   advances it) — write tests with `sleep()` as if time were real; even a
   whole benchmark runs in milliseconds.
@@ -547,59 +590,76 @@ sometimes — fetch all branches to find it.
   (cleanup, fog) and `claude/sweet-franklin-bwkdsh` (voice-over), both
   end on `main` at 0.170. Treat them as finished: use the branch the new
   session is given.
-- Ship as before: bump, suite green, push to `main` and to the session's
-  working branch. No PRs unless the owner asks. **Two sessions may ship
-  at once** (0.161–0.169 came from two threads): `git fetch origin main`
-  right before every push, merge what landed, pick the build number above
-  it, and read the suite's exit code, not its last line through a pipe.
+- Ship with `node tools/ship.mjs --note "..."` (rule 6): it is the
+  bump-suite-fetch-merge-push loop with the collision handling two
+  threads need. No PRs unless the owner asks. **Two sessions may ship at
+  once** (0.161–0.195 came from two threads; 0.182, 0.193 and 0.194 were
+  each taken twice): never pick a build number by hand, and read the
+  suite's exit code, never its last line through a pipe.
 
-## State at handover (0.170)
+## State at handover (0.00197)
 
-- Live: the Old Wizard voice-over (0.161; all 122 takes reviewed in the VO
-  Lab, 29 re-rendered steadier, every take approved by 0.167), the Labs
-  menu (0.168), the Fog Lab (0.164) and the living mist it tuned (0.166,
-  toned down to the owner's reference in 0.169: every painting its own
-  fog and wind), treasure rooms (0.155), click-to-attack, 35 fight
-  paintings + 4 throne rooms + 6 treasure rooms, no repeats in a run,
-  ordered transitions.
-- 0.170 reviewed the voice-over code after the two threads met: no
-  structural change needed (`audio/narrator.js` is a pure rule engine
-  the scenes only name moments to; `tools/gen-vo.mjs` renders, measures
-  and keeps the registry; the lab is standalone). A muted narrator no
-  longer spends a take on the never-twice-in-a-row rule.
-- 0.157 was a cleanup pass over the whole project (four audits, every
-  file read): no new content. Fixed on the way: a reliquary death left
-  the room's buttons live under YOU DIED; Export Save read localStorage
-  (stale when a write was refused); the balance bot ignored `--tactic`
-  in single-seed mode; the 3D renderer leaked its GL context when the
-  quality ladder stepped down to flat, and the camera lurched after a
-  hidden tab; a bad strike-layer name played a crit ring. The sim output
-  is byte-identical to 0.156.
-- Not yet browser-checked: a boss fight in the new throne rooms (tests cover
-  the pick). Treasure rooms aren't in the play stats yet (no history field —
-  a candidate: which chest, what it gave; the collector would need it too).
-- Open ideas the owner floated: a mimic chest (needs enemy art).
-- Left as found (owner's call): `icon.png` (374KB) at the root is
-  referenced by nothing (the master art? move it out of the site root or
-  delete); the Particle Lab's "current" style is the pre-0.128 burst and
-  the lab is out of step with `particleLooks.js`; `collector/worker.js`
-  could cache `/players` and send `access-control-max-age` (a redeploy —
-  not done here); the nine test files share one long copy-pasted import
-  line; the shipped v1→v2 migration keeps its `?? N` copies (rule 3).
+- Live: the card effects from the Card Lab (0.183–0.195: a glow behind
+  every portrait by material, the cards in 3D, the glint, see-through
+  plates), the room push and swoosh (0.171–0.178), the Old Wizard
+  (0.161–0.188), the Fog Lab's living mist (0.164–0.169), treasure rooms,
+  the Art Lab's redrawn portraits (0.186–0.194, the other thread; four
+  characters still undecided), build numbers with five decimals.
+- 0.00197 was a review of the whole project (three audits, every file
+  read, plus a headless profile): the JavaScript side of a five-enemy
+  fight idles at ~2% of a core; the GPU cost is the mist (forty large
+  sprites at half resolution), then the card glow, then the mesh — the
+  ladder handles weak devices. Fixed: the card glow's per-frame readback,
+  the uncapped frame rate under motion, the 40 Hz ladder trap, the flat
+  layers animating under the canvas, the glow repaint, the dialog
+  swallowing F5, the narrator's order race, muted music still running, a
+  malformed save code breaking the hub, `wipeProfile` throwing, the
+  changelist fetched unversioned, a chest paying twice, the lights' and
+  the ladder's default copies (now data), the boss id / starting gear /
+  shrine deal count / potion thresholds in src (now data), stale
+  comments, the copied test import line. New: `tools/ship.mjs`,
+  `tools/check-bump.mjs`, `shared/motion.js`, `.nojekyll`, the build
+  file read once per page and cache-busted everywhere, the update poll
+  every minute. The simulator's output is byte-identical to 0.196.
+- Owner's call (found, not changed): the heavy attack's cooldown is off
+  by one — `useHeavy` sets it before `playerAttack`'s turn-end decrement,
+  so `baseHeavyCd 3` is ready after two ordinary turns and two Quicken
+  boons make it usable every turn; the simulator's balance includes it.
+  Decrementing at the start of the turn (then re-tuning) changes the
+  balance, so it waits for a decision.
+- Left as found: `icon.png` (374KB) at the root referenced by nothing;
+  the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
+  `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
+  `assets/chars/candidates` (12.6MB) and `assets/style` (9MB) are
+  lab-only art no player fetches but every clone and deploy carries (an
+  Actions deploy could exclude them); the Particle Lab is a standalone
+  copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
+  not quality: re-encoding saved 3%).
 
-## Backlog (as of 0.170)
+## Backlog (as of 0.00197)
 
-- Voice-over: a few more takes per frequent line (OVERKILL, room cleared)
-  so the wizard repeats less on long sessions · a NARRATOR volume slider if
-  players ask · the ElevenLabs key is the owner's (quota per key).
+- Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
+  key is the owner's (quota per key) · a dropped line (queued past
+  `maxWaitS`) still spends its once-per rule.
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
-  Lord) · the room-24 boss is a wall (~5% clear in the simulator) and meta
-  saturates past ~60 runs — deeper tiers or NG+ (then move `finalBossRoom`)
-  · thorns relic is a flat 4 damage, weak against scaled enemy HP · more
-  room kinds · portrait / phone layout (then drop the mobile notice).
-- Engineering: deploy through the test workflow once the HTTPS setup is
-  settled · font as WOFF2 (212KB TTF) · the Particle Lab can go once nobody
-  is experimenting with looks.
+  Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
+  in the simulator) and meta saturates past ~60 runs — deeper tiers or
+  NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
+  against scaled enemy HP · more room kinds · portrait / phone layout
+  (then drop the mobile notice) · the heavy cooldown above · the
+  reliquary's revive is not narrated · treasure rooms are not in the
+  play stats.
+- Engineering: rename the `smash` combat event to `overkill` (engine,
+  sound keys, narration ids and the script disagree on the name) · the
+  mute pattern is copied in music / sfx / narrator (`shared/prefs.js
+  mutePref`) · `go()` is silently dropped during a transition (queue it)
+  · `hubScene.render` is ~150 lines · seed the two unseeded fight tests
+  (`withSeed` from `simCore.mjs`) · ~75 checks assert on source text
+  rather than behaviour (inject recording stubs instead) · `fresh()` does
+  not restore `DATA` after a test patches it · the Actions deploy job
+  (off until the owner opts in) should exclude `assets/chars/candidates`,
+  `assets/style`, `tools`, `docs`, `collector` · font as WOFF2 (212KB
+  TTF) · the Particle Lab can go once nobody is experimenting with looks.
 - Other: check the DIN Condensed web-embedding licence (macOS system font)
   · orphaned legacy staging site cleanup.
 

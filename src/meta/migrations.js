@@ -4,7 +4,7 @@
 // change bumps SAVE_VERSION and adds a step at the end.
 
 import { DATA } from '../shared/data.js';
-import { equipItems, startingEquipment } from './equipment.js';
+import { equipItems, startingEquipment, emptyEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
 import { cleanName } from './names.js';
 
@@ -74,4 +74,13 @@ export function migrateProfile(p, DEFAULTS) {
   let v = Number.isInteger(p.saveVersion) ? p.saveVersion : 0;
   while (v < SAVE_VERSION) MIGRATIONS[v++](p);
   p.saveVersion = Math.max(v, SAVE_VERSION);
+  // An imported code is not trusted (0.00197; the stats page has
+  // sanitizeProfile, the game had nothing): the gear slots, the numbers
+  // and the lists are made whole, so a malformed paste cannot break the
+  // Great Hall on every entry (after the steps: they read a legacy save's own shape)
+  p.equipment = { ...emptyEquipment(), ...(p.equipment || {}) };
+  if (!Array.isArray(p.equipment.rings) || p.equipment.rings.length !== 2) p.equipment.rings = [null, null];
+  for (const k of ['coins', 'xp', 'potions', 'potionCap']) p[k] = Number.isFinite(Number(p[k])) ? Number(p[k]) : DEFAULTS[k];
+  for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
+
 }

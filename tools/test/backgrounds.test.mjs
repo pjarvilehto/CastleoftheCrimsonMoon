@@ -1,9 +1,7 @@
 // tools/test/backgrounds.test.mjs — 3D backgrounds: depth maps, tuning sliders, camera math.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, t, fresh, registry, El, DATA, handleKey, generateRoom, hubScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -282,7 +280,7 @@ fresh();
   const run = (fps, ms, gapAt = -1) => {
     let w = null;
     const got = [];
-    for (let t = 0; t <= ms; t += 1000 / fps) { w = q.fpsWindow(w, t < gapAt ? t : t + (gapAt >= 0 ? 1000 : 0), 22); if (w.fps !== undefined) got.push(w); }
+    for (let t = 0; t <= ms; t += 1000 / fps) { w = q.fpsWindow(w, t < gapAt ? t : t + (gapAt >= 0 ? 1000 : 0), 22, DATA.backgrounds.parallax.quality); if (w.fps !== undefined) got.push(w); }
     return got;
   };
   const steady = run(30, 3200), slow = run(15, 3200), gap = run(30, 3200, 1500);
@@ -290,12 +288,12 @@ fresh();
   ok('a hidden-tab gap restarts the window instead of reading as slow', gap.length === 0);
   const slow2 = run(15, 6200);
   ok('one slow window is a hitch; the second in a row steps down', steady[0].slow === 0 && slow[0].slow === 1
-    && slow2.at(-1).slow === q.SLOW_WINDOWS);
+    && slow2.at(-1).slow === DATA.backgrounds.parallax.quality.slowWindows);
   ok('quality ladder: resolution first, then fog, then flat', q.LADDER[0].scale === 1 && q.LADDER[0].fog
     && q.LADDER.findIndex((s) => s.scale < 1) < q.LADDER.findIndex((s) => !s.fog) && !q.LADDER.at(-1).fog);
   const src = readFileSync('src/core/bg3d.js', 'utf8');
   ok('past the last step: back to the flat backgrounds', src.includes('if (level >= LADDER.length) { shutdown(); return false; }')
-    && src.includes('if (fpsW.slow >= SLOW_WINDOWS && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
+    && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
 }
 
 // 0.156 — no painting twice in a run (while the pool lasts), and the boss

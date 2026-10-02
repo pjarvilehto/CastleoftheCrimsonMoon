@@ -12,7 +12,7 @@
 import { counts, readdirSync } from './test/harness.mjs';
 
 // Every tools/test/*.test.mjs, in the suite's order (new files join at the end).
-const ORDER = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history'];
+const ORDER = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history', 'narration', 'art', 'cards'];
 const FILES = readdirSync('tools/test').filter((f) => f.endsWith('.test.mjs')).map((f) => f.slice(0, -'.test.mjs'.length))
   .sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
 const filter = process.argv.slice(2);

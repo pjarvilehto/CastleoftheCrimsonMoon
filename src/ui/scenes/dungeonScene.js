@@ -11,6 +11,7 @@
 //   multi— gold bold (multi-kill)
 //   sys  — gray   (deaths, misc)
 //   summon — violet (the boss calls a skeleton, 0.092)
+//   relic — crimson (a relic found), revive — the Heart's second life
 
 import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -189,26 +190,16 @@ export function dungeonScene() {
 
   // ---- shrine: panel layout (shrineUI.js) ----
   // ---- treasure (0.155): the shrine's panel, three chests ----
-  function renderTreasure(root, room) {
-    renderTreasureRoom(root, run, room, {
-      title: [room.name], // (0.171: no number — "The Frozen Tribute")
-      logEl, buffBar, coins: shownCoins, xp: shownXp,
-      onDeeper: () => nextRoom(root),
-      onRetreat: () => endRun(root, 'retreat'),
-      onDeath: () => openDeathModal(),
+  // what a panel room (the shrine, the chests) gets from the scene (0.171: titled by name alone — "An Ominous Shrine")
+  function panelHooks(root, room) { // (a declaration: render() runs before this line is reached)
+    return {
+      title: [room.name], logEl, buffBar, coins: shownCoins, xp: shownXp,
+      onDeeper: () => nextRoom(root), onRetreat: () => endRun(root, 'retreat'), onDeath: () => openDeathModal(),
       refresh: () => { render(currentRoot); tickUpChips(); },
-    });
+    };
   }
-
-  function renderShrine(root, room) {
-    renderShrineRoom(root, run, room, {
-      title: [room.name], // (0.171: no number — "An Ominous Shrine")
-      logEl, buffBar, coins: shownCoins, xp: shownXp,
-      onDeeper: () => nextRoom(root),
-      onRetreat: () => endRun(root, 'retreat'),
-      refresh: () => render(currentRoot),
-    });
-  }
+  function renderTreasure(root, room) { renderTreasureRoom(root, run, room, panelHooks(root, room)); }
+  function renderShrine(root, room) { renderShrineRoom(root, run, room, panelHooks(root, room)); }
 
   // Execute a combat action. Combat resolves synchronously; the resulting
   // log lines are queued and printed one by one (logDelayMs apart) so the

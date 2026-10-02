@@ -1,9 +1,7 @@
 // tools/test/shrines.test.mjs — shrine placement, the shrine room, boon tuning text, the buff bar.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, generateRoom,
-  scaleEnemy, createCombat, playerAttack, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, hubScene, titleScene,
-  resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -254,8 +252,8 @@ fresh();
 // cards and the buff bar show it (the glyph is its text alternative)
 {
   const { iconArt } = await import('../../src/ui/buffs.js');
-  const treasureSrc = readFileSync('src/ui/treasureUI.js', 'utf8');
-  const chestImgs = [...treasureSrc.matchAll(/img: '([^']+)'/g)].map((m) => m[1]);
+  const { CHEST_ICONS } = await import('../../src/run/treasure.js'); // (one table since 0.00197: the cards and the preload read it)
+  const chestImgs = Object.values(CHEST_ICONS);
   const files = [...DATA.shrines.offers.map((o) => o.img), ...chestImgs];
   ok('icons: every shrine boon and chest has a picture on disk', chestImgs.length === 3 && DATA.shrines.offers.every((o) => o.img)
     && files.every((f) => { try { return statSync(f).isFile(); } catch { return false; } }) && new Set(files).size === files.length, files.join(', '));

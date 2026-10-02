@@ -23,7 +23,9 @@
     "price": 30,
     "capUpgradeBase": 300,
     "capUpgradeGrowth": 2,
-    "fullSatchelSellCoins": 10
+    "fullSatchelSellCoins": 10,
+    "lowShare": 0.3,
+    "lowShareHud": 0.25
   },
   "statTrainXpBase": 15,
   "levelEvery": 5,
@@ -57,9 +59,22 @@
     "chance": 0.3,
     "unlockRoom": 5,
     "minRoom": 2,
-    "coffer": { "fights": [3, 5] },
-    "gilded": { "tier3Room": 9 },
-    "reliquary": { "hpCost": 0.2, "relicChance": 0.15, "itemTier": 3 }
+    "coffer": {
+      "fights": [
+        3,
+        5
+      ]
+    },
+    "gilded": {
+      "tier3Room": 9,
+      "tierBefore": 2,
+      "tierFrom": 3
+    },
+    "reliquary": {
+      "hpCost": 0.2,
+      "relicChance": 0.15,
+      "itemTier": 3
+    }
   },
   "deathCoinToll": 0.5,
   "logDelayMs": 100,
@@ -83,7 +98,8 @@
       "hpScale": 1,
       "dmgScale": 3,
       "depthBonus": 4
-    }
+    },
+    "enemy": "vampire_lord"
   },
   "player": {
     "baseHp": 400,
@@ -102,6 +118,10 @@
       "perLevel": 0.03,
       "linear": 10,
       "max": 0.5
+    },
+    "startingGear": {
+      "weapon": "rusty_sword",
+      "armor": "oak_shield"
     }
   },
   "combat": {

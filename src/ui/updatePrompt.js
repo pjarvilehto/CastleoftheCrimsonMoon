@@ -1,6 +1,6 @@
 // ui/updatePrompt.js — "a new build is out" (0.094). Testers play the live
 // site while builds keep landing; this polls build.json (uncached) every
-// few minutes and when the tab comes back into view. When a newer build is
+// minute and when the tab comes back into view. When a newer build is
 // up it offers a reload, with the changelist of every build since this one
 // (build.json `changelog`, written by tools/bump.mjs --note).
 //
@@ -15,7 +15,7 @@ import { openDialog } from './dialog.js';
 import { isNewer } from '../shared/version.js';
 import { DATA } from '../shared/data.js';
 
-const POLL_MS = 3 * 60 * 1000;
+const POLL_MS = 60 * 1000; // (0.00197: was 3 minutes; a 600-byte fetch a minute, so a build lands within a minute of its deploy)
 const MAX_NOTES = 8;
 
 let pending = null;   // { version, notes } — newer than this build, not yet shown
