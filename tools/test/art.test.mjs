@@ -33,6 +33,8 @@ fresh();
   ok('the style block fills in the facing: enemies face left, the knight right', doc.style.includes('[FACING]')
     && /Three-quarter view,\s+facing left\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'rat'))) && /Three-quarter view,\s+facing right\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'player')))
     && facing('vampire_lord') === 'facing left');
+  const boss = promptFor(doc, doc.chars.find((c) => c.id === 'vampire_lord'));
+  ok('a boss gets its own composition (waist up, wide, the weapon out of the frame) and no call for feet', boss.includes('from the waist up fills the height') && !boss.includes('full body from head to toe') && boss.includes('facing left') && !boss.includes('[FACING]'));
   const p = promptFor(doc, doc.chars.find((c) => c.id === 'rat'), 'simple big shapes');
   ok('a prompt = the style block, the character line, the facing once more, then a re-roll hint', p.startsWith('Redraw the character from image 1') && p.includes('\n\nCHARACTER: a huge hunched black sewer rat') && p.includes('\nFACING: the figure faces left,') && p.endsWith('\n\nsimple big shapes') && !p.includes('[FACING]'));
   ok('the clean pass: the one-picture Kontext paints the ground shadow, panel and signature out and keeps the figure', CLEAN.model === 'black-forest-labs/flux-kontext-pro' && /ground shadow/.test(CLEAN.prompt) && /Keep the character exactly as it is/.test(CLEAN.prompt)

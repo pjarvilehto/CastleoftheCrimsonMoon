@@ -147,10 +147,15 @@ export function idsByFile(root = ROOT) {
   return { [cards.player.art]: 'player', ...Object.fromEntries(Object.entries(enemies).map(([id, e]) => [e.art, id])) };
 }
 export const facing = (id) => (id === 'player' ? 'facing right' : 'facing left');
-/** The prompt sent for a character: the style block (facing filled in), its line, the facing once more (Kontext mirrors a figure readily; the lab's Flip catches the rest), a re-roll hint. */
+// A boss's composition replaces the shared paragraph (which asks for feet; the first instruction wins):
+// close and wide, as the original Vampire Lord that "feels big" is.
+export const BOSS_COMPOSITION = 'COMPOSITION: one character only, a wide picture: the figure from the waist up fills the height of the frame, looming over the viewer, the weapon sweeping across the full width and out of the frame. Three-quarter view, [FACING]. Plain flat mid-grey background (#8a8a8a), completely empty: no floor, no scenery, no frame, no text, no watermark, and no glow or bloom spilling beyond the figure\'s silhouette.';
+export const isBoss = (id) => id in WIDE;
+/** The prompt sent for a character: the style block (facing filled in; a boss's own composition), its line, the facing once more (Kontext mirrors a figure readily; the lab's Flip catches the rest), a re-roll hint. */
 export function promptFor(doc, c, hint = '') {
   const side = facing(c.id).split(' ')[1];
-  return `${doc.style.replace('[FACING]', facing(c.id))}\n\n${c.line}\nFACING: the figure faces ${side}, its head and eyes turned toward the ${side} edge of the picture.${hint ? `\n\n${hint.trim()}` : ''}`;
+  const style = isBoss(c.id) ? doc.style.replace(/COMPOSITION:[\s\S]*?(?=\n\n[A-Z]+:)/, BOSS_COMPOSITION) : doc.style;
+  return `${style.replace(/\[FACING\]/g, facing(c.id))}\n\n${c.line}\nFACING: the figure faces ${side}, its head and eyes turned toward the ${side} edge of the picture.${hint ? `\n\n${hint.trim()}` : ''}`;
 }
 
 /** A stable seed per candidate; a re-roll gets a fresh one. */
@@ -398,7 +403,7 @@ async function main() {
             ? { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
-            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: WIDE[j.c.id] ? '1:1' : DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
