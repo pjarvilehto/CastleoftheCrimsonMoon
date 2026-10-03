@@ -12,7 +12,7 @@
         "Heavy blows",
         "Armor"
       ],
-      "class": { "heavyName": "Heavy Blow", "hpMult": 1, "dmgMult": 1, "armorMult": 1, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "blow", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "class": { "hpMult": 1, "dmgMult": 1, "armorMult": 1, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "blow", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "rusty_sword", "armor": "oak_shield" },
       "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
@@ -34,7 +34,7 @@
         "Rage",
         "No armor"
       ],
-      "class": { "heavyName": "Cleave", "hpMult": 1.15, "dmgMult": 1.1, "armorMult": 0.6, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 1, "heavy": "cleave", "charges": 0, "cleaveShare": 0.5, "rage": 0.35, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "class": { "hpMult": 1.15, "dmgMult": 1.1, "armorMult": 0.6, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 1, "heavy": "cleave", "charges": 0, "cleaveShare": 0.5, "rage": 0.35, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "notched_hand_axe", "armor": "wolfhide_jerkin" },
       "theme": { "plate": "#9e3e1a", "light": "embers", "tint": [0.95, 0.45, 0.15] },
       "looks": [
@@ -56,7 +56,7 @@
         "Spells",
         "Frail"
       ],
-      "class": { "heavyName": "Fireball", "hpMult": 0.9, "dmgMult": 1.1, "armorMult": 0.7, "potionHealMult": 0.9, "dodge": 0, "heavyCd": 1, "heavyMult": 0.9, "heavy": "fireball", "charges": 3, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 1 },
+      "class": { "hpMult": 0.9, "dmgMult": 1.1, "armorMult": 0.7, "potionHealMult": 0.9, "dodge": 0, "heavyCd": 1, "heavyMult": 0.9, "heavy": "fireball", "charges": 3, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 1 },
       "kit": { "weapon": "apprentices_staff", "armor": "threadbare_robe" },
       "theme": { "plate": "#24479a", "light": "ether", "tint": [0.4, 0.6, 1.0] },
       "looks": [
@@ -81,7 +81,7 @@
         "Thralls",
         "Lifesteal"
       ],
-      "class": { "heavyName": "Soul Drain", "hpMult": 0.9, "dmgMult": 1, "armorMult": 0.8, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "drain", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0.6, "thrallShare": 0.6, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "class": { "hpMult": 0.9, "dmgMult": 1, "armorMult": 0.8, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "drain", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0.6, "thrallShare": 0.6, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "grave_knife", "armor": "gravediggers_shroud" },
       "theme": { "plate": "#246b38", "light": "ether", "tint": [0.35, 0.9, 0.45] },
       "looks": [
@@ -106,7 +106,7 @@
         "Mending",
         "Wild shape"
       ],
-      "class": { "heavyName": "Go Feral", "hpMult": 1.1, "dmgMult": 0.9, "armorMult": 0.9, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 0.65, "heavy": "wildshape", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 3, "wildMult": 2.2, "mend": 0.04, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "class": { "hpMult": 1.1, "dmgMult": 0.9, "armorMult": 0.9, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 0.65, "heavy": "wildshape", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 3, "wildMult": 2.2, "mend": 0.04, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "budding_branch", "armor": "bark_vest" },
       "theme": { "plate": "#4a7a24", "light": "fog", "tint": [0.55, 0.8, 0.4] },
       "looks": [
@@ -128,7 +128,7 @@
         "Hexes",
         "Quick"
       ],
-      "class": { "heavyName": "Hex", "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.8, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0.3, "chargeOnKill": 0 },
+      "class": { "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.8, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0.3, "chargeOnKill": 0 },
       "kit": { "weapon": "worn_hand_crossbow", "armor": "witchfinders_coat" },
       "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
@@ -149,7 +149,7 @@
         "Blight",
         "Endurance"
       ],
-      "class": { "heavyName": "Last Rites", "hpMult": 1.15, "dmgMult": 0.85, "armorMult": 1.2, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 0.45, "heavy": "censer", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0.3, "potionArmor": 30, "markCrit": 0, "chargeOnKill": 0 },
+      "class": { "hpMult": 1.15, "dmgMult": 0.85, "armorMult": 1.2, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 0.45, "heavy": "censer", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0.3, "potionArmor": 30, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "tin_censer", "armor": "sisters_habit" },
       "theme": { "plate": "#8a7420", "light": "fog", "tint": [0.8, 0.75, 0.35] },
       "looks": [
@@ -160,5 +160,5 @@
       ]
     }
   ],
-  "_class": "class (0.00258, a draft under study — the simulator's --hero): heavyName = the heavy button's label (the developer's names: Go Feral, Last Rites); hpMult / dmgMult / armorMult scale the knight's derived max HP, damage and armor (gear included); potionHealMult a potion's heal; dodge adds to the relics' dodge (under player.dodgeCap); heavyCd the heavy's cooldown in ordinary turns (relics and Quicken lower it); heavyMult a factor on combat.heavyMult; heavy = what the heavy button does: blow (the knight's, with spill and OVERKILL) | cleave (the blow, and cleaveShare of it on every other foe) | fireball (the blow on every foe; charges per fight) | drain (the blow heals drainShare of it) | mark (a hit that marks the target: every hit on it crits) | censer (a hit, and a blight stack on every foe: blightShare of your damage a stack a turn) | wildshape (a hit, then wildTurns of wildMult damage with no potions); passives: rage = up to this share more damage at no HP, thrallShare = a kill raises a thrall of this share of its max HP that takes the foes' blows first, mend = this share of max HP healed a turn, potionArmor = armor a potion adds for the room; markCrit = crit damage added to every hit on the hexed foe (the hexhunter); chargeOnKill = charges a kill gives back, up to charges (the wizard). Quicken at a shrine gives a charge class a charge instead of cutting its cooldown (run/shrine.js). Every key is present on every hero (0 = off)."
+  "_class": "class (drafted 0.00258 under the simulator's --hero, live since 0.00266 — the developer's call, to tune in play; heavyName above names the heavy): hpMult / dmgMult / armorMult scale the knight's derived max HP, damage and armor (gear included); potionHealMult a potion's heal; dodge adds to the relics' dodge (under player.dodgeCap); heavyCd the heavy's cooldown in ordinary turns (relics and Quicken lower it); heavyMult a factor on combat.heavyMult; heavy = what the heavy button does: blow (the knight's, with spill and OVERKILL) | cleave (the blow, and cleaveShare of it on every other foe) | fireball (the blow on every foe; charges per fight) | drain (the blow heals drainShare of it) | mark (a hit that marks the target: every hit on it crits) | censer (a hit, and a blight stack on every foe: blightShare of your damage a stack a turn) | wildshape (a hit, then wildTurns of wildMult damage with no potions); passives: rage = up to this share more damage at no HP, thrallShare = a kill raises a thrall of this share of its max HP that takes the foes' blows first, mend = this share of max HP healed a turn, potionArmor = armor a potion adds for the room; markCrit = crit damage added to every hit on the hexed foe (the hexhunter); chargeOnKill = charges a kill gives back, up to charges (the wizard). Quicken at a shrine gives a charge class a charge instead of cutting its cooldown (run/shrine.js). Every key is present on every hero (0 = off)."
 }

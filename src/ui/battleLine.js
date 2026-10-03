@@ -272,11 +272,17 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setText(potionCount, shownPotions());
     setText(armorVal, armorText());
     if (page > 0) back.set(PAGES[page]);
-    setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
+    // 0.00266, the classes: a charge class (the wizard) shows its charges
+    // left as pips in place of the cooldown; the druid's feral turns show
+    // while they last (no potion then — runState.drinkPotion refuses)
+    const k = run.stats.klass;
+    const charges = Math.max(0, Math.min(k.charges, Number(s.charges) || 0));
+    setText(cd, k.charges > 0 ? ` ${'◆'.repeat(charges)}${'◇'.repeat(k.charges - charges)}`
+      : s.wild > 0 ? ` (feral ${s.wild})` : s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
-    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
+    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp || s.wild > 0);
     // Low on health with potions left: Drink Potion pulses red (0.126) —
     // kept on while a turn prints, so the glow doesn't restart every blow.
     const remind = low && !s.dead && run.potions > 0;
@@ -319,6 +325,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
   const plate = frame();
+  const foeTag = el('div', { class: 'foe-tag card-sub' }, ''); // (0.00266: HEXED by the hexhunter, BLIGHT ×n under the plague sister's censer; empty otherwise)
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
     plate,
     el('div', { class: 'card-head' },
@@ -327,6 +334,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
+    foeTag,
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
@@ -350,6 +358,10 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       setClass(card, 'dying', true);
       collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
+    const tag = [s.hexed ? 'HEXED' : '', s.blight > 0 ? `BLIGHT ×${s.blight}` : ''].filter(Boolean).join(' · ');
+    setText(foeTag, tag);
+    setClass(foeTag, 'on', !!tag);
+    setClass(card, 'hexed', !!s.hexed);
     setClass(atk, 'ghost-btn', s.dead);
     atkDisabled(s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);

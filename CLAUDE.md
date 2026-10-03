@@ -806,9 +806,9 @@ Feral, Hex, Last Rites; the blow is the same for every class,
 `shared/heroes.js heavyName`). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
-with fog — my picks, tuned in the data. **The classes' gameplay, a draft
-under study (0.00258, on the branch, not shipped — the UI knows none of
-the new events; the knight's path is byte-identical in the simulator):**
+with fog — my picks, tuned in the data. **The classes' gameplay (drafted
+0.00258 under the simulator, LIVE since 0.00266 — the developer's call: play
+it, then tune; the knight's path is the game as it was):**
 `heroes.json class` per hero (every key on every hero, `_class` says
 what each does) — multipliers on the derived HP / damage / armor, a
 potion's heal, dodge, the heavy's cooldown and factor, and `heavy`: the
@@ -833,7 +833,18 @@ against bosses (`chargeOnKill`: a kill gives a charge back, up to
 `charges`, now 3; damage 1.1; Quicken at a shrine gives a charge class a
 charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
 78% from 68%). No difficulty label on the cards (the developer's call:
-the variance stays quiet). **What it changes:**
+the variance stays quiet). **The combat UI's minimum (0.00266, shipped
+with it so the classes can be played; the mock-ups in the chat are the
+design to grow into):** the heavy button carries the class's name (above)
+and, for a charge class, its charges as pips (◆◆◇) in place of the
+cooldown, for the Druid `(feral n)` while the shape lasts (Drink Potion
+dead meanwhile — `battleRoom.js update` hands `charges` / `wild` to the
+unit); a foe's card tags HEXED / BLIGHT ×n above its HP line
+(`.foe-tag`, the hexed card rimmed violet; `hexed` / `blight` in its
+snapshot); every new log line has a colour (mark, blight, wild, charge,
+thrall, thrallhit, thrallfall; `styles.css`). Not yet: a thrall card (the
+log alone says it rose, took a blow, crumbled), a rage chip, a feral
+glow. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
 the knight's standing looks too — only a look marked `sprite: true`

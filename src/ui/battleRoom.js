@@ -77,12 +77,14 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
     player.update({
       hp: playback.playerHpOf(run.hp), printing, dead,
       heavyReady: heavyReady && !printing && !combat.over, heavyCd: combat.heavyCd,
+      charges: combat.charges, wild: run.wild, // (0.00266: the wizard's charges, the druid's feral turns)
     });
     enemies.forEach((u, i) => {
       const e = combat.enemies[i];
       u.update({
         hp: playback.hpOf(i, e.hp), dead: playback.deadOf(i, e.hp), printing, combatOver: combat.over,
         meter: playback.meterOf(i, e.summonMeter ?? null),
+        hexed: combat.marked === i && e.hp > 0, blight: e.hp > 0 ? (e.blight ?? 0) : 0, // (0.00266: the hexhunter's hex, the plague sister's blight)
       });
     });
   }
