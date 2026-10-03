@@ -405,10 +405,16 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @media (hover: hover) { .hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%); } }
 .hero.chosen, .hero.chosen:hover { filter: none; transform: translateY(-3%) scale(1.05); z-index: 2; }
 .hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
-.hero .rim { position: absolute; inset: -0.6%; border-radius: 4% / 1.6%; box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); opacity: 0; pointer-events: none; }
+/* the rim and the pulse sit on the plate's own edge: card_enemy.png keeps a soft shadow outside its grey border (1.5% of the width at the sides) and corners of ~16% of the width (0.00249: the rim used to ring the element, a dark band between it and the card) */
+.hero .rim, .hero .pulse { position: absolute; inset: 0.3% 1.5% 0.4% 1.5%; border-radius: 16% / 5.9%; opacity: 0; pointer-events: none; }
+.hero .rim { box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); }
 .hero.chosen .rim { animation: hero-rim 1.6s ease-in-out infinite; }
 @keyframes hero-rim { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .hero.chosen .rim { animation: none; opacity: 0.8; } .hero { transition: none; } }
+/* the chosen card's red plate breathes: a warm wash over the art whose opacity pulses slowly */
+.hero .pulse { background: radial-gradient(ellipse at 50% 42%, rgba(190, 40, 40, 0.75), rgba(120, 15, 15, 0.3) 55%, rgba(60, 5, 5, 0) 82%); }
+.hero.chosen .pulse { animation: hero-pulse 3.4s ease-in-out infinite; }
+@keyframes hero-pulse { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .hero.chosen .rim { animation: none; opacity: 0.8; } .hero.chosen .pulse { animation: none; opacity: 0.4; } .hero { transition: none; } }
 .hero .figure { position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); height: calc(var(--hero-h) * var(--fh)); max-width: 150%; width: auto; object-fit: contain; object-position: bottom center;
   filter: drop-shadow(0 0.8vh 1.2vh rgba(0,0,0,0.7)); -webkit-user-drag: none; user-select: none; pointer-events: none; }
 .hero .name { position: absolute; left: 4%; right: 4%; bottom: 3.5%; text-align: center; text-transform: uppercase; letter-spacing: 0.12em; color: var(--parchment); font-size: calc(var(--hero-h) * 0.048); line-height: 1.05; text-shadow: 0 1px 4px #000; }
@@ -741,6 +747,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* player.png is WIDE (aspect 1.11): bleed past the sides, not the top —
    the card carries 4 text rows (name/weapon/armor) that must stay clear */
 .player-card .portrait { bottom: 13%; width: 135%; height: auto; max-width: none; max-height: 67%; }
+.player-card.hero-standing .portrait { max-height: 100%; } /* a standing hero (0.00249, the developer's call): a full card tall, the staff past the frame like the enemies' heads — the wizard read small beside them at 67% */
 /* the in-flow portrait used to flex-push the player's HP row to the bottom;
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }

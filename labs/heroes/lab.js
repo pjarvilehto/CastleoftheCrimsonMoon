@@ -34,11 +34,11 @@ function setLook(id, n) { const m = heroById(id).looks.length; S.look = { ...S.l
 // ---- the screen (the game's markup and classes) ----
 function card(h, i) {
   return el('div', { class: 'hero', 'data-hero': h.id, onclick: () => choose(h.id) },
-    el('div', { class: 'plate' }), el('div', { class: 'rim' }),
+    el('div', { class: 'plate' }), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
     el('img', { class: 'figure', src: lookUrl(h, lookAt(h.id)), style: `--fh:${lookOf(h, lookAt(h.id)).fh}`, alt: h.name, draggable: 'false' }),
     el('button', { class: 'num' }, String(i + 1)),
     el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)),
-    el('div', { class: 'looks' },
+    el('div', { class: `looks${h.looks.length < 2 ? ' single' : ''}` },
       el('button', { title: 'Previous look', onclick: (e) => { e.stopPropagation(); setLook(h.id, lookAt(h.id) - 1); } }, '‹'),
       el('div', { class: 'dots' }, ...h.looks.map((_, n) => el('i', { class: n === lookAt(h.id) ? 'on' : '' }))),
       el('button', { title: 'Next look', onclick: (e) => { e.stopPropagation(); setLook(h.id, lookAt(h.id) + 1); } }, '›'),

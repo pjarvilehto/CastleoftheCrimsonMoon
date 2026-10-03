@@ -15,7 +15,7 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf } from '../shared/heroes.js';
+import { heroOf, defaultHero } from '../shared/heroes.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
 // .idle-<family>), keyed by enemy ID — display names differ (golem is
@@ -142,7 +142,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
   const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
   const plate = frame();
-  const card = el('div', { class: 'char-card player-card' },
+  const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00249: a standing hero's figure stands taller than the knight's wide sprite)
     plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, heroOf(p).name.toUpperCase()), // (0.00248: the chosen class)

@@ -3,7 +3,8 @@
 // Castle and the Great Hall, over the hall's own painting, so PROCEED fades
 // this screen's pieces out and the hall's in with the painting never
 // changing. The heroes' cards in a row (heroes.json, shared/heroes.js) on
-// the enemy frame, the chosen one lifted with a breathing gold rim; under
+// the enemy frame, the chosen one lifted with a breathing gold rim and a
+// slow red pulse on its plate; under
 // it the look switcher (‹ › = the arrow keys; a hero's looks are its
 // sheets, one to eight so far — a hero with one look hides it); a bar with
 // the hero's lines and PROCEED (Space). 1-7 and a click choose. The pick lands on the
@@ -39,7 +40,7 @@ export function heroScene() {
       const figure = el('img', { class: 'figure', src: lookUrl(h, looks[h.id]), style: `--fh:${lookOf(h, looks[h.id]).fh}`, alt: h.name, draggable: 'false' });
       figures[h.id] = figure;
       const card = el('div', { class: 'hero', 'data-hero': h.id, onclick: () => choose(h.id) },
-        el('div', { class: 'plate' }), el('div', { class: 'rim' }),
+        el('div', { class: 'plate' }), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
         figure,
         el('button', { class: 'num', key: String(i + 1), onclick: (e) => { e?.stopPropagation?.(); choose(h.id); } }, String(i + 1)),
         el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)));
