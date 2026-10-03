@@ -1121,7 +1121,12 @@ loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
 Music Lab in 0.00273; **the developer picked ElevenLabs for both**
 (`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
-two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
+two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). New takes change `assets/data/music-art.json`, which the bump check
+counts as loaded by players (everything under `assets/data`): ship them
+with `tools/ship.mjs`, never a bare push (0.00288). **The boss's second
+brief (0.00288, the developer's note: `boss_c2` too in-your-face):** 60 s,
+the menace held back — no organ opening, no full-ensemble climax, the
+choir distant; four takes, `boss_c3`–`c6`, awaiting verdicts. **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
