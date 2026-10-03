@@ -54,6 +54,10 @@
       "when": "Mega crit",
       "often": "Sometimes (50%)"
     },
+    "crit": {
+      "when": "A critical hit (not a mega crit)",
+      "often": "Sometimes (12%), then 20 s quiet"
+    },
     "room_cleared": {
       "when": "Room cleared",
       "often": "Sometimes (20%)"
@@ -803,6 +807,125 @@
           "use_speaker_boost": true
         },
         "approved": true
+      },
+      {
+        "take": 5,
+        "file": "assets/audio/vo/vo_mega_crit_5.mp3",
+        "text": "Savage…",
+        "measuredDb": -15.3,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 6,
+        "file": "assets/audio/vo/vo_mega_crit_6.mp3",
+        "text": "Even I flinched.",
+        "measuredDb": -10,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 7,
+        "file": "assets/audio/vo/vo_mega_crit_7.mp3",
+        "text": "A blow for the chronicles…",
+        "measuredDb": -8.1,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 8,
+        "file": "assets/audio/vo/vo_mega_crit_8.mp3",
+        "text": "The castle shuddered.",
+        "measuredDb": -10.6,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      }
+    ],
+    "crit": [
+      {
+        "take": 1,
+        "file": "assets/audio/vo/vo_crit_1.mp3",
+        "text": "A clean strike.",
+        "measuredDb": -9.9,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 2,
+        "file": "assets/audio/vo/vo_crit_2.mp3",
+        "text": "Well placed…",
+        "measuredDb": -11.3,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 3,
+        "file": "assets/audio/vo/vo_crit_3.mp3",
+        "text": "Through the gap…",
+        "measuredDb": -6.2,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 4,
+        "file": "assets/audio/vo/vo_crit_4.mp3",
+        "text": "That one bit deep.",
+        "measuredDb": -9.8,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
+      },
+      {
+        "take": 5,
+        "file": "assets/audio/vo/vo_crit_5.mp3",
+        "text": "Precisely…",
+        "measuredDb": -6.1,
+        "settings": {
+          "stability": 0.7,
+          "similarity_boost": 0.75,
+          "style": 0,
+          "speed": 0.85,
+          "use_speaker_boost": true
+        }
       }
     ],
     "room_cleared": [

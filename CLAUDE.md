@@ -1102,8 +1102,9 @@ Music Lab in 0.00273; the next steps are the developer's verdicts, then
 an import that finds a loop seam (the end meeting the start), cuts the
 loop + `tailS`, measures it and points `audio.json music.tracks` at a
 new file (rule 7). **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
-who never shouts — the script is `docs/narration-script.md` (32 lines,
-four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+who never shouts — the script is `docs/narration-script.md` (33 lines,
+four takes each; OVERKILL nine since 0.188, a plain crit five and the mega
+crit eight since 0.00278), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
 sends "!" as "." and drops a leading "…", never overwrites a take — delete
 the file to re-render it, `--stability/--style/--speed` for a steadier
@@ -1114,7 +1115,8 @@ loudest 50 ms). **When** a line plays is `audio.json narration.lines`
 `oncePerSession`, `cooldownMs`); the scenes only call `narrate('overkill')`,
 the dungeon marks rooms and runs (`narratorRoom()` / `narratorRun()`), and
 `combatQueue.js voFor()` maps combat events (OVERKILL, a multi-kill = the
-script's SMASH, mega crit, revive, summon, room cleared, low HP) to items'
+script's SMASH, mega crit, a plain crit (12% with a 20 s cooldown — Precision
+makes them common), revive, summon, room cleared, low HP) to items'
 `vo`, said as the line prints (+ `combatDelayMs`). A room's threshold says
 one line at most (boss / shrine / treasure, else descent, `stretch_N`,
 new record, elite; `roomEntryDelayMs` so it lands with the painting). One

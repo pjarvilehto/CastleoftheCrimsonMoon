@@ -1420,6 +1420,10 @@
       "mega_crit": {
         "chance": 0.5
       },
+      "crit": {
+        "chance": 0.12,
+        "cooldownMs": 20000
+      },
       "room_cleared": {
         "chance": 0.2
       },
