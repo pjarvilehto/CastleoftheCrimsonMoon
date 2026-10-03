@@ -1,7 +1,7 @@
 // tools/test/progression.test.mjs — the meta game: settle, potions, saves, alchemy, disciplines, forge, hub, loot, 0.097 fixes.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, t, fresh, registry, El, DATA, show, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, t, fresh, registry, El, DATA, show, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync, byClass } from './harness.mjs';
 
 fresh();
 
@@ -436,7 +436,7 @@ fresh();
   const shown = (run, outcome) => {
     const root = new El('div');
     runEndScene(run, outcome).enter(root);
-    const box = root.all((e) => e.className === 'stat-box').find((b) => b.textContent.startsWith('Rooms Cleared'));
+    const box = byClass(root, 'stat-box').find((b) => b.textContent.startsWith('Rooms Cleared'));
     return box.textContent.replace('Rooms Cleared', '');
   };
   const base = { roomNumber: 9, kills: 1, coins: 10, coinsRetrieved: 5, coinsLost: 5, xp: 1, itemsFound: [], tollPct: 0.5 };

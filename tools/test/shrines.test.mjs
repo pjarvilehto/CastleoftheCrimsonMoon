@@ -1,7 +1,7 @@
 // tools/test/shrines.test.mjs — shrine placement, the shrine room, boon tuning text, the buff bar.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync, withSeedAsync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync, withSeedAsync, byClass } from './harness.mjs';
 
 fresh();
 
@@ -113,7 +113,7 @@ fresh();
     if (key) handleKey(key);
     await sleep(500);
     bar = registry.app.all((e) => e.attrs && e.attrs.id === 'buffs')[0];
-    items = bar ? bar.all((e) => e.className === 'buff') : [];
+    items = bar ? byClass(bar, 'buff') : [];
     if (items.length === 1 && t().includes('Retreat with Loot')) break;
   }
   if (!(items.length === 1 && t().includes('Retreat with Loot'))) {
@@ -166,8 +166,8 @@ fresh();
   acceptOffer(run, DATA.shrines.offers.find((o) => o.id === 'bulwark'));
   const bar = new El('div');
   updateBuffs(bar, run.buffs);
-  const cells = bar.all((e) => e.className === 'buff');
-  const badge = bar.all((e) => e.className === 'buff-count');
+  const cells = byClass(bar, 'buff');
+  const badge = byClass(bar, 'buff-count');
   ok('the same boon twice = one icon with a ×2 badge', cells.length === 2 && badge.length === 1 && badge[0].textContent === '×2');
   ok('cells show the short label, tooltip the full text', cells[0].textContent.includes(crit.short) && cells[0].attrs.title.startsWith(crit.buff) && cells[0].attrs.title.includes('x2'));
   const css = readFileSync('styles.css', 'utf8');

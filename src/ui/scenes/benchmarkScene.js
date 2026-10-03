@@ -67,7 +67,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     onSfx: (item) => combatSfx(item, fxCtx),
     onDeath: (i) => ui?.battle.deathStep(i), // (as the dungeon: a death waits only while a card is off screen)
   });
-  const fxCtx = fxContext(() => ui);
+  const fxCtx = fxContext(() => ui, () => run); // (0.00283: the class's traces read the run)
 
   return {
     inRun: true, // no update prompt mid-measurement

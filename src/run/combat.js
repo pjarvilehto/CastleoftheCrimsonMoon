@@ -3,9 +3,12 @@
 // The scene layer renders state and feeds player actions in.
 //
 // The hero's class (heroes.json class, snapshotted as run.stats.klass;
-// drafted 0.00258, live since 0.00267) shapes the turn: the heavy's kind
-// (the knight's blow with spill and OVERKILL, cleave, fireball, drain,
-// mark, censer, entangle) and the passives play out in classPhase.
+// drafted 0.00258, live since 0.00267) shapes the turn through the
+// registry in run/classes.js (0.00283): the heavy's kind — the knight's
+// blow with spill and OVERKILL, cleave, fireball, drain, mark, censer,
+// entangle — is HEAVIES[klass.heavy], the passives are AFTER_BLOW and
+// FOE_TURN hooks; this file calls them in a fixed order and switches on no
+// class name.
 //
 // Damage spill: the knight's heavy attacks only. When a heavy hit rolls at least
 // spillThreshold x the target's remaining HP, the excess cleaves into
@@ -16,6 +19,7 @@ import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
 import { tryRevive } from './loot.js';
+import { HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges } from './classes.js';
 
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
@@ -24,12 +28,18 @@ export function critMultiplier(tune, mega = false, r = Math.random()) {
   return mega ? m * tune.megaCritMult : m;
 }
 
+// A foe as the fight holds it: the room's enemy copied, at full HP, with the
+// classes' statuses at zero (0.00283: `blight` stacks, the roots' `entangled`
+// turns — the hooks count on the numbers being there; a summon gets the
+// same in summonPhase).
+const fighter = (e) => ({ ...e, hp: e.maxHp, blight: 0, entangled: 0 });
+
 export function createCombat(run, room) {
   return {
     run,
     roomNumber: room.number, // summons scale to the room
     isBoss: !!room.isBoss,   // run history counts boss kills (0.095)
-    enemies: room.enemies.map((e) => ({ ...e, hp: e.maxHp })),
+    enemies: room.enemies.map(fighter),
     turn: 1,
     heavyCd: 0,
     over: false,
@@ -43,6 +53,20 @@ export function createCombat(run, room) {
 
 function living(combat) {
   return combat.enemies.filter((e) => e.hp > 0);
+}
+
+// Takes `dmg` off the foe at `idx` — never past its HP — and pushes its line
+// (`ev(applied)`: the event, the caller's text and fields) and, when it
+// fell, its kill. Returns the damage applied. 0.00283: the one path for the
+// strike chain, a heavy's sweep (classes.js), the blight's tick and the
+// thorns — four copies before.
+export function damageFoe(combat, idx, dmg, ev, push) {
+  const t = combat.enemies[idx];
+  const applied = Math.min(dmg, t.hp);
+  t.hp -= applied;
+  push(ev(applied));
+  if (t.hp === 0) push({ type: 'kill', text: `${t.name} died!`, enemy: t });
+  return applied;
 }
 
 // One player action, in phases (0.117: split out of one 154-line
@@ -65,17 +89,19 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     };
     events.push(ev);
   };
+  // the turn's outputs (0.00283): what the phases and the class hooks write through
+  const turn = { push, hurt: (idx, dmg, ev) => damageFoe(combat, idx, dmg, ev, push) };
   const target = combat.enemies[targetIndex];
   if (!target || target.hp <= 0 || combat.over) return events;
   combat.run.turns += 1; // run history (0.095)
 
   const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258, live 0.00267)
   const hit = rollHit(combat, heavy, targetIndex);
-  if (!smash(combat, hit, push)) strike(combat, targetIndex, hit, push);
-  lifesteal(combat, hit.dmg, push);
-  classPhase(combat, targetIndex, hit, deadBefore, push); // the class's heavy, its blight, its mending, its thrall (0.00258, live 0.00267; nothing for the knight)
-  if (enemyPhase(combat, push)) return events; // the hero fell
-  summonPhase(combat, push);
+  if (!smash(combat, hit, turn)) strike(combat, targetIndex, hit, turn);
+  lifesteal(combat, hit.dmg, turn);
+  classPhase(combat, targetIndex, hit, deadBefore, turn); // the class's heavy, its blight, its mending, its thrall (0.00258, live 0.00267; nothing for the knight)
+  if (enemyPhase(combat, turn)) return events; // the hero fell
+  summonPhase(combat, turn);
   if (living(combat).length === 0) {
     combat.over = true;
     combat.victory = true;
@@ -113,9 +139,10 @@ function rollHit(combat, heavy, targetIndex = -1) {
 // drip, so overpowered players breeze through early rooms. Kill events
 // are silent: the scene still applies loot per enemy. True if it overkilled
 // (the smash phase; 0.00223: the event is `overkill`, as the UI names it).
-function smash(combat, { dmg, heavy }, push) {
+// A heavy that spills (the knight's blow, classes.js HEAVIES) alone.
+function smash(combat, { dmg, heavy }, { push }) {
   const alive = living(combat);
-  if (!heavy || combat.run.stats.klass.heavy !== 'blow' || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false; // (0.00258, live 0.00267: the knight's blow only)
+  if (!heavy || !HEAVIES[combat.run.stats.klass.heavy].spills || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false;
   for (const e of alive) e.hp = 0; // before the line: its snap shows the wiped room
   // victims: their indices, so every card can burst (0.128)
   push({ type: 'overkill', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
@@ -125,11 +152,13 @@ function smash(combat, { dmg, heavy }, push) {
 
 // The blow on its target; a heavy blow of at least spillThreshold x the
 // target's HP strikes through into every other living enemy (no cap — a
-// strong enough blow sweeps the room). Basic attacks never spill.
-function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, push) {
+// strong enough blow sweeps the room) when the class's heavy spills (the
+// knight's; the other heavies have their own reach, classes.js). Basic
+// attacks never spill.
+function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, turn) {
   const target = combat.enemies[targetIndex];
   const chain = [targetIndex];
-  if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258, live 0.00267: the knight's blow spills; the other classes' heavies have their own reach)
+  if (heavy && HEAVIES[combat.run.stats.klass.heavy].spills && dmg >= target.hp * DATA.difficulty.spillThreshold) {
     for (const [i, e] of combat.enemies.entries()) if (i !== targetIndex && e.hp > 0) chain.push(i);
   }
   let remaining = dmg;
@@ -137,77 +166,32 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, pus
   chain.forEach((idx, n) => {
     const t = combat.enemies[idx];
     if (remaining <= 0 || t.hp <= 0) return;
-    const applied = Math.min(remaining, t.hp);
-    t.hp -= applied;
-    remaining -= applied;
-    if (n === 0) {
-      push({
+    remaining -= turn.hurt(idx, remaining, (applied) => (n === 0
+      ? {
         type: 'atk',
         text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : '.'}`,
         target: idx, dmg, crit, megaCrit, heavy, marked,
-      });
-    } else {
-      push({ type: 'spill', text: `...the blow strikes through into ${t.name} for ${applied} dmg!`, target: idx, dmg: applied });
-    }
-    if (t.hp === 0) {
-      kills += 1;
-      push({ type: 'kill', text: `${t.name} died!`, enemy: t });
-    }
+      }
+      : { type: 'spill', text: `...the blow strikes through into ${t.name} for ${applied} dmg!`, target: idx, dmg: applied }));
+    if (t.hp === 0) kills += 1;
   });
-  if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+  if (kills >= 2) turn.push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
 }
 
 // The class's own turn (0.00258; live since 0.00267 — the UI plays every
 // event: the tags and log colours 0.00267, the particles 0.00268, the
-// sounds 0.00270 / 0.00271; the knight makes none): after the blow, its heavy's effect (cleave / fireball sweep the other foes,
-// drain heals, mark marks, censer blights, entangle binds), then the
-// blight's tick, the druid's mending, and the necromancer's thrall rising
-// from this turn's kill.
-function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
-  const run = combat.run, k = run.stats.klass;
-  if (k.heavy === 'blow') return;
-  if (heavy) {
-    if (k.heavy === 'cleave' || k.heavy === 'fireball') sweep(combat, targetIndex, Math.round(dmg * (k.heavy === 'fireball' ? 1 : k.cleaveShare)), k.heavy, push);
-    else if (k.heavy === 'drain') { const healed = Math.min(run.maxHp - run.hp, Math.round(dmg * k.drainShare)); if (healed > 0) { run.hp += healed; push({ type: 'heal', text: `You drain ${healed} HP from the blow.`, healed, drain: true, target: targetIndex }); } } // (drain: the soul wisps from the foe to the Necromancer, 0.00268)
-    else if (k.heavy === 'mark') { if (combat.enemies[targetIndex].hp > 0) { combat.marked = targetIndex; push({ type: 'mark', text: `You hex ${combat.enemies[targetIndex].name}: every blow on it will strike true.`, target: targetIndex }); } }
-    else if (k.heavy === 'censer') { for (const e of living(combat)) e.blight = (e.blight ?? 0) + 1; push({ type: 'blight', text: 'Your censer\'s smoke settles on every foe.' }); }
-    else if (k.heavy === 'entangle') { for (const e of living(combat)) e.entangled = k.entangleTurns; push({ type: 'entangle', text: `Roots burst from the ground and bind every foe for ${k.entangleTurns} turns.` }); } // (the Druid, 0.00271: a bound foe's attack fails with entangleChance — enemyStrike)
-  }
-  // the wizard's charges come back with the kills (a fireball through a room refills it; a boss's summons feed it)
-  if (k.chargeOnKill > 0) {
-    const kills = combat.enemies.filter((e) => e.hp <= 0).length - deadBefore;
-    if (kills > 0 && combat.charges < k.charges) { combat.charges = Math.min(k.charges, combat.charges + k.chargeOnKill * kills); push({ type: 'charge', text: `The kill feeds your grimoire: ${combat.charges} charge${combat.charges === 1 ? '' : 's'}.` }); }
-  }
-  if (k.blightShare > 0) {
-    for (const [i, e] of combat.enemies.entries()) {
-      if (e.hp <= 0 || !(e.blight > 0)) continue;
-      const dealt = Math.min(e.hp, Math.max(1, Math.round(run.stats.dmg * k.blightShare * e.blight)));
-      e.hp -= dealt;
-      push({ type: 'spill', text: `The blight gnaws ${e.name} for ${dealt}.`, target: i, dmg: dealt, via: 'blight' });
-      if (e.hp === 0) push({ type: 'kill', text: `${e.name} died!`, enemy: e });
-    }
-  }
-  if (k.mend > 0 && run.hp < run.maxHp) { const healed = Math.min(run.maxHp - run.hp, Math.max(1, Math.round(run.maxHp * k.mend))); run.hp += healed; push({ type: 'heal', text: `Your wounds knit for ${healed} HP.`, healed }); }
-  if (k.thrallShare > 0 && !(combat.thrall?.hp > 0)) {
-    const fallen = [...combat.enemies].reverse().find((e) => e.hp <= 0 && !e.raised);
-    if (fallen) { fallen.raised = true; combat.thrall = { name: `thrall ${fallen.name}`, hp: Math.max(1, Math.round(fallen.maxHp * k.thrallShare)) }; combat.thrall.maxHp = combat.thrall.hp; push({ type: 'thrall', text: `${fallen.name} rises again at your side.` }); }
-  }
-}
-// a heavy's reach past its target (the barbarian's cleave, the wizard's fireball): `dmg` on every other living foe
-function sweep(combat, targetIndex, dmg, kind, push) {
-  let kills = 0;
-  for (const [i, e] of combat.enemies.entries()) {
-    if (i === targetIndex || e.hp <= 0 || dmg <= 0) continue;
-    const applied = Math.min(dmg, e.hp);
-    e.hp -= applied;
-    push({ type: 'spill', text: kind === 'fireball' ? `...the fire takes ${e.name} for ${applied}!` : `...the cleave catches ${e.name} for ${applied}!`, target: i, dmg: applied, via: kind }); // (via: the fire's or the cleave's own particles, 0.00268)
-    if (e.hp === 0) { kills += 1; push({ type: 'kill', text: `${e.name} died!`, enemy: e }); }
-  }
-  if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+// sounds 0.00270 / 0.00271; the knight makes none): after the blow, its
+// heavy's effect (classes.js HEAVIES: cleave / fireball sweep the other
+// foes, drain heals, mark marks, censer blights, entangle binds), then the
+// passives in AFTER_BLOW's order — the blight's tick, the druid's mending,
+// the necromancer's thrall rising from this turn's kill.
+function classPhase(combat, targetIndex, hit, deadBefore, turn) {
+  if (hit.heavy) HEAVIES[combat.run.stats.klass.heavy].onHeavy?.(combat, targetIndex, hit, turn);
+  for (const hook of AFTER_BLOW) hook(combat, deadBefore, turn);
 }
 
 // Lifesteal: once per blow, off the full rolled damage.
-function lifesteal(combat, dmg, push) {
+function lifesteal(combat, dmg, { push }) {
   const run = combat.run;
   const ls = run.stats.lifesteal;
   if (!(ls > 0) || dmg <= 0) return;
@@ -220,32 +204,24 @@ function lifesteal(combat, dmg, push) {
 
 // Every living enemy strikes back. True if the hero fell (combat over).
 // Rolls per enemy: damage jitter, then dodge.
-function enemyPhase(combat, push) {
+function enemyPhase(combat, turn) {
   for (const enemy of living(combat)) {
     const source = combat.enemies.indexOf(enemy); // who acts, for the UI
-    if (enemyStrike(combat, enemy, source, push)) return true;
+    if (enemyStrike(combat, enemy, source, turn)) return true;
   }
-  for (const e of combat.enemies) if (e.entangled > 0) e.entangled -= 1; // the Druid's roots loosen a turn (0.00271)
+  for (const hook of FOE_TURN.end) hook(combat); // the Druid's roots loosen a turn (0.00271)
   return false;
 }
 
-function enemyStrike(combat, enemy, source, push) {
+function enemyStrike(combat, enemy, source, turn) {
   const run = combat.run;
   const tune = DATA.difficulty.combat;
-  // the Druid's roots (0.00271): a bound foe rolls to attack at all
-  if (enemy.entangled > 0 && Math.random() < run.stats.klass.entangleChance) {
-    push({ type: 'entangled', text: `${enemy.name} strains against the roots — Entangled!`, source });
-    return false;
-  }
+  const { push } = turn;
+  // the Druid's roots (0.00271): a bound foe rolls to attack at all (classes.js FOE_TURN.hold)
+  if (FOE_TURN.hold.some((hook) => hook(combat, enemy, source, turn))) return false;
   const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
-  // the necromancer's thrall (0.00258, live 0.00267) takes the blow instead, unarmored
-  if (combat.thrall?.hp > 0) {
-    const t = combat.thrall, taken = Math.min(t.hp, raw);
-    t.hp -= taken;
-    push({ type: 'thrallhit', text: `${enemy.name} hits your thrall for ${taken}.`, taken, source });
-    if (t.hp === 0) push({ type: 'thrallfall', text: 'Your thrall crumbles.' });
-    return false;
-  }
+  // the necromancer's thrall (0.00258, live 0.00267) takes the blow instead, unarmored (FOE_TURN.take)
+  if (FOE_TURN.take.some((hook) => hook(combat, enemy, raw, source, turn))) return false;
   // T4 relic: dodge — the blow misses entirely.
   if (!DEBUG.invulnerable && run.stats.dodge > 0 && Math.random() < run.stats.dodge) {
     push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
@@ -262,12 +238,7 @@ function enemyStrike(combat, enemy, source, push) {
   // used to stop at 1 HP — a tester's foes stood at 1 HP, which read as a
   // bug); a thorns kill is a kill like any other, its rewards and its fall.
   const thorns = run.stats.thorns;
-  if (thorns > 0 && taken > 0) {
-    const dealt = Math.min(thorns, enemy.hp);
-    enemy.hp -= dealt;
-    push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${dealt}.`, target: source, dmg: dealt });
-    if (enemy.hp === 0) push({ type: 'kill', text: `${enemy.name} died!`, enemy });
-  }
+  if (thorns > 0 && taken > 0) turn.hurt(source, thorns, (dealt) => ({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${dealt}.`, target: source, dmg: dealt }));
   if (run.hp > 0) return false;
   const revived = tryRevive(run); // T4 relic: the Heart of the Dying Moon, once per run
   if (revived) { push({ type: 'revive', text: revived }); return false; }
@@ -281,7 +252,7 @@ function enemyStrike(combat, enemy, source, push) {
 // Boss summons (0.092): a summoner's meter fills one step per turn; when
 // full it calls a (weakened) enemy that steps in front of it. Summons give
 // no rewards — stalling the boss to farm them is pointless. Capped alive.
-function summonPhase(combat, push) {
+function summonPhase(combat, { push }) {
   const cfg = DATA.difficulty.boss.summon;
   for (const [i, e] of combat.enemies.entries()) {
     if (!e.summonEvery || e.hp <= 0) continue;
@@ -291,8 +262,7 @@ function summonPhase(combat, push) {
     const s = scaleEnemy(cfg.enemy, combat.roomNumber + cfg.depthBonus);
     s.maxHp = Math.max(1, Math.round(s.maxHp * cfg.hpScale));
     s.dmg = Math.max(1, Math.round(s.dmg * cfg.dmgScale));
-    Object.assign(s, { hp: s.maxHp, summoned: true, xp: 0, coins: [0, 0] });
-    combat.enemies.push(s);
+    combat.enemies.push(Object.assign(fighter(s), { summoned: true, xp: 0, coins: [0, 0] })); // (a fighter like the room's: full HP, no blight, no roots)
     // Snapshot BEFORE the reset: the bar shows full as the summon lands,
     // then drains when playback settles on the real state.
     push({ type: 'summon', text: `${e.name} summons a ${s.name}!`, source: i, target: combat.enemies.length - 1 });
@@ -315,7 +285,7 @@ export function heavyTarget(combat) {
 }
 
 export function canHeavy(combat) {
-  return combat.heavyCd === 0 && !combat.over && (combat.run.stats.klass.charges === 0 || combat.charges > 0); // (the wizard's charges per fight, 0.00258, live 0.00267)
+  return combat.heavyCd === 0 && !combat.over && (!usesCharges(combat.run.stats.klass) || combat.charges > 0); // (the wizard's charges per fight, 0.00258, live 0.00267)
 }
 
 export function useHeavy(combat) {
@@ -323,5 +293,5 @@ export function useHeavy(combat) {
   // relics and the quicken boon lower it (floor 1): that many ordinary
   // turns pass before the next heavy.
   combat.heavyCd = combat.run.stats.heavyCdMax;
-  if (combat.run.stats.klass.charges > 0) combat.charges -= 1; // (0.00258, live 0.00267)
+  if (usesCharges(combat.run.stats.klass)) combat.charges -= 1; // (0.00258, live 0.00267)
 }

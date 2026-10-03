@@ -25,8 +25,7 @@
 // The Card Lab (labs/cards/cardFx.js) imports this shader: one copy.
 
 import { DATA } from '../shared/data.js';
-import { getProfile } from '../meta/profile.js';
-import { heroOf } from '../shared/heroes.js';
+import { heroSnapshot } from '../shared/heroes.js';
 import { isBg3dActive } from '../core/bg3d.js';
 import { MATERIAL } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
@@ -117,8 +116,11 @@ export const styleNamed = (name) => STYLE[name] ?? STYLE.fog;
 // By particle material (particleLooks.js MATERIAL): flesh blood, bone fog,
 // embers flames, wisps ether; the boss flames, the knight ether.
 const BY_MATERIAL = { embers: 'flames', wisps: 'ether', dust: 'fog' };
-export function cardStyle(id, boss = false) {
-  if (id === 'player') { const t = heroOf(getProfile()).theme; return { look: t.light, tint: t.tint }; } // (0.00254: the class's theme, heroes.json)
+// The player's is the class's theme (0.00254, heroes.json): `theme` as the
+// run holds it (run.hero.theme, 0.00283 — battleLine passes it); none given
+// (the hall, the labs), the profile's class.
+export function cardStyle(id, boss = false, theme = null) {
+  if (id === 'player') { const t = theme ?? heroSnapshot().theme; return { look: t.light, tint: t.tint }; }
   if (boss) return STYLE.boss;
   return STYLE[BY_MATERIAL[MATERIAL[id]] ?? 'blood'];
 }

@@ -490,6 +490,32 @@ fresh();
     && readFileSync('labs/index.html', 'utf8').includes('href="music/" data-lab="music"') && js.includes('createMediaElementSource') && js.includes('TARGET_LUFS - t.lufs') && js.includes("download: 'music-rerender.json'"));
 }
 
+// 0.00283 — the sound tool and the shared ElevenLabs module: the prompt
+// table and the registry name the same recorded clips, a fresh take
+// never overwrites (rule 7), and the one POST carries the key and
+// throws the status.
+{
+  const { readPrompts, nextFile } = await import('../gen-sfx.mjs');
+  const { post, hasKey, measureDb } = await import('../elevenlabs.mjs');
+  const { measureDb: viaVo } = await import('../gen-vo.mjs');
+  const rows = readPrompts();
+  const recorded = Object.entries(DATA.audio.clips).filter(([k, c]) => /^(atk|heavy|hurt|eatk|ehurt)_/.test(k) && c.file?.startsWith('assets/audio/sfx/')).map(([k]) => k);
+  ok('sfx-prompts.md: a row per recorded clip (seconds and a prompt), and a recording for every row',
+    rows.length >= 45 && rows.every((r) => r.seconds > 0 && r.prompt.length > 20 && recorded.includes(r.clip)) && recorded.every((k) => rows.some((r) => r.clip === k)), `${rows.length} rows, ${recorded.length} clips`);
+  ok('readPrompts reads the table alone (a heading or prose row is skipped)',
+    readPrompts('| clip | seconds | prompt |\n|---|---|---|\n| atk_x | 1.5 | a swing |\nsome prose | with | bars | in | it\n| eatk_rat | 1 | a bite |').map((r) => r.clip).join() === 'atk_x,eatk_rat');
+  ok('nextFile: the first free _vN, never an existing one', nextFile('atk_wizard', (f) => f === 'atk_wizard_v1.mp3' || f === 'atk_wizard_v2.mp3') === 'atk_wizard_v3.mp3' && nextFile('new_clip', () => false) === 'new_clip_v1.mp3');
+  const calls = [];
+  const fetchFn = async (url, init) => { calls.push({ url, init }); return { ok: true, arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer }; };
+  const bytes = await post('sound-generation', { text: 'a swing', duration_seconds: 1 }, { fetchFn, key: 'k' });
+  ok('elevenlabs.post: the path under /v1, the key in the header, the body as JSON, the bytes back',
+    calls[0].url === 'https://api.elevenlabs.io/v1/sound-generation' && calls[0].init.headers['xi-api-key'] === 'k' && JSON.parse(calls[0].init.body).text === 'a swing' && bytes.length === 3);
+  let err = null;
+  try { await post('x', {}, { fetchFn: async () => ({ ok: false, status: 401, text: async () => 'missing_permissions and more' }), key: 'k' }); } catch (e) { err = e; }
+  ok('a refused call throws the status and the start of the body', err?.message.startsWith('HTTP 401: missing_permissions'));
+  ok('the key is read from the environment, never baked in', typeof hasKey() === 'boolean' && !readFileSync('tools/elevenlabs.mjs', 'utf8').match(/xi-api-key': '[a-z0-9]/) && viaVo === measureDb);
+}
+
 // 0.00280: a take into the game (gen-score.mjs --import). The seam finder
 // (tools/music-seam.mjs) finds where a piece repeats; the search stops short
 // of the piece's fade; the new bed plays at the old bed's level; audio.json
