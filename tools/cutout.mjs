@@ -41,7 +41,7 @@ const sat = (data, i) => { const mx = Math.max(data[i], data[i + 1], data[i + 2]
 /** Paper-like: light and unsaturated, whatever the exact tone (a lighter paper, a grey panel, a vignette). */
 export const PAPER = { minLum: 120, maxSat: 0.3, tolerance: 70 }; // (0.00201: within `tolerance` of the border's tone too — a painterly figure has no outline, so its own greys must not count)
 /** The ground shadow the model paints under the figure despite the prompt: a mid-light, unsaturated wash in the picture's lower part (y from `fromY` of the height). Measured on the pilot: shadow pixels at luminance 105-135, distance 130-180 from the background; the inked figure under 80. */
-export const SHADOW = { tolerance: 200, minLum: 90, maxSat: 0.45, fromY: 0.6 };
+export const SHADOW = { tolerance: 200, minLum: 90, minLumShare: 0.5, maxSat: 0.45, fromY: 0.6 }; // minLum, or `minLumShare` of the border's own brightness when that is lower (a mid-grey background's shadow is darker than a light paper's; 0.00201)
 
 /**
  * The alpha of every pixel: 0 where the flood fill from the border ran
@@ -55,6 +55,8 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
   const reached = new Uint8Array(n);
   const stack = [];
   const yShadow = shadow ? Math.round(h * (shadow.fromY ?? 0)) : h;
+  const bgLum = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
+  const shadowLum = shadow ? Math.min(shadow.minLum, bgLum * (shadow.minLumShare ?? 1)) : 0;
   const passable = (p) => {
     const x = p % w, y = (p - x) / w;
     if (x < margin || y < margin || x >= w - margin || y >= h - margin) return true;
@@ -62,7 +64,7 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
     if (d <= tolerance) return true;
     const L = lum(data, i), S = sat(data, i);
     if (paper && L >= paper.minLum && S <= paper.maxSat && d <= (paper.tolerance ?? Infinity)) return true;
-    return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadow.minLum && S <= shadow.maxSat;
+    return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadowLum && S <= shadow.maxSat;
   };
   const push = (p) => { if (!reached[p] && passable(p)) { reached[p] = 1; stack.push(p); } };
   for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
