@@ -115,7 +115,7 @@ fresh();
   ok('dodge avoids the blow', evs.some((e) => e.type === 'dodge') && run.hp === run.maxHp);
   Math.random = origRandom;
 
-  // Combat: thorns wound but never finish
+  // Combat: thorns wound the attacker, and finish it (0.00242: they used to stop at 1 HP)
   p.equipment = { weapon: null, armor: 'bloodmoon_aegis', boots: null, rings: [null, null], trinket: null, amulet: null };
   const run2 = createRun();
   run2.stats.dmg = 1;
@@ -124,7 +124,14 @@ fresh();
   evs = playerAttack(cb2, 0, false);
   Math.random = origRandom;
   const foe = cb2.enemies[0];
-  ok('thorns wound the attacker', foe.hp === Math.max(1, 9 - 4) && evs.some((e) => e.type === 'thorns'));
+  ok('thorns wound the attacker', foe.hp === 9 - 4 && evs.some((e) => e.type === 'thorns'));
+  foe.hp = 3; // thorns (4) now outweigh what is left: the foe falls on its own blow
+  Math.random = () => 0.5;
+  run2.stats.dmg = 0; // (the knight's blow does nothing: only the thorns can kill)
+  evs = playerAttack(cb2, 0, false);
+  Math.random = origRandom;
+  const kill = evs.findIndex((e) => e.type === 'kill'), th = evs.findIndex((e) => e.type === 'thorns');
+  ok('thorns finish a foe: a kill after the thorns line, and the room is cleared', foe.hp === 0 && th >= 0 && kill > th && evs[kill].enemy === foe && evs[th].dmg === 2 && cb2.over && cb2.victory, `${evs.map((e) => e.type).join(',')} hp ${foe.hp}`);
 
   // Combat: the Heart revives once at half health
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: 'heart_of_the_dying_moon', amulet: null };

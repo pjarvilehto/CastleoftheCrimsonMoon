@@ -1,5 +1,5 @@
 {
-  "version": "0.00242",
+  "version": "0.00243",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00243": [
+      "Settings: the corner buttons are one SETTINGS menu (Audio, Display, Game), with Fullscreen as an icon beside it; DEBUG MODE at the bottom shows the testing tools — no ?debug needed",
+      "Thorns can now finish a foe: no more enemies left standing at 1 HP"
+    ],
     "0.00242": [
       "Background Lab (labs/backgrounds/): the new room paintings through their stages — drafts, approved, in the game — each room's candidates as tiles to approve, reject with a note or regenerate with notes, a fight at the game's size over the shown one, a compare beside a game painting; COPY JSON for the generator",
       "gen-bg.mjs: Seedream 4 is the default; --rerender takes the lab's verdicts and paints the re-rolls (fresh, or from a candidate with a direction), --prune, --import by room; four of the guide's own rooms painted (The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned Throne)"
@@ -137,9 +141,6 @@
     ],
     "0.00229": [
       "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
-    ],
-    "0.00228": [
-      "Benchmark round: 0.00228 — 0.00227's note named 0.00226, another build that landed first; a benchmark from 0.00227 does not count, please run it once more on this build."
     ]
   }
 }

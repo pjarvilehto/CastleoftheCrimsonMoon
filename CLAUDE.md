@@ -735,10 +735,19 @@ be served stale for ~4 hours.
   summon bar, the death and victory titles all breathe on opacity over a
   static glow; a smoke check parses every infinite `@keyframes`. The
   panel rooms' HP number and bar turn red at `lowHpShare` like the chip.
-- Upper-right column (`ui/cornerToggles.js`): add buttons in main.js's
-  `cornerBar([...])` with `onOffToggle` / `panelToggle`; the `?debug` tools
-  (INVULNERABLE, background views and tuning, FORCE CRITS, LABS (the menu page),
-  BENCHMARK) are in `ui/debugToggles.js`. No pixel offsets.
+- Upper-right corner (`ui/cornerToggles.js`; a SETTINGS menu since
+  0.00243, the owner's call): the top row is FULLSCREEN (an icon, not on a
+  phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
+  in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
+  SAVER), GAME (CHANGELIST) — and DEBUG MODE last. Add items in main.js's
+  `cornerBar([...], lead)` with `menuHead` / `onOffToggle` / `panelToggle`.
+  **DEBUG MODE** (`ui/debugToggles.js debugMenu`): ON shows the testing
+  tools under it (INVULNERABLE, background views and tuning, FORCE CRITS,
+  LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
+  carries `.debug-on`); remembered in this browser (`castle-debug-mode`),
+  so testers need no `?debug` — `?debug` still turns it on for the visit,
+  and only `?debug` in the address lets software GL draw the 3D background
+  (the headless checks). OFF clears every testing switch. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
 - Transitions go strictly in order (0.154, the owner's call):
   `transitionTo` fades the windows out fully, runs the swap, and when it
@@ -1190,7 +1199,7 @@ sometimes — fetch all branches to find it.
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
-  against scaled enemy HP · more room kinds · a portrait phone layout
+  against scaled enemy HP (it can finish a foe since 0.00243) · more room kinds · a portrait phone layout
   (0.00208 plays sideways only) · the reliquary's revive is not narrated
   · treasure rooms are not in the play stats · the world map (the World
   Lab's design, 0.00210: a scene between the Great Hall and the dungeon;
@@ -1199,7 +1208,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: the SETTINGS menu's and the thorns fix's comments (cornerToggles.js, debugToggles.js, main.js, styles.css, combat.js) say 0.00242 for 0.00243 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)

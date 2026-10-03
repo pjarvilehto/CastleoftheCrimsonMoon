@@ -1052,7 +1052,19 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   max-height: calc(100vh - 16px); overflow-y: auto; pointer-events: none;
 }
 .corner-bar > * { pointer-events: auto; }
-.corner-bar > .menu-toggle { display: none; } /* the phone's folded column (0.00208): shown by the phone layer at the end of this file */
+/* the SETTINGS menu (0.00242): the top row (FULLSCREEN, SETTINGS) always; the rest drops down under it while open */
+.corner-top { display: flex; gap: 6px; align-items: stretch; justify-content: flex-end; }
+.menu-toggle { gap: 6px; }
+.menu-label { margin-left: 6px; }
+.corner-bar:not(.open) > :not(.corner-top) { display: none; }
+.corner-bar:not(.debug-on) > .dbg { display: none; } /* the testing tools: DEBUG MODE ON (ui/debugToggles.js) */
+.corner-bar.open { padding: 8px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); align-items: stretch; min-width: 220px; }
+.corner-bar.open > .debug-toggle { justify-content: flex-start; opacity: 0.75; }
+.corner-bar.open > .debug-toggle.on { opacity: 1; }
+.menu-head { color: #85775a; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; margin: 6px 2px 0; padding-bottom: 2px; border-bottom: 1px solid rgba(201, 162, 39, 0.15); }
+.corner-bar > .debug-mode-toggle { margin-top: 12px; }
+.fs-toggle { padding: 4px 8px; }
+.fs-toggle svg { width: 14px; height: 14px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .debug-toggle {
   padding: 4px 12px; font-size: 0.7rem; letter-spacing: 1px;
   opacity: 0.45;
@@ -1165,9 +1177,9 @@ html.phone .buff { width: 30px; }
 html.phone .combat-proceed { right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); flex-direction: row; gap: 8px; }
 html.phone .combat-proceed button { min-height: 40px; padding: 0 14px; font-size: 0.9rem; }
 /* ---- the corner column folded into ☰: a dropdown under the button, closed by a tap elsewhere (cornerToggles.js) ---- */
-html.phone .corner-bar > .menu-toggle { display: block; font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
-html.phone .corner-bar:not(.open) > :not(.menu-toggle) { display: none; }
-html.phone .corner-bar.open { padding: 6px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+html.phone .corner-top > .menu-toggle { font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
+html.phone .menu-toggle .menu-label { display: none; } /* (☰ alone on a phone) */
+html.phone .corner-bar.open { padding: 6px; }
 html.phone .corner-bar.open .debug-toggle { min-height: 40px; padding: 0 14px; font-size: 0.85rem; opacity: 0.85; }
 html.phone .build-tag { font-size: 0.6rem; width: var(--tag-w); overflow: hidden; white-space: nowrap; } /* a fixed width: XP and coins sit right after it */
 /* ---- the Great Hall (hubScene.js phoneHall): a stats strip, three stacked sheets under their tabs, the way on fixed at the bottom ---- */

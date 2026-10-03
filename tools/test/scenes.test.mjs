@@ -260,7 +260,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
   ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
   ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
-  ok('CHANGELIST sits in the corner column, under VOLUME', /volumeToggle\(\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
+  ok('CHANGELIST sits in the SETTINGS menu, under GAME', /menuHead\('Game'\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
 
   const realBody = globalThis.document.body;
   const body = new El('body');

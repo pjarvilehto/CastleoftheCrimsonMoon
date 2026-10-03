@@ -178,12 +178,15 @@ function enemyStrike(combat, enemy, source, push) {
   const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * tune.armorMinTakenPct), raw - armor);
   run.hp = Math.max(0, run.hp - taken);
   push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
-  // T4 relic: thorns wound the attacker — but never finish it (kill/loot
-  // flow stays on the player's own blows).
+  // T4 relic: thorns wound the attacker, and can finish it (0.00242: they
+  // used to stop at 1 HP — a tester's foes stood at 1 HP, which read as a
+  // bug); a thorns kill is a kill like any other, its rewards and its fall.
   const thorns = run.stats.thorns;
-  if (thorns > 0 && taken > 0 && enemy.hp > 1) {
-    enemy.hp = Math.max(1, enemy.hp - thorns);
-    push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${thorns}.`, target: source, dmg: thorns });
+  if (thorns > 0 && taken > 0) {
+    const dealt = Math.min(thorns, enemy.hp);
+    enemy.hp -= dealt;
+    push({ type: 'thorns', text: `Your thorns tear into ${enemy.name} for ${dealt}.`, target: source, dmg: dealt });
+    if (enemy.hp === 0) push({ type: 'kill', text: `${enemy.name} died!`, enemy });
   }
   if (run.hp > 0) return false;
   const revived = tryRevive(run); // T4 relic: the Heart of the Dying Moon, once per run
