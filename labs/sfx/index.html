@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon SFX Lab</title>
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<!-- labs/sfx/: every sound effect the game plays (assets/data/audio.json
+     clips), grouped by where it plays — the Great Hall, combat, the panel
+     rooms, the room change, the run's end — through the game's own mixer
+     (src/audio/sfx.js, mixer.js, music.js), so the trims, the random
+     variation layers and the music ducking are the game's. Each clip: Play,
+     and Volume / Pitch / Speed sliders for a review edit (the preview is
+     time-stretched in this page; the game plays the file as is), Approve,
+     a note. MUSIC ON plays the group's bed under the sounds (the game's
+     beds, through the same bus the game ducks). COPY JSON packs the
+     verdicts and edits as sfx-review.json for node tools/render-sfx.mjs
+     --apply, which re-renders an edited clip into a new file (rule 7) and
+     marks the approvals in the registry. Booted through labs/boot.js: the
+     game's modules load under the build number. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+@font-face { font-family: "D-DIN Condensed"; src: url("assets/fonts/D-DINCondensed-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+:root {
+  --bg: #0d0808; --panel: #161009; --panel2: #1d1510; --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818;
+  --ok: #4f9a5c; --edit: #6a7fb0;
+  --display: "D-DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--parchment); }
+body { margin: 0; font-family: var(--body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 18px; }
+header { display: grid; gap: 6px; }
+.eyebrow a { color: var(--gold); text-decoration: none; }
+.eyebrow a:hover { text-decoration: underline; }
+.eyebrow { font-family: var(--display); letter-spacing: 0.22em; color: var(--muted); font-size: 0.95rem; text-transform: uppercase; }
+h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: clamp(2rem, 5vw, 3rem); letter-spacing: 0.08em; text-transform: uppercase; margin: 0; line-height: 1; }
+.lede { margin: 0; max-width: 78ch; }
+.lede small, .hint { color: var(--muted); font-size: 0.92rem; }
+kbd { font: 0.85em var(--display); letter-spacing: 0.06em; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; color: var(--gold); }
+code { font-size: 0.9em; color: var(--gold); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 0.92rem; }
+.controls select { font: inherit; color: var(--parchment); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+.count { color: var(--muted); }
+.count b { color: var(--parchment); }
+button { font-family: var(--display); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.95rem; color: var(--parchment); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--gold); color: var(--gold); }
+button.primary { border-color: var(--gold); color: var(--gold); }
+button.on { background: var(--gold); color: #1a1208; border-color: var(--gold); }
+button.on-ok { background: var(--ok); color: #fff; border-color: var(--ok); }
+button.small { font-size: 0.85rem; padding: 4px 9px; }
+button:disabled { opacity: 0.4; cursor: default; }
+
+section.group { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); overflow: hidden; }
+.group-head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 18px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel2); align-items: baseline; }
+.group-head h2 { font-family: var(--display); color: var(--gold); letter-spacing: 0.1em; font-size: 1.4rem; margin: 0; text-transform: uppercase; }
+.group-head .bed { color: var(--muted); font-size: 0.9rem; }
+.group-head .bed b { color: var(--parchment); }
+.clip { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(220px, 2fr) auto; gap: 6px 14px; align-items: center; padding: 8px 14px; border-top: 1px solid #241a10; }
+.group-head + .clip { border-top: 0; }
+.clip.current { outline: 2px solid var(--gold); outline-offset: -2px; }
+.clip.ok { background: rgba(79, 154, 92, 0.12); }
+.clip.edited { box-shadow: inset 4px 0 0 var(--edit); }
+.clip .name { font-family: var(--display); color: var(--gold); letter-spacing: 0.06em; font-size: 1.1rem; }
+.clip .name small { display: block; font-family: var(--body); letter-spacing: 0; color: var(--muted); font-size: 0.8rem; }
+.clip .where { font-size: 0.98rem; }
+.clip .where small { display: block; color: var(--muted); font-size: 0.82rem; }
+.clip .acts { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.knobs { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)) auto; gap: 6px 18px; align-items: center; color: var(--muted); font-size: 0.9rem; padding: 2px 0 4px; }
+.knobs label { display: grid; grid-template-columns: 4.2rem 1fr 4.4rem; gap: 8px; align-items: center; }
+.knobs input[type=range] { width: 100%; accent-color: var(--gold); }
+.knobs output { color: var(--parchment); font-variant-numeric: tabular-nums; text-align: right; }
+.knobs input[type=text] { grid-column: 1 / -1; font: inherit; color: var(--parchment); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+.knobs .lock { color: var(--muted); font-style: italic; }
+.hidden { display: none; }
+#out { white-space: pre-wrap; font: 0.85rem/1.4 ui-monospace, monospace; background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 10px; max-height: 240px; overflow: auto; }
+@media (max-width: 760px) {
+  .clip { grid-template-columns: 1fr; }
+  .clip .acts { justify-content: flex-start; }
+  .knobs { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><a class="labs-link" href="labs/">‹ Labs</a> · Castle of the Crimson Moon · testing tools</div>
+    <h1>SFX Lab</h1>
+    <p class="lede">Every sound effect the game plays, where it plays, through the game's own mixer — the trims, the random variation layers and the music ducking are the game's. <b>MUSIC ON</b> plays each section's bed under the sounds. Edit a clip's <b>Volume</b>, <b>Pitch</b> and <b>Speed</b>, listen, <b>Approve</b> what you want kept, and <b>COPY JSON</b> packs it for <code>node tools/render-sfx.mjs --apply sfx-review.json</code> (a pitch or speed change is rendered into a new file; a volume change is the clip's trim).
+      <small>Keys: <kbd>Space</kbd> play the current clip · <kbd>A</kbd> approve · <kbd>M</kbd> music on / off · <kbd>V</kbd> variation on / off · <kbd>J</kbd>/<kbd>K</kbd> or <kbd>↓</kbd>/<kbd>↑</kbd> next / previous · <kbd>R</kbd> reset the current clip's edits. Verdicts and edits are kept in this browser. Speed keeps the pitch (a time-stretch in this page; the Speed slider is off for the generated sounds, where pitch and speed are one knob).</small></p>
+  </header>
+  <div class="controls">
+    <button id="music">♪ Music: off</button>
+    <label>Bed <select id="bed"><option value="auto">the section's own</option><option value="title">title / Great Hall</option><option value="combat">combat</option><option value="boss">boss</option><option value="shrine">shrine / treasure</option><option value="end">run's end</option></select></label>
+    <button id="vary" class="on">Variation: on</button>
+    <button id="stopAll">■ Stop</button>
+    <span class="count" id="count"></span>
+    <span style="flex:1"></span>
+    <button id="copy" class="primary">Copy JSON</button>
+    <button id="clear">Clear</button>
+  </div>
+  <p class="hint" id="note"></p>
+  <div id="exportBox" class="hidden">
+    <p class="hint">Copied to the clipboard and downloaded as <code>sfx-review.json</code>. In the repo: <code>node tools/render-sfx.mjs --apply sfx-review.json</code> (<code>--dry-run</code> first shows what it would do), then ship. Or paste the JSON to the assistant.</p>
+    <div id="out"></div>
+  </div>
+  <div id="groups"></div>
+</div>
+<!-- the versioned boot (labs/boot.js): this lab's script and the game's modules under ?v=<build> -->
+<script src="labs/boot.js" data-lab="labs/sfx/lab.js"></script>
+</body>
+</html>

@@ -433,6 +433,22 @@ fresh();
   await sleep(10);
   const dh = ctx.started.slice(nD).find((s) => s.kind === 'buffer');
   ok('sfxPeakAt starts the death hit 900 ms - its peakMs ahead of the dialog', !!dh && Math.abs(dh.started[0] - (ctx.currentTime + (900 - A.clips.death.peakMs) / 1000)) < 1e-9, dh && `${dh.started[0]}`);
+  // the SFX Lab's path (0.00301): sfxFrom plays a buffer of the caller's at a given rate through the same start();
+  // `plain` = no variation layers, no random pitch, no level jitter — the trim plus the offset exactly
+  ctx.currentTime += 5;
+  const own = ctx.createBuffer(2, 4800, 48000);
+  const nF = ctx.started.length, nN2 = ctx.nodes.length;
+  sfxMod.sfxFrom('attack', own, { rate: 0.5, gainDb: 2, plain: true });
+  await sleep(10);
+  const fr = ctx.started.slice(nF).find((s) => s.kind === 'buffer');
+  const gains = ctx.nodes.slice(nN2).filter((n) => n.kind === 'gain');
+  ok('sfxFrom plays the given buffer at the given rate, alone (plain: no EQ, no synth layer)', !!fr && fr.buffer === own && fr.playbackRate.value === 0.5
+    && !ctx.nodes.slice(nN2).some((n) => n.kind === 'biquad') && !ctx.started.slice(nF).some((s) => s.kind === 'osc'));
+  ok('plain: the level is the trim plus the offset, no jitter', gains.some((g) => Math.abs(g.gain.value - dbToGain(A.clips.attack.gainDb + 2)) < 1e-9), gains.map((g) => g.gain.value).join());
+  ok('the lab reads the context sfx.js plays on', sfxMod.sfxContext() === ctx);
+  let plainPitch = true;
+  await withSeedAsync(3, async () => { for (let i = 0; i < 6; i++) { ctx.currentTime += 1; const n0 = ctx.started.length; sfxMod.sfx('loot', { plain: true }); await sleep(5); const s = ctx.started.slice(n0).find((x) => x.kind === 'buffer'); if (!s || s.playbackRate.value !== 1) plainPitch = false; } });
+  ok('plain: a clip with a random rate range plays at pitch 1', plainPitch);
   // variation (0.110) heard: a peaking EQ, a pitch off 1 and a synthesized layer on the strikes
   const nN = ctx.nodes.length, nS = ctx.started.length;
   await withSeedAsync(5, async () => { for (let i = 0; i < 10; i++) { ctx.currentTime += 1; sfxMod.sfx('attack'); await sleep(5); } });
@@ -584,4 +600,51 @@ fresh();
     const t = DATA.audio.music.tracks[id];
     return k.verdict === 'ok' && t.file === k.imported.file && t.loopS === k.imported.loopS && t.crossfade === 'power' && k.imported.end > k.imported.start && statSync(t.file).isFile();
   }), imported.map(([id, k]) => `${id}_c${k.n}`).join());
+}
+
+// 0.00301: the SFX Lab (labs/sfx/) — every clip by where it plays, through the
+// game's own modules, with Volume / Pitch / Speed edits and approvals that
+// tools/render-sfx.mjs applies (a pitch or speed change re-rendered into a new
+// file with ffmpeg, the trim keeping the level; approvals marked in the registry).
+{
+  const lab = readFileSync('labs/sfx/index.html', 'utf8'), js = readFileSync('labs/sfx/lab.js', 'utf8');
+  ok('sfx lab: not indexed, resolves from the site root, booted under the build, links back to the menu, a card on it (0 opens the tenth)',
+    lab.includes('<base href="../../">') && lab.includes('name="robots" content="noindex"') && lab.includes('<script src="labs/boot.js" data-lab="labs/sfx/lab.js"') && lab.includes('class="labs-link" href="labs/"')
+    && readFileSync('labs/index.html', 'utf8').includes('href="sfx/" data-lab="sfx"') && readFileSync('labs/index.html', 'utf8').includes("e.key === '0' ? 10"));
+  ok('sfx lab: the game\'s own sfx, mixer and music modules; the edited preview through sfxFrom; the review as sfx-review.json',
+    js.includes("from '../../src/audio/sfx.js'") && js.includes("from '../../src/audio/music.js'") && js.includes('sfxFrom(clip, stretched[key], { ...opts, rate: pitch })') && js.includes("download: 'sfx-review.json'")
+    && js.includes('initSfx();\ninitMusic();'));
+  // every registered clip is listed in some section, and every listed clip is registered
+  const listed = new Set([...js.matchAll(/^\s+\['([a-z_]+)',/gm)].map((m) => m[1]));
+  const generated = (id) => /^(atk|heavy|hurt)_/.test(id) || /^(eatk|ehurt)_/.test(id) || /^whoosh_/.test(id); // (built from heroes.json, enemies.json and transition.clips)
+  const missing = Object.keys(DATA.audio.clips).filter((id) => !listed.has(id) && !generated(id));
+  const unknown = [...listed].filter((id) => !DATA.audio.clips[id]);
+  ok('sfx lab: every registered clip has its row (the class, foe and whoosh rows from the data), no row names a clip the registry lacks', missing.length === 0 && unknown.length === 0, `missing ${missing} unknown ${unknown}`);
+  const { pitchSpeedFilter, nextFile, setClip, newGain, applyReview } = await import('../render-sfx.mjs');
+  ok('render-sfx: the ffmpeg filter — asetrate for the pitch, atempo chained inside 0.5-2 for the tempo, nothing at 0 st / 100%',
+    pitchSpeedFilter(-12, 100) === 'asetrate=22050,aresample=44100,atempo=2' && pitchSpeedFilter(0, 150) === 'atempo=1.5' && pitchSpeedFilter(0, 100) === ''
+    && pitchSpeedFilter(0, 25) === 'atempo=0.5,atempo=0.5' && /^asetrate=58866,aresample=44100,atempo=0\.5,atempo=0\.5993/.test(pitchSpeedFilter(5, 40)));
+  ok('render-sfx: a new name beside the old (rule 7) — sfx/<stem>_v<k+1>, a root sfx-<x>.mp3 into sfx/ as <x>_v2',
+    nextFile('assets/audio/sfx/deeper_v1.mp3', () => false) === 'assets/audio/sfx/deeper_v2.mp3' && nextFile('assets/audio/sfx-loot.mp3', () => false) === 'assets/audio/sfx/loot_v2.mp3'
+    && nextFile('assets/audio/sfx/deeper_v1.mp3', (f) => f.endsWith('_v2.mp3')) === 'assets/audio/sfx/deeper_v3.mp3');
+  ok('render-sfx: the trim keeps the level plus the offset on the new measure', newGain({ measuredDb: -6, gainDb: -6 }, 2, -8) === -2 && newGain({ measuredDb: -10.6, gainDb: -8.7 }, 0, -12.3) === -7);
+  const text = readFileSync('assets/data/audio.json', 'utf8');
+  const t2 = setClip(text, 'loot', { approved: true });
+  const J2 = JSON.parse(t2), J0 = JSON.parse(text);
+  ok('render-sfx: setClip rewrites one clip in place (a clip whose block holds an array too), the rest byte for byte',
+    J2.clips.loot.approved === true && J2.clips.loot.rate[0] === J0.clips.loot.rate[0] && t2.split('\n').length === text.split('\n').length + 1
+    && JSON.stringify({ ...J2, clips: { ...J2.clips, loot: null } }) === JSON.stringify({ ...J0, clips: { ...J0.clips, loot: null } }));
+  const logs = [], removed = [], rendered = [];
+  const out = JSON.parse(applyReview(text, { approved: ['click'], edits: [
+    { clip: 'deeper', gainDb: 1, pitch: -2, speed: 100, approved: true }, { clip: 'ring', gainDb: -1, pitch: 2 }, { clip: 'loot', gainDb: 1.5 }, { clip: 'nope' }] },
+  { render: (src, dst, f) => rendered.push([src, dst, f]), measure: () => ({ db: -5, ms: 200 }), remove: (f) => removed.push(f), log: (l) => logs.push(l) }));
+  ok('render-sfx: an approval marks the clip; a pitch edit renders a new file, measures it, keeps the level plus the offset, moves the peak and removes the old file',
+    out.clips.click.approved === true && rendered.length === 1 && rendered[0][0] === 'assets/audio/sfx/deeper_v1.mp3' && rendered[0][1] === 'assets/audio/sfx/deeper_v2.mp3'
+    && out.clips.deeper.file === 'assets/audio/sfx/deeper_v2.mp3' && out.clips.deeper.measuredDb === -5 && out.clips.deeper.peakMs === 200 && out.clips.deeper.approved === true
+    && Math.abs(out.clips.deeper.gainDb - (J0.clips.deeper.measuredDb + J0.clips.deeper.gainDb + 1 + 5)) < 1e-9 && removed.join() === 'assets/audio/sfx/deeper_v1.mp3');
+  ok('render-sfx: a synth clip takes the offset alone and its pitch is a note for the hand; a volume-only edit is the trim; an unknown clip is skipped',
+    out.clips.ring.gainDb === J0.clips.ring.gainDb - 1 && logs.some((l) => /ring: a generated sound/.test(l)) && Math.abs(out.clips.loot.gainDb - (J0.clips.loot.gainDb + 1.5)) < 1e-9 && out.clips.loot.file === J0.clips.loot.file
+    && logs.some((l) => /nope: not a clip/.test(l)));
+  const dry = applyReview(text, { approved: ['click'], edits: [{ clip: 'deeper', pitch: 1 }] }, { render: () => { throw new Error('rendered on a dry run'); }, log: () => {}, dry: true });
+  ok('render-sfx: --dry-run changes nothing and renders nothing', dry === text);
 }

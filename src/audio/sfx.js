@@ -13,7 +13,8 @@
 //     and maxTotal sounds at once, stacked copies quieter — a 5-enemy turn
 //     no longer piles up 7 full-level hits;
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
-//     visual strike), rate, gainDb };
+//     visual strike), rate, gainDb, plain (0.00301: no random variation,
+//     layers or level jitter — the SFX Lab's dry listen) };
 //   - 'ring' / 'boom' / strike layers are synthesized (synth.js);
 //   - 0.118: every sound is an entry in audio.json clips (the registry);
 //   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
@@ -39,7 +40,7 @@ setBusMuted('sfx', mute.on);
 
 const bufferFor = (name) => cached(buffers, name, () => decode(clip(name).file));
 
-function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
+function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0, plain = false }) {
   if (mute.on) return;
   const A = DATA.audio;
   const t = Math.max(at, ctx.currentTime);
@@ -50,10 +51,10 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
   const c = clip(name);
   // strikes (0.110): random pitch, tone colour and articulation layers;
   // other jittered clips: a random pitch within c.rate. Then a random level.
-  const vary = rate == null ? planVariation(A.variation?.[name]) : null;
-  const r = rate ?? vary?.rate ?? (c.rate ? c.rate[0] + Math.random() * (c.rate[1] - c.rate[0]) : 1);
+  const vary = rate == null && !plain ? planVariation(A.variation?.[name]) : null;
+  const r = rate ?? vary?.rate ?? (c.rate && !plain ? c.rate[0] + Math.random() * (c.rate[1] - c.rate[0]) : 1);
   const out = ctx.createGain();
-  out.gain.value = dbToGain(c.gainDb + gainDb + plan.gainDb + (c.jitterDb ? (Math.random() * 2 - 1) * c.jitterDb : 0));
+  out.gain.value = dbToGain(c.gainDb + gainDb + plan.gainDb + (c.jitterDb && !plain ? (Math.random() * 2 - 1) * c.jitterDb : 0));
   let node = out;
   if (pan && ctx.createStereoPanner) {
     const p = ctx.createStereoPanner();
@@ -113,6 +114,22 @@ export function sfx(name, opts = {}) {
     .then((buffer) => start(name, buffer, at, opts))
     .catch(() => { /* audio must never break gameplay */ });
 }
+
+// A file clip from a buffer of the caller's own, through the same path as
+// sfx() — the registry's trim, the voices, the duck, the stinger flag
+// (0.00301: the SFX Lab's edited previews, a clip time-stretched for a
+// speed its pitch does not follow). opts as sfx()'s; a rate given plays
+// the buffer at that pitch. Nothing before the first gesture.
+export function sfxFrom(name, buffer, opts = {}) {
+  const c = clip(name);
+  if (!c || !ctx || mute.on || !buffer) return;
+  const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
+  try { start(name, buffer, at, opts); } catch { /* audio must never break gameplay */ }
+}
+
+// The shared context once the first gesture has unlocked it (the lab
+// decodes and stretches its previews on the same clock), else null.
+export const sfxContext = () => ctx;
 
 // A clip played so its loudest moment (clips.<name>.peakMs, measured) lands
 // atMs from now — a sound timed to a picture rather than started with it
