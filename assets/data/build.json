@@ -1,5 +1,5 @@
 {
-  "version": "0.00254",
+  "version": "0.00255",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -93,6 +93,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00255": [
+      "Debug menu: BENCHMARK starts the benchmark again (the open Settings menu swallowed the click on Start)."
+    ],
     "0.00254": [
       "Every class has its colour: the card plates on Choose your Hero, the knight's card in combat and the hall's portrait wear it, and the light behind your hero in the fights follows the class — ember for the Barbarian, mist for the Druid and the Plague Sister, ether for the rest."
     ],
@@ -140,9 +143,6 @@
     ],
     "0.00241": [
       "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
-    ],
-    "0.00240": [
-      "Room paintings: four more Seedream 4 versions of each of the guide's two prompts (the owner's pick from the verbatim round)"
     ]
   }
 }
