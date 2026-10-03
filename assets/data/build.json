@@ -1,5 +1,5 @@
 {
-  "version": "0.00310",
+  "version": "0.00311",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00311": [
+      "The title screen's castle has its own deeper, wider-swaying 3D depth."
+    ],
     "0.00310": [
       "The title's fly-in lands on the living painting exactly: the camera returns to rest as the film fades, the mist and the sway rising after; the film carries the game's vignette; its whoosh a fifth quieter."
     ],
@@ -146,9 +149,6 @@
       "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
       "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
       "The coin jingle plays an octave lower."
-    ],
-    "0.00296": [
-      "On a computer, Enter the Castle now switches the game to full screen (Esc or the corner icon leaves it)."
     ]
   }
 }
