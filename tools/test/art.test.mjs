@@ -22,8 +22,8 @@ fresh();
     MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
     && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
     && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && readFileSync('tools/gen-art.mjs', 'utf8').includes("lora_weights: MODELS.lora.weights") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
-  ok('the style reference: the original of the colour family (fire: the Blood Knight, cold: the skeleton), the character\'s own otherwise; --refs sheets = the owner\'s inked sheets',
-    styleFor('ghoul') === 'assets/chars/blood_knight.webp' && styleFor('gargoyle') === 'assets/chars/skeleton.webp' && styleFor('vampire_lord') === null && styleFor('player') === null
+  ok('the style reference: the character\'s own portrait; --refs family = the colour family\'s original (fire: the Blood Knight, cold: the skeleton); --refs sheets = the owner\'s inked sheets',
+    styleFor('ghoul') === null && styleFor('ghoul', undefined, 'family') === 'assets/chars/blood_knight.webp' && styleFor('gargoyle', undefined, 'family') === 'assets/chars/skeleton.webp' && styleFor('vampire_lord', undefined, 'family') === null
     && styleFor('rat', undefined, 'sheets') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord', undefined, 'sheets') === 'assets/style/wraith.png' && styleFor('bat', undefined, 'sheets') === DEFAULTS.style
     && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));

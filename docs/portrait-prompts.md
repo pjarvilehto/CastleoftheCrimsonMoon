@@ -11,12 +11,13 @@ and hit effects still fit.
    - **Image 1:** the character's current portrait from `assets/chars/`, for
      the design and pose.
    - **Image 2:** the style reference. Since the painterly direction
-     (0.00201) it is the best ORIGINAL portrait of the same colour family:
-     `blood_knight.webp` for the fire and crimson creatures,
-     `skeleton.webp` for the cold undead and stone, `vampire_lord.webp`
-     for the boss, a character's own portrait otherwise
-     (`tools/gen-art.mjs STYLE_REF`; `--refs sheets` goes back to the
-     owner's inked sheets in `assets/style/`, `--style` to any picture).
+     (0.00201) it is the character's OWN current portrait — its rendering
+     is the destination, and another character's picture bleeds its
+     design in. A character whose portrait is no reference (the gargoyle)
+     is drawn onto the best original of its colour family instead
+     (`--from-sheet skeleton`; `tools/gen-art.mjs STYLE_REF`, `--refs
+     family`); `--refs sheets` uses the owner's inked sheets in
+     `assets/style/`, `--style` any picture.
 2. Paste the **style block** below, then that character's **character
    line**.
 3. Ask for a **2:3 portrait** (vertical). Generate 2–4 variants and keep the
@@ -45,8 +46,9 @@ ember, stone grey-blue. Saturation lives in the glow; everything else is
 dark and desaturated.
 
 COMPOSITION: one character only, full body from head to toe, nothing
-cropped, large in the frame with only a small margin, in a dynamic
-menacing stance. Three-quarter view, [FACING]. Plain flat mid-grey
+cropped (a boss may instead be cropped close, see its line), large in
+the frame with only a small margin, in a dynamic menacing stance.
+Three-quarter view, [FACING]. Plain flat mid-grey
 background (#8a8a8a), completely empty: no floor, no ground shadow, no
 scenery, no frame, no text, no watermark, and no glow or bloom spilling
 beyond the figure's silhouette.
@@ -81,7 +83,7 @@ gargoyle; the skeleton's original, or its inked sheet with `--refs sheets`).
 | Fellblade | `golem.webp` | `CHARACTER: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. ACCENT: black shaggy hide, bright red glowing eyes, a crimson haze about its feet.` |
 | Wraith | `wraith.webp` | `CHARACTER: a floating hooded spectre with a skull face, a tattered shroud that dissolves into mist at the bottom, long bony hands. Cold, ghostly, no feet. ACCENT: cold blue-grey shroud and pale bone, a dim red sigil on the chest, cold blue mist at the hem.` |
 | Gargoyle | `gargoyle.webp` | `CHARACTER: a crouching stone gargoyle of pale cracked stone, curved horns, a snarling fanged face, folded bat wings, clawed feet. ACCENT: pale grey-blue cracked stone, dark hollows; no glow.` |
-| Vampire Lord (boss) | `vampire_lord.webp` | `CHARACTER: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. BOSS: he towers over the frame, ornate and heavy with gold, the sword sweeping across the full width of the picture, embers in the air; wide format. ACCENT: black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged.` |
+| Vampire Lord (boss) | `vampire_lord.webp` | `CHARACTER: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. BOSS: a wide picture, cropped close from the waist up so he looms over the viewer and fills the frame, the golden sword sweeping across its full width and out of it, embers in the air; ornate gold armour under the cloak, a tall collar, a thin crown — a lord, not a reaper. ACCENT: black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged.` |
 | Crypt Spider | `crypt_spider.webp` | `CHARACTER: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. ACCENT: black spiked carapace; the eyes and the rune on its back blaze bright red.` |
 | Hollow Hound | `hollow_hound.webp` | `CHARACTER: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. ACCENT: black cracked hide split by burning red cracks, the core in its chest a bright red blaze.` |
 | Blood Knight | `blood_knight.webp` | `CHARACTER: a knight in jagged crimson armour and a hood, a glowing red sigil on the chest, holding a long blood-red sword point down. ACCENT: crimson armour; the sword and the chest sigil burn bright red.` |

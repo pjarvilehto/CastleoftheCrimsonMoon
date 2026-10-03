@@ -8,8 +8,8 @@
 //
 //   node tools/gen-art.mjs --dry-run                      # what would be sent, and to which model
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
-//   node tools/gen-art.mjs --refs sheets                  # the owner's inked sheets (assets/style/<id>.png) as the
-//                                                         # style reference instead of the originals (STYLE_REF)
+//   node tools/gen-art.mjs --refs family|sheets           # image 2 = the colour family's best original (STYLE_REF) or the
+//                                                         # owner's inked sheet instead of the character's own portrait
 //   node tools/gen-art.mjs --style castle_courtyard.jpg   # any picture by path or painting as the reference
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
@@ -91,9 +91,12 @@ export function fromSheetPrompt(doc, c, hint = '') {
 // painting in DEFAULTS.style.
 export const STYLE_DIR = 'assets/style';
 // The style reference (image 2) since the painterly direction (0.00201): the
-// best ORIGINAL portrait of the character's colour family — the originals'
-// rendering is the destination; the inked sheets (--refs sheets) were a
-// detour that cost the glows. A character not listed is its own reference.
+// character's OWN original by default (--refs own) — its rendering is the
+// destination, and another character's picture bleeds its design in (the
+// Cinderborn grew the Blood Knight's armour from a "family" reference);
+// --refs family = the best original of the colour family (for --from-sheet,
+// where the character has no usable original); --refs sheets = the owner's
+// inked sheets (a detour that cost the glows).
 export const STYLE_REF = {
   fire: { ref: 'blood_knight.webp', ids: ['ghoul', 'hollow_hound', 'crypt_spider', 'blood_knight', 'golem', 'cultist'] },
   cold: { ref: 'skeleton.webp', ids: ['skeleton', 'wraith', 'bat', 'gargoyle'] },
@@ -107,8 +110,9 @@ export const WIDE = { vampire_lord: 1100 };
 // A character without a sheet borrows the nearest one (a hooded skull for the
 // Vampire Lord, a beast for the beasts, armour for the brutes, bone for the stone).
 export const STYLE_NEAREST = { vampire_lord: 'wraith', crypt_spider: 'rat', hollow_hound: 'rat', golem: 'blood_knight', gargoyle: 'skeleton' }; // (not the Shrieker: the rat's sheet made it a rodent, 0.192; the painting keeps its identity)
-export const styleFor = (id, root = ROOT, refs = 'originals') => {
-  if (refs === 'originals') { const r = originalRef(id); return r ? `assets/chars/${r}` : null; } // null: the character's own portrait
+export const styleFor = (id, root = ROOT, refs = 'own') => {
+  if (refs === 'own') return null; // the character's own portrait
+  if (refs === 'family') { const r = originalRef(id); return r ? `assets/chars/${r}` : null; }
   for (const s of [id, STYLE_NEAREST[id]]) if (s && existsSync(join(root, STYLE_DIR, `${s}.png`))) return `${STYLE_DIR}/${s}.png`;
   return DEFAULTS.style;
 };
@@ -257,8 +261,8 @@ async function main() {
   const chars = doc.chars.filter((c) => !only || only.includes(c.id));
   if (only && chars.length !== only.length) throw new Error(`unknown character in --only (known: ${doc.chars.map((c) => c.id).join(', ')})`);
   const model = MODELS[val('--model', DEFAULTS.model)];
-  const refs = val('--refs', 'originals');
-  if (!['originals', 'sheets'].includes(refs)) throw new Error('--refs originals | sheets');
+  const refs = val('--refs', 'own');
+  if (!['own', 'family', 'sheets'].includes(refs)) throw new Error('--refs own | family | sheets');
   if (!model) throw new Error('--model pro | max');
   const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance)), paper = val('--paper', '1') !== '0', holes = val('--holes', '1') !== '0';
   const cutOpts = { tolerance, shadow, paper, holes };
