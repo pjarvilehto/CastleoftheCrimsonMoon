@@ -1,5 +1,5 @@
 {
-  "version": "0.00236",
+  "version": "0.00237",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00237": [
+      "Room paintings: the owner's prompting guide (docs/image-prompting-guide.md: the recipe every painting came from) is the prompt of tools/gen-bg.mjs — the room's line with its palette cue, the mood, the Darkest Dungeon 2 + Mignola style block verbatim, as text alone; the bake-off re-run on nine models (Imagen 4 and FLUX 1.1 Pro joined): Nano Banana Pro and Nano Banana land closest, Imagen a close third",
+      "The rooms' style LoRA trained on the 48 paintings (gen-bg.mjs --model lora draws a room from its line alone); the character LoRA's prompt uses the training captions' words"
+    ],
     "0.00236": [
       "Room paintings: a bake-off of six models on three new rooms (The Clock Tower, The Blood Baths, The Rookery) painted from the game's own paintings; Nano Banana Pro is the pick, now the default of the new tools/gen-bg.mjs (docs/room-prompts.md, candidates in assets/bg/candidates, --import makes the game's JPEG)",
       "The character style LoRA trained on the 31 approved portraits (it draws a character the game has no art for, the mimic chest first); the rooms' LoRA set and model; one Replicate client for the art tools"
@@ -146,14 +150,6 @@
       "Smoother: the glowing text (rare items, low health, the death and victory titles) no longer repaints every frame; the battle line writes only what changed; OVERKILL's banner is placed from the cards still standing.",
       "If a screen fails to open, a Reload button appears instead of a blank window; a dialog opened mid-fade hears the keyboard; the display font is a third of its size.",
       "Play stats: a bad run record no longer blanks the dashboard, and the collector agrees with the page on every field (Worker 0.00223 to paste)."
-    ],
-    "0.00222": [
-      "Phones: a lighter picture — the background at a lower resolution and rest rate, a thinner mist buffer, 1x particles, the card glow at 20 fps, the figures without their drop shadow (the same look, fewer pixels; the owner's iPhone ran hot)",
-      "BATTERY SAVER in the corner column: the smallest background and no mist, for a hot phone or a long session; remembered per browser",
-      "The room change no longer stalls the game for a quarter second: the painting is decoded off the main thread, and the heavy work is split over two frames",
-      "The vignette is drawn by the background's shaders, the glint by transforms, the glow loops as breathing layers, the particle layer is hidden between bursts: less work for every screen every frame",
-      "Play stats: the refresh rate is read from the busiest frame interval (120 Hz Macs read 144, iPhones 90 or 75 before, with every ordinary frame 'dropped'); stalls and the worst frame's moment are recorded; old rows are graded by their fps",
-      "The benchmark measures each room at rest — a new round, so everyone is asked again; about 50 seconds now"
     ]
   }
 }
