@@ -670,7 +670,7 @@ own sway and fog clocks (`L.tau` / `L.fogT`, a new layer carrying the
 last one's on), its own orbit, and the skirt fits the most demanding
 painting shown (`refit`); the title's (`medieval_castle.jpg`) are the
 developer's slider picks (depth 1.2, focus 0.45, sway 3.6° / 1°, speed
-2.15, fog x1.15 — x2.0 since the base went to 1.75, the same 15% over the rest). BG TUNING's live sliders still win over every painting.
+2.15, fog x1.15 — x2.0 since the base went to 1.75, the same 15% over the rest). The Great Hall (`castle_great_hall.jpg`) and The War Room (`dungeon_war_room.jpg`) take depth 0.6 (0.00321, the developer's call; the base is 0.8). BG TUNING's live sliders still win over every painting.
 **The mist turned up (0.00318, the developer's Fog Lab picks, every painting):** `fogScale` 1 → 1.75, `puffs.opacity` 0.4 → 0.76, `puffs.count` 40 → 48; the haze as it was.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
