@@ -113,7 +113,7 @@
         "Hexes",
         "Quick"
       ],
-      "class": { "heavyName": "Mark", "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.7, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0 },
+      "class": { "heavyName": "Hex", "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.7, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0 },
       "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
         { "art": "hexhunter_v1_k2.webp", "fh": 0.961 },
