@@ -694,7 +694,7 @@
           "at": "2026-10-03T12:49:38.194Z",
           "verdict": "ok",
           "note": "works 0:27 onwards. the beginning is too much organ stuff. ",
-          "imported": {
+          "replaced": {
             "file": "assets/audio/music-boss-v3.mp3",
             "start": 28.189,
             "end": 68.185,
@@ -702,7 +702,8 @@
             "tailS": 3,
             "gainDb": -1,
             "lufs": -11,
-            "at": "2026-10-03T12:59:36.974Z"
+            "at": "2026-10-03T12:59:36.974Z",
+            "by": "boss_c4"
           }
         },
         {
@@ -885,7 +886,19 @@
           "asked": 60,
           "lufs": -14.1,
           "seconds": 60.1,
-          "at": "2026-10-03T13:12:36.382Z"
+          "at": "2026-10-03T13:12:36.382Z",
+          "verdict": "ok",
+          "note": "let's go with Take 4 for now (boss_c2 was too in-your-face)",
+          "imported": {
+            "file": "assets/audio/music-boss-v4.mp3",
+            "start": 13.003,
+            "end": 46.335,
+            "loopS": 33.3322,
+            "tailS": 3,
+            "gainDb": 2.5,
+            "lufs": -14.5,
+            "at": "2026-10-03T13:23:16.320Z"
+          }
         },
         {
           "n": 5,
@@ -1072,10 +1085,10 @@
       ],
       "painting": "castle_throne_room.jpg",
       "current": {
-        "file": "assets/audio/music-boss-v3.mp3",
-        "loopS": 39.9964,
-        "lufs": -11,
-        "seconds": 43.3
+        "file": "assets/audio/music-boss-v4.mp3",
+        "loopS": 43.3342,
+        "lufs": -15.1,
+        "seconds": 46.6
       },
       "line": "The throne room and the vampire lord who rules it: menacing and ceremonial but held back, a slow dread that sits under the fight rather than on top of it."
     },

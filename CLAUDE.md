@@ -1126,7 +1126,10 @@ counts as loaded by players (everything under `assets/data`): ship them
 with `tools/ship.mjs`, never a bare push (0.00288). **The boss's second
 brief (0.00288, the developer's note: `boss_c2` too in-your-face):** 60 s,
 the menace held back — no organ opening, no full-ensemble climax, the
-choir distant; four takes, `boss_c3`–`c6`, awaiting verdicts. **The import (0.00280, `--import
+choir distant; four takes, `boss_c3`–`c6`; the developer took
+`boss_c4` "for now" (0.00289): 0:13.0 → 0:46.3, a 33 s loop (the take
+opens on its pulse and fades after 0:53; a 43 s loop from 0:02 put the
+seam in a quiet bar). **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
@@ -1151,9 +1154,13 @@ and its fade; a 47 s loop to 1:14 matched less well), shrine 0:02.4 →
 0:38.8 (36 s, "the first about 37 secs", through the phrase's breath at
 0:36), end 0:39.0 → 1:17.9 (39 s, "0:37 to the end", the end pinned to
 the last steady stretch before the fade). `tools/audio-check.mjs` judges
-a generated bed by its seam's level (the quietest 0.5 s of the crossfade
-against the quieter of the seconds either side; flagged under -4 dB):
-title -3.4, combat -2.9, boss -0.5, shrine +2.4, end -0.6. **ElevenLabs limits:** two requests at a time per
+a generated bed by its seam's level: the quietest 0.5 s inside the
+crossfade as rendered, against the quietest 0.5 s of the same span in
+either passage alone (the take carrying on past the loop point, or its
+start) — a seam you hear is quieter than both; flagged under -3 dB
+(0.00289: it was the quieter of the seconds either side, which the boss
+take's drum gaps and sparser start fooled). As of 0.00289: title +0.5,
+combat +9.6, boss +3.7, shrine +3.7, end +4.7. **ElevenLabs limits:** two requests at a time per
 subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
 limit — waits and retries), and the API key carries its own credit cap
 (ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
@@ -1844,9 +1851,7 @@ sometimes — fetch all branches to find it.
   `combatPlayback.statusOf`); SWITCH CLASS resets the blight; the orphan
   check reads `assets/audio/sfx`; the hurt clips lost the synth grunt layer
   (the recordings carry each class's cry).
-- Engineering: the 0.00285 comments in `src/audio/music.js` (startEarly)
-  and `src/ui/scenes/hubScene.js` (the Forge and Descend) say 0.00283 —
-  fix with the next build · `go()` is silently dropped
+- Engineering: `go()` is silently dropped
   during a transition (queue it) · about 160 of the ~1100 checks still
   assert on source text rather than behaviour (inject recording stubs
   instead; 0.00283 gave the harness `byClass` / `button` and a `DATA`
