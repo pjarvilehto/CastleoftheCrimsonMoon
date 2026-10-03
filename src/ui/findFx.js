@@ -2,7 +2,11 @@
 // the mockups): as its "Found:" line prints, the item rises as a card over
 // the enemies still standing — its picture fading into the text (the hall's
 // look), FOUND · the slot, the name in its rarity, its stats and what it
-// replaces — holds long enough to read, then flies into the hero's card.
+// replaces — holds long enough to read, then flies into the LOOT row at the
+// bottom left (0.00262, the developer's call: a find joins the run's loot,
+// not the hero — it is worn only after the run). The scene hands the row as
+// ctx.loot(); a phone has no row (its top strip is the room title's), so
+// there the card flies into the XP / COINS counters it would sit under.
 // The fx descriptor is combatQueue.js's { kind: 'find', id, slot, index,
 // from } (run/loot.js takeItem). A no-op without the Web Animations API
 // (the smoke-test shim) or under reduced motion: the log line says it.
@@ -11,7 +15,7 @@ import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
 import { gainLine } from '../shared/itemArt.js';
 import { itemPic, describeItem, gearLabel } from './hud.js';
-import { can, reduced, glintSweep } from './fxParts.js';
+import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
 
 const IN_MS = 260, HOLD_MS = 1500, FLY_MS = 520; // (the look: in, read, away)
@@ -30,6 +34,19 @@ export function findCard(fx) {
       el('div', { class: 'fp-name' }, it.name),
       el('div', { class: 'fp-desc' }, describeItem(it)),
       el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
+}
+
+// The LOOT row's next free place (its tray's end) and a chip's size; on a
+// phone, where the row is hidden, the counters' end; null with neither.
+// `ahead`: finds still flying to it, each a chip further along.
+export function lootSpot(row, ahead = 0) {
+  const r = row?.getBoundingClientRect?.();
+  if (r && r.width > 0) {
+    const tray = row.children?.[1], t = tray?.getBoundingClientRect?.() ?? r, size = r.height;
+    return { x: (tray?.children?.length ? t.right : t.left) + size / 2 + ahead * size * 1.1, y: r.top + r.height / 2, size };
+  }
+  const p = row?.parentElement?.getBoundingClientRect?.();
+  return p && p.width > 0 ? { x: p.right - p.height / 2, y: p.top + p.height / 2, size: p.height } : null;
 }
 
 /** Plays the card; returns the ms until it lands (undefined when nothing plays). */
@@ -51,18 +68,16 @@ export function findPop(fx, ctx) {
   const top = Math.max(8, area.top + area.height * 0.22 + stack * (h + 10));
   card.style.left = `${left}px`;
   card.style.top = `${top}px`;
-  // where it flies: the hero card's gear lines (its top quarter)
-  const hero = ctx.unit('player')?.card?.getBoundingClientRect?.();
-  const dx = hero ? hero.left + hero.width * 0.5 - (left + w / 2) : 0;
-  const dy = hero ? hero.top + hero.height * 0.2 - (top + h / 2) : 0;
+  // where it flies: the LOOT row's next free place, shrinking to a chip's size
+  const spot = lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0);
+  const dx = spot ? spot.x - (left + w / 2) : 0, dy = spot ? spot.y - (top + h / 2) : 0;
+  const shrink = spot && w ? Math.min(0.3, Math.max(0.04, spot.size / w)) : 0.1;
   const total = IN_MS + HOLD_MS + FLY_MS, a = IN_MS / total, b = (IN_MS + HOLD_MS) / total;
   card.animate([
     { opacity: 0, transform: 'translateY(14px) scale(0.9)' },
     { opacity: 1, transform: 'none', offset: a },
     { opacity: 1, transform: 'none', offset: b, easing: 'cubic-bezier(0.5, 0, 0.75, 0.4)' },
-    { opacity: hero ? 0.2 : 0, transform: hero ? `translate(${dx}px, ${dy}px) scale(0.18)` : 'translateY(-20px)' },
+    { opacity: spot ? 0.35 : 0, transform: spot ? `translate(${dx}px, ${dy}px) scale(${shrink.toFixed(3)})` : 'translateY(-20px)' },
   ], { duration: total, fill: 'forwards' }).finished.then(() => card.remove(), () => card.remove());
-  // the hero takes it: the glint sweeps the figure as the card lands
-  if (hero) glintSweep(ctx.unit('player'), DATA.cards.glint.hitMs, -1, IN_MS + HOLD_MS + FLY_MS * 0.8);
   return total; // (ms until it lands: the scene's LOOT row takes it then)
 }

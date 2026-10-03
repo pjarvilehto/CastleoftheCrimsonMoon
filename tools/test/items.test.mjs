@@ -94,16 +94,34 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('the find card: tier-3, FOUND · Weapon, the name, its stats, what it replaces and the gain', card.className === 'find-pop tier-3'
     && /Found · Weapon/.test(text) && text.includes('Moonbrand') && text.includes(describeItem(I.moonbrand)) && text.includes('replaces Rusty Sword') && text.includes(`+${dmgUp} dmg`));
   ok('...a ring into an empty slot says so', findCard({ id: 'vampiric_ring', slot: 'rings', index: 1, from: null }).textContent.includes('an empty slot'));
+  const { lootSpot } = await import('../../src/ui/findFx.js');
+  const box = (left, top, width, height) => () => ({ left, top, width, height, right: left + width, bottom: top + height });
+  // the LOOT row bottom left: a label and a tray holding one chip; the counters above it
+  const lootRow = () => {
+    const res = Object.assign(new El('div'), { getBoundingClientRect: box(20, 700, 200, 90) });
+    const row = Object.assign(new El('div'), { getBoundingClientRect: box(20, 760, 160, 30) });
+    const tray = Object.assign(new El('span'), { getBoundingClientRect: box(80, 762, 30, 26) });
+    tray.append(new El('img'));
+    row.append(new El('span'), tray);
+    res.append(row);
+    return row;
+  };
+  const spot = lootSpot(lootRow()), ahead = lootSpot(lootRow(), 2);
+  ok('lootSpot: the tray\'s next free place, a chip\'s size; a find still flying puts the next one further along', spot.x === 125 && spot.y === 775 && spot.size === 30 && ahead.x === 125 + 2 * 33);
+  const hidden = lootRow(); hidden.getBoundingClientRect = box(0, 0, 0, 0);
+  const phone = lootSpot(hidden);
+  ok('...a hidden row (a phone): the counters it sits under; nothing at all: null', phone.x === 220 - 45 && phone.y === 745 && lootSpot(null) === null);
   await withAnimations(async () => {
     const layer = new El('div');
-    const unit = (left) => ({ card: Object.assign(new El('div'), { getBoundingClientRect: () => ({ left, top: 200, width: 100, height: 300, right: left + 100, bottom: 500 }) }), portrait: null }); // (no portrait: the arrival's glint sweep skips, as in the shim)
+    const unit = (left) => ({ card: Object.assign(new El('div'), { getBoundingClientRect: box(left, 200, 100, 300) }), portrait: null });
     const foes = [unit(600), unit(720)], hero = unit(40);
-    const ctx = { layer, unit: (i) => (i === 'player' ? hero : foes[i] ?? null) };
+    const ctx = { layer, unit: (i) => (i === 'player' ? hero : foes[i] ?? null), loot: lootRow, lootAhead: () => 0 };
     const ms = findPop({ id: 'moonbrand', slot: 'weapon', from: 'rusty_sword' }, ctx);
     const pop = layer.children[0];
-    const anim = pop?.animations?.[0];
-    ok('findPop: the card over the foes, rising in, then flying to the hero\'s card; it says when it lands', !!pop && typeof ms === 'number' && ms > 1500
-      && parseFloat(pop.style.left) > 500 && anim.kf.length === 4 && /translate\(-?\d/.test(anim.kf[3].transform) && anim.kf[3].transform.includes('scale(0.18)'));
+    const anim = pop?.animations?.[0], end = anim?.kf[3].transform ?? '';
+    const [dx, dy] = (end.match(/translate\((-?[\d.]+)px, (-?[\d.]+)px\)/) ?? []).slice(1).map(Number);
+    ok('findPop: the card over the foes, rising in, then flying down-left into the LOOT row; it says when it lands', !!pop && typeof ms === 'number' && ms > 1500
+      && parseFloat(pop.style.left) > 500 && anim.kf.length === 4 && dx < -400 && dy > 400 && /scale\(0\.\d+\)/.test(end) && !hero.card.animations, end);
     findPop({ id: 'vampiric_ring', slot: 'rings', index: 0, from: null }, ctx);
     ok('...a second find in the same moment sits under the first', layer.children.length === 2 && parseFloat(layer.children[1].style.top) > parseFloat(layer.children[0].style.top));
   });

@@ -691,13 +691,18 @@ index, from }` (what the preview's `equipItems` changed),
 `combatQueue.js` turns it into the line's `fx: { kind: 'find' }`, and
 `ui/findFx.js findPop` raises the item as a card over the foes still
 standing (FOUND · the slot, the name in its rarity, its stats, "replaces
-X · +gain"), holds 1.5 s and flies it into the hero's card (the glint
-sweeps him as it lands; reduced motion and the shim: nothing, the log
-says it); the Found line and the room's loot summary lead with the
-picture; the **LOOT** row under XP / COINS (`dungeonScene.js
-showLoot`: the newest six; none on a phone, whose top strip is the room
-title's — the hero card's inventory page lists them; a find joins as its card lands,
-an OVERKILL's silent finds when the room's lines are out); the hero
+X · +gain"), holds 1.5 s and flies it into the LOOT row bottom left,
+shrinking to a chip (0.00262, the developer's call: a find is the run's
+loot, worn only after the run — it used to fly into the hero's card;
+`findFx.js lootSpot`: the tray's next free place, past the cards still
+flying, the scene handing `fxCtx.loot` / `lootAhead`; on a phone, with
+no row, the XP / COINS counters; reduced motion and the shim: nothing,
+the log says it); the Found line and the room's loot summary lead with
+the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
+showLoot`: the newest six; shown as the run's first find takes off;
+none on a phone, whose top strip is the room title's — the hero card's
+inventory page lists them; a find's chip joins as its card lands, with
+a flash, an OVERKILL's silent finds when the room's lines are out); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
 (`runEndScene.js findCard`: a card per slot `equipSummary.changes`
 changed — the picture fading down into the slot, the name, its stats,

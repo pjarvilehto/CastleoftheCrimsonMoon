@@ -54,27 +54,34 @@ export function dungeonScene() {
   let ui = null;         // the persistent battle line of the current combat room (0.086)
   let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures
   let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
+  let lootFlying = 0;   // finds whose card is still on its way to the row (0.00262)
 
   const playback = createPlayback({
     logEl: () => logEl,
     onTick: () => { if (ui) updateCombat(); },
     onEmpty: () => {
       tickUpChips();
-      showLoot(run.itemsFound.length); // (an OVERKILL's silent finds too, once the room's lines are out)
+      showLoot(run.itemsFound.length - lootFlying); // (an OVERKILL's silent finds too, once the room's lines are out; a card still flying lands on its own)
       if (combat.over && !combat.victory) openDeathModal();
       // a boss falls: the win dialog the first time, else the narrator's word (0.161)
       if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
     onFx: (fx) => {
       if (!fx) return;
+      if (fx.kind === 'find') lootEl?.classList.remove('none'); // (0.00262: the row shows before the first find takes off — the card flies into it)
       const landsIn = playFx(fx, fxCtx);
-      if (fx.kind === 'find') setTimeout(() => showLoot(lootShown + 1), typeof landsIn === 'number' ? landsIn : 0); // (the tray takes it as the card lands)
+      if (fx.kind !== 'find') return;
+      if (typeof landsIn !== 'number') { showLoot(lootShown + 1); return; } // (no flight — reduced motion: at once)
+      lootFlying++;
+      setTimeout(() => { lootFlying--; showLoot(lootShown + 1, false, true); }, landsIn); // (the row takes it as the card lands)
     },
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
     onDeath: (i) => ui?.battle.deathStep(i), // the fallen card's leaving and the restack are a step of their own (0.00220) — only while a card is off screen (battleRoom.js)
   });
   const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
+  fxCtx.loot = () => lootEl; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
+  fxCtx.lootAhead = () => lootFlying; // — past the ones still on their way
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
@@ -207,14 +214,21 @@ export function dungeonScene() {
   }
 
   // The LOOT row (0.00260): the newest LOOT_SHOWN of the run's finds, oldest first.
-  function showLoot(n, rebuild = false) {
+  // landed: a card has just flown in — the new chip pops (0.00262).
+  function showLoot(n, rebuild = false, landed = false) {
     n = Math.min(n, run.itemsFound.length);
     if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
+    const grew = n > lootShown;
     lootShown = n;
     const tray = lootEl.children[1];
     tray.textContent = '';
     tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, 'loot-chip')).filter(Boolean));
-    lootEl.classList.toggle('none', n === 0);
+    lootEl.classList.toggle('none', n === 0 && !lootFlying);
+    const chip = tray.children[tray.children.length - 1];
+    if (landed && grew) chip?.animate?.([ // (one-shot: the chip lands with a flash)
+      { transform: 'scale(1.7)', filter: 'brightness(2.2)' },
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+    ], { duration: 420, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----
