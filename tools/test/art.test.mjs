@@ -17,10 +17,10 @@ fresh();
   ok('the cut-out: a matting model by default (851-labs/background-remover), the colour key as the offline fallback', MATTE.model === '851-labs/background-remover'
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("if (matte === 'api') {") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--matte', 'api')"));
   const { trainingSet, LORA } = await import('../train-lora.mjs');
-  const set = trainingSet();
-  ok('the LoRA training set: every room painting and character sheet, each captioned with the trigger word and the data\'s words',
-    set.filter((s) => s.kind === 'room').length === readdirSync('assets/bg').filter((f) => f.endsWith('.jpg')).length && set.filter((s) => s.kind === 'character').length >= 7
-    && set.every((s) => s.caption.startsWith(`${LORA.trigger} style, `) && existsSync(s.src)) && set.some((s) => s.caption.includes('a painting of The Ossuary')) && set.some((s) => s.caption.includes('a huge hunched black sewer rat')));
+  const set = trainingSet(), wide = trainingSet({ rooms: true, sheets: true });
+  ok('the LoRA training set: the approved candidates only by default (the rooms and the inked sheets opt in), each captioned with the trigger word and the character line',
+    set.every((s) => s.kind === 'character' && s.name.startsWith('approved_') && s.caption.startsWith(`${LORA.trigger} style, a photoreal`) && existsSync(s.src) && !/ACCENT:|BOSS:|Facing (left|right)/.test(s.caption))
+    && wide.filter((s) => s.kind === 'room').length === readdirSync('assets/bg').filter((f) => f.endsWith('.jpg')).length && wide.some((s) => s.name.startsWith('sheet_')));
   ok('gen-art --model lora: the trained weights, the trigger in the prompt, the facing, no pictures in; a new character gets a default canvas',
     MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
     && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
