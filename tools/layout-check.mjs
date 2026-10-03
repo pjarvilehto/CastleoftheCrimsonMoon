@@ -125,7 +125,7 @@ async function run(name, { short = false, ...opts }, url) {
     }
     await shot('2-title');
     if (phone) { // the save dialogs sit high, above the on-screen keyboard (0.00223: their twin never matched)
-      await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => /Import Save/.test(x.textContent)).click());
+      await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => /Import Save/i.test(x.textContent)).click()); // (0.00301: a SETTINGS menu item)
       await page.waitForTimeout(300);
       const dlg = await page.evaluate(() => { const o = document.querySelector('.update-overlay'); const m = o?.querySelector('.update-modal'); return o && m ? { align: getComputedStyle(o).alignItems, top: m.getBoundingClientRect().top } : null; });
       check(name, 'title: the Import Save dialog sits at the top for the keyboard', dlg && dlg.align === 'flex-start' && dlg.top <= 10, dlg ? `${dlg.align}, top ${Math.round(dlg.top)}` : 'no dialog');

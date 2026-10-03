@@ -271,8 +271,8 @@ fresh();
     d.close?.();
   }
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
-  ok('main builds the menu: AUDIO (MUSIC SOUND NARRATOR VOLUME) DISPLAY (BATTERY SAVER) GAME (CHANGELIST) DEBUG MODE (the tools)',
-    /menuHead\('Audio'\),\s*onOffToggle\('MUSIC'[\s\S]*onOffToggle\('SOUND'[\s\S]*onOffToggle\('NARRATOR'[\s\S]*volumeToggle\(\),\s*menuHead\('Display'\),\s*onOffToggle\('BATTERY SAVER'[\s\S]*menuHead\('Game'\),\s*changelogToggle\(\),\s*dbg\.toggle,\s*\.\.\.dbg\.items,/.test(m)
+  ok('main builds the menu: AUDIO (MUSIC SOUND NARRATOR VOLUME) DISPLAY (BATTERY SAVER) GAME (EXPORT SAVE IMPORT SAVE CHANGELIST) DEBUG MODE (the tools)',
+    /menuHead\('Audio'\),\s*onOffToggle\('MUSIC'[\s\S]*onOffToggle\('SOUND'[\s\S]*onOffToggle\('NARRATOR'[\s\S]*volumeToggle\(\),\s*menuHead\('Display'\),\s*onOffToggle\('BATTERY SAVER'[\s\S]*menuHead\('Game'\),\s*exportSaveToggle\(\),\s*importSaveToggle\([^\n]*\n\s*changelogToggle\(\),\s*dbg\.toggle,\s*\.\.\.dbg\.items,/.test(m)
     && css.includes('.corner-bar {') && css.includes('.corner-bar:not(.open) > :not(.corner-top) { display: none; }') && css.includes('.corner-bar:not(.debug-on) > .dbg { display: none; }') && !/toggle \{ top: \d+px; \}/.test(css));
   // DEBUG MODE (0.00242): its tools carry .dbg (hidden until it is on); OFF puts every testing switch back
   const { debugMenu } = await import('../../src/ui/debugToggles.js');

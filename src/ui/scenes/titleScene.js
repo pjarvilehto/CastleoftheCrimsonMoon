@@ -3,13 +3,12 @@
 import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
-import { getProfile, resetProfile, exportSave, importSave } from '../../meta/profile.js';
+import { getProfile, resetProfile } from '../../meta/profile.js';
 import { loadProfile } from '../../meta/storage.js';
 import { play } from '../../audio/music.js';
 import { namePrompt } from '../namePrompt.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { armOnGesture } from '../../audio/narrator.js';
-import { openDialog } from '../dialog.js';
 import { recordsLine } from '../hubText.js';
 import { isMobile, fullscreenOn, canFullscreen, enterFullscreen } from '../../shared/platform.js';
 
@@ -35,38 +34,6 @@ export function titleScene() {
   function render(root) {
     setBackground(DATA.backgrounds.title);
     const p = getProfile();
-
-    // Save transfer (0.00209: dialogs, like everything else — the title used
-    // to expand a textarea at its foot, under a phone's keyboard). Export is
-    // a copy-out code; import pastes in. 0.00223: a keyboard way out — the
-    // dialog's own keys (Esc, Enter, Space through `proceed`) and the
-    // field's, since the hotkeys ignore a textarea's keys.
-    const exportDialog = () => {
-      const code = exportSave();
-      const ta = el('textarea', { class: 'save-code', readonly: true, rows: 4 }, code || 'No save yet — play a run first.');
-      let dlg;
-      const done = el('button', { class: 'primary', proceed: true, onclick: () => dlg.close() }, 'Done');
-      dlg = openDialog({ label: 'Export Save', proceed: done, onKey: (k, close) => { if (k === 'escape' || k === 'enter') close(); }, children: [
-        el('h2', { class: 'update-title' }, 'Export Save'),
-        ta,
-        el('div', { class: 'save-hint' }, 'Select the code and copy it. Paste it into Import Save on the other site.'),
-        el('div', { class: 'btn-row' }, done)] });
-      ta.addEventListener?.('keydown', (e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault?.(); dlg.close(); } });
-      ta.focus?.(); ta.select?.(); // (inside the click's gesture: iOS honours it)
-    };
-    const importDialog = () => {
-      const ta = el('textarea', { class: 'save-code', rows: 4, placeholder: 'Paste your save code here…' });
-      const error = el('div', { class: 'save-error' }, '');
-      let dlg;
-      const tryLoad = () => { if (importSave(ta.value)) { dlg.close(); render(root); } else error.textContent = 'That code doesn’t look like a valid save.'; };
-      const load = el('button', { class: 'primary', proceed: true, onclick: tryLoad }, 'Load Save');
-      dlg = openDialog({ label: 'Import Save', proceed: load, onKey: (k, close) => { if (k === 'escape') close(); else if (k === 'enter') tryLoad(); }, children: [
-        el('h2', { class: 'update-title' }, 'Import Save'),
-        ta, error,
-        el('div', { class: 'btn-row' }, load, el('button', { onclick: () => dlg.close() }, 'Cancel'))] });
-      ta.addEventListener?.('keydown', (e) => { if (e.key === 'Escape') dlg.close(); else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) tryLoad(); }); // (a plain Enter stays a newline)
-      ta.focus?.();
-    };
 
     root.innerHTML = '';
     root.append(
@@ -97,10 +64,7 @@ export function titleScene() {
         p.name
           ? el('div', { class: 'player-name' }, `Playing as ${p.name} · `,
               el('button', { class: 'link-btn', onclick: () => namePrompt(() => render(root)) }, 'change'))
-          : null,
-        el('div', { class: 'save-transfer' },
-          el('button', { onclick: exportDialog }, 'Export Save'),
-          el('button', { onclick: importDialog }, 'Import Save')))
-    );
+          : null)
+    ); // (0.00301: Export / Import Save moved to the SETTINGS menu's GAME group, ui/saveTransfer.js)
   }
 }

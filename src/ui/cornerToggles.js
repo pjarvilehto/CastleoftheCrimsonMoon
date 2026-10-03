@@ -1,6 +1,7 @@
 // ui/cornerToggles.js — the upper-right corner (0.115; a SETTINGS menu since
 // 0.00243): FULLSCREEN beside it, and in the menu AUDIO (MUSIC, SOUND,
-// NARRATOR, VOLUME), DISPLAY (BATTERY SAVER), GAME (CHANGELIST) and DEBUG
+// NARRATOR, VOLUME), DISPLAY (BATTERY SAVER), GAME (EXPORT SAVE, IMPORT
+// SAVE, CHANGELIST) and DEBUG
 // MODE, which shows the testing tools under it (ui/debugToggles.js). One
 // flex column (.corner-bar), so adding a button is one line in main.js — no
 // hand-placed pixel offsets — and a panel a button opens (VOLUME, BG
