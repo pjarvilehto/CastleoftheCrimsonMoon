@@ -617,7 +617,9 @@ be served stale for ~4 hours.
   by `data-row` and glows, grows and flashes its label at its new level
   (`fx.js pulseNumber`, one `element.animate`, 0.8 s). The three
   sections' rows (Train, Alchemy, Equipment) are built in
-  `ui/hubSections.js` (0.00223); `hubScene.js` keeps the hall's table,
+  `ui/hubSections.js` (0.00223; each row's text is `rowText`: a title —
+  name + level or count — over a small muted line, one line on a phone,
+  0.00231); `hubScene.js` keeps the hall's table,
   the two assemblies, Descend and the flash. A new player is asked their
   name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —

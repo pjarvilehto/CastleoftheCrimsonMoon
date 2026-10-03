@@ -147,7 +147,7 @@ fresh();
   const { statDesc } = await import('../../src/ui/hubText.js');
   const pl = DATA.difficulty.player;
   ok('hub stat text generated from data', statDesc('power', 0).includes(`+${pl.dmgPerPower} `)
-    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('Crit Chance +'));
+    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && /^\+[\d.]+% crit chance, \+[\d.]+% crit damage$/.test(statDesc('precision', 0)));
 }
 
 // T58: 0.096 — compact buff bar: short labels from shrines.json (full

@@ -580,7 +580,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 // is a dialog that resolves on PLAY and skips a home-screen app.
 {
   const { PHONE_MQ, phoneLayout, standaloneApp, isIos, fullscreenOn } = await import('../../src/shared/platform.js');
-  const { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
+  const { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
   const { phoneGate } = await import('../../src/ui/phoneGate.js');
   const { anyDialogOpen } = await import('../../src/ui/dialog.js');
   const { canSpendAlchemy, canForgeAny, canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
@@ -605,10 +605,10 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('the short wording carries the data\'s numbers', statDesc('power', 0, true) === `+${pl.dmgPerPower} dmg / lv` && statDesc('vitality', 0, true) === `+${pl.hpPerVitality} hp / lv`
     && statDesc('endurance', 0, true) === `+${pl.armorPerEndurance} armor / lv` && /^\+[\d.]+% crit, \+[\d.]+% crit dmg$/.test(statDesc('precision', 0, true)) && statDesc('fortune', 0, true) === 'better loot'
     && alchemyDesc('potency', true) === `+${tr.potency.healPerLevel} heal / lv (now ${DATA.difficulty.potionHeal})` && alchemyDesc('infusion', true) === `potion armor +0 (+${tr.infusion.armorPerLevel} / lv)`
-    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} per level`) // (the long line carries it too, 0.00209)
-    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === '2/4 — price climbs per buy'
+    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} / level`) // (the long line carries it too, 0.00209)
+    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === 'price climbs per buy' && potionCount({ potions: 2, potionCap: 4 }) === '2/4'
     && satchelDesc({ potionCap: 4 }, false, true) === '+1 capacity (now 4)' && satchelDesc({ potionCap: 6 }, true, true) === 'carries 6 (max)'
-    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
+    && statDesc('power', 0) === `+${pl.dmgPerPower} damage / level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
   // coins buy in two places: the dots follow each (0.00209)
   fresh();
   const forge = getProfile(); forge.equipment.weapon = 'knights_blade'; forge.potions = forge.potionCap; forge.coins = forgeCost('knights_blade');
