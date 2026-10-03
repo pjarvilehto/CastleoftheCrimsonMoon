@@ -177,12 +177,12 @@ export const { shrineOffers, canAffordOffer, acceptOffer } = await import('../..
 export const { dungeonScene, hubScene, titleScene, heroScene } = await import('../../src/ui/scenes/index.js');
 export const { resetProfile, getProfile } = await import('../../src/meta/profile.js');
 await loadData();
-const SHIPPED = structuredClone(DATA); // the data as loaded (0.00278: fresh() puts a patched block back)
+const SHIPPED = structuredClone(DATA); // the data as loaded (0.00283: fresh() puts a patched block back)
 
 export const t = () => registry.app.textContent;
 
 // Each test file starts from a clean slate: fresh profile, empty screen,
-// the data as shipped (0.00278: a block a test patched — a boon's price,
+// the data as shipped (0.00283: a block a test patched — a boon's price,
 // a pacing knob — used to stay patched for every file after it; the
 // restore is in place, so a module holding DATA.difficulty sees it too).
 export function fresh() {
@@ -194,7 +194,7 @@ export function fresh() {
   for (const k of Object.keys(DATA)) if (k !== 'build') { for (const kk of Object.keys(DATA[k])) delete DATA[k][kk]; Object.assign(DATA[k], structuredClone(SHIPPED[k])); }
 }
 
-// ---------- finding things on the screen (0.00278) ----------
+// ---------- finding things on the screen (0.00283) ----------
 // The shim has no querySelector on elements, so tests walked the tree
 // with `all((n) => n.className === 'x')` — an exact match that misses a
 // second class (`back-row st-hp`). These read the class list.

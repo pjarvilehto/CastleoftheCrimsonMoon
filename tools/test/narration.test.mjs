@@ -18,7 +18,7 @@ const LINES = DATA.narration.lines;
   const { parseScript, cleanTake } = await import('../gen-vo.mjs');
   const script = parseScript(read('docs/narration-script.md'));
   const ids = script.map((l) => l.id);
-  ok('the script has 33 lines in 136 takes (OVERKILL nine since 0.188; crit five and mega crit eight since 0.00278)', ids.length === 33 && script.reduce((n, l) => n + l.takes.length, 0) === 136
+  ok('the script has 33 lines in 136 takes (OVERKILL nine since 0.188; crit five and mega crit eight since 0.00283)', ids.length === 33 && script.reduce((n, l) => n + l.takes.length, 0) === 136
     && script.find((l) => l.id === 'overkill').takes.length === 9 && script.find((l) => l.id === 'crit').takes.length === 5 && script.find((l) => l.id === 'mega_crit').takes.length === 8);
   ok('every line of the script is in narration.json with every take', script.every((l) => l.takes.every((t) => LINES[l.id]?.some((x) => x.take === t.take && x.text === t.text))));
   ok('narration.json has no line the script lacks', Object.keys(LINES).every((id) => ids.includes(id)));
@@ -162,7 +162,7 @@ const LINES = DATA.narration.lines;
 
   // the dungeon's first room says the descent (the scene drives the real narrator)
   fresh();
-  const T1 = Math.max(300, Math.ceil(ctx.currentTime / 100) * 100 + 100); // never back in time (0.00278)
+  const T1 = Math.max(300, Math.ceil(ctx.currentTime / 100) * 100 + 100); // never back in time (0.00283)
   ctx.currentTime = T1;
   const n3 = started().length;
   dungeonScene().enter(registry.app);

@@ -35,7 +35,7 @@ export function createRun() {
     hp: stats.maxHp,
     maxHp: stats.maxHp,
     stats,                       // snapshot of dmg/armor/crit at run start
-    hero: heroSnapshot(),        // the class this run plays (0.00278): id, name, heavyName, theme, look — the UI reads it here, never the profile
+    hero: heroSnapshot(),        // the class this run plays (0.00283): id, name, heavyName, theme, look — the UI reads it here, never the profile
     coins: 0,
     xp: 0,
     itemsFound: [],              // item ids picked up this run (upgrades only, 0.091)

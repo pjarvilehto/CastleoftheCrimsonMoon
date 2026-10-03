@@ -1038,7 +1038,7 @@ seconds, prompt) through ElevenLabs' sound generation into
 `assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7; `--redo <clip>` a
 fresh take as `_v<k+1>`), measured each with ffmpeg (the loudest 50 ms)
 and pointed the clip's `file` / `measuredDb` at it (the API call and
-the measure are `tools/elevenlabs.mjs`'s since 0.00278, shared with
+the measure are `tools/elevenlabs.mjs`'s since 0.00283, shared with
 gen-vo.mjs; the audio test checks the prompt table and the registry
 name the same clips) — then every
 rendered clip's `measuredDb` was replaced by the browser's own reading
@@ -1142,7 +1142,7 @@ limit — waits and retries), and the API key carries its own credit cap
 a 90 s bed ~1,125) — the developer raised it in 0.00280. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (33 lines,
 four takes each; OVERKILL nine since 0.188, a plain crit five and the mega
-crit eight since 0.00278), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+crit eight since 0.00283), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
 sends "!" as "." and drops a leading "…", never overwrites a take — delete
 the file to re-render it, `--stability/--style/--speed` for a steadier
@@ -1551,7 +1551,7 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
   vanish checks). Test files may not assume a module singleton (the
   mixer, scene.js's active layer) is untouched by an earlier file: read
   the state relative to what is there. **`fresh()` restores `DATA`
-  (0.00278):** every block is put back to the loaded JSON, in place, so a
+  (0.00283):** every block is put back to the loaded JSON, in place, so a
   test may patch a price or a pacing knob and leave it (before, a patch
   stayed for every file after it). The harness also finds things on the
   screen by class list, not by exact `className` — `byClass(root, cls)`,
@@ -1756,10 +1756,10 @@ sometimes — fetch all branches to find it.
   flying into it (0.00262), the potion's picture and card (0.00263).
   The simulator, 4 campaigns x 40 runs per class: the knight median 15.8
   / room-24 boss 6%, the others 16.5–18.3 (the Heroes notes).
-- 0.00276–0.00278 (the review after the classes): the documentation sweep
+- 0.00276–0.00283 (the review after the classes; 0.00278–0.00282 were the other threads' music and hall builds): the documentation sweep
   (0.00276: CLAUDE.md, ARCHITECTURE.md, the collector's README, the labs'
   headers, the prompt docs), the seven display mismatches (0.00277, the
-  Backlog's list) and the refactors (0.00278: the class registry
+  Backlog's list) and the refactors (0.00283: the class registry
   `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
   `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
   simulator and the shrine study; the Backlog's "Refactors done" entry).
@@ -1819,7 +1819,7 @@ sometimes — fetch all branches to find it.
 - Engineering: `go()` is silently dropped
   during a transition (queue it) · about 160 of the ~1100 checks still
   assert on source text rather than behaviour (inject recording stubs
-  instead; 0.00278 gave the harness `byClass` / `button` and a `DATA`
+  instead; 0.00283 gave the harness `byClass` / `button` and a `DATA`
   restore in `fresh()` for it) · the Actions deploy job (off until the developer opts in)
   could exclude `tools`, `docs`, `collector`, `assets/style` (17MB) and
   `assets/items/candidates` (1.3MB) — those two are unused by every
@@ -1845,7 +1845,7 @@ sometimes — fetch all branches to find it.
   or retire it (the developer's call) · WebP room paintings under new
   names (~49% smaller at q80; the developer judges q80 / q85 in the Fog
   Lab; `bg3dPuffs seedOf` should hash the stem first).
-- Refactors done in 0.00278 (the classes had landed as switches; the
+- Refactors done in 0.00283 (the classes had landed as switches; the
   simulator and the shrine study byte-identical for all seven classes):
   `run/classes.js`, the class registry — `HEAVIES` by kind (`spills`,
   `onHeavy`), `AFTER_BLOW` and `FOE_TURN` hook lists in the old phases'

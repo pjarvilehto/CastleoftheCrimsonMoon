@@ -1,4 +1,4 @@
-// run/classes.js — the class registry (0.00278): what each heavy kind does
+// run/classes.js — the class registry (0.00283): what each heavy kind does
 // and the classes' passives, as hooks the engine (run/combat.js) calls — the
 // one place the class logic lives. It used to be a string switch on the
 // heavy's kind spread over combat.js (classPhase, the knight-only guards in

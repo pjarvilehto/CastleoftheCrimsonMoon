@@ -13,7 +13,7 @@ import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
 
 // What effects can touch — the live units of the current battle line.
 // ui(): the scene's current { player, enemies, layer } (null between rooms).
-// run(): the scene's current run (0.00278; null where there is none) — the
+// run(): the scene's current run (0.00283; null where there is none) — the
 // class's heavy on run.stats.klass (ui/classFx.js reads the traces from it)
 // and the satchel's count (ui/findFx.js). The scenes add what else they
 // have (loot, lootAhead).

@@ -94,8 +94,8 @@ src/
     combat.js           one action in phases: rollHit -> overkill | strike(+spill)
                         -> classPhase (the class's heavy and passives, 0.00267)
                         -> lifesteal -> enemyPhase -> summons -> cleared;
-                        damageFoe() is the one place a foe loses HP (0.00278)
-    classes.js          the class registry (0.00278): HEAVIES by kind (blow,
+                        damageFoe() is the one place a foe loses HP (0.00283)
+    classes.js          the class registry (0.00283): HEAVIES by kind (blow,
                         cleave, fireball, drain, mark, censer, entangle —
                         spills / onHeavy), AFTER_BLOW hooks (a charge back,
                         the blight's tick, the mending, the thrall rising),
@@ -157,11 +157,11 @@ src/
                         per printed line: tick, line, sound, effect
     combatQueue.js      combat events -> playback items (fx, hold, sfx, loot);
                         sfxFor(ev, run.hero) picks the class's own blow / heavy /
-                        hurt clip (0.00270; the run's class since 0.00278)
+                        hurt clip (0.00270; the run's class since 0.00283)
     combatFx.js  fxParts.js   effects per event; shake, spray, numbers...;
                         fxParts.lunge() is the one lunge (attack, dodge, the
-                        thrall's blow, 0.00278)
-    classFx.js          the class effects (0.00278, out of combatFx.js): the
+                        thrall's blow, 0.00283)
+    classFx.js          the class effects (0.00283, out of combatFx.js): the
                         traces over a foe's burst (traceFor / classTrace) and
                         CLASS_FX, the class events by kind (mark, blight,
                         entangle, entangled, charge, thrall, thrallhit,
@@ -173,7 +173,7 @@ src/
     particleLooks.js    what a burst is made of (materials, looks; pure);
                         spawnClassBurst() = the class's own trace: LOOKS, a
                         table of generators on shared primitives (CLASS_LOOKS
-                        its keys; 0.00268, a table since 0.00278)
+                        its keys; 0.00268, a table since 0.00283)
     particles.js        the particle canvas: budget, batched drawing
     cardFx.js           the shader light behind every card: a pooled WebGL
                         canvas per lit card, reused across rooms (0.00227; the

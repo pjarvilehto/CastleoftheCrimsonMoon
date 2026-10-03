@@ -1,6 +1,6 @@
 // ui/fxParts.js — the reusable pieces of the combat effects (0.098: split
 // out of combatFx.js, which keeps the choreography: which effect plays on
-// which event, the hit's timing; 0.00278: the lunge and its clock live
+// which event, the hit's timing; 0.00283: the lunge and its clock live
 // here, shared with ui/classFx.js). Everything here is a no-op without
 // the Web Animations API (the smoke-test shim) or with reduced motion.
 
@@ -19,7 +19,7 @@ export const HIT_TINT = 'sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.15
 export const DEATH_TINT = 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)';
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
 
-// The lunge (0.00278: one helper for the three copies combatFx.js carried —
+// The lunge (0.00283: one helper for the three copies combatFx.js carried —
 // the attack's, the dodge's and the thrall hit's). Its clock: LUNGE_MS long
 // (a heavy 1.3x), the blow landing STRIKE_AT of the way; crits and heavies
 // freeze the attacker at impact for HITSTOP_MS (0.088).

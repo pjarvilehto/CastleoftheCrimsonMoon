@@ -18,7 +18,7 @@
 // browser's reading, and 0.00271 took it over ffmpeg's for every rendered
 // clip (the 16 kHz measure under-reads a hissy clip by up to 4 dB); its rate and variation layers stay:
 // the layers are the class's colour over any recording). The API call
-// and the measure are tools/elevenlabs.mjs's (0.00278). Behind the
+// and the measure are tools/elevenlabs.mjs's (0.00283). Behind the
 // proxy: NODE_USE_ENV_PROXY=1.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';

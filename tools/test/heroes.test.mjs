@@ -3,7 +3,7 @@
 // imported code made whole), CHOOSE YOUR HERO between the title and the
 // hall (1-7 and a click choose, the arrows turn the look, Proceed lands the
 // pick and leads on), and the knight's card and the hall drawing the hero
-// (0.00278: the card from the run's snapshot, run.hero; the hall from the
+// (0.00283: the card from the run's snapshot, run.hero; the hall from the
 // profile — shared/portraits.js portraitUrl('player')).
 
 import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, heroScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
@@ -216,7 +216,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const frame = u.card.all((n) => n.className === 'card-frame')[0];
   ok('the knight\'s card plate carries the class colour as a blend layer', frame.attrs.style === '--theme:#9e3e1a' && frame.children.some((c) => c.className === 'tone'));
-  // 0.00278: the card's theme is the run's (run.hero.theme), not the profile's
+  // 0.00283: the card's theme is the run's (run.hero.theme), not the profile's
   const { heroSnapshot } = await import('../../src/shared/heroes.js');
   const run = createRun(); run.hero = heroSnapshot({ hero: { id: 'wizard', look: 0 } });
   const wu = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });

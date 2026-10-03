@@ -483,7 +483,7 @@ fresh();
     && readFileSync('labs/index.html', 'utf8').includes('href="music/" data-lab="music"') && js.includes('createMediaElementSource') && js.includes('TARGET_LUFS - t.lufs') && js.includes("download: 'music-rerender.json'"));
 }
 
-// 0.00278 — the sound tool and the shared ElevenLabs module: the prompt
+// 0.00283 — the sound tool and the shared ElevenLabs module: the prompt
 // table and the registry name the same recorded clips, a fresh take
 // never overwrites (rule 7), and the one POST carries the key and
 // throws the status.

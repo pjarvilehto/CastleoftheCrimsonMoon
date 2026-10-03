@@ -177,7 +177,7 @@ const sigil = (h, P, r, life, spin) => ({ kind: 'sigil', x: h.x, y: h.y, age: 0,
 // The looks, one generator each: (h, o) -> particles. h = { x, y, dir, u }
 // (u = the card's height / 290, the looks above); o = { big (a crit or a
 // heavy), m (its particle count factor), to (a point the burst flies to) }.
-// A table since 0.00278 (it was a 22-case switch): CLASS_LOOKS is its keys.
+// A table since 0.00283 (it was a 22-case switch): CLASS_LOOKS is its keys.
 const LOOKS = {
   steel: (h) => [flash(h, CLASS_PAL.steel, 36), ...sparks(h, CLASS_PAL.steel, 14, 420, 900, 1, [0.14, 0.3])], // the Knight's heavy: a steel clash
   cleave: (h) => [arc(h, CLASS_PAL.rust, 170, 20, 0.5), flash(h, CLASS_PAL.rust, 60, 0.14, CLASS_PAL.rust.mid), ...sparks(h, CLASS_PAL.rust, 18, 300, 760, -1), ...motes(h, CLASS_PAL.rust, 10, { spread: 50 })], // the Barbarian's Cleave: a wide crescent swung through the foe, embers off the edge

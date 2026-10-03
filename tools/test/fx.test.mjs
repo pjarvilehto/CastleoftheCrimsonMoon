@@ -1,11 +1,11 @@
-// Effects (0.00278): the lunge helper the attack, the dodge and the thrall
+// Effects (0.00283): the lunge helper the attack, the dodge and the thrall
 // hit share (fxParts.js lunge), the classes' choreography reading the class
 // from the run (ui/classFx.js), and the class looks as a table
 // (particleLooks.js LOOKS). Behavioural: the harness lends Web Animations
 // for a block, the units are the game's own.
 import { ok, fresh, sleep, El, createRun, scaleEnemy, getProfile, withAnimations } from './harness.mjs';
 
-// One lunge for the three (0.00278): the attacker's unit pulls back, strikes
+// One lunge for the three (0.00283): the attacker's unit pulls back, strikes
 // at STRIKE_AT and recovers, added over its own transform; a heavy lunges
 // 1.3x as long and reaches further; the dodge's swing overshoots 1.15x; a
 // crit or a heavy freezes the attacker at impact for the hit-stop.
@@ -63,7 +63,7 @@ import { ok, fresh, sleep, El, createRun, scaleEnemy, getProfile, withAnimations
   fresh();
 }
 
-// The class is the run's (0.00278, ui/classFx.js): the trace a blow leaves
+// The class is the run's (0.00283, ui/classFx.js): the trace a blow leaves
 // comes from run.stats.klass.heavy, never the profile; a context without a
 // run (the tests' bare ones) falls back to the profile's hero.
 {
@@ -86,7 +86,7 @@ import { ok, fresh, sleep, El, createRun, scaleEnemy, getProfile, withAnimations
   fresh();
 }
 
-// The class looks as a table (0.00278): CLASS_LOOKS is its keys — every one
+// The class looks as a table (0.00283): CLASS_LOOKS is its keys — every one
 // spawns, nothing else does, the 22 of 0.00268 / 0.00271 in their order.
 {
   const { spawnClassBurst, CLASS_LOOKS } = await import('../../src/ui/particles.js');

@@ -1,4 +1,4 @@
-// ui/classFx.js — the classes' choreography (0.00278: split out of
+// ui/classFx.js — the classes' choreography (0.00283: split out of
 // combatFx.js, which keeps the core: fxFor / holdFor / playFx, the attack,
 // the hit, the deal). The developer's ask (0.00268) was each class's
 // attacks their own: a blow by the hero lays the class's trace over the
@@ -6,7 +6,7 @@
 // the class events — the Hex, Last Rites, Entangle, a charge back, the
 // thrall's rise, a blow it took, its crumbling — burst on their own.
 //
-// The class is the RUN's (0.00278): ctx.run() -> run.stats.klass.heavy, the
+// The class is the RUN's (0.00283): ctx.run() -> run.stats.klass.heavy, the
 // class block snapshotted at the run's start (meta/stats.js derivedStats;
 // a debug SWITCH CLASS rebuilds it). A context without a run — the tests
 // build bare ones — falls back to the profile's hero.

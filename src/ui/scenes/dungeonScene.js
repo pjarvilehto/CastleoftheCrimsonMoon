@@ -82,7 +82,7 @@ export function dungeonScene() {
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
     onDeath: (i) => ui?.battle.deathStep(i), // the fallen card's leaving and the restack are a step of their own (0.00220) — only while a card is off screen (battleRoom.js)
   });
-  const fxCtx = fxContext(() => ui, () => run); // what effects can touch (ui/battleRoom.js); the run: the class's traces (0.00278) and a found potion's card's count (0.00263)
+  const fxCtx = fxContext(() => ui, () => run); // what effects can touch (ui/battleRoom.js); the run: the class's traces (0.00283) and a found potion's card's count (0.00263)
   fxCtx.loot = () => lootEl; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
   fxCtx.lootAhead = () => lootFlying; // — past the ones still on their way
 
@@ -102,7 +102,7 @@ export function dungeonScene() {
       const stats = derivedStats();
       const share = run.maxHp > 0 ? run.hp / run.maxHp : 1;
       run.stats = stats;
-      run.hero = heroSnapshot(); // (0.00278: the UI reads the class from the run)
+      run.hero = heroSnapshot(); // (0.00283: the UI reads the class from the run)
       run.maxHp = stats.maxHp;
       run.hp = Math.max(1, Math.min(run.maxHp, Math.round(run.maxHp * share)));
       if (combat) { combat.charges = stats.klass.charges; combat.marked = -1; combat.thrall = null; for (const e of combat.enemies) { e.entangled = 0; e.blight = 0; } combat.heavyCd = Math.min(combat.heavyCd, run.stats.heavyCdMax); }

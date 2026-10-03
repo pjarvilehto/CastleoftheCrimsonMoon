@@ -28,7 +28,7 @@ export function cleanHero(h) {
 export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
 /** The name of a profile's heavy attack (0.00267, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Entangle, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; what each heavy does is heroes.json `class.heavy` (run/combat.js classPhase). */
 export const heavyName = (p) => heroOf(p).heavyName;
-/** The hero a run plays, snapshotted at its start (0.00278; runState.js createRun → run.hero):
+/** The hero a run plays, snapshotted at its start (0.00283; runState.js createRun → run.hero):
  * id, name, heavyName, theme and look — what the combat UI, the effects and the sound picker
  * read, so nothing in a run goes back to the profile for the class (a debug SWITCH CLASS
  * rebuilds the run's stats and this with it). */

@@ -33,7 +33,7 @@ export const IDLE_FAMILY = {
   vampire_lord: 'boss',
 };
 
-// The hero's figure for the run's class and look (run.hero, 0.00278 — the
+// The hero's figure for the run's class and look (run.hero, 0.00283 — the
 // combat UI reads the class from the run, never the profile; shared/portraits.js
 // portraitUrl('player') is the hall's, off the profile): the look's file in
 // assets/heroes/, or cards.json player.art for a look marked `sprite` (the
@@ -66,7 +66,7 @@ function glintBand(src, family, img) {
 // away again (the sweep's end, fxParts.js).
 export function mountGlint(u) {
   if (u.glintEl) return u.glintEl;
-  const band = glintBand(u.art, u.family, u.portrait); // (u.art: the portrait's file, 0.00278 — the player's is the run's look)
+  const band = glintBand(u.art, u.family, u.portrait); // (u.art: the portrait's file, 0.00283 — the player's is the run's look)
   const kids = u.card.children;
   u.card.insertBefore(band, kids[Array.prototype.indexOf.call(kids, u.portrait) + 1] ?? null);
   u.glintEl = band;
@@ -165,7 +165,7 @@ function statsPage(run) {
     ['Crit chance', () => pct(run.stats.crit), 'crit'],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`, 'crit'],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—'), 'ls'],
-    [run.hero.heavyName, () => `×${+(tune.heavyMult * run.stats.klass.heavyMult).toFixed(2)} · ${usesCharges(run.stats.klass) ? `${run.stats.klass.charges} charges` : `${run.stats.heavyCdMax} turns`}`], // (0.00267: the class's name for its heavy — the run's, 0.00278; 0.00277: its own factor, and charges for a charge class)
+    [run.hero.heavyName, () => `×${+(tune.heavyMult * run.stats.klass.heavyMult).toFixed(2)} · ${usesCharges(run.stats.klass) ? `${run.stats.klass.charges} charges` : `${run.stats.heavyCdMax} turns`}`], // (0.00267: the class's name for its heavy — the run's, 0.00283; 0.00277: its own factor, and charges for a charge class)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
     ['Potion heals', () => `${potionHealFor(run.stats.klass)} HP`, 'hp'], // (0.00277: the class's share in it)
   ].map(([label, val, st]) => ({ val, b: el('b', {}, val()), label, st }));
@@ -222,7 +222,7 @@ function flipCard(card, swap) {
 }
 
 // Player unit. update({ hp, printing, heavyReady, heavyCd, dead })
-// The class is the run's (run.hero, 0.00278: id, name, heavyName, theme,
+// The class is the run's (run.hero, 0.00283: id, name, heavyName, theme,
 // look — runState.js createRun snapshots it, the debug SWITCH CLASS rebuilds
 // it); the gear is the profile's, as worn.
 export function createPlayerUnit(run, { onHeavy, onPotion }) {

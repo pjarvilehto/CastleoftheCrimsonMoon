@@ -4,7 +4,7 @@
 //
 // The hero's class (heroes.json class, snapshotted as run.stats.klass;
 // drafted 0.00258, live since 0.00267) shapes the turn through the
-// registry in run/classes.js (0.00278): the heavy's kind — the knight's
+// registry in run/classes.js (0.00283): the heavy's kind — the knight's
 // blow with spill and OVERKILL, cleave, fireball, drain, mark, censer,
 // entangle — is HEAVIES[klass.heavy], the passives are AFTER_BLOW and
 // FOE_TURN hooks; this file calls them in a fixed order and switches on no
@@ -29,7 +29,7 @@ export function critMultiplier(tune, mega = false, r = Math.random()) {
 }
 
 // A foe as the fight holds it: the room's enemy copied, at full HP, with the
-// classes' statuses at zero (0.00278: `blight` stacks, the roots' `entangled`
+// classes' statuses at zero (0.00283: `blight` stacks, the roots' `entangled`
 // turns — the hooks count on the numbers being there; a summon gets the
 // same in summonPhase).
 const fighter = (e) => ({ ...e, hp: e.maxHp, blight: 0, entangled: 0 });
@@ -57,7 +57,7 @@ function living(combat) {
 
 // Takes `dmg` off the foe at `idx` — never past its HP — and pushes its line
 // (`ev(applied)`: the event, the caller's text and fields) and, when it
-// fell, its kill. Returns the damage applied. 0.00278: the one path for the
+// fell, its kill. Returns the damage applied. 0.00283: the one path for the
 // strike chain, a heavy's sweep (classes.js), the blight's tick and the
 // thorns — four copies before.
 export function damageFoe(combat, idx, dmg, ev, push) {
@@ -89,7 +89,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
     };
     events.push(ev);
   };
-  // the turn's outputs (0.00278): what the phases and the class hooks write through
+  // the turn's outputs (0.00283): what the phases and the class hooks write through
   const turn = { push, hurt: (idx, dmg, ev) => damageFoe(combat, idx, dmg, ev, push) };
   const target = combat.enemies[targetIndex];
   if (!target || target.hp <= 0 || combat.over) return events;

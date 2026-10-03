@@ -2,7 +2,7 @@
 // the developer's call: "we can edit and finetune once I get to play"):
 // heroes.json class per hero through stats.js derivedStats into
 // run.stats.klass, the seven heavies and the passives in the registry
-// run/classes.js (0.00278: HEAVIES by kind, AFTER_BLOW and FOE_TURN hooks;
+// run/classes.js (0.00283: HEAVIES by kind, AFTER_BLOW and FOE_TURN hooks;
 // combat.js calls them, damageFoe the one wound path), and the combat UI's
 // minimum: the charges on the hero's button, the HEXED / BLIGHT / ROOTED
 // tag on a foe's card, a colour per new log line — the UI reading the class
@@ -38,7 +38,7 @@ const types = (evs) => evs.map((e) => e.type);
   getProfile().hero = null;
 }
 
-// the registry (0.00278): the kinds and the keys in one place, driving the data check
+// the registry (0.00283): the kinds and the keys in one place, driving the data check
 {
   fresh();
   ok('the seven heavy kinds, each in HEAVIES; the knight\'s blow the one that spills (strike and OVERKILL)', HEAVY_KINDS.join() === 'blow,cleave,fireball,drain,mark,censer,entangle' && HEAVY_KINDS.every((k) => HEAVIES[k] && typeof HEAVIES[k].spills === 'boolean')
@@ -263,7 +263,7 @@ const types = (evs) => evs.map((e) => e.type);
 }
 
 
-// the UI reads the class from the run (0.00278): run.hero, not the profile
+// the UI reads the class from the run (0.00283): run.hero, not the profile
 {
   fresh();
   const { heroArt } = await import('../../src/ui/battleLine.js');
@@ -339,7 +339,7 @@ const types = (evs) => evs.map((e) => e.type);
   const wiz = { id: 'wizard' };
   ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
     && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
-  ok('…by the run\'s class (run.hero, 0.00278), the plain sound when none is given', sfxFor({ type: 'atk', heavy: true }, as('druid').hero) === 'heavy_druid' && sfxFor({ type: 'atk', heavy: true }) === 'attack' && sfxFor({ type: 'dmg' }) === 'hurt');
+  ok('…by the run\'s class (run.hero, 0.00283), the plain sound when none is given', sfxFor({ type: 'atk', heavy: true }, as('druid').hero) === 'heavy_druid' && sfxFor({ type: 'atk', heavy: true }) === 'attack' && sfxFor({ type: 'dmg' }) === 'hurt');
   getProfile().hero = null;
   {
     // queueEvents hands sfxFor the run's class, whatever the profile says

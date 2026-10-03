@@ -109,12 +109,12 @@ function hit(u, power = 1, fromRight = false) {
     u.card.animate(kf, { duration: O.motion.ms * (O.motion.hit === 'wobble' ? 1.8 : 1), easing: 'linear', composite: 'add' });
   }
   // the knockback the game plays on the whole unit (combatFx.js hit): kept, so the kick reads on top of it
-  // (0.00278: the lab mirrors fxParts.js / combatFx.js hit() — the five keyframes, the hit's add composite; keep them in step)
+  // (0.00283: the lab mirrors fxParts.js / combatFx.js hit() — the five keyframes, the hit's add composite; keep them in step)
   if (can(u.el)) { const k = u.el.getBoundingClientRect().width * 0.03 * power * (fromRight ? -1 : 1); u.el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${k}px)` }, { transform: `translateX(${-k * 0.45}px)` }, { transform: `translateX(${k * 0.2}px)` }, { transform: 'translateX(0)' }], { duration: 240, easing: 'ease-out', composite: 'add' }); }
   if (O.glint.withHit) sweep(u, Math.max(500, O.motion.ms * 1.1), -dir);
   flash(u);
 }
-// The struck figure's flash: the game's (combatFx.js hit(), its tint fxParts.js HIT_TINT) — the lab mirrors it (0.00278: it had drifted to 2.4 / 0.3 and a literal tint).
+// The struck figure's flash: the game's (combatFx.js hit(), its tint fxParts.js HIT_TINT) — the lab mirrors it (0.00283: it had drifted to 2.4 / 0.3 and a literal tint).
 function flash(u) {
   if (!can(u.portrait)) return;
   const base = getComputedStyle(u.portrait).filter, pre = base === 'none' ? '' : base;

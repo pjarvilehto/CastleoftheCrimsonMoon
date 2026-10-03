@@ -24,7 +24,7 @@ const EV_SFX = {
 // tools/gen-sfx.mjs, with the class's synth layers riding on top as its
 // colour, audio.json variation); a class without the clip falls back to the
 // plain one, so the registry can grow a class at a time. `hero` is the
-// run's class (run.hero, 0.00278 — the UI reads it from the run, never the
+// run's class (run.hero, 0.00283 — the UI reads it from the run, never the
 // profile); without one the plain sounds.
 export function sfxFor(ev, hero = null) {
   const plain = EV_SFX[ev.type];
@@ -41,7 +41,7 @@ export function voFor(ev, { run, combat }) {
   if (ev.type === 'overkill') return 'overkill';
   if (ev.type === 'multi') return 'smash'; // (the narration id and the script's name for a multi-kill)
   if (ev.type === 'atk' && ev.megaCrit) return 'mega_crit';
-  if (ev.type === 'atk' && ev.crit) return 'crit'; // (0.00278: a plain critical, rarer and with a cooldown in audio.json)
+  if (ev.type === 'atk' && ev.crit) return 'crit'; // (0.00283: a plain critical, rarer and with a cooldown in audio.json)
   if (ev.type === 'revive') return 'revive';
   if (ev.type === 'summon') return 'boss_summon';
   if (ev.type === 'sys' && combat.over && combat.victory && !combat.isBoss) return 'room_cleared';

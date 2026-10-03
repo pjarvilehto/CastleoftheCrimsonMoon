@@ -117,7 +117,7 @@ export const styleNamed = (name) => STYLE[name] ?? STYLE.fog;
 // embers flames, wisps ether; the boss flames, the knight ether.
 const BY_MATERIAL = { embers: 'flames', wisps: 'ether', dust: 'fog' };
 // The player's is the class's theme (0.00254, heroes.json): `theme` as the
-// run holds it (run.hero.theme, 0.00278 — battleLine passes it); none given
+// run holds it (run.hero.theme, 0.00283 — battleLine passes it); none given
 // (the hall, the labs), the profile's class.
 export function cardStyle(id, boss = false, theme = null) {
   if (id === 'player') { const t = theme ?? heroSnapshot().theme; return { look: t.light, tint: t.tint }; }

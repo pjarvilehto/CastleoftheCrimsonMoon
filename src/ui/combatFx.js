@@ -19,9 +19,9 @@
 // flashes act on the portrait. Death collapse lives in battleLine.js (the
 // card owns its dead state).
 // The reusable pieces (shake, particle spray, HP-bar flash, glow, floating
-// numbers, the lunge and its clock) live in fxParts.js (0.098, 0.00278); the
+// numbers, the lunge and its clock) live in fxParts.js (0.098, 0.00283); the
 // classes' choreography (the traces, the Hex, the thrall...) in classFx.js
-// (0.00278). Browsers without element.animate (the smoke test shim, very old
+// (0.00283). Browsers without element.animate (the smoke test shim, very old
 // TVs) simply get no one-shots.
 
 import { DATA } from '../shared/data.js';
@@ -90,7 +90,7 @@ export function playFx(fx, ctx) {
     case 'summon': return summon(fx, ctx);
     case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies into the LOOT row (0.00260)
     case 'potion': return potionPop(ctx); // a found potion: its card flies into the hero card's count (0.00263)
-    default: return CLASS_FX[fx.kind]?.(fx, ctx); // the classes' events (0.00268; ui/classFx.js since 0.00278), else nothing
+    default: return CLASS_FX[fx.kind]?.(fx, ctx); // the classes' events (0.00268; ui/classFx.js since 0.00283), else nothing
   }
 }
 
