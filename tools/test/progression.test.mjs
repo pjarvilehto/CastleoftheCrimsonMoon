@@ -22,8 +22,8 @@ fresh();
   const pc = DATA.difficulty.potions;
   resetProfile();
   const p = getProfile();
-  ok('fresh profile: 2/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
-  p.coins = 1000;
+  ok('fresh profile: 3/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
+  p.coins = 1000; p.potions = 2; // (0.00230: the stock starts at 3 — two short of the cap for the ladder below)
   const c0 = potionCost();
   restockPotion(); const c1 = potionCost(); restockPotion();
   ok('potion price climbs: 10, 20, then 25 and +5 each (0.00204)', c0 === 10 && c1 === 20 && potionCost() === 25 && p.potions === 4 && p.coins === 1000 - 30
@@ -127,16 +127,16 @@ fresh();
   const p = getProfile();
   p.coins = 0; p.xp = 10000;
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
-  ok('training is XP-only', statCost(0).xp === 15 && statCost(0).coins === undefined);
+  ok('training is XP-only', statCost(0).xp === DATA.difficulty.statTrainXpBase && DATA.difficulty.statTrainXpBase === 13 && statCost(0).coins === undefined);
   buyStat('power'); // lvl 1, 15xp
-  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 15 && p.stats.power === 1);
+  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 13 && p.stats.power === 1);
   p.stats.power = 4;
   const r = buyStat('power'); // -> lvl 5 = breakthrough
   ok('breakthrough doubles every 5th level', r === 'breakthrough' && trainedLevel(p, 'power') === 6);
   p.stats.precision = 5; p.stats.endurance = 7; p.stats.vitality = 0;
   const d = derivedStats(p);
-  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 80
-    && d.dmg === 24 && d.maxHp === 400);
+  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 64
+    && d.dmg === 18 && d.maxHp === 400); // (0.00230: +8 armor, +2 damage a level)
 }
 
 // T23: alchemy tracks — base costs, efficiency free drinks, infusion temp armor
@@ -197,7 +197,7 @@ fresh();
   const html = t();
   ok('hub: five disciplines', ['Power', 'Vitality', 'Fortune', 'Precision', 'Endurance'].every((n) => html.includes(n)));
   ok('hub: three alchemy tracks', ['Potency', 'Efficiency', 'Infusion'].every((n) => html.includes(n)));
-  ok('hub: xp-only train buttons', html.includes('Train (15xp)'));
+  ok('hub: xp-only train buttons', html.includes('Train (13xp)'));
   ok('hub: scribe removed', !html.includes('Scribe'));
   ok('hub: forge button on equipped item', html.includes('+100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
 }
@@ -304,10 +304,10 @@ fresh();
   resetProfile();
   const p = getProfile();
   const r1 = createRun();
-  ok('run draws the stock and cap', r1.potions === 2 && r1.potionCap === 4);
+  ok('run draws the stock and cap', r1.potions === 3 && r1.potionCap === 4);
   r1.hp = 1; drinkPotion(r1);
   settleRun(r1, 'retreat');
-  ok('unused potions come home (retreat)', p.potions === 1);
+  ok('unused potions come home (retreat)', p.potions === 2);
   const r2 = createRun(); r2.potions = 3;
   settleRun(r2, 'death');
   ok('unused potions come home (death)', p.potions === 3);
@@ -343,7 +343,7 @@ fresh();
   hub.enter(root);
   const txt = root.textContent;
   ok('Great Hall shows Level before Coins', txt.indexOf('Level') !== -1 && txt.indexOf('Level') < txt.indexOf('Coins'));
-  ok('Great Hall shows potions as n/max and the satchel', txt.includes('2/4') && txt.includes('Potion Satchel'));
+  ok('Great Hall shows potions as n/max and the satchel', txt.includes('3/4') && txt.includes('Potion Satchel'));
 }
 
 // T43: 0.081 — Great Hall stat boxes: 3 columns (Level/Coins/XP,

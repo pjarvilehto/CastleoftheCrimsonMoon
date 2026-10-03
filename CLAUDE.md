@@ -269,7 +269,19 @@ the boss. The win (0.121): beating the boss of `finalBossRoom` (24) shows
 `ui/victoryModal.js` once per save; move the knob when deeper content lands.
 `node tools/simulate.mjs --tactic suggested|boss|summons` compares targeting.
 
-**Progression.** HP scale (0.093): player HP, enemy damage, armor, potion
+**Progression.** The opening and the ramp (0.00230, the owner's call:
+an easier first run that reaches about room 3, the overpowered phase in
+the early rooms a little later, the march to room 24 unchanged): the
+tier-1 enemies hit ~25% softer (rat 30, Cave Shrieker 22, skeleton 45,
+Crypt Spider 38), a new save starts with 3 potions, and a trained level
+gives +2 damage / +72 HP / +8 armor (was 3 / 90 / 10) for a base cost of
+13 XP (was 15). The simulator, 12 campaigns: the first run reaches room
+3-4 (was 2), rooms 1-5 cost under 10% of max HP from about run 12-13
+(was about run 11), room 24 first reached at run ~33 (was ~31), its boss
+beaten at ~41 (was ~39). Tried and turned down by the owner: early rooms
+that grow with the best room ("the castle remembers"), and starting a run
+at a beaten boss's next stretch (waypoints — it also slowed room 24 to
+run ~44). HP scale (0.093): player HP, enemy damage, armor, potion
 heals and lifesteal are 10x their old values; enemy HP and player damage
 were not scaled — keep new numbers on that scale. Upgrades never charge for
 nothing (0.112): capped effects use `meta/stats.js taper` (linear `perLevel`
