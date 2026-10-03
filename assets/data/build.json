@@ -1,5 +1,5 @@
 {
-  "version": "0.00232",
+  "version": "0.00233",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00233": [
+      "Art Lab: 30 candidates approved across twelve characters; the wraith redrawn from its best candidate with the owner's note (dead black eyes, the red heart kept); the unapproved candidates pruned",
+      "The style LoRA trains on the approved pictures only (tools/train-lora.mjs; the inked sheets and the room paintings are opt-in)"
+    ],
     "0.00232": [
       "The Great Hall reads at a glance: each upgrade's name and level stand out, with a shorter, quieter line under it saying what it does"
     ],
@@ -151,9 +155,6 @@
     "0.00219": [
       "The benchmark ask is back for everyone: once your best room reaches 6, the Great Hall asks once for a 40-second scripted fight (a new round, so a benchmark from an older build is asked again)",
       "Phones: the benchmark keeps the screen awake, and one that went to the background partway is not saved (the game asks again)"
-    ],
-    "0.00218": [
-      "Phone: the equipment sheet's rows are all the same height, so every slot fits on the sheet (a forgeable slot's row used to be taller)"
     ]
   }
 }
