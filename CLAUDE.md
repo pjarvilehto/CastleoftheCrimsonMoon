@@ -591,9 +591,10 @@ New room art: JPEG in `assets/bg/`, entries in
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
 **Portraits (0.184).** The file is data: `enemies.json art` per enemy and
-`cards.json player.art` for the knight's crouching look alone (0.00264:
-only a look marked `sprite: true` draws it; every other look of every
-class is a `heroes.json` figure — see "Heroes"), read through
+`cards.json player.art` (0.00291: drawn nowhere in the game any more —
+every look of every class, the knight's crouch marked `sprite: true`
+included, is its `heroes.json` figure; the file stays for the Art Lab),
+read through
 `shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
@@ -990,11 +991,11 @@ thrall card (the log alone says it rose, took a blow, crumbled), a rage
 chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
-the knight's standing looks too — only a look marked `sprite: true`
-(`heroes.js lookIsSprite`, the knight's crouch) draws `cards.json
-player.art`, the file the Art Lab's import writes, as the wide sprite,
-and its card drops `.hero-standing`; the preload fetches that sprite
-with the essentials) and the card is named after the class — the name ABOVE the
+the knight's standing looks too; 0.00291: his crouch as well — a look
+marked `sprite: true` (`heroes.js lookIsSprite`) draws its own figure
+and only keeps the wide placement, its card without `.hero-standing`;
+the old photoreal `cards.json player.art` it used to draw is gone from
+the game) and the card is named after the class — the name ABOVE the
 card (`.hero-title`, 0.00251, the developer's layout), the gear as two
 columns at the card's top (`.gear-block`: names left, LV / damage /
 armor right) and a standing hero a full card tall behind them

@@ -45,9 +45,9 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
 {
   fresh();
   const knight = heroById('knight'), crouch = knight.looks.findIndex((l) => l.sprite);
-  ok('the knight\'s card draws his standing look (an unchosen save is the knight\'s too); only his crouching look keeps cards.json player.art (0.00264)', portraitUrl('player') === lookUrl(knight, 0)
+  ok('the knight\'s card draws his chosen look (an unchosen save is the knight\'s too) — his crouch too, its own figure, never cards.json player.art (0.00291)', portraitUrl('player') === lookUrl(knight, 0)
     && (getProfile().hero = { id: 'knight', look: 2 }, portraitUrl('player') === lookUrl(knight, 2))
-    && crouch === 4 && (getProfile().hero = { id: 'knight', look: crouch }, portraitUrl('player') === `assets/chars/${DATA.cards.player.art}`));
+    && crouch === 4 && (getProfile().hero = { id: 'knight', look: crouch }, portraitUrl('player') === lookUrl(knight, crouch)));
   {
     const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
     const { createRun } = await import('../../src/run/runState.js');

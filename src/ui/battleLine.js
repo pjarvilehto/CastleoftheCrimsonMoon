@@ -15,7 +15,6 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { PORTRAIT_DIR, portraitFile } from '../shared/portraits.js'; // (the knight's wide sprite, for the run's look — heroArt)
 import { heroById, lookUrl, lookIsSprite } from '../shared/heroes.js';
 import { usesCharges } from '../run/classes.js';
 import { potionHealFor } from '../meta/leveling.js';
@@ -35,12 +34,9 @@ export const IDLE_FAMILY = {
 // The hero's figure for the run's class and look (run.hero, 0.00283 — the
 // combat UI reads the class from the run, never the profile; shared/portraits.js
 // portraitUrl('player') is the hall's, off the profile): the look's file in
-// assets/heroes/, or cards.json player.art for a look marked `sprite` (the
-// knight's crouch, 0.00264).
-export function heroArt(hero) {
-  const h = heroById(hero.id);
-  return lookIsSprite(h, hero.look) ? `${PORTRAIT_DIR}/${portraitFile('player')}` : lookUrl(h, hero.look);
-}
+// assets/heroes/, every look's (0.00291: the knight's crouch too — it used to
+// draw the old photoreal cards.json player.art; `sprite` now only places it).
+export const heroArt = (hero) => lookUrl(heroById(hero.id), hero.look);
 
 // A portrait (`src`) with its idle loop, started at a random phase so a room
 // of identical skeletons doesn't breathe in unison.

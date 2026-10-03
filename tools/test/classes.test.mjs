@@ -278,9 +278,9 @@ const types = (evs) => evs.map((e) => e.type);
   const frame = u.card.all((n) => n.className === 'card-frame')[0];
   ok('the hero title, the heavy button, the plate\'s theme and the figure follow run.hero (the Wizard\'s third look), the STATS row too', title === 'THE WIZARD' && label.startsWith('Fireball') && frame.attrs.style === `--theme:${heroById('wizard').theme.plate}`
     && u.portrait.attrs.src === lookUrl(heroById('wizard'), 2) && u.art === lookUrl(heroById('wizard'), 2) && u.card.all((n) => (n.className ?? '').startsWith('back-row')).some((r) => r.textContent.startsWith('Fireball')) && u.card.classList.contains('hero-standing'));
-  ok('heroArt: a look\'s file, the knight\'s crouch the wide sprite from cards.json', heroArt({ id: 'necromancer', look: 1 }) === lookUrl(heroById('necromancer'), 1) && heroArt({ id: 'knight', look: heroById('knight').looks.findIndex((l) => l.sprite) }) === `assets/chars/${DATA.cards.player.art}`);
+  ok('heroArt: every look\'s own file, the knight\'s crouch too (0.00291: never the old cards.json player.art)', heroArt({ id: 'necromancer', look: 1 }) === lookUrl(heroById('necromancer'), 1) && heroArt({ id: 'knight', look: heroById('knight').looks.findIndex((l) => l.sprite) }) === lookUrl(heroById('knight'), 4));
   const sprite = createPlayerUnit({ ...run, hero: heroSnapshot({ hero: { id: 'knight', look: 4 } }) }, { onHeavy() {}, onPotion() {} });
-  ok('…and the card drops hero-standing for the sprite', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === `assets/chars/${DATA.cards.player.art}`);
+  ok('…and the card keeps the crouch\'s wide placement (no hero-standing), drawing the look\'s figure', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === lookUrl(heroById('knight'), 4));
   ok('cardStyle(\'player\') takes the run\'s theme; without one the profile\'s class (the hall, the labs)', cardStyle('player', false, heroById('barbarian').theme).look === 'embers' && cardStyle('player').look === 'ether' && cardStyle('rat', false, heroById('barbarian').theme).look === 'blood');
   ok('battleLine reads no class from the profile any more', !/heroOf\(|heavyName\(|cleanHero\(/.test(readFileSync('src/ui/battleLine.js', 'utf8')) && !readFileSync('src/ui/combatQueue.js', 'utf8').includes('getProfile'));
   getProfile().hero = null;
