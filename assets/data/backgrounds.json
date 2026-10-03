@@ -236,14 +236,14 @@
     "lights": {
       "enabled": true,
       "dist": 0.8,
-      "radius": 0.45,
+      "radius": 0.6,
       "crit": {
         "color": [
           1.0,
           0.72,
           0.35
         ],
-        "strength": 1.0,
+        "strength": 1.5,
         "fade": 0.3,
         "life": 1.2
       },
@@ -253,7 +253,7 @@
           0.6,
           0.25
         ],
-        "strength": 1.8,
+        "strength": 2.7,
         "fade": 0.45,
         "life": 1.6
       },
@@ -263,7 +263,7 @@
           0.35,
           0.15
         ],
-        "strength": 2.4,
+        "strength": 3.6,
         "fade": 0.6,
         "life": 2.0
       },
@@ -273,7 +273,7 @@
           1.0,
           0.5
         ],
-        "strength": 0.9,
+        "strength": 1.35,
         "fade": 0.55,
         "life": 2.0
       },
@@ -283,7 +283,7 @@
           0.88,
           0.55
         ],
-        "strength": 1.6,
+        "strength": 2.4,
         "fade": 0.8,
         "life": 2.8
       },

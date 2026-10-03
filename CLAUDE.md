@@ -34,6 +34,15 @@ before structural changes. This file is the rules and the per-system notes.
   - **Fog Lab (0.164):** `labs/fog/` — the game's real 3D renderer on every
     painting with every fog knob as a live slider, presets, the flash lights
     on demand, and COPY JSON for a `parallax` patch (see "3D backgrounds").
+    0.00312: FLASH LIGHTS — a button per flash (crit, mega, OVERKILL,
+    potion, revive) fired where the game puts it (`lab.js STANDINS`: the
+    struck foe's card, the hero's, the row), dark card stand-ins over the
+    painting (the cards hide the light's middle in the game; a checkbox),
+    the shared Reach / Distance / Rise and each kind's strength, fade and
+    life as sliders, `lights` in COPY JSON; and the mist's four tint
+    sliders now start from the shipped tints (`untint`; they started at
+    neutral, so the lab drew untinted mist and COPY JSON undid them —
+    Reset to shipped clears a browser's old saved neutral ones).
   - **VO Lab:** `labs/vo/` — (booted through `labs/boot.js` like the
     others since 0.00197) every narrator take with its text, when it
     plays and how often; Play / Approve / Disapprove (+ volatility and shouty
@@ -615,7 +624,7 @@ later `initBg3d` starts clean. Keep per-pixel shader work minimal;
 slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
-revive): `bgLight(kind, rect)`, settings in `parallax.lights`. Big-hit sway:
+revive): `bgLight(kind, rect)`, settings in `parallax.lights`. 0.00312 (the developer found them faint in combat — the cards, grown since 0.100, cover the light's middle): every kind's strength x1.5 and the reach 0.45 → 0.6; tuned in the Fog Lab. Big-hit sway:
 `swayDeg` / `swayHitShare`.
 
 #### The mist's own motion and light (0.164, tuned in the Fog Lab)

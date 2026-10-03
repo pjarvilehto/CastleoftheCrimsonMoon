@@ -64,6 +64,8 @@ textarea { width: 100%; box-sizing: border-box; background: #0a0705; color: var(
 .ideas .done { color: var(--muted); }
 .ideas .done b { color: var(--gold); }
 #status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+.standin { position: fixed; z-index: 2; box-sizing: border-box; border: 1px dashed rgba(201, 162, 39, 0.55); border-radius: 10px; background: rgba(8, 5, 4, 0.85); color: var(--muted); font-family: var(--display); letter-spacing: 0.14em; text-transform: uppercase; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; pointer-events: none; }
+.standin[hidden] { display: none; }
 </style>
 </head>
 <body>
