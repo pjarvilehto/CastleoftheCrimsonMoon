@@ -1,4 +1,8 @@
 {
+  "0.00242": [
+    "Background Lab (labs/backgrounds/): the new room paintings through their stages — drafts, approved, in the game — each room's candidates as tiles to approve, reject with a note or regenerate with notes, a fight at the game's size over the shown one, a compare beside a game painting; COPY JSON for the generator",
+    "gen-bg.mjs: Seedream 4 is the default; --rerender takes the lab's verdicts and paints the re-rolls (fresh, or from a candidate with a direction), --prune, --import by room; four of the guide's own rooms painted (The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned Throne)"
+  ],
   "0.00241": [
     "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
   ],

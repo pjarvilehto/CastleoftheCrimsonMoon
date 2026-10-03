@@ -40,9 +40,29 @@ fresh();
     && BG.promptFor(rdoc, rdoc.rooms[0], 'more chains').includes('more chains') && BG.promptFor(rdoc, rdoc.rooms[0]).endsWith(`, ${BG.MOOD}, ${rdoc.style}`) && BG.promptFor(rdoc, { ...rdoc.rooms[0], kind: 'arena' }).includes(BG.ARENA) && !BG.promptFor(rdoc, rdoc.rooms[0]).includes('first image') && BG.promptFor(rdoc, rdoc.rooms[0], '', ['a.jpg', 'b.jpg']).startsWith('In exactly the style of the first image')
     && BG.refsFor(rdoc.rooms[0]) === null && BG.refsFor(rdoc.rooms[0], true) === BG.REFS[rdoc.rooms[0].hue] && BG.refsFor(rdoc.rooms[0], 'a.jpg,b.jpg').join() === 'a.jpg,b.jpg');
   ok('gen-bg: every bake-off model is a two-picture editor in MODELS, the default is Nano Banana Pro at 16:9, GPT Image paints 3:2 for it, and the game\'s painting is 2048x1152 q86',
-    BG.BAKEOFF.every((m) => BG.modelDef(m) && !BG.modelDef(m).weights && !['pro', 'max'].includes(m)) && BG.TEXT_MODELS.flux11.build({ prompt: 'p', aspect: '16:9' }).aspect_ratio === '16:9' && BG.DEFAULTS.model === 'bananapro' && BG.DEFAULTS.aspect === '16:9'
+    BG.BAKEOFF.every((m) => BG.modelDef(m) && !BG.modelDef(m).weights && !['pro', 'max'].includes(m)) && BG.TEXT_MODELS.flux11.build({ prompt: 'p', aspect: '16:9' }).aspect_ratio === '16:9' && BG.DEFAULTS.model === 'seedream' && BG.DEFAULTS.aspect === '16:9'
     && MODELS.gpt.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '3:2' && MODELS.bananapro.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '16:9'
     && BG.GAME.w === 2048 && BG.GAME.h === 1152 && BG.GAME.quality === 86);
+  // the stages (0.00241): the Background Lab's JSON into the registry (pure), a re-roll from a candidate, the lab's page and script
+  {
+    const reg = { rooms: { r: { name: 'R', candidates: [{ n: 1, file: 'a.jpg', verdict: 'no', note: 'old' }, { n: 2, file: 'b.jpg' }, { n: 3, file: 'c.jpg' }] } } };
+    const v = BG.applyVerdicts(reg, { approved: [{ id: 'r', file: 'a.jpg' }], rejected: [{ id: 'r', file: 'b.jpg', note: 'too bright' }, { id: 'r', file: 'c.jpg' }], reroll: [] });
+    const c = reg.rooms.r.candidates;
+    ok('gen-bg --rerender: an approval clears the old note, a rejection keeps its note (or none), an unknown file is ignored',
+      v.approved === 1 && v.rejected === 2 && c[0].verdict === 'ok' && !('note' in c[0]) && c[1].verdict === 'no' && c[1].note === 'too bright' && c[2].verdict === 'no' && !('note' in c[2])
+      && BG.applyVerdicts(reg, { approved: [{ id: 'r', file: 'zzz.jpg' }] }).approved === 1 && c.every((k) => k.file !== 'zzz.jpg'));
+    const rp = BG.basedOnPrompt(rdoc, rdoc.rooms[0], 'darker');
+    ok('gen-bg: Regenerate with notes attaches the candidate and keeps the room\'s own prompt after the direction; --prune and --import by room are there; Seedream is the default',
+      rp.startsWith('The first image is a painting of this room: keep its composition, palette and style and paint it again, darker. ') && rp.endsWith(rdoc.style)
+      && BG.DEFAULTS.model === 'seedream' && BG.DEFAULTS.n === 2
+      && readFileSync('tools/gen-bg.mjs', 'utf8').includes("has('--prune')") && readFileSync('tools/gen-bg.mjs', 'utf8').includes("has('--rerender')") && readFileSync('tools/gen-bg.mjs', 'utf8').includes("reverse().find((k) => k.verdict === 'ok')"));
+    const lab = readFileSync('labs/backgrounds/index.html', 'utf8'), js = readFileSync('labs/backgrounds/lab.js', 'utf8');
+    ok('the Background Lab: booted and versioned like the others, the three views, the verdict JSON for gen-bg --rerender, the game\'s units in the fight view',
+      lab.includes('<base href="../../">') && lab.includes('name="robots" content="noindex"') && lab.includes('data-lab="labs/backgrounds/lab.js"') && lab.includes('data-versioned')
+      && js.includes("rooms-art.json${buildQuery()}") && js.includes("download: 'rooms-rerender.json'") && js.includes("out.approved.push({ id, file: k.file })") && js.includes("out.reroll.push({ id: q.id, basedOn: q.basedOn")
+      && ['room', 'compare', 'fight'].every((v) => js.includes(`['${v}', `)) && js.includes('createEnemyUnit(') && js.includes('createPlayerUnit(')
+      && readFileSync('labs/index.html', 'utf8').includes('href="backgrounds/" data-lab="backgrounds"'));
+  }
   if (existsSync('assets/data/rooms-art.json')) {
     const reg = JSON.parse(readFileSync('assets/data/rooms-art.json', 'utf8'));
     const all = Object.values(reg.rooms).flatMap((e) => e.candidates);

@@ -1,5 +1,5 @@
 {
-  "version": "0.00241",
+  "version": "0.00242",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00242": [
+      "Background Lab (labs/backgrounds/): the new room paintings through their stages — drafts, approved, in the game — each room's candidates as tiles to approve, reject with a note or regenerate with notes, a fight at the game's size over the shown one, a compare beside a game painting; COPY JSON for the generator",
+      "gen-bg.mjs: Seedream 4 is the default; --rerender takes the lab's verdicts and paints the re-rolls (fresh, or from a candidate with a direction), --prune, --import by room; four of the guide's own rooms painted (The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned Throne)"
+    ],
     "0.00241": [
       "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
     ],
@@ -136,10 +140,6 @@
     ],
     "0.00228": [
       "Benchmark round: 0.00228 — 0.00227's note named 0.00226, another build that landed first; a benchmark from 0.00227 does not count, please run it once more on this build."
-    ],
-    "0.00227": [
-      "Card light: every card now draws its glow on a canvas of its own, handed from room to room, instead of copying each card's picture out of one hidden canvas every frame (the iPhone spent 13 ms a tick on that at rest).",
-      "A new benchmark round (0.00226): please run the benchmark again on each device — the Great Hall asks once past room 6, the ?debug BENCHMARK button any time."
     ]
   }
 }
