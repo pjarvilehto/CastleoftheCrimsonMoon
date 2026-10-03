@@ -90,16 +90,11 @@ before structural changes. This file is the rules and the per-system notes.
     pinch; CLEAR fakes progress; COPY JSON gives the data and tuning back.
     Nothing touches the save; the design it prototypes is in the Backlog.
   - **Hero Lab (0.00247):** `labs/heroes/` — the CHOOSE YOUR HERO screen
-    as a draft: five character classes (the Curious Knight and the developer's
-    Barbarian, Wizard, Necromancer and Druid sheets, `assets/style/heroes/`,
-    cut out of the grey by `tools/cutout.mjs` into the lab's folder, each
-    figure sized by its sheet box so the five stay in scale) over any
-    painting, two layouts (LINE-UP: five tall cards on the enemy frame,
-    the chosen one lifted with a breathing gold rim, its lines and BEGIN
-    under them; SHOWCASE: the chosen hero large beside the lines, the
-    five as a strip), an optional 3D fan, 1-5 / arrows / Space. `lab.js
-    HEROES` is the shape of a future `heroes.json`; names, lines and
-    traits are placeholders, the choice is cosmetic for now.
+    over any painting, drawn from the game's own data and stylesheet since
+    it shipped (0.00248, see "Heroes" below): the game's LINE-UP, or the
+    SHOWCASE alternative (the chosen hero large beside the lines, the
+    heroes as a strip); 1-7 / arrows / Space, COPY JSON gives the picks
+    back.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the developer from
   Kimi version cards — not maintained here.
 
@@ -120,6 +115,7 @@ node tools/gen-art.mjs [--only rat] [--model banana]   # redraw portraits on Rep
 node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-prompts.md (Seedream 4); --rerender / --prune / --import are the stages
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
+node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
 ```
 
 ## The rules that matter
@@ -152,7 +148,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
    keeps the desktop values, `?desktop` too) and every phone key is listed
    in `dataCheck.js` like any other.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
-   now 4): bump it and append a step to `MIGRATIONS` — never edit a shipped
+   now 5 — 0.00248 added `hero`): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
    After the steps `migrateProfile` makes an imported code whole (0.00197;
    0.00223 says exactly what): the gear slots checked against items.json
@@ -629,6 +625,55 @@ interiors — the title's and the death's exteriors stay out — into
 `ROOM_CAPTION` + the room's name; trained in 0.00237, 16 min; the
 destination model is made on first use) draws a room from its line
 alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
+
+**Heroes (0.00248, the developer's call and layout).** Character classes:
+`assets/data/heroes.json` lists them (`default` the knight; per hero id,
+name, epithet, lore, traits — placeholders of mine for the lines — and
+`looks`, one per sheet: `art` the figure in `assets/heroes/`, `fh` its
+share of the sheet's height so the heroes read in scale with one another),
+read through `shared/heroes.js` (`heroList`, `heroById`, `cleanHero`,
+`heroOf`, `lookUrl`, `lookOf`, the preload lists). Seven so far: the
+Curious Knight (one look, the chat's sheet) and the developer's Barbarian
+(5), Wizard (8), Necromancer (8), Druid (5), Hexhunter (4) and Plague
+Sister (4), 35 figures. **The art:** the developer uploads 1024x1536 sheets
+on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
+tools/cut-heroes.mjs --import .` converts them to
+`assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
+keys every sheet out of its grey by `tools/cutout.mjs` (no shadow pass:
+the sheets carry none) into `assets/heroes/<id>_<look>.webp` trimmed to
+the figure, never overwriting (rule 7), and prints the `looks` lines for
+heroes.json; then `git rm` the PNGs (they stay in history). The
+cut-outs were reviewed on contact sheets: the light specks on the
+Hexhunter's crossbow and the Druid's staff are highlights in the art.
+**The screen** (`ui/scenes/heroScene.js`, `styles.css` section 6b, the
+phone's twins in 16): the title's Enter the Castle leads here every
+visit (a new player is asked their name first), over the Great Hall's
+own painting, so PROCEED fades this screen's pieces out and the hall's
+in with the painting never changing. The heroes' cards in a row on the
+enemy frame (`--hero-h` 48vh or what `--n` cards fit in 90vw; a figure's
+height is its `fh` of the card), the chosen one lifted with a breathing
+gold rim (opacity), the look switcher under it (‹ › = the arrow keys,
+which reach keyed buttons since 0.00248, `hotkeys.js`; a hero with one
+look hides it, `.single`; each hero remembers its look while the player
+compares), a bar with the hero's lines and PROCEED (Space, `P`); 1-7 and
+a click choose (the number badge is the card's keyed button). **The
+pick** lands on the profile on PROCEED only — `hero: { id, look }`, save
+version 5 (`migrations.js`: a v4 save gains the knight; `cleanHero`
+makes an imported code whole: an unknown class or look is the knight's
+first); a progress wipe starts fresh (the knight). **What it changes:**
+the knight's card in combat and the hall's knight card draw the chosen
+hero's figure (`shared/portraits.js portraitUrl('player')`; the default
+hero keeps `cards.json player.art`, the file the Art Lab's import
+writes) and the card is named after the class; the numbers are the same
+for every class — the gameplay side is the developer's next call. The
+preloader fetches the figures the screen opens on (every hero's first
+look and the profile's own) first among the Descend essentials, the
+other looks after them and before the rooms (`preload.js
+heroLaterUrls`). `tools/layout-check.mjs` visits the screen at the five
+sizes (seven cards inside the window, the title inside it and the chosen
+figure clear of it, the switcher clear of the bar, Proceed on screen) and
+runs the hall and the dungeon as the Necromancer, so a standing figure
+on the cards is looked at; the knight's wide sprite is the easy case.
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
@@ -1222,7 +1267,8 @@ sometimes — fetch all branches to find it.
   design — a padded maskable variant would be the developer's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
-  `assets/chars/candidates` (12.6MB) and `assets/style` (9MB) are
+  `assets/chars/candidates` (12.6MB) and `assets/style` (16MB with the
+  hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
@@ -1233,7 +1279,11 @@ sometimes — fetch all branches to find it.
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the developer's (quota per key).
-- Game: merchant room (endgame coin sink) · more bosses (only the Vampire
+- Game: the classes' gameplay (0.00248 made the choice cosmetic: a class
+  could carry its own base stats, starting gear, a signature move — the
+  knight's heavy blow, the necromancer's thralls — and the Art Lab's
+  photoreal redraw path for its card) · a knight sheet in the standing
+  pose and his own looks · merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak

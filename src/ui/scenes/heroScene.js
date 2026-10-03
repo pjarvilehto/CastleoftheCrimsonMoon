@@ -2,11 +2,11 @@
 // layout from the Hero Lab's second draft): between the title's Enter the
 // Castle and the Great Hall, over the hall's own painting, so PROCEED fades
 // this screen's pieces out and the hall's in with the painting never
-// changing. Five cards in a row (heroes.json, shared/heroes.js) on the
-// enemy frame, the chosen one lifted with a breathing gold rim; under it
-// the look switcher (‹ › = the arrow keys, four looks per hero — the same
-// bitmap until the developer's variations land); a bar with the hero's
-// lines and PROCEED (Space). 1-5 and a click choose. The pick lands on the
+// changing. The heroes' cards in a row (heroes.json, shared/heroes.js) on
+// the enemy frame, the chosen one lifted with a breathing gold rim; under
+// it the look switcher (‹ › = the arrow keys; a hero's looks are its
+// sheets, one to eight so far — a hero with one look hides it); a bar with
+// the hero's lines and PROCEED (Space). 1-7 and a click choose. The pick lands on the
 // profile (hero: { id, look }) on PROCEED only; the knight's card and the
 // hall draw it from then on (shared/portraits.js). The choice is cosmetic.
 
@@ -14,7 +14,7 @@ import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile, persist } from '../../meta/profile.js';
-import { heroList, heroById, cleanHero, lookUrl } from '../../shared/heroes.js';
+import { heroList, heroById, cleanHero, lookUrl, lookOf } from '../../shared/heroes.js';
 import { play } from '../../audio/music.js';
 
 export function heroScene() {
@@ -35,10 +35,10 @@ export function heroScene() {
 
     const cards = {};
     const figures = {};
-    const row = el('div', { class: 'hero-row' }, ...heroes.map((h, i) => {
-      const figure = el('img', { class: 'figure', src: lookUrl(h, looks[h.id]), alt: h.name, draggable: 'false' });
+    const row = el('div', { class: 'hero-row', style: `--n:${heroes.length}` }, ...heroes.map((h, i) => {
+      const figure = el('img', { class: 'figure', src: lookUrl(h, looks[h.id]), style: `--fh:${lookOf(h, looks[h.id]).fh}`, alt: h.name, draggable: 'false' });
       figures[h.id] = figure;
-      const card = el('div', { class: 'hero', 'data-hero': h.id, style: `--fh:${h.fh}`, onclick: () => choose(h.id) },
+      const card = el('div', { class: 'hero', 'data-hero': h.id, onclick: () => choose(h.id) },
         el('div', { class: 'plate' }), el('div', { class: 'rim' }),
         figure,
         el('button', { class: 'num', key: String(i + 1), onclick: (e) => { e?.stopPropagation?.(); choose(h.id); } }, String(i + 1)),
@@ -66,6 +66,7 @@ export function heroScene() {
       const h = heroById(chosen), n = h.looks.length;
       looks[chosen] = (looks[chosen] + d + n) % n;
       figures[chosen].setAttribute('src', lookUrl(h, looks[chosen]));
+      figures[chosen].setAttribute('style', `--fh:${lookOf(h, looks[chosen]).fh}`);
       update();
     }
     function proceed() {

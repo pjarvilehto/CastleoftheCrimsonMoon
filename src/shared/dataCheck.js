@@ -94,8 +94,7 @@ export function checkData(data) {
   if (!heroes.length) out.push('heroes.json: heroes (a list)');
   for (const h of heroes) {
     if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
-    if (!isNum(h?.fh) || h.fh <= 0 || h.fh > 1) out.push(`heroes.json: ${h?.id}.fh (the figure's share of its sheet, 0-1)`);
-    if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((f) => typeof f === 'string' && f)) out.push(`heroes.json: ${h?.id}.looks (the figure files in assets/heroes/, one per look)`);
+    if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((l) => typeof l?.art === 'string' && l.art && isNum(l.fh) && l.fh > 0 && l.fh <= 1)) out.push(`heroes.json: ${h?.id}.looks (one per look: art, the figure file in assets/heroes/, and fh, its share of the sheet's height, 0-1)`);
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
   }
   if (heroes.length && !heroes.some((h) => h.id === data.heroes.default)) out.push(`heroes.json: default (${data.heroes?.default}) is not a hero`);
