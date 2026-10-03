@@ -725,8 +725,9 @@ classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
 tools/simulate.mjs --hero <id>` plays a class; the second tuning round
 (4 campaigns x 40 runs, the knight at median 15.8 / room-24 boss 6%):
 Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
-16.0 / 4% (rooms in 2 turns, bosses hurt), Necromancer 16.0 / 5%,
-Hexhunter 15.3 / 0%. **What it changes:**
+16.0 / 0% (the developer's call: less glass, less cannon — HP 0.9, armor
+0.7, damage 1.05, the fireball 0.9; rooms in under 3 turns, bosses
+still hurt), Necromancer 16.0 / 5%, Hexhunter 15.3 / 0%. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import
