@@ -1,5 +1,5 @@
 {
-  "version": "0.00293",
+  "version": "0.00294",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -99,6 +99,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00294": [
+      "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
+    ],
     "0.00293": [
       "Immunities: the undead and the vermin can shrug off Last Rites' blight and the fire-born the Wizard's Fireball — 'Immune!' instead; the Wizard and the Plague Sister hit a little harder to make up for it"
     ],
@@ -143,9 +146,6 @@
     "0.00280": [
       "New music: the title and the Great Hall, and every fight, play new orchestral scores (picked in the Music Lab), looped where the music meets itself and crossfaded so the loop is hard to hear.",
       "The Music Lab has two takes each for the boss, the shrine and the run's end to choose from."
-    ],
-    "0.00279": [
-      "The Old Wizard's crit lines, second pass: six re-recorded steadier after the owner's review"
     ]
   }
 }
