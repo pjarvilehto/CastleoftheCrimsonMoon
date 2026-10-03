@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, withAnimations, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -696,4 +696,24 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   dlg4.all((n) => n.tagName === 'textarea')[0].value = code;
   ok('Import Save: Space loads a good code (Load Save is the way on)', handleKey(' ') === true && !anyDialogOpen() && getProfile().coins === 4242);
   closeAllDialogs(); fresh();
+}
+
+// A purchase makes the attribute it raised glow (0.00233): Power rolls Attack
+// up with the pulse, Coins / XP (what was spent) and the untouched boxes stay put.
+{
+  fresh();
+  await withAnimations(async () => {
+    const p = getProfile(); p.name = 'Glow'; p.xp = 1e6; p.coins = 0;
+    const scene = hubScene(); scene.enter(registry.app);
+    const box = (label) => registry.app.all((n) => /\bstat-box\b/.test(n.className ?? '') && n.children[0]?.textContent === label)[0]?.children[1];
+    const before = Number(box('Attack').textContent);
+    registry.app.all((n) => n.tagName === 'button' && /^Train/.test(n.textContent))[0].listeners.click[0](); // Power
+    const atk = box('Attack'), hp = box('HP'), xp = box('XP');
+    ok('training Power: Attack glows', atk.animations?.length === 1 && !hp.animations && !xp.animations);
+    await sleep(1000);
+    ok('…and rolls up to its new value', Number(atk.textContent) === before + DATA.difficulty.player.dmgPerPower, `${before} → ${atk.textContent}`);
+    scene.enter(registry.app); // re-entering the hall is not a purchase
+    ok('entering the hall glows nothing', !box('Attack').animations);
+  });
+  fresh();
 }

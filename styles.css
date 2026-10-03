@@ -409,7 +409,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hub-wrap h2 { margin: 10px 0 6px; }
 .hub-wrap .item-row { padding: 6px 12px; margin: 4px 0; font-size: 0.95rem; gap: 12px; }
 .hub-wrap .item-row button { padding: 8px 14px; font-size: 1rem; flex-shrink: 0; }
-/* a row's text (0.00231, the owner's ask): the title — the name and its level or count — reads first; what it does sits under it, small and muted */
+/* a row's text (0.00232, the owner's ask): the title — the name and its level or count — reads first; what it does sits under it, small and muted */
 .row-text { min-width: 0; }
 .row-title { font-size: 1.12em; letter-spacing: 0.04em; line-height: 1.15; }
 .row-lv { color: var(--gold); margin-left: 0.45em; }
