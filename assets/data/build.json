@@ -1,5 +1,5 @@
 {
-  "version": "0.00270",
+  "version": "0.00271",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00271": [
+      "The Druid's heavy is now Entangle: roots burst from the ground at every foe's feet and bind them for two turns; a bound foe that tries to attack may strain against the roots and lose its blow (Entangled!). Go Feral is gone (potions are never blocked). Tuned in the simulator to sit beside the Knight.",
+      "Every class's attack, heavy and get-hit sounds are real recordings now, made for each class: the Knight's sword, the Barbarian's axe and roar, the Wizard's staff and fireball, the Necromancer's knife and soul-drain, the Druid's staff and roots, the Hexhunter's crossbow and hex, the Plague Sister's censer and rites, and each one's own cry when struck.",
+      "Every foe has its own voice too: its attack as it strikes you and its cry as you strike it — the rat's squeak, the skeleton's clatter, the wraith's wail, the golem's clang, the vampire lord's hiss and the rest."
+    ],
     "0.00270": [
       "Every class sounds its own: the blows, the heavy and a blow taken are pitched per class (the Barbarian low and heavy, the Wizard and the two women higher) with each class's own voice under them — a wide swing for Cleave, a fireball's roar and crackle, the Necromancer's grave wail, the Druid's claws and growl, the Hexhunter's crossbow click and hex chime, the Plague Sister's censer chain and smoke hiss — and a grunt in the hero's own voice when struck. The hex chimes, the blight hisses, Go Feral growls, a charge back zaps, the thrall wails as it rises and thuds as it takes a blow."
     ],
@@ -141,10 +146,6 @@
     ],
     "0.00257": [
       "The light behind the cards in combat is drawn at 60 frames a second on desktops (it was 30, a cap from before each card had its own canvas); phones keep 20."
-    ],
-    "0.00256": [
-      "Combat: tap or click your hero's card to turn it over — its back lists your stats for this run (health, attack, armor, crit, lifesteal, the heavy blow, potions); tap again to turn it back.",
-      "Debug menu: BENCHMARK works in a run too — it ends the run as a retreat (everything found kept), then runs the benchmark."
     ]
   }
 }
