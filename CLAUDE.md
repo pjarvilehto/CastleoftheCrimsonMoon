@@ -289,7 +289,17 @@ gives +2 damage / +72 HP / +8 armor (was 3 / 90 / 10) for a base cost of
 13 XP (was 15). The simulator, 12 campaigns: the first run reaches room
 3-4 (was 2), rooms 1-5 cost under 10% of max HP from about run 12-13
 (was about run 11), room 24 first reached at run ~33 (was ~31), its boss
-beaten at ~41 (was ~39). Tried and turned down by the owner: early rooms
+beaten at ~41 (was ~39). **Lifesteal by tier (0.00245, the owner's call — the game felt very
+hard until lifesteal, then easy until the end wall):** it heals a share of
+the whole rolled blow and stacks across slots, and two TIER-2 items carried
+most of it (Vampiric Ring 100%, Amulet of the Leech 80% — 200% by run 10,
+each stretch of rooms flipping from ~55% of max HP a fight to free in ~8
+runs). Now tier 2 is ~30% of that (0.3 / 0.25), tier 3 ~60% (0.35-0.7),
+tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
+24, free rooms a run or two later. Measured and set aside: lifesteal
+halved everywhere (gentler, room 24 four runs later), healing only off
+damage dealt (no change), a per-fight heal cap (the deep game stalls),
+slower enemy damage growth (undoes the smoothing). Tried and turned down by the owner: early rooms
 that grow with the best room ("the castle remembers"), and starting a run
 at a beaten boss's next stretch (waypoints — it also slowed room 24 to
 run ~44). HP scale (0.093): player HP, enemy damage, armor, potion
@@ -1208,7 +1218,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: the SETTINGS menu's and the thorns fix's comments (cornerToggles.js, debugToggles.js, main.js, styles.css, combat.js) say 0.00242 for 0.00243 — fix with the next build · `go()` is silently dropped during a transition (queue it)
+- Engineering: `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)
