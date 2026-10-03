@@ -18,7 +18,7 @@
 //                                                       # ({ id, model, n, hint, image })
 //   node tools/gen-score.mjs --measure                  # (re)measure the shipped beds' loudness for the lab
 //   node tools/gen-score.mjs --import combat_c2 [--start 21-25] [--end 70-86] [--tail 3] [--dry-run]
-//                                                       # a take into the game (0.00277): the loop seam found
+//                                                       # a take into the game (0.00280): the loop seam found
 //                                                       # (tools/music-seam.mjs: the START and END that sound most
 //                                                       # alike, before the piece's fade; --start / --end pin the
 //                                                       # ranges in seconds), cut from START to END + the tail at

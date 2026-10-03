@@ -104,7 +104,7 @@ const result = await page.evaluate(async () => {
     const rms = (a, s) => { let x = 0; for (let k = s; k < s + w; k++) x += a[k] * a[k]; return Math.sqrt(x / w); };
     const plain = (s) => { let x = 0; for (let k = s; k < s + w; k++) { const v = ref(k); x += v * v; } return Math.sqrt(x / w); };
     for (let s = loop - Math.round(0.5 * SR); s < loop + Math.round((t.tailS + 0.5) * SR); s += w) jump = Math.max(jump, Math.abs(db(rms(L, s)) - db(plain(s))));
-    // A generated bed (0.00277, crossfade 'power') crossfades its own
+    // A generated bed (0.00280, crossfade 'power') crossfades its own
     // continuation into its start: different music, so "restart = plain
     // continuation" does not apply. Its seam is judged by level instead:
     // the quietest 0.5 s inside the crossfade against the quieter of the

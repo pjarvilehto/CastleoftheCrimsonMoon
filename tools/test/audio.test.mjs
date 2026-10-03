@@ -403,7 +403,7 @@ fresh();
   ok('...fading in to its level trim', fadeIns.length >= 1);
   const curves = ctx.nodes.flatMap((n) => (n.gain?.events ?? []).filter((e) => e[0] === 'curve' && e[3] === T.tailS));
   const mid = (c) => c[1][Math.floor(c[1].length / 2)];
-  const shape = T.crossfade === 'power' ? (c) => Math.abs(mid(c) - Math.SQRT1_2) < 0.05 : (c) => Math.abs(mid(c) - 0.5) < 0.05; // (0.00277: a generated bed's continuation sums by power, an exact loop's identical audio by gain)
+  const shape = T.crossfade === 'power' ? (c) => Math.abs(mid(c) - Math.SQRT1_2) < 0.05 : (c) => Math.abs(mid(c) - 0.5) < 0.05; // (0.00280: a generated bed's continuation sums by power, an exact loop's identical audio by gain)
   ok(`...crossfading over its tail, ${T.crossfade === 'power' ? 'equal power (a generated bed)' : 'equal gain'}`, curves.some((e) => e[1][0] === 0 && e[1].at(-1) === 1 && shape(e)) && curves.some((e) => e[1][0] === 1 && e[1].at(-1) === 0 && shape(e)));
   const { fadeCurve } = await import('../../src/audio/audioMath.js');
   ok('the crossfade curves: equal gain sums to 1, equal power squares to 1, both exactly 0 and 1 at the ends', [false, true].every((p) => { const i = fadeCurve(32, false, p), o = fadeCurve(32, true, p); return i[0] === 0 && i[31] === 1 && o[0] === 1 && o[31] === 0 && i.every((v, k) => Math.abs((p ? v * v + o[k] * o[k] : v + o[k]) - 1) < 1e-6); }));
@@ -483,7 +483,7 @@ fresh();
     && readFileSync('labs/index.html', 'utf8').includes('href="music/" data-lab="music"') && js.includes('createMediaElementSource') && js.includes('TARGET_LUFS - t.lufs') && js.includes("download: 'music-rerender.json'"));
 }
 
-// 0.00277: a take into the game (gen-score.mjs --import). The seam finder
+// 0.00280: a take into the game (gen-score.mjs --import). The seam finder
 // (tools/music-seam.mjs) finds where a piece repeats; the search stops short
 // of the piece's fade; the new bed plays at the old bed's level; audio.json
 // keeps its layout; the imported beds crossfade by power.

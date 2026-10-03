@@ -1,4 +1,4 @@
-// The loop seam of a generated score (0.00277, the music thread). A bed in
+// The loop seam of a generated score (0.00280, the music thread). A bed in
 // the game is a loop of loopS seconds plus tailS more (src/audio/musicLoop.js:
 // the next copy starts at loopS and the two crossfade over tailS). A
 // generated piece has a beginning and an ending, so the import looks for the

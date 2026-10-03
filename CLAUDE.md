@@ -1079,7 +1079,7 @@ lands `peakAtMs` (2 s, the middle) into every transition, varied a little
 each play (its `variation` entry + `jitterDb`). Music: five
 generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 --suffix vN`, new suffix = new files; title and combat are ElevenLabs
-scores since 0.00277 — "Generated scores" below), each an exact loop with its first
+scores since 0.00280 — "Generated scores" below), each an exact loop with its first
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
@@ -1101,8 +1101,8 @@ prompt, seed, length and EBU R128 loudness (ffmpeg), the shipped beds'
 loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
 Music Lab in 0.00273; **the developer picked ElevenLabs for both**
-(`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00277,
-two takes each, awaiting verdicts). **The import (0.00277, `--import
+(`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
+two takes each, awaiting verdicts). **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
@@ -1125,7 +1125,7 @@ away after 1:26). **ElevenLabs limits:** two requests at a time per
 subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
 limit — waits and retries), and the API key carries its own credit cap
 (ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
-a 90 s bed ~1,125) — the developer raised it in 0.00277. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+a 90 s bed ~1,125) — the developer raised it in 0.00280. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (33 lines,
 four takes each; OVERKILL nine since 0.188, a plain crit five and the mega
 crit eight since 0.00278), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
@@ -1775,7 +1775,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Display mismatches found by the 0.00272 review — fixed in 0.00277: the
+- Display mismatches found by the 0.00272 review — fixed in 0.00280: the
   STATS page's heavy row shows the class's own factor and a charge class's
   charges; "Potion heals" is `leveling.js potionHealFor(klass)` in the
   drink, the STATS page, the potion card and the Alchemy row; the Quicken

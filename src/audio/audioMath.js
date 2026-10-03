@@ -11,7 +11,7 @@ export const sliderGain = (v) => Math.max(0, Math.min(1, Number(v) || 0)) ** 2;
 // Crossfade curve (n points, 0 -> 1; out = 1 -> 0). Equal gain (linear):
 // a music loop's crossfade plays the SAME audio twice, in phase, so the
 // two always sum to exactly 1 (equal power would bump it 3 dB, 0.113).
-// A generated bed (0.00277, tools/gen-score.mjs --import) crossfades its
+// A generated bed (0.00280, tools/gen-score.mjs --import) crossfades its
 // own continuation into its start: two DIFFERENT passages, which sum by
 // power, so it asks for `crossfade: 'power'` (sin / cos) — equal gain dipped
 // up to 3 dB in the middle of the seam.
