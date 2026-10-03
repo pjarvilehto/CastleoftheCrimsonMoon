@@ -182,7 +182,18 @@
           "asked": 120,
           "lufs": -14.8,
           "seconds": 120.1,
-          "at": "2026-10-03T12:19:30.736Z"
+          "at": "2026-10-03T12:19:30.736Z",
+          "verdict": "ok",
+          "imported": {
+            "file": "assets/audio/music-title-v3.mp3",
+            "start": 25.681,
+            "end": 109.877,
+            "loopS": 84.1956,
+            "tailS": 3,
+            "gainDb": 0.1,
+            "lufs": -14.5,
+            "at": "2026-10-03T12:51:33.634Z"
+          }
         },
         {
           "n": 3,
@@ -240,10 +251,10 @@
       ],
       "painting": "medieval_castle.jpg",
       "current": {
-        "file": "assets/audio/music-title-v2.mp3",
-        "loopS": 96,
-        "lufs": -16.3,
-        "seconds": 98
+        "file": "assets/audio/music-title-v3.mp3",
+        "loopS": 84.1956,
+        "lufs": -14.5,
+        "seconds": 87.2
       },
       "line": "The castle seen from afar at night and the Great Hall between runs: vast, slow and melancholy, a sense of an old curse and of coming home to a cold hearth."
     },
@@ -422,7 +433,19 @@
           "asked": 90,
           "lufs": -14.2,
           "seconds": 90.1,
-          "at": "2026-10-03T12:19:54.113Z"
+          "at": "2026-10-03T12:19:54.113Z",
+          "verdict": "ok",
+          "note": "beginning is too slow, could basically go in from 00:23 onwards and loop from 1:30 or so",
+          "imported": {
+            "file": "assets/audio/music-combat-v3.mp3",
+            "start": 23.174,
+            "end": 84.521,
+            "loopS": 61.3471,
+            "tailS": 3,
+            "gainDb": 0.2,
+            "lufs": -14.2,
+            "at": "2026-10-03T12:51:37.170Z"
+          }
         },
         {
           "n": 3,
@@ -480,46 +503,591 @@
       ],
       "painting": "dungeon_torch_corridor.jpg",
       "current": {
-        "file": "assets/audio/music-combat-v2.mp3",
-        "loopS": 60,
-        "lufs": -16.2,
-        "seconds": 62
+        "file": "assets/audio/music-combat-v3.mp3",
+        "loopS": 61.3471,
+        "lufs": -14.2,
+        "seconds": 64.6
       },
       "line": "A fight in a torchlit dungeon corridor: tense and driving but not frantic, a steady pulse that can loop under every blow for minutes."
     },
     "boss": {
       "name": "The Vampire Lord",
-      "candidates": [],
+      "candidates": [
+        {
+          "n": 1,
+          "file": "assets/audio/candidates/boss_c1.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "gothic horror orchestral",
+              "pipe organ",
+              "chanting wordless male choir",
+              "heavy war drums",
+              "brass stabs",
+              "tolling bell",
+              "72 bpm",
+              "menacing",
+              "ceremonial",
+              "epic"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Organ",
+                "positive_local_styles": [
+                  "a low pipe organ chord progression",
+                  "a tolling bell",
+                  "the drums in a slow heavy pulse"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a chanting wordless male choir joins",
+                  "brass stabs on the downbeats"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 27000,
+                "lines": []
+              },
+              {
+                "section_name": "Assault",
+                "positive_local_styles": [
+                  "the full ensemble",
+                  "organ",
+                  "choir",
+                  "drums and brass at their heaviest",
+                  "dark and relentless"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 25000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the brass and choir fall back",
+                  "the organ and the slow drum pulse of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 90,
+          "lufs": -11.4,
+          "seconds": 90.1,
+          "at": "2026-10-03T12:49:35.554Z"
+        },
+        {
+          "n": 2,
+          "file": "assets/audio/candidates/boss_c2.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "gothic horror orchestral",
+              "pipe organ",
+              "chanting wordless male choir",
+              "heavy war drums",
+              "brass stabs",
+              "tolling bell",
+              "72 bpm",
+              "menacing",
+              "ceremonial",
+              "epic"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Organ",
+                "positive_local_styles": [
+                  "a low pipe organ chord progression",
+                  "a tolling bell",
+                  "the drums in a slow heavy pulse"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a chanting wordless male choir joins",
+                  "brass stabs on the downbeats"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 27000,
+                "lines": []
+              },
+              {
+                "section_name": "Assault",
+                "positive_local_styles": [
+                  "the full ensemble",
+                  "organ",
+                  "choir",
+                  "drums and brass at their heaviest",
+                  "dark and relentless"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 25000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the brass and choir fall back",
+                  "the organ and the slow drum pulse of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 90,
+          "lufs": -11.7,
+          "seconds": 90.1,
+          "at": "2026-10-03T12:49:38.194Z",
+          "verdict": "ok",
+          "note": "works 0:27 onwards. the beginning is too much organ stuff. ",
+          "imported": {
+            "file": "assets/audio/music-boss-v3.mp3",
+            "start": 28.189,
+            "end": 68.185,
+            "loopS": 39.9964,
+            "tailS": 3,
+            "gainDb": -1,
+            "lufs": -11,
+            "at": "2026-10-03T12:59:36.974Z"
+          }
+        }
+      ],
       "painting": "castle_throne_room.jpg",
       "current": {
-        "file": "assets/audio/music-boss-v2.mp3",
-        "loopS": 60,
-        "lufs": -14.3,
-        "seconds": 62
+        "file": "assets/audio/music-boss-v3.mp3",
+        "loopS": 39.9964,
+        "lufs": -11,
+        "seconds": 43.3
       },
       "line": "The throne room and the vampire lord who rules it: ceremonial, menacing and heavy, an organ and a chanting choir over war drums."
     },
     "shrine": {
       "name": "Sanctum",
-      "candidates": [],
+      "candidates": [
+        {
+          "n": 1,
+          "file": "assets/audio/candidates/shrine_c1.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "sacred ambient",
+              "soft wordless choir",
+              "high string harmonics",
+              "celesta",
+              "distant bell glints",
+              "D major with borrowed minor chords",
+              "slow",
+              "serene",
+              "eerie",
+              "no drums"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "drums",
+              "percussion",
+              "pulse"
+            ],
+            "sections": [
+              {
+                "section_name": "Air",
+                "positive_local_styles": [
+                  "high string harmonics and a soft wordless choir",
+                  "a celesta note now and then"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 25000,
+                "lines": []
+              },
+              {
+                "section_name": "Grace",
+                "positive_local_styles": [
+                  "the choir warms into D major",
+                  "a borrowed minor chord darkens it",
+                  "bell glints far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 40000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the choir thins to the high strings and harmonics of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 35000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 100,
+          "lufs": -11.8,
+          "seconds": 100,
+          "at": "2026-10-03T12:49:54.020Z"
+        },
+        {
+          "n": 2,
+          "file": "assets/audio/candidates/shrine_c2.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "sacred ambient",
+              "soft wordless choir",
+              "high string harmonics",
+              "celesta",
+              "distant bell glints",
+              "D major with borrowed minor chords",
+              "slow",
+              "serene",
+              "eerie",
+              "no drums"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "drums",
+              "percussion",
+              "pulse"
+            ],
+            "sections": [
+              {
+                "section_name": "Air",
+                "positive_local_styles": [
+                  "high string harmonics and a soft wordless choir",
+                  "a celesta note now and then"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 25000,
+                "lines": []
+              },
+              {
+                "section_name": "Grace",
+                "positive_local_styles": [
+                  "the choir warms into D major",
+                  "a borrowed minor chord darkens it",
+                  "bell glints far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 40000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the choir thins to the high strings and harmonics of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 35000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 100,
+          "lufs": -13.2,
+          "seconds": 100,
+          "at": "2026-10-03T12:49:50.892Z",
+          "verdict": "ok",
+          "note": "we can just loop the first about 37 secs. ",
+          "imported": {
+            "file": "assets/audio/music-shrine-v3.mp3",
+            "start": 2.368,
+            "end": 38.777,
+            "loopS": 36.4089,
+            "tailS": 3,
+            "gainDb": 3.3,
+            "lufs": -14.4,
+            "at": "2026-10-03T12:59:39.933Z"
+          }
+        }
+      ],
       "painting": "castle_shrine_gold.jpg",
       "current": {
-        "file": "assets/audio/music-shrine-v2.mp3",
-        "loopS": 80,
-        "lufs": -14.3,
-        "seconds": 82.1
+        "file": "assets/audio/music-shrine-v3.mp3",
+        "loopS": 36.4089,
+        "lufs": -14.4,
+        "seconds": 39.7
       },
       "line": "A candlelit shrine where the knight rests and trades: a moment of eerie grace, sacred but not safe."
     },
     "end": {
       "name": "Ashes",
-      "candidates": [],
+      "candidates": [
+        {
+          "n": 1,
+          "file": "assets/audio/candidates/end_c1.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "elegiac",
+              "felt piano",
+              "low strings",
+              "humming wordless choir",
+              "slow",
+              "56 bpm",
+              "sorrowful",
+              "intimate",
+              "reflective"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "drums",
+              "percussion",
+              "grand climax"
+            ],
+            "sections": [
+              {
+                "section_name": "Piano",
+                "positive_local_styles": [
+                  "a soft felt piano alone",
+                  "a few slow notes in D minor"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              },
+              {
+                "section_name": "Strings",
+                "positive_local_styles": [
+                  "low strings enter under the piano",
+                  "a sad descending line"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 35000,
+                "lines": []
+              },
+              {
+                "section_name": "Hum",
+                "positive_local_styles": [
+                  "a humming choir rises softly behind them",
+                  "the emotional peak",
+                  "still quiet"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the choir and strings fade to the lone felt piano of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 15000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 90,
+          "lufs": -14.9,
+          "seconds": 90.1,
+          "at": "2026-10-03T12:50:09.712Z",
+          "verdict": "ok",
+          "note": "0:37 onwards is a nice somber part. let's just go from there to the end. ",
+          "imported": {
+            "file": "assets/audio/music-end-v3.mp3",
+            "start": 39.01,
+            "end": 77.88,
+            "loopS": 38.8702,
+            "tailS": 3,
+            "gainDb": 2.6,
+            "lufs": -14.5,
+            "at": "2026-10-03T12:59:42.771Z"
+          }
+        },
+        {
+          "n": 2,
+          "file": "assets/audio/candidates/end_c2.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "elegiac",
+              "felt piano",
+              "low strings",
+              "humming wordless choir",
+              "slow",
+              "56 bpm",
+              "sorrowful",
+              "intimate",
+              "reflective"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "drums",
+              "percussion",
+              "grand climax"
+            ],
+            "sections": [
+              {
+                "section_name": "Piano",
+                "positive_local_styles": [
+                  "a soft felt piano alone",
+                  "a few slow notes in D minor"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              },
+              {
+                "section_name": "Strings",
+                "positive_local_styles": [
+                  "low strings enter under the piano",
+                  "a sad descending line"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 35000,
+                "lines": []
+              },
+              {
+                "section_name": "Hum",
+                "positive_local_styles": [
+                  "a humming choir rises softly behind them",
+                  "the emotional peak",
+                  "still quiet"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 20000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "the choir and strings fade to the lone felt piano of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 15000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 90,
+          "lufs": -12.9,
+          "seconds": 90.1,
+          "at": "2026-10-03T12:50:06.890Z"
+        }
+      ],
       "painting": "castle_chapel_exterior.jpg",
       "current": {
-        "file": "assets/audio/music-end-v2.mp3",
-        "loopS": 72,
-        "lufs": -15.1,
-        "seconds": 74
+        "file": "assets/audio/music-end-v3.mp3",
+        "loopS": 38.8702,
+        "lufs": -14.5,
+        "seconds": 42.2
       },
       "line": "The run is over, by death or retreat: grief and acceptance, a felt piano over low strings in a ruined chapel."
     }

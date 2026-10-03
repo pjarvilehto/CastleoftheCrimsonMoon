@@ -1,4 +1,20 @@
 {
+  "0.00282": [
+    "New music for the boss fights, the shrine and the run's end: the last three scores picked in the Music Lab, so the whole game now plays the new orchestral score."
+  ],
+  "0.00281": [
+    "The Great Hall grows with large screens: on a big desktop monitor the title, the three panels and the buttons are drawn larger instead of sitting small in the middle."
+  ],
+  "0.00280": [
+    "New music: the title and the Great Hall, and every fight, play new orchestral scores (picked in the Music Lab), looped where the music meets itself and crossfaded so the loop is hard to hear.",
+    "The Music Lab has two takes each for the boss, the shrine and the run's end to choose from."
+  ],
+  "0.00279": [
+    "The Old Wizard's crit lines, second pass: six re-recorded steadier after the owner's review"
+  ],
+  "0.00278": [
+    "The Old Wizard remarks on a critical hit now and then (five lines, 12% of them with a pause between), and has four more things to say about a mega crit"
+  ],
   "0.00277": [
     "Fixes from the review: the STATS page shows each class's own heavy strength (and the Wizard's charges), a potion's heal is shown as the class really gets it, the Quicken boon reads as a charge for the Wizard, a foe's HEXED / BLIGHT / ROOTED tag and look now change on the line that causes them, and SWITCH CLASS clears the blight too. A struck hero no longer grunts twice: the recordings carry each class's cry."
   ],

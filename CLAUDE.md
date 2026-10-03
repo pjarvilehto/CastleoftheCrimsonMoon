@@ -134,6 +134,7 @@ node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the fo
 node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
+node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a take into the game: the loop seam found, cut, levelled, audio.json pointed at it
 # libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
 # cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), simCore.mjs (the bot simulate.mjs and
 # the two studies share); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes a depth map, tools/gen-music.py the beds
@@ -1079,13 +1080,17 @@ quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, 
 from `main.js onTransition` so its measured loudest moment (`peakMs`)
 lands `peakAtMs` (2 s, the middle) into every transition, varied a little
 each play (its `variation` entry + `jitterDb`). Music: five
-generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
---suffix vN`, new suffix = new files), each an exact loop with its first
-`tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
+beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
+(title and combat 0.00280 — "Generated scores" below), each a loop of
+`loopS` with `tailS` more past it, restarted every `loopS` by
+`musicLoop.js` and crossfaded over the tail (`crossfade: 'power'`); the
+procedural beds before them (`python3 tools/gen-music.py --suffix vN`, an
+exact loop with its own first `tailS` seconds appended, equal gain) are
+in git history. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
-**Generated scores (0.00273, the music thread; the beds the game plays are
-still the procedural ones):** `docs/music-prompts.md` is a brief per bed —
+**Generated scores (0.00273, the music thread; every bed the game plays
+since 0.00282):** `docs/music-prompts.md` is a brief per bed —
 a style block, a common avoid list, the bed's line, global styles and
 timed sections ending where they began (the beds loop) — and
 `tools/gen-score.mjs` sends it to three models: **ElevenLabs Music** by
@@ -1101,12 +1106,43 @@ folder) and recorded in `assets/data/music-art.json` with its plan or
 prompt, seed, length and EBU R128 loudness (ffmpeg), the shipped beds'
 loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
-Music Lab in 0.00273; the next steps are the developer's verdicts, then
-an import that finds a loop seam (the end meeting the start), cuts the
-loop + `tailS`, measures it and points `audio.json music.tracks` at a
-new file (rule 7). **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
-who never shouts — the script is `docs/narration-script.md` (32 lines,
-four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+Music Lab in 0.00273; **the developer picked ElevenLabs for both**
+(`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
+two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
+<bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
+a chroma + log-band vector, a seam's score the mean likeness of the 4 s
+after START against the 4 s after END, less 0.015 per dB of level
+difference, plus a little per second of loop; END then nudged ±140 ms so
+the onsets line up — START searched in the first 40%, END from the middle
+to where the compared window would reach the piece's fade (`autoRanges`;
+`--start a-b` / `--end c-d` pin them: the developer's note put combat's
+start at 0:23); the file is cut from START to END + `tailS` (3 s: the
+music's own continuation, not a copy of the start) at 128 kbps as
+`assets/audio/music-<bed>-v<k>.mp3`, levelled to the bed it replaces
+(`gainFor`: the old gainDb moved by the loudness difference), written
+into `audio.json` in place (`setTrack`) with **`crossfade: 'power'`**
+(`audioMath.fadeCurve(n, out, power)`, `musicLoop.js`: two different
+passages sum by power — equal gain dipped up to 3 dB mid-seam; the
+procedural beds keep equal gain, their tail IS their start), the old
+file removed, the take marked `imported`. Title: 0:25.7 → 1:49.9 (an
+84 s loop, the start pinned to the first 30 s; unpinned it found a
+closer but 64 s loop); combat: 0:23.2 → 1:24.5 (61 s; the take falls
+away after 1:26); 0.00282, each from the developer's note: boss 0:28.2 →
+1:08.2 (40 s, `--min-loop` — the take has ~55 s between its organ opening
+and its fade; a 47 s loop to 1:14 matched less well), shrine 0:02.4 →
+0:38.8 (36 s, "the first about 37 secs", through the phrase's breath at
+0:36), end 0:39.0 → 1:17.9 (39 s, "0:37 to the end", the end pinned to
+the last steady stretch before the fade). `tools/audio-check.mjs` judges
+a generated bed by its seam's level (the quietest 0.5 s of the crossfade
+against the quieter of the seconds either side; flagged under -4 dB):
+title -3.4, combat -2.9, boss -0.5, shrine +2.4, end -0.6. **ElevenLabs limits:** two requests at a time per
+subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
+limit — waits and retries), and the API key carries its own credit cap
+(ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
+a 90 s bed ~1,125) — the developer raised it in 0.00280. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+who never shouts — the script is `docs/narration-script.md` (33 lines,
+four takes each; OVERKILL nine since 0.188, a plain crit five and the mega
+crit eight since 0.00278), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
 sends "!" as "." and drops a leading "…", never overwrites a take — delete
 the file to re-render it, `--stability/--style/--speed` for a steadier
@@ -1117,7 +1153,8 @@ loudest 50 ms). **When** a line plays is `audio.json narration.lines`
 `oncePerSession`, `cooldownMs`); the scenes only call `narrate('overkill')`,
 the dungeon marks rooms and runs (`narratorRoom()` / `narratorRun()`), and
 `combatQueue.js voFor()` maps combat events (OVERKILL, a multi-kill = the
-script's SMASH, mega crit, revive, summon, room cleared, low HP) to items'
+script's SMASH, mega crit, a plain crit (12% with a 20 s cooldown — Precision
+makes them common), revive, summon, room cleared, low HP) to items'
 `vo`, said as the line prints (+ `combatDelayMs`). A room's threshold says
 one line at most (boss / shrine / treasure, else descent, `stretch_N`,
 new record, elite; `roomEntryDelayMs` so it lands with the painting). One
@@ -1179,7 +1216,10 @@ be served stale for ~4 hours.
   Lifesteal / Potions under it), TRAIN and ALCHEMY as three panels of one
   height (`.hall-desk`), each purse in its section's head (`secHead`);
   1001-1400px wide the panels `zoom` down in three steps (an iPad gets the
-  same hall smaller), under 1000px one scrolling column;
+  same hall smaller), under 1000px one scrolling column; on a large window
+  the title, panels and buttons `zoom` UP in five steps, 1.15 at 1700x1000
+  to 2.2 at 3400x1900 (0.00281: the 1400px panels sat small on a 2560px
+  Mac mini screen; each step needs the height too);
   **a run's finds revealed (0.00249, the owner's ask):** `equipItems`
   records `changes` (each slot the finds filled: from → to), the run's end
   hands them to the hall (`go('hub', { fromRun, finds })`), and the hall
@@ -1767,7 +1807,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Display mismatches found by the 0.00272 review — fixed in 0.00277: the
+- Display mismatches found by the 0.00272 review — fixed in 0.00280: the
   STATS page's heavy row shows the class's own factor and a charge class's
   charges; "Potion heals" is `leveling.js potionHealFor(klass)` in the
   drink, the STATS page, the potion card and the Alchemy row; the Quicken

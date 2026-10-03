@@ -1,5 +1,5 @@
 {
-  "version": "0.00277",
+  "version": "0.00282",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -97,6 +97,22 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00282": [
+      "New music for the boss fights, the shrine and the run's end: the last three scores picked in the Music Lab, so the whole game now plays the new orchestral score."
+    ],
+    "0.00281": [
+      "The Great Hall grows with large screens: on a big desktop monitor the title, the three panels and the buttons are drawn larger instead of sitting small in the middle."
+    ],
+    "0.00280": [
+      "New music: the title and the Great Hall, and every fight, play new orchestral scores (picked in the Music Lab), looped where the music meets itself and crossfaded so the loop is hard to hear.",
+      "The Music Lab has two takes each for the boss, the shrine and the run's end to choose from."
+    ],
+    "0.00279": [
+      "The Old Wizard's crit lines, second pass: six re-recorded steadier after the owner's review"
+    ],
+    "0.00278": [
+      "The Old Wizard remarks on a critical hit now and then (five lines, 12% of them with a pause between), and has four more things to say about a mega crit"
+    ],
     "0.00277": [
       "Fixes from the review: the STATS page shows each class's own heavy strength (and the Wizard's charges), a potion's heal is shown as the class really gets it, the Quicken boon reads as a charge for the Wizard, a foe's HEXED / BLIGHT / ROOTED tag and look now change on the line that causes them, and SWITCH CLASS clears the blight too. A struck hero no longer grunts twice: the recordings carry each class's cry."
     ],
@@ -131,24 +147,6 @@
     ],
     "0.00268": [
       "Every class's attacks have their own particles: the Knight's heavy a steel clash; the Barbarian's Cleave a crescent swung through the foes with embers, his blows shedding sparks; the Wizard's Fireball an amber bloom with cinders and smoke on every foe it takes, his blows an arcane flash; the Necromancer's Soul Drain wisps torn out of the foe that fly into him; the Druid's feral blows three rakes and leaves, Go Feral a burst of leaves and a green light; the Hexhunter's Hex a turning pentagram on the foe that flares with every blow on it; the Plague Sister's Last Rites the censer's smoke settling on every foe, the blight a wisp of it as it gnaws. A blow the Necromancer's thrall takes shows as a lunge and a green THRALL number."
-    ],
-    "0.00267": [
-      "Every class now fights its own way: the Barbarian's Cleave reaches every foe (and his blows harden as his health falls), the Wizard's Fireball burns them all (three charges a fight, a kill gives one back), the Necromancer's Soul Drain heals and a slain foe rises as his thrall to take the blows, the Druid's Go Feral is three turns of a beast's damage (no potion meanwhile) and his wounds knit each turn, the Hexhunter's Hex makes every blow on that foe a crit and she dodges a fifth of the blows, the Plague Sister's Last Rites blights every foe to gnaw them each turn and her potions harden her armor. Health, damage and armor differ a little by class; the Knight is as he was. A first pass, to be tuned in play.",
-      "The heavy button carries the class's name (Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites), the Wizard's charges show as pips on it and the Druid's feral turns in brackets; a hexed or blighted foe wears a tag on its card, and the log colours the new lines.",
-      "Shrines: Quicken gives the Wizard a charge instead of a shorter cooldown."
-    ],
-    "0.00266": [
-      "Stats have colours: damage rust, HP sage, armor slate, crit verdigris, loot ochre — the same on the Train row that raises a stat and wherever it shows (your gear, the stat boxes, your hero's card), so you can see what training moves."
-    ],
-    "0.00265": [
-      "Every class starts with its own kit: the Barbarian a notched hand axe and a wolfhide jerkin, the Wizard an apprentice's staff and a threadbare robe, the Necromancer a grave knife and a gravedigger's shroud, the Druid a budding branch and a bark vest, the Hexhunter a worn hand crossbow and a witchfinder's coat, the Plague Sister a tin censer and a sister's habit; the knight keeps his rusty sword and oak shield. Same strength as before; a new game puts it on when you choose your hero."
-    ],
-    "0.00264": [
-      "The Curious Knight now stands like the other classes, in four new looks to choose from; his old crouching pose is still there as the fifth."
-    ],
-    "0.00263": [
-      "Potions have a picture: on your hero's card beside the count, and in the log.",
-      "A potion found in combat rises as a card like a find, then flies into your hero's potion count, which glows as it counts it."
     ]
   }
 }

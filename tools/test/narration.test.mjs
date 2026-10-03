@@ -18,7 +18,8 @@ const LINES = DATA.narration.lines;
   const { parseScript, cleanTake } = await import('../gen-vo.mjs');
   const script = parseScript(read('docs/narration-script.md'));
   const ids = script.map((l) => l.id);
-  ok('the script has 32 lines in 127 takes (OVERKILL nine since 0.188)', ids.length === 32 && script.reduce((n, l) => n + l.takes.length, 0) === 127 && script.find((l) => l.id === 'overkill').takes.length === 9);
+  ok('the script has 33 lines in 136 takes (OVERKILL nine since 0.188; crit five and mega crit eight since 0.00278)', ids.length === 33 && script.reduce((n, l) => n + l.takes.length, 0) === 136
+    && script.find((l) => l.id === 'overkill').takes.length === 9 && script.find((l) => l.id === 'crit').takes.length === 5 && script.find((l) => l.id === 'mega_crit').takes.length === 8);
   ok('every line of the script is in narration.json with every take', script.every((l) => l.takes.every((t) => LINES[l.id]?.some((x) => x.take === t.take && x.text === t.text))));
   ok('narration.json has no line the script lacks', Object.keys(LINES).every((id) => ids.includes(id)));
   const takes = Object.values(LINES).flat();
@@ -179,7 +180,8 @@ const LINES = DATA.narration.lines;
   const c = { over: false, victory: false, isBoss: false };
   ok('OVERKILL / multi-kill (SMASH) / mega crit / revive / summon map to their lines',
     voFor({ type: 'overkill' }, { run, combat: c }) === 'overkill' && voFor({ type: 'multi' }, { run, combat: c }) === 'smash'
-    && voFor({ type: 'atk', megaCrit: true }, { run, combat: c }) === 'mega_crit' && voFor({ type: 'atk', crit: true }, { run, combat: c }) === undefined
+    && voFor({ type: 'atk', megaCrit: true }, { run, combat: c }) === 'mega_crit' && voFor({ type: 'atk', crit: true }, { run, combat: c }) === 'crit' && voFor({ type: 'atk', crit: true, megaCrit: true }, { run, combat: c }) === 'mega_crit'
+    && voFor({ type: 'atk' }, { run, combat: c }) === undefined && N.lines.crit.chance < N.lines.mega_crit.chance && N.lines.crit.cooldownMs > 0
     && voFor({ type: 'revive' }, { run, combat: c }) === 'revive' && voFor({ type: 'summon' }, { run, combat: c }) === 'boss_summon');
   ok('the room cleared: a line, except after a boss (which has its own)', voFor({ type: 'sys' }, { run, combat: { over: true, victory: true, isBoss: false } }) === 'room_cleared'
     && voFor({ type: 'sys' }, { run, combat: { over: true, victory: true, isBoss: true } }) === undefined && voFor({ type: 'sys' }, { run, combat: { over: true, victory: false } }) === undefined);

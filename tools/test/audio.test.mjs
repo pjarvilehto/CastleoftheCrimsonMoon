@@ -23,7 +23,7 @@ fresh();
   const tracks = DATA.audio.music.tracks; // the beds live in audio.json (0.114; one score since 0.118)
   for (const t of ['title', 'combat', 'boss', 'shrine', 'end']) {
     const secs = statSync(tracks[t].file).size * 8 / 128000; // 128 kbps
-    ok(`music bed ${t}: on disk, an exact loop + its tail`, Math.abs(secs - (tracks[t].loopS + tracks[t].tailS)) < 0.6 && tracks[t].loopS >= 60);
+    ok(`music bed ${t}: on disk, a loop + its tail, at least 30 s`, Math.abs(secs - (tracks[t].loopS + tracks[t].tailS)) < 0.6 && tracks[t].loopS >= 30); // (0.00282: the developer's shrine loop is the take's first ~35 s)
   }
   ok('the classic beds are gone (0.118)', !readdirSync('assets/audio').some((f) => /^music-(title|combat|boss|shrine|end)\.mp3$/.test(f)));
   ok('no stale ambient/dungeon track refs', !musicSrc.includes('ambient.mp3') && !musicSrc.includes('dungeon.mp3'));
@@ -402,7 +402,11 @@ fresh();
   const fadeIns = ctx.nodes.filter((n) => n.kind === 'gain' && n.gain.events.some((e) => e[0] === 'linear' && Math.abs(e[1] - dbToGain(T.gainDb)) < 1e-9));
   ok('...fading in to its level trim', fadeIns.length >= 1);
   const curves = ctx.nodes.flatMap((n) => (n.gain?.events ?? []).filter((e) => e[0] === 'curve' && e[3] === T.tailS));
-  ok('...crossfading over its tail, equal gain', curves.some((e) => e[1][0] === 0 && e[1].at(-1) === 1) && curves.some((e) => e[1][0] === 1 && e[1].at(-1) === 0));
+  const mid = (c) => c[1][Math.floor(c[1].length / 2)];
+  const shape = T.crossfade === 'power' ? (c) => Math.abs(mid(c) - Math.SQRT1_2) < 0.05 : (c) => Math.abs(mid(c) - 0.5) < 0.05; // (0.00280: a generated bed's continuation sums by power, an exact loop's identical audio by gain)
+  ok(`...crossfading over its tail, ${T.crossfade === 'power' ? 'equal power (a generated bed)' : 'equal gain'}`, curves.some((e) => e[1][0] === 0 && e[1].at(-1) === 1 && shape(e)) && curves.some((e) => e[1][0] === 1 && e[1].at(-1) === 0 && shape(e)));
+  const { fadeCurve } = await import('../../src/audio/audioMath.js');
+  ok('the crossfade curves: equal gain sums to 1, equal power squares to 1, both exactly 0 and 1 at the ends', [false, true].every((p) => { const i = fadeCurve(32, false, p), o = fadeCurve(32, true, p); return i[0] === 0 && i[31] === 1 && o[0] === 1 && o[31] === 0 && i.every((v, k) => Math.abs((p ? v * v + o[k] * o[k] : v + o[k]) - 1) < 1e-6); }));
   const n2 = ctx.started.length;
   music.play('combat');
   await sleep(10);
@@ -503,4 +507,34 @@ fresh();
   try { await post('x', {}, { fetchFn: async () => ({ ok: false, status: 401, text: async () => 'missing_permissions and more' }), key: 'k' }); } catch (e) { err = e; }
   ok('a refused call throws the status and the start of the body', err?.message.startsWith('HTTP 401: missing_permissions'));
   ok('the key is read from the environment, never baked in', typeof hasKey() === 'boolean' && !readFileSync('tools/elevenlabs.mjs', 'utf8').match(/xi-api-key': '[a-z0-9]/) && viaVo === measureDb);
+}
+
+// 0.00280: a take into the game (gen-score.mjs --import). The seam finder
+// (tools/music-seam.mjs) finds where a piece repeats; the search stops short
+// of the piece's fade; the new bed plays at the old bed's level; audio.json
+// keeps its layout; the imported beds crossfade by power.
+{
+  const { features, findSeam } = await import('../music-seam.mjs');
+  const { autoRanges, gainFor, setTrack } = await import('../gen-score.mjs');
+  const sr = 22050, chords = [[220, 277, 330], [196, 247, 294], [175, 220, 262], [247, 311, 370], [165, 208, 247]];
+  const x = new Float32Array(sr * 40);
+  for (let i = 0; i < x.length; i++) { const c = chords[Math.floor(i / sr / 2) % 5]; x[i] = c.reduce((s, f) => s + Math.sin((2 * Math.PI * f * i) / sr), 0) * 0.1; } // (a 10 s progression, four times)
+  const seam = findSeam(features(x, sr), { startRange: [0, 1], endRange: [7, 14], minLoop: 5, window: 3 });
+  ok('the seam finder finds where a piece repeats (a 10 s chord cycle: END = START + 10 s)', Math.abs(seam.end - seam.start - 10) < 0.15 && seam.sim > 0.95, JSON.stringify(seam));
+  const hopS = 0.05, db = Float32Array.from({ length: 2400 }, (_, i) => (i < 2200 ? -15 : -15 - (i - 2200) * 0.3)); // (120 s, fading from 110 s)
+  const r = autoRanges({ db, hopS }, 3, 4);
+  ok('the seam search: START in the first 40%, END from the middle to the fade less the compared window', r.startRange[1] === 48 && r.endRange[0] === 60 && r.endRange[1] > 104 && r.endRange[1] <= 108, JSON.stringify(r));
+  ok('the new bed plays at the old bed\'s level (2 dB louder = 2 dB less gain)', gainFor(1.9, -16.3, -14.3) === -0.1);
+  const text = readFileSync('assets/data/audio.json', 'utf8');
+  const moved = setTrack(text, 'boss', { file: 'assets/audio/x.mp3', loopS: 70.5, tailS: 3, crossfade: 'power', gainDb: -1 });
+  const J = JSON.parse(moved);
+  ok('the import edits one music track in place: the rest of audio.json byte for byte', J.music.tracks.boss.file === 'assets/audio/x.mp3' && J.music.tracks.boss.crossfade === 'power'
+    && moved.split('\n').length === text.split('\n').length + (text.includes('"boss": {\n        "file": "assets/audio/music-boss-v2.mp3",\n        "loopS": 60,\n        "tailS": 2,\n        "gainDb"') ? 1 : 0)
+    && JSON.stringify({ ...J, music: { ...J.music, tracks: { ...J.music.tracks, boss: null } } }) === JSON.stringify({ ...JSON.parse(text), music: { ...JSON.parse(text).music, tracks: { ...JSON.parse(text).music.tracks, boss: null } } }));
+  const reg = JSON.parse(readFileSync('assets/data/music-art.json', 'utf8'));
+  const imported = Object.entries(reg.beds).flatMap(([id, e]) => e.candidates.filter((k) => k.imported).map((k) => [id, k]));
+  ok('every imported take is the bed the game plays: approved, its seam and level recorded, an equal-power crossfade', imported.length >= 2 && imported.every(([id, k]) => {
+    const t = DATA.audio.music.tracks[id];
+    return k.verdict === 'ok' && t.file === k.imported.file && t.loopS === k.imported.loopS && t.crossfade === 'power' && k.imported.end > k.imported.start && statSync(t.file).isFile();
+  }), imported.map(([id, k]) => `${id}_c${k.n}`).join());
 }

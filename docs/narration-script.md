@@ -67,7 +67,8 @@ transitions, and they wear better on the hundredth hearing.
 |---|---|---|---|
 | `overkill` | 1. "Overkill!" 2. "Overkill…" 3. "*(dry chuckle)* Overkill." 4. "Overkill… magnificent." 5. "A devastating blow…" 6. "Overpowered…" 7. "Nothing left standing." 8. "Such… excess." 9. "Overkill… and then some." | OVERKILL | First in each room, then 25% |
 | `smash` | 1. "Smash!" 2. "Shattered!" 3. "Crushed!" 4. "Broken…" | SMASH | Sometimes (30%) |
-| `mega_crit` | 1. "Devastating!" 2. "*Ha!*" 3. "What a blow!" 4. "They felt that in the walls…" | Mega crit | Sometimes (50%) |
+| `mega_crit` | 1. "Devastating!" 2. "*Ha!*" 3. "What a blow!" 4. "They felt that in the walls…" 5. "Savage…" 6. "Even I flinched." 7. "A blow for the chronicles…" 8. "The castle shuddered." | Mega crit | Sometimes (50%) |
+| `crit` | 1. "A clean strike." 2. "Well placed…" 3. "Through the gap…" 4. "That one bit deep." 5. "Precisely…" | A critical hit (not a mega crit) | Sometimes (12%), then 20 s quiet |
 | `room_cleared` | 1. "Silence…" 2. "For now…" 3. "The room is yours." 4. "Still… at last." | Room cleared | Sometimes (20%) |
 | `low_hp` | 1. "Your blood runs thin…" 2. "Drink, fool…" 3. "Careful now…" 4. "The castle smells your blood…" | HP falls to 35% or less | Once per room, then a 30 s cooldown |
 | `potion` | 1. "Drink deep." 2. "Bitter…" 3. "Better…" 4. "It holds… for now." | Drinking a potion | Sometimes (20%) |
@@ -113,6 +114,7 @@ transitions, and they wear better on the hundredth hearing.
 
 ---
 
-**Count:** 32 IDs and 127 takes in all (four takes each; OVERKILL, the
-most frequent line, has nine since 0.188; the two once-per-save lines have
-one), about 3 minutes of audio. Most lines are two to five words.
+**Count:** 33 IDs and 136 takes in all (four takes each; OVERKILL, the
+most frequent line, has nine since 0.188, the crit five and the mega crit
+eight since 0.00278; the two once-per-save lines have one), about 3
+minutes of audio. Most lines are two to five words.
