@@ -124,6 +124,7 @@ export function dungeonScene() {
   };
 
   function nextRoom(root, instant = false) {
+    if (!instant) sfx('deeper'); // Push Deeper: the developer's huge tom (0.00298; the first room's is the hall's Descend)
     const setup = () => {
       const firstRoom = run.roomNumber === 0;
       const room = enterNextRoom(run);

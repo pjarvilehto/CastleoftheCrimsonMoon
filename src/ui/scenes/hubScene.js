@@ -136,6 +136,7 @@ export function hubScene(opts = {}) {
       clearInterval(timer);
       if (currentScene() !== scene) return; // left the hall meanwhile
     }
+    sfx('deeper'); // the descent begins: the developer's huge tom (0.00298), the same strike as Push Deeper
     go('dungeon');
   }
 

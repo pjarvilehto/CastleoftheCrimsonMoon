@@ -104,6 +104,10 @@ fresh();
     ok('the death hit lands as the dialog flashes in: the flash\'s peak is exported and the clip\'s own peak comes before it', DEATH_PEAK_MS === 900 && C.death.peakMs < DEATH_PEAK_MS
       && read('src/ui/fx.js').includes('}, DEATH_PEAK_MS);'));
     ok('the reliquary\'s revive plays the hit too (treasureUI: the Heart unspent before, spent after, the knight alive)', read('src/ui/treasureUI.js').includes("if (!got.died && heart && !run.revive) sfx('revive');"));
+    // 0.00298: the huge tom on Push Deeper (every chosen room change, not the first room's entry) and as the hall's Descend begins
+    ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', C.deeper.file === 'assets/audio/sfx/deeper_v1.mp3' && statSync(C.deeper.file).size > 100 * 1024
+      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 12) < 0.11 && !C.deeper.stinger
+      && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("sfx('deeper'); // the descent begins"));
   }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/hubSections.js'); // (0.00223: the hall's rows live there)
@@ -201,7 +205,7 @@ fresh();
     && !A.clips.whoosh && !A.clips.room_swoosh && !A.variation.room_swoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
   ok('every whoosh\'s peak comes before mid-transition (2 s), so each can be timed to the crossfade; the level varied a little each play', T.peakAtMs === 2000
     && cs.every((c) => T.peakAtMs - c.peakMs > 0 && c.jitterDb > 0));
-  ok('the whooshes sit well under the hits in the mix, all at one level (the old swoosh\'s -19.3)', cs.every((c) => Math.abs(c.measuredDb + c.gainDb + 19.3) < 0.11));
+  ok('the whooshes all sit at one level, the hits\' -12 (0.00298, the developer: at the old swoosh\'s -19.3 they were way too quiet)', cs.every((c) => Math.abs(c.measuredDb + c.gainDb + 12) < 0.11));
   ok('the old swoosh and death files are gone from the folder players download (rule 7: new names)', !readdirSync('assets/audio').some((f) => /room-swoosh|sfx-death/.test(f)));
 }
 

@@ -1131,7 +1131,8 @@ transitionSfx()` from `main.js onTransition` picks one at random and plays
 it through `sfxPeakAt(name, atMs)` so ITS measured loudest moment (`peakMs`,
 every recording's is under 2 s) lands `peakAtMs` (2 s, the middle of the
 crossfade) into every transition; `jitterDb` varies the level, all ten
-levelled where the old swoosh sat (-19.3 dB). **The developer's two hits
+levelled at the hits' -12 dB (0.00298; at the old swoosh's -19.3 they were
+way too quiet, the developer found). **The developer's two hits
 (0.00297, `assets/audio/sfx/`):** the `death` clip is the huge wooden tube
 (`death_v2.mp3`), a stinger timed by `sfxPeakAt('death', DEATH_PEAK_MS)`
 (`fx.js`, the flash's 900 ms build) so its hit lands as the YOU DIED dialog
@@ -1144,7 +1145,12 @@ name, measure its loudest 50 ms and where it sits (the measure is the
 `measureDb` one in `tools/elevenlabs.mjs`; a peak's time is the window's
 centre), register it, `git rm` the WAVs (they stay in history). The coin
 jingle (`loot`) plays an octave down since 0.00297 (`rate` 0.44-0.56; the
-developer found it too high). Music: five
+developer found it too high). **The descent's strike (0.00298):** the
+`deeper` clip, the developer's huge tom (`deeper_v1.mp3`, the hits' -12 dB,
+no duck — it plays every room), struck as the player chooses Push Deeper
+(`dungeonScene.js nextRoom`, not the first room's entry) and as the hall's
+Descend actually begins (`hubScene.js enterDungeon`, after the prompt and
+the art's gathering), a moment before the whoosh. Music: five
 beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
 (title and combat 0.00280 — "Generated scores" below), each a loop of
 `loopS` with `tailS` more past it, restarted every `loopS` by
