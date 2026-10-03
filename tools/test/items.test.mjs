@@ -231,3 +231,29 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
     ok('...where it is counted as it lands', landed.length === 1);
   });
 }
+
+// the classes' starting kits (0.00265): a weapon and an armor per class, the knight's the Rusty Sword and the Oak Shield;
+// the same numbers as those (the classes play alike so far), never dropped, worn by a new save on PROCEED
+{
+  const { heroList, heroById, heroKit } = await import('../../src/shared/heroes.js');
+  const { rollLoot, droppable } = await import('../../src/run/loot.js');
+  const { checkData } = await import('../../src/shared/dataCheck.js');
+  const { wearKit } = await import('../../src/ui/scenes/heroScene.js');
+  const stats = (id) => { const { name, slot, tier, art, starter, ...rest } = DATA.items[id]; return JSON.stringify(rest); };
+  const g = DATA.difficulty.player.startingGear, kits = heroList().map((h) => heroKit(h));
+  ok('every class has a kit: a weapon and an armor, with the starting gear\'s numbers, the knight\'s that gear', kits.length === 7 && kits.every((k) => DATA.items[k.weapon]?.slot === 'weapon' && DATA.items[k.armor]?.slot === 'armor'
+    && stats(k.weapon) === stats(g.weapon) && stats(k.armor) === stats(g.armor)) && heroKit(heroById('knight')).weapon === g.weapon && new Set(kits.flatMap((k) => [k.weapon, k.armor])).size === 2 + 12);
+  const starters = Object.keys(DATA.items).filter((id) => DATA.items[id].starter);
+  ok('...the twelve new ones are starters with their pictures; a starter never drops', starters.length === 12 && starters.every((id) => existsSync(itemArtUrl(id)) && !droppable(id)) && droppable('rusty_sword'));
+  const origR = Math.random, seen = new Set();
+  try { for (let i = 0; i < 2000; i++) { Math.random = () => (i * 0.6180339) % 1; const r = rollLoot({ ...DATA.enemies.rat, id: 'rat', maxHp: 10 }, 1, 1, true); if (r.itemId) seen.add(r.itemId); } } finally { Math.random = origR; }
+  ok('...a kill\'s loot never rolls one', seen.size > 3 && ![...seen].some((id) => DATA.items[id].starter), [...seen].join());
+  const b = structuredClone(DATA); b.heroes.heroes[2].kit.armor = 'grave_knife';
+  ok('...dataCheck names a kit item of the wrong slot', checkData(b).some((m) => /wizard\.kit\.armor/.test(m)));
+  const fresh1 = { equipment: { weapon: g.weapon, armor: g.armor } };
+  wearKit(fresh1, heroById('plaguesister'));
+  const found = { equipment: { weapon: 'moonbrand', armor: g.armor } };
+  wearKit(found, heroById('wizard'));
+  ok('wearKit: the class\'s kit over the default gear, never over a find', fresh1.equipment.weapon === 'tin_censer' && fresh1.equipment.armor === 'sisters_habit'
+    && found.equipment.weapon === 'moonbrand' && found.equipment.armor === 'threadbare_robe');
+}

@@ -98,6 +98,7 @@ export function checkData(data) {
   for (const h of heroes) {
     if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
     if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((l) => typeof l?.art === 'string' && l.art && isNum(l.fh) && l.fh > 0 && l.fh <= 1)) out.push(`heroes.json: ${h?.id}.looks (one per look: art, the figure file in assets/heroes/, and fh, its share of the sheet's height, 0-1)`);
+    for (const slot of ['weapon', 'armor']) { const id = h?.kit?.[slot]; if (data.items?.[id]?.slot !== slot) out.push(`heroes.json: ${h?.id}.kit.${slot} (the class's starting ${slot}, an item of that slot; 0.00265)`); }
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     // the class colour theme (0.00254): the plate's colour, the card light's look and tint
     const th = h?.theme;

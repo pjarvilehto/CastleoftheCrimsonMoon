@@ -421,7 +421,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Apprentice's Staff, a plain crooked wooden walking staff, its head wrapped in worn copper wire around a dull, unlit blue stone. Humble, common item. Shown diagonally, head to the upper right.",
-        "at": "2026-10-03T10:14:22Z"
+        "at": "2026-10-03T10:14:22Z",
+        "imported": "apprentices_staff_v1.webp"
       }
     ],
     "notched_hand_axe": [
@@ -431,7 +432,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Notched Hand Axe, a crude one-handed bearded axe, a chipped iron head bound to an ash haft with rawhide, rust-brown stains. Humble, common item. Shown diagonally, head to the upper right.",
-        "at": "2026-10-03T10:14:22Z"
+        "at": "2026-10-03T10:14:22Z",
+        "imported": "notched_hand_axe_v1.webp"
       }
     ],
     "threadbare_robe": [
@@ -450,7 +452,8 @@
         "line": "Threadbare Robe, a faded deep-blue wizard's robe with a hood, frayed hems and patched elbows, a simple rope belt, laid out flat. Humble, common item.",
         "hint": "on a pure near-black background to every edge — no white anywhere around it",
         "note": "recorded after a registry race",
-        "at": "2026-10-03T10:15:54Z"
+        "at": "2026-10-03T10:15:54Z",
+        "imported": "threadbare_robe_v1.webp"
       }
     ],
     "wolfhide_jerkin": [
@@ -469,7 +472,8 @@
         "version": "hidden",
         "line": "Wolfhide Jerkin, a sleeveless jerkin of stitched grey wolf pelts over boiled leather, crude bone toggles, a fur collar. Humble, common item.",
         "hint": "no blue lights or dots around it; plain grey fur and brown leather",
-        "at": "2026-10-03T10:15:36Z"
+        "at": "2026-10-03T10:15:36Z",
+        "imported": "wolfhide_jerkin_v1.webp"
       }
     ],
     "grave_knife": [
@@ -479,7 +483,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Grave Knife, a short single-edged knife of dull iron, a handle wrapped in black cloth, a small bone pommel, a faint sickly green tarnish on the blade. Humble, common item. Shown diagonally, tip to the upper right.",
-        "at": "2026-10-03T10:14:38Z"
+        "at": "2026-10-03T10:14:38Z",
+        "imported": "grave_knife_v1.webp"
       }
     ],
     "gravediggers_shroud": [
@@ -489,7 +494,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Gravedigger's Shroud, a hooded black burial shroud, its hem crusted with dried grave earth, a tarnished pewter clasp, laid out flat. Humble, common item.",
-        "at": "2026-10-03T10:14:39Z"
+        "at": "2026-10-03T10:14:39Z",
+        "imported": "gravediggers_shroud_v1.webp"
       }
     ],
     "budding_branch": [
@@ -499,7 +505,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Budding Branch, a gnarled length of living oak used as a staff, a few small green leaves and a tuft of moss still growing on it. Humble, common item. Shown diagonally, head to the upper right.",
-        "at": "2026-10-03T10:14:40Z"
+        "at": "2026-10-03T10:14:40Z",
+        "imported": "budding_branch_v1.webp"
       }
     ],
     "bark_vest": [
@@ -518,7 +525,8 @@
         "line": "Bark Vest, a vest of overlapping plates of oak bark laced together with green vines over a moss-green tunic. Humble, common item.",
         "hint": "on a pure near-black background to every edge — no white anywhere around it",
         "note": "recorded after a registry race",
-        "at": "2026-10-03T10:15:54Z"
+        "at": "2026-10-03T10:15:54Z",
+        "imported": "bark_vest_v1.webp"
       }
     ],
     "sisters_habit": [
@@ -529,6 +537,25 @@
         "version": "hidden",
         "line": "Sister's Habit, a nursing sister's habit of coarse ochre-grey wool with a white wimple and a stained linen apron, laid out flat. Humble, common item.",
         "at": "2026-10-03T10:14:57Z"
+      },
+      {
+        "n": 2,
+        "file": "sisters_habit_c2.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Sister's Habit, a nursing sister's habit of coarse ochre-grey wool with a white wimple and a stained linen apron, laid out flat. Humble, common item.",
+        "hint": "more dramatic: the habit hung on a crooked iron hook or draped over a reliquary, a censer's smoke curling around it, a hard raking light, deep shadow folds, the white wimple catching the light, stains of old blood and plague on the apron",
+        "at": "2026-10-03T10:32:36Z"
+      },
+      {
+        "n": 3,
+        "file": "sisters_habit_c3.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Sister's Habit, a nursing sister's habit of coarse ochre-grey wool with a white wimple and a stained linen apron, laid out flat. Humble, common item.",
+        "hint": "more dramatic: the habit hung on a crooked iron hook or draped over a reliquary, a censer's smoke curling around it, a hard raking light, deep shadow folds, the white wimple catching the light, stains of old blood and plague on the apron",
+        "at": "2026-10-03T10:32:37Z",
+        "imported": "sisters_habit_v1.webp"
       }
     ],
     "worn_hand_crossbow": [
@@ -538,7 +565,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Worn Hand Crossbow, a small one-handed crossbow of dark wood and iron, a frayed string, a scratched stock, a single bolt loaded. Humble, common item.",
-        "at": "2026-10-03T10:14:57Z"
+        "at": "2026-10-03T10:14:57Z",
+        "imported": "worn_hand_crossbow_v1.webp"
       }
     ],
     "witchfinders_coat": [
@@ -548,7 +576,8 @@
         "model": "google/nano-banana-pro",
         "version": "hidden",
         "line": "Witchfinder's Coat, a long dark leather coat with a high collar, buckled straps and a few small tin charms sewn on, worn and scuffed, laid out flat. Humble, common item.",
-        "at": "2026-10-03T10:14:57Z"
+        "at": "2026-10-03T10:14:57Z",
+        "imported": "witchfinders_coat_v1.webp"
       }
     ],
     "tin_censer": [
@@ -576,7 +605,8 @@
         "version": "hidden",
         "line": "Tin Censer, a simple dented tin censer hanging from a short chain, a thin wisp of grey smoke curling from its vents. Humble, common item.",
         "hint": "a small church thurible: a round tin incense burner with a pierced lid, hanging from three chains gathered into a ring at the top, smoke rising from the piercings — clearly a censer on chains, not a helmet or a lantern",
-        "at": "2026-10-03T10:16:28Z"
+        "at": "2026-10-03T10:16:28Z",
+        "imported": "tin_censer_v1.webp"
       }
     ],
     "healing_potion": [

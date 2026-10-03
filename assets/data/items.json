@@ -284,5 +284,107 @@
     "hp": 50,
     "armor": 15,
     "lifesteal": 1
+  },
+  "notched_hand_axe": {
+    "name": "Notched Hand Axe",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "notched_hand_axe_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "wolfhide_jerkin": {
+    "name": "Wolfhide Jerkin",
+    "slot": "armor",
+    "tier": 1,
+    "art": "wolfhide_jerkin_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "apprentices_staff": {
+    "name": "Apprentice's Staff",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "apprentices_staff_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "threadbare_robe": {
+    "name": "Threadbare Robe",
+    "slot": "armor",
+    "tier": 1,
+    "art": "threadbare_robe_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "grave_knife": {
+    "name": "Grave Knife",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "grave_knife_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "gravediggers_shroud": {
+    "name": "Gravedigger's Shroud",
+    "slot": "armor",
+    "tier": 1,
+    "art": "gravediggers_shroud_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "budding_branch": {
+    "name": "Budding Branch",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "budding_branch_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "bark_vest": {
+    "name": "Bark Vest",
+    "slot": "armor",
+    "tier": 1,
+    "art": "bark_vest_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "worn_hand_crossbow": {
+    "name": "Worn Hand Crossbow",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "worn_hand_crossbow_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "witchfinders_coat": {
+    "name": "Witchfinder's Coat",
+    "slot": "armor",
+    "tier": 1,
+    "art": "witchfinders_coat_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "tin_censer": {
+    "name": "Tin Censer",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "tin_censer_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "sisters_habit": {
+    "name": "Sister's Habit",
+    "slot": "armor",
+    "tier": 1,
+    "art": "sisters_habit_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
   }
 }

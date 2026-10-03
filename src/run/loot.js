@@ -6,6 +6,8 @@ import { equipItems, salvageValue } from '../meta/equipment.js';
 
 export const RELIC_TIER = 4;
 export const relicIds = () => Object.keys(DATA.items).filter((id) => DATA.items[id].tier === RELIC_TIER);
+// The classes' starting kits (0.00265, items.json `starter: true`) never drop: a kill's loot and the gilded chest leave them out.
+export const droppable = (id) => !DATA.items[id]?.starter;
 
 // Returns { coins, xp, itemId|null } for one killed enemy. fortuneBonus:
 // run.stats.fortuneBonus (meta/stats.js). roomNumber gates T4 relics by
@@ -28,7 +30,7 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
     if (relics.length) itemId = pick(relics);
   } else if (Math.random() < diff.dropChance + fortuneBonus) {
     const pool = Object.keys(DATA.items).filter(
-      (id) => DATA.items[id].tier <= maxTierFor(enemy)
+      (id) => DATA.items[id].tier <= maxTierFor(enemy) && droppable(id)
     );
     if (pool.length) itemId = pick(pool);
   }

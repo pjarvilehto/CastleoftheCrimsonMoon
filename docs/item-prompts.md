@@ -62,9 +62,11 @@ No text, no frame, no border, no card, no background panel. The near-black backg
 | amulet_of_the_blood_moon | Amulet of the Blood Moon, a round silver locket set with a large full blood-red moonstone with craters, a single drop of blood falling from it, on a black chain. Epic item, a violet and red glow. |
 | amulet_of_the_blood_eclipse | Amulet of the Blood Eclipse, an ornate gold sun-disc pendant on a gold chain, its center a black eclipse disc ringed by a blazing blood-red corona of fire, small gold rays around the rim. Legendary item, radiating intense red light — the brightest thing in the image. |
 
-The classes' starting kits (proposed, 0.00263): a weapon and an armor per
-class in its own look — the knight keeps the Rusty Sword and the Oak
-Shield. Humble, common, no glow; a dull touch of the class's colour.
+The classes' starting kits (0.00265, the developer's approval; heroes.json
+`kit`): a weapon and an armor per class in its own look — the knight
+keeps the Rusty Sword and the Oak Shield. Humble, common, no glow; a dull
+touch of the class's colour. (The Sister's Habit was redrawn "a bit more
+dramatic": hung on an iron hook in censer smoke, the third roll.)
 
 | id | line |
 |---|---|

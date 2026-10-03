@@ -11,6 +11,7 @@
         "Heavy blows",
         "Armor"
       ],
+      "kit": { "weapon": "rusty_sword", "armor": "oak_shield" },
       "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
         { "art": "knight_v2.webp", "fh": 0.95 },
@@ -30,6 +31,7 @@
         "Rage",
         "No armor"
       ],
+      "kit": { "weapon": "notched_hand_axe", "armor": "wolfhide_jerkin" },
       "theme": { "plate": "#9e3e1a", "light": "embers", "tint": [0.95, 0.45, 0.15] },
       "looks": [
         { "art": "barbarian_v1_k2.webp", "fh": 0.883 },
@@ -49,6 +51,7 @@
         "Spells",
         "Frail"
       ],
+      "kit": { "weapon": "apprentices_staff", "armor": "threadbare_robe" },
       "theme": { "plate": "#24479a", "light": "ether", "tint": [0.4, 0.6, 1.0] },
       "looks": [
         { "art": "wizard_v1_k2.webp", "fh": 0.921 },
@@ -71,6 +74,7 @@
         "Thralls",
         "Lifesteal"
       ],
+      "kit": { "weapon": "grave_knife", "armor": "gravediggers_shroud" },
       "theme": { "plate": "#246b38", "light": "ether", "tint": [0.35, 0.9, 0.45] },
       "looks": [
         { "art": "necromancer_v1_k2.webp", "fh": 0.939 },
@@ -93,6 +97,7 @@
         "Mending",
         "Wild shape"
       ],
+      "kit": { "weapon": "budding_branch", "armor": "bark_vest" },
       "theme": { "plate": "#4a7a24", "light": "fog", "tint": [0.55, 0.8, 0.4] },
       "looks": [
         { "art": "druid_v1_k2.webp", "fh": 0.938 },
@@ -112,6 +117,7 @@
         "Hexes",
         "Quick"
       ],
+      "kit": { "weapon": "worn_hand_crossbow", "armor": "witchfinders_coat" },
       "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
         { "art": "hexhunter_v1_k2.webp", "fh": 0.961 },
@@ -130,6 +136,7 @@
         "Blight",
         "Endurance"
       ],
+      "kit": { "weapon": "tin_censer", "armor": "sisters_habit" },
       "theme": { "plate": "#8a7420", "light": "fog", "tint": [0.8, 0.75, 0.35] },
       "looks": [
         { "art": "plaguesister_v1_k2.webp", "fh": 0.921 },

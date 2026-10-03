@@ -94,6 +94,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   await sleep(1300);
   ok('Proceed lands the pick on the profile and leads to the Great Hall', getProfile().hero.id === 'druid' && getProfile().hero.look === 4 && t().includes('GREAT HALL')
     && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).hero.look === 4);
+  ok('...and a new save puts on the class\'s starting kit (0.00265): the druid\'s branch and bark vest', getProfile().equipment.weapon === 'budding_branch' && getProfile().equipment.armor === 'bark_vest');
   ok('the hall names the class where the player has no name', (getProfile().name = '', show((await import('../../src/ui/scenes/index.js')).hubScene()), await sleep(1100), t().includes('The Druid')));
   getProfile().name = 'Tester';
 }

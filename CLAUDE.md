@@ -722,17 +722,22 @@ FOUND · Potion, what it heals, the satchel) and flies into that count —
 (`holdPotion`: the run's count is already up when the loot is rolled, a
 line before it prints), and the landing counts it with a glow
 (`landPotion`; under reduced motion at once). A full satchel's sale has no card.
-**The classes' starting kits (proposed 0.00263, awaiting the
-developer's verdict):** twelve tier-1 pictures in
-`assets/items/candidates` from the lines at the end of
-`docs/item-prompts.md` (Barbarian: Notched Hand Axe + Wolfhide Jerkin;
-Wizard: Apprentice's Staff + Threadbare Robe; Necromancer: Grave Knife +
-Gravedigger's Shroud; Druid: Budding Branch + Bark Vest; Hexhunter: Worn
-Hand Crossbow + Witchfinder's Coat; Plague Sister: Tin Censer + Sister's
-Habit; the knight keeps the Rusty Sword and the Oak Shield) — the plan:
-the Rusty Sword's and the Oak Shield's numbers each (the classes play the
-same so far), never in the drop pool, the class's kit worn on PROCEED
-for a new save. Not in items.json yet, so a bare `--import` skips them.
+**The classes' starting kits (0.00265, the developer's approval):** a
+weapon and an armor per class in its look (`heroes.json kit`, `heroes.js
+heroKit`; dataCheck names a kit item of the wrong slot) — Barbarian:
+Notched Hand Axe + Wolfhide Jerkin; Wizard: Apprentice's Staff +
+Threadbare Robe; Necromancer: Grave Knife + Gravedigger's Shroud; Druid:
+Budding Branch + Bark Vest; Hexhunter: Worn Hand Crossbow + Witchfinder's
+Coat; Plague Sister: Tin Censer + Sister's Habit; the knight's is the
+Rusty Sword and the Oak Shield (`difficulty.json player.startingGear`,
+still every new save's gear until the pick). The twelve are tier 1 with
+exactly the Rusty Sword's or the Oak Shield's numbers (the classes play
+alike so far — a class's own numbers are the developer's next call) and
+`starter: true`: never in a kill's loot or the gilded chest (`loot.js
+droppable`), so the drop pool and the simulator are unchanged
+(byte-identical). A NEW save wears its class's kit on PROCEED
+(`heroScene.js wearKit`: slot by slot, only over the default starting
+gear, never over a find); a save that had chosen before keeps its gear.
 
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
