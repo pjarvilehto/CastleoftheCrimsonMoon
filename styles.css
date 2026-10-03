@@ -985,7 +985,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 #combat-log .blight { color: #c9d26a; }
 #combat-log .entangle { color: #9ee06a; font-weight: bold; }
 #combat-log .entangled { color: #9ee06a; }
-#combat-log .immune { color: #b9b4a8; font-style: italic; } /* a foe shrugging an elemental heavy off (0.00285) */
+#combat-log .immune { color: #b9b4a8; font-style: italic; } /* a foe shrugging an elemental heavy off (0.00293) */
 #combat-log .charge { color: #9ab4ff; }
 #combat-log .thrall { color: #8fe0a0; font-weight: bold; }
 #combat-log .thrallhit { color: #9a8b6a; }

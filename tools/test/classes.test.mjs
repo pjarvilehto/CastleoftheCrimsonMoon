@@ -156,7 +156,7 @@ const types = (evs) => evs.map((e) => e.type);
   ok('a blow on the hexed foe always crits (the crit multiplier plus markCrit, no roll spent); the other foe takes a plain blow', onMark.crit && !plain.crit && onMark.dmg >= floor && onMark.dmg > plain.dmg && plain.dmg === run.stats.dmg, `${onMark.dmg} vs floor ${floor}, plain ${plain.dmg}`);
 }
 
-// Immunities (0.00285, the developer's ask): the undead and the vermin shrug the blight off, the
+// Immunities (0.00293, the developer's ask): the undead and the vermin shrug the blight off, the
 // fire-born the fire — a chance per element on every enemy (enemies.json immune), rolled by Last
 // Rites on every foe and by Fireball on its target and every foe the fire reaches; "Immune!" prints
 // in place of the stacks or the damage, and the cast is spent all the same.

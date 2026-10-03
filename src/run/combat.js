@@ -97,7 +97,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 
   const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258, live 0.00267)
   const hit = rollHit(combat, heavy, targetIndex);
-  // an elemental heavy on a foe immune to it (0.00285, the developer's ask): the blow does nothing —
+  // an elemental heavy on a foe immune to it (0.00293, the developer's ask): the blow does nothing —
   // no damage, no lifesteal — and "Immune!" prints in its place; the heavy's reach still plays
   // (classes.js: the fire rolls every other foe), the charge or the cooldown is spent all the same
   const element = heavy ? HEAVIES[combat.run.stats.klass.heavy].element : null;

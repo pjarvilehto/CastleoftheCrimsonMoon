@@ -77,7 +77,7 @@ export function entangled(fx, ctx) {
   if (can(u.el) && !reduced()) u.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'translateX(0)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
   floatNumber(ctx, u, 'ENTANGLED', 'fx-miss');
 }
-// A foe shrugs an elemental heavy off (0.00285): IMMUNE floats over its card, which pales for a moment.
+// A foe shrugs an elemental heavy off (0.00293): IMMUNE floats over its card, which pales for a moment.
 export function immune(fx, ctx) {
   const u = ctx.unit(fx.to);
   if (!u) return;

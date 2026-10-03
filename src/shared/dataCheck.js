@@ -86,7 +86,7 @@ export function checkData(data) {
   for (const [id, e] of Object.entries(data.enemies ?? {})) {
     if (!['hp', 'dmg', 'xp'].every((k) => isNum(e?.[k]))) out.push(`enemies.json: ${id} hp / dmg / xp`);
     if (!(e?.coins?.length === 2 && e.coins.every(isNum))) out.push(`enemies.json: ${id}.coins ([lo, hi])`);
-    // its immunities (0.00285): a chance 0-1 per element, every element on every enemy (0 = none)
+    // its immunities (0.00293): a chance 0-1 per element, every element on every enemy (0 = none)
     for (const el of ELEMENTS) if (!(isNum(e?.immune?.[el]) && e.immune[el] >= 0 && e.immune[el] <= 1)) out.push(`enemies.json: ${id}.immune.${el} (a chance 0-1)`);
   }
   for (const [kind, h] of Object.entries(HEAVIES)) if (h.element && !ELEMENTS.includes(h.element)) out.push(`classes.js: the ${kind} heavy's element (${h.element}) is not one of ${ELEMENTS.join(', ')}`);

@@ -102,7 +102,7 @@ src/
                         FOE_TURN hooks (the roots' hold, the thrall taking
                         the blow, the roots loosening), HEAVY_KINDS and
                         CLASS_KEYS for dataCheck; combat.js calls, never switches;
-                        ELEMENTS / rollImmune (0.00285): a heavy's element
+                        ELEMENTS / rollImmune (0.00293): a heavy's element
                         (fire, blight) against the foe's enemies.json immune
                         chance — "Immune!" in place of the blow or the stack
     shrine.js           boon deal + costs + effects (ids map to code)

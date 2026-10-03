@@ -53,7 +53,7 @@ export function fxFor(ev, who = {}) {
     // the classes' events (0.00268): each bursts in its class's colour
     case 'mark': return { kind: 'mark', to: ev.target };
     case 'blight': return { kind: 'blight' };
-    case 'immune': return { kind: 'immune', to: ev.target, element: ev.element }; // (0.00285: the foe shrugged an elemental heavy off)
+    case 'immune': return { kind: 'immune', to: ev.target, element: ev.element }; // (0.00293: the foe shrugged an elemental heavy off)
     case 'entangle': return { kind: 'entangle' };
     case 'entangled': return { kind: 'entangled', from: ev.source };
     case 'charge': return { kind: 'charge', to: 'player' };

@@ -28,7 +28,7 @@ export const HEAVY_KINDS = ['blow', 'cleave', 'fireball', 'drain', 'mark', 'cens
 export const CLASS_KEYS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'entangleTurns', 'entangleChance', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
 
 /** The elements a foe can be immune to (enemies.json `immune.<element>`, a chance 0-1 per enemy —
- *  0.00285, the developer's ask: the undead and the vermin shrug the blight off, the fire-born the fire):
+ *  0.00293, the developer's ask: the undead and the vermin shrug the blight off, the fire-born the fire):
  *  a heavy with an `element` rolls it on every foe it would touch; an immune foe prints "Immune!" and takes nothing. */
 export const ELEMENTS = ['blight', 'fire'];
 /** The roll: the chance is the foe's own (scaleEnemy copies it); a chance of 0 spends no roll, so the
@@ -47,7 +47,7 @@ const living = (combat) => combat.enemies.filter((e) => e.hp > 0);
 // fireball): `dmg` on every other living foe, each its own line (`via` the
 // kind: the fire's or the cleave's own particles, 0.00268), a MULTI-KILL
 // line for two or more. With an element (the fire), every foe reached
-// rolls its immunity first (0.00285).
+// rolls its immunity first (0.00293).
 function sweep(combat, targetIndex, dmg, kind, line, turn, element = null) {
   let kills = 0;
   for (const [i, e] of combat.enemies.entries()) {
@@ -60,7 +60,7 @@ function sweep(combat, targetIndex, dmg, kind, line, turn, element = null) {
 }
 
 /** The heavies by kind. `spills`: the blow itself strikes through (combat.js strike, at spillThreshold)
- *  and OVERKILLs a room it covers (smash) — the knight's alone; `element` (0.00285): the heavy is that
+ *  and OVERKILLs a room it covers (smash) — the knight's alone; `element` (0.00293): the heavy is that
  *  element, and a foe immune to it shrugs it off — the target its blow (combat.js playerAttack: no damage,
  *  no lifesteal, the charge or cooldown spent all the same), the others the reach or the stacks here;
  *  `onHeavy(combat, targetIndex, hit, turn)`: what the heavy does once its blow has landed (after the lifesteal). */
@@ -72,7 +72,7 @@ export const HEAVIES = {
     spills: false,
     onHeavy: (combat, i, { dmg }, turn) => sweep(combat, i, Math.round(dmg * combat.run.stats.klass.cleaveShare), 'cleave', (name, applied) => `...the cleave catches ${name} for ${applied}!`, turn),
   },
-  // the Wizard's: the whole blow on every other foe (a charge a cast, canHeavy); the fire-born shrug it off (0.00285)
+  // the Wizard's: the whole blow on every other foe (a charge a cast, canHeavy); the fire-born shrug it off (0.00293)
   fireball: {
     spills: false,
     element: 'fire',
@@ -96,7 +96,7 @@ export const HEAVIES = {
     },
   },
   // the Plague Sister's: a blight stack on every living foe (blightTick gnaws them a turn); the undead and
-  // the vermin roll their immunity and shrug it off (0.00285) — the stacks land first, so the smoke's
+  // the vermin roll their immunity and shrug it off (0.00293) — the stacks land first, so the smoke's
   // line shows them, then an Immune! line per foe that shrugged
   censer: {
     spills: false,

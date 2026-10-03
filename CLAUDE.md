@@ -963,7 +963,7 @@ multipliers and snapshots the block as `run.stats.klass`, `combat.js
 classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
 `canHeavy` do the rest, each heavy's code in `run/classes.js` (0.00283:
 `HEAVIES` by kind, the `AFTER_BLOW` / `FOE_TURN` hooks; combat.js calls
-them, never switches on the kind). **Immunities (0.00285, the developer's
+them, never switches on the kind). **Immunities (0.00293, the developer's
 ask):** `enemies.json immune` per enemy, a chance 0-1 per element
 (`blight`, the censer's; `fire`, the fireball's — `classes.js ELEMENTS`,
 each HEAVY's `element`; dataCheck wants every element on every enemy):
@@ -1857,7 +1857,7 @@ sometimes — fetch all branches to find it.
   narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
   pulled behind `audio.json cries` (0.00287) until their content is
   rethought — new recordings would be new files (rule 7).
-- Game: a foe's immunities show nowhere before the cast (0.00285: a tag or
+- Game: a foe's immunities show nowhere before the cast (0.00293: a tag or
   a hover line on the card would let the Wizard and the Plague Sister aim)
   · the classes' next round — the thrall card and the rage chip (the
   class UI's "not yet": the log alone says the thrall rose, took a blow,
