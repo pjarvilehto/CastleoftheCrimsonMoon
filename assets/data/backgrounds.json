@@ -155,7 +155,7 @@
     "swayHitShare": 0.15,
     "fog": 0.36,
     "fogSpeed": 3.5,
-    "fogScale": 1,
+    "fogScale": 1.75,
     "fogFadeMs": 2500,
     "fogWind": [
       0.01,
@@ -163,7 +163,7 @@
       0.002
     ],
     "puffs": {
-      "count": 40,
+      "count": 48,
       "size": [
         0.34,
         0.72
@@ -178,7 +178,7 @@
       "nearBand": 0.27,
       "farBand": 0.25,
       "soft": 0.12,
-      "opacity": 0.4,
+      "opacity": 0.76,
       "drift": [
         0.7,
         1.0
@@ -307,7 +307,7 @@
         "yawDeg": 3.6,
         "pitchDeg": 1,
         "pivot": 0.45,
-        "fogScale": 1.15,
+        "fogScale": 2.0,
         "fogSpeed": 3.5,
         "fog": 0.64,
         "fogWind": [
