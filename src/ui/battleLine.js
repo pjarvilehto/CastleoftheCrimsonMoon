@@ -5,7 +5,6 @@
 // Portraits: WebP with alpha in assets/chars/ (0.078: q85 — 9.6MB of PNGs
 // became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
-import { canUse } from '../shared/classGear.js';
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
 import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText } from './hud.js';
@@ -175,39 +174,30 @@ function statsPage(run) {
     dots(1), el('div', { class: 'back-hint' }, 'tap for inventory'));
   return { el: page, set: () => rows.forEach((r) => setText(r.b, r.val())) };
 }
-// The gear as worn (forge levels in), one row per slot, then what this run
-// has found so far (upgrades only, run.itemsFound) — the list grows mid-run.
-const FOUND_SHOWN = 3;
-function invPage(run) {
+// The gear as worn (forge levels in), a strip per slot like the Great Hall's
+// slots (0.00289, the developer's layout): the item's picture on the right,
+// fading into the dark under its name and stats on the left. The run's finds
+// are not listed here (a list of their own is to come) — the page is the
+// save's gear and does not change mid-run.
+function invPage() {
   const p = getProfile();
   const worn = GEAR_SLOTS.map(([key, i]) => {
     const id = i === undefined ? p.equipment[key] : p.equipment[key]?.[i];
     const item = id ? itemWithForge(id, p) : null;
-    return el('div', { class: 'inv-row' }, el('span', { class: 'inv-kind' }, SLOT_NAME[key]),
-      item ? el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase() + (item.forgeLvl ? ` +${item.forgeLvl}` : '')) : el('span', { class: 'inv-name inv-empty' }, 'Empty'),
-      el('span', { class: 'inv-desc' }, ...(item ? statText(describeItem(item)) : [''])));
+    if (!item) return el('div', { class: 'inv-row empty' }, el('span', { class: 'inv-name inv-empty' }, `${SLOT_NAME[key]} — empty`));
+    const pic = itemPic(id);
+    return el('div', { class: `inv-row gear-${rarityClass(item)}` },
+      pic ? el('div', { class: 'slot-art' }, pic) : null,
+      el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase(), ...(item.forgeLvl ? [el('span', { class: 'inv-forge' }, ` +${item.forgeLvl}`)] : [])),
+      el('span', { class: 'inv-desc' }, ...statText(describeItem(item))));
   });
-  const found = el('div', { class: 'inv-found-list' });
-  let shown = -1;
-  const set = () => {
-    const ids = run.itemsFound;
-    if (ids.length === shown) return;
-    shown = ids.length;
-    const known = ids.filter((id) => DATA.items[id]), items = known.map((id) => DATA.items[id]);
-    found.textContent = '';
-    found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
-      ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
-        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), canUse(run.heroId, id) ? el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`) : el('small', { class: 'inv-off' }, 'salvage')); }), // (0.00274: another class's gear: salvaged at the end)
-      ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
-  };
-  set();
   const page = el('div', { class: 'back-page back-inv' },
-    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), ...worn, found,
+    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list' }, ...worn),
     dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
-  return { el: page, set };
+  return { el: page, set: () => {} };
 }
 function cardBack(run) {
-  const stats = statsPage(run), inv = invPage(run);
+  const stats = statsPage(run), inv = invPage();
   return { el: el('div', { class: 'card-back' }, stats.el, inv.el), set: (page) => (page === 'inv' ? inv : stats).set() };
 }
 

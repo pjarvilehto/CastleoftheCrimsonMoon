@@ -82,8 +82,8 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 }
 
 // The knight's card turns over on a click (0.00256 / 0.00258): STATS, then
-// INVENTORY, then the hero again; the pages show the run's own numbers and
-// gear and follow the tick. The ⓘ under the gear says it turns.
+// INVENTORY, then the hero again; STATS shows the run's own numbers and
+// follows the tick, INVENTORY the worn gear as picture strips (0.00289). The ⓘ under the gear says it turns.
 {
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const { getProfile } = await import('../../src/meta/profile.js');
@@ -109,12 +109,11 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   run.itemsFound.push('vampiric_ring');
   await click();
   const rows = all(inv, has('inv-row'));
-  ok('a second click turns it to INVENTORY: every gear slot with the worn item (or Empty), and this run\'s finds', p.card.classList.contains('flipped') && p.card.classList.contains('page-inv')
-    && inv.children[0].textContent === 'Inventory' && rows.length === 7 && rows[0].textContent.includes('MOONBRAND') && rows[6].textContent.includes('Empty')
-    && inv.textContent.includes('Found this run') && inv.textContent.includes('VAMPIRIC RING') && inv.textContent.includes('Ring ↑'));
-  run.itemsFound.push('ring_of_might', 'lucky_charm', 'traveler_boots');
-  p.update({ hp: run.hp, heavyCd: 0, heavyReady: true });
-  ok('…the finds follow the tick, the newest three shown and the rest counted', inv.textContent.includes("TRAVELER'S BOOTS") && !inv.textContent.includes('VAMPIRIC RING') && inv.textContent.includes('+1 more'));
+  const art = (r) => all(r, has('slot-art'))[0];
+  ok('a second click turns it to INVENTORY: a strip per gear slot — the worn item\'s picture, name and stats, an empty slot dashed (0.00289)', p.card.classList.contains('flipped') && p.card.classList.contains('page-inv')
+    && inv.children[0].textContent === 'Inventory' && rows.length === 7 && rows[0].textContent.includes('MOONBRAND') && art(rows[0])?.children[0]?.attrs?.src?.includes('moonbrand')
+    && rows[0].classList.contains(`gear-rarity-${DATA.items.moonbrand.tier}`) && rows[6].classList.contains('empty') && rows[6].textContent.includes('Amulet — empty') && !art(rows[6]));
+  ok('…and no list of this run\'s finds on the page (a list of their own is to come)', !inv.textContent.includes('Found this run') && !inv.textContent.includes('VAMPIRIC RING'));
   await click();
   ok('…and a third click turns it back to the hero', !p.card.classList.contains('flipped') && !p.card.classList.contains('page-inv'));
   p0.equipment = JSON.parse(eq0);

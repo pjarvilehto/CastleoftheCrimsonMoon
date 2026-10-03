@@ -857,18 +857,20 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .card-back .back-row.st span { color: color-mix(in srgb, var(--c) 65%, #9a8b6a); }
 .card-back .back-inv h2 { font-size: 1.55em; }
 .card-back .back-inv .back-rule { margin: 0.3em 10% 0.35em; }
-.card-back .inv-row { margin: 0 6%; padding: 0.16em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); display: grid; grid-template-columns: 3.3em minmax(0, 1fr); column-gap: 0.4em; align-items: baseline; }
-.card-back .inv-kind { grid-row: span 2; align-self: center; color: #8a7c5e; letter-spacing: 0.1em; font-size: 0.56em; }
-.card-back .inv-name { font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
-.card-back .inv-empty { color: #4a4234; }
-.card-back .inv-desc { min-height: 1.2em; color: #8a7c5e; font-size: 0.56em; letter-spacing: 0.03em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card-back .inv-head { margin: 0.45em 6% 0.1em; color: var(--gold); letter-spacing: 0.18em; font-size: 0.56em; }
-.card-back .inv-found { margin: 0 6%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.4em; font-size: 0.72em; }
-.card-back .inv-found span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
-.card-back .inv-found .inv-pic { width: 1.7em; height: 1.7em; flex-shrink: 0; align-self: center; border-radius: 2px; border: 1px solid var(--rim); } /* (0.00260: the find's picture) */
-.card-back .inv-found small, .card-back .inv-more { color: #8a7c5e; font-size: 0.78em; letter-spacing: 0.08em; white-space: nowrap; }
-.card-back .inv-found small.inv-off { color: #9a5a4c; } /* (0.00274: another class's gear) */
-.card-back .inv-more { margin: 0 6%; font-size: 0.56em; }
+.card-back .inv-list { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 0.3em; margin: 0 5% 0.35em; }
+/* a strip per slot (0.00289, the developer's layout, like the hall's gear slots): the picture on the right fading into
+   the dark, the name and stats on the left over it; the strips share the page's height */
+.card-back .inv-row { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 0.08em; padding: 0 0.6em; overflow: hidden; border-width: 1px; border-style: solid; border-radius: 0.3em; background: rgba(0, 0, 0, 0.45); }
+:where(.card-back .inv-row) { border-color: rgba(201, 162, 39, 0.22); } /* (no weight: the hall's gear-rarity-N rim colours win) */
+.card-back .inv-row.empty { border-style: dashed; background: rgba(0, 0, 0, 0.25); }
+.card-back .inv-row .slot-art { position: absolute; inset: 0; pointer-events: none; }
+.card-back .inv-row .slot-art img { position: absolute; right: -6%; top: -70%; height: 240%; width: auto; aspect-ratio: 1; filter: brightness(1.45) contrast(1.08) saturate(1.1); -webkit-mask-image: linear-gradient(to left, #000 35%, transparent 90%); mask-image: linear-gradient(to left, #000 35%, transparent 90%); }
+.card-back .inv-row .slot-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, rgba(0, 0, 0, 0.6) 20%, transparent 75%); }
+.card-back .inv-name, .card-back .inv-desc { position: relative; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px #000; }
+.card-back .inv-name { font-size: 0.85em; animation: none; }
+.card-back .inv-forge { color: var(--gold); }
+.card-back .inv-empty { color: #4a4234; font-size: 0.66em; letter-spacing: 0.12em; text-shadow: none; }
+.card-back .inv-desc { color: #a89468; font-size: 0.6em; letter-spacing: 0.04em; }
 .card-back .page-dots { display: flex; justify-content: center; gap: 0.45em; margin-top: auto; padding-bottom: 0.35em; }
 .card-back .page-dots i { width: 0.42em; height: 0.42em; border-radius: 50%; background: rgba(201, 162, 39, 0.25); }
 .card-back .page-dots i.on { background: var(--gold); box-shadow: 0 0 4px rgba(201, 162, 39, 0.6); }

@@ -758,8 +758,8 @@ no row, the XP / COINS counters; reduced motion and the shim: nothing,
 the log says it); the Found line and the room's loot summary lead with
 the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
 showLoot`: the newest six; shown as the run's first find takes off;
-none on a phone, whose top strip is the room title's — the hero card's
-inventory page lists them; a find's chip joins as its card lands, with
+none on a phone, whose top strip is the room title's — since 0.00289
+nothing lists them there mid-run (the finds' own list is to come); a find's chip joins as its card lands, with
 a flash, an OVERKILL's silent finds when the room's lines are out); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
 (`runEndScene.js findCard`: a card per slot `equipSummary.changes`
@@ -1410,9 +1410,11 @@ be served stale for ~4 hours.
   cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
   is the run's totals only (health, attack, armor, crit chance / damage,
   lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
-  worn per `GEAR_SLOTS` (forge levels in, `describeItem` lines) and the
-  run's finds (`run.itemsFound`, the newest three and a count) — worn
-  from the run's end. The shown page refreshes on the update tick; the
+  worn per `GEAR_SLOTS` as strips like the hall's slots (0.00289, the
+  developer's layout: the item's picture on the right fading under its
+  name, forge level and stats on the left, the rarity's rim; an empty slot
+  dashed) — the run's finds are no longer listed there (a list of their
+  own is to come). The shown page refreshes on the update tick; the
   turn is two `rotateY` halves with the face swapped edge-on (`flipCard`,
   `composite: 'add'` like the kick; instant under reduced motion). A
   still gold ⓘ under the gear names says the card turns; the phone's
