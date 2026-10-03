@@ -142,33 +142,27 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
   const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
   const plate = frame();
-  const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00249: a standing hero's figure stands taller than the knight's wide sprite)
-    plate,
-    el('div', { class: 'card-head' },
-      el('span', { class: 'card-name' }, heroOf(p).name.toUpperCase()), // (0.00248: the chosen class)
-      el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`)),
-    // Weapon line: rarity-colored name left, ACTUAL total damage right
-    // (run.stats.dmg = base + power + gear + shrine boons) — mirrors the
-    // card-head row (name left, LV badge right).
-    el('div', { class: 'card-sub weapon-line' },
-      weapon
-        ? el('span', { class: rarityClass(weapon) }, weapon.name.toUpperCase() + (weapon.forgeLvl ? ` +${weapon.forgeLvl}` : ''))
-        : el('span', {}, 'UNARMED'),
-      el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`)),
-    // Armor line: equipped armor piece (rarity-colored) + TOTAL armor.
-    el('div', { class: 'card-sub weapon-line' },
-      armor
-        ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : ''))
-        : el('span', { class: 'no-item' }, 'NO ARMOR'),
-      armorVal),
-    img,
-    chip,
-    potions);
+  // The card's top (0.00251, the developer's layout): the class name sits
+  // ABOVE the card (hero-title, in the unit), and the gear takes the top
+  // of the card as two columns — the weapon and armor names (rarity
+  // colours) on the left, the LV badge, the ACTUAL total damage
+  // (run.stats.dmg = base + power + gear + shrine boons) and the total
+  // armor on the right — so the figure stands tall behind them.
+  const gear = el('div', { class: 'gear-block' },
+    el('div', { class: 'gear-names' },
+      weapon ? el('span', { class: rarityClass(weapon) }, weapon.name.toUpperCase() + (weapon.forgeLvl ? ` +${weapon.forgeLvl}` : '')) : el('span', {}, 'UNARMED'),
+      armor ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : '')) : el('span', { class: 'no-item' }, 'NO ARMOR')),
+    el('div', { class: 'gear-vals' },
+      el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),
+      el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`),
+      armorVal));
+  const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite)
+    plate, gear, img, chip, potions);
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
-  const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
+  const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
