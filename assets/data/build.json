@@ -1,5 +1,5 @@
 {
-  "version": "0.00302",
+  "version": "0.00303",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -100,6 +100,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00303": [
+      "The enemies are redrawn: every approved new portrait is in the game, and a fight gives each foe of a kind its own picture (three Giant Rats, different rats where there are pictures enough); the Vampire Lord wears one of his three at random each fight."
+    ],
     "0.00302": [
       "Export Save and Import Save moved from the title screen into the Settings menu (under Game)."
     ],
@@ -145,9 +148,6 @@
     ],
     "0.00289": [
       "Calmer boss music: the throne room's score is a new, more restrained take (picked in the Music Lab), the menace held under the fight instead of on top of it."
-    ],
-    "0.00288": [
-      "The Music Lab has four calmer takes for the boss music to choose from."
     ]
   }
 }
