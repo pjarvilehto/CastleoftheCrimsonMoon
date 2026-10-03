@@ -1,5 +1,5 @@
 {
-  "version": "0.00248",
+  "version": "0.00249",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -92,6 +92,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00249": [
+      "Back in the Great Hall after a run, every item you found takes its place one by one — your old gear first, then the new piece glowing in with a NEW tag as your stats climb"
+    ],
     "0.00248": [
       "Choose your hero: after Enter the Castle you pick your character — the Curious Knight or the new Barbarian, Wizard, Necromancer, Druid, Hexhunter and Plague Sister — and, under the chosen one, a look from their sheets (35 figures from the developer's art); the knight's card in the hall and the fights draws your hero. The choice is cosmetic for now."
     ],
@@ -138,9 +141,6 @@
     ],
     "0.00235": [
       "The Great Hall: whatever a purchase raises — Attack after Power or a forged blade, HP, Armor, your level, potions — now glows as it counts up"
-    ],
-    "0.00234": [
-      "Art Lab: the wraith's c10 approved (every character now has an approved portrait) and its other candidates pruned; the LoRA tool can cancel a training"
     ]
   }
 }

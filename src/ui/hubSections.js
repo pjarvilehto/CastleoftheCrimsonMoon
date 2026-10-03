@@ -100,17 +100,23 @@ export function alchemySection(p, phone, done, spend = false) {
     }));
 }
 
+// A worn slot's label in the hall, from the settle record's slot (0.00248).
+const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', amulet: 'Amulet' };
+export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);
+// The NEW tag on a slot this run's finds filled (0.00248; the hall's reveal).
+const newTag = (found, label) => (found.has(label) ? el('span', { class: 'slot-new' }, 'New') : null);
+
 // ---- EQUIPMENT with per-item Forge enhancement. ----
-export function equipSection(p, done) {
+export function equipSection(p, done, found = new Set(), waiting = new Set()) {
   const eq = p.equipment;
   const slotRow = (label, id) => {
     const item = id ? itemWithForge(id, p) : null;
     const forgeLvl = id ? (p.forged[id] ?? 0) : 0;
     // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
     // worth the coins, so it gets no enhance button at all (0.068).
-    const canForge = !!item && forgeable(id);
+    const canForge = !!item && forgeable(id) && !waiting.has(label);
     return el('div', { class: 'item-row', 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
-      el('span', { class: 'equip-slot' }, label),
+      el('span', { class: 'equip-slot' }, label, newTag(found, label)),
       item
         ? el('div', { class: 'equip-right' },
             el('div', { class: 'equip-item' },
@@ -143,16 +149,17 @@ export function equipSection(p, done) {
 // as the card allows and its Forge button in the outer top corner — and his
 // numbers under it. `boxes` hands the scene the values that glow when a
 // purchase moves them (hubScene.js settleStats).
-export function knightSection(p, done) {
+export function knightSection(p, done, found = new Set(), waiting = new Set()) {
   const eq = p.equipment, s = derivedStats(p);
   const pct = (x) => `${Math.round(x * 100)}%`;
   const slot = (label, id) => {
     const item = id ? itemWithForge(id, p) : null;
     if (!item) return el('div', { class: 'gear-slot empty', 'data-row': `slot-${label}` }, el('div', { class: 'slot-kind' }, label), el('div', { class: 'slot-name' }, '— empty —'));
     const forgeLvl = p.forged[id] ?? 0;
-    return el('div', { class: `gear-slot gear-${rarityClass(item)}`, 'data-row': `slot-${label}` },
-      el('div', { class: 'slot-kind' }, label),
-      forgeable(id) && !forgeMaxed(id)
+    return el('div', { class: `gear-slot gear-${rarityClass(item)}${found.has(label) ? ' found' : ''}`, 'data-row': `slot-${label}` },
+      el('div', { class: 'slot-kind' }, label, newTag(found, label)),
+      waiting.has(label) ? null
+      : forgeable(id) && !forgeMaxed(id)
         ? el('button', {
             class: 'forge-btn',
             disabled: p.coins < forgeCost(id),

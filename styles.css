@@ -527,6 +527,8 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .slot-name { color: var(--parchment); font-size: 0.92rem; line-height: 1.05; }
 .gear-slot.empty .slot-name { color: #4a4234; }
 .slot-plus { color: var(--gold); }
+.slot-new { margin-left: 6px; color: var(--gold); letter-spacing: 0.12em; text-shadow: 0 0 8px rgba(232, 196, 92, 0.7); } /* a slot this run's finds filled (0.00248; hubScene.js reveal) */
+.gear-slot.found { border-color: rgba(232, 196, 92, 0.75); }
 .slot-desc { color: #85775a; font-size: 0.7rem; letter-spacing: 0.04em; }
 .gear-slot .forge-btn, .gear-slot .forge-max { position: absolute; top: 5px; padding: 2px 7px; font-size: 0.72rem; } /* the Forge in the slot's outer top corner */
 .gear-left .forge-btn, .gear-left .forge-max { left: 6px; }

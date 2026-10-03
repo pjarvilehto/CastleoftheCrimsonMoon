@@ -18,13 +18,14 @@ import {
   forgeCost, forgeMaxed, forgeable } from '../../meta/leveling.js';
 import { statBox, potionLevel } from '../hud.js';
 import { recordsLine } from '../hubText.js';
-import { trainSection, alchemySection, equipSection, knightSection } from '../hubSections.js'; // the sections (0.00223; the knight 0.00238)
+import { trainSection, alchemySection, equipSection, knightSection, gearLabel } from '../hubSections.js'; // the sections (0.00223; the knight 0.00238)
 import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 import { narrate } from '../../audio/narrator.js';
 import { pulseNumber, tickUp } from '../fx.js';
+import { sfx } from '../../audio/sfx.js';
 
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
@@ -46,14 +47,46 @@ export function canForgeAny(p) {
 export const canSpendCoins = (p) => canSpendAlchemy(p) || canForgeAny(p);
 
 // opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.161)
+// opts.finds: the slots that run's finds filled (equipment.js equipItems
+// `changes`, 0.00248, the owner's ask): the hall opens with the OLD items
+// there, then each new one takes its place in turn — the slot glows, its
+// name flashes, the numbers it moves roll up — and keeps a NEW tag.
+const REVEAL_MS = 900, REVEAL_FIRST_MS = 700; // (the look: the beat between finds)
 export function hubScene(opts = {}) {
   let leaving = false;
+  const pending = (opts.fromRun ? opts.finds ?? [] : []).map((c) => ({ ...c, label: gearLabel(c) })).filter((c) => c.label);
+  const found = new Set();
+  // The profile as the hall shows it mid-reveal: the slots still to come wear their old item.
+  const shownProfile = (p) => {
+    if (!pending.length) return p;
+    const eq = { ...p.equipment, rings: [...p.equipment.rings] };
+    for (const c of pending) { if (c.slot === 'rings') eq.rings[c.index] = c.from; else eq[c.slot] = c.from; }
+    return { ...p, equipment: eq };
+  };
+  const waiting = () => new Set(pending.map((c) => c.label)); // (their old item is salvaged already: no Forge button until the reveal)
   const scene = {
     enter(root) {
       play('title');
       setBackground(DATA.backgrounds.hub);
       render(root);
       if (opts.fromRun) narrate('hall_return');
+      // the finds take their slots one by one once the hall's windows are in
+      const reveal = () => {
+        if (currentScene() !== scene || leaving || !pending.length) return;
+        const c = pending.shift();
+        found.add(c.label);
+        flashNext(`slot-${c.label}`);
+        render(root);
+        const row = root.querySelector?.(`[data-row="slot-${c.label}"]`);
+        row?.animate?.([ // (one-shot: a gold flare round the slot)
+          { boxShadow: '0 0 0 0 rgba(232,196,92,0)', borderColor: 'rgba(232,196,92,1)' },
+          { boxShadow: '0 0 22px 4px rgba(232,196,92,0.85)', borderColor: 'rgba(255,236,170,1)', offset: 0.3 },
+          { boxShadow: '0 0 0 0 rgba(232,196,92,0)' },
+        ], { duration: 1400, easing: 'ease-out' });
+        sfx(DATA.items[c.to]?.tier >= 3 ? 'rare' : 'loot');
+        if (pending.length) setTimeout(reveal, REVEAL_MS);
+      };
+      if (pending.length) whenWindowsBack().then(() => setTimeout(reveal, REVEAL_FIRST_MS));
       // 0.133: the one-time benchmark request, once the hall has faded in;
       // 0.134: never over another dialog — it waits its turn
       // 0.136: …and never once a descent has started ("Gathering shadows…"
@@ -100,7 +133,7 @@ export function hubScene(opts = {}) {
   }
 
   function render(root) {
-    const p = getProfile();
+    const p = shownProfile(getProfile()); // (mid-reveal: the finds still to come show their old items, and the numbers follow)
     const stats = derivedStats(p);
     const phone = phoneLayout(); // 0.00208: the phone's assembly and wording (below)
 
@@ -120,7 +153,7 @@ export function hubScene(opts = {}) {
 
     // the three sections (ui/hubSections.js); done = a purchase landed: the row flashes after the re-render
     const done = (row) => { flashNext(row); render(root); };
-    const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done, canSpendXp(p)), alchemySection(p, phone, done, canSpendAlchemy(p)), phone ? equipSection(p, done) : null];
+    const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done, canSpendXp(p)), alchemySection(p, phone, done, canSpendAlchemy(p)), phone ? equipSection(p, done, found, waiting()) : null];
 
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
@@ -141,7 +174,7 @@ export function hubScene(opts = {}) {
     // name and the records up top; the knight with his gear and numbers,
     // TRAIN and ALCHEMY as three panels of one height; the way on at the
     // foot. Each purse sits in the head of the section that spends it.
-    const knight = knightSection(p, done);
+    const knight = knightSection(p, done, found, waiting());
     ({ boxes, vals } = knight);
     root.append(
       el('div', { class: 'hub-container hall-desk' },
