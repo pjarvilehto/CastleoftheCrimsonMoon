@@ -1,4 +1,4 @@
-// classes.test.mjs — the classes' gameplay (drafted 0.00258, shipped 0.00266,
+// classes.test.mjs — the classes' gameplay (drafted 0.00258, shipped 0.00267,
 // the developer's call: "we can edit and finetune once I get to play"):
 // heroes.json class per hero through stats.js derivedStats into
 // run.stats.klass, the seven heavies and the passives in combat.js

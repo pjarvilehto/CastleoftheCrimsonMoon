@@ -149,9 +149,9 @@ export function hubScene(opts = {}) {
       Level: statBox('Level', vals.Level), // 0.080: same LV as the combat card
       Coins: statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
       XP: statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
-      Attack: statBox('Attack', vals.Attack),
-      HP: statBox('HP', vals.HP),
-      Armor: statBox('Armor', vals.Armor),
+      Attack: statBox('Attack', vals.Attack, '', 'dmg'), // (0.00266: in their stats' colours)
+      HP: statBox('HP', vals.HP, '', 'hp'),
+      Armor: statBox('Armor', vals.Armor, '', 'armor'),
       Potions: statBox('Potions', vals.Potions, `stat-potions ${potionLevel(p)}`),
     };
     const statsRow = el('div', { class: 'stat-grid hub-stats' }, ...Object.values(boxes));

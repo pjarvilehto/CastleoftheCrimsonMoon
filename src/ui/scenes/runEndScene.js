@@ -3,7 +3,7 @@
 import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
-import { statBox, itemPic, describeItem, gearLabel } from '../hud.js';
+import { statBox, itemPic, describeItem, gearLabel, statText } from '../hud.js';
 import { gainLine } from '../../shared/itemArt.js';
 import { play } from '../../audio/music.js';
 import { narrate } from '../../audio/narrator.js';
@@ -22,7 +22,7 @@ function findCard({ slot, index, from, to }) {
     el('div', { class: 'fc-text' },
       el('div', { class: 'fc-slot' }, gearLabel({ slot, index })),
       el('div', { class: 'fc-name' }, it.name),
-      el('div', { class: 'fc-desc' }, describeItem(it)),
+      el('div', { class: 'fc-desc' }, ...statText(describeItem(it))),
       el('div', { class: 'fc-cmp' }, from && DATA.items[from] ? `over ${DATA.items[from].name}` : 'into an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }
 function salvageRow(sum) {

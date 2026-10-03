@@ -257,3 +257,30 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('wearKit: the class\'s kit over the default gear, never over a find', fresh1.equipment.weapon === 'tin_censer' && fresh1.equipment.armor === 'sisters_habit'
     && found.equipment.weapon === 'moonbrand' && found.equipment.armor === 'threadbare_robe');
 }
+
+// the stat colours (0.00266, the developer's call): a stat's words and numbers in its colour, the same as the Train
+// row that raises it — Power and damage, Vitality and HP, Endurance and armor, Precision and crit, Fortune and loot
+{
+  const { statText, statKind, ST_TRAIN, statBox } = await import('../../src/ui/hud.js');
+  const kinds = (s) => statText(s).filter((x) => typeof x !== 'string').map((x) => `${x.className.replace('st st-', '')}:${x.textContent}`).join(' | ');
+  ok('statText: each stat with its number in its colour, the rest plain', kinds('+40 armor, +80 HP') === 'armor:+40 armor | hp:+80 HP'
+    && kinds('+3% crit chance, +1% crit damage') === 'crit:+3% crit chance | crit:+1% crit damage' && kinds('+3% crit, +1% crit dmg') === 'crit:+3% crit | crit:+1% crit dmg'
+    && kinds('+6 dmg') === 'dmg:+6 dmg' && kinds('Better loot drops') === 'loot:Better loot drops' && kinds('30% lifesteal, 8% dodge') === 'ls:30% lifesteal | dodge:8% dodge'
+    && kinds('faster heavy recharge') === '' && statText('a, b').join('') === 'a, b', kinds('+3% crit, +1% crit dmg'));
+  ok('...every Train discipline names a stat with a colour', Object.keys(ST_TRAIN).sort().join() === Object.keys((await import('../../src/meta/leveling.js')).STAT_DEFS).sort().join()
+    && Object.values(ST_TRAIN).every((k) => readFileSync('styles.css', 'utf8').includes(`--st-${k}:`)) && statKind('Max HP') === 'hp');
+  const { trainSection, knightSection } = await import('../../src/ui/hubSections.js');
+  const p = getProfile();
+  const rows = trainSection(p, false, () => {}).all((n) => n.className?.startsWith?.('item-row'));
+  const power = rows.find((r) => r.attrs['data-row'] === 'power'), vit = rows.find((r) => r.attrs['data-row'] === 'vitality');
+  ok('TRAIN: each row wears its stat\'s colour, its effect too', power.classList.contains('st-dmg') && power.classList.contains('st-row') && vit.classList.contains('st-hp')
+    && power.all((n) => n.className === 'st st-dmg').length === 1);
+  const boxes = knightSection(p, () => {}).boxes;
+  ok('...and the stat boxes the same: Attack with Power, HP with Vitality, Crit with Precision', boxes.Attack.classList.contains('st-dmg') && boxes.HP.classList.contains('st-hp') && boxes.Crit.classList.contains('st-crit') && boxes.Armor.classList.contains('st-armor')
+    && !statBox('Coins', 1).classList.contains('st-box'));
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const hero = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
+  const backRow = (label) => hero.card.all((n) => n.className?.startsWith?.('back-row') && n.children[0]?.textContent === label)[0];
+  ok('the hero card: DMG and ARMOR in their colours; its STATS page by stat, the potion\'s heal as HP', hero.card.all((n) => n.className === 'weapon-dmg st st-dmg').length === 1
+    && backRow('Attack').classList.contains('st-dmg') && backRow('Crit damage').classList.contains('st-crit') && backRow('Potion heals').classList.contains('st-hp') && !backRow('Heavy blow').classList.contains('st'));
+}

@@ -20,7 +20,7 @@ import {
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../meta/leveling.js';
-import { describeItem, itemName, itemPic, rarityClass, statBox, potionLevel, gearLabel } from './hud.js';
+import { describeItem, itemName, itemPic, rarityClass, statBox, potionLevel, gearLabel, statText, ST_TRAIN } from './hud.js';
 import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
 
 // A row's text (0.00232, the developer's ask): the title — the name and its
@@ -28,7 +28,7 @@ import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './h
 // what it does (the phone keeps both on one line, styles.css section 16).
 const rowText = (title, level, desc) => el('div', { class: 'row-text' },
   el('div', { class: 'row-title' }, el('b', {}, ...title), level ? el('span', { class: 'row-lv' }, level) : null),
-  el('div', { class: 'row-desc' }, desc));
+  el('div', { class: 'row-desc' }, ...statText(desc))); // (0.00266: the stats in their colours)
 const keyed = (name) => [el('u', {}, name[0]), name.slice(1)]; // (the hotkey's letter underlined)
 
 // A section's head (0.00238): its name, the purse it spends from (green
@@ -48,7 +48,7 @@ export function trainSection(p, phone, done, spend = false) {
       const lvl = p.stats[key];
       const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
       const desc = statDesc(key, lvl, phone);
-      return el('div', { class: 'item-row', 'data-row': key },
+      return el('div', { class: `item-row st-row st-${ST_TRAIN[key]}`, 'data-row': key }, // (0.00266: in the colour of the stat it raises)
         rowText(keyed(def.name), `Lv ${lvl}${star}`, desc),
         el('button', {
           disabled: !canAfford(key),
@@ -123,7 +123,7 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
         ? el('div', { class: 'equip-right' },
             el('div', { class: 'equip-item' },
               el('div', {}, itemName(item), forgeLvl ? ` +${forgeLvl}` : null),
-              el('div', { class: 'equip-desc' }, describeItem(item))),
+              el('div', { class: 'equip-desc' }, ...statText(describeItem(item)))),
             !canForge
             ? null
             : forgeMaxed(id)
@@ -179,12 +179,13 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
           }, `Forge ${forgeCost(id)}c`)
         : forgeable(id) ? el('span', { class: 'forge-max' }, 'MAX') : null,
       el('div', { class: 'slot-name' }, itemName(item), forgeLvl ? el('span', { class: 'slot-plus' }, ` +${forgeLvl}`) : null),
-      el('div', { class: 'slot-desc' }, describeItem(item)));
+      el('div', { class: 'slot-desc' }, ...statText(describeItem(item))));
   };
   const hero = heroOf(p), looks = hero.looks.length;
   const level = el('div', { class: 'knight-level' }, el('span', {}, 'Level '), el('b', {}, String(playerLevel(p))));
   const vals = { Level: playerLevel(p), Attack: s.dmg, HP: s.maxHp, Armor: s.armor, Crit: pct(s.crit), Lifesteal: s.lifesteal ? pct(s.lifesteal) : '—', Potions: `${p.potions}/${p.potionCap}` };
-  const chip = (k, cls = '') => statBox(k, vals[k], cls);
+  const ST = { Attack: 'dmg', HP: 'hp', Armor: 'armor', Crit: 'crit', Lifesteal: 'ls' }; // (0.00266: each box in its stat's colour)
+  const chip = (k, cls = '') => statBox(k, vals[k], cls, ST[k]);
   const boxes = { Level: level, Attack: chip('Attack'), HP: chip('HP'), Armor: chip('Armor'), Crit: chip('Crit'), Lifesteal: chip('Lifesteal', s.lifesteal ? '' : 'none'), Potions: chip('Potions', potionLevel(p)) };
   const panel = el('div', { class: 'panel knight-panel' },
     el('div', { class: 'knight-name' }, p.name || heroOf(p).name),

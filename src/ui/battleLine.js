@@ -7,7 +7,7 @@
 
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic } from './hud.js';
+import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -105,14 +105,15 @@ function splitName(full) {
 // Single-line health: "HP 26/92" left, bar filling the rest of the row.
 // Returns the line plus a setter that patches it in place (0.086).
 function hpLine(cur, max) {
-  const text = el('span', { class: 'hp-text' }, `HP ${cur}/${max}`);
+  const num = el('span', {}, `${cur}/${max}`);
+  const text = el('span', { class: 'hp-text' }, el('span', { class: 'st st-hp' }, 'HP '), num); // (0.00266: the HP word in its stat's colour)
   const bar = hpBar(cur, max);
   const line = el('div', { class: 'hp-line' }, text, bar);
   let lastHp = cur, lastMax = max;
   const set = (hp, maxHp = max) => {
     if (hp === lastHp && maxHp === lastMax) return; // (0.00223: no write when nothing changed)
     lastHp = hp; lastMax = maxHp;
-    text.textContent = `HP ${hp}/${maxHp}`;
+    num.textContent = `${hp}/${maxHp}`;
     bar.children[0].style.width = `${Math.max(0, Math.round((hp / maxHp) * 100))}%`;
   };
   return { line, set };
@@ -145,19 +146,19 @@ function statsPage(run) {
   const tune = DATA.difficulty.combat;
   const pct = (x) => `${Math.round(x * 100)}%`;
   const rows = [
-    ['Health', () => `${run.hp} / ${run.maxHp}`, 'gold'],
-    ['Attack', () => `${run.stats.dmg}`, 'gold'],
-    ['Armor', () => `${run.stats.armor}${run.tempArmor > 0 ? ` +${run.tempArmor}` : ''}`, 'gold'],
-    ['Crit chance', () => pct(run.stats.crit)],
-    ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`],
-    ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—')],
-    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00266: the class's name for its heavy)
+    ['Health', () => `${run.hp} / ${run.maxHp}`, 'hp'], // (0.00266: each stat in its colour — the Train row that raises it wears the same)
+    ['Attack', () => `${run.stats.dmg}`, 'dmg'],
+    ['Armor', () => `${run.stats.armor}${run.tempArmor > 0 ? ` +${run.tempArmor}` : ''}`, 'armor'],
+    ['Crit chance', () => pct(run.stats.crit), 'crit'],
+    ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`, 'crit'],
+    ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—'), 'ls'],
+    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00267: the class's name for its heavy)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
-    ['Potion heals', () => `${potionHealAmount()} HP`],
-  ].map(([label, val, cls]) => ({ val, b: el('b', { class: cls ?? '' }, val()), label }));
+    ['Potion heals', () => `${potionHealAmount()} HP`, 'hp'],
+  ].map(([label, val, st]) => ({ val, b: el('b', {}, val()), label, st }));
   const page = el('div', { class: 'back-page back-stats' },
     el('h2', {}, 'Stats'), el('div', { class: 'back-rule' }),
-    ...rows.map((r) => el('div', { class: 'back-row' }, el('span', {}, r.label), r.b)),
+    ...rows.map((r) => el('div', { class: `back-row${r.st ? ` st st-${r.st}` : ''}` }, el('span', {}, r.label), r.b)),
     dots(1), el('div', { class: 'back-hint' }, 'tap for inventory'));
   return { el: page, set: () => rows.forEach((r) => setText(r.b, r.val())) };
 }
@@ -171,7 +172,7 @@ function invPage(run) {
     const item = id ? itemWithForge(id, p) : null;
     return el('div', { class: 'inv-row' }, el('span', { class: 'inv-kind' }, SLOT_NAME[key]),
       item ? el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase() + (item.forgeLvl ? ` +${item.forgeLvl}` : '')) : el('span', { class: 'inv-name inv-empty' }, 'Empty'),
-      el('span', { class: 'inv-desc' }, item ? describeItem(item) : ''));
+      el('span', { class: 'inv-desc' }, ...(item ? statText(describeItem(item)) : [''])));
   });
   const found = el('div', { class: 'inv-found-list' });
   let shown = -1;
@@ -225,7 +226,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
-  const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
+  const armorVal = el('span', { class: 'weapon-dmg st st-armor' }, armorText()); // (0.00266: the stat colours)
   const plate = frame(heroOf(p).theme);
   // The card's top (0.00251, the developer's layout): the class name sits
   // ABOVE the card (hero-title, in the unit), and the gear takes the top
@@ -240,7 +241,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
       el('span', { class: 'info-i', 'aria-hidden': 'true' }, 'i')), // (0.00258: says the card turns over)
     el('div', { class: 'gear-vals' },
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),
-      el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`),
+      el('span', { class: 'weapon-dmg st st-dmg' }, `${run.stats.dmg} DMG`),
       armorVal));
   const card = el('div', { class: `char-card player-card${lookIsSprite(heroOf(p), cleanHero(p.hero).look) ? '' : ' hero-standing'}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite; 0.00264: the knight stands too, but for his crouching look)
     plate, gear, img, chip, potions);
@@ -261,7 +262,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   });
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00266: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
+  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
@@ -272,7 +273,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setText(potionCount, shownPotions());
     setText(armorVal, armorText());
     if (page > 0) back.set(PAGES[page]);
-    // 0.00266, the classes: a charge class (the wizard) shows its charges
+    // 0.00267, the classes: a charge class (the wizard) shows its charges
     // left as pips in place of the cooldown; the druid's feral turns show
     // while they last (no potion then — runState.drinkPotion refuses)
     const k = run.stats.klass;
@@ -325,7 +326,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
   const plate = frame();
-  const foeTag = el('div', { class: 'foe-tag card-sub' }, ''); // (0.00266: HEXED by the hexhunter, BLIGHT ×n under the plague sister's censer; empty otherwise)
+  const foeTag = el('div', { class: 'foe-tag card-sub' }, ''); // (0.00267: HEXED by the hexhunter, BLIGHT ×n under the plague sister's censer; empty otherwise)
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
     plate,
     el('div', { class: 'card-head' },

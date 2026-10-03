@@ -62,7 +62,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   ok('the knight\'s card is named after the class, above the card (0.00251)', u.el.all((n) => n.className === 'hero-title card-name')[0].textContent === 'THE NECROMANCER' && !u.card.all((n) => n.className.includes('card-name')).length
     && u.card.all((n) => n.className === 'gear-vals')[0].textContent.includes('LV1'));
-  // the heavy's name per class (0.00266, the developer's picks)
+  // the heavy's name per class (0.00267, the developer's picks)
   const heavyLabel = (unit) => unit.el.all((n) => n.className === 'btn-label')[0].textContent.replace(/\s*\(\d+\)$/, '');
   ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), on the H key still', heavyLabel(u) === 'Soul Drain' && u.el.all((n) => n.tagName === 'button')[0].attrs['data-key'] === 'h'
     && u.card.all((n) => n.className === 'back-row').some((r) => r.textContent.startsWith('Soul Drain')));

@@ -27,6 +27,9 @@
 /* ================= 1 Base ================= */
 :root {
   --gold: #c9a227;
+  /* the stat colours (0.00266, the developer's call — the "moody" set): one per stat, shared by the Train row that raises
+     it and everywhere the stat shows (hud.js statText / statBox, ST_TRAIN) */
+  --st-dmg: #b8734f; --st-hp: #829c6c; --st-armor: #8797a8; --st-crit: #6f9e9b; --st-ls: #a46e78; --st-loot: #b39657; --st-dodge: #8f84a6;
   --gold-dim: #8a7020;
   --parchment: #d8c9a3;
   --blood: #8e2323;
@@ -348,6 +351,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .rarity-2 { color: #6fa8dc; text-shadow: 0 0 12px rgba(111, 168, 220, 0.8); animation: rarity-pulse-2 2.8s ease-in-out infinite; }
 .rarity-3 { color: #c07ae8; font-weight: bold; text-shadow: 0 0 18px rgba(192, 122, 232, 1), 0 0 34px rgba(192, 122, 232, 0.5); animation: rarity-pulse-3 2.2s ease-in-out infinite; }
 .rarity-4 { color: #ff6b4a; font-weight: bold; text-shadow: 0 0 18px rgba(255, 90, 60, 1), 0 0 36px rgba(255, 170, 60, 0.6); animation: rarity-pulse-4 1.8s ease-in-out infinite; }
+/* Stat colours (0.00266): a stat word or number (.st-*), a stat box (.st-box: its value, its label, a hairline on top), a Train row (.st-row: its name, a bar on its left) */
+.st-dmg { --c: var(--st-dmg); } .st-hp { --c: var(--st-hp); } .st-armor { --c: var(--st-armor); } .st-crit { --c: var(--st-crit); } .st-ls { --c: var(--st-ls); } .st-loot { --c: var(--st-loot); } .st-dodge { --c: var(--st-dodge); }
+.st { color: var(--c); }
+.stat-box.st-box { border-top: 1px solid color-mix(in srgb, var(--c) 75%, transparent); }
+.stat-box.st-box .label { color: color-mix(in srgb, var(--c) 70%, #9a8b6a); }
+.stat-box.st-box .value { color: var(--c); }
+.item-row.st-row { border-left: 2px solid color-mix(in srgb, var(--c) 70%, transparent); }
+.item-row.st-row .row-title b { color: var(--c); }
+.item-row.st-row .row-lv { color: color-mix(in srgb, var(--c) 55%, #e8d9b0); }
 /* An item's picture (0.00260, hud.js itemPic; items.json art): a small one gets a rim in its rarity's colour */
 .item-pic { display: block; object-fit: cover; }
 .item-pic.tier-1 { --rim: rgba(163, 155, 135, 0.55); --rim-glow: transparent; }
@@ -744,7 +756,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .player-card .card-name { font-size: 1.1em; }
 .enemy-char .card-name { text-transform: uppercase; } /* data stays title case */
 .lv-badge { color: var(--gold); font-size: 1em; white-space: nowrap; }
-/* a foe's class state (0.00266): HEXED (the hexhunter's hex: every blow crits) / BLIGHT ×n (the plague sister's censer, ticking a turn) — a small chip above the HP line, empty and hidden otherwise */
+/* a foe's class state (0.00267): HEXED (the hexhunter's hex: every blow crits) / BLIGHT ×n (the plague sister's censer, ticking a turn) — a small chip above the HP line, empty and hidden otherwise */
 .foe-tag { display: none; font-size: 0.68em; letter-spacing: 0.14em; padding: 0.15em 0.6em 0.05em; border: 1px solid #c9d26a; border-radius: 3px; color: #c9d26a; background: rgba(10,7,5,0.8); text-shadow: 0 1px 3px #000; white-space: nowrap; margin-bottom: 0.3em; }
 .foe-tag.on { display: inline-block; }
 .char-card.hexed { box-shadow: inset 0 0 0 2px #b36cff, 0 0 18px rgba(179,108,255,0.6); border-radius: 4% / 1.5%; }
@@ -767,6 +779,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .gear-vals { align-items: flex-end; text-align: right; white-space: nowrap; }
 .gear-vals .lv-badge { font-size: 1.18em; }
 .gear-vals .weapon-dmg { color: #a89468; }
+.gear-vals .weapon-dmg.st { color: var(--c); }
 .gear-names .no-item { color: #4a4234; } /* empty gear slot */
 .potions { margin-top: 0.2em; letter-spacing: 0.08em; } /* (after .card-sub) */
 .potions { display: flex; align-items: center; justify-content: center; gap: 0.25em; } /* (0.00263: the potion's picture, then the count) */
@@ -831,6 +844,8 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .card-back .back-row span { color: #9a8b6a; letter-spacing: 0.12em; font-size: 0.75em; white-space: nowrap; }
 .card-back .back-row b { color: #e8d9b0; font-weight: normal; font-size: 1.15em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .card-back .back-row b.gold { color: var(--gold); }
+.card-back .back-row.st b { color: var(--c); } /* (0.00266: a stat's row in its colour, the label a shade of it) */
+.card-back .back-row.st span { color: color-mix(in srgb, var(--c) 65%, #9a8b6a); }
 .card-back .back-inv h2 { font-size: 1.55em; }
 .card-back .back-inv .back-rule { margin: 0.3em 10% 0.35em; }
 .card-back .inv-row { margin: 0 6%; padding: 0.16em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); display: grid; grid-template-columns: 3.3em minmax(0, 1fr); column-gap: 0.4em; align-items: baseline; }
@@ -933,7 +948,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 #combat-log .dodge { color: #8fd3e8; }
 #combat-log .thorns { color: #ff6b4a; }
 #combat-log .revive { color: var(--gold); font-weight: bold; }
-/* the classes' lines (0.00266): the hex, the blight, the wild shape, a charge back, the thrall */
+/* the classes' lines (0.00267): the hex, the blight, the wild shape, a charge back, the thrall */
 #combat-log .mark { color: #c99bff; }
 #combat-log .blight { color: #c9d26a; }
 #combat-log .wild { color: #9ee06a; font-weight: bold; }

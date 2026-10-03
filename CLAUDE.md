@@ -739,6 +739,25 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
+**Stat colours (0.00266, the developer's call; the "moody" set after a
+brighter first try).** One colour per stat, the same on the Train row that
+raises it and everywhere the stat shows, so training reads as the stat it
+moves: damage rust (Power), HP sage (Vitality), armor slate (Endurance),
+crit verdigris (Precision), loot ochre (Fortune), lifesteal dusty rose,
+dodge dusk violet — `styles.css :root --st-*` (the look, not tuning). The
+code: `hud.js statText(str)` wraps each stat word with its number ("+6
+dmg", "+40 armor", "+3% crit chance", "better loot", "300 HP") in a `.st
+st-<kind>` span (`statKind`), used on every item line (`describeItem`'s
+sites: the hall's slots and Equipment rows, the hero card's inventory, the
+find card, the run's end) and the Train / Alchemy rows' small line;
+`ST_TRAIN` maps a discipline to its stat (the row gets `.st-row st-<k>`:
+its name in the colour, a bar on its left); `statBox(label, value, cls,
+st)` colours a stat box (the hall's under the knight and the phone's
+strip: Attack / HP / Armor / Crit / Lifesteal); the hero card's DMG /
+ARMOR, the HP word on every HP line, and the STATS page's rows (the
+potion's heal as HP). Item names keep their rarity colours; the find
+cards' "+gain" stays green (an improvement, not a stat).
+
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
 name, epithet, lore, traits — placeholders of mine for the lines — and
@@ -800,14 +819,14 @@ the chosen one's pulse in it too), on the knight's card in combat
 (`battleLine.js frame(theme)`) and on the hall's portrait), `light` and
 `tint` (the card light behind the player: `cardFx.js cardStyle('player')`
 reads them, the knight's ether as before; `heavyName`, the heavy
-attack's name on the button and the STATS row — 0.00266, the
+attack's name on the button and the STATS row — 0.00267, the
 developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Go
 Feral, Hex, Last Rites; the blow is the same for every class,
 `shared/heroes.js heavyName`). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
 with fog — my picks, tuned in the data. **The classes' gameplay (drafted
-0.00258 under the simulator, LIVE since 0.00266 — the developer's call: play
+0.00258 under the simulator, LIVE since 0.00267 — the developer's call: play
 it, then tune; the knight's path is the game as it was):**
 `heroes.json class` per hero (every key on every hero, `_class` says
 what each does) — multipliers on the derived HP / damage / armor, a
@@ -833,7 +852,7 @@ against bosses (`chargeOnKill`: a kill gives a charge back, up to
 `charges`, now 3; damage 1.1; Quicken at a shrine gives a charge class a
 charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
 78% from 68%). No difficulty label on the cards (the developer's call:
-the variance stays quiet). **The combat UI's minimum (0.00266, shipped
+the variance stays quiet). **The combat UI's minimum (0.00267, shipped
 with it so the classes can be played; the mock-ups in the chat are the
 design to grow into):** the heavy button carries the class's name (above)
 and, for a charge class, its charges as pips (◆◆◇) in place of the
