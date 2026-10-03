@@ -40,6 +40,7 @@ export function createRun() {
     // What the gear will look like after settleRun equips this run's finds:
     // a drop that can't beat it is salvaged on the spot (0.091).
     gearPreview: structuredClone(getProfile().equipment),
+    heroId: getProfile().hero?.id ?? null, // the class (0.00274): what it can use (shared/classGear.js) — loot, the chests, the preview
     relicFound: false,           // per-run relic cap, even if the relic was salvaged
     potions: stats.potions,      // drawn from the persistent stock (0.080)
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
@@ -88,7 +89,7 @@ export function enterNextRoom(run) {
 export function applyLoot(run, enemy, log) {
   // Boss summons (0.092) count as kills but carry nothing.
   if (enemy.summoned) { run.kills += 1; return { itemId: null, kept: false }; }
-  const loot = rollLoot(enemy, run.stats.fortuneBonus, run.roomNumber, run.relicFound);
+  const loot = rollLoot(enemy, run.stats.fortuneBonus, run.roomNumber, run.relicFound, run.heroId);
   // Greed shrine boon multiplies kill coins (run.coinMult, default 1).
   const coins = Math.round(loot.coins * run.coinMult);
   run.coins += coins;

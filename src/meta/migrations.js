@@ -3,6 +3,7 @@
 // been through every shipped step, so a step is never edited — a format
 // change bumps SAVE_VERSION and adds a step at the end.
 
+import { fitGearToClass } from '../shared/classGear.js';
 import { DATA } from '../shared/data.js';
 import { equipItems, startingEquipment, emptyEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
@@ -104,5 +105,6 @@ export function migrateProfile(p, DEFAULTS) {
   for (const [id, lvl] of Object.entries(p.forged)) { if (!Object.hasOwn(DATA.items, id) || !Number.isFinite(Number(lvl))) delete p.forged[id]; else p.forged[id] = Number(lvl); }
   for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
   p.hero = p.hero == null ? null : cleanHero(p.hero); // (an unknown class or look in an imported code: the knight, the first look; null = not chosen yet)
+  fitGearToClass(p); // (0.00274, the item matrix: worn gear the class can't use becomes its kit, an accessory comes off — every load, so an old save and an imported code are fitted)
 
 }

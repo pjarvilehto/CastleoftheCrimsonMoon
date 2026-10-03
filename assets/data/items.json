@@ -3,6 +3,8 @@
     "name": "Rusty Sword",
     "slot": "weapon",
     "tier": 1,
+    "kind": "sword",
+    "class": "knight",
     "art": "rusty_sword_v1.webp",
     "dmg": 6
   },
@@ -10,6 +12,8 @@
     "name": "Knight's Blade",
     "slot": "weapon",
     "tier": 2,
+    "kind": "sword",
+    "class": "knight",
     "art": "knights_blade_v1.webp",
     "dmg": 14
   },
@@ -17,6 +21,7 @@
     "name": "Executioner's Axe",
     "slot": "weapon",
     "tier": 3,
+    "kind": "axe",
     "art": "executioner_axe_v1.webp",
     "dmg": 24
   },
@@ -24,6 +29,8 @@
     "name": "Oak Shield",
     "slot": "armor",
     "tier": 1,
+    "kind": "heavy",
+    "class": "knight",
     "art": "oak_shield_v1.webp",
     "armor": 40,
     "hp": 80
@@ -32,6 +39,7 @@
     "name": "Plate Armor",
     "slot": "armor",
     "tier": 2,
+    "kind": "heavy",
     "art": "plate_armor_v1.webp",
     "armor": 110,
     "hp": 130
@@ -40,6 +48,7 @@
     "name": "Dragonscale Mail",
     "slot": "armor",
     "tier": 3,
+    "kind": "heavy",
     "art": "dragonscale_mail_v1.webp",
     "armor": 195,
     "hp": 180
@@ -55,6 +64,7 @@
     "name": "Knight's Greaves",
     "slot": "boots",
     "tier": 2,
+    "class": "knight",
     "art": "knights_greaves_v1.webp",
     "armor": 6,
     "hp": 30
@@ -130,6 +140,7 @@
     "name": "Ritual Dagger",
     "slot": "weapon",
     "tier": 2,
+    "kind": "dagger",
     "art": "ritual_dagger_v1.webp",
     "dmg": 9,
     "crit": 0.1
@@ -138,6 +149,7 @@
     "name": "Crimson Reaver",
     "slot": "weapon",
     "tier": 3,
+    "kind": "sword",
     "art": "crimson_reaver_v1.webp",
     "dmg": 18,
     "lifesteal": 0.5
@@ -146,6 +158,7 @@
     "name": "Boneplate",
     "slot": "armor",
     "tier": 2,
+    "kind": "hide",
     "art": "boneplate_v1.webp",
     "armor": 85,
     "hp": 230
@@ -170,6 +183,7 @@
     "name": "Moonbrand",
     "slot": "weapon",
     "tier": 3,
+    "kind": "sword",
     "art": "moonbrand_v1.webp",
     "dmg": 21,
     "crit": 0.1
@@ -178,6 +192,7 @@
     "name": "Crimson Plate",
     "slot": "armor",
     "tier": 3,
+    "kind": "heavy",
     "art": "crimson_plate_v1.webp",
     "armor": 155,
     "hp": 360
@@ -210,6 +225,8 @@
     "name": "Relic of the First Knight",
     "slot": "trinket",
     "tier": 3,
+    "class": "knight",
+    "mastery": 1,
     "art": "relic_of_the_first_knight_v1.webp",
     "dmg": 2,
     "armor": 10,
@@ -227,6 +244,7 @@
     "name": "Fang of the Eclipse",
     "slot": "weapon",
     "tier": 4,
+    "kind": "sword",
     "art": "fang_of_the_eclipse_v1.webp",
     "dmg": 24,
     "crit": 0.1,
@@ -236,6 +254,7 @@
     "name": "Bloodmoon Aegis",
     "slot": "armor",
     "tier": 4,
+    "kind": "heavy",
     "art": "bloodmoon_aegis_v1.webp",
     "armor": 225,
     "hp": 420,
@@ -289,6 +308,8 @@
     "name": "Notched Hand Axe",
     "slot": "weapon",
     "tier": 1,
+    "kind": "axe",
+    "class": "barbarian",
     "art": "notched_hand_axe_v1.webp",
     "starter": true,
     "dmg": 6
@@ -297,6 +318,8 @@
     "name": "Wolfhide Jerkin",
     "slot": "armor",
     "tier": 1,
+    "kind": "hide",
+    "class": "barbarian",
     "art": "wolfhide_jerkin_v1.webp",
     "starter": true,
     "armor": 40,
@@ -306,6 +329,8 @@
     "name": "Apprentice's Staff",
     "slot": "weapon",
     "tier": 1,
+    "kind": "staff",
+    "class": "wizard",
     "art": "apprentices_staff_v1.webp",
     "starter": true,
     "dmg": 6
@@ -314,6 +339,8 @@
     "name": "Threadbare Robe",
     "slot": "armor",
     "tier": 1,
+    "kind": "cloth",
+    "class": "wizard",
     "art": "threadbare_robe_v1.webp",
     "starter": true,
     "armor": 40,
@@ -323,6 +350,8 @@
     "name": "Grave Knife",
     "slot": "weapon",
     "tier": 1,
+    "kind": "dagger",
+    "class": "necromancer",
     "art": "grave_knife_v1.webp",
     "starter": true,
     "dmg": 6
@@ -331,6 +360,8 @@
     "name": "Gravedigger's Shroud",
     "slot": "armor",
     "tier": 1,
+    "kind": "cloth",
+    "class": "necromancer",
     "art": "gravediggers_shroud_v1.webp",
     "starter": true,
     "armor": 40,
@@ -340,6 +371,8 @@
     "name": "Budding Branch",
     "slot": "weapon",
     "tier": 1,
+    "kind": "staff",
+    "class": "druid",
     "art": "budding_branch_v1.webp",
     "starter": true,
     "dmg": 6
@@ -348,6 +381,8 @@
     "name": "Bark Vest",
     "slot": "armor",
     "tier": 1,
+    "kind": "hide",
+    "class": "druid",
     "art": "bark_vest_v1.webp",
     "starter": true,
     "armor": 40,
@@ -357,6 +392,8 @@
     "name": "Worn Hand Crossbow",
     "slot": "weapon",
     "tier": 1,
+    "kind": "crossbow",
+    "class": "hexhunter",
     "art": "worn_hand_crossbow_v1.webp",
     "starter": true,
     "dmg": 6
@@ -365,6 +402,8 @@
     "name": "Witchfinder's Coat",
     "slot": "armor",
     "tier": 1,
+    "kind": "hide",
+    "class": "hexhunter",
     "art": "witchfinders_coat_v1.webp",
     "starter": true,
     "armor": 40,
@@ -374,6 +413,8 @@
     "name": "Tin Censer",
     "slot": "weapon",
     "tier": 1,
+    "kind": "censer",
+    "class": "plaguesister",
     "art": "tin_censer_v1.webp",
     "starter": true,
     "dmg": 6
@@ -382,9 +423,450 @@
     "name": "Sister's Habit",
     "slot": "armor",
     "tier": 1,
+    "kind": "cloth",
+    "class": "plaguesister",
     "art": "sisters_habit_v1.webp",
     "starter": true,
     "armor": 40,
     "hp": 80
+  },
+  "silvered_shortsword": {
+    "name": "Silvered Shortsword",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "silvered_shortsword_v1.webp",
+    "kind": "sword",
+    "dmg": 11,
+    "crit": 0.08
+  },
+  "bearded_war_axe": {
+    "name": "Bearded War Axe",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "bearded_war_axe_v1.webp",
+    "kind": "axe",
+    "dmg": 16
+  },
+  "flanged_mace": {
+    "name": "Flanged Mace",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "flanged_mace_v1.webp",
+    "kind": "mace",
+    "dmg": 12,
+    "armor": 20
+  },
+  "ashwood_staff": {
+    "name": "Ashwood Staff",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "ashwood_staff_v1.webp",
+    "kind": "staff",
+    "dmg": 12,
+    "crit": 0.06
+  },
+  "harvest_sickle": {
+    "name": "Harvest Sickle",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "harvest_sickle_v1.webp",
+    "kind": "scythe",
+    "dmg": 11,
+    "lifesteal": 0.25
+  },
+  "silverbolt_crossbow": {
+    "name": "Silverbolt Crossbow",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "silverbolt_crossbow_v1.webp",
+    "kind": "crossbow",
+    "dmg": 12,
+    "crit": 0.08
+  },
+  "brass_thurible": {
+    "name": "Brass Thurible",
+    "slot": "weapon",
+    "tier": 2,
+    "art": "brass_thurible_v1.webp",
+    "kind": "censer",
+    "dmg": 11,
+    "lifesteal": 0.2
+  },
+  "wolfjaw_cleaver": {
+    "name": "Wolfjaw Cleaver",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "wolfjaw_cleaver_v1.webp",
+    "kind": "axe",
+    "dmg": 20,
+    "lifesteal": 0.3
+  },
+  "bonecrusher_maul": {
+    "name": "Bonecrusher Maul",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "bonecrusher_maul_v1.webp",
+    "kind": "mace",
+    "dmg": 20,
+    "armor": 35
+  },
+  "stormcaller_staff": {
+    "name": "Stormcaller Staff",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "stormcaller_staff_v1.webp",
+    "kind": "staff",
+    "dmg": 19,
+    "crit": 0.1
+  },
+  "athame_of_ash": {
+    "name": "Athame of Ash",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "athame_of_ash_v1.webp",
+    "kind": "dagger",
+    "dmg": 15,
+    "crit": 0.15
+  },
+  "reapers_scythe": {
+    "name": "Reaper's Scythe",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "reapers_scythe_v1.webp",
+    "kind": "scythe",
+    "dmg": 18,
+    "lifesteal": 0.5
+  },
+  "witchbane_arbalest": {
+    "name": "Witchbane Arbalest",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "witchbane_arbalest_v1.webp",
+    "kind": "crossbow",
+    "dmg": 20,
+    "crit": 0.12
+  },
+  "censer_of_ashen_mercy": {
+    "name": "Censer of Ashen Mercy",
+    "slot": "weapon",
+    "tier": 3,
+    "art": "censer_of_ashen_mercy_v1.webp",
+    "kind": "censer",
+    "dmg": 18,
+    "lifesteal": 0.4
+  },
+  "moonsplitter": {
+    "name": "Moonsplitter",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "moonsplitter_v1.webp",
+    "kind": "axe",
+    "dmg": 32,
+    "heavyCd": 1
+  },
+  "hammer_of_the_last_vigil": {
+    "name": "Hammer of the Last Vigil",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "hammer_of_the_last_vigil_v1.webp",
+    "kind": "mace",
+    "dmg": 26,
+    "armor": 50,
+    "thorns": 4
+  },
+  "staff_of_the_pale_moon": {
+    "name": "Staff of the Pale Moon",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "staff_of_the_pale_moon_v1.webp",
+    "kind": "staff",
+    "dmg": 25,
+    "crit": 0.12,
+    "heavyCd": 1
+  },
+  "bloodletters_kris": {
+    "name": "Bloodletter's Kris",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "bloodletters_kris_v1.webp",
+    "kind": "dagger",
+    "dmg": 18,
+    "crit": 0.15,
+    "lifesteal": 0.4
+  },
+  "scythe_of_the_dying_moon": {
+    "name": "Scythe of the Dying Moon",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "scythe_of_the_dying_moon_v1.webp",
+    "kind": "scythe",
+    "dmg": 24,
+    "lifesteal": 0.8
+  },
+  "eclipse_repeater": {
+    "name": "Eclipse Repeater",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "eclipse_repeater_v1.webp",
+    "kind": "crossbow",
+    "dmg": 25,
+    "crit": 0.15,
+    "heavyCd": 1
+  },
+  "thurible_of_the_black_abbey": {
+    "name": "Thurible of the Black Abbey",
+    "slot": "weapon",
+    "tier": 4,
+    "art": "thurible_of_the_black_abbey_v1.webp",
+    "kind": "censer",
+    "dmg": 24,
+    "lifesteal": 0.6,
+    "thorns": 4
+  },
+  "riveted_hauberk": {
+    "name": "Riveted Hauberk",
+    "slot": "armor",
+    "tier": 2,
+    "art": "riveted_hauberk_v1.webp",
+    "kind": "heavy",
+    "armor": 100,
+    "hp": 170
+  },
+  "studded_leather": {
+    "name": "Studded Leather",
+    "slot": "armor",
+    "tier": 2,
+    "art": "studded_leather_v1.webp",
+    "kind": "hide",
+    "armor": 75,
+    "hp": 190,
+    "dodge": 0.04
+  },
+  "scholars_robe": {
+    "name": "Scholar's Robe",
+    "slot": "armor",
+    "tier": 2,
+    "art": "scholars_robe_v1.webp",
+    "kind": "cloth",
+    "armor": 45,
+    "hp": 250,
+    "crit": 0.06
+  },
+  "ashen_vestments": {
+    "name": "Ashen Vestments",
+    "slot": "armor",
+    "tier": 2,
+    "art": "ashen_vestments_v1.webp",
+    "kind": "cloth",
+    "armor": 50,
+    "hp": 240,
+    "lifesteal": 0.15
+  },
+  "bearhide_mantle": {
+    "name": "Bearhide Mantle",
+    "slot": "armor",
+    "tier": 3,
+    "art": "bearhide_mantle_v1.webp",
+    "kind": "hide",
+    "armor": 120,
+    "hp": 330
+  },
+  "shadowstalker_leathers": {
+    "name": "Shadowstalker Leathers",
+    "slot": "armor",
+    "tier": 3,
+    "art": "shadowstalker_leathers_v1.webp",
+    "kind": "hide",
+    "armor": 105,
+    "hp": 270,
+    "dodge": 0.06
+  },
+  "robe_of_starlit_thread": {
+    "name": "Robe of Starlit Thread",
+    "slot": "armor",
+    "tier": 3,
+    "art": "robe_of_starlit_thread_v1.webp",
+    "kind": "cloth",
+    "armor": 75,
+    "hp": 380,
+    "crit": 0.08
+  },
+  "bloodsilk_vestments": {
+    "name": "Bloodsilk Vestments",
+    "slot": "armor",
+    "tier": 3,
+    "art": "bloodsilk_vestments_v1.webp",
+    "kind": "cloth",
+    "armor": 80,
+    "hp": 360,
+    "lifesteal": 0.3
+  },
+  "eclipse_mail": {
+    "name": "Eclipse Mail",
+    "slot": "armor",
+    "tier": 4,
+    "art": "eclipse_mail_v1.webp",
+    "kind": "heavy",
+    "armor": 240,
+    "hp": 360
+  },
+  "hide_of_the_moon_wolf": {
+    "name": "Hide of the Moon-Wolf",
+    "slot": "armor",
+    "tier": 4,
+    "art": "hide_of_the_moon_wolf_v1.webp",
+    "kind": "hide",
+    "armor": 160,
+    "hp": 440,
+    "dodge": 0.06
+  },
+  "mantle_of_the_crimson_moon": {
+    "name": "Mantle of the Crimson Moon",
+    "slot": "armor",
+    "tier": 4,
+    "art": "mantle_of_the_crimson_moon_v1.webp",
+    "kind": "cloth",
+    "armor": 110,
+    "hp": 520,
+    "lifesteal": 0.5
+  },
+  "hobnailed_boots": {
+    "name": "Hobnailed Boots",
+    "slot": "boots",
+    "tier": 2,
+    "art": "hobnailed_boots_v1.webp",
+    "armor": 6,
+    "hp": 30
+  },
+  "warchiefs_torc": {
+    "name": "Warchief's Torc",
+    "slot": "amulet",
+    "tier": 3,
+    "art": "warchiefs_torc_v1.webp",
+    "class": "barbarian",
+    "mastery": 1,
+    "dmg": 3,
+    "hp": 40
+  },
+  "chained_grimoire": {
+    "name": "Chained Grimoire",
+    "slot": "trinket",
+    "tier": 3,
+    "art": "chained_grimoire_v1.webp",
+    "class": "wizard",
+    "mastery": 1,
+    "dmg": 2,
+    "crit": 0.05
+  },
+  "necromancers_phylactery": {
+    "name": "Necromancer's Phylactery",
+    "slot": "amulet",
+    "tier": 3,
+    "art": "necromancers_phylactery_v1.webp",
+    "class": "necromancer",
+    "mastery": 1,
+    "lifesteal": 0.3,
+    "hp": 40
+  },
+  "druids_antler_totem": {
+    "name": "Druid's Antler Totem",
+    "slot": "trinket",
+    "tier": 3,
+    "art": "druids_antler_totem_v1.webp",
+    "class": "druid",
+    "mastery": 1,
+    "armor": 10,
+    "hp": 50
+  },
+  "witchfinders_signet": {
+    "name": "Witchfinder's Signet",
+    "slot": "ring",
+    "tier": 3,
+    "art": "witchfinders_signet_v1.webp",
+    "class": "hexhunter",
+    "mastery": 1,
+    "crit": 0.06,
+    "dodge": 0.03
+  },
+  "abbey_reliquary": {
+    "name": "Abbey Reliquary",
+    "slot": "trinket",
+    "tier": 3,
+    "art": "abbey_reliquary_v1.webp",
+    "class": "plaguesister",
+    "mastery": 1,
+    "armor": 15,
+    "hp": 50
+  },
+  "knight_commanders_seal": {
+    "name": "Knight-Commander's Seal",
+    "slot": "amulet",
+    "tier": 4,
+    "art": "knight_commanders_seal_v1.webp",
+    "class": "knight",
+    "mastery": 2,
+    "dmg": 3,
+    "armor": 15,
+    "hp": 50
+  },
+  "warlords_skull_totem": {
+    "name": "Warlord's Skull Totem",
+    "slot": "trinket",
+    "tier": 4,
+    "art": "warlords_skull_totem_v1.webp",
+    "class": "barbarian",
+    "mastery": 2,
+    "dmg": 3,
+    "hp": 60
+  },
+  "archmages_starstone": {
+    "name": "Archmage's Starstone",
+    "slot": "amulet",
+    "tier": 4,
+    "art": "archmages_starstone_v1.webp",
+    "class": "wizard",
+    "mastery": 2,
+    "dmg": 2,
+    "crit": 0.08
+  },
+  "ring_of_the_thrall_lord": {
+    "name": "Ring of the Thrall-Lord",
+    "slot": "ring",
+    "tier": 4,
+    "art": "ring_of_the_thrall_lord_v1.webp",
+    "class": "necromancer",
+    "mastery": 2,
+    "lifesteal": 0.4,
+    "hp": 50
+  },
+  "heartwood_of_the_elder_grove": {
+    "name": "Heartwood of the Elder Grove",
+    "slot": "amulet",
+    "tier": 4,
+    "art": "heartwood_of_the_elder_grove_v1.webp",
+    "class": "druid",
+    "mastery": 2,
+    "armor": 15,
+    "hp": 70
+  },
+  "grand_inquisitors_badge": {
+    "name": "Grand Inquisitor's Badge",
+    "slot": "trinket",
+    "tier": 4,
+    "art": "grand_inquisitors_badge_v1.webp",
+    "class": "hexhunter",
+    "mastery": 2,
+    "crit": 0.08,
+    "dodge": 0.04
+  },
+  "black_abbess_rosary": {
+    "name": "Black Abbess's Rosary",
+    "slot": "amulet",
+    "tier": 4,
+    "art": "black_abbess_rosary_v1.webp",
+    "class": "plaguesister",
+    "mastery": 2,
+    "armor": 20,
+    "hp": 60
   }
 }

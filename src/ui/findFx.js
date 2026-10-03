@@ -28,13 +28,15 @@ export function findCard(fx) {
   if (!it) return null;
   const from = fx.from && DATA.items[fx.from] ? DATA.items[fx.from] : null;
   const gain = gainLine(fx.from, fx.id);
-  return el('div', { class: `find-pop tier-${Math.min(4, it.tier)}` },
+  return el('div', { class: `find-pop tier-${Math.min(4, it.tier)}${fx.offClass ? ' off-class' : ''}` },
     el('div', { class: 'fp-art' }, itemPic(fx.id)),
     el('div', { class: 'fp-text' },
       el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, gearLabel({ slot: fx.slot === 'ring' ? 'rings' : fx.slot, index: fx.index ?? 0 }) ?? it.slot)),
       el('div', { class: 'fp-name' }, it.name),
       el('div', { class: 'fp-desc' }, ...statText(describeItem(it))),
-      el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
+      fx.offClass // (0.00274: another class's gear — carried to the run's end and salvaged there)
+        ? el('div', { class: 'fp-cmp fp-off' }, `${fx.offClass} · salvaged at the end`)
+        : el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }
 
 // The LOOT row's next free place (its tray's end) and a chip's size; on a

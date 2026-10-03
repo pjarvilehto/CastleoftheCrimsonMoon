@@ -3,6 +3,8 @@
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
 import { itemArtUrl, potionArtUrl } from '../shared/itemArt.js';
+import { masteryText } from '../shared/classGear.js';
+import { heroById } from '../shared/heroes.js';
 
 // Low health (0.126): at or under difficulty.json lowHpShare of max HP the
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
@@ -137,5 +139,6 @@ export function describeItem(item) {
   if (item.thorns) parts.push(`${item.thorns} thorns`);
   if (item.heavyCd) parts.push('faster heavy recharge');
   if (item.revive) parts.push('revive once per run');
+  if (item.mastery && item.class) parts.push(masteryText(heroById(item.class), item.mastery)); // (0.00274: a class's signature item feeds its mechanic)
   return parts.join(', ');
 }

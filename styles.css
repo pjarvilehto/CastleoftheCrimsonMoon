@@ -858,6 +858,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .card-back .inv-found span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
 .card-back .inv-found .inv-pic { width: 1.7em; height: 1.7em; flex-shrink: 0; align-self: center; border-radius: 2px; border: 1px solid var(--rim); } /* (0.00260: the find's picture) */
 .card-back .inv-found small, .card-back .inv-more { color: #8a7c5e; font-size: 0.78em; letter-spacing: 0.08em; white-space: nowrap; }
+.card-back .inv-found small.inv-off { color: #9a5a4c; } /* (0.00274: another class's gear) */
 .card-back .inv-more { margin: 0 6%; font-size: 0.56em; }
 .card-back .page-dots { display: flex; justify-content: center; gap: 0.45em; margin-top: auto; padding-bottom: 0.35em; }
 .card-back .page-dots i { width: 0.42em; height: 0.42em; border-radius: 50%; background: rgba(201, 162, 39, 0.25); }
@@ -988,6 +989,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .res-loot.none { display: none; }
 .loot-tray { display: flex; gap: 0.4vh; }
 .loot-tray .loot-chip { width: 3.6vh; height: 3.6vh; border-radius: 3px; border: 1px solid var(--rim); box-shadow: 0 0 6px var(--rim-glow); }
+.loot-tray .loot-chip.off-class { filter: grayscale(0.9) brightness(0.65); border-color: #4a3f30; box-shadow: none; } /* another class's gear (0.00274): salvaged at the end */
 #combat-log .log-art { display: inline-block; width: 1.5em; height: 1.5em; margin: -0.35em 0.35em -0.35em 0.1em; vertical-align: middle; border-radius: 2px; border: 1px solid var(--rim); } /* a find's picture before its name (hud.js logLine) */
 
 /* Active shrine blessings (0.096): equal compact cells in the gap between
@@ -1057,6 +1059,8 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .fp-name { font-size: 1.35rem; line-height: 1; color: var(--name); }
 .fp-desc, .fp-cmp { font-size: 0.74rem; letter-spacing: 0.05em; color: #b3a382; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fp-cmp { color: #8a7c5e; }
+.fp-cmp.fp-off { color: #b0705f; } /* another class's gear (0.00274): whose, and salvaged at the end */
+.find-pop.off-class .fp-art img { filter: grayscale(0.6) brightness(1.1) contrast(1.05); }
 .fp-cmp .up, .fc-cmp .up { color: #6fe07a; }
 .fx-num {
   position: absolute; font-size: var(--num, 24px); font-weight: bold; letter-spacing: 0.04em; white-space: nowrap;
@@ -1144,6 +1148,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .salvage-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 12px; margin: 6px 0 4px; font-size: 0.8rem; color: #8a7c5e; text-transform: uppercase; letter-spacing: 0.06em; }
 .salvage-chip { display: flex; align-items: center; gap: 6px; }
 .salvage-chip .item-pic { width: 28px; height: 28px; border-radius: 3px; filter: grayscale(0.85) brightness(0.8); border: 1px solid #4a3f30; }
+.off-class-row .salvage-head { color: #b0705f; } /* "Can't use · salvaged" (0.00274: another class's gear) */
 .salvage-coins { color: var(--gold); }
 .toll-line { text-align: center; color: #e07b7b; margin-top: 8px; }
 .retrieved-line { text-align: center; color: #c9a227; margin-top: 8px; }

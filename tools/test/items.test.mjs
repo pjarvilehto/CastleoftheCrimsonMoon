@@ -239,7 +239,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const { rollLoot, droppable } = await import('../../src/run/loot.js');
   const { checkData } = await import('../../src/shared/dataCheck.js');
   const { wearKit } = await import('../../src/ui/scenes/heroScene.js');
-  const stats = (id) => { const { name, slot, tier, art, starter, ...rest } = DATA.items[id]; return JSON.stringify(rest); };
+  const stats = (id) => { const { name, slot, tier, art, starter, kind, class: c, ...rest } = DATA.items[id]; return JSON.stringify(rest); };
   const g = DATA.difficulty.player.startingGear, kits = heroList().map((h) => heroKit(h));
   ok('every class has a kit: a weapon and an armor, with the starting gear\'s numbers, the knight\'s that gear', kits.length === 7 && kits.every((k) => DATA.items[k.weapon]?.slot === 'weapon' && DATA.items[k.armor]?.slot === 'armor'
     && stats(k.weapon) === stats(g.weapon) && stats(k.armor) === stats(g.armor)) && heroKit(heroById('knight')).weapon === g.weapon && new Set(kits.flatMap((k) => [k.weapon, k.armor])).size === 2 + 12);
@@ -283,4 +283,83 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const backRow = (label) => hero.card.all((n) => n.className?.startsWith?.('back-row') && n.children[0]?.textContent === label)[0];
   ok('the hero card: DMG and ARMOR in their colours; its STATS page by stat, the potion\'s heal as HP', hero.card.all((n) => n.className === 'weapon-dmg st st-dmg').length === 1
     && backRow('Attack').classList.contains('st-dmg') && backRow('Crit damage').classList.contains('st-crit') && backRow('Potion heals').classList.contains('st-hp') && !backRow('Heavy Attack').classList.contains('st')); // (0.00267: the heavy's row is named per class — the knight's is Heavy Attack)
+}
+
+// the item matrix (0.00274, the developer's call; docs/item-matrix.md): weapon kinds, one armor weight per class, items
+// named for a class; another class's gear still drops and is salvaged at the run's end; a class's two signature items
+// feed its mechanic (+1 at tier 3, +2 at tier 4); a save's gear the class can't use becomes its kit
+{
+  const { canUse, usersText, fitGearToClass, masteryText } = await import('../../src/shared/classGear.js');
+  const { describeItem } = await import('../../src/ui/hud.js');
+  const { heroList, heroById } = await import('../../src/shared/heroes.js');
+  ok('who can use what: plate is the knight\'s, a robe the casters\', the Knight\'s Blade his alone, boots everyone\'s', !canUse('wizard', 'plate_armor') && canUse('knight', 'plate_armor')
+    && canUse('wizard', 'scholars_robe') && canUse('plaguesister', 'scholars_robe') && !canUse('barbarian', 'scholars_robe') && canUse('wizard', 'ritual_dagger') && !canUse('hexhunter', 'ritual_dagger')
+    && !canUse('hexhunter', 'knights_blade') && canUse('hexhunter', 'moonbrand') && !canUse('knight', 'executioner_axe') && canUse('barbarian', 'flanged_mace') && canUse('plaguesister', 'flanged_mace')
+    && heroList().every((h) => canUse(h.id, 'hobnailed_boots')) && canUse(null, 'plate_armor') && usersText('hobnailed_boots') === 'Everyone' && usersText('plate_armor') === 'Knight');
+  const droppable = (id) => !DATA.items[id].starter;
+  const cover = heroList().map((h) => [2, 3, 4].map((t) => {
+    const ids = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === t && droppable(id) && canUse(h.id, id));
+    return [ids.filter((id) => DATA.items[id].slot === 'weapon').length, ids.filter((id) => DATA.items[id].slot === 'armor').length];
+  }));
+  ok('every class has two weapons and an armor to find at tiers 2, 3 and 4', cover.every((tiers) => tiers.every(([w, a]) => w >= 2 && a >= 1)), JSON.stringify(cover));
+  ok('...each class wears one weight and its kit is its own', heroList().every((h) => typeof h.wears === 'string' && canUse(h.id, h.kit.weapon) && canUse(h.id, h.kit.armor) && heroList().filter((o) => o.id !== h.id).every((o) => !canUse(o.id, h.kit.armor))));
+  const sig = heroList().map((h) => Object.values(DATA.items).filter((it) => it.class === h.id && it.mastery).map((it) => `${it.tier}:${it.mastery}`).sort().join());
+  ok('...each class has two signature items: +1 at tier 3, +2 at tier 4', sig.every((s) => s === '3:1,4:2'), sig.join(' | '));
+  ok('plate is stronger than cloth, tier for tier', [2, 3, 4].every((t) => {
+    const val = (kind) => Math.max(...Object.values(DATA.items).filter((it) => it.tier === t && it.slot === 'armor' && it.kind === kind && !it.starter).map((it) => (it.armor ?? 0) * 0.4 + (it.hp ?? 0) * 0.05));
+    return val('heavy') > val('hide') && val('hide') > val('cloth');
+  }));
+  ok('a signature item says what it feeds', describeItem(DATA.items.chained_grimoire).endsWith('+1 Fireball charge') && describeItem(DATA.items.archmages_starstone).endsWith('+2 Fireball charges')
+    && masteryText(heroById('barbarian'), 2) === '+30% Cleave reach');
+  // the mastery in the run's class block
+  const { derivedStats } = await import('../../src/meta/stats.js');
+  const { emptyEquipment } = await import('../../src/meta/equipment.js');
+  const prof = (hero, eq) => ({ ...structuredClone(getProfile()), hero: { id: hero, look: 0 }, equipment: { ...emptyEquipment(), ...eq } });
+  const base = heroById('wizard').class.charges;
+  ok('the mastery feeds the class: +1 and +2 Fireball charges; another class\'s signature nothing', derivedStats(prof('wizard', { trinket: 'chained_grimoire' })).klass.charges === base + 1
+    && derivedStats(prof('wizard', { trinket: 'chained_grimoire', amulet: 'archmages_starstone' })).klass.charges === base + 3
+    && derivedStats(prof('druid', { amulet: 'heartwood_of_the_elder_grove' })).klass.entangleTurns === heroById('druid').class.entangleTurns + 2
+    && derivedStats(prof('knight', {})).klass.heavyMult === heroById('knight').class.heavyMult);
+  // equipping: another class's gear is salvaged, marked
+  const { equipItems } = await import('../../src/meta/equipment.js');
+  const wiz = prof('wizard', { weapon: 'apprentices_staff', armor: 'threadbare_robe' });
+  const sum = equipItems(wiz, ['plate_armor', 'scholars_robe']);
+  ok('equipItems: a wizard wears the robe; the plate is salvaged as another class\'s', wiz.equipment.armor === 'scholars_robe' && sum.salvaged.some((s) => s.id === 'plate_armor' && s.offClass) && sum.coins > 0);
+  // a find: another class's gear is carried, with its line, not judged
+  const { takeItem, rollLoot } = await import('../../src/run/loot.js');
+  const run = createRun();
+  run.heroId = 'wizard'; run.gearPreview = structuredClone(wiz.equipment);
+  const lines = [];
+  const r = takeItem(run, 'bearhide_mantle', (text, cls, extra) => lines.push({ text, extra }));
+  ok('takeItem: another class\'s gear goes in the run\'s loot, its line says whose and that it is salvaged at the end', r.offClass && !r.kept && run.itemsFound.includes('bearhide_mantle')
+    && lines[0].text.join('').includes('salvaged at the end') && /Barbarian, Druid|another class/.test(lines[0].extra.find.offClass), JSON.stringify(lines[0]?.extra));
+  // drops: classDropShare of them from the class's own pool
+  const origR = Math.random, share = DATA.difficulty.classDropShare;
+  const rolls = (s) => { DATA.difficulty.classDropShare = s; const seen = new Set(); let i = 0; Math.random = () => ((i++ * 0.6180339887) % 1); for (let k = 0; k < 600; k++) { const it = rollLoot({ ...DATA.enemies.skeleton, id: 'skeleton', maxHp: 999 }, 1, 30, true, 'wizard').itemId; if (it) seen.add(it); } return [...seen]; };
+  try {
+    const own = rolls(1), any = rolls(0);
+    ok('rollLoot: all from the class\'s pool at share 1, another class\'s gear at share 0', own.length > 5 && own.every((id) => canUse('wizard', id)) && any.some((id) => !canUse('wizard', id)), `${own.length} / ${any.length}`);
+  } finally { Math.random = origR; DATA.difficulty.classDropShare = share; }
+  // a save fitted to its class: the kit where it can't, an accessory off
+  const p = { hero: { id: 'wizard', look: 0 }, equipment: { ...emptyEquipment(), weapon: 'moonbrand', armor: 'plate_armor', boots: 'knights_greaves', rings: ['ring_of_might', 'witchfinders_signet'], trinket: 'chained_grimoire' } };
+  const changed = fitGearToClass(p);
+  ok('fitGearToClass: the wizard\'s kit for the sword and the plate, the Greaves and the Signet off, his own Grimoire kept', p.equipment.weapon === 'apprentices_staff' && p.equipment.armor === 'threadbare_robe'
+    && p.equipment.boots === null && p.equipment.rings.join() === 'ring_of_might,' && p.equipment.trinket === 'chained_grimoire' && changed.length === 4, changed.join());
+  const { migrateProfile } = await import('../../src/meta/migrations.js');
+  const DEFAULTS = { coins: 0, xp: 0, potions: 2, potionCap: 4, potionsBought: 0, stats: {}, alchemy: {}, records: {} }; // (as heroes.test does: profile.js keeps its own)
+  const { SAVE_VERSION } = await import('../../src/meta/migrations.js');
+  const old = { ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, hero: { id: 'barbarian', look: 0 }, equipment: { ...emptyEquipment(), weapon: 'moonbrand', armor: 'crimson_plate' } };
+  migrateProfile(old, DEFAULTS);
+  ok('...on every load: an old Barbarian in a knight\'s gear wakes up in his own kit', old.equipment.weapon === 'notched_hand_axe' && old.equipment.armor === 'wolfhide_jerkin');
+  // the run's end: "Can't use · salvaged"
+  const { runEndScene } = await import('../../src/ui/scenes/runEndScene.js');
+  const root = new El('div');
+  runEndScene({ roomNumber: 3, kills: 4, coins: 10, coinsRetrieved: 10, xp: 5, itemsFound: ['bearhide_mantle'], equipSummary: { equipped: [], changes: [], coins: 24,
+    salvaged: [{ id: 'rusty_sword', name: 'Rusty Sword', tier: 1 }, { id: 'bearhide_mantle', name: 'Bearhide Mantle', tier: 3, offClass: true }] } }, 'retreat').enter(root);
+  const offRow = root.all((n) => n.className?.includes?.('off-class-row'))[0];
+  ok('run end: another class\'s gear on its own row, "Can\'t use · salvaged", the coins after it', !!offRow && offRow.textContent.startsWith("Can't use · salvaged") && offRow.textContent.includes('Bearhide Mantle') && offRow.textContent.endsWith('+24 coins')
+    && root.all((n) => n.className === 'loot-summary salvage-row')[0]?.textContent.includes('Rusty Sword'));
+  const { findCard } = await import('../../src/ui/findFx.js');
+  const card = findCard({ id: 'bearhide_mantle', slot: 'armor', from: null, offClass: 'Barbarian, Druid and Hexhunter armor' });
+  ok('the find card: another class\'s gear greyed, whose it is, salvaged at the end', card.className.includes('off-class') && card.textContent.includes('salvaged at the end') && !card.textContent.includes('replaces'));
 }

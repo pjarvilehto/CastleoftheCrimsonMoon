@@ -5,6 +5,7 @@
 // Portraits: WebP with alpha in assets/chars/ (0.078: q85 — 9.6MB of PNGs
 // became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
+import { canUse } from '../shared/classGear.js';
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
 import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText } from './hud.js';
@@ -184,7 +185,7 @@ function invPage(run) {
     found.textContent = '';
     found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
       ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
-        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`)); }),
+        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), canUse(run.heroId, id) ? el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`) : el('small', { class: 'inv-off' }, 'salvage')); }), // (0.00274: another class's gear: salvaged at the end)
       ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
   };
   set();

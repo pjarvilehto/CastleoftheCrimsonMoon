@@ -89,3 +89,57 @@ on the hero card's potion count and the potion's card in combat.
 | id | line |
 |---|---|
 | healing_potion | Healing Potion, a round-bellied glass flask stoppered with cork and red wax, filled with a glowing blood-red elixir, a frayed leather cord tied around its neck, a few drops of red on the glass. Its own warm red glow lighting the glass from inside. |
+
+The item matrix (0.00274, docs/item-matrix.md): every class's weapon kinds
+and armor weight at tiers 2–4, and each class's two signature items (a
+tier-3 and a tier-4 accessory that feeds its mechanic — named for the
+class, in its colours).
+
+| id | line |
+|---|---|
+| silvered_shortsword | Silvered Shortsword, a short straight witch-hunter's sword with a bright silvered blade etched with small protective sigils, a simple black iron crossguard, a leather-wrapped grip. Uncommon item with a faint cold blue sheen. Shown diagonally, tip to the upper right. |
+| bearded_war_axe | Bearded War Axe, a one-handed northern war axe with a long hooked 'bearded' iron blade, a thick ash haft bound in leather and wolf fur. Uncommon item with a faint cold blue sheen. Shown diagonally, head to the upper right. |
+| flanged_mace | Flanged Mace, a heavy iron mace with a head of seven sharp radiating flanges on a riveted steel shaft, a leather grip. Uncommon item with a faint cold blue sheen. Shown diagonally, head to the upper right. |
+| ashwood_staff | Ashwood Staff, a tall straight staff of pale ash wood, its head carved into an open hand cradling a small glowing blue crystal, bands of silver. Uncommon item with a faint cold blue glow. Shown diagonally, head to the upper right. |
+| harvest_sickle | Harvest Sickle, a curved crescent sickle of dark old iron with a worn wooden handle wrapped in twine, a few stalks of dried wheat tied to it. Uncommon item with a faint cold blue sheen. |
+| silverbolt_crossbow | Silverbolt Crossbow, a compact hunter's crossbow of dark oiled wood with steel limbs, loaded with a gleaming silver-tipped bolt. Uncommon item with a faint cold blue sheen. |
+| brass_thurible | Brass Thurible, a round brass church censer hanging from three short chains, pale smoke curling from its pierced lid, a little worn and dented. Uncommon item with a faint cold blue sheen. |
+| wolfjaw_cleaver | Wolfjaw Cleaver, a brutal two-handed cleaver axe whose blade edge is set with a row of real wolf teeth, a bone handle bound in red leather. Epic item, a violet glow. Shown diagonally, head to the upper right. |
+| bonecrusher_maul | Bonecrusher Maul, a massive two-handed war hammer with a blocky black iron head studded with spikes, a long iron-banded haft. Epic item, a violet glow. Shown diagonally, head to the upper right. |
+| stormcaller_staff | Stormcaller Staff, a twisted black staff whose head is a cage of iron prongs holding a crackling violet lightning orb, small arcs of lightning around it. Epic item, a violet glow. Shown diagonally, head to the upper right. |
+| athame_of_ash | Athame of Ash, a slim double-edged ritual dagger of dark grey metal with a black handle carved with occult sigils, wisps of grey ash curling off the blade. Epic item, a violet glow. Shown diagonally, tip to the upper right. |
+| reapers_scythe | Reaper's Scythe, a great two-handed war scythe with a long curved black blade on a crooked dark wood snath bound with chains and a small skull. Epic item, a violet glow. |
+| witchbane_arbalest | Witchbane Arbalest, a heavy steel arbalest crossbow with a crank, its stock carved with holy sigils, a silver bolt glowing faintly. Epic item, a violet glow. |
+| censer_of_ashen_mercy | Censer of Ashen Mercy, an ornate silver censer on a long chain, shaped like a small cathedral, thick grey-violet smoke pouring from its windows. Epic item, a violet glow. |
+| moonsplitter | Moonsplitter, a legendary huge double-bladed great axe of black steel, its two crescent blades glowing molten red along the edges like a blood moon, a long haft wrapped in dark fur. Legendary item, radiating red light. Shown diagonally. |
+| hammer_of_the_last_vigil | Hammer of the Last Vigil, a legendary holy war hammer of dark steel and gold, its head shaped like a small chapel with a burning red window, fiery red light pouring out. Legendary item, radiating red light. Shown diagonally. |
+| staff_of_the_pale_moon | Staff of the Pale Moon, a legendary tall staff of white bone-like wood whose head holds a floating blood-red full moon orb inside a silver crescent, red light radiating. Legendary item, radiating red light. Shown diagonally. |
+| bloodletters_kris | Bloodletter's Kris, a legendary wavy-bladed kris dagger of dark red steel, blood running in channels along the blade and dripping from its tip, a black and gold handle. Legendary item, radiating red light. |
+| scythe_of_the_dying_moon | Scythe of the Dying Moon, a legendary great scythe whose huge blade is a pale curved crescent moon cracked and bleeding red light, on a black bone snath. Legendary item, radiating red light. |
+| eclipse_repeater | Eclipse Repeater, a legendary black repeating crossbow with a magazine of red-glowing bolts on top, an eclipse disc ringed by red fire set in its stock. Legendary item, radiating red light. |
+| thurible_of_the_black_abbey | Thurible of the Black Abbey, a legendary black iron censer on a heavy chain, shaped like a small ruined abbey, blood-red smoke and embers pouring from it. Legendary item, radiating red and orange light. |
+| riveted_hauberk | Riveted Hauberk, a knee-length coat of riveted steel chainmail with short sleeves, leather-trimmed collar, laid out flat. Uncommon item with a faint cold blue sheen. |
+| studded_leather | Studded Leather, a hunter's vest of dark boiled leather covered in rows of steel studs, buckled straps at the sides. Uncommon item with a faint cold blue sheen. |
+| scholars_robe | Scholar's Robe, a deep blue hooded wizard's robe embroidered with small silver stars and runes at the hems and cuffs, a book-belt at the waist, laid out flat. Uncommon item with a faint cold blue glow in the embroidery. |
+| ashen_vestments | Ashen Vestments, ash-grey occult vestments with a high collar and long ragged sleeves, a black sash stitched with faded sigils, laid out flat. Uncommon item with a faint cold blue sheen. |
+| bearhide_mantle | Bearhide Mantle, a heavy mantle of thick brown bear fur with the bear's head as a hood, leather straps and bone toggles, laid out. Epic item, a violet glow in the bear's eyes. |
+| shadowstalker_leathers | Shadowstalker Leathers, a sleek dark leather hunter's armor with a hood and many small buckles, wisps of violet shadow clinging to it. Epic item, a violet glow. |
+| robe_of_starlit_thread | Robe of Starlit Thread, a midnight-black wizard's robe whose fabric is woven with tiny glowing violet stars and constellations, a high collar, laid out flat. Epic item, a violet glow. |
+| bloodsilk_vestments | Bloodsilk Vestments, flowing dark crimson silk vestments of an occult priest, a black stole embroidered with violet runes, laid out flat. Epic item, a violet and red glow. |
+| eclipse_mail | Eclipse Mail, a legendary full suit of black plate and mail armor, an eclipse disc ringed by blood-red fire on the breastplate, red light glowing in the joints. Legendary item, radiating red light. |
+| hide_of_the_moon_wolf | Hide of the Moon-Wolf, a legendary armor made from a giant silver-black wolf's pelt, the wolf's head as a hood with glowing red eyes, a red crescent moon branded on the chest. Legendary item, radiating red light. |
+| mantle_of_the_crimson_moon | Mantle of the Crimson Moon, a legendary flowing hooded robe of deep crimson velvet embroidered in gold with a great full blood moon on its back, red light glowing from the embroidery. Legendary item, radiating red light. |
+| hobnailed_boots | Hobnailed Boots, a pair of sturdy dark leather marching boots with iron hobnails in the soles and buckled shin straps. Uncommon item with a faint cold blue sheen. |
+| warchiefs_torc | Warchief's Torc, a heavy twisted iron neck torc ending in two snarling wolf heads, hung with a few bear claws. A barbarian's. Epic item, a violet glow. |
+| chained_grimoire | Chained Grimoire, a small thick leather-bound spellbook clasped shut with an iron lock and hung on a chain, glowing violet runes leaking from between its pages. A wizard's. Epic item, a violet glow. |
+| necromancers_phylactery | Necromancer's Phylactery, a small ornate silver vial on a chain holding a swirling trapped green-violet soul, a tiny skull for a stopper. A necromancer's. Epic item, a violet glow. |
+| druids_antler_totem | Druid's Antler Totem, a small totem of a stag's antler bound with green vines, feathers and moss, a tiny glowing green leaf at its centre. A druid's. Epic item, a violet glow. |
+| witchfinders_signet | Witchfinder's Signet, a heavy silver signet ring engraved with an eye inside a pentacle crossed by a stake, a witch hunter's seal. Epic item, a violet glow. |
+| abbey_reliquary | Abbey Reliquary, a small gilded reliquary box on a chain with a tiny glass window holding a saint's bone, ochre and gold, faint holy smoke. A nursing sister's. Epic item, a violet glow. |
+| knight_commanders_seal | Knight-Commander's Seal, a legendary heavy gold medallion on a chain, a sword and crown engraved on it, a blood-red ruby at its centre blazing with light. A knight's. Legendary item, radiating red light. |
+| warlords_skull_totem | Warlord's Skull Totem, a legendary horned beast skull painted with red war paint, hung with braids, iron rings and teeth, red light glowing from its eye sockets. A barbarian's. Legendary item, radiating red light. |
+| archmages_starstone | Archmage's Starstone, a legendary pendant holding a faceted star-shaped crystal with a tiny red galaxy swirling inside, set in an ornate silver frame. A wizard's. Legendary item, radiating red light. |
+| ring_of_the_thrall_lord | Ring of the Thrall-Lord, a legendary black bone ring carved as a circle of tiny clutching skeletal hands holding a glowing red soul-gem. A necromancer's. Legendary item, radiating red light. |
+| heartwood_of_the_elder_grove | Heartwood of the Elder Grove, a legendary pendant of ancient dark heartwood shaped like a heart, roots and tiny leaves growing from it, a red-amber sap glowing in its veins. A druid's. Legendary item, radiating red and orange light. |
+| grand_inquisitors_badge | Grand Inquisitor's Badge, a legendary iron and gold badge shaped like a flaming eye over crossed stakes, red fire burning in the eye. A witch hunter's. Legendary item, radiating red light. |
+| black_abbess_rosary | Black Abbess's Rosary, a legendary rosary of black beads and small bone skulls ending in an ornate iron censer-cross, red embers glowing in it. A plague nun's. Legendary item, radiating red and orange light. |

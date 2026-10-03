@@ -6,6 +6,7 @@
 // This module is pure logic over the profile object — no DOM, no storage.
 
 import { DATA } from '../shared/data.js';
+import { canUse } from '../shared/classGear.js';
 
 export function emptyEquipment() {
   return { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
@@ -57,9 +58,11 @@ export function equipItems(profile, itemIds) {
   const eq = profile.equipment;
   const before = GEAR_SLOTS.map((s) => wornIn(eq, s)); // (0.00249: what each slot held, for the hall's reveal)
 
+  const heroId = profile.hero?.id ?? null; // (0.00274: the item matrix — what the class can't use is salvaged, marked offClass; no hero chosen: anything goes)
   for (const id of itemIds) {
     const item = DATA.items[id];
     if (!item) continue;
+    if (!canUse(heroId, id)) { salvage(id, summary, true); continue; }
 
     if (item.slot === 'ring') {
       const emptyIdx = eq.rings.indexOf(null);
@@ -112,9 +115,9 @@ function swapOut(arr, idx, newId, summary) {
   arr[idx] = newId;
 }
 
-function salvage(id, summary) {
+function salvage(id, summary, offClass = false) {
   const it = DATA.items[id];
   if (!it) return; // an item the data no longer lists (0.00223): nothing to sell
-  summary.salvaged.push({ id, name: it.name, tier: it.tier }); // (0.00260: the id, for the run end's pictures)
+  summary.salvaged.push({ id, name: it.name, tier: it.tier, ...(offClass ? { offClass: true } : {}) }); // (0.00260: the id, for the run end's pictures; 0.00274: offClass = another class's gear)
   summary.coins += salvageValue(id);
 }

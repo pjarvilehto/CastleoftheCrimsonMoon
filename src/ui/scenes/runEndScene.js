@@ -25,11 +25,15 @@ function findCard({ slot, index, from, to }) {
       el('div', { class: 'fc-desc' }, ...statText(describeItem(it))),
       el('div', { class: 'fc-cmp' }, from && DATA.items[from] ? `over ${DATA.items[from].name}` : 'into an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }
-function salvageRow(sum) {
-  return el('div', { class: 'loot-summary salvage-row' },
-    el('span', { class: 'salvage-head' }, 'Salvaged'),
-    ...sum.salvaged.map((it) => el('span', { class: 'salvage-chip' }, itemPic(it.id), it.name)),
-    el('span', { class: 'salvage-coins' }, `+${sum.coins} coins`));
+// 0.00274 (the developer's call): another class's gear found on the run has its own row — "Can't use · salvaged".
+function salvageRows(sum) {
+  const own = sum.salvaged.filter((it) => !it.offClass), off = sum.salvaged.filter((it) => it.offClass);
+  const chips = (list) => list.map((it) => el('span', { class: 'salvage-chip' }, itemPic(it.id), it.name));
+  const rows = [];
+  if (own.length) rows.push(el('div', { class: 'loot-summary salvage-row' }, el('span', { class: 'salvage-head' }, 'Salvaged'), ...chips(own)));
+  if (off.length) rows.push(el('div', { class: 'loot-summary salvage-row off-class-row' }, el('span', { class: 'salvage-head' }, "Can't use · salvaged"), ...chips(off)));
+  rows.at(-1)?.append(el('span', { class: 'salvage-coins' }, `+${sum.coins} coins`));
+  return rows;
 }
 
 export function runEndScene(run, outcome) {
@@ -55,7 +59,7 @@ export function runEndScene(run, outcome) {
           run.equipSummary?.changes?.length
             ? el('div', { class: 'finds-row' }, ...run.equipSummary.changes.map(findCard))
             : null,
-          run.equipSummary?.salvaged?.length ? salvageRow(run.equipSummary) : null,
+          ...(run.equipSummary?.salvaged?.length ? salvageRows(run.equipSummary) : []),
           outcome === 'death'
             ? el('div', { class: 'toll-line' },
                 run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round(run.tollPct * 100)}%).` : null)

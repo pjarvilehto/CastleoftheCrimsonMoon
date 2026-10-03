@@ -100,6 +100,14 @@ before structural changes. This file is the rules and the per-system notes.
     SHOWCASE alternative (the chosen hero large beside the lines, the
     heroes as a strip); 1-7 / arrows / Space, COPY JSON gives the picks
     back.
+  - **Music Lab (0.00273):** `labs/music/` — the generated scores
+    (`tools/gen-score.mjs`, `assets/data/music-art.json`) beside the bed
+    the game plays, bed by bed over its painting: every take LEVEL-matched
+    by its measured LUFS (a gain node, -20 LUFS), SYNC keeps the position
+    across takes (an A/B at the same bar), BLIND shuffles the takes — the
+    game's own among them — and hides the models; Approve / Reject with a
+    note, re-rolls queued per bed; COPY JSON packs them as
+    `music-rerender.json` for `node tools/gen-score.mjs --rerender`.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the developer from
   Kimi version cards — not maintained here.
 
@@ -125,6 +133,7 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
 node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the foes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
+node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
 # libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
 # cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), simCore.mjs (the bot simulate.mjs and
 # the two studies share); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes a depth map, tools/gen-music.py the beds
@@ -788,6 +797,57 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
+**The item matrix (0.00274, the developer's calls; `docs/item-matrix.md`).**
+Who can use what, readable from an item's name: a weapon has a `kind`
+(sword, axe, mace, staff, dagger, scythe, crossbow, censer) and a class
+wields two (`heroes.json wields`: Knight sword + mace, Barbarian axe +
+mace, Wizard staff + dagger, Necromancer dagger + scythe, Druid staff +
+scythe, Hexhunter crossbow + sword, Plague Sister censer + mace); a body
+armor has a weight (`heavy` plate and mail, `hide`, `cloth`) and a class
+wears ONE (`wears`: the Knight heavy; Barbarian, Druid, Hexhunter hide;
+Wizard, Necromancer, Plague Sister cloth) — heavy clearly strongest,
+cloth the least armor and the most HP (a smoke check compares the tiers);
+an item with `class` is that class's alone whatever its kind (the kits,
+Knight's Blade / Greaves, the Relic of the First Knight, the signature
+items); everything else is everyone's. `shared/classGear.js` (`canUse`,
+`usersOf` / `usersText`, `masteryText`, `withMastery`, `kitFor`,
+`fitGearToClass`); dataCheck checks the kinds, the hero blocks and the
+mastery. 94 items (46 new in 0.00274, painted by `gen-items.mjs` from
+their lines in `docs/item-prompts.md`; every class has two weapons and a
+body armor to find at tiers 2, 3 and 4 — a smoke check). **Mastery:** a
+class's two signature accessories (`class` + `mastery`: 1 on its tier-3,
+2 on its tier-4) add `heroes.json mastery.per` per point to a key of its
+class block (`stats.js derivedStats` → `run.stats.klass`, through
+`withMastery`): the Knight +15% Heavy Attack damage (`heavyMult`), the
+Barbarian +15% Cleave reach, the Wizard +1 Fireball charge, the
+Necromancer +20% thrall strength, the Druid +1 Entangle turn, the
+Hexhunter +15% Hex crit damage, the Plague Sister +10% blight; the item's
+line says it (`hud.js describeItem`). **Drops:** `classDropShare` (0.8)
+of the item rolls come from what the class can use (`loot.js rollLoot`,
+the run's `run.heroId`), the rest from everything — another class's gear
+still drops: `takeItem` carries it into `run.itemsFound` with its line
+("Found: X — Barbarian armor, salvaged at the end."; the find card greyed
+with the same words, `fx.offClass`; its LOOT chip greyed), and at the
+run's end `equipItems` salvages it (`salvaged[].offClass`; the run-end's
+"Can't use · salvaged" row, its coins with the rest — the death toll
+applies). The gilded chest and the reliquary make their item for the
+class. **A save's gear:** `migrateProfile` fits it on every load
+(`fitGearToClass`: a weapon or armor the class can't use becomes its kit,
+an accessory comes off — the developer's call: no payout), so do the
+debug SWITCH CLASS and the dungeon's `switchClass` (the run's preview
+too); the simulator puts on the class's kit and plays the knight with his
+class set. **Balance (4 campaigns x 40 runs per class, mean depth / the
+last 10 runs' depth, before → after):** Knight 15.5 / 23.7 → 15.8 / 23.6,
+Barbarian 16.6 / 23.8 → 16.3 / 23.3, Wizard 17.3 / 23.8 → 16.4 / 23.4,
+Druid 15.9 / 24.1 → 15.9 / 23.8, Hexhunter 16.0 / 24.1 → 15.2 / 23.5;
+the two cloth classes that leaned on armor lost the most, so (the class
+numbers re-tuned for the matrix) the Necromancer's armor x0.8 → x1.1 and
+damage x1.0 → x1.1 (15.8 / 23.3 → 14.8 / 22.4, the weakest now — his
+daggers and scythes trade damage for crit and lifesteal) and the Plague
+Sister's armor x1.2 → x1.35 (16.3 / 23.6 → 15.5 / 23.0); the room-24
+boss column swings ±15-25 between seeds at this size — read it with
+more campaigns.
+
 **Stat colours (0.00266, the developer's call; the "moody" set after a
 brighter first try).** One colour per stat, the same on the Train row that
 raises it and everywhere the stat shows, so training reads as the stat it
@@ -1021,7 +1081,27 @@ generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
-**Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+**Generated scores (0.00273, the music thread; the beds the game plays are
+still the procedural ones):** `docs/music-prompts.md` is a brief per bed —
+a style block, a common avoid list, the bed's line, global styles and
+timed sections ending where they began (the beds loop) — and
+`tools/gen-score.mjs` sends it to three models: **ElevenLabs Music** by
+its own API as a composition plan (`planFor`: the sections in ms, the
+avoid list as negative styles; the session's ELEVENLABS_API_KEY can
+compose), **Lyria 3 Pro** on Replicate (`lyriaPrompt`: the sections as
+`[0:00 - 0:16]` timestamps; `--image` attaches the bed's painting as
+the picture to score) and **Stable Audio 2.5** (`stablePrompt`: no
+structure, it ignores it). Every take is transcoded to 192 kbps MP3 in
+`assets/audio/candidates/<bed>_c<n>.mp3` (lab-only, never overwritten;
+the orphan check reads files directly in `assets/audio`, not this
+folder) and recorded in `assets/data/music-art.json` with its plan or
+prompt, seed, length and EBU R128 loudness (ffmpeg), the shipped beds'
+loudness under `current`. The bake-off (`--bakeoff`: title + combat,
+two takes per model, Lyria's second on the painting) went to the
+Music Lab in 0.00273; the next steps are the developer's verdicts, then
+an import that finds a loop seam (the end meeting the start), cuts the
+loop + `tailS`, measures it and points `audio.json music.tracks` at a
+new file (rule 7). **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (32 lines,
 four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
@@ -1632,7 +1712,7 @@ sometimes — fetch all branches to find it.
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
   `assets/chars/candidates` (12MB), `assets/items/candidates` (1.3MB,
-  0.00260) and `assets/style` (17MB with the hero sheets, 0.00248) are
+  0.00260), `assets/audio/candidates` (30MB, 0.00273) and `assets/style` (17MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude those two; `assets/bg/candidates` (22MB,
   the largest) and `assets/chars/candidates` are read by the public
