@@ -1,4 +1,8 @@
 {
+  "0.00325": [
+    "Debug mode: an ANALYTICS item opens the play stats page, which has a Back to game link; a run in progress is settled first",
+    "Under the hood: the hero's card is its own module"
+  ],
   "0.00324": [
     "Under the hood: two more checks in the test suite (the special attack's H key beside the other buttons, the play stats' two readers of a run agreeing)"
   ],
