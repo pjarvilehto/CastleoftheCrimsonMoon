@@ -9,7 +9,7 @@
      Replicate) on the game's REAL card units (src/ui/battleLine.js +
      styles.css) over a room painting of your choice. Three views: COMPARE
      (one character: the current portrait beside every candidate, Approve /
-     Reject with a note, Flip), LINE-UP (all 13, current or new) and FIGHT
+     Reject with a note, Flip, Clean, Regenerate with notes), LINE-UP (all 13, current or new) and FIGHT
      (the knight and four enemies at the game's own size). Verdicts stay in
      this browser; COPY JSON packs them, with the re-rolls, for
      node tools/gen-art.mjs --rerender. The base href keeps the game's
@@ -30,6 +30,9 @@ html, body { overflow: hidden; }
 body.fight #stage .battle-line { right: 0; padding-bottom: 17.5vh; justify-content: space-between; --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
 body.fight #panel { display: none; }
 #stage .enemy-row { justify-content: center; }
+/* a long compare row (over seven candidates) wraps into two lines of larger cards */
+#stage .battle-line.wrap { align-items: center; --card-h: min(36vh, calc((100vw - var(--panel-w) - 5vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
+#stage .battle-line.wrap .enemy-row { flex-wrap: wrap; row-gap: 2.5vh; align-items: flex-end; }
 body:not(.fight) #stage .unit-actions { display: none; }
 .portrait.flipped { transform: translateX(-50%) scaleX(-1); }
 /* the caption under a card: which picture, and the verdict */

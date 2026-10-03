@@ -103,8 +103,10 @@ fresh();
     && js.includes('out.approved.push({ id, file: k.file, flip: !!v.flip })') && js.includes('out.rejected.push({ id, file: k.file, note:') && js.includes('out.reroll.push({ id, n:') && js.includes('out.reroll.push({ id: q.id, clean: q.n })')
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--rerender')"));
   // 0.194: --prune keeps only the approved candidate of a character that has one (a later round may add candidates again: an approval can be superseded)
-  ok('gen-art --prune: the approved candidate stays, the others go, files and records', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
-    && readFileSync('tools/gen-art.mjs', 'utf8').includes("e.candidates = e.candidates.filter((k) => k.verdict === 'ok')"));
+  ok('gen-art --prune: the approved candidate stays, the others go, files and records; --keep-models keeps those models\' candidates only, --clear-verdicts forgets the verdicts', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("e.candidates = e.candidates.filter(stays)") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--keep-models')") && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--clear-verdicts')"));
+  ok('gen-art --rerender: a re-roll based on a candidate (the lab\'s Regenerate with notes) takes it as image 1, the current portrait as image 2, the note as the direction, and its own model',
+    readFileSync('tools/gen-art.mjs', 'utf8').includes('j.portraitPath = join(ROOT, j.basedOn.raw)') && readFileSync('tools/gen-art.mjs', 'utf8').includes("`DIRECTION for this redraw: ${j.hint}`") && readFileSync('tools/gen-art.mjs', 'utf8').includes('const useModel = r.model ? MODELS[r.model]'));
   if (existsSync('assets/data/art.json')) {
     const reg = JSON.parse(readFileSync('assets/data/art.json', 'utf8'));
     const all = Object.values(reg.chars).flatMap((e) => e.candidates);

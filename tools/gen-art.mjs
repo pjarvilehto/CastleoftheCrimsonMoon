@@ -22,7 +22,9 @@
 //   node tools/gen-art.mjs --model lora --new mimic --line "CHARACTER: a treasure chest with fangs..." --name "Mimic"
 //                                                         # a character the game does not have yet (a default canvas)
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
-//                                                         # rejections (+ notes), generates the re-rolls
+//                                                         # rejections (+ notes), generates the re-rolls — from the
+//                                                         # current portrait, or from a candidate with a direction
+//                                                         # ("Regenerate with notes": { id, basedOn: n, hint, n, model })
 //   node tools/gen-art.mjs --recut all [--only rat]       # cut the candidates out again (the matting model; --matte key =
 //                                                         # the colour key, offline, with the knobs below)
 //   node tools/gen-art.mjs --recut rat_c2 --matte key --tolerance 40 --shadow 90   # one candidate with
@@ -35,6 +37,9 @@
 //                                                         # into the game under a NEW filename (rat_v2.webp)
 //   node tools/gen-art.mjs --prune [--only rat]           # a character with an approved candidate loses its
 //                                                         # other candidates (files and records); the rest untouched
+//   node tools/gen-art.mjs --prune --keep-models banana,bananapro [--only rat] [--clear-verdicts]
+//                                                         # keep only those models' candidates (a change of direction);
+//                                                         # --clear-verdicts forgets the approvals and rejections too
 //   node tools/gen-art.mjs --manifest                     # rebuild art.json from what is on disk
 //
 // Each candidate: the model's picture as sent back (assets/chars/candidates/
@@ -332,20 +337,23 @@ async function main() {
     saveRegistry(reg); console.log(`${REGISTRY.replace(ROOT + '/', '')}: ${Object.values(reg.chars).reduce((s, e) => s + e.candidates.length, 0)} candidates`); return;
   }
 
-  if (has('--prune')) { // the approved candidate stays, the character's others go (a character without one keeps all)
+  if (has('--prune')) { // the approved candidate stays, the character's others go (a character without one keeps all);
+    // with --keep-models: only those models' candidates stay (verdicts cleared with --clear-verdicts)
+    const keepModels = val('--keep-models') ? val('--keep-models').split(',').map((k) => { if (!MODELS[k]) throw new Error(`--keep-models: no model ${k}`); return MODELS[k].model; }) : null;
     let gone = 0, kept = 0;
     for (const c of chars) {
       const e = charEntry(reg, c);
-      if (!e.candidates.some((k) => k.verdict === 'ok')) continue;
+      if (!keepModels && !e.candidates.some((k) => k.verdict === 'ok')) continue;
+      const stays = (k) => (keepModels ? keepModels.includes(k.model) : k.verdict === 'ok');
       for (const k of e.candidates) {
-        if (k.verdict === 'ok') { kept++; continue; }
+        if (stays(k)) { kept++; if (has('--clear-verdicts')) { delete k.verdict; delete k.note; delete k.flip; } continue; }
         for (const f of [k.file, k.raw]) if (existsSync(join(ROOT, f))) unlinkSync(join(ROOT, f));
         gone++;
       }
-      e.candidates = e.candidates.filter((k) => k.verdict === 'ok');
-      console.log(`  ${c.id}: kept c${e.candidates.map((k) => k.n).join(', c')}`);
+      e.candidates = e.candidates.filter(stays);
+      console.log(`  ${c.id}: kept ${e.candidates.length ? `c${e.candidates.map((k) => k.n).join(', c')}` : 'none'}`);
     }
-    saveRegistry(reg); console.log(`${gone} candidates pruned, ${kept} approved kept`); return;
+    saveRegistry(reg); console.log(`${gone} candidates pruned, ${kept} kept`); return;
   }
 
   if (has('--recut')) { // the same picture(s), another key ("all" = every candidate of the --only characters)
@@ -399,7 +407,9 @@ async function main() {
       if (!c) throw new Error(`reroll: unknown character ${r.id}`);
       const e = charEntry(reg, c), n0 = nextN(e);
       if (r.clean) { jobs.push({ c, n: n0, from: e.candidates.find((k) => k.n === r.clean) ?? (() => { throw new Error(`clean: no candidate ${r.id}_c${r.clean}`); })(), seed: Date.now() % 2147483647 }); continue; }
-      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', styleFor(c.id, ROOT, refs) ?? (c.file ? `assets/chars/${c.file}` : DEFAULTS.style)), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
+      const basedOn = r.basedOn ? e.candidates.find((k) => k.n === r.basedOn) ?? (() => { throw new Error(`basedOn: no candidate ${r.id}_c${r.basedOn}`); })() : null;
+      const useModel = r.model ? MODELS[r.model] ?? (() => { throw new Error(`reroll: no model ${r.model}`); })() : model;
+      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, model: useModel, basedOn, style: r.style || val('--style', styleFor(c.id, ROOT, refs) ?? (c.file ? `assets/chars/${c.file}` : DEFAULTS.style)), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
     }
     saveRegistry(reg);
     console.log(`verdicts: ${(req.approved ?? []).length} approved, ${(req.rejected ?? []).length} rejected`);
@@ -413,8 +423,9 @@ async function main() {
     for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', styleFor(c.id, ROOT, refs) ?? (c.file ? `assets/chars/${c.file}` : DEFAULTS.style)), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
   }
   for (const j of jobs) {
+    j.model ??= model;
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
-    if (model === MODELS.lora) { j.style = MODELS.lora.weights; j.prompt = loraPrompt(j.c, j.hint); continue; } // text to image: no pictures go in
+    if (j.model === MODELS.lora) { j.style = MODELS.lora.weights; j.prompt = loraPrompt(j.c, j.hint); continue; } // text to image: no pictures go in
     if (val('--from-sheet')) {
       const base = doc.chars.find((x) => x.id === val('--from-sheet'));
       j.style = refs === 'sheets' || !base?.file ? `${STYLE_DIR}/${val('--from-sheet')}.png` : `assets/chars/${base.file}`;
@@ -422,15 +433,21 @@ async function main() {
       if (!existsSync(j.sheet)) throw new Error(`--from-sheet: no ${j.style}`);
       j.prompt = fromSheetPrompt(doc, j.c, j.hint); continue;
     }
+    if (j.basedOn) { // the candidate is the design (image 1), the current portrait the rendering reference (image 2), the note the direction
+      j.portraitPath = join(ROOT, j.basedOn.raw);
+      j.stylePath = j.c.file ? join(CHARS, j.c.file) : join(ROOT, j.basedOn.raw);
+      j.style = j.c.file ? `assets/chars/${j.c.file}` : j.basedOn.raw;
+      j.prompt = promptFor(doc, j.c, j.hint ? `DIRECTION for this redraw: ${j.hint}` : ''); continue;
+    }
     if (j.c.isNew) throw new Error(`--new ${j.c.id} has no portrait to redraw: use --model lora`);
     j.stylePath = existsSync(join(ROOT, 'assets/bg', j.style)) ? join(ROOT, 'assets/bg', j.style) : existsSync(join(ROOT, j.style)) ? join(ROOT, j.style) : null;
     if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
   }
-  const modelOf = (j) => (j.from ? CLEAN : j.sheet && !model.list ? FROM_SHEET : model);
+  const modelOf = (j) => (j.from ? CLEAN : j.sheet && !j.model.list ? FROM_SHEET : j.model);
   const cost = jobs.reduce((s, j) => s + modelOf(j).priceUsd, 0);
   console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => modelOf(j).model))].join(' + ')} (about $${cost.toFixed(2)}, from memory)`);
-  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : j.sheet ? `from the sheet ${j.style}` : `style ${j.style}`}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
+  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : j.sheet ? `from the sheet ${j.style}` : j.basedOn ? `based on c${j.basedOn.n}, style ${j.style}` : `style ${j.style}`}${j.model !== model ? `  ${j.model.model}` : ''}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
   if (has('--dry-run')) { if (jobs.length) console.log(`\n--- the prompt for ${jobs[0].c.id} ---\n${jobs[0].prompt}\n---`); return; }
   if (!jobs.length) return;
   if (!token()) throw new Error('REPLICATE_API_TOKEN is not set');
@@ -445,23 +462,23 @@ async function main() {
       const name = candidateFile(j.c.id, j.n);
       try {
         const t0 = Date.now();
-        const use = j.from ? CLEAN.model : j.sheet && !model.list ? FROM_SHEET.model : model.model;
+        const use = modelOf(j).model;
         const input = j.from
           ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : j.sheet
-            ? (model.list ? model.build({ prompt: j.prompt, portrait: await uploaded(j.sheet), style: null, aspect: DEFAULTS.aspect, seed: j.seed })
+            ? (j.model.list ? j.model.build({ prompt: j.prompt, portrait: await uploaded(j.sheet), style: null, aspect: DEFAULTS.aspect, seed: j.seed })
               : { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed })
-          : model === MODELS.lora
+          : j.model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
-            : model.build({ prompt: model.list ? j.prompt.replace(/\bimage 1\b/g, 'the first image').replace(/\bimage 2\b/g, 'the second image') : j.prompt,
-              portrait: await uploaded(join(CHARS, j.c.file)), style: await uploaded(j.stylePath), aspect: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, seed: j.seed });
+            : j.model.build({ prompt: j.model.list ? j.prompt.replace(/\bimage 1\b/g, 'the first image').replace(/\bimage 2\b/g, 'the second image') : j.prompt,
+              portrait: await uploaded(j.portraitPath ?? join(CHARS, j.c.file)), style: await uploaded(j.stylePath), aspect: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, seed: j.seed });
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
         await (await sharp())(out.bytes).jpeg({ quality: 92 }).toFile(rawPath);
         const cut = await cutAndFit(rawPath, j.c.file ? join(CHARS, j.c.file) : null, cutPath, { ...cutOpts, wide: WIDE[j.c.id] ?? 0 });
         const entry = charEntry(reg, j.c);
-        entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: use, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, from: j.from?.n, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
+        entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: use, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, from: j.from?.n, basedOn: j.basedOn?.n, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
         entry.candidates.sort((a, b) => a.n - b.n);
         saveRegistry(reg); // after every picture: a crash loses nothing
         console.log(`  ok ${name} (${(out.bytes.length / 1024).toFixed(0)} KB raw, ${((Date.now() - t0) / 1000).toFixed(0)} s, figure ${cut.figure.join('x')} on ${cut.canvas.join('x')})`);
