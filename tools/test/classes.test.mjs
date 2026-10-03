@@ -338,7 +338,10 @@ const types = (evs) => evs.map((e) => e.type);
     && V.hurt_hexhunter.rate[0] > V.hurt_barbarian.rate[1]);
   const wiz = { id: 'wizard' };
   ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
-    && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
+    && sfxFor({ type: 'dmg' }, wiz) === 'hurt' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
+  const cries = DATA.audio.cries;
+  ok('the get-hit recordings are pulled (0.00287, audio.json cries): a blow taken is the plain hurt until cries.hero is on', cries.hero === false && cries.foe === false
+    && (DATA.audio.cries = { hero: true, foe: false }, sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard') && (DATA.audio.cries = cries, sfxFor({ type: 'dmg' }, wiz) === 'hurt'));
   ok('…by the run\'s class (run.hero, 0.00283), the plain sound when none is given', sfxFor({ type: 'atk', heavy: true }, as('druid').hero) === 'heavy_druid' && sfxFor({ type: 'atk', heavy: true }) === 'attack' && sfxFor({ type: 'dmg' }) === 'hurt');
   getProfile().hero = null;
   {
@@ -365,10 +368,15 @@ const types = (evs) => evs.map((e) => e.type);
   const unitOf = (who) => (who === 'player' ? { id: 'player', card: null } : { id: ['rat', 'skeleton'][who], card: null });
   const ctx = { unit: unitOf };
   combatSfx({ sfx: 'atk_knight', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, ctx, play);
-  ok('the hero\'s blow plays his attack and the struck foe\'s cry (ehurt_rat), both on the strike', played.map((p) => p[0]).join('|') === 'atk_knight|ehurt_rat' && played.every((p) => p[1] > 0));
+  ok('the hero\'s blow plays his attack on the strike; the struck foe\'s cry (ehurt_rat) is pulled (0.00287, cries.foe)', played.map((p) => p[0]).join('|') === 'atk_knight' && played.every((p) => p[1] > 0));
+  played.length = 0;
+  const cries2 = DATA.audio.cries; DATA.audio.cries = { ...cries2, foe: true };
+  combatSfx({ sfx: 'atk_knight', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, ctx, play);
+  DATA.audio.cries = cries2;
+  ok('…and comes back with cries.foe on', played.map((p) => p[0]).join('|') === 'atk_knight|ehurt_rat');
   played.length = 0;
   combatSfx({ sfx: 'hurt_knight', fx: { kind: 'attack', from: 1, to: 'player', dmg: 5 } }, ctx, play);
-  ok('a foe\'s blow plays the hero\'s hurt and the foe\'s attack (eatk_skeleton)', played.map((p) => p[0]).join('|') === 'hurt_knight|eatk_skeleton');
+  ok('a foe\'s blow plays the hero\'s hurt and the foe\'s attack (eatk_skeleton; the attack is not a cry, it stays)', played.map((p) => p[0]).join('|') === 'hurt_knight|eatk_skeleton');
   played.length = 0;
   combatSfx({ sfx: 'attack', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, { unit: (w) => (w === 'player' ? { id: 'player' } : { id: 'nobody' }) }, play);
   ok('a foe without a clip is as before: the blow alone', played.map((p) => p[0]).join('|') === 'attack');
