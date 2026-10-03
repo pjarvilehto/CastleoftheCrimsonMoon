@@ -1,5 +1,5 @@
 {
-  "version": "0.00252",
+  "version": "0.00253",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -74,6 +74,7 @@
     "src/ui/hubSections.js",
     "src/ui/hubText.js",
     "src/ui/hud.js",
+    "src/ui/lookPicker.js",
     "src/ui/namePrompt.js",
     "src/ui/particleLooks.js",
     "src/ui/particles.js",
@@ -92,6 +93,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00253": [
+      "Your hero is chosen once per game: Enter the Castle picks on a new game and goes straight to the Great Hall after; the hall's portrait (a Look row on phones) opens a picker for your hero's other looks.",
+      "The hero figures recut: the grey showing through fur, hems and the crossbow is gone, and the edges lost their pale fringe.",
+      "Play stats: every run records who played and which look; the dashboard shows a Hero column and a By hero table (the collector Worker to paste is 0.00253)."
+    ],
     "0.00252": [
       "Shrines: Bulwark is now the big-armor boon (+40% armor, at least +80) and Glass Cannon costs less armor (+50% damage for -30% armor); every shrine's price is about a third lighter",
       "Play stats: each shrine's three offers and your pick are recorded, so the stats page can show what players really choose"
@@ -137,9 +143,6 @@
     ],
     "0.00239": [
       "gen-bg.mjs --prompt sends a prompt exactly as written (the guide's own example and its ossuary line on seven libraries, beside the game's paintings)"
-    ],
-    "0.00238": [
-      "The Great Hall, redrawn on desktop and iPad: your knight on the left with his gear around him and all his numbers beneath, Train in the middle, Alchemy on the right — each with the XP or coins it spends"
     ]
   }
 }

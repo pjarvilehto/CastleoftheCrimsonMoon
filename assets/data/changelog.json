@@ -1,4 +1,9 @@
 {
+  "0.00253": [
+    "Your hero is chosen once per game: Enter the Castle picks on a new game and goes straight to the Great Hall after; the hall's portrait (a Look row on phones) opens a picker for your hero's other looks.",
+    "The hero figures recut: the grey showing through fur, hems and the crossbow is gone, and the edges lost their pale fringe.",
+    "Play stats: every run records who played and which look; the dashboard shows a Hero column and a By hero table (the collector Worker to paste is 0.00253)."
+  ],
   "0.00252": [
     "Shrines: Bulwark is now the big-armor boon (+40% armor, at least +80) and Glass Cannon costs less armor (+50% damage for -30% armor); every shrine's price is about a third lighter",
     "Play stats: each shrine's three offers and your pick are recorded, so the stats page can show what players really choose"
