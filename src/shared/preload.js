@@ -19,6 +19,8 @@ import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
 import { portraitUrl } from './portraits.js';
 import { heroFirstUrls, heroArtUrls } from './heroes.js';
+import { itemArtUrls } from './itemArt.js';
+import { GEAR_SLOTS } from '../meta/equipment.js';
 import { getProfile } from '../meta/profile.js';
 
 const bgUrl = (f) => `assets/bg/${f}`;
@@ -51,7 +53,12 @@ export function roomUrls() {
 // Everything the dungeon and run-end screens use, essentials first.
 // The heroes' other looks (0.00248): the switcher's, after the essentials and before the rooms.
 export function heroLaterUrls() { const first = new Set(heroFirstUrls(getProfile())); return heroArtUrls().filter((u) => !first.has(u)); }
-export const restUrls = () => [...essentialUrls(), ...heroLaterUrls(), ...roomUrls()];
+// The gear's pictures (0.00259, ~300KB for all): the save's worn gear first — the hall paints those — then the rest a find can show.
+export function itemUrls() {
+  const eq = getProfile().equipment ?? {};
+  return itemArtUrls(GEAR_SLOTS.map(([k, i]) => (i === undefined ? eq[k] : eq[k]?.[i])).filter(Boolean));
+}
+export const restUrls = () => [...essentialUrls(), ...heroLaterUrls(), ...itemUrls(), ...roomUrls()];
 
 // img.decode() waits for a full decode, not just the network fetch.
 // Falls back to onload where decode is unavailable; resolves (never
@@ -105,7 +112,7 @@ export function preloadRest() {
     restState.total = urls.length;
     await pool(urls, 4, async (url) => { await warm(url); restState.done++; });
     restState.ready = true;
-    pool(roomUrls(), 3, fetchOnly); // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
+    pool(itemUrls(), 4, warm).then(() => pool(roomUrls(), 3, fetchOnly)); // (0.00259: the gear's pictures first — small, decoded, so a find's card shows its picture the moment it rises; Descend waits for neither) // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
   })();
   return rest;
 }

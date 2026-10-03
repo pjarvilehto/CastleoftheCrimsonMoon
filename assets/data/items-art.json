@@ -1,0 +1,418 @@
+{
+  "items": {
+    "crimson_plate": [
+      {
+        "n": 1,
+        "file": "crimson_plate_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Crimson Plate, a knight's breastplate cuirass with pauldrons, front view: deep blood-red enamelled steel, worn gold trim and rivets, a ruby set at the chest, battle scratches. Epic item, a violet and red glow.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:32Z",
+        "imported": "crimson_plate_v1.webp"
+      }
+    ],
+    "umbral_treads": [
+      {
+        "n": 1,
+        "file": "umbral_treads_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Umbral Treads, a pair of tall black leather knight's boots with steel greaves and silver buckles, wisps of violet shadow smoke rising from them, thin ember-orange glowing seams. Legendary item, radiating orange light.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:32Z",
+        "imported": "umbral_treads_v1.webp"
+      }
+    ],
+    "vampiric_ring": [
+      {
+        "n": 1,
+        "file": "vampiric_ring_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Vampiric Ring, a gold ring seen from slightly above, set with a blood-drop shaped ruby held between two small ivory fangs, a single drop of blood running down the band. Uncommon item.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "vampiric_ring_v1.webp"
+      }
+    ],
+    "ring_of_the_blood_moon": [
+      {
+        "n": 1,
+        "file": "ring_of_the_blood_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Ring of the Blood Moon, a blackened silver ring holding a round glowing red moonstone with crater markings, cradled by two silver crescent prongs. Epic item, a violet and red glow.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "ring_of_the_blood_moon_v1.webp"
+      }
+    ],
+    "lucky_charm": [
+      {
+        "n": 1,
+        "file": "lucky_charm_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Lucky Charm, a worn iron horseshoe tied with a faded red ribbon, a small tarnished gold coin with a four-leaf clover hanging inside it. Humble, simple, common item.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "lucky_charm_v1.webp"
+      }
+    ],
+    "rusty_sword": [
+      {
+        "n": 1,
+        "file": "rusty_sword_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Rusty Sword, a plain short iron sword pitted with rust, a nicked edge, a simple crossguard, a worn leather grip. Humble, common item. Shown diagonally, tip to the upper right.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "rusty_sword_v1.webp"
+      }
+    ],
+    "oak_shield": [
+      {
+        "n": 1,
+        "file": "oak_shield_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Oak Shield, a round wooden shield of oak planks bound with a dented iron rim and an iron boss, scuffed and scratched. Humble, common item.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "oak_shield_v1.webp"
+      }
+    ],
+    "traveler_boots": [
+      {
+        "n": 1,
+        "file": "traveler_boots_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Traveler's Boots, a pair of worn brown leather walking boots with laces and mud-stained soles. Humble, common item.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:33Z",
+        "imported": "traveler_boots_v1.webp"
+      }
+    ],
+    "ring_of_might": [
+      {
+        "n": 1,
+        "file": "ring_of_might_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Ring of Might, a plain heavy bronze ring with a small engraved fist emblem. Humble, common item.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:34Z",
+        "imported": "ring_of_might_v1.webp"
+      }
+    ],
+    "knights_greaves": [
+      {
+        "n": 1,
+        "file": "knights_greaves_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Knight's Greaves, a pair of steel plate leg greaves with knee cops and blue-grey leather straps, polished. Uncommon item with a faint cold blue sheen.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:34Z",
+        "imported": "knights_greaves_v1.webp"
+      }
+    ],
+    "hunters_talisman": [
+      {
+        "n": 1,
+        "file": "hunters_talisman_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Hunter's Talisman, a wolf fang and a small carved bone arrowhead hung on a leather cord with blue glass beads. Uncommon item with a faint cold blue sheen.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:34Z",
+        "imported": "hunters_talisman_v1.webp"
+      }
+    ],
+    "ring_of_protection": [
+      {
+        "n": 1,
+        "file": "ring_of_protection_c1.webp",
+        "model": "google/nano-banana-pro",
+        "line": "Ring of Protection, a silver ring set with a square blue sapphire, a tiny shield engraved on the band. Uncommon item with a faint cold blue sheen.",
+        "note": "added from a file",
+        "at": "2026-10-03T09:42:34Z",
+        "imported": "ring_of_protection_v1.webp"
+      }
+    ],
+    "executioner_axe": [
+      {
+        "n": 1,
+        "file": "executioner_axe_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Executioner's Axe, a huge broad-bladed two-handed axe, a black iron head with a crescent edge, notched and stained, a long leather-wrapped haft. Epic item, a violet glow along the edge.",
+        "at": "2026-10-03T09:42:54Z"
+      },
+      {
+        "n": 2,
+        "file": "executioner_axe_c2.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Executioner's Axe, a huge broad-bladed two-handed axe, a black iron head with a crescent edge, notched and stained, a long leather-wrapped haft. Epic item, a violet glow along the edge.",
+        "hint": "the axe alone, lying free in the dark — no hand, no arm, no person holding it",
+        "at": "2026-10-03T09:44:58Z"
+      },
+      {
+        "n": 3,
+        "file": "executioner_axe_c3.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Executioner's Axe, a huge broad-bladed two-handed axe, a black iron head with a crescent edge, notched and stained, a long leather-wrapped haft. Epic item, a violet glow along the edge.",
+        "hint": "the axe alone, no hand, no arm, no person; shown diagonally, its huge broad crescent blade large and filling the upper right of the frame",
+        "at": "2026-10-03T09:45:22Z",
+        "imported": "executioner_axe_v1.webp"
+      }
+    ],
+    "ritual_dagger": [
+      {
+        "n": 1,
+        "file": "ritual_dagger_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ritual Dagger, a wavy-bladed kris dagger of dark steel, a bone handle carved with runes, a small blue gem in the pommel. Uncommon item with a faint cold blue glow along its edge.",
+        "at": "2026-10-03T09:42:54Z",
+        "imported": "ritual_dagger_v1.webp"
+      }
+    ],
+    "crimson_reaver": [
+      {
+        "n": 1,
+        "file": "crimson_reaver_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Crimson Reaver, a heavy curved falchion of dark red steel, blood-red runes glowing in the blade, blood dripping from its edge, a guard of black iron fangs. Epic item, a violet and blood-red glow. Shown diagonally, tip to the upper right.",
+        "at": "2026-10-03T09:42:54Z",
+        "imported": "crimson_reaver_v1.webp"
+      }
+    ],
+    "knights_blade": [
+      {
+        "n": 1,
+        "file": "knights_blade_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Knight's Blade, a well-kept steel arming sword with a cross-shaped guard, a grip wrapped in blue leather, a brass pommel, the polished blade catching the light. Uncommon item with a faint cold blue sheen. Shown diagonally, tip to the upper right.",
+        "at": "2026-10-03T09:42:54Z",
+        "imported": "knights_blade_v1.webp"
+      }
+    ],
+    "moonbrand": [
+      {
+        "n": 1,
+        "file": "moonbrand_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Moonbrand, a long knightly sword, clearly enchanted: its pale silver-blue blade glowing with cold moonlight, a row of glowing violet runes down the fuller, a crossguard shaped like a crescent moon, a dark violet leather grip, a glowing moonstone pommel. Epic item, a violet glow. Shown diagonally, tip to the upper right.",
+        "at": "2026-10-03T09:43:12Z",
+        "imported": "moonbrand_v1.webp"
+      }
+    ],
+    "boneplate": [
+      {
+        "n": 1,
+        "file": "boneplate_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Boneplate, a cuirass built from bleached ribs and bones lashed together over dark leather, a small skull at the chest. Uncommon item, a faint cold blue glow in the skull's eyes.",
+        "at": "2026-10-03T09:43:12Z",
+        "imported": "boneplate_v1.webp"
+      }
+    ],
+    "plate_armor": [
+      {
+        "n": 1,
+        "file": "plate_armor_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Plate Armor, a polished steel breastplate cuirass with pauldrons and riveted lames, blue-grey leather straps. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T09:43:12Z",
+        "imported": "plate_armor_v1.webp"
+      }
+    ],
+    "fang_of_the_eclipse": [
+      {
+        "n": 1,
+        "file": "fang_of_the_eclipse_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Fang of the Eclipse, a legendary curved blade shaped like a giant black fang, an eclipse disc of black stone ringed by blood-red fire set in its guard, a corona of red flame licking along the edge. Legendary item, radiating red and orange light.",
+        "at": "2026-10-03T09:43:13Z",
+        "imported": "fang_of_the_eclipse_v1.webp"
+      }
+    ],
+    "bloodmoon_aegis": [
+      {
+        "n": 1,
+        "file": "bloodmoon_aegis_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bloodmoon Aegis, a legendary kite shield of black steel, a huge blood-red moon embossed on its face glowing like molten metal, sharp thorns along its rim. Legendary item, radiating red light.",
+        "at": "2026-10-03T09:43:30Z",
+        "imported": "bloodmoon_aegis_v1.webp"
+      }
+    ],
+    "moonstriders": [
+      {
+        "n": 1,
+        "file": "moonstriders_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Moonstriders, a pair of elegant silver plate boots etched with crescent moons, pale moonlight glowing from the etchings, violet leather lining. Epic item, a violet glow.",
+        "at": "2026-10-03T09:43:30Z",
+        "imported": "moonstriders_v1.webp"
+      }
+    ],
+    "dragonscale_mail": [
+      {
+        "n": 1,
+        "file": "dragonscale_mail_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Dragonscale Mail, a scale-mail hauberk of overlapping dark purple dragon scales edged in gold, glowing violet seams between the scales. Epic item, a violet glow.",
+        "at": "2026-10-03T09:43:30Z",
+        "imported": "dragonscale_mail_v1.webp"
+      }
+    ],
+    "wraithwalkers": [
+      {
+        "n": 1,
+        "file": "wraithwalkers_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Wraithwalkers, a pair of ghostly grey cloth-wrapped boots whose tops fade into violet ethereal mist, faintly translucent and spectral. Epic item, a violet glow.",
+        "at": "2026-10-03T09:43:30Z",
+        "imported": "wraithwalkers_v1.webp"
+      }
+    ],
+    "signet_of_the_blood_pact": [
+      {
+        "n": 1,
+        "file": "signet_of_the_blood_pact_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Signet of the Blood Pact, a heavy gold signet ring, its flat face engraved with two clasped hands over a drop of blood, the engraving filled with glowing molten red. Legendary item, radiating red light.",
+        "at": "2026-10-03T09:43:49Z",
+        "imported": "signet_of_the_blood_pact_v1.webp"
+      }
+    ],
+    "bloodstone_band": [
+      {
+        "n": 1,
+        "file": "bloodstone_band_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bloodstone Band, a thick dark iron band inlaid with a polished bloodstone — a dark green stone speckled with red. Epic item, a violet glow.",
+        "at": "2026-10-03T09:43:49Z",
+        "imported": "bloodstone_band_v1.webp"
+      }
+    ],
+    "ring_of_the_eclipse": [
+      {
+        "n": 1,
+        "file": "ring_of_the_eclipse_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ring of the Eclipse, a black obsidian ring holding a disc of black stone ringed by a thin glowing violet-white corona. Epic item, a violet glow.",
+        "at": "2026-10-03T09:43:49Z",
+        "imported": "ring_of_the_eclipse_v1.webp"
+      }
+    ],
+    "ring_of_the_red_veil": [
+      {
+        "n": 1,
+        "file": "ring_of_the_red_veil_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ring of the Red Veil, a slender gold ring wrapped in a sheer floating veil of blood-red silk, a teardrop ruby blazing with red light. Legendary item, radiating red light.",
+        "at": "2026-10-03T09:43:49Z",
+        "imported": "ring_of_the_red_veil_v1.webp"
+      }
+    ],
+    "heart_of_the_dying_moon": [
+      {
+        "n": 1,
+        "file": "heart_of_the_dying_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Heart of the Dying Moon, a deep red crystal heart, cracked, a dim pale moon trapped inside it, held in a cage of black iron, red-orange light pulsing out of the cracks. Legendary item, radiating red and orange light.",
+        "at": "2026-10-03T09:44:05Z",
+        "imported": "heart_of_the_dying_moon_v1.webp"
+      }
+    ],
+    "relic_of_the_first_knight": [
+      {
+        "n": 1,
+        "file": "relic_of_the_first_knight_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Relic of the First Knight, a small ornate silver reliquary box with a glass window holding a fragment of an old knight's sword hilt, gold filigree. Epic item, a holy violet-white glow.",
+        "at": "2026-10-03T09:44:06Z",
+        "imported": "relic_of_the_first_knight_v1.webp"
+      }
+    ],
+    "fang_of_the_crimson_moon": [
+      {
+        "n": 1,
+        "file": "fang_of_the_crimson_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Fang of the Crimson Moon, a large curved wolf fang capped in silver on a fine chain, a red crescent moon carved into it and glowing. Epic item, a violet and red glow.",
+        "at": "2026-10-03T09:44:06Z",
+        "imported": "fang_of_the_crimson_moon_v1.webp"
+      }
+    ],
+    "amulet_of_vigor": [
+      {
+        "n": 1,
+        "file": "amulet_of_vigor_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Amulet of Vigor, a simple bronze pendant on a leather cord, an oak-leaf emblem with a small green stone. Humble, common item.",
+        "at": "2026-10-03T09:44:07Z",
+        "imported": "amulet_of_vigor_v1.webp"
+      }
+    ],
+    "amulet_of_the_crimson_moon": [
+      {
+        "n": 1,
+        "file": "amulet_of_the_crimson_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Amulet of the Crimson Moon, a gold crescent-moon pendant cradling a round glowing crimson gem, on a gold chain. Epic item, a violet and red glow.",
+        "at": "2026-10-03T09:44:23Z",
+        "imported": "amulet_of_the_crimson_moon_v1.webp"
+      }
+    ],
+    "amulet_of_the_blood_eclipse": [
+      {
+        "n": 1,
+        "file": "amulet_of_the_blood_eclipse_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Amulet of the Blood Eclipse, an ornate gold sun-disc pendant on a gold chain, its center a black eclipse disc ringed by a blazing blood-red corona of fire, small gold rays around the rim. Legendary item, radiating intense red light — the brightest thing in the image.",
+        "at": "2026-10-03T09:44:23Z",
+        "imported": "amulet_of_the_blood_eclipse_v1.webp"
+      }
+    ],
+    "amulet_of_the_blood_moon": [
+      {
+        "n": 1,
+        "file": "amulet_of_the_blood_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Amulet of the Blood Moon, a round silver locket set with a large full blood-red moonstone with craters, a single drop of blood falling from it, on a black chain. Epic item, a violet and red glow.",
+        "at": "2026-10-03T09:44:23Z",
+        "imported": "amulet_of_the_blood_moon_v1.webp"
+      }
+    ],
+    "amulet_of_the_leech": [
+      {
+        "n": 1,
+        "file": "amulet_of_the_leech_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Amulet of the Leech, a silver pendant shaped like a coiled leech around a small dark red gem, on a silver chain. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T09:44:24Z",
+        "imported": "amulet_of_the_leech_v1.webp"
+      }
+    ]
+  }
+}

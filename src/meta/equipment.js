@@ -44,7 +44,7 @@ export function salvageValue(id) {
 }
 
 // Auto-equip a list of item ids into the profile. Returns a summary
-// { equipped: [{name,tier}], salvaged: [{name,tier}], coins } for UI display.
+// { equipped: [{id,name,tier}], salvaged: [{id,name,tier}], coins, changes } for UI display.
 // `equipped` lists only what is still worn at the end: a find that a later
 // find replaced in the same call shows under salvaged only (0.097).
 // The worn slots in the hall's order (0.00248): a key, and the ring's index.
@@ -65,14 +65,14 @@ export function equipItems(profile, itemIds) {
       const emptyIdx = eq.rings.indexOf(null);
       if (emptyIdx !== -1) {
         eq.rings[emptyIdx] = id;
-        summary.equipped.push({ name: item.name, tier: item.tier });
+        summary.equipped.push({ id, name: item.name, tier: item.tier });
         worn.push(id);
         continue;
       }
       const weakerIdx = itemValue(eq.rings[0]) <= itemValue(eq.rings[1]) ? 0 : 1;
       if (itemValue(id) > itemValue(eq.rings[weakerIdx])) {
         swapOut(eq.rings, weakerIdx, id, summary);
-        summary.equipped.push({ name: item.name, tier: item.tier });
+        summary.equipped.push({ id, name: item.name, tier: item.tier });
         worn.push(id);
       } else {
         salvage(id, summary);
@@ -86,7 +86,7 @@ export function equipItems(profile, itemIds) {
         salvage(current, summary);
       }
       eq[item.slot] = id;
-      summary.equipped.push({ name: item.name, tier: item.tier });
+      summary.equipped.push({ id, name: item.name, tier: item.tier });
       worn.push(id);
     } else {
       salvage(id, summary);
@@ -115,6 +115,6 @@ function swapOut(arr, idx, newId, summary) {
 function salvage(id, summary) {
   const it = DATA.items[id];
   if (!it) return; // an item the data no longer lists (0.00223): nothing to sell
-  summary.salvaged.push({ name: it.name, tier: it.tier });
+  summary.salvaged.push({ id, name: it.name, tier: it.tier }); // (0.00259: the id, for the run end's pictures)
   summary.coins += salvageValue(id);
 }

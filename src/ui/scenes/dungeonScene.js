@@ -19,7 +19,7 @@ import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runS
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
-import { logLine, itemName, markWayOn } from '../hud.js';
+import { logLine, itemName, itemPic, markWayOn } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
@@ -39,6 +39,8 @@ import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
+const LOOT_SHOWN = 6; // (the look: the row's length under XP / COINS; a phone has none, styles.css — the hero card's inventory page lists them)
+
 export function dungeonScene() {
   const run = createRun();
   let combat = null;
@@ -50,17 +52,24 @@ export function dungeonScene() {
   let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
+  let lootEl = null;    // the LOOT row under XP / COINS (0.00259): the run's finds as small pictures
+  let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
 
   const playback = createPlayback({
     logEl: () => logEl,
     onTick: () => { if (ui) updateCombat(); },
     onEmpty: () => {
       tickUpChips();
+      showLoot(run.itemsFound.length); // (an OVERKILL's silent finds too, once the room's lines are out)
       if (combat.over && !combat.victory) openDeathModal();
       // a boss falls: the win dialog the first time, else the narrator's word (0.161)
       if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
-    onFx: (fx) => fx && playFx(fx, fxCtx),
+    onFx: (fx) => {
+      if (!fx) return;
+      const landsIn = playFx(fx, fxCtx);
+      if (fx.kind === 'find') setTimeout(() => showLoot(lootShown + 1), typeof landsIn === 'number' ? landsIn : 0); // (the tray takes it as the card lands)
+    },
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
     onDeath: (i) => ui?.battle.deathStep(i), // the fallen card's leaving and the restack are a step of their own (0.00220) — only while a card is off screen (battleRoom.js)
@@ -164,11 +173,13 @@ export function dungeonScene() {
       battle.line, // ui/battleRoom.js
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
-        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
+        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
+        lootEl = el('div', { class: 'res-row res-loot none' }, el('span', { class: 'res-label' }, 'LOOT'), el('span', { class: 'loot-tray' }))),
       layer,
       logEl,
       proceed);
     logEl.className = 'docked';
+    showLoot(run.itemsFound.length, true); // (a new room: every find so far is out — a chest's too)
     battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
@@ -193,6 +204,17 @@ export function dungeonScene() {
     }
     // Low with nothing to drink: Retreat pulses red and Push Deeper is plain (hud.js markWayOn, 0.00206) — on every update, since a potion drunk after the win changes the advice.
     if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
+  }
+
+  // The LOOT row (0.00259): the newest LOOT_SHOWN of the run's finds, oldest first.
+  function showLoot(n, rebuild = false) {
+    n = Math.min(n, run.itemsFound.length);
+    if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
+    lootShown = n;
+    const tray = lootEl.children[1];
+    tray.textContent = '';
+    tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, 'loot-chip')).filter(Boolean));
+    lootEl.classList.toggle('none', n === 0);
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----
@@ -241,7 +263,7 @@ export function dungeonScene() {
       parts.push(' — loot: ');
       newItems.forEach((id, i) => {
         if (i > 0) parts.push(', ');
-        parts.push(itemName(DATA.items[id]));
+        parts.push(itemPic(id, 'log-art'), itemName(DATA.items[id])); // (0.00259: with its picture, like the Found line)
       });
     }
     return parts;

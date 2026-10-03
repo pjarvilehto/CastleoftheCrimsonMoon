@@ -116,6 +116,7 @@ node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-pr
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
+node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 ```
 
 ## The rules that matter
@@ -644,6 +645,57 @@ interiors — the title's and the death's exteriors stay out — into
 `ROOM_CAPTION` + the room's name; trained in 0.00237, 16 min; the
 destination model is made on first use) draws a room from its line
 alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
+
+**Item art (0.00259, the developer's direction and picks from the
+mockups).** Every item has a picture: `items.json art` per item, a 256 px
+WebP in `assets/items/` (~8 KB; 300 KB for all 36), read through
+`shared/itemArt.js` (`itemArtUrl`, `itemArtUrls`, and `gainLine(from,
+to)` — what a find raises over what it replaced) and drawn by `hud.js
+itemPic(id)` (an `<img class="item-pic tier-N">`; the tier sets `--rim` /
+`--rim-glow` for the small ones' rarity rim); `dataCheck` fails an item
+without one, the orphan check covers the folder. **The look:** dramatic
+low-key light, an Unreal Engine 5 render, a touch of Mike Mignola
+(`docs/item-prompts.md`: the style block and a line per item ending in its
+rarity's glow — common none, uncommon cold blue, epic violet, legendary
+red / orange). **Painting them:** `tools/gen-items.mjs` sends the block +
+the line as text alone (a reference picture made Nano Banana copy instead
+of restyle) to **Nano Banana Pro** (picked over Seedream 4 — dramatic but
+it added things and cropped — and Nano Banana — small objects); every
+candidate is kept (`assets/items/candidates/<id>_c<n>.webp`, 512 px,
+lab-only) and recorded in `assets/data/items-art.json`; `--hint` adds a
+direction (the axe's first roll had a hand on it); `--import [id|id_cN]`
+writes `assets/items/<id>_v<k>.webp` (a new name each time, rule 7) and
+edits the item's `art` line in place (`setArt`: items.json keeps its own
+layout); `--sheet` a contact sheet. A new item = its line in the doc, a
+roll, an import. **Where they show** (the developer's pick "B": the
+picture fading into the dark, the text over it): the hall's worn slots
+(`hubSections.js` — the desktop's `.gear-slot .slot-art` on the slot's
+outer side fading toward the card, the phone's twin at the Equipment
+row's left end; the art layer clips itself, not the slot — the purchase
+flash grows the name past the slot's edge — and is lifted
+(`brightness(1.45)`) so the low-key art does not sink under the fade);
+the hall's finds reveal (the picture flashes in under the gold flare,
+`hubScene.js reveal`, its filter list matching the CSS one); **a find in
+combat:** `run/loot.js takeItem` hands the log `extra.find = { id, slot,
+index, from }` (what the preview's `equipItems` changed),
+`combatQueue.js` turns it into the line's `fx: { kind: 'find' }`, and
+`ui/findFx.js findPop` raises the item as a card over the foes still
+standing (FOUND · the slot, the name in its rarity, its stats, "replaces
+X · +gain"), holds 1.5 s and flies it into the hero's card (the glint
+sweeps him as it lands; reduced motion and the shim: nothing, the log
+says it); the Found line and the room's loot summary lead with the
+picture; the **LOOT** row under XP / COINS (`dungeonScene.js
+showLoot`: the newest six; none on a phone, whose top strip is the room
+title's — the hero card's inventory page lists them; a find joins as its card lands,
+an OVERKILL's silent finds when the room's lines are out); the hero
+card's inventory page (`battleLine.js invPage`); **the run's end**
+(`runEndScene.js findCard`: a card per slot `equipSummary.changes`
+changed — the picture fading down into the slot, the name, its stats,
+"over X · +gain", RELIC on a tier 4 — and the salvage as grey chips;
+`equipItems`' `equipped` / `salvaged` entries carry the `id` since).
+Preload: after the Descend essentials and before the rooms, decoded, the
+save's worn gear first (`preload.js itemUrls`; Descend waits for none of
+it).
 
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
@@ -1340,8 +1392,8 @@ sometimes — fetch all branches to find it.
   design — a padded maskable variant would be the developer's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
-  `assets/chars/candidates` (12.6MB) and `assets/style` (16MB with the
-  hero sheets, 0.00248) are
+  `assets/chars/candidates` (12.6MB), `assets/items/candidates` (1MB,
+  0.00259) and `assets/style` (16MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
@@ -1399,7 +1451,12 @@ sometimes — fetch all branches to find it.
   Throne, the ossuary test); the guide's other unused rooms are the next
   batch (`docs/image-prompting-guide.md` §3: arenas, thrones, corridors,
   antechambers, shrines) · a generated painting's fog is a default until
-  the Fog Lab tunes it · the mimic chest has art but no enemy entry.
+  the Fog Lab tunes it · the mimic chest has art but no enemy entry ·
+  the item pictures have no lab view yet (0.00259: reviewed on
+  `gen-items.mjs --sheet`; the Art Lab's COMPARE would suit them) ·
+  Moonbrand's runes and the Blood Eclipse amulet's corona were
+  re-asked for in their lines — a redraw with `--hint` if they still
+  read too plain in the game.
 - Other: orphaned legacy staging site cleanup.
 
 **Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon

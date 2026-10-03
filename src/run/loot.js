@@ -40,17 +40,23 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
 // be equipped at settle (the same rules, run against run.gearPreview), else
 // salvaged on the spot — it would only be salvaged at the end, so take the
 // coins now instead of piling up junk (0.091; same value, same toll).
-// log(text, cls) prints the line: { item } parts are rendered
-// rarity-colored by hud.logLine — run/ stays free of UI imports (0.079).
+// log(text, cls, extra) prints the line: { item, id } parts are rendered
+// rarity-colored (with the item's picture, 0.00259) by hud.logLine — run/
+// stays free of UI imports (0.079). A kept find's line also carries
+// extra.find = { id, slot, index, from }: the slot it takes in the preview
+// and what it replaces (null: an empty slot) — combat's find card.
 // Returns { itemId, kept, coins? }.
 export function takeItem(run, itemId, log) {
   const item = DATA.items[itemId];
   if (item.tier === RELIC_TIER) run.relicFound = true; // the per-run relic cap, kept or not
-  if (equipItems({ equipment: run.gearPreview }, [itemId]).equipped.length > 0) {
+  const preview = equipItems({ equipment: run.gearPreview }, [itemId]); // (moves the preview on: the next find is judged against this one)
+  if (preview.equipped.length > 0) {
     run.itemsFound.push(itemId);
+    const change = preview.changes.find((c) => c.to === itemId) ?? preview.changes[0];
+    const find = { id: itemId, slot: change?.slot ?? item.slot, index: change?.index, from: change?.from ?? null };
     // T4 relics get a burning EPIC ITEM line (0.063 — replaced the modal popup).
-    if (item.tier === RELIC_TIER) log(['✦ EPIC ITEM ✦  You found ', { item }, '!'], 'relic');
-    else log(['Found: ', { item }, '!'], 'loot');
+    if (item.tier === RELIC_TIER) log(['✦ EPIC ITEM ✦  You found ', { item, id: itemId }, '!'], 'relic', { find });
+    else log(['Found: ', { item, id: itemId }, '!'], 'loot', { find });
     return { itemId, kept: true };
   }
   const coins = salvageValue(itemId);
