@@ -113,6 +113,6 @@ export function derivedStats(p = getProfile()) {
     fortuneBonus: trainedLevel(p, 'fortune') * DATA.difficulty.fortuneLootBonus,
     potions: p.potions,
     potionCap: p.potionCap,
-    klass: withMastery(cls, heroOf(p), gear), // (0.00273: + the signature items' mastery, shared/classGear.js) the class block, snapshotted with the rest — a copy, a shrine's Quicken adds a charge to it (run/combat.js reads the heavy and the passives from it)
+    klass: withMastery(cls, heroOf(p), gear), // (0.00274: + the signature items' mastery, shared/classGear.js) the class block, snapshotted with the rest — a copy, a shrine's Quicken adds a charge to it (run/combat.js reads the heavy and the passives from it)
   };
 }

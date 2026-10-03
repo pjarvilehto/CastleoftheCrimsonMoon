@@ -98,7 +98,7 @@ export function dungeonScene() {
     // as a share of the new maximum, the fight's class state reset and the
     // room rendered again — the battle line is rebuilt in place, dealt in.
     switchClass(root) {
-      run.heroId = getProfile().hero?.id ?? null; // (0.00273: the run's loot and preview follow the class)
+      run.heroId = getProfile().hero?.id ?? null; // (0.00274: the run's loot and preview follow the class)
       fitGearToClass({ hero: getProfile().hero, equipment: run.gearPreview });
       const stats = derivedStats();
       const share = run.maxHp > 0 ? run.hp / run.maxHp : 1;
@@ -245,7 +245,7 @@ export function dungeonScene() {
     lootShown = n;
     const tray = lootEl.children[1];
     tray.textContent = '';
-    tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, `loot-chip${canUse(run.heroId, id) ? '' : ' off-class'}`)).filter(Boolean)); // (0.00273: another class's gear greyed — salvaged at the end)
+    tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, `loot-chip${canUse(run.heroId, id) ? '' : ' off-class'}`)).filter(Boolean)); // (0.00274: another class's gear greyed — salvaged at the end)
     lootEl.classList.toggle('none', n === 0 && !lootFlying);
     const chip = tray.children[tray.children.length - 1];
     if (landed && grew) chip?.animate?.([ // (one-shot: the chip lands with a flash)

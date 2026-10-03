@@ -90,7 +90,7 @@ on the hero card's potion count and the potion's card in combat.
 |---|---|
 | healing_potion | Healing Potion, a round-bellied glass flask stoppered with cork and red wax, filled with a glowing blood-red elixir, a frayed leather cord tied around its neck, a few drops of red on the glass. Its own warm red glow lighting the glass from inside. |
 
-The item matrix (0.00273, docs/item-matrix.md): every class's weapon kinds
+The item matrix (0.00274, docs/item-matrix.md): every class's weapon kinds
 and armor weight at tiers 2–4, and each class's two signature items (a
 tier-3 and a tier-4 accessory that feeds its mechanic — named for the
 class, in its colours).

@@ -1,4 +1,4 @@
-// shared/classGear.js — who can use what (0.00273, the developer's item
+// shared/classGear.js — who can use what (0.00274, the developer's item
 // matrix, docs/item-matrix.md). Three layers, readable from an item's name:
 // a weapon has a `kind` (sword, axe, mace, staff, dagger, scythe, crossbow,
 // censer) and a class wields two kinds (heroes.json `wields`); a body armor

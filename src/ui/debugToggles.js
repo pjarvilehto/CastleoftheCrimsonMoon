@@ -71,7 +71,7 @@ export function switchClassButton() {
   const btn = el('button', { class: 'debug-toggle class-toggle', onclick: () => {
     const list = heroList(), cur = heroOf(getProfile()), next = list[(list.findIndex((h) => h.id === cur.id) + 1) % list.length];
     getProfile().hero = cleanHero({ id: next.id, look: 0 });
-    fitGearToClass(getProfile()); // (0.00273: the new class's kit where the old gear is not its own)
+    fitGearToClass(getProfile()); // (0.00274: the new class's kit where the old gear is not its own)
     persist();
     const scene = currentScene(), root = document.getElementById?.('app');
     if (root) (scene?.switchClass ?? scene?.relayout)?.call(scene, root);

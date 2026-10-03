@@ -58,7 +58,7 @@ export function equipItems(profile, itemIds) {
   const eq = profile.equipment;
   const before = GEAR_SLOTS.map((s) => wornIn(eq, s)); // (0.00248: what each slot held, for the hall's reveal)
 
-  const heroId = profile.hero?.id ?? null; // (0.00273: the item matrix — what the class can't use is salvaged, marked offClass; no hero chosen: anything goes)
+  const heroId = profile.hero?.id ?? null; // (0.00274: the item matrix — what the class can't use is salvaged, marked offClass; no hero chosen: anything goes)
   for (const id of itemIds) {
     const item = DATA.items[id];
     if (!item) continue;
@@ -118,6 +118,6 @@ function swapOut(arr, idx, newId, summary) {
 function salvage(id, summary, offClass = false) {
   const it = DATA.items[id];
   if (!it) return; // an item the data no longer lists (0.00223): nothing to sell
-  summary.salvaged.push({ id, name: it.name, tier: it.tier, ...(offClass ? { offClass: true } : {}) }); // (0.00260: the id, for the run end's pictures; 0.00273: offClass = another class's gear)
+  summary.salvaged.push({ id, name: it.name, tier: it.tier, ...(offClass ? { offClass: true } : {}) }); // (0.00260: the id, for the run end's pictures; 0.00274: offClass = another class's gear)
   summary.coins += salvageValue(id);
 }

@@ -94,7 +94,7 @@ export function checkData(data) {
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
   // every item names its picture (0.00260): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
   for (const [id, it] of Object.entries(data.items ?? {})) if (typeof it?.art !== 'string' || !/\.webp$/.test(it.art)) out.push(`items.json: ${id}.art (the item's picture, a .webp in assets/items/)`);
-  for (const [id, it] of Object.entries(data.items ?? {})) { // the item matrix (0.00273): a weapon or body armor has a kind; a class item names a hero; mastery only on a class item
+  for (const [id, it] of Object.entries(data.items ?? {})) { // the item matrix (0.00274): a weapon or body armor has a kind; a class item names a hero; mastery only on a class item
     if (it?.slot === 'weapon' && !WEAPON_KINDS.includes(it.kind)) out.push(`items.json: ${id}.kind (a weapon kind: ${WEAPON_KINDS.join(', ')})`);
     if (it?.slot === 'armor' && !ARMOR_KINDS.includes(it.kind)) out.push(`items.json: ${id}.kind (an armor weight: ${ARMOR_KINDS.join(', ')})`);
     if (it?.class !== undefined && !(data.heroes?.heroes ?? []).some((h) => h.id === it.class)) out.push(`items.json: ${id}.class (a hero id)`);
@@ -107,7 +107,7 @@ export function checkData(data) {
   for (const h of heroes) {
     if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
     if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((l) => typeof l?.art === 'string' && l.art && isNum(l.fh) && l.fh > 0 && l.fh <= 1)) out.push(`heroes.json: ${h?.id}.looks (one per look: art, the figure file in assets/heroes/, and fh, its share of the sheet's height, 0-1)`);
-    // the item matrix (0.00273): two weapon kinds, one armor weight, a mastery whose key is a class key
+    // the item matrix (0.00274): two weapon kinds, one armor weight, a mastery whose key is a class key
     if (!Array.isArray(h?.wields) || h.wields.length < 1 || !h.wields.every((k) => WEAPON_KINDS.includes(k))) out.push(`heroes.json: ${h?.id}.wields (weapon kinds: ${WEAPON_KINDS.join(', ')})`);
     if (!ARMOR_KINDS.includes(h?.wears)) out.push(`heroes.json: ${h?.id}.wears (one armor weight: ${ARMOR_KINDS.join(', ')})`);
     if (!h?.mastery || !Object.hasOwn(h.class ?? {}, h.mastery.key) || !isNum(h.mastery.per) || typeof h.mastery.label !== 'string') out.push(`heroes.json: ${h?.id}.mastery (key: a key of its class block, per: a number, label)`);

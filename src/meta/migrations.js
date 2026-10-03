@@ -105,6 +105,6 @@ export function migrateProfile(p, DEFAULTS) {
   for (const [id, lvl] of Object.entries(p.forged)) { if (!Object.hasOwn(DATA.items, id) || !Number.isFinite(Number(lvl))) delete p.forged[id]; else p.forged[id] = Number(lvl); }
   for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
   p.hero = p.hero == null ? null : cleanHero(p.hero); // (an unknown class or look in an imported code: the knight, the first look; null = not chosen yet)
-  fitGearToClass(p); // (0.00273, the item matrix: worn gear the class can't use becomes its kit, an accessory comes off — every load, so an old save and an imported code are fitted)
+  fitGearToClass(p); // (0.00274, the item matrix: worn gear the class can't use becomes its kit, an accessory comes off — every load, so an old save and an imported code are fitted)
 
 }

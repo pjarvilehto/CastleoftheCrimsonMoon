@@ -34,7 +34,7 @@ export function findCard(fx) {
       el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, gearLabel({ slot: fx.slot === 'ring' ? 'rings' : fx.slot, index: fx.index ?? 0 }) ?? it.slot)),
       el('div', { class: 'fp-name' }, it.name),
       el('div', { class: 'fp-desc' }, ...statText(describeItem(it))),
-      fx.offClass // (0.00273: another class's gear — carried to the run's end and salvaged there)
+      fx.offClass // (0.00274: another class's gear — carried to the run's end and salvaged there)
         ? el('div', { class: 'fp-cmp fp-off' }, `${fx.offClass} · salvaged at the end`)
         : el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }

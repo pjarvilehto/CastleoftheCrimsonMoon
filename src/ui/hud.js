@@ -139,6 +139,6 @@ export function describeItem(item) {
   if (item.thorns) parts.push(`${item.thorns} thorns`);
   if (item.heavyCd) parts.push('faster heavy recharge');
   if (item.revive) parts.push('revive once per run');
-  if (item.mastery && item.class) parts.push(masteryText(heroById(item.class), item.mastery)); // (0.00273: a class's signature item feeds its mechanic)
+  if (item.mastery && item.class) parts.push(masteryText(heroById(item.class), item.mastery)); // (0.00274: a class's signature item feeds its mechanic)
   return parts.join(', ');
 }

@@ -285,7 +285,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
     && backRow('Attack').classList.contains('st-dmg') && backRow('Crit damage').classList.contains('st-crit') && backRow('Potion heals').classList.contains('st-hp') && !backRow('Heavy Attack').classList.contains('st')); // (0.00267: the heavy's row is named per class — the knight's is Heavy Attack)
 }
 
-// the item matrix (0.00273, the developer's call; docs/item-matrix.md): weapon kinds, one armor weight per class, items
+// the item matrix (0.00274, the developer's call; docs/item-matrix.md): weapon kinds, one armor weight per class, items
 // named for a class; another class's gear still drops and is salvaged at the run's end; a class's two signature items
 // feed its mechanic (+1 at tier 3, +2 at tier 4); a save's gear the class can't use becomes its kit
 {

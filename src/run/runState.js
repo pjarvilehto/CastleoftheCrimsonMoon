@@ -40,7 +40,7 @@ export function createRun() {
     // What the gear will look like after settleRun equips this run's finds:
     // a drop that can't beat it is salvaged on the spot (0.091).
     gearPreview: structuredClone(getProfile().equipment),
-    heroId: getProfile().hero?.id ?? null, // the class (0.00273): what it can use (shared/classGear.js) — loot, the chests, the preview
+    heroId: getProfile().hero?.id ?? null, // the class (0.00274): what it can use (shared/classGear.js) — loot, the chests, the preview
     relicFound: false,           // per-run relic cap, even if the relic was salvaged
     potions: stats.potions,      // drawn from the persistent stock (0.080)
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold

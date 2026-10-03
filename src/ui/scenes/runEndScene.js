@@ -25,7 +25,7 @@ function findCard({ slot, index, from, to }) {
       el('div', { class: 'fc-desc' }, ...statText(describeItem(it))),
       el('div', { class: 'fc-cmp' }, from && DATA.items[from] ? `over ${DATA.items[from].name}` : 'into an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }
-// 0.00273 (the developer's call): another class's gear found on the run has its own row — "Can't use · salvaged".
+// 0.00274 (the developer's call): another class's gear found on the run has its own row — "Can't use · salvaged".
 function salvageRows(sum) {
   const own = sum.salvaged.filter((it) => !it.offClass), off = sum.salvaged.filter((it) => it.offClass);
   const chips = (list) => list.map((it) => el('span', { class: 'salvage-chip' }, itemPic(it.id), it.name));

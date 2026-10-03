@@ -39,8 +39,8 @@ export async function simulate({ runs = 40, seed = 1, verbose = false, retreat =
   agg.potionDropChance = sim.DATA.difficulty.potionDropChance;
   return withSeed(seed, () => {
     sim.fresh();
-    sim.getProfile().hero = { id: hero ?? 'knight', look: 0 }; // the class under study (0.00258; the knight when unset — 0.00273: set, so the item matrix applies to him too)
-    fitGearToClass(sim.getProfile()); // (0.00273: the class's kit, as a new save puts it on at PROCEED)
+    sim.getProfile().hero = { id: hero ?? 'knight', look: 0 }; // the class under study (0.00258; the knight when unset — 0.00274: set, so the item matrix applies to him too)
+    fitGearToClass(sim.getProfile()); // (0.00274: the class's kit, as a new save puts it on at PROCEED)
     for (let r = 0; r < runs; r++) {
       const rec = sim.playRun({ agg, retreat, tactic });
       if (rec.bossesBeaten >= 1 && agg.firstBossClearRun == null) agg.firstBossClearRun = r + 1;

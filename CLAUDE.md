@@ -777,7 +777,7 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
-**The item matrix (0.00273, the developer's calls; `docs/item-matrix.md`).**
+**The item matrix (0.00274, the developer's calls; `docs/item-matrix.md`).**
 Who can use what, readable from an item's name: a weapon has a `kind`
 (sword, axe, mace, staff, dagger, scythe, crossbow, censer) and a class
 wields two (`heroes.json wields`: Knight sword + mace, Barbarian axe +
@@ -792,7 +792,7 @@ Knight's Blade / Greaves, the Relic of the First Knight, the signature
 items); everything else is everyone's. `shared/classGear.js` (`canUse`,
 `usersOf` / `usersText`, `masteryText`, `withMastery`, `kitFor`,
 `fitGearToClass`); dataCheck checks the kinds, the hero blocks and the
-mastery. 94 items (46 new in 0.00273, painted by `gen-items.mjs` from
+mastery. 94 items (46 new in 0.00274, painted by `gen-items.mjs` from
 their lines in `docs/item-prompts.md`; every class has two weapons and a
 body armor to find at tiers 2, 3 and 4 — a smoke check). **Mastery:** a
 class's two signature accessories (`class` + `mastery`: 1 on its tier-3,

@@ -185,7 +185,7 @@ function invPage(run) {
     found.textContent = '';
     found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
       ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
-        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), canUse(run.heroId, id) ? el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`) : el('small', { class: 'inv-off' }, 'salvage')); }), // (0.00273: another class's gear: salvaged at the end)
+        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), canUse(run.heroId, id) ? el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`) : el('small', { class: 'inv-off' }, 'salvage')); }), // (0.00274: another class's gear: salvaged at the end)
       ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
   };
   set();

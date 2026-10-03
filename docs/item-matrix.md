@@ -1,6 +1,6 @@
 # Item matrix — who can wear what
 
-**Shipped in 0.00273** with the developer's calls on the open questions:
+**Shipped in 0.00274** with the developer's calls on the open questions:
 one armor weight per class (Heavy = plate and mail, the Knight's;
 Leather & Hide = the Barbarian, the Druid, the Hexhunter; Cloth = the
 Wizard, the Necromancer, the Plague Sister); axes the Barbarian's alone;

@@ -43,7 +43,7 @@ export const reliquaryCost = (run) => Math.round(run.maxHp * T().reliquary.hpCos
 // An item of `tier` for a slot it would improve (against the run's gear
 // as it will be), or any item of that tier when none would.
 function gearFor(run, tier) {
-  const ids = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === tier && droppable(id) && canUse(run.heroId, id)); // (0.00265: never a class's starting kit; 0.00273: the gilded chest is made for the class)
+  const ids = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === tier && droppable(id) && canUse(run.heroId, id)); // (0.00265: never a class's starting kit; 0.00274: the gilded chest is made for the class)
   const better = ids.filter((id) => equipItems({ equipment: structuredClone(run.gearPreview), hero: run.heroId ? { id: run.heroId } : null }, [id]).equipped.length > 0);
   return pick(better.length ? better : ids);
 }

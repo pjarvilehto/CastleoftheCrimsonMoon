@@ -15,7 +15,7 @@ export const droppable = (id) => !DATA.items[id]?.starter;
 // depth (0.071, t4MinRoom); direct calls default deep. hasRelic caps relics
 // at ONE per run (0.072) — they're build-defining drops, not a per-room
 // income stream.
-// heroId (0.00273, the item matrix): classDropShare of the drops are rolled
+// heroId (0.00274, the item matrix): classDropShare of the drops are rolled
 // from what the class can use, the rest from everything — another class's
 // gear still drops, and is salvaged at the run's end.
 export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = false, heroId = null) {
@@ -53,7 +53,7 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
 // extra.find = { id, slot, index, from }: the slot it takes in the preview
 // and what it replaces (null: an empty slot) — combat's find card.
 // Returns { itemId, kept, coins? }.
-// Another class's gear (0.00273, the developer's call) is carried, not judged:
+// Another class's gear (0.00274, the developer's call) is carried, not judged:
 // into run.itemsFound and the LOOT row, salvaged at the run's end
 // (equipItems' offClass salvage); its line says whose it is.
 export function takeItem(run, itemId, log) {
