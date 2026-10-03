@@ -1,4 +1,5 @@
 {
+  "_doc": "The shrine's boons (run/shrine.js deals dealCount of offers[] at each shrine; src/ui/shrineUI.js draws them): per offer an id, the painted icon (img, assets/icons/) with its glyph (icon) as alt text, the card text (buff / short / costDesc) and the numbers behind it (the cost and effect knobs — a smoke check keeps the card text in sync with them); coinCostGrowthPerRoom prices a coin boon by the room the shrine leads to (flatCost on an offer overrides), minMaxHp / minDmg are the floors a cost may not cut under.",
   "coinCostGrowthPerRoom": 0.5,
   "minMaxHp": 50,
   "minDmg": 5,

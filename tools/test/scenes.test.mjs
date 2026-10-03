@@ -728,7 +728,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   fresh();
 }
 
-// After a run (0.00248, the owner's ask): the slots the finds filled are
+// After a run (0.00249, the developer's ask): the slots the finds filled are
 // recorded at settle; the hall opens with the old items there, then each new
 // one takes its place in turn with a NEW tag, the numbers following.
 {

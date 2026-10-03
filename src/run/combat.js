@@ -2,7 +2,12 @@
 // Operates on the run object + a room's enemy list.
 // The scene layer renders state and feeds player actions in.
 //
-// Damage spill: heavy attacks only. When a heavy hit rolls at least
+// The hero's class (heroes.json class, snapshotted as run.stats.klass;
+// drafted 0.00258, live since 0.00267) shapes the turn: the heavy's kind
+// (the knight's blow with spill and OVERKILL, cleave, fireball, drain,
+// mark, censer, entangle) and the passives play out in classPhase.
+//
+// Damage spill: the knight's heavy attacks only. When a heavy hit rolls at least
 // spillThreshold x the target's remaining HP, the excess cleaves into
 // every remaining living enemy (multi-kill). Basic attacks never spill —
 // they kill at most their target, no matter how overpowered.
@@ -29,7 +34,7 @@ export function createCombat(run, room) {
     heavyCd: 0,
     over: false,
     victory: false,
-    // the class (0.00258, run.stats.klass): the wizard's charges per fight, the hexhunter's mark, the necromancer's thrall
+    // the class (0.00258, live 0.00267; run.stats.klass): the wizard's charges per fight, the hexhunter's mark, the necromancer's thrall
     charges: run.stats.klass.charges,
     marked: -1,
     thrall: null,
@@ -44,6 +49,7 @@ function living(combat) {
 // function; the order of random rolls is unchanged, so seeded runs play
 // exactly as before):
 //   rollHit -> player's blow (smash | hit + spill) -> lifesteal ->
+//   classPhase (the class's heavy effect, blight, mending, thrall) ->
 //   enemies strike back -> summons -> room cleared?
 // Returns the events for logging. Every event carries `snap` (0.086):
 // enemy HPs + player HP right after it happened, so the UI can replay the
@@ -62,12 +68,12 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (!target || target.hp <= 0 || combat.over) return events;
   combat.run.turns += 1; // run history (0.095)
 
-  const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258)
+  const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258, live 0.00267)
   const hit = rollHit(combat, heavy, targetIndex);
   if (!smash(combat, hit, push)) strike(combat, targetIndex, hit, push);
   lifesteal(combat, hit.dmg, push);
-  classPhase(combat, targetIndex, hit, deadBefore, push); // the class's heavy, its blight, its mending, its thrall (0.00258; nothing for the knight)
-  if (enemyPhase(combat, push)) return events; // the knight fell
+  classPhase(combat, targetIndex, hit, deadBefore, push); // the class's heavy, its blight, its mending, its thrall (0.00258, live 0.00267; nothing for the knight)
+  if (enemyPhase(combat, push)) return events; // the hero fell
   summonPhase(combat, push);
   if (living(combat).length === 0) {
     combat.over = true;
@@ -89,15 +95,15 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 // overflow adds to critMult, 0.112/0.113). Rolls: crit, mega, jitter.
 function rollHit(combat, heavy, targetIndex = -1) {
   const tune = DATA.difficulty.combat, run = combat.run, k = run.stats.klass;
-  // the hexhunter's mark (0.00258): every hit on the marked foe crits — no roll spent
+  // the hexhunter's mark (0.00258, live 0.00267): every hit on the marked foe crits — no roll spent
   const marked = combat.marked >= 0 && combat.marked === targetIndex;
   const crit = marked || DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
   // whole numbers always (0.00199): a heavy at heavyMult 2.3 printed 358.79999 on an OVERKILL
-  // the class (0.00258): its heavy's factor, the barbarian's rage (more damage the lower the HP)
+  // the class (0.00258, live 0.00267): its heavy's factor, the barbarian's rage (more damage the lower the HP)
   const rage = k.rage > 0 ? 1 + k.rage * (1 - run.hp / run.maxHp) : 1;
   let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage);
-  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus + (marked ? k.markCrit : 0) }, megaCrit)); // (the hex's own crit damage, 0.00258)
+  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus + (marked ? k.markCrit : 0) }, megaCrit)); // (the hex's own crit damage, 0.00258, live 0.00267)
   return { dmg: Math.max(1, dmg), crit, megaCrit, heavy, marked }; // (marked: the class's own trace on the blow, ui/combatFx.js — 0.00268)
 }
 
@@ -108,7 +114,7 @@ function rollHit(combat, heavy, targetIndex = -1) {
 // (the smash phase; 0.00223: the event is `overkill`, as the UI names it).
 function smash(combat, { dmg, heavy }, push) {
   const alive = living(combat);
-  if (!heavy || combat.run.stats.klass.heavy !== 'blow' || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false; // (0.00258: the knight's blow only)
+  if (!heavy || combat.run.stats.klass.heavy !== 'blow' || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false; // (0.00258, live 0.00267: the knight's blow only)
   for (const e of alive) e.hp = 0; // before the line: its snap shows the wiped room
   // victims: their indices, so every card can burst (0.128)
   push({ type: 'overkill', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
@@ -122,7 +128,7 @@ function smash(combat, { dmg, heavy }, push) {
 function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, push) {
   const target = combat.enemies[targetIndex];
   const chain = [targetIndex];
-  if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258: the knight's blow spills; the other classes' heavies have their own reach)
+  if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258, live 0.00267: the knight's blow spills; the other classes' heavies have their own reach)
     for (const [i, e] of combat.enemies.entries()) if (i !== targetIndex && e.hp > 0) chain.push(i);
   }
   let remaining = dmg;
@@ -150,9 +156,9 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, pus
   if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
 }
 
-// The class's own turn (0.00258, a draft under the simulator's study —
-// the UI knows none of these events yet, the knight makes none): after
-// the blow, its heavy's effect (cleave / fireball sweep the other foes,
+// The class's own turn (0.00258; live since 0.00267 — the UI plays every
+// event: the tags and log colours 0.00267, the particles 0.00268, the
+// sounds 0.00270 / 0.00271; the knight makes none): after the blow, its heavy's effect (cleave / fireball sweep the other foes,
 // drain heals, mark marks, censer blights, entangle binds), then the
 // blight's tick, the druid's mending, and the necromancer's thrall rising
 // from this turn's kill.
@@ -211,7 +217,7 @@ function lifesteal(combat, dmg, push) {
   }
 }
 
-// Every living enemy strikes back. True if the knight fell (combat over).
+// Every living enemy strikes back. True if the hero fell (combat over).
 // Rolls per enemy: damage jitter, then dodge.
 function enemyPhase(combat, push) {
   for (const enemy of living(combat)) {
@@ -231,7 +237,7 @@ function enemyStrike(combat, enemy, source, push) {
     return false;
   }
   const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
-  // the necromancer's thrall (0.00258) takes the blow instead, unarmored
+  // the necromancer's thrall (0.00258, live 0.00267) takes the blow instead, unarmored
   if (combat.thrall?.hp > 0) {
     const t = combat.thrall, taken = Math.min(t.hp, raw);
     t.hp -= taken;
@@ -301,7 +307,7 @@ export function heavyTarget(combat) {
 }
 
 export function canHeavy(combat) {
-  return combat.heavyCd === 0 && !combat.over && (combat.run.stats.klass.charges === 0 || combat.charges > 0); // (the wizard's charges per fight, 0.00258)
+  return combat.heavyCd === 0 && !combat.over && (combat.run.stats.klass.charges === 0 || combat.charges > 0); // (the wizard's charges per fight, 0.00258, live 0.00267)
 }
 
 export function useHeavy(combat) {
@@ -309,5 +315,5 @@ export function useHeavy(combat) {
   // relics and the quicken boon lower it (floor 1): that many ordinary
   // turns pass before the next heavy.
   combat.heavyCd = combat.run.stats.heavyCdMax;
-  if (combat.run.stats.klass.charges > 0) combat.charges -= 1; // (0.00258)
+  if (combat.run.stats.klass.charges > 0) combat.charges -= 1; // (0.00258, live 0.00267)
 }

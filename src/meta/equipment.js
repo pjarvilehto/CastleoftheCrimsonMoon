@@ -55,7 +55,7 @@ export function equipItems(profile, itemIds) {
   const summary = { equipped: [], salvaged: [], coins: 0, changes: [] };
   const worn = []; // ids equipped by this call, in order (parallel to summary.equipped)
   const eq = profile.equipment;
-  const before = GEAR_SLOTS.map((s) => wornIn(eq, s)); // (0.00248: what each slot held, for the hall's reveal)
+  const before = GEAR_SLOTS.map((s) => wornIn(eq, s)); // (0.00249: what each slot held, for the hall's reveal)
 
   for (const id of itemIds) {
     const item = DATA.items[id];
@@ -100,7 +100,7 @@ export function equipItems(profile, itemIds) {
     if ((left.get(worn[i]) ?? 0) > 0) { keep[i] = true; left.set(worn[i], left.get(worn[i]) - 1); }
   }
   summary.equipped = summary.equipped.filter((_, i) => keep[i]);
-  // Every slot the run's finds changed, in the hall's order (0.00248): the
+  // Every slot the run's finds changed, in the hall's order (0.00249): the
   // Great Hall shows the old item there first, then the new one taking its
   // place (hubScene.js reveal).
   summary.changes = GEAR_SLOTS.map((s, n) => ({ slot: s[0], index: s[1], from: before[n], to: wornIn(eq, s) })).filter((c) => c.to && c.to !== c.from);

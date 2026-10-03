@@ -269,9 +269,9 @@ const types = (evs) => evs.map((e) => e.type);
   const { heroList } = await import('../../src/shared/heroes.js');
   const C = DATA.audio.clips, V = DATA.audio.variation;
   const ids = heroList().map((h) => h.id);
-  ok('every class has atk_, heavy_ and hurt_ clips: rendered files on disk (0.00272), measured, pitched per class', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb) && C[`${k}_${id}`].rate?.length === 2))
+  ok('every class has atk_, heavy_ and hurt_ clips: rendered files on disk (0.00271), measured, pitched per class', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb) && C[`${k}_${id}`].rate?.length === 2))
     && C.atk_barbarian.rate[1] < C.atk_wizard.rate[0] && C.hurt_hexhunter.rate[0] > C.hurt_barbarian.rate[1]);
-  ok('every foe has eatk_ and ehurt_ clips on disk, measured and trimmed (0.00272)', Object.keys(DATA.enemies).every((id) => ['eatk', 'ehurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb))));
+  ok('every foe has eatk_ and ehurt_ clips on disk, measured and trimmed (0.00271)', Object.keys(DATA.enemies).every((id) => ['eatk', 'ehurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb))));
   ok('each has its own variation with the class\'s synth layers (every layer a synth clip)', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => V[`${k}_${id}`]?.layers?.length && V[`${k}_${id}`].layers.every((l) => C[l.name]?.synth)))
     && V.heavy_barbarian.layers.some((l) => l.name === 'swing' && l.p === 1) && V.heavy_wizard.layers.some((l) => l.name === 'crackle') && V.heavy_hexhunter.layers.some((l) => l.name === 'chime')
     && V.heavy_necromancer.layers.some((l) => l.name === 'wail') && V.atk_druid.layers.some((l) => l.name === 'rake') && V.heavy_plaguesister.layers.some((l) => l.name === 'hiss'));
@@ -288,7 +288,7 @@ const types = (evs) => evs.map((e) => e.type);
 }
 
 
-// the foes' sounds (0.00272): layered on the blow by the struck or striking foe's id
+// the foes' sounds (0.00271): layered on the blow by the struck or striking foe's id
 {
   fresh();
   const { combatSfx } = await import('../../src/ui/combatSfx.js');

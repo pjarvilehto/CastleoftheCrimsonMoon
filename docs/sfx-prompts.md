@@ -1,12 +1,15 @@
-# The classes' and the foes' sounds — prompts for `tools/gen-sfx.mjs` (0.00270 / 0.00272)
+# The classes' and the foes' sounds — prompts for `tools/gen-sfx.mjs` (0.00270 / 0.00271)
 
 Each class's own attack, heavy and get-hit sound, rendered through
 ElevenLabs' sound generation (`POST /v1/sound-generation`; the key needs
-the `sound_generation` permission) into `assets/audio/sfx/<clip>_v<k>.mp3`
-and pointed at from `assets/data/audio.json clips.<clip>.file` (the
-measured loudness with it). Until a clip is rendered its entry plays the
-developer's strike / hurt recording pitched per class, with the class's
-synth layers (`audio/synth.js`) — the layers stay after a render too.
+the `sound_generation` permission — the developer granted it in 0.00271)
+into `assets/audio/sfx/<clip>_v<k>.mp3` and pointed at from
+`assets/data/audio.json clips.<clip>.file` (the measured loudness with
+it). Every clip in the tables below is rendered (0.00271: the classes'
+and the foes'); the class's synth layers (`audio/synth.js`, the
+`variation` entry) ride on top of the recording as its colour. Before
+the render each entry played the developer's strike / hurt recording
+pitched per class (0.00270).
 
 Short, dry, close-miked, no music, no reverb tail: the game pans and
 layers them itself. The attack lands on the blow (`combatFx.strikeMs`),
@@ -36,7 +39,7 @@ so the sound's loudest moment should sit near its start.
 | heavy_plaguesister | 1.5 | A funeral rite: a small bell tolls, incense smoke hisses and spreads, a whispered prayer, dry, close |
 | hurt_plaguesister | 0.7 | A woman cries out in pain as she is struck, muffled by a veil, chains clink, one short hit, dry, close |
 
-## The foes (0.00272, the developer's ask: every character its own)
+## The foes (0.00271, the developer's ask: every character its own)
 
 `eatk_<id>` plays with the hero's hurt as the foe strikes him, `ehurt_<id>`
 with the hero's blow as the foe is struck (`ui/combatSfx.js` layers them

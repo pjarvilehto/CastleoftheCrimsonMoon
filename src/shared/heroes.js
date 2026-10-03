@@ -4,9 +4,12 @@
 // its sheet's height, so the heroes read in scale with one another on the
 // CHOOSE YOUR HERO screen; tools/cut-heroes.mjs makes both from the
 // developer's sheets). The profile
-// carries the pick as `hero: { id, look }` (save version 5); the choice is
-// cosmetic: the knight's card and the hall draw the hero's figure, the
-// numbers are the same for every class. Pure: the data in, no DOM.
+// carries the pick as `hero: { id, look }` (save version 6, null until
+// chosen); the hero's card and the hall draw the hero's figure, and since
+// 0.00267 the class plays its own game: heroes.json `class` (multipliers
+// on the derived stats, its own heavy — blow, cleave, fireball, drain,
+// mark, censer, entangle — and passives; meta/stats.js, run/combat.js).
+// Pure: the data in, no DOM.
 
 import { DATA } from './data.js';
 
@@ -22,7 +25,7 @@ export function cleanHero(h) {
 }
 /** The hero a profile plays, whole. */
 export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
-/** The name of a profile's heavy attack (0.00267, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Entangle, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; the blow itself is the same for every class. */
+/** The name of a profile's heavy attack (0.00267, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Entangle, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; what each heavy does is heroes.json `class.heavy` (run/combat.js classPhase). */
 export const heavyName = (p) => heroOf(p).heavyName;
 /** A hero's colour theme (0.00254): { plate, light, tint } — the card plates' colour, the card light's look and tint. */
 export const heroTheme = (hero) => hero.theme;

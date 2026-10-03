@@ -1,7 +1,7 @@
 // tools/test/heroes.test.mjs — the character classes (0.00248): heroes.json
-// and shared/heroes.js, the pick on the profile (save version 5, an
+// and shared/heroes.js, the pick on the profile (save version 6, an
 // imported code made whole), CHOOSE YOUR HERO between the title and the
-// hall (1-5 and a click choose, the arrows turn the look, Proceed lands the
+// hall (1-7 and a click choose, the arrows turn the look, Proceed lands the
 // pick and leads on), and the knight's card and the hall drawing the hero.
 
 import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, heroScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';

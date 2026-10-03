@@ -48,7 +48,7 @@ export const canSpendCoins = (p) => canSpendAlchemy(p) || canForgeAny(p);
 
 // opts.fromRun: entered from a run's end (the narrator's "Rest… while you can.", 0.161)
 // opts.finds: the slots that run's finds filled (equipment.js equipItems
-// `changes`, 0.00248, the owner's ask): the hall opens with the OLD items
+// `changes`, 0.00249, the developer's ask): the hall opens with the OLD items
 // there, then each new one takes its place in turn — the slot glows, its
 // name flashes, the numbers it moves roll up — and keeps a NEW tag.
 const REVEAL_MS = 900, REVEAL_FIRST_MS = 700; // (the look: the beat between finds)

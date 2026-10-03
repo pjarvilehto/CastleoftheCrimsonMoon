@@ -3,9 +3,12 @@
 // land on the same beat as the log line and its sound.
 //
 // Descriptor shape: { kind, from?, to?, dmg?, crit?, heavy?, amount?, share? }
-//   share: a hit on the knight / his max HP (sizes the big-hit sway)
+//   share: a hit on the hero / the hero's max HP (sizes the big-hit sway)
 //   from / to: an enemy index, or 'player'
-//   kinds: attack, hit, dodge, heal, overkill, multi, revive, die, enter, deal, summon
+//   kinds: attack, hit, dodge, heal, overkill, multi, revive, die, enter, deal, summon,
+//     find, potion (a find's or a found potion's card, findFx.js, 0.00260 / 0.00263),
+//     and the classes' (0.00268): mark, blight, entangle, entangled, charge, thrall,
+//     thrallhit, thrallfall
 //   (enter = the room is built: the units wait unseen; deal = the windows are
 //   back: the cards are dealt in — scene.js whenWindowsBack, 0.184)
 //
@@ -30,7 +33,7 @@ import { findPop, potionPop } from './findFx.js';
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
-// who: { maxHp } of the knight — sizes hits on him (big-hit sway).
+// who: { maxHp } of the hero — sizes hits on the hero (big-hit sway).
 export function fxFor(ev, who = {}) {
   switch (ev.type) {
     case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy, marked: !!ev.marked }; // (marked: the class's trace, 0.00268)
@@ -105,9 +108,6 @@ export function playFx(fx, ctx) {
 
 const OVERKILL_STAGGER_MS = 70;
 
-// OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
-// the whole enemy line: a huge number + caption, a hard shake, the widest
-// sway, and a red-hot flash lighting the scene where they stood.
 // The box around a set of rects, empty ones dropped (a fallen enemy's unit
 // has left the row since 0.00216 and its detached card reads 0x0 — the
 // banner and the flash used to be placed from those; 0.00223). null when
@@ -122,6 +122,9 @@ export function unionRect(rects) {
 // The victims' cards, read once (the sprays take these rects too).
 export const overkillRects = (fx, ctx) => (fx.victims ?? []).map((i) => ctx.unit(i)?.card?.getBoundingClientRect?.() ?? null);
 export const overkillArea = (fx, ctx) => unionRect(overkillRects(fx, ctx));
+// OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
+// the whole enemy line: a huge number + caption, a hard shake, the widest
+// sway, and a red-hot flash lighting the scene where they stood.
 function overkill(fx, ctx) {
   shake(ctx, 2);
   bgSway(2, 1);
@@ -170,7 +173,7 @@ function attack(fx, ctx) {
       } else bgJolt(1);
     }, strike);
   }
-  // A crushing hit on the knight swings it back, right -> left.
+  // A crushing hit on the hero swings it back, right -> left.
   const big = DATA.backgrounds.parallax.swayHitShare;
   if (fx.to === 'player' && fx.share >= big) setTimeout(() => bgSway((0.8 * fx.share) / big, -1), strike);
 }
@@ -242,7 +245,8 @@ const heavyKind = () => heroOf(getProfile()).class.heavy;
 // reach a smaller one), his blows embers; the Wizard's Fireball a bloom on
 // every foe it takes, his blows arcane; the Necromancer's blows grave
 // motes, his Soul Drain the wisps torn out of the foe flying to him; the Druid's heavy
-// three rakes of the living staff, his blows one; the Hexhunter's blows on the hexed
+// blow three rakes of the living staff (the roots themselves burst on the
+// entangle line, 0.00271), his blows one; the Hexhunter's blows on the hexed
 // foe flare its sigil, the others violet sparks (the Hex itself on the
 // mark line); the Plague Sister's blows a swing of the censer, the blight's
 // gnawing a wisp of it. null = the foe's own burst alone.
@@ -297,7 +301,7 @@ function thrall(ctx) {
   classSpray(p, 'thrall');
   glow(p, 'sepia(1) saturate(4) hue-rotate(80deg) brightness(1.3)', 800);
 }
-// A foe's blow lands on the thrall: the lunge, a grey number, grave motes — the Necromancer stands untouched.
+// A foe's blow lands on the thrall: the lunge, a green THRALL number (.fx-thrall), grave motes — the Necromancer stands untouched.
 function thrallHit(fx, ctx) {
   const a = ctx.unit(fx.from), p = ctx.unit('player');
   const strike = strikeMs(fx);
@@ -315,7 +319,7 @@ function thrallHit(fx, ctx) {
   if (fx.taken > 0) floatNumber(ctx, p, `-${fx.taken}`, 'fx-thrall', strike, 'THRALL');
 }
 
-// Enemy swings and misses: the lunge still happens, the knight side-steps.
+// Enemy swings and misses: the lunge still happens, the hero side-steps.
 function dodge(fx, ctx) {
   const a = ctx.unit(fx.from), p = ctx.unit('player');
   if (can(a?.el) && can(p?.el) && !reduced()) {
@@ -336,8 +340,8 @@ function dodge(fx, ctx) {
   floatNumber(ctx, p, 'MISS', 'fx-miss', LUNGE_MS * STRIKE_AT);
 }
 
-// Lifesteal: green number + a soft green glow on the knight. A potion is
-// an EVENT (0.089): a green aura swells out behind the knight, a longer
+// Lifesteal: green number + a soft green glow on the hero. A potion is
+// an EVENT (0.089): a green aura swells out behind the hero, a longer
 // glow, rising sparkles, and the HP bar flares green as it fills.
 function heal(fx, ctx) {
   const p = ctx.unit(fx.to);

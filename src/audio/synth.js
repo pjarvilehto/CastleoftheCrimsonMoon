@@ -7,6 +7,13 @@
 //          random under the attack and hurt clips so no two hits sound the
 //          same: a blade's metallic tick, a body thud, the air cut by the
 //          swing, plate armour taking a blow. Each also varies itself.
+//   the classes' instruments (0.00270; since 0.00271 layered as each
+//          class's colour over its own recordings, audio.json variation):
+//          swing (Cleave, the Fireball's rush), crackle (the Fireball's
+//          fire), zap (the Wizard's blows, a charge back), wail (the
+//          Necromancer's grave voice, the thrall), rake (the Druid's
+//          living staff), chime (the Hex, the rites), hiss (the censer's
+//          smoke), grunt (the hero struck, the rate its voice)
 // Each plays into `out` at context time t and returns { dur, sources }.
 // Each is a `synth: true` entry in audio.json clips (0.118).
 
@@ -208,7 +215,7 @@ function zap(ctx, out, t, rate) {
   });
   return { dur, sources };
 }
-// wail — a grave voice: two detuned low sines, a vibrato, rising then sinking, with breath (the Necromancer, the thrall; pitched low, the Druid's growl)
+// wail — a grave voice: two detuned low sines, a vibrato, rising then sinking, with breath (the Necromancer's voice, the thrall's rise)
 function wail(ctx, out, t, rate) {
   const dur = rand(0.5, 0.65), base = rand(150, 200) * rate;
   const env = envelope(ctx, out, t, 0.06, dur);
@@ -231,7 +238,7 @@ function wail(ctx, out, t, rate) {
   sources.push(n);
   return { dur, sources };
 }
-// rake — three quick claws across, each a touch lower (the Druid's living staff)
+// rake — three quick scratches across, each a touch lower (the Druid's living staff on a blow)
 function rake(ctx, out, t, rate) {
   const gap = rand(0.038, 0.05), f0 = rand(2600, 3600) * rate;
   const sources = [0, 1, 2].map((i) => noiseHit(ctx, out, t + i * gap, 'bandpass', f0 * (1 - i * 0.12), 2.4, rand(0.035, 0.05)));

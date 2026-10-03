@@ -9,6 +9,9 @@
 > stage directions and a leading "…" (the voice shouted the one and
 > mumbled the other). Change a line here, delete its files, run the tool.
 > "SMASH" is the game's multi-kill line; OVERKILL is the one-blow room wipe.
+> The lines that address the player as "knight" predate the character
+> classes (0.00248): every class hears them as written (the takes are
+> rendered); a per-class pass of the script is a backlog item.
 
 ## Voice direction
 

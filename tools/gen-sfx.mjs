@@ -15,7 +15,7 @@
 // gen-vo.mjs measures a take) and written into assets/data/audio.json
 // clips.<clip>.file / measuredDb (its gainDb trim stays — set it from the
 // audio-check table after a listen: that table's `now` column is the
-// browser's reading, and 0.00272 took it over ffmpeg's for every rendered
+// browser's reading, and 0.00271 took it over ffmpeg's for every rendered
 // clip (the 16 kHz measure under-reads a hissy clip by up to 4 dB); its rate and variation layers stay:
 // the layers are the class's colour over any recording). Behind the
 // proxy: NODE_USE_ENV_PROXY=1.

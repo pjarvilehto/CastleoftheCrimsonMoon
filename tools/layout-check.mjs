@@ -113,7 +113,7 @@ async function run(name, opts, url) {
       await page.evaluate(() => [...document.querySelectorAll('.update-overlay button')].find((x) => /Cancel/.test(x.textContent)).click());
       await page.waitForTimeout(200);
     }
-    // CHOOSE YOUR HERO (0.00248): the way in after the title — five cards inside the window, the chosen figure clear of the title, the look switcher clear of the bar, Proceed on screen
+    // CHOOSE YOUR HERO (0.00248): the way in after the title — seven cards inside the window, the chosen figure clear of the title, the look switcher clear of the bar, Proceed on screen
     await page.evaluate(async () => {
       const { go, isTransitioning } = await import('/src/core/scene.js');
       for (let i = 0; i < 40 && !document.body.textContent.includes('CHOOSE YOUR HERO'); i++) { if (!isTransitioning()) go('hero'); await new Promise((r) => setTimeout(r, 500)); }

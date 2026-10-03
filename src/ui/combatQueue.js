@@ -16,13 +16,15 @@ const EV_SFX = {
   atk: 'attack', spill: 'attack', thorns: 'attack',
   dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
   kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'shrine', summon: 'shrine',
-  // the classes' events (0.00270): the hex a chime, the blight a hiss, the roots a thud and a bound foe's strain a swoosh, a charge back a zap, the thrall's rise a wail, its blows and fall a thud (audio/synth.js)
+  // the classes' events (0.00270; the roots and the strain 0.00271): the hex a chime, the blight a hiss, the roots a thud and a bound foe's strain a swoosh, a charge back a zap, the thrall's rise a wail, its blows and fall a thud (audio/synth.js)
   mark: 'chime', blight: 'hiss', entangle: 'thud', entangled: 'swoosh', charge: 'zap', thrall: 'wail', thrallhit: 'thud', thrallfall: 'thud',
 };
 // The class's own sounds (0.00270, the developer's ask): the hero's blow
 // is atk_<class>, its heavy heavy_<class>, a blow on the hero hurt_<class>
-// (audio.json clips: the two recordings pitched per class, the class's
-// synth layers under them); a class without the clip falls back to the
+// (audio.json clips: since 0.00271 a recording made for each class — and
+// for each foe, eatk_ / ehurt_ in ui/combatSfx.js — rendered by
+// tools/gen-sfx.mjs, with the class's synth layers riding on top as its
+// colour, audio.json variation); a class without the clip falls back to the
 // plain one, so the registry can grow a class at a time.
 export function sfxFor(ev, hero = heroOf(getProfile())) {
   const plain = EV_SFX[ev.type];

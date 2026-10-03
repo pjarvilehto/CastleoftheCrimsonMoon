@@ -24,9 +24,10 @@ hit effects still fit.
    line**.
 3. Ask for a **2:3 portrait** (vertical). Generate 2–4 variants and keep the
    best.
-4. Start with the pilot of three: **the Curious Knight, the Giant Rat and the
-   Vampire Lord**. Once those look right in the game, do the rest with the
-   same wording.
+4. (History: the first round, 0.184, started with a pilot of three — the
+   Curious Knight, the Giant Rat and the Vampire Lord — before the rest;
+   since 0.00201 every character runs through `tools/gen-art.mjs` and the
+   Art Lab in one loop.)
 
 ## Style block (the same for every character)
 
@@ -83,7 +84,7 @@ gargoyle; the skeleton's original, or its inked sheet with `--refs sheets`).
 
 | Character | File | Character line |
 |---|---|---|
-| The Curious Knight | `player.webp` | `CHARACTER: a young dark-haired knight with no helmet, worn leather and chainmail, a long straight sword held low in a lunging fighting stance. Facing right. ACCENT: warm leather browns and dull steel, a dark red scarf; no glow.` |
+| The Curious Knight (the crouching sprite only: since 0.00264 a standing look draws its figure from heroes.json, and `player.webp` is drawn for the look marked `sprite`) | `player.webp` | `CHARACTER: a young dark-haired knight with no helmet, worn leather and chainmail, a long straight sword held low in a lunging fighting stance. Facing right. ACCENT: warm leather browns and dull steel, a dark red scarf; no glow.` |
 | Giant Rat | `rat.webp` | `CHARACTER: a huge hunched black sewer rat, matted fur, pink ears and scaly tail, small glowing pale eyes, bared yellow fangs, clawed forepaws. ACCENT: black fur, pink ears and tail, small pale glowing eyes.` |
 | Cave Shrieker | `cave_shrieker.webp` | `CHARACTER: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. ACCENT: wet blue-black skin with cold blue highlights, pale glowing eyes.` |
 | Skeleton | `skeleton.webp` | `CHARACTER: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. ACCENT: cold blue-grey bone and rusted iron; the blade glows a bright cold blue.` |
@@ -99,15 +100,22 @@ gargoyle; the skeleton's original, or its inked sheet with `--refs sheets`).
 
 ## Tips
 
-- **Too clean or too 3D?** Add: `flat inked comic look, like a Hellboy
-  panel, no rendering`.
+- **Too clean or too 3D?** Nudge the light, not the rendering: `harsher
+  rim light, grime and wear, less polish`. (An earlier tip said `flat
+  inked comic look, like a Hellboy panel` — that was the dropped inked
+  direction, and the style block's AVOID now rules it out.)
 - **Too busy at card size?** Add: `simple big shapes, readable at a small
   size`.
-- **Background not flat?** Repeat: `plain empty light grey background`. A
-  flat background is what lets the figure be cut out cleanly.
+- **Background not flat?** Repeat the block's own words: `plain flat
+  mid-grey background (#8a8a8a), completely empty`. A flat background is
+  what lets the figure be cut out cleanly (the matting model,
+  `851-labs/background-remover`, since 0.00201).
 - Keep the wording identical between characters, so the set stays
   consistent.
 
-When the images are ready, upload them to GitHub (or the chat) named by
-the file column, e.g. `rat.png`. The import trims and cuts out each one,
-and it goes into the game under a new file name.
+(History: in the first round the pictures were made by hand and uploaded
+to GitHub or the chat named by the file column, e.g. `rat.png`, for an
+import that trimmed and cut out each one. Since 0.00201 `tools/gen-art.mjs`
+renders, cuts out and records every candidate itself, the Art Lab gives
+the verdicts, and `--import` puts an approved one in the game under a new
+file name.)

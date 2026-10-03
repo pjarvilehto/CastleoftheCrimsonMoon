@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /tools/
+Disallow: /docs/
+Disallow: /collector/
+Disallow: /node_modules/
+Disallow: /labs/
+Disallow: /analytics/
+Disallow: /assets/chars/candidates/
+Disallow: /assets/bg/candidates/
+Disallow: /assets/style/
+Disallow: /assets/items/candidates/

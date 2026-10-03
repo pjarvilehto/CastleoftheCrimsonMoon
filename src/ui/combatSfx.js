@@ -1,5 +1,5 @@
 // ui/combatSfx.js — where and when a combat line's sound plays (0.107).
-// Stereo: the knight stands on the left, the enemies across the right, so
+// Stereo: the hero stands on the left, the enemies across the right, so
 // each sound comes from the card it belongs to (audioMath.panForX, scaled
 // by audio.json pan.width). Timing: an attack's sound lands on the blow
 // (combatFx.strikeMs after the line prints), not ~130ms before it.
@@ -28,7 +28,7 @@ export function combatSfx(item, ctx, play = sfx) {
   if (fx?.kind === 'attack') {
     const opts = { pan: panOf(ctx, fx.to), delayMs: strikeMs(fx) };
     play(item.sfx, opts);
-    // the foe's own voice (0.00272, the developer's ask: every character its own): struck by the hero it cries out (ehurt_<id>), striking him it attacks (eatk_<id>) — audio.json clips, rendered by tools/gen-sfx.mjs; a foe without one is as before
+    // the foe's own voice (0.00271, the developer's ask: every character its own): struck by the hero it cries out (ehurt_<id>), striking him it attacks (eatk_<id>) — audio.json clips, rendered by tools/gen-sfx.mjs; a foe without one is as before
     const foe = fx.from === 'player' ? ctx?.unit?.(fx.to)?.id : ctx?.unit?.(fx.from)?.id;
     const own = foe && foe !== 'player' ? `${fx.from === 'player' ? 'ehurt' : 'eatk'}_${foe}` : null;
     if (own && DATA.audio.clips[own]) play(own, opts);

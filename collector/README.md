@@ -62,7 +62,22 @@ the KV binding stay as they are.
   defaults to death on both sides. 0.00225: `report` — the device report
   (src/meta/perfReport.js), kept as the newest three per player under
   `reports`, bounded rather than typed (`cleanReport`: strings cut to 120,
-  lists and objects to 64 entries, a depth limit, 24 KB at most). Limits: 30 POSTs a minute per client IP (in memory, never
+  lists and objects to 64 entries, a depth limit, 24 KB at most). 0.00222
+  (kept by Worker 0.00223 on): `perf` and each benchmark carry `power`
+  (saver / phone / full — the battery saver, the phone profile, or
+  neither), and a run's `perf` also `worstOut` (the worst frame fell in a
+  room change) and `stalls` (frames of 100 ms or more); a benchmark's
+  phases keep `fps`, `p95`, `drop`, `worst`, `hz`, `secs` only (their
+  `worstOut` / `stalls` are dropped there — harmless today: the Benchmarks
+  card reads neither per phase; the device report, bounded not typed, keeps
+  its own stalls). 0.00253 (Worker `VERSION` 0.00253): each run
+  carries `hero` and `look` (who played — heroes.json id, the look worn;
+  the dashboard's By hero table) and `shrines` (each shrine's deal and the
+  pick: at most 6, each `o` the offered boon ids, at most 4, and `t` the
+  one taken, null = walked away — the Shrine picks card), and the profile
+  `hero` (`{ id, look }`, null until chosen). An older Worker drops the
+  fields it does not know; the saves keep them and they arrive with the
+  next upload once it is pasted. Limits: 30 POSTs a minute per client IP (in memory, never
   stored), one per second per player → `429`.
 - `GET /players` with `authorization: Bearer <READ_KEY>` (0.119; the older
   `?key=READ_KEY` still works) — every player

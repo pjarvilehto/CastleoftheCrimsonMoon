@@ -7,8 +7,11 @@
 <title>Crimson Moon Particle Lab</title>
 <link rel="icon" type="image/png" sizes="64x64" href="../../icon-64.png">
 <!-- labs/particles/: side-by-side particle look experiments, opened from the
-     game's ?debug corner column (PARTICLE LAB). Standalone: no game modules;
-     art and font come from ../../assets. -->
+     Labs page (DEBUG MODE's LABS entry in the game's settings menu).
+     Standalone: no game modules; art and font come from ../../assets. A
+     copy of the looks as they stood around 0.128-0.135 — no heal material,
+     none of the classes' looks (0.00268), no status tints (0.00272): the
+     game's own are src/ui/particleLooks.js. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500&display=swap">
 <style>
 /* Layout: one control bar, then a 2x2 wall of live stages (current look + three references), notes under each. Single dark look on purpose: it is the game's own world. */
@@ -84,7 +87,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <header>
     <div class="eyebrow"><a class="labs-link" href="../">‹ Labs</a> &middot; Castle of the Crimson Moon &middot; combat effects</div>
     <h1>Particle Lab</h1>
-    <p class="lede">Every stage fires the same hits at the same moment. Up top: the old dots beside the mix the game ships since 0.128 — Ink &amp; Gore for blood, Spark &amp; Streak for bone and the wraith, and a yellower, fiery Spark &amp; Streak for embers. Four alternative spirit looks follow, each of which can be tried in the mix. The three original reference looks are kept at the bottom.
+    <p class="lede">Every stage fires the same hits at the same moment. Up top: the old dots beside the mix the game shipped in 0.128 (a standalone copy of the looks as of about 0.128-0.135; the game's own looks live in <code>src/ui/particleLooks.js</code> and have since grown the classes' traces and the status tints) — Ink &amp; Gore for blood, Spark &amp; Streak for bone and the wraith, and a yellower, fiery Spark &amp; Streak for embers. Four alternative spirit looks follow, each of which can be tried in the mix. The three original reference looks are kept at the bottom.
       <small>These are recreations of each game's look made in our engine, on our own room art and portraits. They are not footage from those games.</small></p>
   </header>
 
@@ -200,7 +203,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     </figure>
   </div>
 
-  <footer class="back">Experimental page, kept on the site while we decide on a look. <a href="../">All labs</a> &middot; <a href="../../?debug">Back to the game</a> &middot; Each look is a self-contained particle style that could replace <code>ui/particles.js</code> without touching combat. Pieces can also be mixed, for example the ink splats with the spark style's impact ring on crits.</footer>
+  <footer class="back">Experimental page, kept on the site as a copy of the ~0.128-0.135 looks (the shipped mix here is a pre-0.136 copy; the game draws <code>src/ui/particleLooks.js</code>). <a href="../">All labs</a> &middot; <a href="../../?debug">Back to the game</a> &middot; Each look is a self-contained particle style that could replace <code>ui/particles.js</code> without touching combat. Pieces can also be mixed, for example the ink splats with the spark style's impact ring on crits.</footer>
 </div>
 
 <script>

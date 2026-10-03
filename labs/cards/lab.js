@@ -200,7 +200,7 @@ panel.append(
     slider(O.bg, 'amt', 'Intensity', 0, 2, 0.05, 'how much light it adds', applyBg),
     slider(O.bg, 'speed', 'Speed', 0, 4, 0.1, 'how fast it moves', applyBg),
     slider(O.bg, 'alpha', 'Plate opacity', 0, 1, 0.05, 'the card\'s dark inside and its light; the border stays (the game: 0.85)', applyBg),
-    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark plate (cut out of the frame art so Plate opacity can fade it under the border). In the game (0.183): one shared WebGL canvas draws every card, each card copies its picture out.')),
+    note('Drawn at a third of the card\'s pixels, 30 fps, as added light over the frame\'s dark plate (cut out of the frame art so Plate opacity can fade it under the border). In the game: 0.183 drew every card on one shared WebGL canvas and copied each picture out; since 0.00227 a pooled WebGL canvas per lit card draws straight, no copy (cardFx.js POOL_MAX), and cards.json fx.fps is 60 since 0.00257 (a phone 20, the saver 15).')),
   group('Card motion', 'the cards in 3D', true,
     check(O.motion, 'on', '3D on', applyMotion),
     choice(O.motion, 'enter', 'Entrance', [['slide', 'slide (today)'], ['turn', 'slide with a turn'], ['deal', 'dealt: from above, turning']], () => { applyMotion(); enter(); }),

@@ -406,7 +406,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 
 /* ================= 6b Choose your hero (0.00248) ================= */
 /* CHOOSE YOUR HERO (ui/scenes/heroScene.js), the developer's layout from the
-   Hero Lab's second draft: over the hall's painting, five tall cards on the
+   Hero Lab's second draft: over the hall's painting, seven tall cards on the
    enemy frame in a row, the chosen one lifted with a breathing gold rim
    (a layer whose opacity animates, like .active), the look switcher under
    it, and one bar with the hero's lines and PROCEED. Fluid (vh / vw) like
@@ -443,7 +443,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hero .name { position: absolute; left: 4%; right: 4%; bottom: 3.5%; text-align: center; text-transform: uppercase; letter-spacing: 0.12em; color: var(--parchment); font-size: calc(var(--hero-h) * 0.048); line-height: 1.05; text-shadow: 0 1px 4px #000; }
 .hero .name small { display: block; font-size: 0.62em; letter-spacing: 0.16em; color: #9a8b6a; margin-top: 0.15em; }
 .hero.chosen .name { color: var(--gold); }
-/* the number badge is the card's hotkey button (1-5) */
+/* the number badge is the card's hotkey button (1-7) */
 .hero .num { position: absolute; left: 5%; top: 3%; min-width: 0; min-height: 0; padding: 0.1em 0.45em 0; font-size: calc(var(--hero-h) * 0.04); letter-spacing: 0.1em; color: #9a8b6a; background: rgba(10, 7, 5, 0.5); border: 1px solid rgba(201, 162, 39, 0.25); border-radius: 3px; opacity: 0.8; }
 /* the looks: the chosen hero's versions, switched by the arrows under its card (the arrow keys) */
 .hero .looks { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 1vh; display: none; align-items: center; gap: 0.6vw; white-space: nowrap; }
@@ -565,7 +565,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .slot-name { color: var(--parchment); font-size: 0.92rem; line-height: 1.05; }
 .gear-slot.empty .slot-name { color: #4a4234; }
 .slot-plus { color: var(--gold); }
-.slot-new { margin-left: 6px; color: var(--gold); letter-spacing: 0.12em; text-shadow: 0 0 8px rgba(232, 196, 92, 0.7); } /* a slot this run's finds filled (0.00248; hubScene.js reveal) */
+.slot-new { margin-left: 6px; color: var(--gold); letter-spacing: 0.12em; text-shadow: 0 0 8px rgba(232, 196, 92, 0.7); } /* a slot this run's finds filled (0.00249; hubScene.js reveal) */
 .gear-slot.found { border-color: rgba(232, 196, 92, 0.75); }
 .slot-desc { color: #85775a; font-size: 0.7rem; letter-spacing: 0.04em; }
 .gear-slot .forge-btn, .gear-slot .forge-max { position: absolute; top: 5px; padding: 2px 7px; font-size: 0.72rem; } /* the Forge in the slot's outer top corner */
@@ -1519,7 +1519,7 @@ html.phone .gate-card h1 { font-size: 1.5rem; margin: 0 0 6px; }
 html.phone .gate-card .btn-row { margin-top: 12px; }
 html.phone .gate-card .btn-row button { min-height: 44px; padding: 0 22px; font-size: 1.05rem; }
 
-/* ---- CHOOSE YOUR HERO (0.00248): the five cards at the phone's height, the bar as name + traits + PROCEED ---- */
+/* ---- CHOOSE YOUR HERO (0.00248): the seven cards at the phone's height, the bar as name + traits + PROCEED ---- */
 html.phone .hero-screen { padding: 6px calc(2vw + env(safe-area-inset-right, 0px)) 4px calc(2vw + env(safe-area-inset-left, 0px)); gap: 2px; }
 html.phone .hero-head h1 { font-size: 1.25rem; letter-spacing: 0.14em; }
 html.phone .hero-head .subtitle { font-size: 0.6rem; margin: 0; }

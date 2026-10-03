@@ -132,7 +132,7 @@ const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) ret
 // (HP, dead state, buttons). Rebuilding it every 100ms used to restart any
 // animation — this is what lets cards move.
 
-// The knight card's back (0.00256, the developer's call): a tap turns the
+// The hero card's back (0.00256, the developer's call): a tap turns the
 // card around to STATS — the run's own numbers (run.stats: base, training,
 // gear and the shrine boons), the totals only — a second to INVENTORY
 // (0.00258: the gear worn, and this run's finds, worn from the run's end),
@@ -260,7 +260,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     });
     flipping = false;
   });
-  attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
+  attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the hero (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');

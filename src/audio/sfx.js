@@ -133,7 +133,7 @@ export function toggleMuted() {
 
 // Called once from main.js: the first gesture anywhere unlocks the context
 // and warms the whole clip set so first fires don't wait on a fetch.
-// 0.00272: the bytes alone, in the pool's own order — warming through
+// 0.00271: the bytes alone, in the pool's own order — warming through
 // decode() put every clip at the FRONT of the download line (its "about
 // to play" flag), and with the classes' and the foes' recordings (59 file
 // clips) the narrator's takes waited behind them all; a clip decodes from

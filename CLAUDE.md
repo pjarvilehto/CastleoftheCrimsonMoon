@@ -6,7 +6,9 @@ painted backgrounds (3D when WebGL allows); D-DIN Condensed Bold via
 @font-face (Datto, SIL Open Font License, `assets/fonts/D-DIN-OFL.txt`;
 0.00226 — it replaced Apple's DIN Condensed, which had no web licence).
 D-DIN carries 231 glyphs: the symbols the UI uses (★ ⚔ ☰ → …) fall back
-to the next font in the stack, and a text minus is a plain hyphen. You play as The Curious Knight pushing deeper into a castle:
+to the next font in the stack, and a text minus is a plain hyphen. You play
+one of seven classes (CHOOSE YOUR HERO, 0.00248; the Curious Knight is the
+default and the first) pushing deeper into a castle:
 card-based combat rooms, a shrine in every 8-room stretch, a summoning boss
 every 8 rooms, the game "won" at the room-24 boss, and meta progression
 (training, alchemy, forge) in the Great Hall between runs.
@@ -24,7 +26,8 @@ before structural changes. This file is the rules and the per-system notes.
   (`analytics/`), fed by the collector Worker in `collector/`
   (https://castle-stats.petri-jarvilehto.workers.dev; see "Play stats").
 - **Labs (0.168):** https://www.castleofthecrimsonmoon.com/labs/ — the
-  menu of the testing pages, opened from the `?debug` corner column (LABS).
+  menu of the testing pages, opened from the LABS entry under DEBUG MODE in
+  the ☰ SETTINGS menu (0.00243; `?debug` turns the mode on for the visit).
   Each lab is a folder `labs/<name>/` with a card on `labs/index.html` and a
   "‹ Labs" link back (a smoke check keeps cards, folders and links in step);
   the old `particle-lab/`, `fog-lab/`, `vo-lab/` are forwarding stubs.
@@ -36,8 +39,9 @@ before structural changes. This file is the rules and the per-system notes.
     plays and how often; Play / Approve / Disapprove (+ volatility and shouty
     nudges); RE-RENDER gives a JSON for `node tools/gen-vo.mjs --rerender`
     (see "Audio").
-  - **Particle Lab:** `labs/particles/` — trying particle looks (see
-    "Effects").
+  - **Particle Lab:** `labs/particles/` — trying particle looks: a
+    standalone copy of the ~0.128–0.135 looks (no heal material, none of
+    the class looks, no status tints; see "Effects" and the Backlog).
   - **Card Lab (0.174):** `labs/cards/` — the game's real card units
     (`battleLine.js` + `styles.css`) with three proposals on top, each with
     options: a shader behind each portrait (`cardFx.js`: fog, blood,
@@ -55,10 +59,11 @@ before structural changes. This file is the rules and the per-system notes.
     load styles.css versioned through `labs/boot.js` (`data-versioned`
     links, 0.00223); the Fog Lab's saved state merges knob by knob over
     the shipped values; the Particle Lab's room list has the throne and
-    treasure paintings (its 'shipped mix' stage is still a pre-0.136
+    treasure paintings (its 'shipped mix' stage is the same ~0.128–0.135
     copy — see the Backlog).
-  - **Art Lab (0.184):** `labs/art/` — the portraits redrawn in the room
-    paintings' style (see "Portraits" below) on the real card units over
+  - **Art Lab (0.184):** `labs/art/` — the portraits redrawn in their own
+    photoreal rendering (the direction that stuck in 0.00201; see
+    "Portraits" below) on the real card units over
     any room painting: COMPARE (one character, current beside every
     candidate, Approve / Reject with a note, Flip), LINE-UP (all 13, new
     or current), FIGHT (the knight and four enemies at the game's size).
@@ -103,11 +108,12 @@ before structural changes. This file is the rules and the per-system notes.
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
 node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
-node tools/smoke-test.mjs                    # the suite: ~870 checks, a second or two on the virtual clock
+node tools/smoke-test.mjs                    # the suite: ~1100 checks, a second or two on the virtual clock
 node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at five screens (rule 8; needs Playwright)
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
+node tools/simulate.mjs --hero wizard        # a class's campaign (the knight without it; see "Heroes")
 node tools/shrine-study.mjs --n 500          # per-boon shrine balance (paired runs)
 node tools/stat-study.mjs [--set path=json]  # what each upgrade is worth
 node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (ElevenLabs; needs ELEVENLABS_API_KEY)
@@ -116,8 +122,12 @@ node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-pr
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
-node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
+node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the foes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
+node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
+# libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
+# cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), simCore.mjs (the bot simulate.mjs and
+# the two studies share); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes a depth map, tools/gen-music.py the beds
 ```
 
 ## The rules that matter
@@ -236,14 +246,14 @@ node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pict
   that the collector is older, and the old Worker drops new fields (saves
   keep them; they arrive with the next upload). A Worker NEWER than the
   page's telemetry.json gets a neutral note instead (0.00223: it used to
-  be told to roll back). The Worker to paste as of 0.00252 carries each run's
-  shrine deals (`shrines`); before it, as of 0.00223, it gained the
-  phone power / stall fields (0.00222) and the run-record clamp (a run
-  whose `room` is not a whole number up to 999 is dropped, the counts
-  clamped; one such record used to break the whole dashboard).
+  be told to roll back). The Worker to paste is 0.00253 (`VERSION` =
+  `telemetry.json collectorVersion`): it carries each run's shrine deals
+  (`shrines`, 0.00252) and the hero fields (`hero`, `look` on every run
+  and `hero` on the profile, 0.00253); before them, as of 0.00223, it
+  gained the phone power / stall fields (0.00222) and the run-record
+  clamp (a run whose `room` is not a whole number up to 999 is dropped,
+  the counts clamped; one such record used to break the whole dashboard).
 - The collector's `READ_KEY` is the developer's secret: never ask for it.
-  The Worker to paste as of 0.00253 carries the hero fields (`hero`,
-  `look` on every run and `hero` on the profile).
   **Reading the stats from a session (0.00229):** `node tools/reports.mjs`
   pulls every player (device, runs, benchmarks, device reports) from the
   collector when the cloud environment allows the host
@@ -477,8 +487,11 @@ a per-particle save/restore or gradient doubled the frame cost in 0.128),
 slow overlapping fades (splats) drawn one by one (batched, they flickered),
 only last frame's painted box cleared, 1.25x DPR (1x once the background
 stepped down), new bursts thin out past `BUDGET` live particles; off when
-the background fell back to flat. OVERKILL bursts every victim. The lab is
-a copy for experiments: keep it in step when a look changes.
+the background fell back to flat. OVERKILL bursts every victim. The lab
+(`labs/particles/`) is a standalone copy of the ~0.128–0.135 looks for
+experiments — no heal material, none of the class looks, no status tints;
+a look changed in the game does not change there (rewire it to
+`particleLooks` or retire it, see the Backlog).
 
 **3D backgrounds** (`core/bg3d.js` + `bg3d*.js`; tuning in
 `backgrounds.json parallax`, per-file `overrides`, `enabled: false` = kill
@@ -568,7 +581,9 @@ New room art: JPEG in `assets/bg/`, entries in
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
 **Portraits (0.184).** The file is data: `enemies.json art` per enemy and
-`cards.json player.art` for the knight, read through
+`cards.json player.art` for the knight's crouching look alone (0.00264:
+only a look marked `sprite: true` draws it; every other look of every
+class is a `heroes.json` figure — see "Heroes"), read through
 `shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
@@ -671,10 +686,13 @@ contact sheet. **The bake-off** (three rooms the game lacks — The Clock Tower,
 The Blood Baths, The Rookery — `--bakeoff`, nine models in all): with my
 first, descriptive prompt and references every model drifted
 (0.00236); with the guide's recipe as text alone, **Nano Banana Pro**
-(the default, `DEFAULTS.model`; 2752x1536 native, ~$0.15) and **Nano
-Banana** (1344x768, ~$0.04, upscaled 1.5x at import) land closest to
-the paintings' ink and palette; Imagen 4 (`imagen`, 1376x768) is a
-close third; the room LoRA (below) has the set's colour mood with less
+(`bananapro`; 2752x1536 native, ~$0.15) and **Nano Banana** (`banana`,
+1344x768, ~$0.04, upscaled 1.5x at import) land closest to the
+paintings' ink and palette; Imagen 4 (`imagen`, 1376x768) is a close
+third — yet the default stayed **Seedream 4** (`DEFAULTS.model`,
+`seedream`): the developer's pick from the verbatim round (0.00242)
+stands over the bake-off's ink ranking, `--model bananapro` for the
+closest ink; the room LoRA (below) has the set's colour mood with less
 of its ink; Seedream 4 a brighter modern comic (with references it went
 to white paper); GPT Image 1.5 an etching, 3:2 and slow; FLUX 2 Pro
 and FLUX 1.1 Pro grittier, and both refused "The Blood Baths" as
@@ -687,7 +705,8 @@ alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
 
 **Item art (0.00260, the developer's direction and picks from the
 mockups).** Every item has a picture: `items.json art` per item, a 256 px
-WebP in `assets/items/` (~8 KB; 300 KB for all 36), read through
+WebP in `assets/items/` (~8 KB; about 420 KB for the 48 items and the
+potion), read through
 `shared/itemArt.js` (`itemArtUrl`, `itemArtUrls`, and `gainLine(from,
 to)` — what a find raises over what it replaced) and drawn by `hud.js
 itemPic(id)` (an `<img class="item-pic tier-N">`; the tier sets `--rim` /
@@ -760,8 +779,9 @@ Budding Branch + Bark Vest; Hexhunter: Worn Hand Crossbow + Witchfinder's
 Coat; Plague Sister: Tin Censer + Sister's Habit; the knight's is the
 Rusty Sword and the Oak Shield (`difficulty.json player.startingGear`,
 still every new save's gear until the pick). The twelve are tier 1 with
-exactly the Rusty Sword's or the Oak Shield's numbers (the classes play
-alike so far — a class's own numbers are the developer's next call) and
+exactly the Rusty Sword's or the Oak Shield's numbers (only the kit items'
+numbers are identical — the classes' own gameplay is 0.00267's; a kit's
+own numbers are still the developer's call) and
 `starter: true`: never in a kill's loot or the gilded chest (`loot.js
 droppable`), so the drop pool and the simulator are unchanged
 (byte-identical). A NEW save wears its class's kit on PROCEED
@@ -849,9 +869,9 @@ the chosen one's pulse in it too), on the knight's card in combat
 `tint` (the card light behind the player: `cardFx.js cardStyle('player')`
 reads them, the knight's ether as before; `heavyName`, the heavy
 attack's name on the button and the STATS row — 0.00267, the
-developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Go
-Feral, Hex, Last Rites; the blow is the same for every class,
-`shared/heroes.js heavyName`). The knight crimson, the
+developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Entangle
+(Go Feral until 0.00271), Hex, Last Rites — `shared/heroes.js heavyName`;
+what each heavy does is `class.heavy`, below). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
 with fog — my picks, tuned in the data. **The classes' gameplay (drafted
@@ -917,8 +937,9 @@ with the essentials) and the card is named after the class — the name ABOVE th
 card (`.hero-title`, 0.00251, the developer's layout), the gear as two
 columns at the card's top (`.gear-block`: names left, LV / damage /
 armor right) and a standing hero a full card tall behind them
-(`.hero-standing`), the knight's crouching look as the wide sprite it was; the numbers are the same
-for every class — the gameplay side is the developer's next call. The
+(`.hero-standing`), the knight's crouching look as the wide sprite it was
+(the class's own numbers and heavy are the gameplay block above, live
+since 0.00267). The
 preloader fetches the figures the screen opens on (every hero's first
 look and the profile's own) first among the Descend essentials, the
 other looks after them and before the rooms (`preload.js
@@ -930,21 +951,26 @@ on the cards is looked at; the knight's wide sprite is the easy case.
 
 **The classes' sounds (0.00270, the developer's ask: each class its own
 attack and get-hit sounds).** `audio.json clips` has `atk_<id>`,
-`heavy_<id>` and `hurt_<id>` per hero — the developer's two recordings
-(`sfx-attack.mp3`, `sfx-hurt.mp3`) pitched per class (`rate`: the
-Barbarian low and slow, the Wizard and the women higher) with their own
-`variation` layers from `audio/synth.js`: `swing` (a heavy swing),
+`heavy_<id>` and `hurt_<id>` per hero — since 0.00271 a rendered
+recording per clip and per foe (`assets/audio/sfx/<clip>_v1.mp3`, below;
+0.00270 shipped the developer's two recordings `sfx-attack.mp3` /
+`sfx-hurt.mp3` pitched per class — `rate`: the Barbarian low and slow,
+the Wizard and the women higher) with the class's own `variation` layers
+from `audio/synth.js` on top: `swing` (a heavy swing),
 `crackle` (fire: a roar bed and pops), `zap` (an arcane buzz falling),
 `wail` (a grave voice with vibrato, breath under it; low, a growl),
 `rake` (three claws), `chime` (an inharmonic bell), `hiss` (censer smoke
 with the chain's rattle) and `grunt` (the hero struck: a buzz through two
 vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
-~1.25 the Hexhunter and the Plague Sister). `combatQueue.js sfxFor(ev)`
+~1.25 the Hexhunter and the Plague Sister — the hurt recordings carry
+each class's own cry too, so a struck hero may sound twice, the
+recording's cry under the synth grunt: a listen decides whether the
+grunt layer goes). `combatQueue.js sfxFor(ev)`
 picks them by the save's class (a class without the clip falls back to
 the plain one); the class events have sounds too (`EV_SFX`: the hex a
 chime, the blight a hiss, Entangle a thud and a bound foe's strain a
 swoosh, a charge a zap, the thrall a wail, its blows a thud); `dataCheck`
-wants the three clips per hero. **The recordings (0.00272):** the
+wants the three clips per hero. **The recordings (0.00271):** the
 developer gave the key the `sound_generation` permission, and
 `tools/gen-sfx.mjs` rendered `docs/sfx-prompts.md` (a line per clip: id,
 seconds, prompt) through ElevenLabs' sound generation into
@@ -957,7 +983,7 @@ ones, a zap or a smoke hiss, by up to 4 dB) and the `gainDb` trims set so
 every clip lands at its level (a hero's blow and hurt
 -12 dB like the hits, a heavy -10, a foe's own sound -14, under the
 hero's). The synth layers stay as the class's colour over the
-recordings. **The foes' sounds (0.00272, "every character"):** `eatk_<id>`
+recordings. **The foes' sounds (0.00271, "every character"):** `eatk_<id>`
 / `ehurt_<id>` per enemy (the same doc and tool): `combatSfx.js` plays
 the struck foe's cry with the hero's blow and the striking foe's attack
 with the hero's hurt, by the unit's id on the strike's pan and timing; a
@@ -1114,7 +1140,7 @@ be served stale for ~4 hours.
   hall and CHOOSE YOUR HERO through `relayout()`, a run through the dungeon
   scene's `switchClass()`: the run's stats rebuilt for the class, this run's
   shrine boons dropped, health kept as a share of the new maximum, the
-  fight's charges / hex / thrall / wild shape reset, the battle line
+  fight's charges / hex / thrall / the roots (entangled) reset, the battle line
   rebuilt in place and dealt in, a DEBUG line in the log; `debugToggles.js
   switchClassButton`), LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
   carries `.debug-on`); remembered in this browser (`castle-debug-mode`),
@@ -1175,8 +1201,9 @@ be served stale for ~4 hours.
   loading behind — a room whose painting isn't in yet keeps the last one up
   (0.00222: into the HTTP cache only, `fetchOnly` — the renderer decodes a
   painting itself as the room is entered; decoding 34 of them here warmed
-  nothing it could reuse). The display font ships as WOFF2 (~68KB,
-  0.00223) with the TTF (212KB) as the fallback and for the labs.
+  nothing it could reuse). The display font ships as WOFF2 only
+  (`assets/fonts/D-DINCondensed-Bold.woff2`, ~22KB; the labs load the
+  same file — no TTF since the D-DIN swap, 0.00226).
 - **Only fights are numbered (0.171, the developer's call):** `run.roomNumber`
   counts fights (the boss's included), so room 8 is always the throne room.
   The shrine and the treasure room are interludes met on the way to a
@@ -1362,10 +1389,11 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
 
 ## Testing notes
 
-- `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (by area: scenes,
-  combat, shrines, progression, content, backgrounds, audio, sim, history,
-  narration, art, cards, layout — the last checks the phone layer's
-  `html.phone` twins against the code and the desktop rules, rule 8),
+- `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (16 files, by area:
+  scenes, combat, shrines, progression, content, backgrounds, audio, sim,
+  history, narration, art, cards, classes, heroes, items, layout — the
+  last checks the phone layer's `html.phone` twins against the code and
+  the desktop rules, rule 8; ~1100 checks),
   each starting from `fresh()`; a test file imports only the harness
   names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
@@ -1444,9 +1472,9 @@ sometimes — fetch all branches to find it.
 - Start from the latest `main`: `git fetch origin main` and branch from
   `origin/main`. `tools/ship.mjs` pushes every build to `main` AND to the
   branch the session is given, so every `claude/*` branch that shipped
-  ends on `main` (the latest, `claude/busy-hawking-blufll`, carried
-  0.00205–0.00223). Never pick an old branch up by name: use the branch
-  the new session is given.
+  ends on `main` (`claude/elegant-volta-ahaall` carried 0.00246–0.00272,
+  the classes thread). Never pick an old branch up by name: use the
+  branch the new session is given.
 - Ship with `node tools/ship.mjs --note "..."` (rule 6): it is the
   bump-suite-fetch-merge-push loop with the collision handling two
   threads need. No PRs unless the developer asks. **Two sessions may ship at
@@ -1460,10 +1488,11 @@ sometimes — fetch all branches to find it.
   every portrait by material, the cards in 3D, the glint, see-through
   plates), the room push and swoosh (0.171–0.178), the Old Wizard
   (0.161–0.188), the Fog Lab's living mist (0.164–0.169), treasure rooms,
-  the Art Lab (0.184–0.194, the other thread: 38 candidates, nine
-  approved in 0.194, none imported — the game still draws the original
-  portraits; `node tools/gen-art.mjs --import` is the next step, four
-  characters still undecided), build numbers with five decimals.
+  the Art Lab (0.184–0.194, the other thread; nine candidates approved
+  in 0.194 — by 0.00244 `art.json` holds 39 candidates, 31 approved,
+  none imported: the game still draws the original portraits, and `node
+  tools/gen-art.mjs --import` is the step), build numbers with five
+  decimals.
 - 0.00197 was a review of the whole project (three audits, every file
   read, plus a headless profile): the JavaScript side of a five-enemy
   fight idles at ~2% of a core; the GPU cost is the mist (forty large
@@ -1556,8 +1585,8 @@ sometimes — fetch all branches to find it.
   `createImageBitmap` from a WebGL canvas is a readback — hence the Idle
   phase's 29% dropped frames at the display rate.
 - 0.00231–0.00244 (the art thread): the portraits redrawn by Nano
-  Banana in their own photoreal rendering, 31 candidates approved across
-  all 13 characters (none imported yet — the game still draws the
+  Banana in their own photoreal rendering, 31 of 39 candidates approved
+  across all 13 characters (none imported yet — the game still draws the
   originals; `gen-art.mjs --import` with `--pick` per character is the
   step); the character LoRA trained on them (`crimson-moon-style`: a
   character from its line alone, the mimic chest first) and the room
@@ -1576,66 +1605,137 @@ sometimes — fetch all branches to find it.
   pool went out as 0.00227 behind another thread's 0.00226, the font
   swap, so its notes named the round one build low): the next iPhone
   report says how much it bought.
+- 0.00246–0.00272 (the classes thread, `claude/elegant-volta-ahaall`):
+  the heroes — `heroes.json`, the Hero Lab (0.00247) and CHOOSE YOUR HERO
+  (0.00248: seven classes on the developer's cut-out sheets, the figure on
+  the knight's card, save version 5), the choice once per save and the
+  look picker (0.00253: `profile.hero` null until PROCEED, version 6, the
+  hero / look in every run record and the Worker 0.00253), the colour
+  themes (0.00254: the plate's hue, the card light), the knight's card
+  turning over to STATS and INVENTORY (0.00256 / 0.00258), the knight's
+  four standing looks (0.00264), the kits (0.00265), the stat colours
+  (0.00266), the classes' gameplay with the heavy's name per class and the
+  combat UI's minimum (0.00267: `heroes.json class`, drafted 0.00258 under
+  `simulate.mjs --hero`), the classes' particles (0.00268), SWITCH CLASS
+  in the debug menu (0.00269), the class synth sounds (0.00270), Entangle
+  in Go Feral's place with the 45 rendered recordings — a blow, a heavy
+  and a hurt per class, an attack and a hurt per foe (0.00271) — and the
+  status tints in the foes' figures (0.00272). The other thread's builds
+  meanwhile: the item art (0.00259–0.00261), the LOOT row and the find
+  flying into it (0.00262), the potion's picture and card (0.00263).
+  The simulator, 4 campaigns x 40 runs per class: the knight median 15.8
+  / room-24 boss 6%, the others 16.5–18.3 (the Heroes notes).
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
   design — a padded maskable variant would be the developer's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
-  `assets/chars/candidates` (12.6MB), `assets/items/candidates` (1MB,
-  0.00260) and `assets/style` (16MB with the hero sheets, 0.00248) are
+  `assets/chars/candidates` (12MB), `assets/items/candidates` (1.3MB,
+  0.00260) and `assets/style` (17MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
-  Actions deploy could exclude them); the Particle Lab is a standalone
-  copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
-  not quality: re-encoding saved 3%). The `.pyc` cache file under
-  `tools/__pycache__` is no longer tracked (0.00223).
+  Actions deploy could exclude those two; `assets/bg/candidates` (22MB,
+  the largest) and `assets/chars/candidates` are read by the public
+  Background and Art labs, `assets/world` by the World Lab); the Particle
+  Lab is a standalone copy of the ~0.128–0.135 looks (no heal material,
+  none of the class looks, no status tints); four portraits weigh
+  200-260KB (content, not quality: re-encoding saved 3%); the root's duplicate
+  `SIL Open Font License.txt` (byte-identical to `assets/fonts/D-DIN-OFL.txt`)
+  went in 0.00273, and a `robots.txt` keeps crawlers out of `tools/`,
+  `docs/`, `collector/`, the labs, the stats page and the candidate
+  folders (they stay public: GitHub Pages serves the whole repo). The
+  `.pyc` cache file under `tools/__pycache__` is no longer tracked (0.00223).
 
-## Backlog (as of 0.00245)
+## Backlog (as of 0.00272)
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
-  key is the developer's (quota per key).
-- Game: the classes' gameplay (0.00248 made the choice cosmetic: a class
-  could carry its own base stats, starting gear, a signature move — the
-  knight's heavy blow, the necromancer's thralls — and the Art Lab's
-  photoreal redraw path for its card) · merchant room (endgame coin sink) · more bosses (only the Vampire
-  Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
-  in the simulator) and meta saturates past ~60 runs — deeper tiers or
-  NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
-  against scaled enemy HP (it can finish a foe since 0.00243) · more room kinds · a portrait phone layout
-  (0.00208 plays sideways only) · the reliquary's revive is not narrated
-  · treasure rooms are not in the play stats · the world map (the World
+  key is the developer's (quota per key) · the reliquary's revive is not
+  narrated.
+- Game: the classes' next round — the thrall card and the rage chip (the
+  class UI's "not yet": the log alone says the thrall rose, took a blow,
+  crumbled; the Barbarian's rage shows nowhere), the kits' own numbers
+  (0.00265: every kit item has the Rusty Sword's or the Oak Shield's),
+  the mock-ups in the chat as the design to grow into · merchant room
+  (endgame coin sink) · more bosses (only the Vampire Lord; `boss.enemy`
+  is data now) · the room-24 boss is a wall (~5% clear in the simulator
+  for the knight) and meta saturates past ~60 runs — deeper tiers or NG+
+  (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
+  against scaled enemy HP (it can finish a foe since 0.00243) · more room
+  kinds · a portrait phone layout (0.00208 plays sideways only) ·
+  treasure rooms are not in the play stats · the world map (the World
   Lab's design, 0.00210: a scene between the Great Hall and the dungeon;
   a place = a dungeon with its own boss, room count, paintings and curve;
   clearing its last boss marks it in the profile at settle time (rule 1)
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: the finds reveal's comments (equipment.js, hubSections.js, hubScene.js, styles.css) say 0.00248 for 0.00249 — fix with the next build · `go()` is silently dropped during a transition (queue it)
-  · ~60 checks still assert on source text rather than behaviour (inject
-  recording stubs instead) · `fresh()` does not restore `DATA` after a
-  test patches it · the Actions deploy job (off until the developer opts in)
-  should exclude `assets/chars/candidates`, `assets/style`, `tools`,
-  `docs`, `collector` · import the approved portraits
-  (`gen-art.mjs --import`, `--pick id=N` where a character has several
-  approvals) once the developer wants the redraws live ·
-  `gen-bg.mjs --import` rewrites backgrounds.json through
-  JSON.stringify (1.0 → 1, the phone block on several lines — harmless,
-  noisy; 0.00244 added its two rooms by hand) · the room LoRA's captions
-  are mine, not the guide's: retrain with the guide's words if it is to
-  be used ·
-  ship.mjs: one commit per ship (the work commit carries the previous
-  build's number; rehearse against a bare scratch remote) · the Particle
-  Lab's shipped-mix stage: rewire to `particleLooks.spawnParticles` or
-  retire the lab (the developer's call) · WebP room paintings under new names
-  (~49% smaller at q80; the developer judges q80 / q85 in the Fog Lab;
-  `bg3dPuffs seedOf` should hash the stem first) · `combatFx.js` could
-  hand kick / enter / deal to a `cardMotion.js` of its own (contested:
-  the kick is part of the hit's choreography).
+- Display mismatches found by the 0.00272 review (each a small fix): the
+  STATS page's heavy row shows `combat.heavyMult` alone (the class's own
+  `heavyMult` factor is ignored) and "n turns" for a charge class
+  (`battleLine.js cardBack`) · "Potion heals" ignores the class's
+  `potionHealMult` in three places (the STATS row, the potion's find card,
+  the hall's line) · the Quicken card text says cooldown -1 while a
+  charge class gets a charge (`shrines.json`, `shrine.js`) · a foe's
+  HEXED / BLIGHT / ROOTED tags read the live `combat.enemies`, not the
+  replay snapshot (`battleRoom.js update`), so a tag can lead the line
+  that earns it · SWITCH CLASS resets the charges, the hex, the thrall
+  and the roots but leaves the foes' blight behind
+  (`dungeonScene.js switchClass`) · the orphan-asset check never looks
+  inside `assets/audio/sfx` (`content.test.mjs`: the folder set is one
+  level deep) · the audio registry's `variation` block repeats one `eq`
+  15 times and `layerRate` [0.85, 1.2] 17 times across its 24 entries
+  (a shared default would do), and a clip's `rate` is an unread copy
+  wherever its `variation` entry carries one (`sfx.js` reads
+  `vary.rate` first).
+- Engineering: `go()` is silently dropped
+  during a transition (queue it) · about 160 of the ~1100 checks still
+  assert on source text rather than behaviour (inject recording stubs
+  instead) · `fresh()` does not restore `DATA` after a test patches it
+  (a `byClass` / button helper in the harness would shorten the class
+  tests too) · the Actions deploy job (off until the developer opts in)
+  could exclude `tools`, `docs`, `collector`, `assets/style` (17MB) and
+  `assets/items/candidates` (1.3MB) — those two are unused by every
+  page; `assets/bg/candidates` (22MB), `assets/chars/candidates` (12MB)
+  and `assets/world` are read by the public labs, so excluding them
+  breaks the Background, Art and World labs · the collector's README
+  stops at 0.00229 (nothing on the shrine deals or the hero fields) ·
+  the manifest has no 192 px icon (180 and 512 only; Android wants 192)
+  · ship.mjs is
+  still two commits per ship (the work commit carries the previous
+  build's number; rehearse against a bare scratch remote) · import the
+  approved portraits (`gen-art.mjs --import`, `--pick id=N` where a
+  character has several approvals) once the developer wants the redraws
+  live — the knight's part is moot since his looks are `heroes.json`
+  figures (0.00264) · `guide_torch_corridor` is approved in
+  `rooms-art.json` but never imported (`gen-bg.mjs --import`) ·
+  `gen-bg.mjs --import` rewrites backgrounds.json through JSON.stringify
+  (1.0 → 1, the phone block on several lines — harmless, noisy; 0.00244
+  added its two rooms by hand) · the room LoRA's captions are mine, not
+  the guide's: retrain with the guide's words if it is to be used · the
+  Particle Lab lacks the heal material, the class looks and the status
+  tints: rewire it to `particleLooks.spawnParticles` / `spawnClassBurst`
+  or retire it (the developer's call) · WebP room paintings under new
+  names (~49% smaller at q80; the developer judges q80 / q85 in the Fog
+  Lab; `bg3dPuffs seedOf` should hash the stem first).
+- Refactor candidates (the classes landed as switches; none urgent): a
+  class registry in `run/` (one table of the seven heavies) in place of
+  the heavy-kind switches in five places (`combat.js` playerAttack /
+  classPhase / sweep / enemyStrike, `shrine.js` Quicken) · the class id,
+  name and theme snapshotted into the run so the combat UI stops reading
+  the profile (`sfxFor`, `heavyName(getProfile())`, `cardStyle`) · a
+  `damageFoe` helper for the four damage copies in `combat.js` · a
+  `lunge()` helper for the three lunges in `combatFx.js`, and the class
+  effects into a `classFx.js` of their own (`combatFx.js` could also hand
+  kick / enter / deal to a `cardMotion.js` — contested: the kick is part
+  of the hit's choreography) · `particleLooks.js` as a table of looks on
+  shared primitives (`CLASS_LOOKS` repeats the ring / streak / puff
+  recipes) · a shared `tools/elevenlabs.mjs` for gen-vo.mjs and
+  gen-sfx.mjs (each carries its own fetch, key and retry).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget
   disagree · a real-device pass (the developer's) is still owed.
-- Art: the Background Lab's six draft rooms await verdicts (The Rookery,
+- Art: the Background Lab's draft rooms await verdicts (The Rookery,
   The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned
   Throne, the ossuary test); the guide's other unused rooms are the next
   batch (`docs/image-prompting-guide.md` §3: arenas, thrones, corridors,
@@ -1645,7 +1745,8 @@ sometimes — fetch all branches to find it.
   `gen-items.mjs --sheet`; the Art Lab's COMPARE would suit them) ·
   Moonbrand's runes and the Blood Eclipse amulet's corona were
   re-asked for in their lines — a redraw with `--hint` if they still
-  read too plain in the game.
+  read too plain in the game · the heroes' lore and traits in
+  `heroes.json` are placeholders of mine.
 - Other: orphaned legacy staging site cleanup.
 
 **Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon

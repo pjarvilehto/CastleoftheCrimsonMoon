@@ -93,7 +93,7 @@ const LINES = DATA.narration.lines;
   const started = () => ctx.started.filter((s) => s.kind === 'buffer' && s.buffer?.duration === 2 && s.started[2] === undefined); // the narrator's (a music loop starts with a duration)
   const gainOf = (src) => src.outs[0]?.gain?.value;
   nar.narratorRun();
-  const T0 = Math.max(100, Math.ceil(ctx.currentTime / 100) * 100 + 100); // (the clock relative to what is there: the audio test leaves it a second past every registered clip — 0.00272, with 59 file clips it passed 100)
+  const T0 = Math.max(100, Math.ceil(ctx.currentTime / 100) * 100 + 100); // (the clock relative to what is there: the audio test leaves it a second past every registered clip — 0.00271, with 59 file clips it passed 100)
   ctx.currentTime = T0;
   const n0 = started().length;
   ok('a line plays: the moment counts', nar.narrate('descent_begin') === true);

@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~870 checks, a second or two on the virtual clock
+node tools/smoke-test.mjs            # the suite: ~1100 checks, a second or two on the virtual clock
 node tools/layout-check.mjs          # the layouts, desktop and phone, in a browser (rule 8)
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
@@ -43,9 +43,9 @@ styles.css              all styling, grouped by screen (index at the top)
 src/
   main.js               boot: html.phone from platform.js PHONE_MQ (and a
                         re-layout when it flips) -> rotate notice -> loader
-                        panel -> loadData -> preloadAssets -> hotkeys, corner
-                        column (+ ?debug tools), 3D backgrounds, audio, update
-                        check -> (a phone: the play / install gate) -> title;
+                        panel -> loadData -> preloadAssets -> hotkeys, the corner's
+                        SETTINGS menu (+ DEBUG MODE's tools), 3D backgrounds, audio,
+                        update check -> (a phone: the play / install gate) -> title;
                         the rest of the art loads in the background; a failed
                         boot says so and a tap reloads
   core/                 engine-level, no game rules
@@ -74,7 +74,8 @@ src/
     storage.js          the only file touching the save; base64 save codes
     profile.js          the profile: defaults, lifecycle, small setters
     migrations.js       SAVE_VERSION + append-only MIGRATIONS
-    stats.js            derived combat stats, taper, level
+    stats.js            derived combat stats (x the class's multipliers, the
+                        class block snapshotted as `klass`, 0.00267), taper, level
     leveling.js         training/alchemy/forge costs and purchases
     equipment.js        slots, auto-equip, salvage
     history.js          one record per finished run (+ its perf)
@@ -91,7 +92,12 @@ src/
                         shrine / treasure room between fights (unnumbered); paintings
                         never repeat in a run (pickFresh, run.seenBackgrounds)
     combat.js           one action in phases: rollHit -> overkill | strike(+spill)
-                        -> lifesteal -> enemyPhase -> summons -> cleared
+                        -> classPhase (the class's heavy and passives, 0.00267:
+                        cleave, fireball, drain, mark, censer, entangle; the
+                        blight's tick, the Druid's mending, the thrall rising)
+                        -> lifesteal -> enemyPhase (the thrall takes the blows
+                        and the roots loosen in enemyStrike / enemyPhase)
+                        -> summons -> cleared
     shrine.js           boon deal + costs + effects (ids map to code)
     loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
                         or salvage on the spot, for kills and chests alike;
@@ -103,7 +109,11 @@ src/
     dataCheck.js        every number the code reads, checked at load
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
-    portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
+    portraits.js        where a character's portrait is (enemies.json art); portraitUrl('player') is
+                        the chosen hero's look (assets/heroes/) — only the knight's crouching `sprite`
+                        look draws cards.json player.art (0.00264)
+    heroes.js           the classes (heroes.json): heroList / heroById / cleanHero / heroOf / lookOf /
+                        lookUrl / heavyName / heroKit, the preload lists heroFirstUrls / heroArtUrls (0.00248)
     itemArt.js          an item's picture (items.json art, assets/items/) and gainLine — what a find raises over what it replaced (0.00260)
     platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp();
                         deviceName() / deviceBlock() (a data block's `phone` sub-block merged on a phone — the phone power profile, 0.00222)
@@ -118,13 +128,18 @@ src/
     mixer.js            buses -> master -> limiter, sliders, ducking
     music.js  musicLoop.js   five beds, seamless exact loops
     sfx.js  synth.js  audioMath.js   clip registry (audio.json clips), voices,
-                        generated sweeteners, pure helpers
+                        generated sweeteners (synth.js: the classes' instruments
+                        too — swing, crackle, zap, wail, rake, chime, hiss,
+                        grunt, 0.00270), pure helpers
     narrator.js         the Old Wizard voice-over (0.161): rules (audio.json
                         narration), takes (data/narration.json), one line at a time
   ui/
-    scenes/             title, hero (CHOOSE YOUR HERO, 0.00248), hub (Great Hall),
-                        dungeon, runEnd, benchmark; registered in scenes/index.js,
-                        never import each other
+    scenes/             title, hero (heroScene.js: CHOOSE YOUR HERO, 0.00248 —
+                        once per save between the title and the hall, the pick
+                        lands on the profile on PROCEED, wearKit() puts the
+                        class's kit on), hub (Great Hall), dungeon, runEnd,
+                        benchmark; registered in scenes/index.js, never import
+                        each other
     battleRoom.js       a room's battle line: mount, summon sync, tick update,
                         the effects' context and the pre-action snapshot
                         (dungeon + benchmark); onGone -> fit() recounts --n when a
@@ -136,11 +151,17 @@ src/
                         is a step of its own — waits onDeath(i), then
                         combatPacing.restackMs, deathMaxMs caps it (0.00220);
                         per printed line: tick, line, sound, effect
-    combatQueue.js      combat events -> playback items (fx, hold, sfx, loot)
-    combatFx.js  fxParts.js   effects per event; shake, spray, numbers...
-    findFx.js           a kept find in combat: its card rises over the foes and flies into the hero's (0.00260)
-    combatSfx.js        a line's sound, panned to its card, timed to the blow
-    particleLooks.js    what a burst is made of (materials, looks; pure)
+    combatQueue.js      combat events -> playback items (fx, hold, sfx, loot);
+                        sfxFor() picks the class's own blow / heavy / hurt clip (0.00270)
+    combatFx.js  fxParts.js   effects per event; shake, spray, numbers...; the
+                        class traces over a foe's burst (traceFor / classTrace)
+                        and the class events (mark, blight, entangle, thrall, 0.00268)
+    findFx.js           a kept find in combat: its card rises over the foes and flies into the LOOT
+                        row (0.00262); a potion's card into the hero card's count (0.00263)
+    combatSfx.js        a line's sound, panned to its card, timed to the blow;
+                        the foe's own voice under it (eatk_ / ehurt_<id>, 0.00271)
+    particleLooks.js    what a burst is made of (materials, looks; pure);
+                        spawnClassBurst() = the class's own trace (CLASS_LOOKS, 0.00268)
     particles.js        the particle canvas: budget, batched drawing
     cardFx.js           the shader light behind every card: a pooled WebGL
                         canvas per lit card, reused across rooms (0.00227; the
@@ -157,27 +178,38 @@ src/
     confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
-    cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
+    cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js   (the SETTINGS menu, 0.00243;
+                        debugToggles.js = DEBUG MODE's tools, SWITCH CLASS among them, 0.00269)
+    lookPicker.js       the hero's look, large between ‹ › (the hall's portrait, the phone's Look row; 0.00253)
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near); candidates/ = the new
-                        rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json)
+                        rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json; lab-only)
   chars/                portraits (WebP with alpha; the file named in the data) + card
-                        frames (PNG); candidates/ = the redraws tools/gen-art.mjs made
+                        frames (PNG); candidates/ = the redraws tools/gen-art.mjs made (lab-only)
+  heroes/               the classes' figures (39 WebP cut-outs, the file named in heroes.json
+                        looks; tools/cut-heroes.mjs, 0.00248)
+  style/                the developer's sheets (the inked style sheets, heroes/ = the hero sheets
+                        the figures were cut from); the labs and tools read them, no player does
+  icons/                the shrine boons' and the chests' painted icons (192 px WebP, 0.177)
+  world/                the World Lab's painting (the prototype's, 0.00210)
   items/                the gear's pictures (256 px WebP, the file named in items.json art); candidates/ =
                         what tools/gen-items.mjs painted from docs/item-prompts.md (items-art.json; 0.00260)
-  audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; fonts/: the display
+  audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; audio/sfx/: the 45
+                        class and foe recordings, tools/gen-sfx.mjs, 0.00271; fonts/: the display
                         font as WOFF2 + the TTF fallback, 0.00223)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
-                        shrines, backgrounds, audio, telemetry, build,
-                        changelog; narration, art, rooms-art, items-art, lora (generated: the takes,
+                        shrines, backgrounds, audio, telemetry, heroes (the classes:
+                        looks, kit, theme, class block), cards (the card light,
+                        the particles, player.art), build, changelog; narration,
+                        art, rooms-art, items-art, lora (generated: the takes,
                         the redrawn portraits, the painted rooms, the item pictures, the LoRA trainings)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
-labs/                   the testing pages (?debug LABS button): index.html is the menu,
+labs/                   the testing pages (DEBUG MODE's LABS entry in the SETTINGS menu): index.html is the menu,
   boot.js               the labs' shared boot (0.188): reads build.json (?t=, no-store), installs an
                         import map so the game's modules, the lab's lab.js (+ data-extra) and the
                         `data-versioned` stylesheets load under ?v=<build> (0.00223), and writes a
@@ -198,6 +230,8 @@ labs/                   the testing pages (?debug LABS button): index.html is th
   world/                the world map above the dungeon (0.00210, a prototype): the
                         developer's painting under clouds, places as pins, the reveal,
                         two looks and the dive; WORLD in lab.js = the future world.json
+  heroes/               the CHOOSE YOUR HERO screen over any painting, from the game's own
+                        data and stylesheet: the LINE-UP or a SHOWCASE alternative (0.00247)
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
@@ -210,6 +244,12 @@ tools/
   audio-check.mjs       clip loudness + loops measured in Chromium
   gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
   gen-vo.mjs            the voice-over: docs/narration-script.md -> ElevenLabs -> assets/audio/vo
+  gen-sfx.mjs           the classes' and the foes' sounds: docs/sfx-prompts.md -> ElevenLabs sound
+                        generation -> assets/audio/sfx + audio.json clips (0.00270)
+  cut-heroes.mjs        the hero figures out of the developer's sheets (assets/style/heroes ->
+                        assets/heroes, keyed by cutout.mjs); prints heroes.json's looks (0.00248)
+  gen-items.mjs         paints the gear's pictures (docs/item-prompts.md -> assets/items, 0.00260)
+  reports.mjs           the play stats pulled from the collector (CASTLE_READ_KEY; 0.00229)
   gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
                         Banana and five others; MODELS) -> assets/chars/candidates + art.json;
                         --import puts one in the game; --model lora draws from the line alone
@@ -218,7 +258,7 @@ tools/
                         takes the Background Lab's verdicts, --prune, --import makes the game's JPEG
   train-lora.mjs        the two style LoRAs (characters on the approved candidates, rooms on the
                         paintings) -> private models on Replicate; lora.json records the trainings
-  replicate.mjs         the Replicate client the three share (token, files, predict, versions)
+  replicate.mjs         the Replicate client the four art tools share (token, files, predict, versions)
 package.json            tool dependencies only (sharp, for the art tools); the game has none
 ```
 
@@ -226,17 +266,24 @@ package.json            tool dependencies only (sharp, for the art tools); the g
 
 1. `main.js` loads every JSON once into `DATA` (`shared/data.js`), checked
    by `dataCheck.js`.
-2. The hub reads and writes the profile through `meta/*`, persisting at once.
-3. A run snapshots `derivedStats()` into `run.stats`; mid-run profile changes
-   don't touch it. Shrine boons change `run.stats` (run-scoped).
+2. The title's Enter the Castle leads a save that has no `hero` yet to
+   CHOOSE YOUR HERO (once; the pick and the class's kit land on the profile
+   on PROCEED), else to the hub. The hub reads and writes the profile
+   through `meta/*`, persisting at once.
+3. A run snapshots `derivedStats()` into `run.stats` (the class's
+   multipliers applied, its block as `run.stats.klass`); mid-run profile
+   changes don't touch it. Shrine boons change `run.stats` (run-scoped);
+   each shrine's deal and the pick go in `run.shrines`.
 4. The dungeon scene drives `run/combat.js`. A turn resolves instantly; its
    events become playback items (`combatQueue.js`) that print line by line,
    each with its state snapshot, effect and sound. Kills route loot through
    the run; so do treasure chests (`run/treasure.js`).
 5. Run end (death or retreat) -> `settleRun()` -> profile + history record
-   (with the run's frame-rate summary) -> persist -> run-end scene;
-   `shareStats()` posts the save's stats to the collector, and the
-   /analytics/ dashboard reads them back.
+   (with the run's frame-rate summary, the hero and look played, the shrine
+   deals) -> persist -> run-end scene; `shareStats()` posts the save's
+   stats (+ `profile.hero`, the device and the device report waiting) to
+   the collector, which keeps them all (Worker 0.00253), and the /analytics/
+   dashboard reads them back (a By hero table, the shrine picks).
 
 ## Keyboard map
 
@@ -256,7 +303,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
-| `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (named per class since 0.00267: Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites) / Drink Potion |
+| `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (the button carries the class's name, `heroes.json heavyName`, 0.00267: Heavy Attack, Cleave, Fireball, Soul Drain, Entangle, Hex, Last Rites) / Drink Potion |
 | `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `G` | run end | Return to the Great Hall |
@@ -265,11 +312,16 @@ primary button. While a dialog is open it owns the keyboard.
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
 
-Corner toggles (MUSIC, FULLSCREEN, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug
-tools) are mouse-only; on a phone they fold behind ☰ (FULLSCREEN is not
-offered there: the gate is the way in). The phone hall's tabs have no keys;
+The upper-right corner is mouse-only: FULLSCREEN (an icon) beside ☰
+SETTINGS, a menu in groups (0.00243) — AUDIO (MUSIC, SOUND, NARRATOR,
+VOLUME), DISPLAY (BATTERY SAVER), GAME (CHANGELIST) and DEBUG MODE last
+(remembered per browser, `?debug` turns it on for the visit; ON shows the
+testing tools: INVULNERABLE, HIDE FOREGROUND, BG VIEW, NEXT BG, BG TUNING,
+FORCE CRITS, FORCE MEGA CRITS, SWITCH CLASS, LABS, BENCHMARK; OFF clears
+every switch). On a phone the same menu sits behind ☰ alone (FULLSCREEN is
+not offered there: the gate is the way in). The phone hall's tabs have no keys;
 the hotkeys of the rows on the sheets behind still fire (p, v, f, r, e, u,
-x, a, y, n), as on the desktop where every panel shows.
+x, a, y, n, l), as on the desktop where every panel shows.
 
 ## Editing conventions
 

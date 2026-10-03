@@ -101,9 +101,9 @@ export function alchemySection(p, phone, done, spend = false) {
     }));
 }
 
-// A worn slot's label in the hall (0.00248; it lives in hud.js since 0.00260, combat's find card names slots too).
+// A worn slot's label in the hall (0.00249; it lives in hud.js since 0.00260, combat's find card names slots too).
 export { gearLabel };
-// The NEW tag on a slot this run's finds filled (0.00248; the hall's reveal).
+// The NEW tag on a slot this run's finds filled (0.00249; the hall's reveal).
 const newTag = (found, label) => (found.has(label) ? el('span', { class: 'slot-new' }, 'New') : null);
 
 // ---- EQUIPMENT with per-item Forge enhancement. ----

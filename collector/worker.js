@@ -25,7 +25,7 @@
 // screen); the latest device is kept on the player. 0.131: the profile's
 // `bench` — ?debug BENCHMARK results (idle / combat / overkill phases).
 
-export const VERSION = '0.00253'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
+export const VERSION = '0.00253'; // (telemetry.json collectorVersion must match; the developer pastes this file into the Worker)
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -69,7 +69,7 @@ export function cleanBench(b) {
   };
 }
 
-// The device report (0.00225, meta/perfReport.js): JSON for the owner to
+// The device report (0.00225, meta/perfReport.js): JSON for the developer to
 // read, so it is bounded rather than typed field by field — numbers finite,
 // strings short, lists and objects capped, a depth limit, MAX_REPORT bytes
 // in all; the top level typed. The newest MAX_REPORTS per player are kept.

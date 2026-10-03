@@ -9,7 +9,8 @@
 // sheets, one to eight so far — a hero with one look hides it); a bar with
 // the hero's lines and PROCEED (Space). 1-7 and a click choose. The pick lands on the
 // profile (hero: { id, look }) on PROCEED only; the knight's card and the
-// hall draw it from then on (shared/portraits.js). The choice is cosmetic.
+// hall draw it from then on (shared/portraits.js), and the class plays its
+// own game since 0.00267 (heroes.json class: its heavy and passives).
 // 0.00253 (the developer's call): the class is chosen ONCE per save — a
 // new game comes here, a save that has chosen goes straight to the hall;
 // the look alone can change later, from the hall's portrait (ui/lookPicker.js).

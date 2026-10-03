@@ -8,11 +8,11 @@
 <!-- labs/heroes/: the CHOOSE YOUR HERO screen (0.00247 a draft; shipped as
      ui/scenes/heroScene.js in 0.00248) over any painting, drawn from the
      game's own data and stylesheet (heroes.json, styles.css section 6b):
-     five character classes — the Curious Knight and the developer's
-     Barbarian, Wizard, Necromancer and Druid (assets/style/heroes/ are the
-     sheets, assets/heroes/ the cut-outs) — in the game's LINE-UP, or the
-     SHOWCASE alternative (the chosen hero large beside the lines, the five
-     as a strip). Click or 1-5 choose, ←/→ turn the look, Space is PROCEED;
+     seven character classes — the Curious Knight and the developer's
+     Barbarian, Wizard, Necromancer, Druid, Hexhunter and Plague Sister
+     (assets/style/heroes/ are the sheets, assets/heroes/ the cut-outs) —
+     in the game's LINE-UP, or the SHOWCASE alternative (the chosen hero
+     large beside the lines, the seven as a strip). Click or 1-7 choose, ←/→ turn the look, Space is PROCEED;
      COPY JSON gives the picks back. Nothing here touches the game or the
      save. The base href keeps the game's relative paths. -->
 <base href="../../">
@@ -40,7 +40,7 @@ html, body { overflow: hidden; }
 .hero-screen { position: fixed; padding-top: 56px; } /* (the lab's bar sits over the top) */
 .hero .num { pointer-events: none; }
 
-/* ---- SHOWCASE: the chosen hero large beside the lines, the five as a strip ---- */
+/* ---- SHOWCASE: the chosen hero large beside the lines, the seven as a strip ---- */
 body.showcase .hero-screen { display: grid; grid-template-columns: 38vw 1fr; grid-template-rows: auto minmax(0, 1fr) auto; padding: 5vh 4vw 2.5vh; gap: 1vh 2vw; align-items: end; }
 body.showcase .hero-head { grid-column: 1 / -1; }
 body.showcase .stage { grid-row: 2 / 4; align-self: end; height: 72vh; position: relative; display: flex; align-items: flex-end; justify-content: center; }
@@ -68,7 +68,7 @@ body:not(.showcase) .stage { display: none; }
   <select id="painting" title="The painting behind the screen"></select>
   <button id="copy">Copy JSON</button>
   <span id="status"></span>
-  <span class="hint">1-5 choose · ←→ look · Space proceed · L layout · P painting</span>
+  <span class="hint">1-7 choose · ←→ look · Space proceed · L layout · P painting</span>
 </div>
 <!-- the versioned boot (labs/boot.js): the game's modules and this lab's script under ?v=<build> -->
 <script src="labs/boot.js" data-lab="labs/heroes/lab.js"></script>

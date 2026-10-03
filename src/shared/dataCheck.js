@@ -102,7 +102,7 @@ export function checkData(data) {
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00267)`);
     for (const k of ['atk', 'heavy', 'hurt']) if (!data.audio?.clips?.[`${k}_${h?.id}`]) out.push(`audio.json: clips.${k}_${h?.id} (the class's own ${k === 'hurt' ? 'get-hit' : k === 'heavy' ? 'heavy' : 'attack'} sound, 0.00270)`);
-    // the class (0.00258): every number present, the heavy one the engine knows
+    // the class (0.00258, live 0.00267): every number present, the heavy one the engine knows
     const c = h?.class;
     const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'entangleTurns', 'entangleChance', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
     if (!c || !NUMS.every((k) => isNum(c[k])) || !['blow', 'cleave', 'fireball', 'drain', 'mark', 'censer', 'entangle'].includes(c.heavy)) out.push(`heroes.json: ${h?.id}.class (every number of the block, and heavy one of blow | cleave | fireball | drain | mark | censer | entangle)`);
