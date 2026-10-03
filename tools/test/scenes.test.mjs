@@ -135,6 +135,17 @@ process.on('uncaughtException', (e) => {
   ok('space clicks data-key2 button', clicked === 1);
   btn.remove();
   ok('space without a binding is inert', handleKey(' ') === false);
+  // 0.00324: a button's second key (data-key-alt, 0.00286) is served after EVERY button's own key — two buttons on
+  // the screen, the alt one mounted first: H clicks the one keyed H; with it gone, H reaches the alt
+  let own = 0, alt = 0;
+  const altBtn = mkEl('button', { key: 's', onclick: () => alt++ }, 'Soul Drain'); altBtn.setAttribute('data-key-alt', 'h');
+  const ownBtn = mkEl('button', { key: 'h', onclick: () => own++ }, 'Heavy Attack');
+  registry.app.append(altBtn, ownBtn);
+  handleKey('h');
+  ok('a key reaches the button keyed to it before any button whose SECOND key it is, whatever the order on the screen', own === 1 && alt === 0);
+  ownBtn.remove(); handleKey('h'); handleKey('s');
+  ok('…and with that button gone the same key reaches the second-key button, whose own key still works', own === 1 && alt === 2);
+  altBtn.remove();
 }
 
 // T37: 0.077 — double Retreat must not bank the run twice, the fading-out

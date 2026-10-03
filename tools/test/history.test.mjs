@@ -167,6 +167,16 @@ fresh();
   const numsLine = readFileSync('collector/worker.js', 'utf8').match(/const RUN_NUMS = (\[[^\]]*\]);/)[1];
   ok('the collector and the dashboard keep the same run fields and read an unknown outcome the same way', JSON.stringify(JSON.parse(numsLine.replace(/'/g, '"'))) === JSON.stringify(st.RUN_FIELDS)
     && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === st.sanitizeProfile({ history: [{ at: 1, outcome: 'victory' }] }).history[0].outcome && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === 'death');
+  // 0.00324: one full, slightly malformed record through BOTH sanitizers, diffed — the next field one side gains
+  // and the other does not shows here (the field list check above reads the names only)
+  const odd2 = { at: 1700000000000, room: '7', kills: 12.7, xp: '340', coins: 210, banked: 105, items: 3, bosses: 1, potions: -2, turns: 88, ms: 123456, level: 4, maxHp: 620, dmg: 31.5, armor: 48,
+    build: '0.00322-extra-long-build', outcome: 'victory', killedBy: 'The Vampire Lord of the Crimson Moon and his court', relic: 1, hero: 'necromancer', look: 150,
+    boons: Array.from({ length: 14 }, (_, i) => `boon${i}`), shrines: [{ o: ['a', 'b', 'c', 'd', 'e'], t: 'a' }, { o: ['x'], t: null }, 'junk'],
+    perf: { fps: '59.5', p95: 18, drop: 0.02, worst: 140, worstOut: 1, stalls: 2, hz: 60, secs: 300, q: 0, dpr: 2, vw: 1440, vh: 900, bg: 'evil', power: 'phone', junk: 1 }, stray: 'dropped' };
+  const viaWorker = wk.cleanRun(odd2), viaPage = st.sanitizeProfile({ history: [odd2] }).history[0];
+  const flat = (o) => (Array.isArray(o) ? `[${o.map(flat)}]` : o && typeof o === 'object' ? `{${Object.entries(o).sort().map(([k, v]) => `${k}:${flat(v)}`)}}` : JSON.stringify(o)); // (keys sorted at every level: the two build perf in a different order)
+  ok('the collector and the dashboard read one full record the same: every field, clamp and cut identical (0.00324)', flat(viaWorker) === flat(viaPage),
+    `${flat(viaWorker)}\n${flat(viaPage)}`);
   const locked = await wk.default.fetch(new Request('https://w/players'), env);
   const open = await wk.default.fetch(new Request('https://w/players?key=k'), env);
   const list = await open.json();

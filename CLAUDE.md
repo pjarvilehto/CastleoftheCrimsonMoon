@@ -2333,7 +2333,7 @@ sometimes — fetch all branches to find it.
   the six classes the fixes did not touch; CLAUDE.md's Systems got
   headings (the audio and the items in play out of the paragraphs that
   buried them).
-- 0.00300–0.00323 (0.00300–0.00313 and 0.00315–0.00321 were the other
+- 0.00300–0.00324 (0.00300–0.00313 and 0.00315–0.00321 were the other
   threads': the cards' tooltips gone (0.00300), the SFX Lab (0.00301), the
   save dialogs into the SETTINGS menu (0.00302), the 30 approved portraits
   dealt per fight (0.00303), the SFX review's two pastes (0.00304–0.00306),
@@ -2352,7 +2352,10 @@ sometimes — fetch all branches to find it.
   `simCore.baselineSnapshots` / `pairedRuns` for the two studies' loops,
   `ui/lootRow.js` out of dungeonScene.js, `lookPicker.js showLook` /
   `lookDots` shared with CHOOSE YOUR HERO, the export dialog on
-  `closeKeys`; the code map and these notes brought up to date. Found
+  `closeKeys`; two tests the 0.00299 review asked for (0.00324: the
+  hotkey alt behind every own key with two buttons on the screen, one
+  full record through the collector's and the dashboard's sanitizers
+  and diffed); the code map and these notes brought up to date. Found
   clean: no unused import, no dead CSS selector, no `?? N` copy, no
   leftover of the retired tooltips.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
@@ -2448,9 +2451,9 @@ sometimes — fetch all branches to find it.
   contact sheets and the Playwright launch (a `tools/browser.mjs`); `cli()`
   reached six tools, the rest parse their own way · the collector's and the
   dashboard's sanitizers are kept in step by one test on the run fields;
-  a fixture run through both and diffed would catch the next drift ·
-  `battleLine.js createPlayerUnit` (~95 lines) wants its own module · the
-  hotkey alt's "served after every own key" has no two-button test · ~180
+  a fixture run through both and diffed since 0.00324 (`history.test.mjs`)
+  · `battleLine.js createPlayerUnit` (~95 lines) wants its own module ·
+  the hotkey alt's two-button test is in `scenes.test.mjs` (0.00324) · ~180
   of the ~1280 checks still read source text (the GLSL, the labs' HTML and
   the tool CLIs stay that way by design).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
