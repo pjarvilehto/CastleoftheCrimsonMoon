@@ -830,7 +830,13 @@ be served stale for ~4 hours.
   card to leave (`battleRoom.js whenGone(i)` through the scene's
   `onDeath` hook), lets the row close up for `combatPacing.restackMs`,
   and only then prints the loot and the enemy phase; `deathMaxMs` caps
-  the wait (a hidden tab pauses animations), `reset()` drops it. A
+  the wait (a hidden tab pauses animations), `reset()` drops it. **Only
+  while a card is off screen (the owner's call, after the heavy blow
+  had slowed to a pause per victim):** `battleRoom.js deathStep` hands
+  the playback the card's leaving only when an enemy card sits partly
+  off the screen (`restackDue`, the cards' rects against the window);
+  a row that fits — every desktop, tablet and phone row measured, 3-6
+  enemies — keeps the old quick pace, the row closing up behind it. A
   multi-kill does this per victim, in order; an OVERKILL's victims fall
   together as the replay ends (their kills are silent).
 - Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
@@ -1171,7 +1177,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: the new hall's comments (hubSections.js, hubScene.js, styles.css) say 0.00237 for 0.00238 — fix with the next build · `go()` is silently dropped during a transition (queue it)
+- Engineering: `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)

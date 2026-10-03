@@ -423,7 +423,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   .hub-container:not(.phone-hub) { max-height: 100%; overflow-y: auto; } /* one column: the stack is taller than the window, so the container scrolls — body does not, and Descend is reachable (0.00223) */
 }
 /* middle column: alchemy panel + records panel stacked */
-/* ---- the desktop and tablet hall (0.00237, the owner's layout): the name and records up top, the knight | TRAIN |
+/* ---- the desktop and tablet hall (0.00238, the owner's layout): the name and records up top, the knight | TRAIN |
    ALCHEMY as three panels of one height, the way on at the foot. The phone keeps its sheets (.phone-hub, section 16). ---- */
 .hall-desk { height: 100%; justify-content: space-between; gap: 14px; }
 .hall-top { display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -1205,7 +1205,7 @@ html.phone .phone-hub .tab-body.pick-3 > .panel:nth-child(2) { z-index: 1; }
 html.phone .phone-hub .tab-body > .panel.on { z-index: 3; transform: none; filter: none; cursor: auto; border-color: rgba(201,162,39,0.5); border-top-left-radius: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.9), 0 0 22px rgba(0,0,0,0.8); }
 html.phone .phone-hub .tab-body > .panel:nth-child(3).on { border-top-left-radius: 6px; border-top-right-radius: 0; }
 html.phone .phone-hub .tab-body > .panel:not(.on) > * { pointer-events: none; } /* a tap on a sheet behind lifts it, nothing more */
-html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle, html.phone .phone-hub .tab-body .sec-head, html.phone .phone-hub .tab-body .sec-hint { display: none; } /* (the tabs carry the names and the dots; 0.00237: the sections' heads too) */
+html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle, html.phone .phone-hub .tab-body .sec-head, html.phone .phone-hub .tab-body .sec-hint { display: none; } /* (the tabs carry the names and the dots; 0.00238: the sections' heads too) */
 html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
 html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }

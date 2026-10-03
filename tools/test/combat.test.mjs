@@ -719,6 +719,18 @@ await withSeedAsync(4, async () => {
   // 0.159: no native image drag from a sloppy click on a portrait, nothing to select in the line
   const { mountBattle } = await import('../../src/ui/battleRoom.js');
   const bl = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
+  // the death's own step only while a card sits partly off screen (the owner's call): a row that fits runs on
+  {
+    const two = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1), scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
+    const wBefore = globalThis.innerWidth; globalThis.innerWidth = 1000;
+    const rect = (left) => () => ({ left, top: 0, width: 300, height: 400 });
+    two.enemies[0].el.getBoundingClientRect = rect(100); two.enemies[1].el.getBoundingClientRect = rect(500);
+    const fits = two.deathStep(0);
+    two.enemies[1].el.getBoundingClientRect = rect(850); // the second card hangs off the right edge
+    const off = two.deathStep(0);
+    globalThis.innerWidth = wBefore;
+    ok('a death waits for the restack only while a card is off screen', fits === null && typeof off?.then === 'function');
+  }
   let prevented = 0;
   bl.line.listeners.dragstart[0]({ preventDefault: () => prevented++ });
   const cssL = readFileSync('styles.css', 'utf8');
@@ -768,6 +780,6 @@ await withSeedAsync(4, async () => {
   pb3.reset(); // a new room
   late(); await sleep(restackMs + deathMaxMs + 100);
   ok('a reset while a card leaves drops the old wait', !has('stale room') && !pb3.isPrinting());
-  ok('the dungeon and the benchmark hand the playback the card\'s leaving (battleRoom.js whenGone)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)')
-    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)'));
+  ok('the dungeon and the benchmark hand the playback the card\'s leaving when a restack is due (battleRoom.js deathStep)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.deathStep(i)')
+    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.deathStep(i)'));
 }
