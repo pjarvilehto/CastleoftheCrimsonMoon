@@ -25,8 +25,7 @@ const GAINS = [
 export function gainLine(fromId, toId, max = 2) {
   const a = DATA.items[fromId] ?? {}, b = DATA.items[toId];
   if (!b) return '';
-  const up = GAINS.map(([k, fmt]) => [(b[k] ?? 0) - (a[k] ?? 0), fmt]).filter(([d]) => d > 1e-9).map(([d, fmt]) => fmt(Math.round(d * 100) / 100));
-  if (b.heavyCd && !a.heavyCd) up.push('faster heavy');
-  if (b.revive && !a.revive) up.push('a revive');
+  const up = [b.revive && !a.revive ? 'a revive' : null, b.heavyCd && !a.heavyCd ? 'faster heavy' : null].filter(Boolean); // (the rare powers first: the stats would crowd them out)
+  up.push(...GAINS.map(([k, fmt]) => [(b[k] ?? 0) - (a[k] ?? 0), fmt]).filter(([d]) => d > 1e-9).map(([d, fmt]) => fmt(Math.round(d * 100) / 100)));
   return up.slice(0, max).join(', ');
 }

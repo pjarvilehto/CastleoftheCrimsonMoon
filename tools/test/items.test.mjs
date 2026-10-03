@@ -36,9 +36,11 @@ const { itemArtUrl, itemArtUrls, gainLine } = await import('../../src/shared/ite
 }
 
 // what a find is worth over what it replaced
-ok('gainLine: the stats a find raises, two at most', gainLine('rusty_sword', 'moonbrand') === '+10 dmg, +10% crit');
+const I = DATA.items, dmgUp = I.moonbrand.dmg - I.rusty_sword.dmg; // (from the data: the balance moves the numbers)
+ok('gainLine: the stats a find raises, two at most', gainLine('rusty_sword', 'moonbrand') === `+${dmgUp} dmg, +${Math.round(I.moonbrand.crit * 100)}% crit`, gainLine('rusty_sword', 'moonbrand'));
 ok('...into an empty slot it is the item\'s own', gainLine(null, 'vampiric_ring') === '+30% lifesteal');
-ok('...nothing raised is an empty line; a revive or a quicker heavy is named', gainLine('moonbrand', 'rusty_sword') === '' && gainLine('relic_of_the_first_knight', 'heart_of_the_dying_moon').includes('a revive'));
+ok('...nothing raised is an empty line; a revive or a quicker heavy is named first', gainLine('moonbrand', 'rusty_sword') === '' && gainLine('relic_of_the_first_knight', 'heart_of_the_dying_moon').startsWith('a revive')
+  && gainLine('moonbrand', 'fang_of_the_eclipse').startsWith('faster heavy'));
 
 // run/loot.js takeItem: a kept find's line carries the slot it takes and what it replaces
 {
@@ -86,10 +88,11 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named', g
 // the find card in combat (ui/findFx.js): built, placed over the foes, flown to the hero
 {
   const { findCard, findPop } = await import('../../src/ui/findFx.js');
+  const { describeItem } = await import('../../src/ui/hud.js');
   const card = findCard({ id: 'moonbrand', slot: 'weapon', from: 'rusty_sword' });
   const text = card.textContent;
   ok('the find card: tier-3, FOUND · Weapon, the name, its stats, what it replaces and the gain', card.className === 'find-pop tier-3'
-    && /Found · Weapon/.test(text) && text.includes('Moonbrand') && text.includes('+14 dmg, +10% crit') && text.includes('replaces Rusty Sword') && text.includes('+10 dmg'));
+    && /Found · Weapon/.test(text) && text.includes('Moonbrand') && text.includes(describeItem(I.moonbrand)) && text.includes('replaces Rusty Sword') && text.includes(`+${dmgUp} dmg`));
   ok('...a ring into an empty slot says so', findCard({ id: 'vampiric_ring', slot: 'rings', index: 1, from: null }).textContent.includes('an empty slot'));
   await withAnimations(async () => {
     const layer = new El('div');
@@ -134,7 +137,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named', g
     equipSummary: { equipped: [], salvaged: [{ id: 'rusty_sword', name: 'Rusty Sword', tier: 1 }], coins: 8, changes } }, 'retreat').enter(root);
   const cards = root.all((n) => n.className?.startsWith?.('find-card'));
   ok('run end: a find card per changed slot — the slot, the name, what it beat and the gain; a relic tagged', cards.length === 2
-    && cards[0].textContent.includes('Weapon') && cards[0].textContent.includes('over Rusty Sword') && cards[0].textContent.includes('+10 dmg')
+    && cards[0].textContent.includes('Weapon') && cards[0].textContent.includes('over Rusty Sword') && cards[0].textContent.includes(`+${dmgUp} dmg`)
     && cards[1].className.includes('tier-4') && cards[1].all((n) => n.className === 'fc-tag')[0]?.textContent === 'Relic' && cards[1].textContent.includes('into an empty slot'));
   const chips = root.all((n) => n.className === 'salvage-chip');
   ok('...what was salvaged as small pictures with the coins', chips.length === 1 && chips[0].all((n) => n.className?.includes?.('item-pic')).length === 1 && root.textContent.includes('+8 coins'));
