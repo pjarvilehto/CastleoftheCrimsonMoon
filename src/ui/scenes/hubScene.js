@@ -113,7 +113,7 @@ export function hubScene(opts = {}) {
   // Forge never asks (0.00285, the developer's call: its use is very
   // optional): coins count only where Alchemy could spend them.
   function descend(btn) {
-    sfx('deeper'); // the strike on the press itself (0.00307, the developer's ask: it used to wait for the prompt and the art's gathering)
+    sfx('deeper'); // the strike on the press itself (0.00313, the developer's ask: it used to wait for the prompt and the art's gathering)
     const p = getProfile();
     const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendAlchemy(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
     if (!left.length) return enterDungeon(btn);
