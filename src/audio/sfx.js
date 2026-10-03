@@ -207,5 +207,7 @@ export function initSfx() {
     }
     // the strikes' recorded layers decoded ahead (0.00305): a layer that waited on its first decode would land late under the first blow
     for (const v of Object.values(DATA.audio.variation ?? {})) for (const l of v.layers ?? []) if (clip(l.name)?.file) bufferFor(l.name).catch(() => {});
+    // a clip marked prime decodes ahead too (0.00307: the descent's tom on the very first press — Enter the Castle is the first gesture, and a decode after it put the strike late)
+    for (const [name, c] of Object.entries(DATA.audio.clips)) if (c.prime && c.file) bufferFor(name).catch(() => {});
   });
 }
