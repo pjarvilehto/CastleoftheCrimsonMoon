@@ -155,9 +155,12 @@ export function checkData(data) {
     if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
     if (!isNum(secs)) out.push(`audio.json: duck.clips.${name} must be seconds`); // (mixer.js: a NaN there dropped the sound, 0.00197)
   }
-  // the room change's swoosh (0.173): a file clip with its loudest moment measured
-  const tr = data.audio?.transition?.clip;
-  if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clip (${tr}) must be a file clip with peakMs`);
+  // the room change's whooshes (0.173; a list since 0.00297): file clips with their loudest moment measured, one picked per change
+  const trs = data.audio?.transition?.clips;
+  if (!Array.isArray(trs) || !trs.length) out.push('audio.json: transition.clips must list at least one clip');
+  for (const tr of trs ?? []) if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clips ${tr} must be a file clip with peakMs`);
+  // the death hit is timed to the YOU DIED dialog by its loudest moment (dungeonScene.js, 0.00297)
+  if (!isNum(data.audio?.clips?.death?.peakMs)) out.push('audio.json: clips.death needs peakMs');
   // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
   const summon = data.difficulty?.boss?.summon?.enemy;
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);

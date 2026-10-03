@@ -24,7 +24,7 @@ import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
 import { logLine, itemName, itemPic, markWayOn } from '../hud.js';
-import { deathFlash, tickUp } from '../fx.js';
+import { deathFlash, tickUp, DEATH_PEAK_MS } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
 import { renderShrineRoom } from '../shrineUI.js';
@@ -35,7 +35,7 @@ import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { DATA } from '../../shared/data.js';
 import { play } from '../../audio/music.js';
-import { sfx } from '../../audio/sfx.js';
+import { sfx, sfxPeakAt } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
@@ -319,11 +319,13 @@ export function dungeonScene() {
 
   // Death is an event: after the fatal blow finishes printing, the screen
   // bleeds slowly to red, the YOU DIED dialog flashes in at the peak, and
-  // the red fades back out behind it (fx.js deathFlash, 0.079).
+  // the red fades back out behind it (fx.js deathFlash, 0.079). The death
+  // hit (0.00297: the developer's huge wooden tube) is timed so its
+  // loudest moment lands as the dialog flashes in.
   function openDeathModal() {
     if (deathShown) return;
     deathShown = true;
-    sfx('death');
+    sfxPeakAt('death', DEATH_PEAK_MS);
     // the narrator on a death (0.161): the reliquary's or the boss's own line, then the save's first death
     narrate(run.killedBy === 'reliquary' ? 'death_reliquary' : DATA.enemies[run.killedBy]?.boss ? 'death_boss' : 'death');
     if (getProfile().records.deaths === 0) narrate('first_death');

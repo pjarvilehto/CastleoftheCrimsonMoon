@@ -114,13 +114,24 @@ export function sfx(name, opts = {}) {
     .catch(() => { /* audio must never break gameplay */ });
 }
 
-// A room change's swoosh (0.173, audio.json transition): the developer's SFX,
-// scheduled so the clip's loudest moment (clips.<clip>.peakMs) lands
-// peakAtMs into the transition — the middle of windows out, crossfade,
-// windows in. Its variation entry and jitterDb vary each play a little.
+// A clip played so its loudest moment (clips.<name>.peakMs, measured) lands
+// atMs from now — a sound timed to a picture rather than started with it
+// (0.00297: the YOU DIED hit on the dialog; the whooshes on the crossfade).
+// A peak past atMs starts at once and lands late by the difference.
+export function sfxPeakAt(name, atMs, opts = {}) {
+  const c = clip(name);
+  if (!c) return;
+  sfx(name, { ...opts, delayMs: Math.max(0, atMs - (c.peakMs ?? 0)) });
+}
+
+// A room change's whoosh (0.173, audio.json transition; 0.00297: one of the
+// developer's ten whoosh recordings, picked at random each change in place
+// of the one pitched-down swoosh), scheduled so the clip's loudest moment
+// lands peakAtMs into the transition — the middle of windows out,
+// crossfade, windows in. jitterDb varies each play's level a little.
 export function transitionSfx() {
   const T = DATA.audio.transition;
-  sfx(T.clip, { delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs) });
+  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], T.peakAtMs);
 }
 
 export const isMuted = () => mute.on;

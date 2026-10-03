@@ -1122,12 +1122,29 @@ the first-death line, a chest and its relic). The three on/off toggles
 share `shared/prefs.js mutePref` (0.00223). A second duck under a
 longer one keeps the longer release (0.00223: a short stinger under a
 narrator line used to bring the music back early). Combat lines go through `ui/combatSfx.js` (panned to the
-card, timed to the blow, crit/mega/overkill sweeteners). The room change's
-swoosh (0.173, `audio.json transition`): the developer's SFX pitched down three
-quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.178), played by `sfx.js transitionSfx()`
-from `main.js onTransition` so its measured loudest moment (`peakMs`)
-lands `peakAtMs` (2 s, the middle) into every transition, varied a little
-each play (its `variation` entry + `jitterDb`). Music: five
+card, timed to the blow, crit/mega/overkill sweeteners). **The room
+change's whoosh** (0.173, `audio.json transition`; **0.00297: one of the
+developer's ten whoosh recordings** — `transition.clips`, three long swishes,
+four short grainy ones, three "fly away"s in `assets/audio/sfx/whoosh_*_v1.mp3`,
+in place of the one pitched-down swoosh and its `variation` entry): `sfx.js
+transitionSfx()` from `main.js onTransition` picks one at random and plays
+it through `sfxPeakAt(name, atMs)` so ITS measured loudest moment (`peakMs`,
+every recording's is under 2 s) lands `peakAtMs` (2 s, the middle of the
+crossfade) into every transition; `jitterDb` varies the level, all ten
+levelled where the old swoosh sat (-19.3 dB). **The developer's two hits
+(0.00297, `assets/audio/sfx/`):** the `death` clip is the huge wooden tube
+(`death_v2.mp3`), a stinger timed by `sfxPeakAt('death', DEATH_PEAK_MS)`
+(`fx.js`, the flash's 900 ms build) so its hit lands as the YOU DIED dialog
+flashes in; the `revive` clip is the spooky metal hit (`revive_v1.mp3`), a
+stinger ducking the music like the shrine's chime, played when the Heart
+gives the knight back (`combatQueue.js EV_SFX.revive`; the reliquary's
+revive in `treasureUI.js` too). A developer's SFX batch lands as WAVs at
+the repo root (GitHub's upload): convert each to a 128 kbps MP3 under a new
+name, measure its loudest 50 ms and where it sits (the measure is the
+`measureDb` one in `tools/elevenlabs.mjs`; a peak's time is the window's
+centre), register it, `git rm` the WAVs (they stay in history). The coin
+jingle (`loot`) plays an octave down since 0.00297 (`rate` 0.44-0.56; the
+developer found it too high). Music: five
 beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
 (title and combat 0.00280 — "Generated scores" below), each a loop of
 `loopS` with `tailS` more past it, restarted every `loopS` by
