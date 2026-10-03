@@ -338,9 +338,20 @@ art-rerender.json` (verdicts in, re-rolls out, a hint per character) →
 `assets/chars/<id>_v<k>.webp` and the data) → bump, ship. `sharp` is the
 one npm dependency (`package.json`, `npm install`; the suite runs
 without it). Pilot (0.184): the knight, the rat and the Vampire Lord,
-four candidates each, for the owner's verdict. Later: a style LoRA
-trained on the ~50 room paintings (`ostris/flux-dev-lora-trainer`) for
-the plain FLUX text-to-image path.
+four candidates each, for the owner's verdict. **The style LoRA (0.00201,
+`tools/train-lora.mjs`):** `ostris/flux-dev-lora-trainer` trained on the
+50 room paintings and the 16 character sheets (the owner's seven +
+the approved candidates' raw pictures), captions written from the data
+(trigger `CRMSNMOON`; the trainer's own captioner would drift the
+style), into the private model `pjarvilehto/crimson-moon-style`
+(`assets/data/lora.json` records each training: set, knobs, version).
+`gen-art.mjs --model lora` draws from the character line alone with
+`black-forest-labs/flux-dev-lora` (`lora_weights` = that model, ~$0.03 a
+picture), and `--model lora --new mimic --line "CHARACTER: ..."` makes
+candidates for a character the game does not have yet (a default
+600x1050 canvas; the lab shows it on a stand-in card; `--import` then
+waits for its `enemies.json` entry). Re-train after new sheets or
+approvals: `node tools/train-lora.mjs` (~$2-4, half an hour).
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels

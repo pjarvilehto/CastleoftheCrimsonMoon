@@ -13,6 +13,10 @@
 //                                                         # there is one; else the ossuary); any picture by path
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
+//   node tools/gen-art.mjs --model lora --only gargoyle   # the style LoRA (tools/train-lora.mjs): drawn from the
+//                                                         # character line alone, no source portrait
+//   node tools/gen-art.mjs --model lora --new mimic --line "CHARACTER: a treasure chest with fangs..." --name "Mimic"
+//                                                         # a character the game does not have yet (a default canvas)
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
 //                                                         # rejections (+ notes), generates the re-rolls
 //   node tools/gen-art.mjs --recut rat_c2 --tolerance 40 --shadow 90   # cut a candidate out again with
@@ -61,7 +65,15 @@ const API = 'https://api.replicate.com/v1';
 export const MODELS = {
   pro: { model: 'flux-kontext-apps/multi-image-kontext-pro', priceUsd: 0.04 },
   max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08 },
+  // the style LoRA (tools/train-lora.mjs): text to image, no source portrait — a NEW character (--new) or a fresh take on one
+  lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON' },
 };
+/** The LoRA's prompt: the trigger, the sheet framing (as the training captions had it), the facing, the character line. */
+export function loraPrompt(c, hint = '') {
+  return `${MODELS.lora.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, ${facing(c.id)}: ${c.line.replace(/^CHARACTER:\s*/, '')}${hint ? ` ${hint.trim()}` : ''}`;
+}
+/** A character not in the doc (--new mimic --line "CHARACTER: ..."): no current portrait, so its cut-out goes on a default canvas. */
+export const NEW_CANVAS = { w: 600, h: 1050, box: { x0: 30, y0: 30, x1: 570, y1: 1020 } };
 export const DEFAULTS = { n: 4, style: 'dungeon_ossuary.jpg', model: 'pro', aspect: '2:3', tolerance: 30, concurrency: 3 };
 // The style reference for a character, when nothing is asked (--style, a
 // re-roll's style): its own finished sheet in the target style if the owner
@@ -178,7 +190,7 @@ export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULT
   const stray = dropStray(alpha, info.width, info.height);
   const box = applyAlpha(data, alpha, info.width, info.height);
   if (!box) throw new Error(`${rawPath}: nothing left after the key (tolerance ${tolerance})`);
-  const old = await portraitFrame(refPath);
+  const old = refPath ? await portraitFrame(refPath) : NEW_CANVAS;
   const at = placeOn(box, old);
   let fig = S(Buffer.from(data.buffer, data.byteOffset, data.length), { raw: { width: info.width, height: info.height, channels: 4 } })
     .extract({ left: box.x0, top: box.y0, width: box.x1 - box.x0, height: box.y1 - box.y0 }).resize(at.w, at.h);
@@ -197,7 +209,7 @@ function saveRegistry(reg) {
   reg.generated = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
   writeFileSync(REGISTRY, JSON.stringify({ _doc: reg._doc, generated: reg.generated, chars: reg.chars }, null, 2) + '\n');
 }
-function charEntry(reg, c) { return (reg.chars[c.id] ??= { name: c.name, file: c.file, candidates: [] }); }
+function charEntry(reg, c) { const e = (reg.chars[c.id] ??= { name: c.name, file: c.file, candidates: [] }); if (c.isNew) { e.line = c.line; e.isNew = true; } return e; }
 function nextN(entry) { return entry.candidates.reduce((m, k) => Math.max(m, k.n), 0) + 1; }
 
 // ---- main ----
@@ -207,7 +219,14 @@ async function main() {
   const val = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
   const doc = parsePrompts(readFileSync(DOC, 'utf8'));
   const reg = loadRegistry();
-  const only = val('--only') ? val('--only').split(',') : null;
+  if (val('--new')) { // a character the game does not have yet: its line from the command line (or the registry, from an earlier run)
+    const id = val('--new'), was = reg.chars[id];
+    if (!/^[a-z_]+$/.test(id)) throw new Error('--new: an id of lowercase letters and underscores');
+    const text = val('--line') ?? was?.line;
+    if (!text) throw new Error(`--new ${id}: --line "CHARACTER: ..." (none recorded yet)`);
+    doc.chars.push({ id, name: val('--name') ?? was?.name ?? id, file: null, line: text.startsWith('CHARACTER:') ? text : `CHARACTER: ${text}`, isNew: true });
+  }
+  const only = val('--only') ? val('--only').split(',') : val('--new') ? [val('--new')] : null;
   const chars = doc.chars.filter((c) => !only || only.includes(c.id));
   if (only && chars.length !== only.length) throw new Error(`unknown character in --only (known: ${doc.chars.map((c) => c.id).join(', ')})`);
   const model = MODELS[val('--model', DEFAULTS.model)];
@@ -250,7 +269,7 @@ async function main() {
     const c = doc.chars.find((x) => x.id === id), one = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
     if (!one && val('--recut') !== 'all') throw new Error(`--recut: no candidate ${val('--recut')} (or "all")`);
     const list = one ? [[c, one]] : chars.flatMap((ch) => charEntry(reg, ch).candidates.map((k) => [ch, k]));
-    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), join(CHARS, ch.file), join(ROOT, k.file), { ...cutOpts, flip: has('--flip') }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
+    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), ch.file ? join(CHARS, ch.file) : null, join(ROOT, k.file), { ...cutOpts, flip: has('--flip') }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
     saveRegistry(reg); return;
   }
 
@@ -270,7 +289,9 @@ async function main() {
       if (k.flip || has('--flip')) img = img.flop();
       await img.webp({ quality: 90, alphaQuality: 100 }).toFile(join(CHARS, file));
       k.imported = file;
-      if (c.id === 'player') cards.player.art = file; else enemies[c.id].art = file;
+      if (c.id === 'player') cards.player.art = file;
+      else if (enemies[c.id]) enemies[c.id].art = file;
+      else console.log(`  (${c.id} is not in enemies.json yet: add the enemy with "art": "${file}" when it joins the game)`);
       console.log(`  ${c.id}: candidate ${k.n} -> assets/chars/${file}${k.flip ? ' (flipped)' : ''}${k.from ? ` (a clean of c${k.from})` : ' (not a clean pass: a ground shadow may be in it — --clean first if so)'}`);
       done++;
     }
@@ -307,6 +328,8 @@ async function main() {
   }
   for (const j of jobs) {
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
+    if (model === MODELS.lora) { j.style = MODELS.lora.weights; j.prompt = loraPrompt(j.c, j.hint); continue; } // text to image: no pictures go in
+    if (j.c.isNew) throw new Error(`--new ${j.c.id} has no portrait to redraw: use --model lora`);
     j.stylePath = existsSync(join(ROOT, 'assets/bg', j.style)) ? join(ROOT, 'assets/bg', j.style) : existsSync(join(ROOT, j.style)) ? join(ROOT, j.style) : null;
     if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
@@ -331,12 +354,14 @@ async function main() {
         const use = j.from ? CLEAN.model : model.model;
         const input = j.from
           ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
-          : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+          : model === MODELS.lora
+            ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
+            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
         await (await sharp())(out.bytes).jpeg({ quality: 92 }).toFile(rawPath);
-        const cut = await cutAndFit(rawPath, join(CHARS, j.c.file), cutPath, cutOpts);
+        const cut = await cutAndFit(rawPath, j.c.file ? join(CHARS, j.c.file) : null, cutPath, cutOpts);
         const entry = charEntry(reg, j.c);
         entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: use, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, from: j.from?.n, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
         entry.candidates.sort((a, b) => a.n - b.n);

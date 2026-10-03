@@ -5,13 +5,23 @@
 // Run via tools/smoke-test.mjs.
 
 import { ok, fresh, DATA, readFileSync } from './harness.mjs';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
 fresh();
 
 // The doc and the generator: 13 characters, every one a portrait on disk, the facing rule
 {
-  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor } = await import('../gen-art.mjs');
+  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor, loraPrompt, NEW_CANVAS } = await import('../gen-art.mjs');
+  // the style LoRA (0.00201): tools/train-lora.mjs trains it on the rooms and the sheets with written captions; gen-art --model lora draws from the line alone
+  const { trainingSet, LORA } = await import('../train-lora.mjs');
+  const set = trainingSet();
+  ok('the LoRA training set: every room painting and character sheet, each captioned with the trigger word and the data\'s words',
+    set.filter((s) => s.kind === 'room').length === readdirSync('assets/bg').filter((f) => f.endsWith('.jpg')).length && set.filter((s) => s.kind === 'character').length >= 7
+    && set.every((s) => s.caption.startsWith(`${LORA.trigger} style, `) && existsSync(s.src)) && set.some((s) => s.caption.includes('a painting of The Ossuary')) && set.some((s) => s.caption.includes('a huge hunched black sewer rat')));
+  ok('gen-art --model lora: the trained weights, the trigger in the prompt, the facing, no pictures in; a new character gets a default canvas',
+    MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
+    && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
+    && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && readFileSync('tools/gen-art.mjs', 'utf8').includes("lora_weights: MODELS.lora.weights") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
   ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('bat') === DEFAULTS.style && styleFor('nobody') === DEFAULTS.style
     && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));

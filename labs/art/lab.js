@@ -19,8 +19,9 @@ const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag)
 
 await loadData();
 const art = await fetch(`assets/data/art.json${buildQuery()}`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { chars: {} })).catch(() => ({ chars: {} }));
-const IDS = ['player', ...Object.keys(DATA.enemies)];
-const nameOf = (id) => (id === 'player' ? 'The Curious Knight' : DATA.enemies[id].name);
+const NEW = Object.keys(art.chars ?? {}).filter((id) => id !== 'player' && !DATA.enemies[id]); // drawn by the LoRA for a character the game does not have yet (gen-art --new)
+const IDS = ['player', ...Object.keys(DATA.enemies), ...NEW];
+const nameOf = (id) => (id === 'player' ? 'The Curious Knight' : DATA.enemies[id]?.name ?? art.chars[id]?.name ?? id);
 const candidates = (id) => art.chars?.[id]?.candidates ?? [];
 const B = DATA.backgrounds;
 const PAINTINGS = [...new Set([...B.entrance, ...B.rooms, ...B.bosses, ...B.treasure])];
@@ -39,9 +40,9 @@ const run = createRun();
 function unitFor(id, i, k = null) {
   const u = id === 'player'
     ? createPlayerUnit(run, { onHeavy() {}, onPotion() {} })
-    : createEnemyUnit({ ...scaleEnemy(id, 9), hp: 0 }, i, { onAttack() {}, onGone() {} });
+    : createEnemyUnit({ ...scaleEnemy(DATA.enemies[id] ? id : 'rat', 9), id, name: `${nameOf(id)} LV9`, hp: 0 }, i, { onAttack() {}, onGone() {} }); // (a new character: the rat's numbers, its own name)
   if (id === 'player') u.update({ hp: run.hp, printing: false, heavyReady: true, heavyCd: 0, dead: false });
-  else u.update({ hp: scaleEnemy(id, 9).maxHp, dead: false, printing: false, combatOver: false });
+  else u.update({ hp: scaleEnemy(DATA.enemies[id] ? id : 'rat', 9).maxHp, dead: false, printing: false, combatOver: false });
   u.card.style.position = 'relative';
   if (id !== 'player' && DATA.enemies[id].boss) u.el.classList.add('boss-unit'); // twice as wide (0.196)
   if (k) { u.portrait.src = k.file; u.glint.src = k.file; }
@@ -62,7 +63,8 @@ function line(units) {
 function compare() {
   const id = S.char, cs = candidates(id);
   const units = [unitFor(id, 0), ...cs.map((k, i) => unitFor(id, i + 1, k))];
-  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, 'Current'), el('span', { class: 'meta' }, portraitUrl(id).split('/').pop())));
+  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, NEW.includes(id) ? 'New character' : 'Current'), el('span', { class: 'meta' }, NEW.includes(id) ? 'not in the game yet (a stand-in card)' : portraitUrl(id).split('/').pop())));
+  if (NEW.includes(id)) { units[0].portrait.style.display = 'none'; units[0].glint.style.display = 'none'; }
   cs.forEach((k, i) => {
     const u = units[i + 1], v = verdictOf(k);
     const bOk = el('button', { onclick: () => verdict(k, 'ok') }, 'Approve'), bNo = el('button', { onclick: () => verdict(k, 'no') }, 'Reject');
