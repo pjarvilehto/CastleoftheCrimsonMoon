@@ -785,7 +785,7 @@ be served stale for ~4 hours.
   height (`.hall-desk`), each purse in its section's head (`secHead`);
   1001-1400px wide the panels `zoom` down in three steps (an iPad gets the
   same hall smaller), under 1000px one scrolling column;
-  **a run's finds revealed (0.00248, the owner's ask):** `equipItems`
+  **a run's finds revealed (0.00249, the owner's ask):** `equipItems`
   records `changes` (each slot the finds filled: from → to), the run's end
   hands them to the hall (`go('hub', { fromRun, finds })`), and the hall
   opens with the OLD items there (`shownProfile`; no Forge on them), then
@@ -1302,7 +1302,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: the finds reveal's comments (equipment.js, hubSections.js, hubScene.js, styles.css) say 0.00248 for 0.00249 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the developer opts in)
