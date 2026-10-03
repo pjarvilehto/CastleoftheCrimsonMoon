@@ -2,8 +2,11 @@
 
 **Castle of the Crimson Moon** — a gothic roguelite browser game. Vanilla JS
 ES modules, **no framework, no build step**. DOM-based UI over full-screen
-painted backgrounds (3D when WebGL allows); DIN Condensed Bold via
-@font-face. You play as The Curious Knight pushing deeper into a castle:
+painted backgrounds (3D when WebGL allows); D-DIN Condensed Bold via
+@font-face (Datto, SIL Open Font License, `assets/fonts/D-DIN-OFL.txt`;
+0.00226 — it replaced Apple's DIN Condensed, which had no web licence).
+D-DIN carries 231 glyphs: the symbols the UI uses (★ ⚔ ☰ → …) fall back
+to the next font in the stack, and a text minus is a plain hyphen. You play as The Curious Knight pushing deeper into a castle:
 card-based combat rooms, a shrine in every 8-room stretch, a summoning boss
 every 8 rooms, the game "won" at the room-24 boss, and meta progression
 (training, alchemy, forge) in the Great Hall between runs.
@@ -1087,8 +1090,7 @@ sometimes — fetch all branches to find it.
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget
   disagree · a real-device pass (the owner's) is still owed.
-- Other: check the DIN Condensed web-embedding licence (macOS system font)
-  · orphaned legacy staging site cleanup.
+- Other: orphaned legacy staging site cleanup.
 
 **Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon
 Lab (generated floors, themed rooms, the game's fights in them) and a

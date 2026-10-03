@@ -36,7 +36,7 @@ async function boot() {
   // then visibly flipped. The <link rel=preload> in index.html starts the
   // fetch at parse time; here we just await it (capped, so a failed fetch
   // can never hang boot).
-  const fontReady = (document.fonts?.load('32px "DIN Condensed"', 'C') ?? Promise.resolve()).catch(() => {});
+  const fontReady = (document.fonts?.load('32px "D-DIN Condensed"', 'C') ?? Promise.resolve()).catch(() => {});
   await Promise.race([fontReady, new Promise((r) => setTimeout(r, 800))]);
   // Render the loader directly (not via show()) — there is nothing to
   // fade out from yet, and #app starts hidden in index.html.
