@@ -1,4 +1,7 @@
 {
+  "0.00295": [
+    "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
+  ],
   "0.00294": [
     "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
   ],

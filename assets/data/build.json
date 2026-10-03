@@ -1,5 +1,5 @@
 {
-  "version": "0.00294",
+  "version": "0.00295",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -99,6 +99,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00295": [
+      "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
+    ],
     "0.00294": [
       "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
     ],
@@ -142,10 +145,6 @@
     ],
     "0.00281": [
       "The Great Hall grows with large screens: on a big desktop monitor the title, the three panels and the buttons are drawn larger instead of sitting small in the middle."
-    ],
-    "0.00280": [
-      "New music: the title and the Great Hall, and every fight, play new orchestral scores (picked in the Music Lab), looped where the music meets itself and crossfaded so the loop is hard to hear.",
-      "The Music Lab has two takes each for the boss, the shrine and the run's end to choose from."
     ]
   }
 }
