@@ -92,12 +92,16 @@ src/
                         shrine / treasure room between fights (unnumbered); paintings
                         never repeat in a run (pickFresh, run.seenBackgrounds)
     combat.js           one action in phases: rollHit -> overkill | strike(+spill)
-                        -> classPhase (the class's heavy and passives, 0.00267:
-                        cleave, fireball, drain, mark, censer, entangle; the
-                        blight's tick, the Druid's mending, the thrall rising)
-                        -> lifesteal -> enemyPhase (the thrall takes the blows
-                        and the roots loosen in enemyStrike / enemyPhase)
-                        -> summons -> cleared
+                        -> classPhase (the class's heavy and passives, 0.00267)
+                        -> lifesteal -> enemyPhase -> summons -> cleared;
+                        damageFoe() is the one place a foe loses HP (0.00278)
+    classes.js          the class registry (0.00278): HEAVIES by kind (blow,
+                        cleave, fireball, drain, mark, censer, entangle —
+                        spills / onHeavy), AFTER_BLOW hooks (a charge back,
+                        the blight's tick, the mending, the thrall rising),
+                        FOE_TURN hooks (the roots' hold, the thrall taking
+                        the blow, the roots loosening), HEAVY_KINDS and
+                        CLASS_KEYS for dataCheck; combat.js calls, never switches
     shrine.js           boon deal + costs + effects (ids map to code)
     loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
                         or salvage on the spot, for kills and chests alike;
@@ -152,16 +156,24 @@ src/
                         combatPacing.restackMs, deathMaxMs caps it (0.00220);
                         per printed line: tick, line, sound, effect
     combatQueue.js      combat events -> playback items (fx, hold, sfx, loot);
-                        sfxFor() picks the class's own blow / heavy / hurt clip (0.00270)
-    combatFx.js  fxParts.js   effects per event; shake, spray, numbers...; the
-                        class traces over a foe's burst (traceFor / classTrace)
-                        and the class events (mark, blight, entangle, thrall, 0.00268)
+                        sfxFor(ev, run.hero) picks the class's own blow / heavy /
+                        hurt clip (0.00270; the run's class since 0.00278)
+    combatFx.js  fxParts.js   effects per event; shake, spray, numbers...;
+                        fxParts.lunge() is the one lunge (attack, dodge, the
+                        thrall's blow, 0.00278)
+    classFx.js          the class effects (0.00278, out of combatFx.js): the
+                        traces over a foe's burst (traceFor / classTrace) and
+                        CLASS_FX, the class events by kind (mark, blight,
+                        entangle, entangled, charge, thrall, thrallhit,
+                        thrallfall); the class is read from the fx context's run
     findFx.js           a kept find in combat: its card rises over the foes and flies into the LOOT
                         row (0.00262); a potion's card into the hero card's count (0.00263)
     combatSfx.js        a line's sound, panned to its card, timed to the blow;
                         the foe's own voice under it (eatk_ / ehurt_<id>, 0.00271)
     particleLooks.js    what a burst is made of (materials, looks; pure);
-                        spawnClassBurst() = the class's own trace (CLASS_LOOKS, 0.00268)
+                        spawnClassBurst() = the class's own trace: LOOKS, a
+                        table of generators on shared primitives (CLASS_LOOKS
+                        its keys; 0.00268, a table since 0.00278)
     particles.js        the particle canvas: budget, batched drawing
     cardFx.js           the shader light behind every card: a pooled WebGL
                         canvas per lit card, reused across rooms (0.00227; the

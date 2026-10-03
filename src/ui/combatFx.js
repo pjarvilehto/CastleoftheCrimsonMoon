@@ -19,17 +19,21 @@
 // flashes act on the portrait. Death collapse lives in battleLine.js (the
 // card owns its dead state).
 // The reusable pieces (shake, particle spray, HP-bar flash, glow, floating
-// numbers) live in fxParts.js (0.098). Browsers without element.animate (the smoke
-// test shim, very old TVs) simply get no one-shots.
+// numbers, the lunge and its clock) live in fxParts.js (0.098, 0.00278); the
+// classes' choreography (the traces, the Hex, the thrall...) in classFx.js
+// (0.00278). Browsers without element.animate (the smoke test shim, very old
+// TVs) simply get no one-shots.
 
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, classSpray, centreOf, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
-import { getProfile } from '../meta/profile.js';
-import { heroOf } from '../shared/heroes.js';
+import { reduced, can, spray, classSpray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT, lunge, strikeMs, LUNGE_MS, STRIKE_AT, HITSTOP_MS } from './fxParts.js';
+import { classTrace, CLASS_FX } from './classFx.js';
 import { markActivity } from '../core/perfSpans.js';
 import { findPop, potionPop } from './findFx.js';
+
+export { strikeMs } from './fxParts.js'; // (ui/combatSfx.js times the blow's sound by it)
+export { traceFor } from './classFx.js'; // (the trace table, kept here for its readers)
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
@@ -69,15 +73,7 @@ export function holdFor(fx) {
   return p.enemyAttackMs;
 }
 
-const LUNGE_MS = 280;
-const STRIKE_AT = 0.45; // share of the lunge where the blow lands
-const HITSTOP_MS = 70;  // crits and heavies freeze for a beat at impact (0.088)
-
-// When an attack's blow lands, ms after its line prints — its sound is
-// scheduled for this moment (ui/combatSfx.js, 0.107).
-export const strikeMs = (fx) => (fx?.heavy ? LUNGE_MS * 1.3 : LUNGE_MS) * STRIKE_AT;
-
-// Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer }
+// Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer, run() } (ui/battleRoom.js fxContext)
 export function playFx(fx, ctx) {
   markActivity(fx.kind); // a stall's label in the device report (0.00225)
   switch (fx.kind) {
@@ -94,15 +90,7 @@ export function playFx(fx, ctx) {
     case 'summon': return summon(fx, ctx);
     case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies into the LOOT row (0.00260)
     case 'potion': return potionPop(ctx); // a found potion: its card flies into the hero card's count (0.00263)
-    case 'mark': return mark(fx, ctx);
-    case 'blight': return blight(ctx);
-    case 'entangle': return entangle(ctx);
-    case 'entangled': return entangled(fx, ctx);
-    case 'charge': return classSpray(ctx.unit('player'), 'charge');
-    case 'thrall': return thrall(ctx);
-    case 'thrallhit': return thrallHit(fx, ctx);
-    case 'thrallfall': return classSpray(ctx.unit('player'), 'thrallfall');
-    default: return undefined;
+    default: return CLASS_FX[fx.kind]?.(fx, ctx); // the classes' events (0.00268; ui/classFx.js since 0.00278), else nothing
   }
 }
 
@@ -146,21 +134,10 @@ function attack(fx, ctx) {
   const dur = fx.heavy ? LUNGE_MS * 1.3 : LUNGE_MS;
   const strike = strikeMs(fx);
   const stop = fx.crit || fx.heavy ? HITSTOP_MS : 0;
-  if (can(a?.el) && can(d?.el) && !reduced()) {
-    // Lunge a slice of the way toward the target: anticipation (pull
-    // back) -> strike -> recover.
-    const ra = a.el.getBoundingClientRect();
-    const toward = (rd.left + rd.width / 2) - (ra.left + ra.width / 2);
-    const reach = Math.sign(toward) * Math.min(Math.abs(toward) * 0.14, ra.width * (fx.heavy ? 0.5 : 0.35));
-    const lunge = a.el.animate([
-      { transform: 'translateX(0)' },
-      { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25, easing: 'ease-in' },
-      { transform: `translateX(${reach}px)`, offset: STRIKE_AT, easing: 'ease-out' },
-      { transform: 'translateX(0)' },
-    ], { duration: dur, easing: 'ease-in-out', composite: 'add' }); // add (0.00197): over the deal still settling the unit, not instead of it
-    // Hit-stop: freeze the attacker at the moment of impact.
-    if (stop) setTimeout(() => { lunge.pause(); setTimeout(() => lunge.play(), stop); }, strike);
-  }
+  // Lunge a slice of the way toward the target (fxParts.js lunge): a heavy reaches further.
+  const swing = can(d?.el) ? lunge(a, rd, { dur, reachShare: fx.heavy ? 0.5 : 0.35 }) : null;
+  // Hit-stop: freeze the attacker at the moment of impact.
+  if (swing && stop) setTimeout(() => { swing.pause(); setTimeout(() => swing.play(), stop); }, strike);
   hit(d, fx, strike, ctx, stop, rd, rc);
   // The player's big blows shake the fighters and kick the camera; crits
   // shove the whole background along the blow, left -> right (0.092).
@@ -237,100 +214,12 @@ function hit(u, fx, delay, ctx, stop = 0, re = null, rc = null) {
   return rc;
 }
 
-// ---- the classes' traces (0.00268, the developer's ask: each class's
-// attacks their own) — particleLooks.js spawnClassBurst draws them ----
-const heavyKind = () => heroOf(getProfile()).class.heavy;
-// Which trace a blow on a foe leaves, by the class and the blow: the
-// knight's heavy a steel clash; the Barbarian's Cleave a crescent (its
-// reach a smaller one), his blows embers; the Wizard's Fireball a bloom on
-// every foe it takes, his blows arcane; the Necromancer's blows grave
-// motes, his Soul Drain the wisps torn out of the foe flying to him; the Druid's heavy
-// blow three rakes of the living staff (the roots themselves burst on the
-// entangle line, 0.00271), his blows one; the Hexhunter's blows on the hexed
-// foe flare its sigil, the others violet sparks (the Hex itself on the
-// mark line); the Plague Sister's blows a swing of the censer, the blight's
-// gnawing a wisp of it. null = the foe's own burst alone.
-export function traceFor(fx, heavy) {
-  if (fx.via === 'fireball') return 'fireball';
-  if (fx.via === 'cleave') return 'cleavespill';
-  if (fx.via === 'blight') return 'blight';
-  if (fx.kind !== 'attack' || fx.from !== 'player') return null;
-  switch (heavy) {
-    case 'blow': return fx.heavy ? 'steel' : null;
-    case 'cleave': return fx.heavy ? 'cleave' : 'rage';
-    case 'fireball': return fx.heavy ? 'fireball' : 'arcane';
-    case 'drain': return fx.heavy ? 'drain' : 'grave';
-    case 'entangle': return fx.heavy ? 'claw' : 'thorn';
-    case 'mark': return fx.marked ? 'hexhit' : 'hexspark';
-    case 'censer': return 'incense';
-    default: return null;
-  }
-}
-function classTrace(u, fx, rc, ctx) {
-  const look = traceFor(fx, heavyKind());
-  if (!look) return;
-  classSpray(u, look, { dir: 1, kind: fx.heavy || fx.crit ? 'crit' : 'hit', to: look === 'drain' ? centreOf(ctx.unit('player')) : null }, rc); // (the drain's wisps fly to the Necromancer)
-}
-// Hex: the sigil turns on the foe, which flares violet.
-function mark(fx, ctx) {
-  const u = ctx.unit(fx.to);
-  classSpray(u, 'hex');
-  glow(u, 'sepia(1) saturate(4) hue-rotate(220deg) brightness(1.3)', 700);
-}
-// Last Rites: the censer's smoke settles on every foe still standing.
-function blight(ctx) {
-  for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'censer'), i * 60);
-}
-// Entangle (0.00271): roots burst from the ground at every foe's feet, a green light in the scene, the line trembles.
-function entangle(ctx) {
-  for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'roots', { at: 'feet' }), i * 70);
-  shake(ctx, 0.5);
-  bgLight('potion', ctx.unit('player')?.card?.getBoundingClientRect?.());
-}
-// A bound foe strains and fails: the roots tug, the card shivers in place, the word floats up.
-function entangled(fx, ctx) {
-  const u = ctx.unit(fx.from);
-  if (!u) return;
-  classSpray(u, 'rooted', { at: 'feet' });
-  if (can(u.el) && !reduced()) u.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'translateX(0)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
-  floatNumber(ctx, u, 'ENTANGLED', 'fx-miss');
-}
-// A foe rises again at the Necromancer's side.
-function thrall(ctx) {
-  const p = ctx.unit('player');
-  classSpray(p, 'thrall');
-  glow(p, 'sepia(1) saturate(4) hue-rotate(80deg) brightness(1.3)', 800);
-}
-// A foe's blow lands on the thrall: the lunge, a green THRALL number (.fx-thrall), grave motes — the Necromancer stands untouched.
-function thrallHit(fx, ctx) {
-  const a = ctx.unit(fx.from), p = ctx.unit('player');
-  const strike = strikeMs(fx);
-  if (can(a?.el) && can(p?.el) && !reduced()) {
-    const ra = a.el.getBoundingClientRect(), rp = p.el.getBoundingClientRect();
-    const reach = -Math.min(Math.abs((ra.left + ra.width / 2) - (rp.left + rp.width / 2)) * 0.14, ra.width * 0.35);
-    a.el.animate([
-      { transform: 'translateX(0)' },
-      { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25 },
-      { transform: `translateX(${reach}px)`, offset: STRIKE_AT },
-      { transform: 'translateX(0)' },
-    ], { duration: LUNGE_MS, easing: 'ease-in-out', composite: 'add' });
-  }
-  setTimeout(() => classSpray(p, 'thrallhit'), strike);
-  if (fx.taken > 0) floatNumber(ctx, p, `-${fx.taken}`, 'fx-thrall', strike, 'THRALL');
-}
-
 // Enemy swings and misses: the lunge still happens, the hero side-steps.
 function dodge(fx, ctx) {
   const a = ctx.unit(fx.from), p = ctx.unit('player');
   if (can(a?.el) && can(p?.el) && !reduced()) {
-    const ra = a.el.getBoundingClientRect(), rp = p.el.getBoundingClientRect();
-    const reach = -Math.min(Math.abs((ra.left + ra.width / 2) - (rp.left + rp.width / 2)) * 0.14, ra.width * 0.35);
-    a.el.animate([
-      { transform: 'translateX(0)' },
-      { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25 },
-      { transform: `translateX(${reach * 1.15}px)`, offset: STRIKE_AT },
-      { transform: 'translateX(0)' },
-    ], { duration: LUNGE_MS, easing: 'ease-in-out', composite: 'add' });
+    const rp = p.el.getBoundingClientRect();
+    lunge(a, rp, { overshoot: 1.15 }); // the swing overreaches: nothing stopped it
     p.el.animate([
       { transform: 'translate(0, 0)' },
       { transform: `translate(${-rp.width * 0.08}px, ${-rp.height * 0.015}px)`, offset: 0.4 },

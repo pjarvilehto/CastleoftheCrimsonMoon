@@ -2,7 +2,9 @@
 // and shared/heroes.js, the pick on the profile (save version 6, an
 // imported code made whole), CHOOSE YOUR HERO between the title and the
 // hall (1-7 and a click choose, the arrows turn the look, Proceed lands the
-// pick and leads on), and the knight's card and the hall drawing the hero.
+// pick and leads on), and the knight's card and the hall drawing the hero
+// (0.00278: the card from the run's snapshot, run.hero; the hall from the
+// profile — shared/portraits.js portraitUrl('player')).
 
 import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, heroScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
@@ -214,6 +216,12 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const frame = u.card.all((n) => n.className === 'card-frame')[0];
   ok('the knight\'s card plate carries the class colour as a blend layer', frame.attrs.style === '--theme:#9e3e1a' && frame.children.some((c) => c.className === 'tone'));
+  // 0.00278: the card's theme is the run's (run.hero.theme), not the profile's
+  const { heroSnapshot } = await import('../../src/shared/heroes.js');
+  const run = createRun(); run.hero = heroSnapshot({ hero: { id: 'wizard', look: 0 } });
+  const wu = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+  ok('…the run\'s theme, whatever the profile says (the run as the Wizard on a Barbarian\'s save): the plate and the card light', wu.card.all((n) => n.className === 'card-frame')[0].attrs.style === `--theme:${heroById('wizard').theme.plate}`
+    && cardStyle('player', false, run.hero.theme).tint === heroById('wizard').theme.tint && cardStyle('player').look === 'embers');
   show(heroScene()); await sleep(1100);
   const cards = registry.app.all((n) => n.className.split(' ').includes('hero'));
   ok('every card on CHOOSE YOUR HERO wears its class colour', cards.length === 7 && cards.every((c) => c.attrs.style === `--theme:${heroById(c.attrs['data-hero']).theme.plate}` && c.all((n) => n.className === 'tone').length === 1));

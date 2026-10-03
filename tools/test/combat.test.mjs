@@ -1,7 +1,7 @@
 // tools/test/combat.test.mjs — combat engine + the battle line: attacks, spill, SMASH, death, playback, animation, summons.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync, byClass } from './harness.mjs';
 
 fresh();
 
@@ -87,8 +87,8 @@ await withSeedAsync(4, async () => {
   scene.enter(registry.app);
   const units = registry.app.all((e) => e.className && e.className.startsWith('unit '));
   const cards = registry.app.all((e) => e.className && e.className.startsWith('char-card'));
-  const hpLines = registry.app.all((e) => e.className === 'hp-line');
-  const actRows = registry.app.all((e) => e.className === 'unit-actions');
+  const hpLines = byClass(registry.app, 'hp-line');
+  const actRows = byClass(registry.app, 'unit-actions');
   const portraits = registry.app.all((e) => e.tagName === 'img' && e.attrs.src && /assets\/(chars|heroes)\//.test(e.attrs.src) && !e.classList.contains('glint')); // (0.183: each portrait has a glint copy; 0.00264: the knight's standing figure is in assets/heroes/)
   const atkBtns = registry.app.all((e) => e.tagName === 'button' && e.attrs['data-key'] === 'a' && e.attrs.disabled === undefined);
   const nEnemies = cards.length - 1;
@@ -204,16 +204,16 @@ await withSeedAsync(4, async () => {
   const scene = dungeonScene();
   scene.enter(registry.app);
   await sleep(50);
-  const line = registry.app.all((e) => e.className === 'battle-line')[0];
+  const line = byClass(registry.app, 'battle-line')[0];
   const cardsAtStart = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'));
   const enemiesAtStart = cardsAtStart.length;
-  const playerHpText = () => registry.app.all((e) => e.className === 'hp-text')[0].textContent;
+  const playerHpText = () => byClass(registry.app, 'hp-text')[0].textContent;
   const before = playerHpText();
   handleKey('a');
   const duringFirstLine = playerHpText();
   await sleep(3000); // drain
   const after = playerHpText();
-  const lineAfter = registry.app.all((e) => e.className === 'battle-line')[0];
+  const lineAfter = byClass(registry.app, 'battle-line')[0];
   ok('battle line is not rebuilt during playback (the cards left are the ones dealt; a fallen one has gone, 0.00216)', line === lineAfter
     && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char')).every((c) => cardsAtStart.includes(c)));
   ok('player HP holds until the enemy hit prints', duringFirstLine === before, `${before} / ${duringFirstLine} / ${after}`);
@@ -222,8 +222,8 @@ await withSeedAsync(4, async () => {
   for (let g = 0; g < 40 && !t().includes('Push Deeper') && !t().includes('YOU DIED'); g++) { handleKey('a'); await sleep(900); }
   await sleep(1500);
   // 0.00216: a fallen enemy leaves the row (no skull card), the slots left grow (fit: --n follows the row)
-  const rowNow = registry.app.all((e) => e.className === 'enemy-row')[0];
-  if (rowNow) ok('fallen enemies have left the row (no skull cards) and the line counts the living', rowNow.children.length < enemiesAtStart && !registry.app.all((e) => e.className === 'skull').length
+  const rowNow = byClass(registry.app, 'enemy-row')[0];
+  if (rowNow) ok('fallen enemies have left the row (no skull cards) and the line counts the living', rowNow.children.length < enemiesAtStart && !byClass(registry.app, 'skull').length
     && String(lineAfter.attrs.style).includes(`--n:${Math.max(1, rowNow.children.length)}`), `${rowNow.children.length} of ${enemiesAtStart} cards, ${lineAfter.attrs.style}`);
 }
 
@@ -264,7 +264,7 @@ await withSeedAsync(4, async () => {
   const scene = dungeonScene();
   scene.enter(registry.app);
   await sleep(50);
-  ok('combat room has the fx layer', registry.app.all((e) => e.className === 'fx-layer').length === 1);
+  ok('combat room has the fx layer', byClass(registry.app, 'fx-layer').length === 1);
   const portraits = registry.app.all((e) => e.tagName === 'img' && /\bidle-/.test(e.className));
   ok('portraits carry idle classes + random phase', portraits.length >= 2 && portraits.every((p) => /^-\d/.test(p.style.animationDelay)));
 }
@@ -386,9 +386,9 @@ await withSeedAsync(4, async () => {
   const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
   const bu = createEnemyUnit(boss, 0, { onAttack() {} });
   bu.update({ hp: boss.maxHp, dead: false, printing: false, combatOver: false, meter: 2 });
-  const fill = bu.el.all((e) => e.className === 'summon-fill')[0];
+  const fill = byClass(bu.el, 'summon-fill')[0];
   ok('boss card has a summon bar that fills', !!fill && fill.style.width === `${Math.round((200) / cfg.every)}%`);
-  ok('regular cards have no summon bar', createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack() {} }).el.all((e) => e.className === 'summon-line').length === 0);
+  ok('regular cards have no summon bar', byClass(createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack() {} }).el, 'summon-line').length === 0);
   const star = (u) => u.el.all((x) => x.className === 'elite-star' || /^aura/.test(x.className ?? '')).length;
   const big = { ...sk, maxHp: DATA.difficulty.eliteMinHp + 1, hp: DATA.difficulty.eliteMinHp + 1 };
   ok('a summon is never elite — no star, no aura — however big it scales; the same card unsummoned is (0.00223)', star(createEnemyUnit(big, 1, { onAttack() {} })) === 0 && star(createEnemyUnit({ ...big, summoned: false }, 1, { onAttack() {} })) === 2 && star(bu) === 2);
@@ -409,8 +409,8 @@ await withSeedAsync(4, async () => {
   const scene = dungeonScene();
   scene.enter(registry.app);
   await sleep(50);
-  const enemyRow = () => registry.app.all((e) => e.className === 'enemy-row')[0];
-  const lineStyle = () => registry.app.all((e) => e.className === 'battle-line')[0].attrs.style;
+  const enemyRow = () => byClass(registry.app, 'enemy-row')[0];
+  const lineStyle = () => byClass(registry.app, 'battle-line')[0].attrs.style;
   let early = null;
   for (let i = 0; i < cfg.every; i++) {
     handleKey('a');
@@ -424,7 +424,7 @@ await withSeedAsync(4, async () => {
   // 0.196: the boss's card is twice as wide (two slots of the width budget), framed as a 9-slice
   const css2 = readFileSync('styles.css', 'utf8');
   ok('the boss card is twice as wide and the row counts it twice', /\.boss-card \{ aspect-ratio: 826 \/ 1106; \}/.test(css2) && css2.includes('var(--slots, var(--n))') && /\.boss-card \.card-frame \{[^}]*border-image:/.test(css2));
-  ok('summon line printed in violet', registry.app.all((e) => e.className === 'summon').length === 1);
+  ok('summon line printed in violet', byClass(registry.app, 'summon').length === 1);
   DATA.difficulty.bossEvery = every;
   for (let g = 0; g < 3; g++) { handleKey('a'); await sleep(900); } // let timers settle
 

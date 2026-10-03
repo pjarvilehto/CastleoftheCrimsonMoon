@@ -161,13 +161,14 @@ const LINES = DATA.narration.lines;
 
   // the dungeon's first room says the descent (the scene drives the real narrator)
   fresh();
-  ctx.currentTime = 300;
+  const T1 = Math.max(300, Math.ceil(ctx.currentTime / 100) * 100 + 100); // never back in time (0.00278)
+  ctx.currentTime = T1;
   const n3 = started().length;
   dungeonScene().enter(registry.app);
   await sleep(50);
   const d = started()[n3];
   const dl = LINES.descent_begin.map((t) => dbToGain(N.targetDb - t.measuredDb));
-  ok('entering the castle: "…your descent begins", held for the painting', !!d && Math.abs(d.started[0] - (300 + N.roomEntryDelayMs / 1000)) < 1e-9 && dl.some((g) => Math.abs(g - gainOf(d)) < 1e-9), d && `${d.started}`);
+  ok('entering the castle: "…your descent begins", held for the painting', !!d && Math.abs(d.started[0] - (T1 + N.roomEntryDelayMs / 1000)) < 1e-9 && dl.some((g) => Math.abs(g - gainOf(d)) < 1e-9), d && `${d.started}`);
   fa.restore();
 }
 

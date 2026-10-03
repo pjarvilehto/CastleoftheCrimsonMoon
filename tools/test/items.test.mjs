@@ -5,7 +5,7 @@
 // Run via tools/smoke-test.mjs.
 
 import { existsSync, readFileSync } from 'node:fs';
-import { ok, fresh, El, DATA, createRun, getProfile, withAnimations, sleep } from './harness.mjs';
+import { ok, fresh, El, DATA, createRun, getProfile, withAnimations, sleep, byClass } from './harness.mjs';
 
 fresh();
 const { itemArtUrl, itemArtUrls, potionArtUrl, gainLine } = await import('../../src/shared/itemArt.js');
@@ -156,8 +156,8 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const cards = root.all((n) => n.className?.startsWith?.('find-card'));
   ok('run end: a find card per changed slot — the slot, the name, what it beat and the gain; a relic tagged', cards.length === 2
     && cards[0].textContent.includes('Weapon') && cards[0].textContent.includes('over Rusty Sword') && cards[0].textContent.includes(`+${dmgUp} dmg`)
-    && cards[1].className.includes('tier-4') && cards[1].all((n) => n.className === 'fc-tag')[0]?.textContent === 'Relic' && cards[1].textContent.includes('into an empty slot'));
-  const chips = root.all((n) => n.className === 'salvage-chip');
+    && cards[1].className.includes('tier-4') && byClass(cards[1], 'fc-tag')[0]?.textContent === 'Relic' && cards[1].textContent.includes('into an empty slot'));
+  const chips = byClass(root, 'salvage-chip');
   ok('...what was salvaged as small pictures with the coins', chips.length === 1 && chips[0].all((n) => n.className?.includes?.('item-pic')).length === 1 && root.textContent.includes('+8 coins'));
 }
 
@@ -194,7 +194,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const run = createRun();
   run.potions = 2; run.potionCap = 4;
   const hero = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
-  const count = () => hero.potionsEl.all((n) => n.className === 'potion-count')[0].textContent;
+  const count = () => byClass(hero.potionsEl, 'potion-count')[0].textContent;
   ok('the hero card: the potion\'s picture and the count', hero.potionsEl.all((n) => n.className?.includes?.('potion-ic'))[0]?.attrs.src === u && count() === '2/4');
   run.potions = 3; hero.holdPotion();
   hero.update({ hp: run.hp, heavyCd: 0, heavyReady: false, dead: false, printing: true });

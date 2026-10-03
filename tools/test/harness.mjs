@@ -177,17 +177,37 @@ export const { shrineOffers, canAffordOffer, acceptOffer } = await import('../..
 export const { dungeonScene, hubScene, titleScene, heroScene } = await import('../../src/ui/scenes/index.js');
 export const { resetProfile, getProfile } = await import('../../src/meta/profile.js');
 await loadData();
+const SHIPPED = structuredClone(DATA); // the data as loaded (0.00278: fresh() puts a patched block back)
 
 export const t = () => registry.app.textContent;
 
-// Each test file starts from a clean slate: fresh profile, empty screen.
+// Each test file starts from a clean slate: fresh profile, empty screen,
+// the data as shipped (0.00278: a block a test patched — a boon's price,
+// a pacing knob — used to stay patched for every file after it; the
+// restore is in place, so a module holding DATA.difficulty sees it too).
 export function fresh() {
   resetProfile();
   getProfile().name ||= 'Tester'; // 0.109: unnamed saves get the name prompt on the title screen
   registry.app.innerHTML = '';
   closeAllDialogs();
   delete El.prototype.animate; // (a withAnimations block that threw)
+  for (const k of Object.keys(DATA)) if (k !== 'build') { for (const kk of Object.keys(DATA[k])) delete DATA[k][kk]; Object.assign(DATA[k], structuredClone(SHIPPED[k])); }
 }
+
+// ---------- finding things on the screen (0.00278) ----------
+// The shim has no querySelector on elements, so tests walked the tree
+// with `all((n) => n.className === 'x')` — an exact match that misses a
+// second class (`back-row st-hp`). These read the class list.
+const hasClass = (e, cls) => typeof e.className === 'string' && e.className.split(' ').includes(cls);
+/** Every element under root carrying the class. */
+export const byClass = (root, cls) => root.all((e) => hasClass(e, cls));
+/** The first element under root carrying the class, or null. */
+export const firstByClass = (root, cls) => byClass(root, cls)[0] ?? null;
+/** The buttons under root whose text starts with the label (the hotkey hint and the pips follow it). */
+export const buttons = (root, label) => root.all((e) => e.tagName === 'button' && e.textContent.startsWith(label));
+export const button = (root, label) => buttons(root, label)[0] ?? null;
+/** Click as the game would: the element's click listeners, in order. */
+export const click = (e) => { for (const fn of e?.listeners?.click ?? []) fn({}); return !!e; };
 
 // A test under a seeded Math.random (0.00223: the fights that walked on the
 // real one could die or not; a seed makes one outcome — the order of the

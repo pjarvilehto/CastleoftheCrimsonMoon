@@ -16,7 +16,9 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf, cleanHero, lookIsSprite, heavyName } from '../shared/heroes.js';
+import { PORTRAIT_DIR, portraitFile } from '../shared/portraits.js'; // (the knight's wide sprite, for the run's look — heroArt)
+import { heroById, lookUrl, lookIsSprite } from '../shared/heroes.js';
+import { usesCharges } from '../run/classes.js';
 import { potionHealFor } from '../meta/leveling.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
 
@@ -31,10 +33,20 @@ export const IDLE_FAMILY = {
   vampire_lord: 'boss',
 };
 
-// A portrait with its idle loop, started at a random phase so a room of
-// identical skeletons doesn't breathe in unison.
-function portrait(id, alt, family) {
-  const img = el('img', { class: `portrait idle-${family}`, src: ART(id), alt, draggable: 'false' }); // never a native image drag (0.159)
+// The hero's figure for the run's class and look (run.hero, 0.00278 — the
+// combat UI reads the class from the run, never the profile; shared/portraits.js
+// portraitUrl('player') is the hall's, off the profile): the look's file in
+// assets/heroes/, or cards.json player.art for a look marked `sprite` (the
+// knight's crouch, 0.00264).
+export function heroArt(hero) {
+  const h = heroById(hero.id);
+  return lookIsSprite(h, hero.look) ? `${PORTRAIT_DIR}/${portraitFile('player')}` : lookUrl(h, hero.look);
+}
+
+// A portrait (`src`) with its idle loop, started at a random phase so a room
+// of identical skeletons doesn't breathe in unison.
+function portrait(src, alt, family) {
+  const img = el('img', { class: `portrait idle-${family}`, src, alt, draggable: 'false' }); // never a native image drag (0.159)
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }
@@ -45,8 +57,8 @@ function portrait(id, alt, family) {
 // figure. 0.00222: mounted for the sweep's length only, through the unit's
 // `glint` getter (mountGlint) — six invisible copies used to run their
 // idle loops and blend-plus-filter surfaces all fight long.
-function glintBand(id, family, img) {
-  const g = el('img', { class: `portrait glint idle-${family}`, src: ART(id), alt: '', draggable: 'false', 'aria-hidden': 'true' });
+function glintBand(src, family, img) {
+  const g = el('img', { class: `portrait glint idle-${family}`, src, alt: '', draggable: 'false', 'aria-hidden': 'true' });
   g.style.animationDelay = img.style.animationDelay;
   return el('div', { class: 'glint-band', 'aria-hidden': 'true' }, g);
 }
@@ -54,7 +66,7 @@ function glintBand(id, family, img) {
 // away again (the sweep's end, fxParts.js).
 export function mountGlint(u) {
   if (u.glintEl) return u.glintEl;
-  const band = glintBand(u.id, u.family, u.portrait);
+  const band = glintBand(u.art, u.family, u.portrait); // (u.art: the portrait's file, 0.00278 — the player's is the run's look)
   const kids = u.card.children;
   u.card.insertBefore(band, kids[Array.prototype.indexOf.call(kids, u.portrait) + 1] ?? null);
   u.glintEl = band;
@@ -153,7 +165,7 @@ function statsPage(run) {
     ['Crit chance', () => pct(run.stats.crit), 'crit'],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`, 'crit'],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—'), 'ls'],
-    [heavyName(getProfile()), () => `×${+(tune.heavyMult * run.stats.klass.heavyMult).toFixed(2)} · ${run.stats.klass.charges > 0 ? `${run.stats.klass.charges} charges` : `${run.stats.heavyCdMax} turns`}`], // (0.00267: the class's name for its heavy; 0.00277: its own factor, and charges for a charge class)
+    [run.hero.heavyName, () => `×${+(tune.heavyMult * run.stats.klass.heavyMult).toFixed(2)} · ${usesCharges(run.stats.klass) ? `${run.stats.klass.charges} charges` : `${run.stats.heavyCdMax} turns`}`], // (0.00267: the class's name for its heavy — the run's, 0.00278; 0.00277: its own factor, and charges for a charge class)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
     ['Potion heals', () => `${potionHealFor(run.stats.klass)} HP`, 'hp'], // (0.00277: the class's share in it)
   ].map(([label, val, st]) => ({ val, b: el('b', {}, val()), label, st }));
@@ -210,8 +222,11 @@ function flipCard(card, swap) {
 }
 
 // Player unit. update({ hp, printing, heavyReady, heavyCd, dead })
+// The class is the run's (run.hero, 0.00278: id, name, heavyName, theme,
+// look — runState.js createRun snapshots it, the debug SWITCH CLASS rebuilds
+// it); the gear is the profile's, as worn.
 export function createPlayerUnit(run, { onHeavy, onPotion }) {
-  const p = getProfile();
+  const p = getProfile(), hero = run.hero;
   const weapon = p.equipment.weapon ? itemWithForge(p.equipment.weapon, p) : null;
   const armor = p.equipment.armor ? itemWithForge(p.equipment.armor, p) : null;
   const hp = hpLine(run.hp, run.maxHp);
@@ -223,12 +238,13 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const potionCount = el('span', { class: 'potion-count' }, shownPotions());
   const potionIcon = potionPic('potion-ic');
   const potions = el('div', { class: 'card-sub potions', title: 'Potions' }, potionIcon ?? 'POTIONS ', potionCount);
-  const img = portrait('player', 'player', 'player');
+  const art = heroArt(hero);
+  const img = portrait(art, 'player', 'player');
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
   const armorVal = el('span', { class: 'weapon-dmg st st-armor' }, armorText()); // (0.00266: the stat colours)
-  const plate = frame(heroOf(p).theme);
+  const plate = frame(hero.theme);
   // The card's top (0.00251, the developer's layout): the class name sits
   // ABOVE the card (hero-title, in the unit), and the gear takes the top
   // of the card as two columns — the weapon and armor names (rarity
@@ -244,7 +260,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),
       el('span', { class: 'weapon-dmg st st-dmg' }, `${run.stats.dmg} DMG`),
       armorVal));
-  const card = el('div', { class: `char-card player-card${lookIsSprite(heroOf(p), cleanHero(p.hero).look) ? '' : ' hero-standing'}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite; 0.00264: the knight stands too, but for his crouching look)
+  const card = el('div', { class: `char-card player-card${lookIsSprite(heroById(hero.id), hero.look) ? '' : ' hero-standing'}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite; 0.00264: the knight stands too, but for his crouching look)
     plate, gear, img, chip, potions);
   const back = cardBack(run);
   card.append(back.el);
@@ -261,11 +277,11 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     });
     flipping = false;
   });
-  attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the hero (0.183)
+  attachCardFx(card, cardStyle('player', false, hero.theme), { into: plate }); // the shader light behind the hero (0.183), in the class's theme (0.00254)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
+  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, hero.heavyName, cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
-  const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
+  const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, hero.name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
@@ -278,7 +294,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     // left as pips in place of the cooldown
     const k = run.stats.klass;
     const charges = Math.max(0, Math.min(k.charges, Number(s.charges) || 0));
-    setText(cd, k.charges > 0 ? ` ${'◆'.repeat(charges)}${'◇'.repeat(k.charges - charges)}`
+    setText(cd, usesCharges(k) ? ` ${'◆'.repeat(charges)}${'◇'.repeat(k.charges - charges)}`
       : s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);
@@ -301,7 +317,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
       { transform: 'scale(1)', filter: 'brightness(1)' },
     ], { duration: 700, easing: 'ease-out' });
   };
-  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update, potionsEl: potions, holdPotion, landPotion });
+  return withGlint({ el: unit, card, portrait: img, art, id: 'player', family: 'player', glintEl: null, update, potionsEl: potions, holdPotion, landPotion });
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })
@@ -310,7 +326,8 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
   const family = IDLE_FAMILY[e.id] ?? 'prowl';
-  const img = portrait(e.id, e.name, family);
+  const art = ART(e.id);
+  const img = portrait(art, e.name, family);
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
@@ -376,7 +393,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     canHit = !(s.dead || s.combatOver || s.printing);
     setClass(card, 'targetable', canHit);
   };
-  const self = withGlint({ el: unit, card, portrait: img, id: e.id, family, glintEl: null, summoned: !!e.summoned, update });
+  const self = withGlint({ el: unit, card, portrait: img, art, id: e.id, family, glintEl: null, summoned: !!e.summoned, update });
   return self;
 }
 

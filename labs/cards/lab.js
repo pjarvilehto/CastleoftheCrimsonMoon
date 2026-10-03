@@ -10,6 +10,7 @@ import { createEnemyUnit, createPlayerUnit, IDLE_FAMILY } from '../../src/ui/bat
 import { createRun } from '../../src/run/runState.js';
 import { scaleEnemy } from '../../src/shared/balance.js';
 import { MATERIAL } from '../../src/ui/particleLooks.js';
+import { HIT_TINT } from '../../src/ui/fxParts.js';
 import { attachCardFx, LOOKS, TINTS } from './cardFx.js';
 
 const KEY = 'castle-card-lab';
@@ -108,14 +109,16 @@ function hit(u, power = 1, fromRight = false) {
     u.card.animate(kf, { duration: O.motion.ms * (O.motion.hit === 'wobble' ? 1.8 : 1), easing: 'linear', composite: 'add' });
   }
   // the knockback the game plays on the whole unit (combatFx.js hit): kept, so the kick reads on top of it
-  if (can(u.el)) { const k = u.el.getBoundingClientRect().width * 0.03 * power * (fromRight ? -1 : 1); u.el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${k}px)` }, { transform: `translateX(${-k * 0.45}px)` }, { transform: 'translateX(0)' }], { duration: 240, easing: 'ease-out' }); }
+  // (0.00278: the lab mirrors fxParts.js / combatFx.js hit() — the five keyframes, the hit's add composite; keep them in step)
+  if (can(u.el)) { const k = u.el.getBoundingClientRect().width * 0.03 * power * (fromRight ? -1 : 1); u.el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${k}px)` }, { transform: `translateX(${-k * 0.45}px)` }, { transform: `translateX(${k * 0.2}px)` }, { transform: 'translateX(0)' }], { duration: 240, easing: 'ease-out', composite: 'add' }); }
   if (O.glint.withHit) sweep(u, Math.max(500, O.motion.ms * 1.1), -dir);
   flash(u);
 }
+// The struck figure's flash: the game's (combatFx.js hit(), its tint fxParts.js HIT_TINT) — the lab mirrors it (0.00278: it had drifted to 2.4 / 0.3 and a literal tint).
 function flash(u) {
   if (!can(u.portrait)) return;
   const base = getComputedStyle(u.portrait).filter, pre = base === 'none' ? '' : base;
-  u.portrait.animate([{ filter: `${pre} brightness(2.4) saturate(0.3)` }, { filter: `${pre} sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.15)`, offset: 0.35 }, { filter: base }], { duration: 260, easing: 'ease-out' });
+  u.portrait.animate([{ filter: `${pre} brightness(2.6) saturate(0.2)` }, { filter: `${pre} ${HIT_TINT}`, offset: 0.35 }, { filter: base }], { duration: 260, easing: 'ease-out' });
 }
 // The entrance: slide in, and with 'turn' / 'deal' a rotation on the way.
 function enter() {

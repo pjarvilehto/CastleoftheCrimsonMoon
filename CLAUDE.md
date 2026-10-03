@@ -1036,7 +1036,10 @@ developer gave the key the `sound_generation` permission, and
 seconds, prompt) through ElevenLabs' sound generation into
 `assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7; `--redo <clip>` a
 fresh take as `_v<k+1>`), measured each with ffmpeg (the loudest 50 ms)
-and pointed the clip's `file` / `measuredDb` at it — then every
+and pointed the clip's `file` / `measuredDb` at it (the API call and
+the measure are `tools/elevenlabs.mjs`'s since 0.00278, shared with
+gen-vo.mjs; the audio test checks the prompt table and the registry
+name the same clips) — then every
 rendered clip's `measuredDb` was replaced by the browser's own reading
 (`tools/audio-check.mjs`: ffmpeg's 16 kHz downsample under-read the hissy
 ones, a zap or a smoke hiss, by up to 4 dB) and the `gainDb` trims set so
@@ -1469,9 +1472,9 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
 
 ## Testing notes
 
-- `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (16 files, by area:
+- `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (17 files, by area:
   scenes, combat, shrines, progression, content, backgrounds, audio, sim,
-  history, narration, art, cards, classes, heroes, items, layout — the
+  history, narration, art, cards, layout, classes, fx, heroes, items — layout
   last checks the phone layer's `html.phone` twins against the code and
   the desktop rules, rule 8; ~1100 checks),
   each starting from `fresh()`; a test file imports only the harness
@@ -1507,7 +1510,15 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
   sweep are asserted through it; keep it off for the instant collapse /
   vanish checks). Test files may not assume a module singleton (the
   mixer, scene.js's active layer) is untouched by an earlier file: read
-  the state relative to what is there. The `check-bump` check runs on a
+  the state relative to what is there. **`fresh()` restores `DATA`
+  (0.00278):** every block is put back to the loaded JSON, in place, so a
+  test may patch a price or a pacing knob and leave it (before, a patch
+  stayed for every file after it). The harness also finds things on the
+  screen by class list, not by exact `className` — `byClass(root, cls)`,
+  `firstByClass`, `buttons(root, label)` / `button` (a button whose text
+  starts with the label: the hotkey hint and the pips follow it) and
+  `click(el)` (its click listeners, as the game fires them); a row
+  carrying two classes (`back-row st-hp`) used to be missed. The `check-bump` check runs on a
   throwaway git repository of its own (the live repo's answer depends on
   where in a ship it runs), and an orphan-asset check guards the folders
   players download.
@@ -1705,6 +1716,13 @@ sometimes — fetch all branches to find it.
   flying into it (0.00262), the potion's picture and card (0.00263).
   The simulator, 4 campaigns x 40 runs per class: the knight median 15.8
   / room-24 boss 6%, the others 16.5–18.3 (the Heroes notes).
+- 0.00276–0.00278 (the review after the classes): the documentation sweep
+  (0.00276: CLAUDE.md, ARCHITECTURE.md, the collector's README, the labs'
+  headers, the prompt docs), the seven display mismatches (0.00277, the
+  Backlog's list) and the refactors (0.00278: the class registry
+  `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
+  `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
+  simulator and the shrine study; the Backlog's "Refactors done" entry).
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
@@ -1761,9 +1779,8 @@ sometimes — fetch all branches to find it.
 - Engineering: `go()` is silently dropped
   during a transition (queue it) · about 160 of the ~1100 checks still
   assert on source text rather than behaviour (inject recording stubs
-  instead) · `fresh()` does not restore `DATA` after a test patches it
-  (a `byClass` / button helper in the harness would shorten the class
-  tests too) · the Actions deploy job (off until the developer opts in)
+  instead; 0.00278 gave the harness `byClass` / `button` and a `DATA`
+  restore in `fresh()` for it) · the Actions deploy job (off until the developer opts in)
   could exclude `tools`, `docs`, `collector`, `assets/style` (17MB) and
   `assets/items/candidates` (1.3MB) — those two are unused by every
   page; `assets/bg/candidates` (22MB), `assets/chars/candidates` (12MB)
@@ -1788,20 +1805,32 @@ sometimes — fetch all branches to find it.
   or retire it (the developer's call) · WebP room paintings under new
   names (~49% smaller at q80; the developer judges q80 / q85 in the Fog
   Lab; `bg3dPuffs seedOf` should hash the stem first).
-- Refactor candidates (the classes landed as switches; none urgent): a
-  class registry in `run/` (one table of the seven heavies) in place of
-  the heavy-kind switches in five places (`combat.js` playerAttack /
-  classPhase / sweep / enemyStrike, `shrine.js` Quicken) · the class id,
-  name and theme snapshotted into the run so the combat UI stops reading
-  the profile (`sfxFor`, `heavyName(getProfile())`, `cardStyle`) · a
-  `damageFoe` helper for the four damage copies in `combat.js` · a
-  `lunge()` helper for the three lunges in `combatFx.js`, and the class
-  effects into a `classFx.js` of their own (`combatFx.js` could also hand
-  kick / enter / deal to a `cardMotion.js` — contested: the kick is part
-  of the hit's choreography) · `particleLooks.js` as a table of looks on
-  shared primitives (`CLASS_LOOKS` repeats the ring / streak / puff
-  recipes) · a shared `tools/elevenlabs.mjs` for gen-vo.mjs and
-  gen-sfx.mjs (each carries its own fetch, key and retry).
+- Refactors done in 0.00278 (the classes had landed as switches; the
+  simulator and the shrine study byte-identical for all seven classes):
+  `run/classes.js`, the class registry — `HEAVIES` by kind (`spills`,
+  `onHeavy`), `AFTER_BLOW` and `FOE_TURN` hook lists in the old phases'
+  order, `HEAVY_KINDS` / `CLASS_KEYS` that `dataCheck` reads (an unknown
+  heavy kind or a missing key is named) — in place of the heavy-kind
+  switches in `combat.js` and `shrine.js` (`usesCharges`); `combat.js
+  damageFoe` for the four damage copies, and every foe a `fighter` with
+  `blight` / `entangled` 0 (summons too) · `run.hero` (`heroes.js
+  heroSnapshot`: id, name, heavyName, theme, look) snapshotted at
+  `createRun` and on SWITCH CLASS, read by `combatQueue.js sfxFor(ev,
+  run.hero)`, `battleLine.js createPlayerUnit` (`heroArt(hero)`, the
+  title, the heavy's name, `frame(theme)`), `cardFx.js cardStyle(id,
+  boss, theme)` and `classFx.js` through the fx context's `run` — the
+  combat UI reads no class from the profile (a test plays a Wizard run
+  on a knight save) · `fxParts.js lunge()` for the three lunges (the
+  dodge and the thrall's blow took the attack's eased keyframes) and
+  the class effects in `ui/classFx.js` (`CLASS_FX` by kind, `traceFor`)
+  · `particleLooks.js LOOKS`, a table of generators on the shared
+  primitives (`ink` / `spark` / `heal` kept as written: restating them
+  would move the seeded shapes) · `tools/elevenlabs.mjs` (above) · the
+  harness helpers and the `DATA` restore (Testing notes); the new
+  `fx.test.mjs` asserts the lunges and the class-from-run reads. Still
+  open: `combatFx.js` could hand kick / enter / deal to a
+  `cardMotion.js` (contested: the kick is part of the hit's
+  choreography).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget

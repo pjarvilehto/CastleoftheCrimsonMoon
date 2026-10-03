@@ -1,17 +1,22 @@
 // classes.test.mjs — the classes' gameplay (drafted 0.00258, shipped 0.00267,
 // the developer's call: "we can edit and finetune once I get to play"):
 // heroes.json class per hero through stats.js derivedStats into
-// run.stats.klass, the seven heavies and the passives in combat.js
-// (classPhase, sweep, the thrall, the charges, the Druid's roots in
-// enemyStrike), and the combat UI's minimum: the charges on the hero's
-// button, the HEXED / BLIGHT / ROOTED tag on a foe's card,
-// a colour per new log line.
+// run.stats.klass, the seven heavies and the passives in the registry
+// run/classes.js (0.00278: HEAVIES by kind, AFTER_BLOW and FOE_TURN hooks;
+// combat.js calls them, damageFoe the one wound path), and the combat UI's
+// minimum: the charges on the hero's button, the HEXED / BLIGHT / ROOTED
+// tag on a foe's card, a colour per new log line — the UI reading the class
+// from run.hero, never the profile.
 import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync } from './harness.mjs';
+import { readdirSync } from 'node:fs';
 
 const { useHeavy, canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
 const { createPlayerUnit, createEnemyUnit } = await import('../../src/ui/battleLine.js');
 const { derivedStats } = await import('../../src/meta/stats.js');
+const { HEAVY_KINDS, CLASS_KEYS, HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges } = await import('../../src/run/classes.js');
+const { heroSnapshot, heroById, lookUrl } = await import('../../src/shared/heroes.js');
+const { checkData } = await import('../../src/shared/dataCheck.js');
 
 const as = (id) => { getProfile().hero = { id, look: 0 }; const run = createRun(); run.stats.crit = 0; return run; };
 const foe = (hp, dmg = 0, name = 'Rat') => ({ id: 'rat', name, maxHp: hp, hp, dmg, xp: 1, coins: [1, 1] });
@@ -31,6 +36,37 @@ const types = (evs) => evs.map((e) => e.type);
   getProfile().hero = { id: 'hexhunter', look: 0 };
   ok('the Hexhunter\'s dodge is the class\'s plus the gear\'s', derivedStats().dodge === DATA.heroes.heroes.find((h) => h.id === 'hexhunter').class.dodge + base.dodge);
   getProfile().hero = null;
+}
+
+// the registry (0.00278): the kinds and the keys in one place, driving the data check
+{
+  fresh();
+  ok('the seven heavy kinds, each in HEAVIES; the knight\'s blow the one that spills (strike and OVERKILL)', HEAVY_KINDS.join() === 'blow,cleave,fireball,drain,mark,censer,entangle' && HEAVY_KINDS.every((k) => HEAVIES[k] && typeof HEAVIES[k].spills === 'boolean')
+    && HEAVIES.blow.spills && !HEAVIES.blow.onHeavy && HEAVY_KINDS.filter((k) => HEAVIES[k].spills).length === 1 && HEAVY_KINDS.filter((k) => k !== 'blow').every((k) => typeof HEAVIES[k].onHeavy === 'function'));
+  ok('every hero\'s class block is exactly CLASS_KEYS + heavy, its heavy a kind', DATA.heroes.heroes.every((h) => Object.keys(h.class).sort().join() === [...CLASS_KEYS, 'heavy'].sort().join() && HEAVY_KINDS.includes(h.class.heavy)));
+  ok('the passives run in the engine\'s order: the charges, the blight\'s tick, the mending, the thrall; the foes\' turn holds (roots), takes (thrall), ends (roots loosen)', AFTER_BLOW.map((f) => f.name).join() === 'chargeOnKill,blightTick,mend,thrallRaise'
+    && FOE_TURN.hold.map((f) => f.name).join() === 'rootsHold' && FOE_TURN.take.map((f) => f.name).join() === 'thrallTakes' && FOE_TURN.end.map((f) => f.name).join() === 'rootsLoosen');
+  ok('usesCharges: the Wizard (charges > 0), no one else', DATA.heroes.heroes.filter((h) => usesCharges(h.class)).map((h) => h.id).join() === 'wizard');
+  const broken = structuredClone(DATA);
+  broken.heroes.heroes[1].class.heavy = 'kick';
+  delete broken.heroes.heroes[2].class.rage;
+  broken.heroes.heroes[3].class.mend = 'some';
+  const probs = checkData(broken);
+  ok('dataCheck reads the registry: an unknown heavy kind, a missing key and a non-number are each named', probs.some((m) => m.includes('barbarian.class.heavy (kick)') && m.includes(HEAVY_KINDS.join(' | '))) && probs.some((m) => m.includes('wizard.class.rage')) && probs.some((m) => m.includes('necromancer.class.mend'))
+    && checkData(DATA).length === 0, probs.join('; '));
+  ok('dataCheck.js carries no list of its own: the kinds and the keys are imported', (() => { const src = readFileSync('src/shared/dataCheck.js', 'utf8'); return src.includes("import { HEAVY_KINDS, CLASS_KEYS } from '../run/classes.js'") && !src.includes("'cleaveShare'") && !src.includes("'fireball'"); })());
+  // the fallback grep (content.test.mjs) keys on dataCheck.js's quoted leaves, which the class keys left: the same check for them here
+  const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
+  const copies = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\.(\w+) \?\? -?[\d.]+/g)].filter((m) => CLASS_KEYS.includes(m[1])).map((m) => `${f}: ${m[0]}`));
+  ok('no fallback copies of a class key\'s number in src', copies.length === 0, copies.join('; '));
+  ok('the doc string in heroes.json points at the registry', DATA.heroes._class.includes('run/classes.js') && DATA.heroes._class.includes('CLASS_KEYS') && DATA.heroes._class.includes('HEAVY_KINDS'));
+  // the statuses are numbers from the first line: the room's foes and a summon alike (the hooks count on it), the room's own objects untouched
+  const summoner = { ...foe(100000, 0, 'Lord'), summonEvery: 1, summonMeter: 0 };
+  const roomObj = { number: 9, kind: 'combat', isBoss: true, background: 'x', name: 'T', enemies: [summoner] };
+  const cb = createCombat(as('knight'), roomObj);
+  ok('createCombat gives every foe blight 0 and entangled 0; the room\'s objects stay as they were', cb.enemies[0].blight === 0 && cb.enemies[0].entangled === 0 && summoner.blight === undefined && summoner.entangled === undefined);
+  const evs = playerAttack(cb, 0, false);
+  ok('a summon joins with the same defaults (and no rewards, as before)', evs.some((e) => e.type === 'summon') && cb.enemies.length === 2 && cb.enemies[1].summoned && cb.enemies[1].blight === 0 && cb.enemies[1].entangled === 0 && cb.enemies[1].xp === 0 && cb.enemies[1].hp === cb.enemies[1].maxHp);
 }
 
 // the Barbarian: the cleave reaches the other foes
@@ -227,6 +263,29 @@ const types = (evs) => evs.map((e) => e.type);
 }
 
 
+// the UI reads the class from the run (0.00278): run.hero, not the profile
+{
+  fresh();
+  const { heroArt } = await import('../../src/ui/battleLine.js');
+  const { cardStyle } = await import('../../src/ui/cardFx.js');
+  const run = as('knight');
+  ok('createRun snapshots the class: id, name, heavyName, theme, look', run.hero.id === 'knight' && run.hero.name === 'The Curious Knight' && run.hero.heavyName === 'Heavy Attack' && run.hero.theme === heroById('knight').theme && run.hero.look === 0);
+  run.hero = heroSnapshot({ hero: { id: 'wizard', look: 2 } }); // the run says wizard; the profile still says knight
+  getProfile().hero = { id: 'knight', look: 0 };
+  const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+  const title = u.el.all((n) => n.className === 'hero-title card-name')[0].textContent;
+  const label = u.el.all((n) => n.className === 'btn-label')[0].textContent;
+  const frame = u.card.all((n) => n.className === 'card-frame')[0];
+  ok('the hero title, the heavy button, the plate\'s theme and the figure follow run.hero (the Wizard\'s third look), the STATS row too', title === 'THE WIZARD' && label.startsWith('Fireball') && frame.attrs.style === `--theme:${heroById('wizard').theme.plate}`
+    && u.portrait.attrs.src === lookUrl(heroById('wizard'), 2) && u.art === lookUrl(heroById('wizard'), 2) && u.card.all((n) => (n.className ?? '').startsWith('back-row')).some((r) => r.textContent.startsWith('Fireball')) && u.card.classList.contains('hero-standing'));
+  ok('heroArt: a look\'s file, the knight\'s crouch the wide sprite from cards.json', heroArt({ id: 'necromancer', look: 1 }) === lookUrl(heroById('necromancer'), 1) && heroArt({ id: 'knight', look: heroById('knight').looks.findIndex((l) => l.sprite) }) === `assets/chars/${DATA.cards.player.art}`);
+  const sprite = createPlayerUnit({ ...run, hero: heroSnapshot({ hero: { id: 'knight', look: 4 } }) }, { onHeavy() {}, onPotion() {} });
+  ok('…and the card drops hero-standing for the sprite', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === `assets/chars/${DATA.cards.player.art}`);
+  ok('cardStyle(\'player\') takes the run\'s theme; without one the profile\'s class (the hall, the labs)', cardStyle('player', false, heroById('barbarian').theme).look === 'embers' && cardStyle('player').look === 'ether' && cardStyle('rat', false, heroById('barbarian').theme).look === 'blood');
+  ok('battleLine reads no class from the profile any more', !/heroOf\(|heavyName\(|cleanHero\(/.test(readFileSync('src/ui/battleLine.js', 'utf8')) && !readFileSync('src/ui/combatQueue.js', 'utf8').includes('getProfile'));
+  getProfile().hero = null;
+}
+
 // SWITCH CLASS in the debug menu (0.00269): the next class on the save, the
 // screen re-rendered — mid-fight the run's stats and the battle line too
 {
@@ -280,9 +339,18 @@ const types = (evs) => evs.map((e) => e.type);
   const wiz = { id: 'wizard' };
   ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
     && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
-  getProfile().hero = { id: 'druid', look: 0 };
-  ok('…by the save\'s class when none is given', sfxFor({ type: 'atk', heavy: true }) === 'heavy_druid');
+  ok('…by the run\'s class (run.hero, 0.00278), the plain sound when none is given', sfxFor({ type: 'atk', heavy: true }, as('druid').hero) === 'heavy_druid' && sfxFor({ type: 'atk', heavy: true }) === 'attack' && sfxFor({ type: 'dmg' }) === 'hurt');
   getProfile().hero = null;
+  {
+    // queueEvents hands sfxFor the run's class, whatever the profile says
+    const { queueEvents } = await import('../../src/ui/combatQueue.js');
+    const run = as('wizard'); getProfile().hero = { id: 'knight', look: 0 };
+    const cb = room(run, [foe(100000)]);
+    const items = [];
+    queueEvents(playerAttack(cb, 0, false), { run, combat: cb, playback: { enqueue: (it) => items.push(it) } });
+    ok('the queued blow carries the run\'s class\'s clip (the Wizard\'s), not the profile\'s', items.find((it) => it.text.startsWith('You attack'))?.sfx === 'atk_wizard');
+    getProfile().hero = null;
+  }
   ok('the class events have sounds (the hex a chime, the blight a hiss, the thrall a wail, a charge a zap)', sfxFor({ type: 'mark' }) === 'chime' && sfxFor({ type: 'blight' }) === 'hiss' && sfxFor({ type: 'thrall' }) === 'wail' && sfxFor({ type: 'charge' }) === 'zap' && sfxFor({ type: 'entangle' }) === 'thud' && sfxFor({ type: 'entangled' }) === 'swoosh');
   ok('the new instruments are synth clips and in the synth', ['swing', 'crackle', 'zap', 'wail', 'rake', 'chime', 'hiss', 'grunt'].every((n) => C[n]?.synth && readFileSync('src/audio/synth.js', 'utf8').includes(`function ${n}(`)));
 }

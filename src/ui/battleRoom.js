@@ -13,9 +13,14 @@ import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
 
 // What effects can touch — the live units of the current battle line.
 // ui(): the scene's current { player, enemies, layer } (null between rooms).
-export const fxContext = (ui) => ({
+// run(): the scene's current run (0.00278; null where there is none) — the
+// class's heavy on run.stats.klass (ui/classFx.js reads the traces from it)
+// and the satchel's count (ui/findFx.js). The scenes add what else they
+// have (loot, lootAhead).
+export const fxContext = (ui, run = () => null) => ({
   unit: (who) => { const u = ui(); return !u ? null : who === 'player' ? u.player : u.enemies[who] ?? null; },
   get layer() { return ui()?.layer ?? null; },
+  run,
 });
 
 // The state BEFORE an action resolves: the replay starts from there (0.086).

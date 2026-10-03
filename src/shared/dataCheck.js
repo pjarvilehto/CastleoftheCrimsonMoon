@@ -8,6 +8,7 @@
 // New knob in the data? Add its path here.
 
 import { compareVersions } from './version.js';
+import { HEAVY_KINDS, CLASS_KEYS } from '../run/classes.js';
 
 const NUM = {
   difficulty: [
@@ -115,10 +116,10 @@ export function checkData(data) {
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00267)`);
     for (const k of ['atk', 'heavy', 'hurt']) if (!data.audio?.clips?.[`${k}_${h?.id}`]) out.push(`audio.json: clips.${k}_${h?.id} (the class's own ${k === 'hurt' ? 'get-hit' : k === 'heavy' ? 'heavy' : 'attack'} sound, 0.00270)`);
-    // the class (0.00258, live 0.00267): every number present, the heavy one the engine knows
+    // the class (0.00258, live 0.00267): every number present, the heavy one the engine knows — both lists the registry's (run/classes.js, 0.00278)
     const c = h?.class;
-    const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'entangleTurns', 'entangleChance', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
-    if (!c || !NUMS.every((k) => isNum(c[k])) || !['blow', 'cleave', 'fireball', 'drain', 'mark', 'censer', 'entangle'].includes(c.heavy)) out.push(`heroes.json: ${h?.id}.class (every number of the block, and heavy one of blow | cleave | fireball | drain | mark | censer | entangle)`);
+    for (const k of CLASS_KEYS) if (!isNum(c?.[k])) out.push(`heroes.json: ${h?.id}.class.${k} missing or not a number`);
+    if (!HEAVY_KINDS.includes(c?.heavy)) out.push(`heroes.json: ${h?.id}.class.heavy (${c?.heavy}) is not a heavy kind: ${HEAVY_KINDS.join(' | ')}`);
     // the class colour theme (0.00254): the plate's colour, the card light's look and tint
     const th = h?.theme;
     if (!/^#[0-9a-f]{6}$/i.test(th?.plate ?? '') || !['fog', 'blood', 'flames', 'embers', 'ether'].includes(th?.light) || !(Array.isArray(th?.tint) && th.tint.length === 3 && th.tint.every((v) => isNum(v) && v >= 0 && v <= 2))) out.push(`heroes.json: ${h?.id}.theme (plate #rrggbb, light fog | blood | flames | embers | ether, tint [r, g, b] 0-2)`);

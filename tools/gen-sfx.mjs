@@ -17,20 +17,20 @@
 // audio-check table after a listen: that table's `now` column is the
 // browser's reading, and 0.00271 took it over ffmpeg's for every rendered
 // clip (the 16 kHz measure under-reads a hissy clip by up to 4 dB); its rate and variation layers stay:
-// the layers are the class's colour over any recording). Behind the
+// the layers are the class's colour over any recording). The API call
+// and the measure are tools/elevenlabs.mjs's (0.00278). Behind the
 // proxy: NODE_USE_ENV_PROXY=1.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { measureDb } from './gen-vo.mjs';
+import { post, hasKey, measureDb } from './elevenlabs.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'sfx-prompts.md');
 const OUT = join(ROOT, 'assets', 'audio', 'sfx');
 const WEB = 'assets/audio/sfx';
 const REGISTRY = join(ROOT, 'assets', 'data', 'audio.json');
-const API = 'https://api.elevenlabs.io/v1/sound-generation';
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -49,22 +49,14 @@ export function nextFile(clip, exists = (f) => existsSync(join(OUT, f))) {
   for (let k = 1; ; k++) { const f = `${clip}_v${k}.mp3`; if (!exists(f)) return f; }
 }
 
-async function render(prompt, seconds) {
-  const res = await fetch(API, {
-    method: 'POST',
-    headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: prompt, duration_seconds: seconds, prompt_influence: influence }),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
-  return Buffer.from(await res.arrayBuffer());
-}
+const render = (prompt, seconds) => post('sound-generation', { text: prompt, duration_seconds: seconds, prompt_influence: influence });
 
 const main = async () => {
   const reg = JSON.parse(readFileSync(REGISTRY, 'utf8'));
   const todo = readPrompts().filter((p) => (!only.length || only.includes(p.clip)) && (redo.includes(p.clip) || !reg.clips[p.clip]?.file?.startsWith(`${WEB}/`)));
   if (!todo.length) { console.log('nothing to render (every clip has a recording; --redo <clip> for a fresh take)'); return; }
   if (flag('--dry-run')) { for (const p of todo) console.log(`${p.clip}  ${p.seconds}s  ${p.prompt}`); return; }
-  if (!process.env.ELEVENLABS_API_KEY) { console.error('ELEVENLABS_API_KEY is not set'); process.exit(1); }
+  if (!hasKey()) { console.error('ELEVENLABS_API_KEY is not set'); process.exit(1); }
   mkdirSync(OUT, { recursive: true });
   let failed = 0;
   for (const p of todo) {

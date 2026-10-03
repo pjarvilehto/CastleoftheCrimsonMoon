@@ -1,6 +1,7 @@
 // ui/fxParts.js — the reusable pieces of the combat effects (0.098: split
 // out of combatFx.js, which keeps the choreography: which effect plays on
-// which event, lunges, hit timing). Everything here is a no-op without
+// which event, the hit's timing; 0.00278: the lunge and its clock live
+// here, shared with ui/classFx.js). Everything here is a no-op without
 // the Web Animations API (the smoke-test shim) or with reduced motion.
 
 import { DATA } from '../shared/data.js';
@@ -17,6 +18,35 @@ export const can = (node) => !!node?.animate;
 export const HIT_TINT = 'sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.15)';
 export const DEATH_TINT = 'sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)';
 export const baseFilter = (u) => (u.baseFilter ??= getComputedStyle(u.portrait).filter);
+
+// The lunge (0.00278: one helper for the three copies combatFx.js carried —
+// the attack's, the dodge's and the thrall hit's). Its clock: LUNGE_MS long
+// (a heavy 1.3x), the blow landing STRIKE_AT of the way; crits and heavies
+// freeze the attacker at impact for HITSTOP_MS (0.088).
+export const LUNGE_MS = 280;
+export const STRIKE_AT = 0.45; // share of the lunge where the blow lands
+export const HITSTOP_MS = 70;  // crits and heavies freeze for a beat at impact (0.088)
+// When an attack's blow lands, ms after its line prints — its sound is
+// scheduled for this moment (ui/combatSfx.js, 0.107).
+export const strikeMs = (fx) => (fx?.heavy ? LUNGE_MS * 1.3 : LUNGE_MS) * STRIKE_AT;
+// The attacker's unit lunges a slice of the way toward the defender's rect
+// `rd`: anticipation (a pull back) -> strike -> recover; reachShare caps the
+// reach at that share of the attacker's width (a heavy reaches further),
+// overshoot stretches the strike alone (the swing that misses). Over the
+// deal still settling the unit (composite add, 0.00197). Returns the
+// animation (the hit-stop pauses it), or null where nothing can animate.
+export function lunge(a, rd, { dur = LUNGE_MS, reachShare = 0.35, overshoot = 1 } = {}) {
+  if (!can(a?.el) || !rd || reduced()) return null;
+  const ra = a.el.getBoundingClientRect();
+  const toward = (rd.left + rd.width / 2) - (ra.left + ra.width / 2);
+  const reach = Math.sign(toward) * Math.min(Math.abs(toward) * 0.14, ra.width * reachShare);
+  return a.el.animate([
+    { transform: 'translateX(0)' },
+    { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25, easing: 'ease-in' },
+    { transform: `translateX(${reach * overshoot}px)`, offset: STRIKE_AT, easing: 'ease-out' },
+    { transform: 'translateX(0)' },
+  ], { duration: dur, easing: 'ease-in-out', composite: 'add' });
+}
 
 // The glint (0.183): the unit's bright masked copy of its portrait sweeps
 // across the figure over `ms`, in `dir`, peaking at cards.json

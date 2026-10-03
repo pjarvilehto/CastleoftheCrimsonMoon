@@ -1,7 +1,7 @@
 // tools/test/content.test.mjs — data/art integrity, relics, elite markers, CSS integrity.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, t, fresh, registry, DATA, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync } from './harness.mjs';
+import { ok, t, fresh, registry, DATA, createRun, scaleEnemy, createCombat, playerAttack, acceptOffer, resetProfile, getProfile, loadData, readFileSync, readdirSync, statSync, byClass } from './harness.mjs';
 import { existsSync } from 'node:fs';
 
 fresh();
@@ -182,7 +182,7 @@ fresh();
     const { el: mkEl } = await import('../../src/core/dom.js');
     const logBox = mkEl('div', {});
     logLine(logBox, epic.text, 'relic');
-    ok('relic line renders rarity-colored name', logBox.all((n) => n.className === 'rarity-4').length === 1);
+    ok('relic line renders rarity-colored name', byClass(logBox, 'rarity-4').length === 1);
   }
   const lines2 = [];
   applyLoot(runL, scaleEnemy('rat', 1), (text, cls) => lines2.push({ text, cls }));

@@ -13,6 +13,7 @@ import { rollLoot, potionDrop, takeItem } from './loot.js';
 import { rollTreasureRoom } from './treasure.js';
 import { DATA } from '../shared/data.js';
 import { pick } from '../shared/balance.js';
+import { heroSnapshot } from '../shared/heroes.js';
 
 // One shrine in every stretch of bossEvery rooms (0.091 — it used to be
 // once per run): shrineRoomRange is the room range WITHIN a stretch, so
@@ -34,6 +35,7 @@ export function createRun() {
     hp: stats.maxHp,
     maxHp: stats.maxHp,
     stats,                       // snapshot of dmg/armor/crit at run start
+    hero: heroSnapshot(),        // the class this run plays (0.00278): id, name, heavyName, theme, look — the UI reads it here, never the profile
     coins: 0,
     xp: 0,
     itemsFound: [],              // item ids picked up this run (upgrades only, 0.091)

@@ -6,6 +6,7 @@
 
 import { DATA } from '../shared/data.js';
 import { addPotion } from './runState.js';
+import { usesCharges } from './classes.js';
 
 export function shrineOffers() {
   return DATA.shrines.offers;
@@ -59,7 +60,7 @@ export function canAffordOffer(run, o) {
     case 'leech': return hpFloorOk(run);
     case 'bulwark': return dmgFloorOk(run);
     case 'secondwind': return coinsOk(run, o);
-    case 'quicken': return hpFloorOk(run) && (run.stats.klass.charges > 0 || run.stats.heavyCdMax > 1); // (a charge class takes it as a charge, 0.00258, live 0.00267)
+    case 'quicken': return hpFloorOk(run) && (usesCharges(run.stats.klass) || run.stats.heavyCdMax > 1); // (a charge class takes it as a charge, 0.00258, live 0.00267)
     case 'greed': return dmgFloorOk(run);
     case 'glasscannon': return run.stats.armor >= o.minArmor;
     default: return false;
@@ -89,7 +90,7 @@ export function noteDeal(run, offers) {
 // class (the Wizard) a charge, not a shorter cooldown — the card and the
 // buff bar say so; every other boon's line is the data's.
 export function buffText(o, run) {
-  return o.id === 'quicken' && run.stats.klass.charges > 0 ? `HEAVY CHARGE +${o.cdReduce}` : o.buff;
+  return o.id === 'quicken' && usesCharges(run.stats.klass) ? `HEAVY CHARGE +${o.cdReduce}` : o.buff;
 }
 export function acceptOffer(run, o) {
   const met = run.shrines?.at(-1);
@@ -131,7 +132,7 @@ export function acceptOffer(run, o) {
       payHp(run, o.hpCostPct);
       // Heavy cooldown starts at player.baseHeavyCd; each quicken drops it (floor 1).
       // A charge class (the wizard, 0.00258, live 0.00267) gets a charge a fight instead: its cooldown is already 1.
-      if (run.stats.klass.charges > 0) run.stats.klass.charges += o.cdReduce;
+      if (usesCharges(run.stats.klass)) run.stats.klass.charges += o.cdReduce;
       else run.stats.heavyCdMax = Math.max(1, run.stats.heavyCdMax - o.cdReduce);
       break;
     case 'greed':

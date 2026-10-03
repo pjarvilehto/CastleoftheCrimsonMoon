@@ -23,9 +23,9 @@
 // goes (the model voices it as a filler "uh…").
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { post, hasKey, measureDb } from './elevenlabs.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = join(ROOT, 'docs', 'narration-script.md');
@@ -77,32 +77,10 @@ export function cleanTake(raw) {
 
 export function fileFor(id, take) { return `vo_${id}_${take}.mp3`; }
 
-// The loudest 50 ms of a file in dB (RMS, full scale = 0), as the sound
-// registry's measuredDb; null without ffmpeg.
-export function measureDb(path) {
-  const r = spawnSync('ffmpeg', ['-v', 'error', '-i', path, '-f', 's16le', '-ac', '1', '-ar', '16000', '-'], { maxBuffer: 64 * 1024 * 1024 });
-  if (r.status !== 0 || !r.stdout?.length) return null;
-  const s = new Int16Array(r.stdout.buffer, r.stdout.byteOffset, Math.floor(r.stdout.length / 2));
-  const w = 800; // 50 ms at 16 kHz
-  let best = -Infinity;
-  for (let i = 0; i + w <= s.length; i += w) {
-    let acc = 0;
-    for (let j = i; j < i + w; j++) acc += s[j] * s[j];
-    const rms = Math.sqrt(acc / w) / 32768;
-    if (rms > 0) best = Math.max(best, 20 * Math.log10(rms));
-  }
-  return Number.isFinite(best) ? Math.round(best * 10) / 10 : null;
-}
+export { measureDb }; // tools/elevenlabs.mjs (0.00278; it lived here, and gen-sfx.mjs imported it from here)
 
 export async function render(text, seed, settings = VOICE.settings) {
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE.voiceId}?output_format=${VOICE.outputFormat}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, model_id: VOICE.modelId, voice_settings: settings, seed }),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return Buffer.from(await res.arrayBuffer());
+  return post(`text-to-speech/${VOICE.voiceId}?output_format=${VOICE.outputFormat}`, { text, model_id: VOICE.modelId, voice_settings: settings, seed });
 }
 
 // The VO Lab's nudges: volatility is the voice swinging (stability),
@@ -161,7 +139,7 @@ async function main() {
   console.log(`${script.length} IDs, ${jobs.length} takes, ${todo.length} to render (${chars} characters)`);
   for (const j of todo) if (j.text !== j.raw) console.log(`  note ${j.file}: "${j.raw}" -> "${j.text}"`);
   if (dry) { for (const j of todo) console.log(`  ${j.file}  "${j.text}"`); return; }
-  if (todo.length && !process.env.ELEVENLABS_API_KEY) throw new Error('ELEVENLABS_API_KEY is not set');
+  if (todo.length && !hasKey()) throw new Error('ELEVENLABS_API_KEY is not set');
 
   mkdirSync(OUT, { recursive: true });
   let i = 0; let failed = 0;

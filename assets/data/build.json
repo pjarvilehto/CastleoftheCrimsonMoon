@@ -61,6 +61,7 @@
     "src/ui/bgTuner.js",
     "src/ui/buffs.js",
     "src/ui/cardFx.js",
+    "src/ui/classFx.js",
     "src/ui/changelog.js",
     "src/ui/combatFx.js",
     "src/ui/combatPlayback.js",
