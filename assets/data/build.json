@@ -1,5 +1,5 @@
 {
-  "version": "0.00271",
+  "version": "0.00272",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00272": [
+      "A foe's status shows in its figure: blighted foes turn sickly green and drained, rooted foes earthy brown, and either moves slower, its weave and bob stretched. (Phones keep the tag and the slower motion.)"
+    ],
     "0.00271": [
       "The Druid's heavy is now Entangle: roots burst from the ground at every foe's feet and bind them for two turns; a bound foe that tries to attack may strain against the roots and lose its blow (Entangled!). Go Feral is gone (potions are never blocked). Tuned in the simulator to sit beside the Knight.",
       "Every class's attack, heavy and get-hit sounds are real recordings now, made for each class: the Knight's sword, the Barbarian's axe and roar, the Wizard's staff and fireball, the Necromancer's knife and soul-drain, the Druid's staff and roots, the Hexhunter's crossbow and hex, the Plague Sister's censer and rites, and each one's own cry when struck.",
@@ -143,9 +146,6 @@
     ],
     "0.00258": [
       "Combat: your hero's card shows a small (i) under the gear — tap the card for your stats, again for your inventory (the gear you wear and what this run has found), and once more to turn it back."
-    ],
-    "0.00257": [
-      "The light behind the cards in combat is drawn at 60 frames a second on desktops (it was 30, a cap from before each card had its own canvas); phones keep 20."
     ]
   }
 }
