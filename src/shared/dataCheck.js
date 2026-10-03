@@ -182,7 +182,7 @@ export function checkData(data) {
   // the title's fly-in (0.00307, ui/titleIntro.js): the clip, its kill switch and its three timings
   if (typeof bg.intro?.enabled !== 'boolean') out.push('backgrounds.json: intro.enabled (true / false)');
   if (typeof bg.intro?.file !== 'string' || !bg.intro.file) out.push('backgrounds.json: intro.file');
-  for (const k of ['waitMs', 'holdMs', 'leadMs', 'fadeMs', 'whooshAtMs']) if (!isNum(bg.intro?.[k])) out.push(`backgrounds.json: intro.${k}`);
+  for (const k of ['waitMs', 'holdMs', 'leadMs', 'fadeMs', 'whooshAtMs', 'whooshDb']) if (!isNum(bg.intro?.[k])) out.push(`backgrounds.json: intro.${k}`);
   for (const k of ['rooms', 'bosses', 'treasure']) if (!(bg[k]?.length > 0)) out.push(`backgrounds.json: ${k} is empty`);
   if (bg.rooms?.length && bg.rooms.every((f) => bg.antechambers?.includes(f))) out.push('backgrounds.json: rooms has no fight painting outside antechambers');
   // the potions' price ladder is read whole; the shrine deals from its offers; room 1 needs a tier-1 enemy; the benchmark round is a build at most one ahead of this one

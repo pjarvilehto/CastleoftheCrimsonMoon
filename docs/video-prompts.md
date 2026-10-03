@@ -97,6 +97,23 @@ ffmpeg -i eased.mp4 -i still.mp4 -filter_complex "[0:v][1:v]xfade=transition=fad
   -c:v libx264 -preset slow -crf 20 -movflags +faststart -pix_fmt yuv420p assets/video/title_flyin_v1.mp4
 ```
 
+**0.00310 (`title_flyin_v2.mp4`):** the game's vignette baked over the
+whole film — the CSS `#vignette` ellipse (centre to the farthest corner,
+0 at 30%, 0.55 at 75%, 0.9 at 100%; the shader draws the same under the
+live canvas) as a mask ffmpeg's `geq` makes and overlays, so the film's
+corners are as dark as the painting's — and the renderer put back to its
+rest pose as the fade begins (`bg3d.js bgArrive`: orbit's t = 0 is the
+flat painting; the sway had reached its full 2.5° by then, a parallax
+jump the fade used to carry) with the mist and haze rising again after
+the hand-over. Headless, the held frame against the renderer 0.63 → 0.78
+(what is left is the mist that has risen by the time of the screenshot).
+
+```
+ffmpeg -f lavfi -i "color=black:s=1920x1080:d=1,format=rgba" -vf "geq=r=0:g=0:b=0:a='st(0, sqrt(pow((X-W/2)/(W/2*sqrt(2)),2)+pow((Y-H/2)/(H/2*sqrt(2)),2))); 255*if(lt(ld(0),0.3),0,if(lt(ld(0),0.75),0.55*(ld(0)-0.3)/0.45,0.55+0.35*(ld(0)-0.75)/0.25))'" -frames:v 1 vignette.png
+ffmpeg -i title_flyin_v1.mp4 -i vignette.png -filter_complex "[0:v][1:v]overlay=0:0:format=auto,format=yuv420p[v]" -map "[v]" -an \
+  -c:v libx264 -preset slow -crf 20 -movflags +faststart -pix_fmt yuv420p assets/video/title_flyin_v2.mp4
+```
+
 ### Open
 
 A take with the painting's crows and smoke (the models add their own), a

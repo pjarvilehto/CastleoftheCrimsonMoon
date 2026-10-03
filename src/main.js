@@ -27,7 +27,7 @@ import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
 import { isPhone, watchPhoneLayout, fullscreenOn, enterFullscreen, exitFullscreen } from './shared/platform.js';
 import { phoneGate, regateOnExit } from './ui/phoneGate.js';
-import { preloadIntro, introReady } from './ui/titleIntro.js';
+import { preloadIntro, introReady, introPending } from './ui/titleIntro.js';
 import { ensureCtx } from './audio/audioCore.js';
 
 const SAVER_KEY = 'castle-power-saver'; // BATTERY SAVER (0.00222), this browser's choice
@@ -98,7 +98,7 @@ async function boot() {
   if (initBg3d({ allowSoftware: debugFromUrl() })) { onBackgroundChange(showBackground3d); warmCardFx(); } // (0.00222: the card light's shader compiles behind the title, not in the first fight's transition)
   if (getPref(SAVER_KEY) === '1') { setPowerSaver(true); setCardFxSaver(true); } // remembered from the last visit (0.00222)
   // Every transition (0.171/0.173): the swoosh, timed to land mid-way, and the camera's push through the picture.
-  onTransition(() => { transitionSfx(); bgPush(); });
+  onTransition(() => { if (!introPending()) transitionSfx(); bgPush(); }); // (0.00310: the boot's own transition leaves the whoosh to the fly-in about to play — two a second apart otherwise)
   // Every button in the game clicks (delegated, so dynamically rendered
   // scenes need no per-button wiring).
   document.addEventListener?.('click', (e) => {

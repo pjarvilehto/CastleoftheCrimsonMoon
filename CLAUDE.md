@@ -663,7 +663,8 @@ The title painting is the END of a short flight: as the title scene
 enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
 everything (`#intro`, z-index above the corner column), the camera
 arrives at the castle, the film's last frame — the painting itself,
-baked in as a 0.4 s crossfade at the file's end — fades `intro.fadeMs`
+baked in as a 0.4 s crossfade at the file's end, the game's vignette
+ellipse baked over the whole film (0.00310) — fades `intro.fadeMs`
 onto the 3D renderer's rest pose, the fade beginning `intro.leadMs`
 before the film's end with the film playing on under it (0.00308, the
 developer's ask after seeing it; `holdMs` = a hold after the end instead,
@@ -674,9 +675,21 @@ before any gesture `sfx.js adoptRunning` takes the context only where
 the browser let the title bed start on its own (RUNNING; a suspended
 one would hold the sounds for a stale burst on the first click), so a
 desktop that blocks autoplay sees the flight silent and a phone, whose
-PLAY tap precedes the title, hears both) (the same
-painting cover-fit; what the fade covers is the renderer's haze and
-vignette), and the title's panel, held under it (`.intro-hold`), fades
+PLAY tap precedes the title, hears both; `intro.whooshDb` -1.9, the
+whoosh 20% under the game's, and the boot's own transition leaves its
+whoosh out while `introPending()`, 0.00310) (the same
+painting cover-fit: as the fade begins, under the still-opaque film,
+`bg3d.js bgArrive()` puts the camera back at the rest pose — orbit's
+t = 0, pixel-identical to the flat painting; by then the sway had
+reached its full 2.5°, a parallax jump the fade used to carry — drops
+any kick, sway or push, and restarts `fogFadeMs`, so the mist and the
+haze rise again as the film goes, the sway ramping in with them
+(`arrived`, a smoothstep over the same `fogFadeMs`: a sine leaves rest
+at its fastest, 1.4° in the first second); headless, the frozen rest
+pose against the film's last frame is SSIM 0.92 — the painting itself
+against the encode 0.93 — so what the fade reveals IS the frame the
+film ends on; 0.00310, after the developer saw the first hand-over),
+and the title's panel, held under it (`.intro-hold`), fades
 in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,
 `file` in `assets/video/`, `waitMs`); the data check and the orphan
 check know the folder. Boot fetches the film beside the art

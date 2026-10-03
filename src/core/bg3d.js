@@ -54,6 +54,21 @@ export function bgPush() {
   push = { t0: performance.now(), rel: null };
 }
 
+// The title's fly-in hands over to the painting (0.00310, ui/titleIntro.js):
+// called as the film's fade begins, while it still covers the canvas. The
+// camera goes back to the rest pose — orbit's t = 0, pixel-identical to the
+// flat painting the film ends on (by the hand-over the sway had reached its
+// full 2.5°, a parallax jump under the fade) — any kick, sway or push is
+// dropped, and the mist and the haze rise again over fogFadeMs, the picture
+// coming alive as the film goes.
+export function bgArrive() {
+  if (!gl) return;
+  tau = 0; jolts = []; sways = []; push = null;
+  arrived = performance.now();
+  if (firstFrame !== null) firstFrame = arrived;
+}
+let arrived = null; // the hand-over's moment while the sway ramps in (fogFadeMs), else null
+
 const easeIn = (t) => t * t, easeOut = (t) => 1 - (1 - t) * (1 - t);
 const unit = (t) => Math.min(1, Math.max(0, t));
 // How far the camera is into layer L's picture right now.
@@ -255,6 +270,11 @@ function frame(now) {
     if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
+  if (arrived !== null) { // 0.00310: after the fly-in's hand-over the sway comes in with the mist (a sine leaves rest at its fastest: 1.4° within the first second, a drift the fade used to carry)
+    const r = Math.min(1, (now - arrived) / cfg.fogFadeMs), ease = r * r * (3 - 2 * r);
+    o.yaw *= ease; o.pitch *= ease;
+    if (r >= 1) arrived = null;
+  }
   const j = joltOffset(jolts, now);
   o.yaw += j.yaw + swayOffset(sways, now);
   o.pitch += j.pitch;
@@ -456,7 +476,7 @@ function shutdown() {
     clearTimeout(resizeTimer);
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
-  t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null;
+  t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null; arrived = null;
   level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; saverFrom = -1; // (0.00197: clean for a later initBg3d, as promised)
   document.getElementById('bg-stack')?.classList.remove('gl'); // the CSS layers show again
   canvas?.remove();
