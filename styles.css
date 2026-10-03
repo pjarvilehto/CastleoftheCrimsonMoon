@@ -779,10 +779,17 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
 .player-card .hud-chip, .player-card .potions { position: relative; z-index: 2; } /* (0.00251: over the figure's feet) */
-/* The card's back (0.00256, battleLine.js statsBack): a tap turns the
-   knight's card to STATS — the frame stays, the face's pieces hide, the
-   run's totals in rows. The card is a button for it (cursor), not a target. */
+/* The card's back (0.00256 / 0.00258, battleLine.js cardBack): a tap turns
+   the knight's card to STATS, a second to INVENTORY, a third back — the
+   frame stays, the face's pieces hide, the page shows. The ⓘ under the gear
+   says the card turns (static). The card is a button for it (cursor). */
 .player-card { cursor: pointer; }
+.gear-names .info-i {
+  display: inline-flex; align-items: center; justify-content: center; width: 1.25em; height: 1.25em; margin-top: 0.25em;
+  border: 1px solid rgba(201, 162, 39, 0.75); border-radius: 50%; color: var(--gold); background: rgba(8, 5, 4, 0.55);
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: bold; font-size: 0.9em; line-height: 1;
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.35);
+}
 .player-card .card-back { display: none; }
 .player-card.flipped > :not(.card-frame):not(.card-back) { visibility: hidden; }
 .player-card.flipped .card-back {
@@ -790,13 +797,30 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   border-radius: 0.5em; padding-top: 1.2em; text-transform: uppercase;
   background: radial-gradient(ellipse at 50% 35%, rgba(60, 20, 20, 0.55), rgba(8, 5, 4, 0.92) 75%);
 }
+.card-back .back-page { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.player-card.page-inv .back-stats, .player-card:not(.page-inv) .back-inv { display: none; }
 .card-back h2 { margin: 0; text-align: center; color: var(--gold); letter-spacing: 0.3em; padding-left: 0.3em; font-size: 2em; font-weight: normal; }
 .card-back .back-rule { height: 1px; margin: 0.4em 10% 0.6em; background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.7), transparent); }
-.card-back .back-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5em; margin: 0 7%; padding: 0.28em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); }
+.card-back .back-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5em; margin: 0 7%; padding: 0.24em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); }
 .card-back .back-row span { color: #9a8b6a; letter-spacing: 0.12em; font-size: 0.75em; white-space: nowrap; }
 .card-back .back-row b { color: #e8d9b0; font-weight: normal; font-size: 1.15em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .card-back .back-row b.gold { color: var(--gold); }
-.card-back .back-hint { margin-top: auto; text-align: center; color: #6a5d44; letter-spacing: 0.14em; font-size: 0.6em; padding-bottom: 6%; }
+.card-back .back-inv h2 { font-size: 1.55em; }
+.card-back .back-inv .back-rule { margin: 0.3em 10% 0.35em; }
+.card-back .inv-row { margin: 0 6%; padding: 0.16em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); display: grid; grid-template-columns: 3.3em minmax(0, 1fr); column-gap: 0.4em; align-items: baseline; }
+.card-back .inv-kind { grid-row: span 2; align-self: center; color: #8a7c5e; letter-spacing: 0.1em; font-size: 0.56em; }
+.card-back .inv-name { font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
+.card-back .inv-empty { color: #4a4234; }
+.card-back .inv-desc { min-height: 1.2em; color: #8a7c5e; font-size: 0.56em; letter-spacing: 0.03em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-back .inv-head { margin: 0.45em 6% 0.1em; color: var(--gold); letter-spacing: 0.18em; font-size: 0.56em; }
+.card-back .inv-found { margin: 0 6%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.4em; font-size: 0.72em; }
+.card-back .inv-found span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
+.card-back .inv-found small, .card-back .inv-more { color: #8a7c5e; font-size: 0.78em; letter-spacing: 0.08em; white-space: nowrap; }
+.card-back .inv-more { margin: 0 6%; font-size: 0.56em; }
+.card-back .page-dots { display: flex; justify-content: center; gap: 0.45em; margin-top: auto; padding-bottom: 0.35em; }
+.card-back .page-dots i { width: 0.42em; height: 0.42em; border-radius: 50%; background: rgba(201, 162, 39, 0.25); }
+.card-back .page-dots i.on { background: var(--gold); box-shadow: 0 0 4px rgba(201, 162, 39, 0.6); }
+.card-back .back-hint { text-align: center; color: #6a5d44; letter-spacing: 0.14em; font-size: 0.6em; padding-bottom: 6%; }
 
 /* persistent cards (0.086): the card is never rebuilt mid-fight — HP and
    state are patched in place; a fallen enemy's card leaves the row (0.00216) */

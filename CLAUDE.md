@@ -977,13 +977,18 @@ be served stale for ~4 hours.
   counts it as two enemy widths in the row's `--slots` (the `--card-h`
   budget), so the boss and its three summons (`maxAlive`) still fit
   without shrinking at 16:9. New boss art should suit a wide card.
-- The knight's card turns over on a click (0.00256, the developer's call):
-  `battleLine.js statsBack` — STATS, the run's totals only (health,
-  attack, armor, crit chance / damage, lifesteal, the heavy blow, potions,
-  a potion's heal), refreshed by the update tick while it shows; the turn
-  is two `rotateY` halves with the face swapped edge-on (`flipCard`,
-  `composite: 'add'` like the kick; instant under reduced motion); the
-  phone's twins compact the rows.
+- The knight's card turns over on a click (0.00256 / 0.00258, the
+  developer's call): front → STATS → INVENTORY → front (`battleLine.js
+  cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
+  is the run's totals only (health, attack, armor, crit chance / damage,
+  lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
+  worn per `GEAR_SLOTS` (forge levels in, `describeItem` lines) and the
+  run's finds (`run.itemsFound`, the newest three and a count) — worn
+  from the run's end. The shown page refreshes on the update tick; the
+  turn is two `rotateY` halves with the face swapped edge-on (`flipCard`,
+  `composite: 'add'` like the kick; instant under reduced motion). A
+  still gold ⓘ under the gear names says the card turns; the phone's
+  twins compact the pages.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`). A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
