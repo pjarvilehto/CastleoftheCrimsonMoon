@@ -1,5 +1,5 @@
 {
-  "version": "0.00250",
+  "version": "0.00251",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -92,6 +92,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00251": [
+      "Combat: the knight's card draws your hero large — the class name sits above the card, the gear as two columns at its top, the figure standing to the frame's edge."
+    ],
     "0.00250": [
       "Choose your hero: the chosen card's gold rim sits on the card's own edge and its red plate pulses slowly; a standing hero fills the knight's card in the fights (the wizard read small beside the enemies)."
     ],
@@ -137,10 +140,6 @@
     "0.00237": [
       "Room paintings: the owner's prompting guide (docs/image-prompting-guide.md: the recipe every painting came from) is the prompt of tools/gen-bg.mjs — the room's line with its palette cue, the mood, the Darkest Dungeon 2 + Mignola style block verbatim, as text alone; the bake-off re-run on nine models (Imagen 4 and FLUX 1.1 Pro joined): Nano Banana Pro and Nano Banana land closest, Imagen a close third",
       "The rooms' style LoRA trained on the 48 paintings (gen-bg.mjs --model lora draws a room from its line alone); the character LoRA's prompt uses the training captions' words"
-    ],
-    "0.00236": [
-      "Room paintings: a bake-off of six models on three new rooms (The Clock Tower, The Blood Baths, The Rookery) painted from the game's own paintings; Nano Banana Pro is the pick, now the default of the new tools/gen-bg.mjs (docs/room-prompts.md, candidates in assets/bg/candidates, --import makes the game's JPEG)",
-      "The character style LoRA trained on the 31 approved portraits (it draws a character the game has no art for, the mimic chest first); the rooms' LoRA set and model; one Replicate client for the art tools"
     ]
   }
 }
