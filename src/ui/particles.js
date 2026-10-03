@@ -31,7 +31,7 @@ function particlesEnabled() {
 // each room's first hit (allocating its backing store).
 let shared = null;
 // The particles' knobs and load, for the device report (0.00225).
-export const particleState = () => ({ ...knobs(), live: parts.length, canvas: canvas ? [canvas.width, canvas.height] : null });
+export const particleState = () => { const { _doc, phone, ...k } = knobs(); return { ...k, live: parts.length, canvas: canvas ? [canvas.width, canvas.height] : null }; }; // (the knobs in force; the data's note and the phone block stay out)
 
 export function attachParticles(layer) {
   parts = []; box = null;
