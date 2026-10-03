@@ -23,7 +23,9 @@
 //                                                         # a character the game does not have yet (a default canvas)
 //   node tools/gen-art.mjs --rerender art-rerender.json   # the Art Lab's verdicts: records approvals,
 //                                                         # rejections (+ notes), generates the re-rolls
-//   node tools/gen-art.mjs --recut rat_c2 --tolerance 40 --shadow 90   # cut a candidate out again with
+//   node tools/gen-art.mjs --recut all [--only rat]       # cut the candidates out again (the matting model; --matte key =
+//                                                         # the colour key, offline, with the knobs below)
+//   node tools/gen-art.mjs --recut rat_c2 --matte key --tolerance 40 --shadow 90   # one candidate with
 //                                                         # another key (--shadow 0 keeps a ground shadow,
 //                                                         # --paper 0 keeps light greys reachable from the edge,
 //                                                         # --holes 0 keeps enclosed patches of the paper's tone)
@@ -220,6 +222,26 @@ async function predict(model, input) {
 
 // ---- pictures (sharp, loaded only when a picture is touched) ----
 const sharp = async () => (await import('sharp')).default;
+// The matte (0.00201): a matting model cuts the figure out — the colour key
+// (tools/cutout.mjs) ate grey-blue stone legs, glossy blade edges and glow
+// halos once the figures turned photoreal (no outlines, greys near the
+// background's tone). 851-labs/background-remover keeps them all, ~1 s and a
+// fraction of a cent a picture. --matte key = the colour key (offline).
+export const MATTE = { model: '851-labs/background-remover', priceUsd: 0.001 };
+const versions = {};
+async function matteAlpha(rawPath) {
+  const S = await sharp();
+  versions[MATTE.model] ??= (await (await fetch(`${API}/models/${MATTE.model}`, { headers: headers() })).json()).latest_version.id;
+  const image = `data:image/jpeg;base64,${(await S(rawPath).jpeg({ quality: 92 }).toBuffer()).toString('base64')}`;
+  const res = await fetch(`${API}/predictions`, { method: 'POST', headers: { ...headers(), 'Content-Type': 'application/json', Prefer: 'wait=60' }, body: JSON.stringify({ version: versions[MATTE.model], input: { image, format: 'png', threshold: 0 } }) });
+  if (!res.ok) throw new Error(`matte: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+  let p = await res.json();
+  while (!['succeeded', 'failed', 'canceled'].includes(p.status)) { await new Promise((r) => setTimeout(r, 1500)); p = await (await fetch(p.urls.get, { headers: headers() })).json(); }
+  if (p.status !== 'succeeded') throw new Error(`matte: ${p.status} ${p.error ?? ''}`);
+  const png = Buffer.from(await (await fetch(Array.isArray(p.output) ? p.output[0] : p.output)).arrayBuffer());
+  const { data, info } = await S(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { data, info };
+}
 /** The current portrait's canvas and figure box: { w, h, box }. */
 export async function portraitFrame(file) {
   const S = await sharp();
@@ -229,13 +251,23 @@ export async function portraitFrame(file) {
   return { w: info.width, h: info.height, box: bbox(alpha, info.width, info.height) };
 }
 /** rawPath -> cutPath: keyed out, trimmed, scaled onto the reference portrait's canvas. Returns the cut record. */
-export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, paper = true, holes = true, flip = false, wide = 0 } = {}) {
+export async function cutAndFit(rawPath, refPath, cutPath, { matte = 'api', tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, paper = true, holes = true, flip = false, wide = 0 } = {}) {
   const S = await sharp();
-  const { data, info } = await S(rawPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const { alpha, bg } = keyOut(data, info.width, info.height, { tolerance, paper: paper ? PAPER : null, shadow: shadow > 0 ? { ...SHADOW, tolerance: shadow } : null });
-  const filled = holes ? fillHoles(data, alpha, info.width, info.height, bg) : 0;
-  const stray = dropStray(alpha, info.width, info.height);
-  const box = applyAlpha(data, alpha, info.width, info.height);
+  let data, info, bg = null, filled = 0, stray = 0, box;
+  if (matte === 'api') { // the matting model's alpha (the figure's own edges, glows included)
+    ({ data, info } = await matteAlpha(rawPath));
+    const alpha = new Uint8Array(info.width * info.height);
+    for (let p = 0; p < alpha.length; p++) alpha[p] = data[p * 4 + 3];
+    stray = dropStray(alpha, info.width, info.height);
+    box = applyAlpha(data, alpha, info.width, info.height);
+  } else { // the colour key
+    ({ data, info } = await S(rawPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true }));
+    const keyed = keyOut(data, info.width, info.height, { tolerance, paper: paper ? PAPER : null, shadow: shadow > 0 ? { ...SHADOW, tolerance: shadow } : null });
+    bg = keyed.bg;
+    filled = holes ? fillHoles(data, keyed.alpha, info.width, info.height, bg) : 0;
+    stray = dropStray(keyed.alpha, info.width, info.height);
+    box = applyAlpha(data, keyed.alpha, info.width, info.height);
+  }
   if (!box) throw new Error(`${rawPath}: nothing left after the key (tolerance ${tolerance})`);
   const old = refPath ? await portraitFrame(refPath) : NEW_CANVAS;
   if (wide > old.w) { old.w = wide; old.box = { ...(old.box ?? { y0: 0, y1: old.h }), x0: 0, x1: wide }; } // the boss: a wide canvas, the figure centred on it
@@ -246,7 +278,7 @@ export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULT
   const figBuf = await fig.png().toBuffer();
   await S({ create: { width: old.w, height: old.h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: figBuf, left: at.left, top: at.top }]).webp({ quality: 90, alphaQuality: 100 }).toFile(cutPath);
-  return { tolerance, shadow, paper, holes, bg, box, filled, stray, flip, canvas: [old.w, old.h], figure: [at.w, at.h] };
+  return { matte: matte === 'api' ? MATTE.model : 'key', tolerance, shadow, paper, holes, bg, box, filled, stray, flip, canvas: [old.w, old.h], figure: [at.w, at.h] };
 }
 
 // ---- the registry ----
@@ -282,7 +314,9 @@ async function main() {
   if (!['own', 'family', 'sheets'].includes(refs)) throw new Error('--refs own | family | sheets');
   if (!model) throw new Error(`--model ${Object.keys(MODELS).join(' | ')}`);
   const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance)), paper = val('--paper', '1') !== '0', holes = val('--holes', '1') !== '0';
-  const cutOpts = { tolerance, shadow, paper, holes };
+  const matte = val('--matte', 'api');
+  if (!['api', 'key'].includes(matte)) throw new Error('--matte api | key');
+  const cutOpts = { matte, tolerance, shadow, paper, holes };
   mkdirSync(OUT, { recursive: true });
 
   if (has('--manifest')) { // what is on disk, keeping every record that still has its file
@@ -319,8 +353,10 @@ async function main() {
     const c = doc.chars.find((x) => x.id === id), one = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
     if (!one && val('--recut') !== 'all') throw new Error(`--recut: no candidate ${val('--recut')} (or "all")`);
     const list = one ? [[c, one]] : chars.flatMap((ch) => charEntry(reg, ch).candidates.map((k) => [ch, k]));
-    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), ch.file ? join(CHARS, ch.file) : null, join(ROOT, k.file), { ...cutOpts, flip: has('--flip'), wide: WIDE[ch.id] ?? 0 }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
-    saveRegistry(reg); return;
+    let i = 0, failed = 0;
+    const worker = async () => { while (i < list.length) { const [ch, k] = list[i++]; try { k.cut = await cutAndFit(join(ROOT, k.raw), ch.file ? join(CHARS, ch.file) : null, join(ROOT, k.file), { ...cutOpts, flip: has('--flip'), wide: WIDE[ch.id] ?? 0 }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.stray} stray`); } catch (e) { failed++; console.error(`  FAIL ${k.file}: ${e.message}`); } } };
+    await Promise.all(Array.from({ length: matte === 'api' ? 4 : 1 }, worker));
+    saveRegistry(reg); console.log(`${list.length - failed} recut${failed ? `, ${failed} FAILED` : ''}`); if (failed) process.exit(1); return;
   }
 
   if (has('--import')) { // the approved candidate (or the pick) into the game, under a new filename

@@ -13,6 +13,9 @@ fresh();
 {
   const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor, loraPrompt, NEW_CANVAS } = await import('../gen-art.mjs');
   // the style LoRA (0.00201): tools/train-lora.mjs trains it on the rooms and the sheets with written captions; gen-art --model lora draws from the line alone
+  const { MATTE } = await import('../gen-art.mjs');
+  ok('the cut-out: a matting model by default (851-labs/background-remover), the colour key as the offline fallback', MATTE.model === '851-labs/background-remover'
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("if (matte === 'api') {") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--matte', 'api')"));
   const { trainingSet, LORA } = await import('../train-lora.mjs');
   const set = trainingSet();
   ok('the LoRA training set: every room painting and character sheet, each captioned with the trigger word and the data\'s words',
