@@ -1414,7 +1414,15 @@ Iron Coffer's coins play the loot jingle; `heal` is a new recording (a
 cork, a gulp, a shimmer — the old read as coins) and the hollow hound's
 attack a gnarl. `gen-sfx.mjs nextFile` never goes below the registry's
 current version (a `--redo` after a render-sfx move wrote `_v1` again).
-`audio/synth.js` keeps the five old instruments unused.
+`audio/synth.js` keeps the five old instruments unused. **The second paste (0.00306):** the lab's
+sliders had kept their positions after the first apply (its state is
+this browser's), so the re-export restated every edit over the
+re-rendered files — only the five whose values had changed were applied
+(the shrine 7 semitones further down and its speed back to 100%, the
+hounds' cries, the new heal and ring takes pitched down as set); since,
+`render-sfx.mjs` stamps every clip it touches with `reviewed` and the
+lab drops a stored entry older than the stamp (the row says "review
+applied <date>"), so the sliders start from the clip as it is now.
 
 #### Music beds
 

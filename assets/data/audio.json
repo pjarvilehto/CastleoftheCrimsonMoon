@@ -82,11 +82,12 @@
       "approved": true
     },
     "shrine": {
-      "file": "assets/audio/sfx/shrine_v2.mp3",
-      "gainDb": 2.4,
-      "measuredDb": -14.4,
+      "file": "assets/audio/sfx/shrine_v3.mp3",
+      "gainDb": 3.9,
+      "measuredDb": -14.9,
       "stinger": true,
-      "approved": true
+      "approved": true,
+      "reviewed": "2026-10-03T16:22:20.110Z"
     },
     "levelup": {
       "file": "assets/audio/sfx/levelup_v2.mp3",
@@ -114,9 +115,11 @@
       "approved": true
     },
     "heal": {
-      "file": "assets/audio/sfx/heal_v1.mp3",
-      "gainDb": 20.7,
-      "measuredDb": -34.7
+      "file": "assets/audio/sfx/heal_v2.mp3",
+      "gainDb": 21.8,
+      "measuredDb": -34.8,
+      "approved": true,
+      "reviewed": "2026-10-03T16:22:20.110Z"
     },
     "forge": {
       "file": "assets/audio/sfx-forge.mp3",
@@ -132,9 +135,11 @@
       "approved": true
     },
     "ring": {
-      "gainDb": -3.5,
-      "file": "assets/audio/sfx/ring_v1.mp3",
-      "measuredDb": -6.5
+      "gainDb": -2.4,
+      "file": "assets/audio/sfx/ring_v2.mp3",
+      "measuredDb": -7.6,
+      "approved": true,
+      "reviewed": "2026-10-03T16:22:20.110Z"
     },
     "boom": {
       "synth": true,
@@ -702,24 +707,28 @@
       "approved": true
     },
     "eatk_hollow_hound": {
-      "gainDb": 11.1,
-      "file": "assets/audio/sfx/eatk_hollow_hound_v3.mp3",
-      "measuredDb": -25.1,
+      "gainDb": 12.4,
+      "file": "assets/audio/sfx/eatk_hollow_hound_v4.mp3",
+      "measuredDb": -25.4,
       "rate": [
         0.94,
         1.06
       ],
-      "jitterDb": 1
+      "jitterDb": 1,
+      "approved": true,
+      "reviewed": "2026-10-03T16:22:20.110Z"
     },
     "ehurt_hollow_hound": {
-      "gainDb": 0.2,
-      "file": "assets/audio/sfx/ehurt_hollow_hound_v2.mp3",
-      "measuredDb": -14.2,
+      "gainDb": 3.1,
+      "file": "assets/audio/sfx/ehurt_hollow_hound_v3.mp3",
+      "measuredDb": -14.6,
       "rate": [
         0.94,
         1.06
       ],
-      "jitterDb": 1
+      "jitterDb": 1,
+      "approved": true,
+      "reviewed": "2026-10-03T16:22:20.110Z"
     },
     "eatk_blood_knight": {
       "gainDb": -3,

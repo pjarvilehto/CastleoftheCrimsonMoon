@@ -678,7 +678,9 @@ fresh();
   const logs = [], removed = [], rendered = [];
   const out = JSON.parse(applyReview(text, { approved: ['click'], edits: [
     { clip: 'deeper', gainDb: 1, pitch: -2, speed: 100, approved: true }, { clip: 'boom', gainDb: -1, pitch: 2 }, { clip: 'loot', gainDb: 1.5 }, { clip: 'nope' }] },
-  { render: (src, dst, f) => rendered.push([src, dst, f]), measure: () => ({ db: -5, ms: 200 }), remove: (f) => removed.push(f), log: (l) => logs.push(l) }));
+  { render: (src, dst, f) => rendered.push([src, dst, f]), measure: () => ({ db: -5, ms: 200 }), remove: (f) => removed.push(f), log: (l) => logs.push(l), stamp: '2026-10-03T12:00:00.000Z' }));
+  ok('render-sfx: every clip touched carries the review\'s stamp (the lab drops older stored edits, 0.00306)', out.clips.click.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.deeper.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.loot.reviewed === '2026-10-03T12:00:00.000Z' && !out.clips.swoosh?.reviewed
+    && readFileSync('labs/sfx/lab.js', 'utf8').includes('if (!CLIPS[clip] || stale(clip, state[clip])) delete state[clip];'));
   ok('render-sfx: an approval marks the clip; a pitch edit renders a new file, measures it, keeps the level plus the offset, moves the peak and removes the old file',
     out.clips.click.approved === true && rendered.length === 1 && rendered[0][0] === 'assets/audio/sfx/deeper_v1.mp3' && rendered[0][1] === 'assets/audio/sfx/deeper_v2.mp3'
     && out.clips.deeper.file === 'assets/audio/sfx/deeper_v2.mp3' && out.clips.deeper.measuredDb === -5 && out.clips.deeper.peakMs === 200 && out.clips.deeper.approved === true

@@ -8,7 +8,10 @@
 //   node tools/render-sfx.mjs --apply sfx-review.json [--dry-run]
 //
 // Approvals mark the clip `approved: true` in assets/data/audio.json (the
-// lab shows them, nothing in the game reads them). An edit's gainDb is a
+// lab shows them, nothing in the game reads them). Every clip touched
+// gets `reviewed: <ISO date>`: the lab drops a stored edit older than it
+// (0.00306: the sliders kept their positions after an apply and stacked
+// on the re-rendered files). An edit's gainDb is a
 // dB offset on the clip's trim; pitch (semitones) and speed (%, the pitch
 // kept) re-render a FILE clip with ffmpeg — asetrate for the pitch, atempo
 // for the tempo — into a new file (rule 7: assets/audio/sfx/<stem>_v<k+1>.mp3;
@@ -78,14 +81,14 @@ function render(src, dst, filter) {
 }
 
 // Apply a review to the registry text. render / measure injectable (tests).
-export function applyReview(text, review, { dry = false, render: doRender = render, measure = (f) => measurePeak(join(ROOT, f)), remove = (f) => unlinkSync(join(ROOT, f)), log = console.log } = {}) {
+export function applyReview(text, review, { dry = false, render: doRender = render, measure = (f) => measurePeak(join(ROOT, f)), remove = (f) => unlinkSync(join(ROOT, f)), log = console.log, stamp = new Date().toISOString() } = {}) {
   const reg = JSON.parse(text);
   const used = (file) => Object.values(reg.clips).filter((c) => c.file === file).length;
   let out = text;
   for (const name of review.approved ?? []) {
     if (!reg.clips[name]) { log(`${name}: not a clip, skipped`); continue; }
     log(`${name}: approved`);
-    if (!dry) out = setClip(out, name, { approved: true });
+    if (!dry) out = setClip(out, name, { approved: true, reviewed: stamp });
   }
   for (const e of review.edits ?? []) {
     const c = reg.clips[e.clip];
@@ -116,7 +119,7 @@ export function applyReview(text, review, { dry = false, render: doRender = rend
         log(`  measured ${m.db} dB at ${m.ms} ms; trim ${patch.gainDb} (level ${(m.db + patch.gainDb).toFixed(1)} dB)${c.peakMs !== undefined ? `, peak ${c.peakMs} -> ${m.ms} ms` : ''}${e.approved ? ', approved' : ''}`);
       }
     }
-    if (!dry && Object.keys(patch).length) out = setClip(out, e.clip, patch);
+    if (!dry && Object.keys(patch).length) out = setClip(out, e.clip, { ...patch, reviewed: stamp });
   }
   return out;
 }

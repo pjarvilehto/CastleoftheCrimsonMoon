@@ -8,7 +8,10 @@
 // played at the pitch's rate through sfx.sfxFrom); Approve; a note. The
 // state lives in localStorage: { [clip]: { ok, vol, pitch, speed, note, at } }.
 // COPY JSON = { approved: [clips], edits: [{ clip, gainDb, pitch, speed, note, approved }] }
-// for tools/render-sfx.mjs --apply.
+// for tools/render-sfx.mjs --apply. A clip the tool touched carries
+// `reviewed` (an ISO date): a stored entry older than it is about the
+// clip as it was and is dropped (0.00306: the sliders used to keep their
+// positions after an apply and stack on the re-rendered files).
 
 import { loadData, DATA } from '../../src/shared/data.js';
 import { sfx, sfxFrom, sfxContext, initSfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from '../../src/audio/sfx.js';
@@ -106,6 +109,11 @@ const BEDS = { title: 'title / Great Hall', combat: 'combat', boss: 'boss', shri
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {}; } catch { state = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* private mode */ } };
+// an entry older than the clip's `reviewed` stamp (the tool applied it) is stale: gone, the sliders at rest
+const stale = (clip, s) => !!(CLIPS[clip]?.reviewed && (!s?.at || s.at < Date.parse(CLIPS[clip].reviewed)));
+for (const clip of Object.keys(state)) if (!CLIPS[clip] || stale(clip, state[clip])) delete state[clip];
+save();
+const touch = (clip) => { S(clip).at = Date.now(); };
 const S = (clip) => (state[clip] ??= { ok: false, vol: 0, pitch: 0, speed: 100, note: '' });
 const edited = (clip) => { const s = state[clip]; return !!s && (s.vol !== 0 || s.pitch !== 0 || s.speed !== 100); };
 const approved = (clip) => state[clip]?.ok ?? !!CLIPS[clip].approved; // the registry's approval is the base; this browser's verdict overrides
@@ -221,7 +229,7 @@ function count() {
 const knob = (r, key, label, min, max, step) => {
   const input = el('input', { type: 'range', min, max, step, value: S(r.clip)[key] });
   const out = el('output');
-  input.addEventListener('input', () => { S(r.clip)[key] = Number(input.value); save(); paintAll(r.clip); });
+  input.addEventListener('input', () => { S(r.clip)[key] = Number(input.value); touch(r.clip); save(); paintAll(r.clip); });
   input.addEventListener('change', () => { setCurrent(rows.indexOf(r)); playClip(r.clip); });
   return { wrap: el('label', {}, el('span', {}, label), input, out), input, out };
 };
@@ -237,15 +245,16 @@ for (const sec of SECTIONS) {
     const vol = knob(r, 'vol', 'Volume', -12, 12, 0.5), pitch = knob(r, 'pitch', 'Pitch', -12, 12, 1), speed = knob(r, 'speed', 'Speed', 50, 200, 5);
     if (c.synth || !c.file) { speed.input.disabled = true; speed.wrap.classList.add('lock'); speed.wrap.title = 'a generated sound: pitch and speed are one knob'; }
     const note = el('input', { type: 'text', placeholder: 'a note for the render (what was wrong, what you want)' });
-    note.addEventListener('input', () => { S(clip).note = note.value; save(); for (const o of rows) if (o.clip === clip && o !== r) o.knobs.note.value = note.value; });
+    note.addEventListener('input', () => { S(clip).note = note.value; touch(clip); save(); for (const o of rows) if (o.clip === clip && o !== r) o.knobs.note.value = note.value; });
     r.knobs = { vol, pitch, speed, note };
     r.row = el('div', { class: 'clip', onclick: () => setCurrent(rows.indexOf(r)) },
-      el('span', { class: 'name' }, clip, el('small', {}, c.file ? c.file.split('/').pop() : 'generated (audio/synth.js)'), el('small', {}, level(clip), c.stinger ? ' · stinger' : '', DATA.audio.duck.clips[clip] ? ` · ducks the music ${DATA.audio.duck.clips[clip]} s` : '')),
+      el('span', { class: 'name' }, clip, el('small', {}, c.file ? c.file.split('/').pop() : 'generated (audio/synth.js)'), el('small', {}, level(clip), c.stinger ? ' · stinger' : '', DATA.audio.duck.clips[clip] ? ` · ducks the music ${DATA.audio.duck.clips[clip]} s` : ''),
+        c.reviewed ? el('small', {}, `review applied ${c.reviewed.slice(0, 10)} — the sliders start from the clip as it is now`) : null),
       el('span', { class: 'where' }, where, el('small', {}, detail)),
       el('div', { class: 'acts' },
         el('button', { class: 'play', onclick: (e) => { e.stopPropagation(); setCurrent(rows.indexOf(r)); playClip(clip); } }, '▶ Play'),
-        el('button', { class: 'b-ok small', onclick: (e) => { e.stopPropagation(); S(clip).ok = !approved(clip); S(clip).at = Date.now(); save(); paintAll(clip); } }, 'Approve'),
-        el('button', { class: 'b-reset small', onclick: (e) => { e.stopPropagation(); Object.assign(S(clip), { vol: 0, pitch: 0, speed: 100, note: '' }); save(); paintAll(clip); } }, 'Reset')),
+        el('button', { class: 'b-ok small', onclick: (e) => { e.stopPropagation(); S(clip).ok = !approved(clip); touch(clip); save(); paintAll(clip); } }, 'Approve'),
+        el('button', { class: 'b-reset small', onclick: (e) => { e.stopPropagation(); Object.assign(S(clip), { vol: 0, pitch: 0, speed: 100, note: '' }); touch(clip); save(); paintAll(clip); } }, 'Reset')),
       el('div', { class: 'knobs' }, vol.wrap, pitch.wrap, speed.wrap, note));
     rows.push(r);
     box.append(r.row);
@@ -281,7 +290,7 @@ document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   const r = rows[current];
   if (k === ' ') { e.preventDefault(); playClip(r.clip); }
-  else if (k === 'a') { S(r.clip).ok = !approved(r.clip); S(r.clip).at = Date.now(); save(); paintAll(r.clip); }
+  else if (k === 'a') { S(r.clip).ok = !approved(r.clip); touch(r.clip); save(); paintAll(r.clip); }
   else if (k === 'm') $('music').click();
   else if (k === 'v') $('vary').click();
   else if (k === 'r') r.row.querySelector('.b-reset').click();
