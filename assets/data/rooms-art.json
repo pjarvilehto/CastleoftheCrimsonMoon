@@ -521,6 +521,54 @@
           "w": 1536,
           "h": 1024,
           "created": "2026-10-03T05:31:23Z"
+        },
+        {
+          "n": 9,
+          "file": "assets/bg/candidates/guide_torch_corridor_c9.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 960809015,
+          "refs": [],
+          "prompt": "a long castle corridor lined with smoky torches, guttering flames barely pushing back the darkness, tattered banners hanging from a vaulted ceiling, wet flagstones reflecting dim amber light, vanishing into blackness, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:04Z"
+        },
+        {
+          "n": 10,
+          "file": "assets/bg/candidates/guide_torch_corridor_c10.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1043559549,
+          "refs": [],
+          "prompt": "a long castle corridor lined with smoky torches, guttering flames barely pushing back the darkness, tattered banners hanging from a vaulted ceiling, wet flagstones reflecting dim amber light, vanishing into blackness, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:04Z"
+        },
+        {
+          "n": 8,
+          "file": "assets/bg/candidates/guide_torch_corridor_c8.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 944031396,
+          "refs": [],
+          "prompt": "a long castle corridor lined with smoky torches, guttering flames barely pushing back the darkness, tattered banners hanging from a vaulted ceiling, wet flagstones reflecting dim amber light, vanishing into blackness, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:04Z"
+        },
+        {
+          "n": 11,
+          "file": "assets/bg/candidates/guide_torch_corridor_c11.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1026781930,
+          "refs": [],
+          "prompt": "a long castle corridor lined with smoky torches, guttering flames barely pushing back the darkness, tattered banners hanging from a vaulted ceiling, wet flagstones reflecting dim amber light, vanishing into blackness, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:10Z"
         }
       ]
     },
@@ -612,6 +660,54 @@
           "w": 1536,
           "h": 1024,
           "created": "2026-10-03T05:32:14Z"
+        },
+        {
+          "n": 10,
+          "file": "assets/bg/candidates/guide_ossuary_c10.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 342484083,
+          "refs": [],
+          "prompt": "an ossuary with walls of skulls and bones, chandeliers of bone, sepia, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:18Z"
+        },
+        {
+          "n": 9,
+          "file": "assets/bg/candidates/guide_ossuary_c9.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1413719503,
+          "refs": [],
+          "prompt": "an ossuary with walls of skulls and bones, chandeliers of bone, sepia, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:18Z"
+        },
+        {
+          "n": 8,
+          "file": "assets/bg/candidates/guide_ossuary_c8.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1430497122,
+          "refs": [],
+          "prompt": "an ossuary with walls of skulls and bones, chandeliers of bone, sepia, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:19Z"
+        },
+        {
+          "n": 11,
+          "file": "assets/bg/candidates/guide_ossuary_c11.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 359261702,
+          "refs": [],
+          "prompt": "an ossuary with walls of skulls and bones, chandeliers of bone, sepia, gloomy and moody, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, deep shadows, oppressive atmosphere, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:02:25Z"
         }
       ]
     }
