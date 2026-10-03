@@ -1,0 +1,131 @@
+{
+  "default": "knight",
+  "heroes": [
+    {
+      "id": "knight",
+      "name": "The Curious Knight",
+      "epithet": "Steel and stubbornness",
+      "lore": "A wanderer who came for the legend and stayed for the fight. A sword, a coat of mail and no sense of when to leave.",
+      "traits": [
+        "Sword",
+        "Heavy blows",
+        "Armor"
+      ],
+      "looks": [
+        { "art": "knight_v1.webp", "fh": 0.739 }
+      ]
+    },
+    {
+      "id": "barbarian",
+      "name": "The Barbarian",
+      "epithet": "The axe decides",
+      "lore": "From the frozen marches, where the moon is one more thing to kill. Hits harder, bleeds more, drinks last.",
+      "traits": [
+        "Great axe",
+        "Rage",
+        "No armor"
+      ],
+      "looks": [
+        { "art": "barbarian_v1.webp", "fh": 0.883 },
+        { "art": "barbarian_v2.webp", "fh": 0.95 },
+        { "art": "barbarian_v3.webp", "fh": 0.902 },
+        { "art": "barbarian_alt_v2.webp", "fh": 0.913 },
+        { "art": "barbarian_alt_v4.webp", "fh": 0.916 }
+      ]
+    },
+    {
+      "id": "wizard",
+      "name": "The Wizard",
+      "epithet": "Old fire, older book",
+      "lore": "He has read what the castle is and came anyway, with a staff, a chained grimoire and three good spells.",
+      "traits": [
+        "Staff",
+        "Spells",
+        "Frail"
+      ],
+      "looks": [
+        { "art": "wizard_v1.webp", "fh": 0.921 },
+        { "art": "wizard_v2.webp", "fh": 0.851 },
+        { "art": "wizard_v3.webp", "fh": 0.93 },
+        { "art": "wizard_v4.webp", "fh": 0.911 },
+        { "art": "wizard_alt_v1.webp", "fh": 0.961 },
+        { "art": "wizard_alt_v2.webp", "fh": 0.953 },
+        { "art": "wizard_alt_v3.webp", "fh": 0.929 },
+        { "art": "wizard_alt_v4.webp", "fh": 0.956 }
+      ]
+    },
+    {
+      "id": "necromancer",
+      "name": "The Necromancer",
+      "epithet": "The dead owe him",
+      "lore": "The castle's own trade, turned against it. Every corpse on the floor is a servant waiting for its word.",
+      "traits": [
+        "Ritual dagger",
+        "Thralls",
+        "Lifesteal"
+      ],
+      "looks": [
+        { "art": "necromancer_v1.webp", "fh": 0.939 },
+        { "art": "necromancer_v2.webp", "fh": 0.934 },
+        { "art": "necromancer_v3.webp", "fh": 0.936 },
+        { "art": "necromancer_v4.webp", "fh": 0.945 },
+        { "art": "necromancer_alt_v1.webp", "fh": 0.943 },
+        { "art": "necromancer_alt_v2.webp", "fh": 0.946 },
+        { "art": "necromancer_alt_v3.webp", "fh": 0.935 },
+        { "art": "necromancer_alt_v4.webp", "fh": 0.91 }
+      ]
+    },
+    {
+      "id": "druid",
+      "name": "The Druid",
+      "epithet": "The forest remembers",
+      "lore": "Antlers, feathers and a staff that still grows. The wild has its own quarrel with the Crimson Moon.",
+      "traits": [
+        "Living staff",
+        "Mending",
+        "Wild shape"
+      ],
+      "looks": [
+        { "art": "druid_v1.webp", "fh": 0.938 },
+        { "art": "druid_v4.webp", "fh": 0.935 },
+        { "art": "druid_alt_v1.webp", "fh": 0.923 },
+        { "art": "druid_alt_v3.webp", "fh": 0.872 },
+        { "art": "druid_alt_v4.webp", "fh": 0.943 }
+      ]
+    },
+    {
+      "id": "hexhunter",
+      "name": "The Hexhunter",
+      "epithet": "Silver bolts, cold eyes",
+      "lore": "A witchfinder who turned her craft on the things that made the witches. A crossbow, a pocket of charms and no mercy left to spend.",
+      "traits": [
+        "Crossbow",
+        "Hexes",
+        "Quick"
+      ],
+      "looks": [
+        { "art": "hexhunter_v1.webp", "fh": 0.961 },
+        { "art": "hexhunter_v2.webp", "fh": 0.962 },
+        { "art": "hexhunter_v3.webp", "fh": 0.967 },
+        { "art": "hexhunter_v4.webp", "fh": 0.964 }
+      ]
+    },
+    {
+      "id": "plaguesister",
+      "name": "The Plague Sister",
+      "epithet": "Mercy, by the censer",
+      "lore": "A nursing order that outlived its abbey. She carries its reliquary on her back and its fever in a censer, and tends the dying either way.",
+      "traits": [
+        "Censer",
+        "Blight",
+        "Endurance"
+      ],
+      "looks": [
+        { "art": "plaguesister_v1.webp", "fh": 0.921 },
+        { "art": "plaguesister_v2.webp", "fh": 0.959 },
+        { "art": "plaguesister_v3.webp", "fh": 0.926 },
+        { "art": "plaguesister_v4.webp", "fh": 0.962 }
+      ]
+    }
+  ]
+}

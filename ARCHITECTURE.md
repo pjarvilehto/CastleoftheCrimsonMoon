@@ -121,8 +121,9 @@ src/
     narrator.js         the Old Wizard voice-over (0.161): rules (audio.json
                         narration), takes (data/narration.json), one line at a time
   ui/
-    scenes/             title, hub (Great Hall), dungeon, runEnd, benchmark;
-                        registered in scenes/index.js, never import each other
+    scenes/             title, hero (CHOOSE YOUR HERO, 0.00248), hub (Great Hall),
+                        dungeon, runEnd, benchmark; registered in scenes/index.js,
+                        never import each other
     battleRoom.js       a room's battle line: mount, summon sync, tick update,
                         the effects' context and the pre-action snapshot
                         (dungeon + benchmark); onGone -> fit() recounts --n when a
@@ -243,8 +244,9 @@ primary button. While a dialog is open it owns the keyboard.
 | Key | Where | Action |
 |---|---|---|
 | `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
-| `Space` | everywhere | Play (the phone gate) · Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close · the save dialogs' Done / Load Save |
+| `Space` | everywhere | Play (the phone gate) · Enter the Castle · Proceed (the hero) · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close · the save dialogs' Done / Load Save |
 | `E` / `N` | title | Enter the Castle / Start a New Game (then `W` wipes, `K` keeps the save) |
+| `1`-`7` / `←` `→` / `P` | hero | Choose a class / turn the chosen hero's look / Proceed to the Great Hall |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |

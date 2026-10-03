@@ -10,6 +10,7 @@ import { startingEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
 import { SAVE_VERSION, migrateProfile } from './migrations.js';
 import { cleanName } from './names.js';
+import { cleanHero } from '../shared/heroes.js';
 
 const DEFAULTS = {
   coins: 0,
@@ -30,6 +31,7 @@ const DEFAULTS = {
   name: '',     // 0.109: what the player calls themselves (title screen prompt; analytics)
   victorySeen: false, // 0.121: the "you've won" dialog after the final boss, shown once
   bench: [],          // 0.131: ?debug BENCHMARK results, newest last (ui/scenes/benchmarkScene.js)
+  hero: null,         // 0.00248: the character class and its look, { id, look } (shared/heroes.js); freshProfile and the v5 step fill it from heroes.json
 };
 
 let profile = null;
@@ -41,7 +43,7 @@ function freshProfile(playerId = newPlayerId(), name = '') {
   const pc = DATA.difficulty.potions;
   return {
     ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId, name,
-    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap,
+    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap, hero: cleanHero(null),
   };
 }
 

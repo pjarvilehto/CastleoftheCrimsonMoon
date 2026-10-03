@@ -245,7 +245,7 @@ fresh();
     globalThis.fetch = orig;
     const v = encodeURIComponent(DATA.build.version);
     ok('loadData reads build.json uncached first, then every other file under ?v=<build>', /^assets\/data\/build\.json\?t=\d+$/.test(calls[0][0]) && calls[0][1] === 'no-store'
-      && calls.length === 10 && calls.slice(1).every(([u, c]) => u.endsWith(`.json?v=${v}`) && c === 'no-cache'), JSON.stringify(calls.slice(0, 3)));
+      && calls.length === 11 && calls.slice(1).every(([u, c]) => u.endsWith(`.json?v=${v}`) && c === 'no-cache'), JSON.stringify(calls.slice(0, 3)));
   }
   const leaves = new Set(readFileSync('src/shared/dataCheck.js', 'utf8').match(/'[a-zA-Z.]+'/g).map((s) => s.slice(1, -1).split('.').pop()));
   const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
@@ -376,6 +376,7 @@ fresh();
     'assets/audio/vo': new Set(Object.values(DATA.narration.lines).flat().map((x) => base(x.file))),
     'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
+    'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)
   };
   const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
   ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame and icon on disk is one the game names', orphans.length === 0, orphans.join(', '));

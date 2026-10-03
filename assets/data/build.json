@@ -1,5 +1,5 @@
 {
-  "version": "0.00247",
+  "version": "0.00248",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -44,6 +44,7 @@
     "src/shared/data.js",
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
+    "src/shared/heroes.js",
     "src/shared/level.js",
     "src/shared/motion.js",
     "src/shared/platform.js",
@@ -79,6 +80,7 @@
     "src/ui/phoneGate.js",
     "src/ui/scenes/benchmarkScene.js",
     "src/ui/scenes/dungeonScene.js",
+    "src/ui/scenes/heroScene.js",
     "src/ui/scenes/hubScene.js",
     "src/ui/scenes/index.js",
     "src/ui/scenes/runEndScene.js",
@@ -90,6 +92,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00248": [
+      "Choose your hero: after Enter the Castle you pick your character — the Curious Knight or the new Barbarian, Wizard, Necromancer, Druid, Hexhunter and Plague Sister — and, under the chosen one, a look from their sheets (35 figures from the developer's art); the knight's card in the hall and the fights draws your hero. The choice is cosmetic for now."
+    ],
     "0.00247": [
       "Hero Lab: the CHOOSE YOUR HERO screen as a draft — the Curious Knight and four new classes (Barbarian, Wizard, Necromancer, Druid) over any painting, in two layouts (labs/heroes/)."
     ],
@@ -136,10 +141,6 @@
     ],
     "0.00234": [
       "Art Lab: the wraith's c10 approved (every character now has an approved portrait) and its other candidates pruned; the LoRA tool can cancel a training"
-    ],
-    "0.00233": [
-      "Art Lab: 30 candidates approved across twelve characters; the wraith redrawn from its best candidate with the owner's note (dead black eyes, the red heart kept); the unapproved candidates pruned",
-      "The style LoRA trains on the approved pictures only (tools/train-lora.mjs; the inked sheets and the room paintings are opt-in)"
     ]
   }
 }

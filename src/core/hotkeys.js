@@ -45,7 +45,7 @@ export function handleKey(key) {
     if (btns.length) { btns[0].click(); return true; }
     return false;
   }
-  if (!/^[a-z0-9]$/.test(k)) return false;
+  if (!/^[a-z0-9]$/.test(k) && !/^arrow(left|right|up|down)$/.test(k)) return false; // (0.00248: the arrows reach a button keyed to them — CHOOSE YOUR HERO)
   const btns = document.querySelectorAll(`button[data-key="${k}"]:not([disabled])`);
   if (btns.length) { btns[0].click(); return true; }
   return false;

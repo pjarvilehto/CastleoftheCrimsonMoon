@@ -128,7 +128,7 @@ function findById(root, id) { let hit = null; root.walk((e) => { if (!hit && e.a
 function match(el, sel) {
   if (sel === 'button.primary:not([disabled])')
     return el.tagName === 'button' && el.className.split(' ').includes('primary') && el.attrs.disabled === undefined;
-  const m = sel.match(/^button\[data-key="([a-z0-9])"\]:not\(\[disabled\]\)$/);
+  const m = sel.match(/^button\[data-key="([a-z0-9]|arrow(?:left|right|up|down))"\]:not\(\[disabled\]\)$/); // (0.00248: the arrow keys reach buttons too)
   if (m) return el.tagName === 'button' && el.attrs['data-key'] === m[1] && el.attrs.disabled === undefined;
   if (sel === 'button[data-key2=" "]:not([disabled])')
     return el.tagName === 'button' && el.attrs['data-key2'] === ' ' && el.attrs.disabled === undefined;
@@ -174,7 +174,7 @@ export const { generateRoom } = await import('../../src/run/roomGen.js');
 export const { scaleEnemy } = await import('../../src/shared/balance.js');
 export const { createCombat, playerAttack } = await import('../../src/run/combat.js');
 export const { shrineOffers, canAffordOffer, acceptOffer } = await import('../../src/run/shrine.js');
-export const { dungeonScene, hubScene, titleScene } = await import('../../src/ui/scenes/index.js');
+export const { dungeonScene, hubScene, titleScene, heroScene } = await import('../../src/ui/scenes/index.js');
 export const { resetProfile, getProfile } = await import('../../src/meta/profile.js');
 await loadData();
 

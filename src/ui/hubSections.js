@@ -13,6 +13,7 @@ import { DATA } from '../shared/data.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel, derivedStats } from '../meta/stats.js';
 import { portraitUrl } from '../shared/portraits.js';
+import { heroOf } from '../shared/heroes.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
@@ -173,7 +174,7 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
   const chip = (k, cls = '') => statBox(k, vals[k], cls);
   const boxes = { Level: level, Attack: chip('Attack'), HP: chip('HP'), Armor: chip('Armor'), Crit: chip('Crit'), Lifesteal: chip('Lifesteal', s.lifesteal ? '' : 'none'), Potions: chip('Potions', potionLevel(p)) };
   const panel = el('div', { class: 'panel knight-panel' },
-    el('div', { class: 'knight-name' }, p.name || 'The Curious Knight'),
+    el('div', { class: 'knight-name' }, p.name || heroOf(p).name),
     level,
     el('div', { class: 'sec-hint' }, 'worn gear · the forge enhances tier 2+ for coins'),
     el('div', { class: 'knight-doll' },

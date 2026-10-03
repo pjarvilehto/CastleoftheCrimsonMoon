@@ -5,19 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Crimson Moon Hero Lab</title>
-<!-- labs/heroes/: the CHOOSE YOUR HERO screen, a draft (0.00247). Five
-     character classes — the Curious Knight the game has, and the
-     Barbarian, the Wizard, the Necromancer and the Druid from the developer's
-     sheets (assets/style/heroes/, cut out of the flat grey by
-     tools/cutout.mjs into this folder) — on a mock of the screen a new
-     player would meet between the title and the Great Hall, over any
-     room painting. Two layouts: LINE-UP (five cards in a row, the chosen
-     one lifted, its lines and the way forward under them) and SHOWCASE
-     (the chosen hero large beside the lines, the five as a strip of small
-     cards). Click or 1-5 / arrows choose, Space is BEGIN. COPY JSON gives
-     the picks back. Nothing here touches the game or the save; the names
-     and lines are placeholders. The base href keeps the game's relative
-     paths (assets/..., styles.css). -->
+<!-- labs/heroes/: the CHOOSE YOUR HERO screen (0.00247 a draft; shipped as
+     ui/scenes/heroScene.js in 0.00248) over any painting, drawn from the
+     game's own data and stylesheet (heroes.json, styles.css section 6b):
+     five character classes — the Curious Knight and the developer's
+     Barbarian, Wizard, Necromancer and Druid (assets/style/heroes/ are the
+     sheets, assets/heroes/ the cut-outs) — in the game's LINE-UP, or the
+     SHOWCASE alternative (the chosen hero large beside the lines, the five
+     as a strip). Click or 1-5 choose, ←/→ turn the look, Space is PROCEED;
+     COPY JSON gives the picks back. Nothing here touches the game or the
+     save. The base href keeps the game's relative paths. -->
 <base href="../../">
 <link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
 <link rel="stylesheet" href="styles.css" data-versioned>
@@ -33,83 +30,45 @@ html, body { overflow: hidden; }
 .top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.4rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
 .top .labs-link { color: var(--gold); font-family: var(--display); letter-spacing: 0.1em; text-decoration: none; text-shadow: 0 2px 6px #000; }
 .top .hint { color: var(--muted); font-size: 0.82rem; text-shadow: 0 1px 4px #000; font-family: var(--body); margin-left: auto; }
-.top button, .top select { font-family: var(--display); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 5px 10px 3px; cursor: pointer; min-width: 0; }
+.top button, .top select { font-family: var(--display); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 5px 10px 3px; cursor: pointer; min-width: 0; min-height: 0; }
 .top button:hover, .top select:hover { border-color: var(--gold); color: #fff; }
 .top button.on { background: var(--gold); color: #1a1208; border-color: var(--gold); }
 .top select { text-transform: none; letter-spacing: 0.04em; max-width: 15em; }
 #status { color: var(--muted); font-size: 0.82rem; font-family: var(--body); text-shadow: 0 1px 4px #000; }
 
-/* ---- the screen ---- */
-#screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 5vh 3vw 2.5vh; gap: 1.5vh; }
-#screen .head { text-align: center; }
-#screen .head h1 { font-size: min(4.2vh, 4vw); letter-spacing: 0.18em; margin: 0; }
-#screen .head .subtitle { margin: 0.2em 0 0; font-size: min(1.7vh, 1.6vw); letter-spacing: 0.22em; text-transform: uppercase; }
-
-/* the row of hero cards: --hero-h is a card's height, the card art the enemy frame (tall, 413 / 1106) */
-/* the row keeps a margin above for the figures that climb over their frames and the chosen card's lift */
-.hero-row { display: flex; gap: 1.4vw; align-items: flex-end; justify-content: center; perspective: 150vh; perspective-origin: 50% 40%; --hero-h: min(50vh, 24vw); margin-top: calc(var(--hero-h) * 0.16); }
-.hero { position: relative; flex: 0 0 auto; width: calc(var(--hero-h) * 0.3734); height: var(--hero-h); cursor: pointer; transform-style: preserve-3d;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s; filter: brightness(0.72) saturate(0.85); }
-.hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%) rotateY(var(--ry, 0deg)); }
-.hero.chosen { filter: none; transform: translateY(-4%) scale(1.07) rotateY(var(--ry, 0deg)); z-index: 2; }
-.hero-row.fan .hero { transform: rotateY(var(--ry)); }
-.hero-row.fan .hero:hover { transform: translateY(-1.5%) rotateY(var(--ry)); }
-.hero-row.fan .hero.chosen { transform: translateY(-4%) scale(1.07) rotateY(0deg); }
-.hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
-/* the chosen card's gold rim: a layer whose opacity breathes (never the box-shadow itself) */
-.hero .rim { position: absolute; inset: -0.6%; border-radius: 4% / 1.6%; box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); opacity: 0; pointer-events: none; }
-.hero.chosen .rim { animation: hero-rim 1.6s ease-in-out infinite; }
-@keyframes hero-rim { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-/* the figure: bottom-anchored over the name plate, in scale with the other sheets (--fh = its sheet box's share of the sheet's height) */
-.hero .figure { position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); height: calc(var(--hero-h) * var(--fh)); max-width: 150%; width: auto; object-fit: contain; object-position: bottom center;
-  filter: drop-shadow(0 0.8vh 1.2vh rgba(0,0,0,0.7)); -webkit-user-drag: none; user-select: none; pointer-events: none; }
-.hero .name { position: absolute; left: 4%; right: 4%; bottom: 3.5%; text-align: center; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--parchment); font-size: calc(var(--hero-h) * 0.048); line-height: 1.05; text-shadow: 0 1px 4px #000; }
-.hero .name small { display: block; font-size: 0.62em; letter-spacing: 0.16em; color: var(--muted); margin-top: 0.15em; }
-.hero.chosen .name { color: var(--gold); }
-.hero .num { position: absolute; left: 6%; top: 3%; font-family: var(--display); font-size: calc(var(--hero-h) * 0.04); color: var(--muted); letter-spacing: 0.1em; opacity: 0.7; }
-
-/* the chosen hero's lines and the way forward (the game's panel look) */
-.detail { width: min(72vw, 980px); padding: 1.2vh 2.2vw 1.1vh; text-align: center; display: grid; grid-template-columns: 1fr; gap: 0.4vh; }
-.detail h2 { margin: 0; font-size: min(3.2vh, 2.8vw); letter-spacing: 0.16em; text-transform: uppercase; }
-.detail .epithet { color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); }
-.detail .lore { font-family: var(--body); color: var(--parchment); font-size: min(1.9vh, 1.6vw); line-height: 1.35; max-width: 60ch; margin: 0.3em auto 0; }
-.detail .traits { display: flex; gap: 0.8vw; justify-content: center; margin-top: 0.6vh; flex-wrap: wrap; }
-.detail .traits span { font-family: var(--display); letter-spacing: 0.12em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); color: var(--parchment); border: 1px solid var(--panel-border); border-radius: 3px; padding: 0.25em 0.8em 0.15em; background: rgba(0,0,0,0.35); }
-.detail .btn-row { margin-top: 0.8vh; justify-content: center; }
-.detail .btn-row button { font-size: min(2.2vh, 1.9vw); }
-.detail .placeholder { color: var(--muted); font-family: var(--body); font-size: 0.78rem; margin-top: 0.4vh; opacity: 0.8; }
+/* ---- the screen: the game's rules (styles.css 6b) on a fixed root, since the lab has no #app ---- */
+.hero-screen { position: fixed; padding-top: 56px; } /* (the lab's bar sits over the top) */
+.hero .num { pointer-events: none; }
 
 /* ---- SHOWCASE: the chosen hero large beside the lines, the five as a strip ---- */
-body.showcase #screen { display: grid; grid-template-columns: 38vw 1fr; grid-template-rows: auto minmax(0, 1fr) auto; padding: 5vh 4vw 2.5vh; gap: 1vh 2vw; align-items: end; }
-body.showcase #screen .head { grid-column: 1 / -1; }
+body.showcase .hero-screen { display: grid; grid-template-columns: 38vw 1fr; grid-template-rows: auto minmax(0, 1fr) auto; padding: 5vh 4vw 2.5vh; gap: 1vh 2vw; align-items: end; }
+body.showcase .hero-head { grid-column: 1 / -1; }
 body.showcase .stage { grid-row: 2 / 4; align-self: end; height: 72vh; position: relative; display: flex; align-items: flex-end; justify-content: center; }
-body.showcase .stage img { height: calc(72vh * var(--fh) * 1.08); max-width: 40vw; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 1.5vh 2.5vh rgba(0,0,0,0.8)); transition: opacity 0.3s; -webkit-user-drag: none; }
+body.showcase .stage img { height: calc(72vh * var(--fh) * 1.08); max-width: 40vw; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 1.5vh 2.5vh rgba(0,0,0,0.8)); -webkit-user-drag: none; }
 body.showcase .stage .ground { position: absolute; left: 10%; right: 10%; bottom: -1vh; height: 4vh; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
-body.showcase .detail { width: auto; text-align: left; align-self: center; justify-items: start; padding: 2vh 2.4vw; }
-body.showcase .detail .lore { margin-left: 0; }
-body.showcase .detail .traits, body.showcase .detail .btn-row { justify-content: flex-start; }
-body.showcase .hero-row { --hero-h: 21vh; justify-content: flex-start; align-self: end; perspective: none; margin-top: calc(var(--hero-h) * 0.2); }
+body.showcase .hero-detail { width: auto; align-self: center; margin-top: 0; }
+body.showcase .hero-row { --hero-h: 21vh; justify-content: flex-start; align-self: end; margin-top: calc(var(--hero-h) * 0.2); }
 body.showcase .hero-row .name small { display: none; }
+body.showcase .hero .looks .which { display: none; }
 body:not(.showcase) .stage { display: none; }
 </style>
 </head>
 <body>
 <div id="room"></div>
-<div id="screen">
-  <div class="head"><h1>CHOOSE YOUR HERO</h1><div class="subtitle">Who walks into the castle tonight?</div></div>
+<div class="hero-screen">
+  <div class="hero-head"><h1>CHOOSE YOUR HERO</h1><div class="subtitle">Who walks into the castle tonight?</div></div>
   <div class="stage"><div class="ground"></div><img alt=""></div>
   <div class="hero-row" id="row"></div>
-  <div class="panel detail" id="detail"></div>
+  <div class="panel hero-detail" id="detail"></div>
 </div>
 <div class="top">
   <a class="labs-link" href="labs/">‹ Labs</a>
   <h1>Hero Lab</h1>
   <span id="layouts"></span>
-  <button id="fan" title="The cards turned a little toward the chosen one (3D)">Fan</button>
   <select id="painting" title="The painting behind the screen"></select>
   <button id="copy">Copy JSON</button>
   <span id="status"></span>
-  <span class="hint">1-5 / ←→ choose · Space begin · L layout · F fan · P painting</span>
+  <span class="hint">1-5 choose · ←→ look · Space proceed · L layout · P painting</span>
 </div>
 <!-- the versioned boot (labs/boot.js): the game's modules and this lab's script under ?v=<build> -->
 <script src="labs/boot.js" data-lab="labs/heroes/lab.js"></script>

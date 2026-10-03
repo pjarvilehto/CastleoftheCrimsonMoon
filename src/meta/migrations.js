@@ -7,6 +7,7 @@ import { DATA } from '../shared/data.js';
 import { equipItems, startingEquipment, emptyEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
 import { cleanName } from './names.js';
+import { cleanHero } from '../shared/heroes.js';
 
 // ---- save schema versioning (0.079) ----
 // Every save carries `saveVersion`. Saves from before 0.079 have none and
@@ -15,7 +16,7 @@ import { cleanName } from './names.js';
 // and APPEND a step — never edit a shipped step (testers' saves have
 // already been through it). saveVersion is deliberately NOT in DEFAULTS:
 // the load merge would stamp it onto old saves and skip their migrations.
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 const MIGRATIONS = [
   // v0 -> v1: everything pre-0.079 builds did on every load.
@@ -59,6 +60,10 @@ const MIGRATIONS = [
   (p) => {
     p.name = cleanName(p.name);
   },
+  // v4 -> v5 (0.00248): the character class — every save so far played the knight.
+  (p) => {
+    p.hero = cleanHero(p.hero);
+  },
 ];
 
 export function migrateProfile(p, DEFAULTS) {
@@ -90,5 +95,6 @@ export function migrateProfile(p, DEFAULTS) {
   if (!p.forged || typeof p.forged !== 'object') p.forged = {};
   for (const [id, lvl] of Object.entries(p.forged)) { if (!Object.hasOwn(DATA.items, id) || !Number.isFinite(Number(lvl))) delete p.forged[id]; else p.forged[id] = Number(lvl); }
   for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
+  p.hero = cleanHero(p.hero); // (an unknown class or look in an imported code: the knight, the first look)
 
 }
