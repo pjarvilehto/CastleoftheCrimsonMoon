@@ -1,4 +1,9 @@
 {
+  "0.00267": [
+    "Every class now fights its own way: the Barbarian's Cleave reaches every foe (and his blows harden as his health falls), the Wizard's Fireball burns them all (three charges a fight, a kill gives one back), the Necromancer's Soul Drain heals and a slain foe rises as his thrall to take the blows, the Druid's Go Feral is three turns of a beast's damage (no potion meanwhile) and his wounds knit each turn, the Hexhunter's Hex makes every blow on that foe a crit and she dodges a fifth of the blows, the Plague Sister's Last Rites blights every foe to gnaw them each turn and her potions harden her armor. Health, damage and armor differ a little by class; the Knight is as he was. A first pass, to be tuned in play.",
+    "The heavy button carries the class's name (Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites), the Wizard's charges show as pips on it and the Druid's feral turns in brackets; a hexed or blighted foe wears a tag on its card, and the log colours the new lines.",
+    "Shrines: Quicken gives the Wizard a charge instead of a shorter cooldown."
+  ],
   "0.00266": [
     "Stats have colours: damage rust, HP sage, armor slate, crit verdigris, loot ochre — the same on the Train row that raises a stat and wherever it shows (your gear, the stat boxes, your hero's card), so you can see what training moves."
   ],

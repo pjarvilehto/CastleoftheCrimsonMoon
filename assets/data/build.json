@@ -1,5 +1,5 @@
 {
-  "version": "0.00266",
+  "version": "0.00267",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00267": [
+      "Every class now fights its own way: the Barbarian's Cleave reaches every foe (and his blows harden as his health falls), the Wizard's Fireball burns them all (three charges a fight, a kill gives one back), the Necromancer's Soul Drain heals and a slain foe rises as his thrall to take the blows, the Druid's Go Feral is three turns of a beast's damage (no potion meanwhile) and his wounds knit each turn, the Hexhunter's Hex makes every blow on that foe a crit and she dodges a fifth of the blows, the Plague Sister's Last Rites blights every foe to gnaw them each turn and her potions harden her armor. Health, damage and armor differ a little by class; the Knight is as he was. A first pass, to be tuned in play.",
+      "The heavy button carries the class's name (Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites), the Wizard's charges show as pips on it and the Druid's feral turns in brackets; a hexed or blighted foe wears a tag on its card, and the log colours the new lines.",
+      "Shrines: Quicken gives the Wizard a charge instead of a shorter cooldown."
+    ],
     "0.00266": [
       "Stats have colours: damage rust, HP sage, armor slate, crit verdigris, loot ochre — the same on the Train row that raises a stat and wherever it shows (your gear, the stat boxes, your hero's card), so you can see what training moves."
     ],
@@ -142,10 +147,6 @@
       "Your hero is chosen once per game: Enter the Castle picks on a new game and goes straight to the Great Hall after; the hall's portrait (a Look row on phones) opens a picker for your hero's other looks.",
       "The hero figures recut: the grey showing through fur, hems and the crossbow is gone, and the edges lost their pale fringe.",
       "Play stats: every run records who played and which look; the dashboard shows a Hero column and a By hero table (the collector Worker to paste is 0.00253)."
-    ],
-    "0.00252": [
-      "Shrines: Bulwark is now the big-armor boon (+40% armor, at least +80) and Glass Cannon costs less armor (+50% damage for -30% armor); every shrine's price is about a third lighter",
-      "Play stats: each shrine's three offers and your pick are recorded, so the stats page can show what players really choose"
     ]
   }
 }
