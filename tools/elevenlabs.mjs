@@ -67,17 +67,22 @@ export async function post(path, body, { fetchFn = fetch, key = apiKey(), format
 // registry's measuredDb; null without ffmpeg. The browser's reading
 // (tools/audio-check.mjs) is the one the registry trusts for a hissy
 // clip (0.00271: this 16 kHz measure under-reads one by up to 4 dB).
-export function measureDb(path) {
+export function measureDb(path) { return measurePeak(path)?.db ?? null; }
+
+// The loudest 50 ms and where it sits (0.00301, tools/render-sfx.mjs: a
+// re-rendered clip's measuredDb and peakMs together): { db, ms } with ms
+// the window's centre, stepping 10 ms; null without ffmpeg.
+export function measurePeak(path) {
   const r = spawnSync('ffmpeg', ['-v', 'error', '-i', path, '-f', 's16le', '-ac', '1', '-ar', '16000', '-'], { maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0 || !r.stdout?.length) return null;
   const s = new Int16Array(r.stdout.buffer, r.stdout.byteOffset, Math.floor(r.stdout.length / 2));
-  const w = 800; // 50 ms at 16 kHz
-  let best = -Infinity;
-  for (let i = 0; i + w <= s.length; i += w) {
+  const w = 800, hop = 160; // 50 ms at 16 kHz, every 10 ms
+  let best = -Infinity, at = 0;
+  for (let i = 0; i + w <= s.length; i += hop) {
     let acc = 0;
     for (let j = i; j < i + w; j++) acc += s[j] * s[j];
     const rms = Math.sqrt(acc / w) / 32768;
-    if (rms > 0) best = Math.max(best, 20 * Math.log10(rms));
+    if (rms > 0 && 20 * Math.log10(rms) > best) { best = 20 * Math.log10(rms); at = i; }
   }
-  return Number.isFinite(best) ? Math.round(best * 10) / 10 : null;
+  return Number.isFinite(best) ? { db: Math.round(best * 10) / 10, ms: Math.round((at + w / 2) / 16) } : null;
 }

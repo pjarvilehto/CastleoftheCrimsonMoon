@@ -97,6 +97,12 @@ footer a { color: var(--gold); }
       <p>The CHOOSE YOUR HERO screen (shipped in 0.00248) over any room painting, drawn from the game's own data: the seven heroes from the developer's sheets &mdash; the Curious Knight, Barbarian, Wizard, Necromancer, Druid, Hexhunter and Plague Sister &mdash; in two layouts (the game's line-up of cards, or the chosen hero large beside their lines). COPY JSON gives the picks back.</p>
       <span class="go">Enter &rsaquo;</span>
     </a>
+    <a class="lab" href="sfx/" data-lab="sfx">
+      <span class="kind">The sound effects &middot; <kbd>0</kbd></span>
+      <h2>SFX Lab</h2>
+      <p>Every sound effect the game plays, where it plays (the Great Hall, combat, the classes and the foes, the panel rooms, the room change, the run's end), through the game's own mixer, with each section's music bed under it or not. Volume, Pitch and Speed per clip for a review edit; Approve; COPY JSON packs the verdicts and edits for the render tool.</p>
+      <span class="go">Enter &rsaquo;</span>
+    </a>
     <a class="lab" href="music/" data-lab="music">
       <span class="kind">The score &middot; <kbd>9</kbd></span>
       <h2>Music Lab</h2>
@@ -107,11 +113,11 @@ footer a { color: var(--gold); }
   <footer><a href="../?debug">Back to the game</a> &middot; The game's in-place tools (backgrounds, forced crits, the benchmark) stay under DEBUG MODE in its settings menu, whose LABS entry opens this page.</footer>
 </main>
 <script>
-// 1-9 open the lab on that card.
+// 1-9 open the lab on that card, 0 the tenth.
 const labs = [...document.querySelectorAll('.lab')];
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const n = Number(e.key);
+  const n = e.key === '0' ? 10 : Number(e.key);
   if (n >= 1 && n <= labs.length) location.href = labs[n - 1].href;
 });
 </script>
