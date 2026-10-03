@@ -1,4 +1,7 @@
 {
+  "0.00324": [
+    "Under the hood: two more checks in the test suite (the special attack's H key beside the other buttons, the play stats' two readers of a run agreeing)"
+  ],
   "0.00323": [
     "Under the hood: the LOOT row, the look switcher and the save dialogs tidied; the code map and the notes brought up to date"
   ],
