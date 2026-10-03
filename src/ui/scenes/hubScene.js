@@ -18,13 +18,13 @@ import {
   forgeCost, forgeMaxed, forgeable } from '../../meta/leveling.js';
 import { statBox, potionLevel } from '../hud.js';
 import { recordsLine } from '../hubText.js';
-import { trainSection, alchemySection, equipSection } from '../hubSections.js'; // the three sections (0.00223)
+import { trainSection, alchemySection, equipSection, knightSection } from '../hubSections.js'; // the sections (0.00223; the knight 0.00238)
 import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 import { narrate } from '../../audio/narrator.js';
-import { pulseNumber } from '../fx.js';
+import { pulseNumber, tickUp } from '../fx.js';
 
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
@@ -104,27 +104,30 @@ export function hubScene(opts = {}) {
     const stats = derivedStats(p);
     const phone = phoneLayout(); // 0.00208: the phone's assembly and wording (below)
 
-    // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
-    // Potions alone in the middle column (hub-stats in styles.css).
-    const statsRow = el('div', { class: 'stat-grid hub-stats' },
-      statBox('Level', playerLevel(p)), // 0.080: same LV as the combat card
-      statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
-      statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
-      statBox('Attack', stats.dmg),
-      statBox('HP', stats.maxHp),
-      statBox('Armor', stats.armor),
-      statBox('Potions', `${p.potions}/${p.potionCap}`, `stat-potions ${potionLevel(p)}`));
+    const purchase = !!flashRow; // (render after a buy: the boxes it moved glow, below)
+    // the phone's stat strip (0.081's boxes; the desktop's numbers sit under the knight, knightSection)
+    let vals = { Level: playerLevel(p), Attack: stats.dmg, HP: stats.maxHp, Armor: stats.armor, Potions: `${p.potions}/${p.potionCap}` };
+    let boxes = {
+      Level: statBox('Level', vals.Level), // 0.080: same LV as the combat card
+      Coins: statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
+      XP: statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
+      Attack: statBox('Attack', vals.Attack),
+      HP: statBox('HP', vals.HP),
+      Armor: statBox('Armor', vals.Armor),
+      Potions: statBox('Potions', vals.Potions, `stat-potions ${potionLevel(p)}`),
+    };
+    const statsRow = el('div', { class: 'stat-grid hub-stats' }, ...Object.values(boxes));
 
     // the three sections (ui/hubSections.js); done = a purchase landed: the row flashes after the re-render
     const done = (row) => { flashNext(row); render(root); };
-    const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done), alchemySection(p, phone, done), equipSection(p, done)];
+    const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done, canSpendXp(p)), alchemySection(p, phone, done, canSpendAlchemy(p)), phone ? equipSection(p, done) : null];
 
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
-    // The hall's three sections, ONE table for both assemblies (0.00209): the
-    // desktop lays them out as three columns, the phone as three stacked
-    // sheets under tabs (phoneHall). A new section is a row here and nothing
-    // else. spend: something in it can be bought now (the phone's tab dot).
+    // The hall's sections as the phone's sheets (0.00209: one table; phoneHall
+    // stacks them under tabs). 0.00238: the desktop and the tablet draw the
+    // knight panel, TRAIN and ALCHEMY instead (below) — the phone's own pass
+    // is still to come. spend: something in it can be bought now (the tab's dot).
     const hall = [
       { tab: 'Train', title: 'THE GREAT HALL', subtitle: 'Your war camp at the castle gates', body: trainBody, spend: canSpendXp(p) },
       { tab: 'Alchemy', body: alchemyBody, spend: canSpendAlchemy(p) },
@@ -133,21 +136,20 @@ export function hubScene(opts = {}) {
     const records = el('div', { class: 'subtitle records-line' }, recordsLine(p));
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
-    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); return; }
-    const [train, alchemy, equipment] = hall;
+    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); settleStats(boxes, vals, purchase); return; }
+    // The desktop and the tablet (0.00238, the developer's layout): the hall's
+    // name and the records up top; the knight with his gear and numbers,
+    // TRAIN and ALCHEMY as three panels of one height; the way on at the
+    // foot. Each purse sits in the head of the section that spends it.
+    const knight = knightSection(p, done);
+    ({ boxes, vals } = knight);
     root.append(
-      el('div', { class: 'hub-container' },
-        el('div', { class: 'hub-wrap' },
-          // Left: the Great Hall — resources and disciplines.
-          el('div', { class: 'panel' }, el('h1', {}, train.title), el('div', { class: 'subtitle' }, train.subtitle), statsRow, train.body),
-          // Middle: alchemy (coins) with lifetime records beneath.
-          el('div', { class: 'hub-col' },
-            el('div', { class: 'panel' }, alchemy.body),
-            el('div', { class: 'panel' }, el('h2', {}, 'RECORDS'), records)),
-          // Right: equipment slots with per-item Forge enhancement.
-          el('div', { class: 'panel' }, el('h1', {}, equipment.title), el('div', { class: 'subtitle' }, equipment.subtitle), equipment.body)),
+      el('div', { class: 'hub-container hall-desk' },
+        el('div', { class: 'hall-top' }, el('h1', {}, hall[0].title), records),
+        el('div', { class: 'hub-wrap' }, knight.panel, el('div', { class: 'panel' }, trainBody), el('div', { class: 'panel' }, alchemyBody)),
         el('div', { class: 'btn-row' }, ...wayOn)));
     settleFlash(root);
+    settleStats(boxes, vals, purchase);
   }
 }
 
@@ -160,7 +162,7 @@ export function hubScene(opts = {}) {
 // something there can be bought (the desktop shows all three panels at
 // once; a phone shows one). The pick lasts the session, so a purchase's
 // re-render stays on the same sheet.
-// A purchase's feedback (0.00216, the owner's ask): the row just bought
+// A purchase's feedback (0.00216, the developer's ask): the row just bought
 // re-renders at its new level and its label glows, grows a little and
 // flashes — Precision LV2 to LV3, 3/4 potions to 4/4. The handlers name
 // the row (data-row) before the re-render; settleFlash finds it after.
@@ -169,8 +171,27 @@ const flashNext = (row) => { flashRow = row; }; // (then the handler's own rende
 function settleFlash(root) {
   if (!flashRow) return;
   const row = root.querySelector?.(`[data-row="${flashRow}"]`); flashRow = null;
-  const label = row?.querySelector?.('.equip-item') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus)
+  const label = row?.querySelector?.('.equip-item, .slot-name, .row-title') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus; an upgrade: its title, not the small line)
   if (label) { label.style.display = 'inline-block'; label.style.transformOrigin = 'left center'; pulseNumber(label); } // (a block would scale around its own centre, off the row)
+}
+// ...and the attribute it raised (0.00235, the developer's ask): a box whose
+// value a purchase changed — Attack after Power or a forged blade, HP after
+// Vitality, Armor after Endurance or forged armor, the Level every fifth
+// trained level, Potions after a buy or a bigger satchel — rolls up to its
+// new value and glows while it does. Coins and XP (what was spent) do not.
+let shownStats = null; // the boxes' values as last drawn
+function settleStats(boxes, vals, purchase) {
+  if (purchase && shownStats) {
+    for (const [k, v] of Object.entries(vals)) {
+      const from = shownStats[k];
+      if (from === v) continue;
+      const value = boxes[k]?.children?.[1];
+      if (!value) continue;
+      value.style.display = 'inline-block'; value.style.transformOrigin = 'right center'; // (the value sits at the box's right: grow from there)
+      if (typeof v === 'number' && typeof from === 'number') tickUp(value, from, v, 900); else pulseNumber(value);
+    }
+  }
+  shownStats = vals;
 }
 let phonePick = 0, phoneScroll = 0; // the picked sheet and how far it was scrolled (a purchase re-renders: the sheet stays put)
 function phoneHall(hall, statsRow, records, wayOn) {

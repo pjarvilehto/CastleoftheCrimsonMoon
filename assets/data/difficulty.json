@@ -17,7 +17,7 @@
   "potionHeal": 300,
   "lowHpShare": 0.35,
   "potions": {
-    "startCount": 2,
+    "startCount": 3,
     "startCap": 4,
     "maxCap": 10,
     "capUpgradeBase": 300,
@@ -32,7 +32,7 @@
     "priceStep": 5,
     "_doc": "0.00204: the price climbs with each potion bought between runs — priceSteps for the first ones (10, 20, 25), then priceStep more each (30, 35, ...); profile.potionsBought counts them and every settled run starts the ladder over."
   },
-  "statTrainXpBase": 15,
+  "statTrainXpBase": 13,
   "levelEvery": 5,
   "breakthroughEvery": 5,
   "alchemyTracks": {
@@ -110,10 +110,10 @@
   },
   "player": {
     "baseHp": 400,
-    "hpPerVitality": 90,
+    "hpPerVitality": 72,
     "baseDmg": 6,
-    "dmgPerPower": 3,
-    "armorPerEndurance": 10,
+    "dmgPerPower": 2,
+    "armorPerEndurance": 8,
     "baseCrit": 0.05,
     "critCap": 0.6,
     "critOverflowDamage": 1.5,

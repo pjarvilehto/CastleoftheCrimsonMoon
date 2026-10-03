@@ -207,7 +207,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const elite = isElite(e) && !e.summoned; // summons are never elite: applyLoot carries nothing for them (0.092; 0.00223 — they wore the star and the aura)
   const aura = elite ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
   // A fallen enemy's figure collapses, then the whole unit fades and leaves
-  // the row (0.00216, the owner's call: the faint skull cards went; the row
+  // the row (0.00216, the developer's call: the faint skull cards went; the row
   // restacks and the cards grow into the room — fit() through onGone).
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)

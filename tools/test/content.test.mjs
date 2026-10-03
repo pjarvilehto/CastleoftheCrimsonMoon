@@ -115,7 +115,7 @@ fresh();
   ok('dodge avoids the blow', evs.some((e) => e.type === 'dodge') && run.hp === run.maxHp);
   Math.random = origRandom;
 
-  // Combat: thorns wound but never finish
+  // Combat: thorns wound the attacker, and finish it (0.00242: they used to stop at 1 HP)
   p.equipment = { weapon: null, armor: 'bloodmoon_aegis', boots: null, rings: [null, null], trinket: null, amulet: null };
   const run2 = createRun();
   run2.stats.dmg = 1;
@@ -124,7 +124,14 @@ fresh();
   evs = playerAttack(cb2, 0, false);
   Math.random = origRandom;
   const foe = cb2.enemies[0];
-  ok('thorns wound the attacker', foe.hp === Math.max(1, 9 - 4) && evs.some((e) => e.type === 'thorns'));
+  ok('thorns wound the attacker', foe.hp === 9 - 4 && evs.some((e) => e.type === 'thorns'));
+  foe.hp = 3; // thorns (4) now outweigh what is left: the foe falls on its own blow
+  Math.random = () => 0.5;
+  run2.stats.dmg = 0; // (the knight's blow does nothing: only the thorns can kill)
+  evs = playerAttack(cb2, 0, false);
+  Math.random = origRandom;
+  const kill = evs.findIndex((e) => e.type === 'kill'), th = evs.findIndex((e) => e.type === 'thorns');
+  ok('thorns finish a foe: a kill after the thorns line, and the room is cleared', foe.hp === 0 && th >= 0 && kill > th && evs[kill].enemy === foe && evs[th].dmg === 2 && cb2.over && cb2.victory, `${evs.map((e) => e.type).join(',')} hp ${foe.hp}`);
 
   // Combat: the Heart revives once at half health
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: 'heart_of_the_dying_moon', amulet: null };
@@ -297,7 +304,7 @@ fresh();
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));
 }
 
-// 0.00210: the World Lab — the owner's world painting under clouds, the
+// 0.00210: the World Lab — the developer's world painting under clouds, the
 // places as the future world.json (every road leads from a place that
 // exists), the two looks and the dive, booted like every lab.
 {
@@ -354,7 +361,7 @@ fresh();
 // (a painting, its depth map, a sound, a take, a portrait or frame, an
 // icon) — an orphan is weight every clone and deploy carries for nothing.
 // (assets/style, assets/chars/candidates and assets/world are the labs' and
-// the owner's, outside this check; assets/fonts is the one font.)
+// the developer's, outside this check; assets/fonts is the one font.)
 {
   const bg = DATA.backgrounds;
   const { depthUrl } = await import('../../src/core/bg3d.js');

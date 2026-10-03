@@ -46,7 +46,7 @@ const median = (xs) => {
 // a row's fps within nearShare of a standard rate below its hz is that
 // rate, at full rate, and its dropped share — counted against the wrong
 // refresh — is not shown.
-// The device reports (0.00225, collector `reports`): JSON the owner copies
+// The device reports (0.00225, collector `reports`): JSON the developer copies
 // out for a later speed optimization — bounded here as the collector bounds
 // them, newest first.
 export function sanitizeReports(list) {

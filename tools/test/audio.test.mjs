@@ -59,7 +59,7 @@ fresh();
 // on the shared ON/OFF toggle; the label follows fullscreenchange).
 {
   const mainSrc = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
-  ok('fullscreen toggle requests/exits fullscreen, label synced to fullscreenchange', mainSrc.includes("onOffToggle('FULLSCREEN'")
+  ok('fullscreen toggle (an icon beside SETTINGS, 0.00242) requests/exits fullscreen, synced to fullscreenchange', mainSrc.includes("class: 'debug-toggle fs-toggle'") && mainSrc.includes("[!isPhone() && fullscreenToggle()]")
     && mainSrc.includes('enterFullscreen()') && mainSrc.includes('exitFullscreen()') && mainSrc.includes("'fullscreenchange', () => btn.sync()")
     && readFileSync(new URL('../../src/shared/platform.js', import.meta.url), 'utf8').includes('requestFullscreen ?? root.webkitRequestFullscreen')); // (0.00209: the prefixed calls live in platform.js, shared with the phone gate)
 }
@@ -174,7 +174,7 @@ fresh();
     && read('src/main.js').includes('volumeToggle(),'));
 }
 
-// T70: 0.173 — the room change's swoosh: the owner's SFX pitched down half
+// T70: 0.173 — the room change's swoosh: the developer's SFX pitched down half
 // an octave, then a quarter more and 30% quieter (0.175, a new file), played so its loudest moment lands in the middle
 // of the transition (1 s out + 2 s crossfade + 1 s in = 2 s), with a little
 // random pitch, tone and level each time; the generated whoosh is gone.
@@ -226,18 +226,33 @@ fresh();
   ok('...clicking flips it', state === true && t1.textContent === 'MUSIC: ON' && t1.classList.contains('on'));
   const p = panelToggle('VOLUME', 'volume-toggle', () => el('div', { class: 'volume-panel' }, 'x'));
   const after = el('button', {}, 'CHANGELIST');
-  const bar = cornerBar([false, t1, p, after]);
-  // (0.00208: the ☰ button leads — the phone's folded column; styles.css shows it only there)
-  ok('the column keeps its order, skipping absent items', bar.className === 'corner-bar' && bar.children.map((c) => c.textContent).join('|') === '☰|MUSIC: ON|VOLUME|CHANGELIST');
+  const lead = el('button', { class: 'debug-toggle fs-toggle' });
+  const bar = cornerBar([false, t1, p, after], [lead, false]);
+  // (0.00242: the top row — FULLSCREEN, ☰ SETTINGS — leads; the menu drops down under it)
+  const top = bar.children[0], menu = top.children[top.children.length - 1];
+  ok('the menu keeps its order under the top row, skipping absent items', bar.className === 'corner-bar' && top.className === 'corner-top' && top.children[0] === lead && top.children.length === 2
+    && bar.children.slice(1).map((c) => c.textContent).join('|') === 'MUSIC: ON|VOLUME|CHANGELIST' && menu.textContent === '☰Settings');
   p.listeners.click[0]();
-  ok('a panel opens right under its button', bar.children.map((c) => c.className).join('|') === 'menu-toggle|debug-toggle music-toggle|debug-toggle volume-toggle|volume-panel|' && p.classList.contains('on'));
+  ok('a panel opens right under its button', bar.children.map((c) => c.className).join('|') === 'corner-top|debug-toggle music-toggle|debug-toggle volume-toggle|volume-panel|' && p.classList.contains('on'));
   p.listeners.click[0]();
   ok('...and closes', bar.children.length === 4 && !p.classList.contains('on'));
-  bar.children[0].listeners.click[0]();
-  ok('☰ opens the folded column (the phone), a second tap closes it', bar.classList.contains('open') && (bar.children[0].listeners.click[0](), !bar.classList.contains('open')));
+  menu.listeners.click[0]();
+  ok('SETTINGS opens the menu (lit while open), a second click closes it', bar.classList.contains('open') && menu.classList.contains('on') && (menu.listeners.click[0](), !bar.classList.contains('open') && !menu.classList.contains('on')));
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
-  ok('main builds the column: (INVULNERABLE) MUSIC FULLSCREEN SOUND VOLUME CHANGELIST (debug tools)', /debugMode && invulnerableToggle\(\),\s*onOffToggle\('MUSIC'[\s\S]*!isPhone\(\) && fullscreenToggle\(\),[^\n]*\n\s*onOffToggle\('SOUND'[\s\S]*volumeToggle\(\),\s*changelogToggle\(\),\s*\.\.\.\(debugMode \? debugToggles\(\)/.test(m)
-    && css.includes('.corner-bar {') && !/toggle \{ top: \d+px; \}/.test(css));
+  ok('main builds the menu: AUDIO (MUSIC SOUND NARRATOR VOLUME) DISPLAY (BATTERY SAVER) GAME (CHANGELIST) DEBUG MODE (the tools)',
+    /menuHead\('Audio'\),\s*onOffToggle\('MUSIC'[\s\S]*onOffToggle\('SOUND'[\s\S]*onOffToggle\('NARRATOR'[\s\S]*volumeToggle\(\),\s*menuHead\('Display'\),\s*onOffToggle\('BATTERY SAVER'[\s\S]*menuHead\('Game'\),\s*changelogToggle\(\),\s*dbg\.toggle,\s*\.\.\.dbg\.items,/.test(m)
+    && css.includes('.corner-bar {') && css.includes('.corner-bar:not(.open) > :not(.corner-top) { display: none; }') && css.includes('.corner-bar:not(.debug-on) > .dbg { display: none; }') && !/toggle \{ top: \d+px; \}/.test(css));
+  // DEBUG MODE (0.00242): its tools carry .dbg (hidden until it is on); OFF puts every testing switch back
+  const { debugMenu } = await import('../../src/ui/debugToggles.js');
+  const { DEBUG } = await import('../../src/shared/debug.js');
+  const { getPref } = await import('../../src/shared/prefs.js');
+  const dm = debugMenu();
+  const on0 = dm.toggle.textContent === 'DEBUG MODE: ON';
+  if (!on0) dm.toggle.listeners.click[0]();
+  DEBUG.invulnerable = true; DEBUG.forceCrit = true;
+  dm.toggle.listeners.click[0]();
+  ok('DEBUG MODE: its tools are marked .dbg; OFF clears every testing switch and is remembered', dm.items.length >= 9 && dm.items.every((n) => n.classList.contains('dbg'))
+    && dm.toggle.textContent === 'DEBUG MODE: OFF' && !DEBUG.invulnerable && !DEBUG.forceCrit && getPref('castle-debug-mode') === '0');
 }
 
 // 0.00223 — the on/off preference the three toggles share (shared/prefs.js mutePref).

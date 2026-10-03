@@ -11,29 +11,43 @@ import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { DATA } from '../shared/data.js';
 import { getProfile } from '../meta/profile.js';
-import { itemWithForge, playerLevel } from '../meta/stats.js';
+import { itemWithForge, playerLevel, derivedStats } from '../meta/stats.js';
+import { portraitUrl } from '../shared/portraits.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../meta/leveling.js';
-import { describeItem, itemName } from './hud.js';
-import { statDesc, alchemyDesc, potionDesc, satchelDesc } from './hubText.js';
+import { describeItem, itemName, rarityClass, statBox, potionLevel } from './hud.js';
+import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
+
+// A row's text (0.00232, the developer's ask): the title — the name and its
+// level or count, what the eye looks for — over a small, muted line of
+// what it does (the phone keeps both on one line, styles.css section 16).
+const rowText = (title, level, desc) => el('div', { class: 'row-text' },
+  el('div', { class: 'row-title' }, el('b', {}, ...title), level ? el('span', { class: 'row-lv' }, level) : null),
+  el('div', { class: 'row-desc' }, desc));
+const keyed = (name) => [el('u', {}, name[0]), name.slice(1)]; // (the hotkey's letter underlined)
+
+// A section's head (0.00238): its name, the purse it spends from (green
+// while something in it can be bought) and a one-line hint. The phone's
+// sheets hide it (their tabs carry the name and the dot, styles.css 16).
+const secHead = (title, purse, amount, spend, hint) => [
+  el('div', { class: 'sec-head' }, el('h2', {}, title),
+    el('div', { class: `purse${spend ? ' spendable' : ''}` }, purse, el('b', {}, amount.toLocaleString('en-US')))),
+  el('div', { class: 'sec-hint' }, hint)];
 
 // ---- TRAIN: five disciplines, XP-only. Breakthrough ★ every 5th level. ----
-export function trainSection(p, phone, done) {
+export function trainSection(p, phone, done, spend = false) {
   const every = DATA.difficulty.breakthroughEvery;
-  return el('div', {},
-    el('h2', {}, 'Train (permanent upgrades)'),
-    el('div', { class: 'subtitle' }, 'XP only — every 5th level is a ★ breakthrough and counts double'),
+  return el('div', { class: 'hall-sec' },
+    ...secHead('Train', 'XP', p.xp, spend, `permanent · every ${every}th level ★ counts double`),
     ...Object.entries(STAT_DEFS).map(([key, def]) => {
       const lvl = p.stats[key];
       const star = lvl > 0 && lvl % every === 0 ? ' ★' : '';
       const desc = statDesc(key, lvl, phone);
       return el('div', { class: 'item-row', 'data-row': key },
-        el('div', {},
-          el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
-          el('span', {}, `Lv ${lvl}${star} — ${desc}`)),
+        rowText(keyed(def.name), `Lv ${lvl}${star}`, desc),
         el('button', {
           disabled: !canAfford(key),
           key: def.key,
@@ -49,13 +63,12 @@ export function trainSection(p, phone, done) {
 }
 
 // ---- ALCHEMY: potions + three coin tracks. ----
-export function alchemySection(p, phone, done) {
-  return el('div', {},
-    el('h2', {}, 'Alchemy (coins)'),
+export function alchemySection(p, phone, done, spend = false) {
+  return el('div', { class: 'hall-sec' },
+    ...secHead('Alchemy', 'Coins', p.coins, spend, 'potions and their craft'),
     // 0.080: potions are a persistent stock; the satchel caps it.
     el('div', { class: 'item-row', 'data-row': 'potion' },
-      el('div', {}, el('b', {}, 'Healing Potion '),
-        el('span', {}, potionDesc(p, phone))),
+      rowText([phone ? 'Potion' : 'Healing Potion'], potionCount(p), potionDesc(p, phone)),
       el('button', {
         disabled: p.coins < potionCost() || satchelFull(p),
         // able to buy one: the obvious next step (0.00216: it used to wait for the stock to run low, 0.090 — a player at 3/4 with the coins expected the glow)
@@ -64,8 +77,7 @@ export function alchemySection(p, phone, done) {
         onclick: () => { restockPotion(); done('potion'); },
       }, satchelFull(p) ? 'Satchel full' : `Buy (${potionCost()}c)`)),
     el('div', { class: 'item-row', 'data-row': 'satchel' },
-      el('div', {}, el('b', {}, phone ? 'Satchel ' : 'Potion Satchel '),
-        el('span', {}, satchelDesc(p, satchelMaxed(p), phone))),
+      rowText([phone ? 'Satchel' : 'Potion Satchel'], null, satchelDesc(p, satchelMaxed(p), phone)),
       satchelMaxed(p)
         ? el('span', { class: 'forge-max' }, 'MAX')
         : el('button', {
@@ -76,9 +88,7 @@ export function alchemySection(p, phone, done) {
     ...Object.entries(ALCHEMY_DEFS).map(([track, def]) => {
       const lvl = p.alchemy[track] ?? 0;
       return el('div', { class: 'item-row', 'data-row': track },
-        el('div', {},
-          el('b', {}, el('u', {}, def.name[0]), def.name.slice(1) + ' '),
-          el('span', {}, `Lv ${lvl} — ${alchemyDesc(track, phone)}`)), // (efficiency: 0.112's tapering, the next level's gain)
+        rowText(keyed(def.name), `Lv ${lvl}`, alchemyDesc(track, phone)), // (efficiency: 0.112's tapering, the next level's gain)
         alchemyMaxed(track)
           ? el('span', { class: 'forge-max' }, 'MAX')
           : el('button', {
@@ -124,4 +134,45 @@ export function equipSection(p, done) {
     slotRow('Ring II', eq.rings[1]),
     slotRow('Trinket', eq.trinket),
     slotRow('Amulet', eq.amulet));
+}
+
+// ---- THE KNIGHT (0.00238, the desktop's left panel; the developer's layout): his
+// name and level, the card with his gear around it — weapon, armor, boots
+// on the left, the rings, trinket and amulet on the right, each slot as tall
+// as the card allows and its Forge button in the outer top corner — and his
+// numbers under it. `boxes` hands the scene the values that glow when a
+// purchase moves them (hubScene.js settleStats).
+export function knightSection(p, done) {
+  const eq = p.equipment, s = derivedStats(p);
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const slot = (label, id) => {
+    const item = id ? itemWithForge(id, p) : null;
+    if (!item) return el('div', { class: 'gear-slot empty', 'data-row': `slot-${label}` }, el('div', { class: 'slot-kind' }, label), el('div', { class: 'slot-name' }, '— empty —'));
+    const forgeLvl = p.forged[id] ?? 0;
+    return el('div', { class: `gear-slot gear-${rarityClass(item)}`, 'data-row': `slot-${label}` },
+      el('div', { class: 'slot-kind' }, label),
+      forgeable(id) && !forgeMaxed(id)
+        ? el('button', {
+            class: 'forge-btn',
+            disabled: p.coins < forgeCost(id),
+            onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); done(`slot-${label}`); },
+          }, `Forge ${forgeCost(id)}c`)
+        : forgeable(id) ? el('span', { class: 'forge-max' }, 'MAX') : null,
+      el('div', { class: 'slot-name' }, itemName(item), forgeLvl ? el('span', { class: 'slot-plus' }, ` +${forgeLvl}`) : null),
+      el('div', { class: 'slot-desc' }, describeItem(item)));
+  };
+  const level = el('div', { class: 'knight-level' }, el('span', {}, 'Level '), el('b', {}, String(playerLevel(p))));
+  const vals = { Level: playerLevel(p), Attack: s.dmg, HP: s.maxHp, Armor: s.armor, Crit: pct(s.crit), Lifesteal: s.lifesteal ? pct(s.lifesteal) : '—', Potions: `${p.potions}/${p.potionCap}` };
+  const chip = (k, cls = '') => statBox(k, vals[k], cls);
+  const boxes = { Level: level, Attack: chip('Attack'), HP: chip('HP'), Armor: chip('Armor'), Crit: chip('Crit'), Lifesteal: chip('Lifesteal', s.lifesteal ? '' : 'none'), Potions: chip('Potions', potionLevel(p)) };
+  const panel = el('div', { class: 'panel knight-panel' },
+    el('div', { class: 'knight-name' }, p.name || 'The Curious Knight'),
+    level,
+    el('div', { class: 'sec-hint' }, 'worn gear · the forge enhances tier 2+ for coins'),
+    el('div', { class: 'knight-doll' },
+      el('div', { class: 'gear-col gear-left' }, slot('Weapon', eq.weapon), slot('Armor', eq.armor), slot('Boots', eq.boots)),
+      el('div', { class: 'knight-card' }, el('img', { src: portraitUrl('player'), alt: '' })),
+      el('div', { class: 'gear-col gear-right' }, slot('Ring I', eq.rings[0]), slot('Ring II', eq.rings[1]), slot('Trinket', eq.trinket), slot('Amulet', eq.amulet))),
+    el('div', { class: 'knight-stats' }, ...['Attack', 'HP', 'Armor', 'Crit', 'Lifesteal', 'Potions'].map((k) => boxes[k])));
+  return { panel, boxes, vals };
 }

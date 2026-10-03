@@ -1,7 +1,7 @@
 // labs/vo/lab.js — the VO Lab (see index.html). Loads the registry
 // (assets/data/narration.json) and the rules (assets/data/audio.json),
 // lists every take, plays it as the game would (levelled to
-// narration.targetDb through one AudioContext) and keeps the owner's
+// narration.targetDb through one AudioContext) and keeps the developer's
 // verdicts in localStorage: { [file]: { v: 'ok' | 'no', volatility: -1|0|1, shouty: -1|0|1, at: ms } }.
 // A verdict older than the take's `rendered` stamp is about the old audio and is ignored;
 // such a take shows as RE-RENDERED, awaiting review.

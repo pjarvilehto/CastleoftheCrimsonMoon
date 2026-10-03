@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Background Lab</title>
+<!-- labs/backgrounds/ (0.00242): the new room paintings tools/gen-bg.mjs made
+     (assets/data/rooms-art.json, Seedream 4 from the developer's prompting guide)
+     through their approval stages. ROOM: one room's candidates as tiles,
+     Approve / Reject with a note / Regenerate with notes; the picked one on
+     the stage behind. FIGHT: the picked candidate at full screen under the
+     game's REAL card units (the knight and four enemies at the game's size)
+     with the game's vignette, so it reads as a battle stage. COMPARE: the
+     picked candidate beside one of the game's own paintings. Verdicts stay
+     in this browser; COPY JSON packs them, with the re-rolls, for
+     node tools/gen-bg.mjs --rerender. The base href keeps the game's
+     relative paths (assets/..., styles.css). -->
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<link rel="stylesheet" href="styles.css" data-versioned>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+:root { --panel: rgba(16, 11, 8, 0.9); --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818; --ok: #4f9a5c; --no: #b23a3a;
+  --display: "D-DIN Condensed", "Oswald", "Arial Narrow", sans-serif; --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif; --panel-w: 380px; }
+html, body { overflow: hidden; }
+#room { position: fixed; inset: 0; background: #0d0808 center / cover no-repeat; }
+#room::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); }
+/* ROOM: the candidates as 16:9 tiles over the stage, kept clear of the panel */
+#tiles { position: fixed; left: 16px; top: 64px; right: calc(var(--panel-w) + 16px); bottom: 16px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 14px; align-content: start; z-index: 2; }
+.tile { background: rgba(10, 7, 5, 0.82); border: 1px solid var(--line); border-radius: 4px; padding: 8px; font-family: var(--body); color: var(--parchment); }
+.tile img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 2px; cursor: pointer; border: 2px solid transparent; }
+.tile.shown img { border-color: var(--gold); }
+.tile.ok img { border-color: var(--ok); } .tile.no img { border-color: var(--no); }
+.tile.shown.ok img { box-shadow: 0 0 0 2px var(--gold); }
+.tile .cap { margin-top: 6px; display: grid; gap: 4px; }
+.tile b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.tile .meta { color: var(--muted); font-size: 0.85em; }
+.tile .verdict { display: flex; flex-wrap: wrap; gap: 4px; }
+.tile button { font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.95em; color: var(--parchment); background: rgba(20, 14, 8, 0.85); border: 1px solid var(--line); border-radius: 3px; padding: 3px 8px 2px; cursor: pointer; }
+.tile button:hover { border-color: var(--gold); }
+.tile button.on-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.tile button.on-no { background: var(--no); border-color: var(--no); color: #fff; }
+.tile button.on { background: var(--gold); border-color: var(--gold); color: #1a1208; }
+.tile input { font: inherit; width: 100%; min-width: 0; box-sizing: border-box; background: rgba(10, 7, 5, 0.85); color: var(--parchment); border: 1px solid var(--line); border-radius: 3px; padding: 3px 6px; }
+.tile.imported b::after { content: " · in the game"; color: var(--ok); }
+/* FIGHT: the game's battle line over the picked candidate, the panel folded away */
+body.fight #tiles, body.compare #tiles, body.fight #panel { display: none; }
+#stage .battle-line { padding-bottom: 17.5vh; justify-content: space-between; --card-h: min(50vh, calc((93.8vw - (var(--n) - 1) * 0.8vw) / (0.605 + var(--slots, var(--n)) * 0.3734))); }
+body:not(.fight) #stage { display: none; }
+#stage .unit-actions { display: none; }
+#vignette-lab { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, transparent 40%, rgba(0,0,0,0.55) 100%); display: none; }
+body.fight #vignette-lab { display: block; }
+/* COMPARE: the candidate beside a game painting */
+#compare { position: fixed; left: 16px; top: 64px; right: calc(var(--panel-w) + 16px); bottom: 16px; display: none; grid-template-columns: 1fr 1fr; gap: 12px; align-content: center; z-index: 2; }
+body.compare #compare { display: grid; }
+#compare figure { margin: 0; }
+#compare img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
+#compare figcaption { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-top: 6px; text-shadow: 0 1px 4px #000; }
+/* ---- the top bar and the panel ---- */
+.top { position: fixed; left: 16px; top: 14px; right: calc(var(--panel-w) + 16px); z-index: 5; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+body.fight .top { right: 16px; }
+.top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
+.top .labs-link { color: var(--gold); font-family: var(--display); letter-spacing: 0.1em; text-decoration: none; text-shadow: 0 2px 6px #000; }
+.top .hint { color: var(--muted); font-size: 0.85rem; text-shadow: 0 1px 4px #000; font-family: var(--body); }
+.top button, .top select, #panel button, #panel select { font-family: var(--display); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 6px 12px 4px; cursor: pointer; min-width: 0; }
+.top button:hover, .top select:hover, #panel button:hover, #panel select:hover { border-color: var(--gold); color: #fff; }
+.top button.on { background: var(--gold); color: #1a1208; border-color: var(--gold); }
+.top select, #panel select { text-transform: none; letter-spacing: 0.04em; max-width: 16em; }
+#panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(var(--panel-w), 92vw); z-index: 60; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); backdrop-filter: blur(6px); padding: 14px 16px 40px; box-sizing: border-box; font-family: var(--body); font-size: 15px; color: var(--parchment); }
+#panel.hidden { display: none; }
+#panel h2 { font-family: var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-size: 1.05rem; margin: 14px 0 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+#panel h2:first-child { border-top: 0; margin-top: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 2px 0 8px; }
+label.c { display: grid; grid-template-columns: 6em 1fr; gap: 8px; align-items: center; font-size: 0.9rem; margin: 4px 0; }
+#panel input[type=text], #panel input[type=number], textarea { width: 100%; box-sizing: border-box; background: #0a0705; color: var(--parchment); border: 1px solid var(--line); border-radius: 4px; font: 14px/1.35 var(--body); padding: 6px; }
+textarea { font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; }
+#rooms { display: grid; gap: 2px; }
+#rooms button { display: flex; justify-content: space-between; text-align: left; padding: 4px 10px 3px; gap: 8px; }
+#rooms button .n { color: var(--muted); font-size: 0.85rem; letter-spacing: 0; white-space: nowrap; }
+#rooms button.ok .n { color: var(--ok); }
+#rooms button.imported .n { color: var(--gold); }
+#status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="tiles"></div>
+<div id="compare"></div>
+<div id="stage"></div>
+<div id="vignette-lab"></div>
+<div class="top">
+  <a class="labs-link" href="labs/">‹ Labs</a>
+  <h1>Background Lab</h1>
+  <span id="views"></span>
+  <select id="painting" title="The game's painting to compare with"></select>
+  <span class="hint">1 room · 2 compare · 3 fight · P panel · ←/→ room · click a tile to show it</span>
+</div>
+<aside id="panel"></aside>
+<!-- the versioned boot (labs/boot.js): the game's modules and this lab's script under ?v=<build> -->
+<script src="labs/boot.js" data-lab="labs/backgrounds/lab.js"></script>
+</body>
+</html>

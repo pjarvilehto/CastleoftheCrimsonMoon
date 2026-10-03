@@ -3,7 +3,7 @@
     "name": "Giant Rat",
     "tier": 1,
     "hp": 14,
-    "dmg": 40,
+    "dmg": 30,
     "xp": 6,
     "coins": [
       3,
@@ -15,7 +15,7 @@
     "name": "Cave Shrieker",
     "tier": 1,
     "hp": 10,
-    "dmg": 30,
+    "dmg": 22,
     "xp": 5,
     "coins": [
       2,
@@ -27,7 +27,7 @@
     "name": "Skeleton",
     "tier": 1,
     "hp": 22,
-    "dmg": 60,
+    "dmg": 45,
     "xp": 10,
     "coins": [
       6,
@@ -112,7 +112,7 @@
     "name": "Crypt Spider",
     "tier": 1,
     "hp": 12,
-    "dmg": 50,
+    "dmg": 38,
     "xp": 7,
     "coins": [
       3,

@@ -346,7 +346,7 @@ fresh();
   const realLoc94 = globalThis.location; globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; // (0.00223: the ask only where stats are sent)
   fresh();
   const p = getProfile();
-  // 0.00201 turned the ask off (the owner's call); 0.00219 turned it on again for the phone testers, from room 6
+  // 0.00201 turned the ask off (the developer's call); 0.00219 turned it on again for the phone testers, from room 6
   const bp = DATA.telemetry.benchmarkPrompt;
   p.records.bestRoom = 12;
   DATA.telemetry.benchmarkPrompt = false;
@@ -491,10 +491,10 @@ fresh();
 }
 
 // T99: 0.00222 — the refresh rate from the busiest frame interval. The
-// owner's dashboard showed two 120 Hz Macs as "144 Hz" (119.8 fps, amber)
+// developer's dashboard showed two 120 Hz Macs as "144 Hz" (119.8 fps, amber)
 // and 60 Hz iPhones as "90 / 75 Hz" with 56-61% "dropped" at 59 fps: the
 // fastest 10% of frames, a refresh short on jittered timestamps. Each
-// fixture asserts hz AND drop (the drop is what the owner reads).
+// fixture asserts hz AND drop (the drop is what the developer reads).
 {
   const pm = await import('../../src/core/perfMonitor.js');
   const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
@@ -515,7 +515,7 @@ fresh();
   const d70 = s([[8.33, 400], [16.67, 500], [25, 100]]);
   ok('a 120 Hz display mostly taking two refreshes: still 120 Hz, 60% dropped', d70.hz === 120 && d70.drop === 60, JSON.stringify(d70));
   const alt = s([[11.11, 1000], [22.22, 1000]]);
-  ok('a 90 Hz display dropping alternately reads 90 (a pure alternation is one; the owner\'s rows are smears)', alt.hz === 90 && alt.drop === 50);
+  ok('a 90 Hz display dropping alternately reads 90 (a pure alternation is one; the developer\'s rows are smears)', alt.hz === 90 && alt.drop === 50);
   ok('the knobs are read from the data (a wide pace share lets the average decide)', pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.6 }).hz === 60 && pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.5 }).hz === 90);
   // stalls and the worst frame's moment (0.00222)
   const r = rec([[16.7, 600], [120, 2]]); pm.addFrame(r, 130, true);

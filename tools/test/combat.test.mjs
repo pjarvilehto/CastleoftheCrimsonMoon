@@ -169,7 +169,7 @@ await withSeedAsync(4, async () => {
   ok('flash timings: 0.9s build, 2s fade to 75%', css.includes('#flash.death-in  { opacity: 0.75; transition: opacity 0.9s')
     && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('debugMode && invulnerableToggle(),'));
+  ok('INVULNERABLE only under DEBUG MODE (?debug, or the menu\'s toggle)', readFileSync('src/ui/debugToggles.js', 'utf8').includes(".has('debug')") && readFileSync('src/main.js', 'utf8').includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]"));
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
@@ -504,7 +504,7 @@ await withSeedAsync(4, async () => {
   const main = readFileSync('src/main.js', 'utf8');
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
-  ok('crit toggles only under ?debug', main.includes('...(debugMode ? debugToggles() : [])')
+  ok('crit toggles only under DEBUG MODE', main.includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]")
     && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|LABS|BENCHMARK', labels.join('|'));
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
@@ -719,6 +719,18 @@ await withSeedAsync(4, async () => {
   // 0.159: no native image drag from a sloppy click on a portrait, nothing to select in the line
   const { mountBattle } = await import('../../src/ui/battleRoom.js');
   const bl = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
+  // the death's own step only while a card sits partly off screen (the developer's call): a row that fits runs on
+  {
+    const two = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1), scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
+    const wBefore = globalThis.innerWidth; globalThis.innerWidth = 1000;
+    const rect = (left) => () => ({ left, top: 0, width: 300, height: 400 });
+    two.enemies[0].el.getBoundingClientRect = rect(100); two.enemies[1].el.getBoundingClientRect = rect(500);
+    const fits = two.deathStep(0);
+    two.enemies[1].el.getBoundingClientRect = rect(850); // the second card hangs off the right edge
+    const off = two.deathStep(0);
+    globalThis.innerWidth = wBefore;
+    ok('a death waits for the restack only while a card is off screen', fits === null && typeof off?.then === 'function');
+  }
   let prevented = 0;
   bl.line.listeners.dragstart[0]({ preventDefault: () => prevented++ });
   const cssL = readFileSync('styles.css', 'utf8');
@@ -726,7 +738,7 @@ await withSeedAsync(4, async () => {
     u.portrait.attrs.draggable === 'false' && prevented === 1 && cssL.includes('.battle-line, .unit-actions { user-select: none;') && cssL.includes('.portrait { -webkit-user-drag: none;'));
 }
 
-// T98: 0.00220 (the owner's call) — a death is a playback step of its own:
+// T98: 0.00220 (the developer's call) — a death is a playback step of its own:
 // after the death line's sink tick the log waits for the card to leave the
 // row (onDeath's promise), lets the row close up for combatPacing.restackMs,
 // and only then prints the next line; deathMaxMs caps the wait (a hidden
@@ -768,6 +780,6 @@ await withSeedAsync(4, async () => {
   pb3.reset(); // a new room
   late(); await sleep(restackMs + deathMaxMs + 100);
   ok('a reset while a card leaves drops the old wait', !has('stale room') && !pb3.isPrinting());
-  ok('the dungeon and the benchmark hand the playback the card\'s leaving (battleRoom.js whenGone)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)')
-    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)'));
+  ok('the dungeon and the benchmark hand the playback the card\'s leaving when a restack is due (battleRoom.js deathStep)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.deathStep(i)')
+    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.deathStep(i)'));
 }

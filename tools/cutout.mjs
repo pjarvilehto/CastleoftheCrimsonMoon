@@ -38,10 +38,12 @@ const dist = (data, i, c) => Math.sqrt((data[i] - c[0]) ** 2 + (data[i + 1] - c[
 const lum = (data, i) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
 const sat = (data, i) => { const mx = Math.max(data[i], data[i + 1], data[i + 2]); return mx ? (mx - Math.min(data[i], data[i + 1], data[i + 2])) / mx : 0; };
 
+/** A smooth gradient (a vignette, a shaded backdrop): the fill may step from a background pixel to a neighbour within `step` of its colour, as long as that neighbour is neither dark nor saturated (the figure's edge is a sharp step; its glow is saturated). */
+export const GRADIENT = { step: 14, minLum: 70, maxSat: 0.22 };
 /** Paper-like: light and unsaturated, whatever the exact tone (a lighter paper, a grey panel, a vignette). */
-export const PAPER = { minLum: 135, maxSat: 0.3 };
+export const PAPER = { minLum: 120, maxSat: 0.3, tolerance: 70 }; // (0.00201: within `tolerance` of the border's tone too — a painterly figure has no outline, so its own greys must not count)
 /** The ground shadow the model paints under the figure despite the prompt: a mid-light, unsaturated wash in the picture's lower part (y from `fromY` of the height). Measured on the pilot: shadow pixels at luminance 105-135, distance 130-180 from the background; the inked figure under 80. */
-export const SHADOW = { tolerance: 200, minLum: 90, maxSat: 0.45, fromY: 0.6 };
+export const SHADOW = { tolerance: 200, minLum: 90, minLumShare: 0.5, maxSat: 0.45, fromY: 0.6 }; // minLum, or `minLumShare` of the border's own brightness when that is lower (a mid-grey background's shadow is darker than a light paper's; 0.00201)
 
 /**
  * The alpha of every pixel: 0 where the flood fill from the border ran
@@ -50,30 +52,34 @@ export const SHADOW = { tolerance: 200, minLum: 90, maxSat: 0.45, fromY: 0.6 };
  * in between on the figure's edge pixels (their distance to the
  * background next to them, over 2x the tolerance). Returns { alpha, bg }.
  */
-export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHADOW, margin = Math.max(1, Math.round(Math.min(w, h) * 0.01)), bg = sampleBackground(data, w, h) } = {}) {
+export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHADOW, gradient = GRADIENT, margin = Math.max(1, Math.round(Math.min(w, h) * 0.01)), bg = sampleBackground(data, w, h) } = {}) {
   const n = w * h;
   const reached = new Uint8Array(n);
   const stack = [];
   const yShadow = shadow ? Math.round(h * (shadow.fromY ?? 0)) : h;
+  const bgLum = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
+  const shadowLum = shadow ? Math.min(shadow.minLum, bgLum * (shadow.minLumShare ?? 1)) : 0;
   const passable = (p) => {
     const x = p % w, y = (p - x) / w;
     if (x < margin || y < margin || x >= w - margin || y >= h - margin) return true;
     const i = p * 4, d = dist(data, i, bg);
     if (d <= tolerance) return true;
     const L = lum(data, i), S = sat(data, i);
-    if (paper && L >= paper.minLum && S <= paper.maxSat) return true;
-    return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadow.minLum && S <= shadow.maxSat;
+    if (paper && L >= paper.minLum && S <= paper.maxSat && d <= (paper.tolerance ?? Infinity)) return true;
+    return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadowLum && S <= shadow.maxSat;
   };
-  const push = (p) => { if (!reached[p] && passable(p)) { reached[p] = 1; stack.push(p); } };
+  // a step along a gradient: from the pixel it is reached from, not from the border's colour
+  const smooth = (p, from) => { if (!gradient) return false; const i = p * 4, j = from * 4; return lum(data, i) >= gradient.minLum && sat(data, i) <= gradient.maxSat && Math.abs(data[i] - data[j]) + Math.abs(data[i + 1] - data[j + 1]) + Math.abs(data[i + 2] - data[j + 2]) <= gradient.step; };
+  const push = (p, from = -1) => { if (!reached[p] && (passable(p) || (from >= 0 && smooth(p, from)))) { reached[p] = 1; stack.push(p); } };
   for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
   for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
   while (stack.length) {
     const p = stack.pop();
     const x = p % w, y = (p - x) / w;
-    if (x > 0) push(p - 1);
-    if (x < w - 1) push(p + 1);
-    if (y > 0) push(p - w);
-    if (y < h - 1) push(p + w);
+    if (x > 0) push(p - 1, p);
+    if (x < w - 1) push(p + 1, p);
+    if (y > 0) push(p - w, p);
+    if (y < h - 1) push(p + w, p);
   }
   const alpha = new Uint8Array(n).fill(255);
   const soft = tolerance * 2;
@@ -99,11 +105,12 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
  * all); a tooth is far too small. (Pale stone of the paper's own tone
  * would go too: --holes 0 then.) Returns how many went.
  */
-export const HOLES = { tolerance: 40, minArea: 0.003, fromY: 0 };
+export const HOLES = { tolerance: 40, minArea: 0.003, fromY: 0, white: { tolerance: 90, minLum: 200, maxSat: 0.12 } };
 export function fillHoles(data, alpha, w, h, bg, opts = {}) {
-  const { tolerance, minArea, fromY } = { ...HOLES, ...opts };
+  const { tolerance, minArea, fromY, white } = { ...HOLES, ...opts };
   const n = w * h, label = new Int32Array(n).fill(-1), yFrom = h * fromY;
-  const paperish = (p) => { const i = p * 4; return alpha[p] > 0 && dist(data, i, bg) <= tolerance && lum(data, i) >= PAPER.minLum && sat(data, i) <= PAPER.maxSat; };
+  // paper's own tone, or a near-white neutral pocket (a lighter paper under the feet, 0.00201: the gargoyles) — bone and skin are warmer than that
+  const paperish = (p) => { const i = p * 4, d = dist(data, i, bg); return alpha[p] > 0 && ((d <= tolerance && lum(data, i) >= PAPER.minLum && sat(data, i) <= PAPER.maxSat) || (white && d <= white.tolerance && lum(data, i) >= white.minLum && sat(data, i) <= white.maxSat)); };
   let gone = 0;
   for (let s = 0; s < n; s++) {
     if (label[s] >= 0 || !paperish(s)) continue;

@@ -1,4 +1,63 @@
 {
+  "0.00246": [
+    "Docs: a light sweep — the notes say developer where they said owner; the quick start lists the art tools; the handover and the backlog read as of this build (the redrawn portraits and the LoRAs, the Background Lab's stages, the two new rooms); the painting counts"
+  ],
+  "0.00245": [
+    "Lifesteal rebalanced: it now grows with the gear tiers instead of arriving all at once — tier-2 lifesteal gear heals about a third of what it did, tier-3 about 60%, the relics are unchanged, and Life Drain grants +50% (was +100%)"
+  ],
+  "0.00244": [
+    "Two new rooms in the castle: The Clock Tower and The Blood Baths (the owner's approvals in the Background Lab; the first paintings from the new generator, with their depth maps and fog)",
+    "gen-bg.mjs --import gives a new painting its fog override; the three approvals recorded and the rooms' other candidates pruned"
+  ],
+  "0.00243": [
+    "Settings: the corner buttons are one SETTINGS menu (Audio, Display, Game), with Fullscreen as an icon beside it; DEBUG MODE at the bottom shows the testing tools — no ?debug needed",
+    "Thorns can now finish a foe: no more enemies left standing at 1 HP"
+  ],
+  "0.00242": [
+    "Background Lab (labs/backgrounds/): the new room paintings through their stages — drafts, approved, in the game — each room's candidates as tiles to approve, reject with a note or regenerate with notes, a fight at the game's size over the shown one, a compare beside a game painting; COPY JSON for the generator",
+    "gen-bg.mjs: Seedream 4 is the default; --rerender takes the lab's verdicts and paints the re-rolls (fresh, or from a candidate with a direction), --prune, --import by room; four of the guide's own rooms painted (The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned Throne)"
+  ],
+  "0.00241": [
+    "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
+  ],
+  "0.00240": [
+    "Room paintings: four more Seedream 4 versions of each of the guide's two prompts (the owner's pick from the verbatim round)"
+  ],
+  "0.00239": [
+    "gen-bg.mjs --prompt sends a prompt exactly as written (the guide's own example and its ossuary line on seven libraries, beside the game's paintings)"
+  ],
+  "0.00238": [
+    "The Great Hall, redrawn on desktop and iPad: your knight on the left with his gear around him and all his numbers beneath, Train in the middle, Alchemy on the right — each with the XP or coins it spends"
+  ],
+  "0.00237": [
+    "Room paintings: the owner's prompting guide (docs/image-prompting-guide.md: the recipe every painting came from) is the prompt of tools/gen-bg.mjs — the room's line with its palette cue, the mood, the Darkest Dungeon 2 + Mignola style block verbatim, as text alone; the bake-off re-run on nine models (Imagen 4 and FLUX 1.1 Pro joined): Nano Banana Pro and Nano Banana land closest, Imagen a close third",
+    "The rooms' style LoRA trained on the 48 paintings (gen-bg.mjs --model lora draws a room from its line alone); the character LoRA's prompt uses the training captions' words"
+  ],
+  "0.00236": [
+    "Room paintings: a bake-off of six models on three new rooms (The Clock Tower, The Blood Baths, The Rookery) painted from the game's own paintings; Nano Banana Pro is the pick, now the default of the new tools/gen-bg.mjs (docs/room-prompts.md, candidates in assets/bg/candidates, --import makes the game's JPEG)",
+    "The character style LoRA trained on the 31 approved portraits (it draws a character the game has no art for, the mimic chest first); the rooms' LoRA set and model; one Replicate client for the art tools"
+  ],
+  "0.00235": [
+    "The Great Hall: whatever a purchase raises — Attack after Power or a forged blade, HP, Armor, your level, potions — now glows as it counts up"
+  ],
+  "0.00234": [
+    "Art Lab: the wraith's c10 approved (every character now has an approved portrait) and its other candidates pruned; the LoRA tool can cancel a training"
+  ],
+  "0.00233": [
+    "Art Lab: 30 candidates approved across twelve characters; the wraith redrawn from its best candidate with the owner's note (dead black eyes, the red heart kept); the unapproved candidates pruned",
+    "The style LoRA trains on the approved pictures only (tools/train-lora.mjs; the inked sheets and the room paintings are opt-in)"
+  ],
+  "0.00232": [
+    "The Great Hall reads at a glance: each upgrade's name and level stand out, with a shorter, quieter line under it saying what it does"
+  ],
+  "0.00231": [
+    "Art Lab: the portraits redrawn in their own photoreal rendering (glows, one hue family each, the boss wide) by Nano Banana and five other editors behind --model; a matting model cuts the figures out (no more missing legs or blade edges); Regenerate with notes on every candidate (that candidate as the design, your note as the direction, a model picker), Clean, long rows in two lines",
+    "The candidates pruned to the Nano Banana set, the Pro bake-off and Seedream's two Vampire Lords; the inked-round approvals cleared"
+  ],
+  "0.00230": [
+    "An easier start: the weakest enemies (rats, Cave Shriekers, skeletons, Crypt Spiders) hit a quarter softer and a new game starts with 3 potions",
+    "Training gives a little less per level (+2 damage, +72 HP, +8 armor) and costs a little less XP, so the knight outgrows the early rooms a few runs later"
+  ],
   "0.00229": [
     "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
   ],

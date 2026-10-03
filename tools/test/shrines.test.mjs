@@ -50,7 +50,7 @@ fresh();
   const leech = shrineOffers().find((o) => o.id === 'leech');
   const ls0 = run.stats.lifesteal || 0; const lh0 = run.maxHp;
   acceptOffer(run, leech);
-  ok('leech boon: -15% HP, +100% lifesteal (0.093: x10 with HP)', leech.lifestealAdd === 1 && run.stats.lifesteal === Math.min(leech.lifestealCap, ls0 + 1) && run.maxHp < lh0);
+  ok('leech boon: -15% HP, +50% lifesteal (0.00245: +100% before — lifesteal moved to the higher tiers)', leech.lifestealAdd === 0.5 && run.stats.lifesteal === Math.min(leech.lifestealCap, ls0 + 0.5) && run.maxHp < lh0);
   const bulwark = shrineOffers().find((o) => o.id === 'bulwark');
   const bd0 = run.stats.dmg; const ba0 = run.stats.armor;
   acceptOffer(run, bulwark);
@@ -147,7 +147,7 @@ fresh();
   const { statDesc } = await import('../../src/ui/hubText.js');
   const pl = DATA.difficulty.player;
   ok('hub stat text generated from data', statDesc('power', 0).includes(`+${pl.dmgPerPower} `)
-    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && statDesc('precision', 0).startsWith('Crit Chance +'));
+    && statDesc('vitality', 0).includes(`+${pl.hpPerVitality} `) && /^\+[\d.]+% crit chance, \+[\d.]+% crit damage$/.test(statDesc('precision', 0)));
 }
 
 // T58: 0.096 — compact buff bar: short labels from shrines.json (full

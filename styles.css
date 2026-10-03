@@ -409,6 +409,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hub-wrap h2 { margin: 10px 0 6px; }
 .hub-wrap .item-row { padding: 6px 12px; margin: 4px 0; font-size: 0.95rem; gap: 12px; }
 .hub-wrap .item-row button { padding: 8px 14px; font-size: 1rem; flex-shrink: 0; }
+/* a row's text (0.00232, the developer's ask): the title — the name and its level or count — reads first; what it does sits under it, small and muted */
+.row-text { min-width: 0; }
+.row-title { font-size: 1.12em; letter-spacing: 0.04em; line-height: 1.15; }
+.row-lv { color: var(--gold); margin-left: 0.45em; }
+.row-desc { color: #8a7c5e; font-size: 0.8em; letter-spacing: 0.06em; line-height: 1.2; margin-top: 1px; }
 /* the corner column overlaps the right panel on a tablet: keep clear of it (0.00205) */
 @media (max-width: 1400px) { .hub-container { padding-right: var(--corner-w); } }
 @media (max-width: 1000px) {
@@ -418,8 +423,65 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   .hub-container:not(.phone-hub) { max-height: 100%; overflow-y: auto; } /* one column: the stack is taller than the window, so the container scrolls — body does not, and Descend is reachable (0.00223) */
 }
 /* middle column: alchemy panel + records panel stacked */
-.hub-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; max-height: min(746px, calc(100vh - 124px)); } /* the stacked column as a whole keeps Descend on screen (0.00205; the same budget as the panels') */
-.hub-col > .panel { min-height: 0; } /* so the alchemy panel shrinks and scrolls, the records panel stays whole */
+/* ---- the desktop and tablet hall (0.00238, the developer's layout): the name and records up top, the knight | TRAIN |
+   ALCHEMY as three panels of one height, the way on at the foot. The phone keeps its sheets (.phone-hub, section 16). ---- */
+.hall-desk { height: 100%; justify-content: space-between; gap: 14px; }
+.hall-top { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hall-top h1 { font-size: 2.4rem; margin: 0; line-height: 1; }
+.hall-top .records-line { margin: 0; font-size: 0.9rem; letter-spacing: 0.14em; color: #85775a; }
+.hall-desk .btn-row { margin-top: 0; }
+@media (min-width: 1001px) {
+  .hall-desk .hub-wrap { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) minmax(0, 1fr); max-width: 1400px; align-items: stretch; }
+}
+/* the hall wants ~1300px of layout: under the corner column's reservation (1400px and narrower) the three
+   panels zoom down a step at a time, so an iPad gets the same hall a size smaller instead of 210px columns */
+@media (min-width: 1001px) and (max-width: 1400px) { .hall-desk .hub-wrap { zoom: 0.9; } }
+@media (min-width: 1001px) and (max-width: 1250px) { .hall-desk .hub-wrap { zoom: 0.78; } }
+@media (min-width: 1001px) and (max-width: 1100px) { .hall-desk .hub-wrap { zoom: 0.64; } }
+@media (max-width: 1000px) { .hall-desk .hub-wrap > .knight-panel { max-height: none; } } /* (one column: the knight whole, the hall scrolls) */
+.hall-desk .hub-wrap > .panel { display: flex; flex-direction: column; }
+.hall-desk .hub-wrap > .panel > .hall-sec { display: flex; flex-direction: column; flex: 1 0 auto; }
+.hall-desk .hall-sec > .item-row { flex: 1 1 auto; max-height: 76px; } /* the rows share the panel's height: TRAIN and ALCHEMY end with the knight */
+/* a section's head: the name, the purse it spends from, a one-line hint */
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hub-wrap .sec-head h2 { margin: 0; }
+.sec-hint { color: #85775a; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 0 6px; }
+.purse { font-size: 1.05rem; letter-spacing: 0.08em; color: #9a8b6a; text-transform: uppercase; white-space: nowrap; }
+.purse b { font-size: 1.45rem; color: var(--parchment); margin-left: 6px; }
+.purse.spendable b { color: #6fe07a; text-shadow: 0 0 10px rgba(111, 224, 122, 0.35); }
+/* the knight: name, level, his card with the gear around it, his numbers */
+.knight-name { text-align: center; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.1; }
+.knight-level { text-align: center; color: #9a8b6a; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.95rem; }
+.knight-level b { color: var(--parchment); font-size: 1.2rem; display: inline-block; }
+.knight-panel > .sec-hint { text-align: center; margin: 2px 0 10px; }
+.knight-doll { display: grid; grid-template-columns: minmax(0, 1fr) 172px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.knight-card { align-self: center; position: relative; aspect-ratio: 663 / 1103; background: url('assets/chars/card_player.png') center / 100% 100% no-repeat; }
+.knight-card img { position: absolute; left: 50%; bottom: 7%; width: 125%; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)); pointer-events: none; }
+.gear-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* (over the portrait's sword) */
+.gear-slot { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 6px 9px 7px; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 4px; background: rgba(0, 0, 0, 0.45); text-transform: uppercase; }
+.gear-left .gear-slot { text-align: right; }
+.gear-slot.empty { justify-content: center; }
+.gear-rarity-2 { border-color: rgba(111, 168, 220, 0.45); }
+.gear-rarity-3 { border-color: rgba(192, 122, 232, 0.5); }
+.gear-rarity-4 { border-color: rgba(255, 107, 74, 0.5); }
+.slot-kind { position: absolute; top: 7px; color: #85775a; font-size: 0.68rem; letter-spacing: 0.12em; }
+.gear-left .slot-kind { right: 9px; }
+.gear-right .slot-kind { left: 9px; }
+.slot-name { color: var(--parchment); font-size: 0.92rem; line-height: 1.05; }
+.gear-slot.empty .slot-name { color: #4a4234; }
+.slot-plus { color: var(--gold); }
+.slot-desc { color: #85775a; font-size: 0.7rem; letter-spacing: 0.04em; }
+.gear-slot .forge-btn, .gear-slot .forge-max { position: absolute; top: 5px; padding: 2px 7px; font-size: 0.72rem; } /* the Forge in the slot's outer top corner */
+.gear-left .forge-btn, .gear-left .forge-max { left: 6px; }
+.gear-right .forge-btn, .gear-right .forge-max { right: 6px; }
+.knight-stats { margin-top: auto; padding-top: 12px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.knight-stats .stat-box { padding: 4px 7px 3px; display: flex; flex-direction: column; }
+.knight-stats .stat-box .label { font-size: 0.68rem; letter-spacing: 0.1em; }
+.knight-stats .stat-box .value { font-size: 1.2rem; align-self: flex-end; line-height: 1.1; }
+.knight-stats .none .value { color: #5a5040; }
+.knight-stats .potions-full .value { color: #6fe07a; }
+.knight-stats .potions-ok .value { color: #d8c95a; }
+.knight-stats .potions-low .value { color: #e05a4a; }
 .records-line { margin-bottom: 0; }
 
 /* Great Hall stats (0.081): three fixed columns; each box has its label
@@ -529,7 +591,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    around its axis (combatFx.js kick) and the room deals the cards in
    (enter). Each level hands its children the camera — perspective applies
    to direct children only — so the unit turns in the row and the card in
-   the unit; 130vh ~ the lab's 1400px on the owner's screen. */
+   the unit; 130vh ~ the lab's 1400px on the developer's screen. */
 .battle-line, .enemy-row, .unit { perspective: 130vh; perspective-origin: 50% 35%; }
 .char-card { backface-visibility: hidden; }
 /* The shader light behind the portrait (ui/cardFx.js): a canvas inside the
@@ -616,7 +678,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   transform-origin: 0 100%;
 }
 .boss-card .portrait { height: 104%; max-width: 148%; } /* bosses loom */
-/* The boss's card is twice as wide (0.196, the owner's call: more
+/* The boss's card is twice as wide (0.196, the developer's call: more
    intimidating), 2 x 413 / 1106; battleRoom.js counts it as two slots so
    the row still fits with its summons. Its frame is drawn as a 9-slice
    so the rounded corners and the grey border keep their shape (stretched,
@@ -990,7 +1052,19 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   max-height: calc(100vh - 16px); overflow-y: auto; pointer-events: none;
 }
 .corner-bar > * { pointer-events: auto; }
-.corner-bar > .menu-toggle { display: none; } /* the phone's folded column (0.00208): shown by the phone layer at the end of this file */
+/* the SETTINGS menu (0.00243): the top row (FULLSCREEN, SETTINGS) always; the rest drops down under it while open */
+.corner-top { display: flex; gap: 6px; align-items: stretch; justify-content: flex-end; }
+.menu-toggle { gap: 6px; }
+.menu-label { margin-left: 6px; }
+.corner-bar:not(.open) > :not(.corner-top) { display: none; }
+.corner-bar:not(.debug-on) > .dbg { display: none; } /* the testing tools: DEBUG MODE ON (ui/debugToggles.js) */
+.corner-bar.open { padding: 8px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); align-items: stretch; min-width: 220px; }
+.corner-bar.open > .debug-toggle { justify-content: flex-start; opacity: 0.75; }
+.corner-bar.open > .debug-toggle.on { opacity: 1; }
+.menu-head { color: #85775a; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; margin: 6px 2px 0; padding-bottom: 2px; border-bottom: 1px solid rgba(201, 162, 39, 0.15); }
+.corner-bar > .debug-mode-toggle { margin-top: 12px; }
+.fs-toggle { padding: 4px 8px; }
+.fs-toggle svg { width: 14px; height: 14px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .debug-toggle {
   padding: 4px 12px; font-size: 0.7rem; letter-spacing: 1px;
   opacity: 0.45;
@@ -1051,7 +1125,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    selector (so it always outranks it, whatever the order — a plain .panel
    lost to `#app > .panel` and the shrine kept its desktop padding, 0.00209;
    the suite checks the mirroring, tools/layout-check.mjs the geometry).
-   Designed with the owner over mockups (0.00207's thread): combat as ONE
+   Designed with the developer over mockups (0.00207's thread): combat as ONE
    line of big cards with the knight's buttons under his card and a
    one-line log; the Great Hall as three stacked sheets under their tabs
    (hubScene.js phoneHall); the corner column folded into ☰; the panel
@@ -1097,15 +1171,15 @@ html.phone #app:has(.combat-proceed > button) #combat-log.docked { right: calc(1
 html.phone .resources { bottom: auto; top: 7px; left: calc(12px + env(safe-area-inset-left, 0px) + var(--tag-w) + 8px); display: flex; gap: 10px; } /* XP and coins up beside the build tag: the knight's buttons own the bottom-left */
 html.phone .resources .res-row { display: flex; gap: 4px; font-size: 0.75rem; } /* (the size sits on the row in the base, so it is set here, not on .resources) */
 html.phone .res-label { width: auto; }
-html.phone #app:has(.battle-line) #buffs { left: calc(1vw + env(safe-area-inset-left, 0px)); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 52px + var(--app-card-h) + 4px); width: var(--knight-w); max-width: none; gap: 4px; flex-wrap: wrap; justify-content: flex-start; } /* the boons as small icons on top of the knight's card (the owner's call) */
+html.phone #app:has(.battle-line) #buffs { left: calc(1vw + env(safe-area-inset-left, 0px)); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 52px + var(--app-card-h) + 4px); width: var(--knight-w); max-width: none; gap: 4px; flex-wrap: wrap; justify-content: flex-start; } /* the boons as small icons on top of the knight's card (the developer's call) */
 html.phone #app:has(> .panel) #buffs { left: auto; right: calc(72px + env(safe-area-inset-right, 0px)); top: calc(6px + env(safe-area-inset-top, 0px)); bottom: auto; max-width: 40vw; gap: 4px; flex-wrap: wrap; justify-content: flex-end; } /* the panel rooms (0.00223): the boons top-right beside ☰ — the panel is 98vw wide, the desktop's bottom-left spot sat on its log and buttons */
 html.phone .buff { width: 30px; }
 html.phone .combat-proceed { right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); flex-direction: row; gap: 8px; }
 html.phone .combat-proceed button { min-height: 40px; padding: 0 14px; font-size: 0.9rem; }
 /* ---- the corner column folded into ☰: a dropdown under the button, closed by a tap elsewhere (cornerToggles.js) ---- */
-html.phone .corner-bar > .menu-toggle { display: block; font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
-html.phone .corner-bar:not(.open) > :not(.menu-toggle) { display: none; }
-html.phone .corner-bar.open { padding: 6px; background: rgba(10, 6, 5, 0.94); border: 1px solid rgba(201,162,39,0.35); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+html.phone .corner-top > .menu-toggle { font-size: 1.1rem; padding: 6px 12px; opacity: 0.85; }
+html.phone .menu-toggle .menu-label { display: none; } /* (☰ alone on a phone) */
+html.phone .corner-bar.open { padding: 6px; }
 html.phone .corner-bar.open .debug-toggle { min-height: 40px; padding: 0 14px; font-size: 0.85rem; opacity: 0.85; }
 html.phone .build-tag { font-size: 0.6rem; width: var(--tag-w); overflow: hidden; white-space: nowrap; } /* a fixed width: XP and coins sit right after it */
 /* ---- the Great Hall (hubScene.js phoneHall): a stats strip, three stacked sheets under their tabs, the way on fixed at the bottom ---- */
@@ -1143,10 +1217,12 @@ html.phone .phone-hub .tab-body.pick-3 > .panel:nth-child(2) { z-index: 1; }
 html.phone .phone-hub .tab-body > .panel.on { z-index: 3; transform: none; filter: none; cursor: auto; border-color: rgba(201,162,39,0.5); border-top-left-radius: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.9), 0 0 22px rgba(0,0,0,0.8); }
 html.phone .phone-hub .tab-body > .panel:nth-child(3).on { border-top-left-radius: 6px; border-top-right-radius: 0; }
 html.phone .phone-hub .tab-body > .panel:not(.on) > * { pointer-events: none; } /* a tap on a sheet behind lifts it, nothing more */
-html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle { display: none; }
+html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle, html.phone .phone-hub .tab-body .sec-head, html.phone .phone-hub .tab-body .sec-hint { display: none; } /* (the tabs carry the names and the dots; 0.00238: the sections' heads too) */
 html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
 html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
+html.phone .phone-hub .row-title, html.phone .phone-hub .row-desc { display: inline; } /* (one line in a sheet: the title, then the small line beside it) */
+html.phone .phone-hub .row-desc { margin-left: 0.6em; font-size: 0.82em; }
 /* the equipment sheet (0.00218): every slot row the same height — the forge button no taller than a row without one, so all seven fit */
 html.phone .phone-hub .item-row .forge-btn { min-height: 24px; padding: 2px 8px; font-size: 0.72rem; }
 html.phone .phone-hub .item-row .equip-item { line-height: 1.15; }

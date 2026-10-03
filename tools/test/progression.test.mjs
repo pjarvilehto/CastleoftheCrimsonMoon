@@ -22,8 +22,8 @@ fresh();
   const pc = DATA.difficulty.potions;
   resetProfile();
   const p = getProfile();
-  ok('fresh profile: 2/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
-  p.coins = 1000;
+  ok('fresh profile: 3/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
+  p.coins = 1000; p.potions = 2; // (0.00230: the stock starts at 3 — two short of the cap for the ladder below)
   const c0 = potionCost();
   restockPotion(); const c1 = potionCost(); restockPotion();
   ok('potion price climbs: 10, 20, then 25 and +5 each (0.00204)', c0 === 10 && c1 === 20 && potionCost() === 25 && p.potions === 4 && p.coins === 1000 - 30
@@ -127,16 +127,16 @@ fresh();
   const p = getProfile();
   p.coins = 0; p.xp = 10000;
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
-  ok('training is XP-only', statCost(0).xp === 15 && statCost(0).coins === undefined);
+  ok('training is XP-only', statCost(0).xp === DATA.difficulty.statTrainXpBase && DATA.difficulty.statTrainXpBase === 13 && statCost(0).coins === undefined);
   buyStat('power'); // lvl 1, 15xp
-  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 15 && p.stats.power === 1);
+  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 13 && p.stats.power === 1);
   p.stats.power = 4;
   const r = buyStat('power'); // -> lvl 5 = breakthrough
   ok('breakthrough doubles every 5th level', r === 'breakthrough' && trainedLevel(p, 'power') === 6);
   p.stats.precision = 5; p.stats.endurance = 7; p.stats.vitality = 0;
   const d = derivedStats(p);
-  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 80
-    && d.dmg === 24 && d.maxHp === 400);
+  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 64
+    && d.dmg === 18 && d.maxHp === 400); // (0.00230: +8 armor, +2 damage a level)
 }
 
 // T23: alchemy tracks — base costs, efficiency free drinks, infusion temp armor
@@ -197,9 +197,9 @@ fresh();
   const html = t();
   ok('hub: five disciplines', ['Power', 'Vitality', 'Fortune', 'Precision', 'Endurance'].every((n) => html.includes(n)));
   ok('hub: three alchemy tracks', ['Potency', 'Efficiency', 'Infusion'].every((n) => html.includes(n)));
-  ok('hub: xp-only train buttons', html.includes('Train (15xp)'));
+  ok('hub: xp-only train buttons', html.includes('Train (13xp)'));
   ok('hub: scribe removed', !html.includes('Scribe'));
-  ok('hub: forge button on equipped item', html.includes('+100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
+  ok('hub: forge button on equipped item', html.includes('Forge 100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
 }
 
 // T28: 0.062 — precision taper, armor floor, title panel docked low
@@ -242,16 +242,16 @@ fresh();
   const want = (l) => { // 0.113: every level also adds crit damage, so none reads +0%
     const gain = precisionCrit(eff(l + 1)) - precisionCrit(eff(l));
     const dmg = pct((eff(l + 1) - eff(l)) * DATA.difficulty.player.critDamagePerPrecision);
-    return gain >= 0.0005 ? `Crit Chance +${pct(gain)}, crit damage +${dmg}` : `crit chance maxed: crit damage +${dmg}`;
+    return gain >= 0.0005 ? `+${pct(gain)} crit chance, +${dmg} crit damage` : `crit chance maxed · +${dmg} crit damage`;
   };
   resetProfile();
   ok('precisionDesc shows the next click\'s actual gain (breakthroughs count double)', [0, 4, 9, 10, 19, 20, 30, 45].every((l) => precisionDesc(l) === want(l))
-    && precisionDesc(0) === 'Crit Chance +3%, crit damage +1%' && precisionDesc(4) === 'Crit Chance +6%, crit damage +2%',
+    && precisionDesc(0) === '+3% crit chance, +1% crit damage' && precisionDesc(4) === '+6% crit chance, +2% crit damage',
     [0, 4, 30].map(precisionDesc).join(' | '));
   ok('late precision never reads +0% (0.113)', [30, 46, 60, 99].every((l) => !precisionDesc(l).includes('+0%')), precisionDesc(46));
   getProfile().stats.precision = 12;
   hubScene().enter(registry.app);
-  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12 — ${want(12)}`));
+  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12${want(12)}`));
   // at the crit cap (crit gear), precision turns into crit damage instead
   const eq = getProfile().equipment;
   eq.trinket = 'fang_of_the_crimson_moon'; eq.weapon = 'moonbrand'; eq.rings = ['ring_of_the_blood_moon', 'ring_of_the_blood_moon'];
@@ -261,7 +261,7 @@ fresh();
   ok('crit past the cap becomes crit damage (0.112)', ds.crit === DATA.difficulty.player.critCap && ds.critBonus > 0
     && Math.abs(ds.critBonus - ((0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5
       + trainedLevel(getProfile(), 'precision') * DATA.difficulty.player.critDamagePerPrecision)) < 1e-9
-    && precisionDesc(30).startsWith('crit chance maxed: crit damage +'));
+    && precisionDesc(30).startsWith('crit chance maxed · +'));
   resetProfile();
 }
 
@@ -304,10 +304,10 @@ fresh();
   resetProfile();
   const p = getProfile();
   const r1 = createRun();
-  ok('run draws the stock and cap', r1.potions === 2 && r1.potionCap === 4);
+  ok('run draws the stock and cap', r1.potions === 3 && r1.potionCap === 4);
   r1.hp = 1; drinkPotion(r1);
   settleRun(r1, 'retreat');
-  ok('unused potions come home (retreat)', p.potions === 1);
+  ok('unused potions come home (retreat)', p.potions === 2);
   const r2 = createRun(); r2.potions = 3;
   settleRun(r2, 'death');
   ok('unused potions come home (death)', p.potions === 3);
@@ -343,25 +343,24 @@ fresh();
   hub.enter(root);
   const txt = root.textContent;
   ok('Great Hall shows Level before Coins', txt.indexOf('Level') !== -1 && txt.indexOf('Level') < txt.indexOf('Coins'));
-  ok('Great Hall shows potions as n/max and the satchel', txt.includes('2/4') && txt.includes('Potion Satchel'));
+  ok('Great Hall shows potions as n/max and the satchel', txt.includes('3/4') && txt.includes('Potion Satchel'));
 }
 
-// T43: 0.081 — Great Hall stat boxes: 3 columns (Level/Coins/XP,
-// Attack/HP/Armor, Potions centered), label top-left, value bottom-right.
+// T43: the Great Hall's numbers (0.00237: the desktop's sit under the knight —
+// Attack, HP, Armor, Crit, Lifesteal, Potions — his level by his name, each
+// purse in the head of the section that spends it; the phone keeps 0.081's
+// 3x3 boxes, scenes.test.mjs).
 {
   resetProfile();
   const root = new El('main');
   hubScene().enter(root);
-  const grid = root.all((n) => n.className.includes('hub-stats'))[0];
-  const labels = grid ? grid.children.map((b) => b.children[0].textContent) : [];
-  ok('hub stat order', labels.join(',') === 'Level,Coins,XP,Attack,HP,Armor,Potions', labels.join(','));
-  ok('potions box centered', grid && grid.children[6].className.includes('stat-potions'));
-  const css = readFileSync('styles.css', 'utf8');
-  ok('hub stats: 3 columns, label top-left, value bottom-right',
-    css.includes('.hub-wrap .stat-grid.hub-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }')
-    && css.includes('.hub-stats .stat-box .label { align-self: flex-start; }')
-    && css.includes('.hub-stats .stat-box .value { align-self: flex-end;')
-    && css.includes('.hub-stats .stat-potions { grid-column: 2; }'));
+  const strip = root.all((n) => /\bknight-stats\b/.test(n.className ?? ''))[0];
+  const labels = strip ? strip.children.map((b) => b.children[0].textContent) : [];
+  ok('the knight\'s numbers, in order', labels.join(',') === 'Attack,HP,Armor,Crit,Lifesteal,Potions', labels.join(','));
+  const purses = root.all((n) => /\bpurse\b/.test(n.className ?? '')).map((n) => n.textContent);
+  ok('XP heads Train and Coins Alchemy', purses.length === 2 && /^XP/.test(purses[0]) && /^Coins/.test(purses[1]), purses.join(' | '));
+  ok('the knight, his level and his seven gear slots', root.all((n) => /\bknight-level\b/.test(n.className ?? '')).length === 1
+    && root.all((n) => /\bgear-slot\b/.test(n.className ?? '')).length === 7);
 }
 
 // T54: 0.091 — drops that can't beat the gear (as it will be after this
@@ -501,7 +500,7 @@ fresh();
     && lv.efficiencyChance(20) > 0.49 && lv.efficiencyChance(20) < 0.51 && lv.efficiencyChance(40) - lv.efficiencyChance(20) > 0.04);
   resetProfile();
   getProfile().alchemy.efficiency = 20;
-  ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
+  ok('efficiency hub line: now and next', /^50% chance to keep a potion \(next \+0\.\d+%\)$/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
   // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
   getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
   const { canSpendCoins, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');

@@ -88,5 +88,16 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   }
 
   const whenGone = (i) => gone[i] ?? Promise.resolve();
-  return { player, enemies, row, line, update, fit, whenGone };
+  // The death's own step (0.00220) only where the row needs it (the developer's
+  // call): while an enemy card sits partly off the screen — a crowded row on
+  // a phone — the fallen card's leaving brings it in, so the playback waits
+  // for that restack. A row that fits keeps the quick pace: a heavy blow
+  // runs from one victim to the next and the row closes up behind it.
+  const restackDue = () => {
+    const w = globalThis.innerWidth;
+    if (!w) return false;
+    return enemies.some((u) => { const r = u.el.getBoundingClientRect?.(); return !!r && r.width > 0 && (r.left < -1 || r.left + r.width > w + 1); });
+  };
+  const deathStep = (i) => (restackDue() ? whenGone(i) : null);
+  return { player, enemies, row, line, update, fit, whenGone, restackDue, deathStep };
 }

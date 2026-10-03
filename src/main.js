@@ -13,8 +13,8 @@ import { setCardFxSaver } from './ui/cardFx.js';
 import { getPref, setPref } from './shared/prefs.js';
 import { volumeToggle } from './ui/volumePanel.js';
 import { changelogToggle } from './ui/changelog.js';
-import { cornerBar, onOffToggle } from './ui/cornerToggles.js';
-import { debugToggles, invulnerableToggle } from './ui/debugToggles.js';
+import { cornerBar, onOffToggle, menuHead } from './ui/cornerToggles.js';
+import { debugMenu, debugModeOn, debugFromUrl } from './ui/debugToggles.js';
 import { loadData, DATA } from './shared/data.js';
 import { preloadAssets, preloadRest } from './shared/preload.js';
 import './ui/scenes/index.js'; // registers the scenes with the router
@@ -66,25 +66,30 @@ async function boot() {
   const tag = document.createElement('div');
   tag.className = 'build-tag';
   tag.textContent = `build v${DATA.build.version}`;
-  // The upper-right column (ui/cornerToggles.js, 0.115). ?debug in the URL
-  // (0.079) adds the testing tools; players never see them.
-  const debugMode = new URLSearchParams(globalThis.location?.search ?? '').has('debug');
-  if (debugMode) document.body.classList.add('debug');
+  // The upper-right corner (ui/cornerToggles.js, 0.115): the SETTINGS menu
+  // in groups since 0.00243, FULLSCREEN beside it as an icon, DEBUG MODE
+  // last — ON shows the testing tools (ui/debugToggles.js; ?debug turns it
+  // on for the visit, else this browser remembers the choice).
+  const dbg = debugMenu();
   document.body.append(tag, cornerBar([
-    debugMode && invulnerableToggle(),
+    menuHead('Audio'),
     onOffToggle('MUSIC', { cls: 'music-toggle', get: () => !isMuted(), flip: () => !toggleMuted() }),
-    !isPhone() && fullscreenToggle(), // (a phone: the gate is the way to the full screen; iPhone has none, and on Android OFF would only bring the gate back)
     onOffToggle('SOUND', { cls: 'sfx-toggle', get: () => !sfxMuted(), flip: () => !toggleSfx() }),
     onOffToggle('NARRATOR', { cls: 'vo-toggle', get: () => !isNarratorMuted(), flip: () => !toggleNarrator() }), // the Old Wizard (0.161)
-    onOffToggle('BATTERY SAVER', { cls: 'saver-toggle', get: powerSaver, flip: () => { const on = !powerSaver(); setPowerSaver(on); setCardFxSaver(on); setPref(SAVER_KEY, on ? '1' : '0'); return on; } }), // (0.00222: the smallest canvas, no mist, the card light at saverFps — the player's choice, never automatic)
     volumeToggle(),
+    menuHead('Display'),
+    onOffToggle('BATTERY SAVER', { cls: 'saver-toggle', get: powerSaver, flip: () => { const on = !powerSaver(); setPowerSaver(on); setCardFxSaver(on); setPref(SAVER_KEY, on ? '1' : '0'); return on; } }), // (0.00222: the smallest canvas, no mist, the card light at saverFps — the player's choice, never automatic)
+    menuHead('Game'),
     changelogToggle(),
-    ...(debugMode ? debugToggles() : []),
-  ]));
+    dbg.toggle,
+    ...dbg.items,
+  ], [!isPhone() && fullscreenToggle()])); // (a phone: the gate is the way to the full screen; iPhone has none, and on Android OFF would only bring the gate back)
+  dbg.apply(debugModeOn());
   // Living 3D backgrounds (0.083). Software-rendered GL is allowed only
-  // under ?debug (headless testing); real players on a GPU-less machine,
-  // or with reduced motion requested, keep the flat CSS backgrounds.
-  if (initBg3d({ allowSoftware: debugMode })) { onBackgroundChange(showBackground3d); warmCardFx(); } // (0.00222: the card light's shader compiles behind the title, not in the first fight's transition)
+  // under ?debug in the address (headless testing); real players on a
+  // GPU-less machine, or with reduced motion requested, keep the flat CSS
+  // backgrounds.
+  if (initBg3d({ allowSoftware: debugFromUrl() })) { onBackgroundChange(showBackground3d); warmCardFx(); } // (0.00222: the card light's shader compiles behind the title, not in the first fight's transition)
   if (getPref(SAVER_KEY) === '1') { setPowerSaver(true); setCardFxSaver(true); } // remembered from the last visit (0.00222)
   // Every transition (0.171/0.173): the swoosh, timed to land mid-way, and the camera's push through the picture.
   onTransition(() => { transitionSfx(); bgPush(); });
@@ -111,15 +116,21 @@ async function boot() {
 
 // FULLSCREEN: the label tracks the real state — Esc/F11 also exit
 // fullscreen without this button.
+// FULLSCREEN (0.069; an icon beside SETTINGS since 0.00243): four corners
+// pointing out, or in while the page is full screen.
+const FS_ICON = { off: 'M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4', on: 'M5 1v4H1M15 5h-4V1M11 15v-4h4M1 11h4v4' };
 function fullscreenToggle() {
-  const btn = onOffToggle('FULLSCREEN', {
-    cls: 'fs-toggle',
-    get: () => fullscreenOn(),
-    flip: () => { // (platform.js: Safari's prefixed names too — iPad Safari has them)
-      (fullscreenOn() ? exitFullscreen() : enterFullscreen()).finally(() => btn.sync());
-      return fullscreenOn();
-    },
+  const draw = () => {
+    const on = fullscreenOn();
+    btn.classList.toggle('on', on);
+    btn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${on ? FS_ICON.on : FS_ICON.off}"/></svg>`;
+  };
+  const btn = el('button', {
+    class: 'debug-toggle fs-toggle', 'aria-label': 'Fullscreen', title: 'Fullscreen',
+    onclick: () => { (fullscreenOn() ? exitFullscreen() : enterFullscreen()).finally(draw); }, // (platform.js: Safari's prefixed names too — iPad Safari has them)
   });
+  btn.sync = draw;
+  draw();
   document.addEventListener?.('fullscreenchange', () => btn.sync());
   document.addEventListener?.('webkitfullscreenchange', () => btn.sync());
   return btn;

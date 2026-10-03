@@ -1,5 +1,5 @@
 // ui/cardFx.js — the shader light behind every card's portrait (0.183, the
-// owner's picks from the Card Lab): slow fog, blood, flames, embers or ether
+// developer's picks from the Card Lab): slow fog, blood, flames, embers or ether
 // by the enemy's particle material, ADDED over the frame's dark plate (the
 // card's canvas blends with mix-blend-mode: screen, styles.css .card-fx) and
 // masked to the frame's window. Every lit card draws on a WebGL canvas of
@@ -8,7 +8,7 @@
 // come and go, so the browser's ceiling on live contexts (about 16 a page;
 // the renderer holds one) is never reached. Before 0.00227 one hidden
 // context drew every card in turn and each card's 2D canvas took its
-// picture as an ImageBitmap; the first device report (0.00225, the owner's
+// picture as an ImageBitmap; the first device report (0.00225, the developer's
 // iPhone) put that at 13.5 ms of main thread per tick at rest and 6-8 ms in
 // the fights, twenty times a second: Safari serves createImageBitmap() of a
 // WebGL canvas as a GPU readback, one per lit card per tick. That copy

@@ -46,7 +46,7 @@ export function phoneGate({ onPlay = () => {}, doc = globalThis.document, nav = 
         render();
       } }, 'Install the game') : null;
       const hint = installed ? 'The castle is on your home screen — open it from there for the full screen.'
-        : ios ? 'For the full screen: tap Share, then Add to Home Screen, and play from the icon.' // (0.00216: no "aA, then Hide Toolbar" — that menu is Safari's own, and the owner tested in Brave)
+        : ios ? 'For the full screen: tap Share, then Add to Home Screen, and play from the icon.' // (0.00216: no "aA, then Hide Toolbar" — that menu is Safari's own, and the developer tested in Brave)
         : install ? 'Play goes full screen. Install for a home-screen icon that always does.'
         : fs ? 'Play goes full screen.'
         : 'Add the castle to your home screen for the full screen.';

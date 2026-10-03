@@ -8,7 +8,7 @@
 //   snap  — { enemies: [hp...], hp } from the combat event: the view jumps
 //           to it as the line prints, so HP bars move WITH the log
 //   sink  — enemy index whose card goes down one tick after its death line;
-//           the log then waits (0.00220, the owner's call: the restack used
+//           the log then waits (0.00220, the developer's call: the restack used
 //           to land in the middle of the enemies' turn) — onDeath(i) says
 //           when the card has left the row, the row closes up, and after
 //           combatPacing.restackMs the next line prints; deathMaxMs caps the

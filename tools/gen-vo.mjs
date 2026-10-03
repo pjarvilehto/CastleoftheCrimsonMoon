@@ -17,7 +17,7 @@
 // level every take; measured with ffmpeg when it is installed). Existing
 // files are never overwritten (edge caches: new content, new filename) —
 // delete a file to re-render it. Each take records the settings it was
-// rendered with and whether the owner approved it (the VO Lab). Before sending, stage directions in *(...)* are
+// rendered with and whether the developer approved it (the VO Lab). Before sending, stage directions in *(...)* are
 // stripped, emphasis marks (*Ha!*) become plain text, an exclamation mark
 // becomes a full stop (the narrator never shouts) and a leading ellipsis
 // goes (the model voices it as a filler "uh…").
@@ -33,7 +33,7 @@ const OUT = join(ROOT, 'assets', 'audio', 'vo');
 const REGISTRY = join(ROOT, 'assets', 'data', 'narration.json');
 const WEB = 'assets/audio/vo'; // as the game fetches it
 
-// The voice the owner picked from the samples (Old Wizard, ElevenLabs
+// The voice the developer picked from the samples (Old Wizard, ElevenLabs
 // Voice Library). The first batch rendered at stability 0.4 / style 0.2;
 // the short one-word takes came out shouty, so renders since use these.
 export const VOICE = {

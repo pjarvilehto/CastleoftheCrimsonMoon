@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, withAnimations, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -260,7 +260,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
   ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
   ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
-  ok('CHANGELIST sits in the corner column, under VOLUME', /volumeToggle\(\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
+  ok('CHANGELIST sits in the SETTINGS menu, under GAME', /menuHead\('Game'\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
 
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -543,7 +543,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && osOf(iphone.userAgent, true) === 'iOS' && osOf(android.userAgent, true) === 'Android' && osOf(win.userAgent, true) === 'Windows');
 }
 
-// 0.154 — transitions strictly in order (the owner's call): the windows fade
+// 0.154 — transitions strictly in order (the developer's call): the windows fade
 // out fully before the background changes, and come back only once the new
 // painting has fully faded in (keys ignored meanwhile); no background change,
 // no wait; a painting that never arrives holds them 4s at most
@@ -580,7 +580,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 // is a dialog that resolves on PLAY and skips a home-screen app.
 {
   const { PHONE_MQ, phoneLayout, standaloneApp, isIos, fullscreenOn } = await import('../../src/shared/platform.js');
-  const { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
+  const { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
   const { phoneGate } = await import('../../src/ui/phoneGate.js');
   const { anyDialogOpen } = await import('../../src/ui/dialog.js');
   const { canSpendAlchemy, canForgeAny, canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
@@ -605,10 +605,10 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('the short wording carries the data\'s numbers', statDesc('power', 0, true) === `+${pl.dmgPerPower} dmg / lv` && statDesc('vitality', 0, true) === `+${pl.hpPerVitality} hp / lv`
     && statDesc('endurance', 0, true) === `+${pl.armorPerEndurance} armor / lv` && /^\+[\d.]+% crit, \+[\d.]+% crit dmg$/.test(statDesc('precision', 0, true)) && statDesc('fortune', 0, true) === 'better loot'
     && alchemyDesc('potency', true) === `+${tr.potency.healPerLevel} heal / lv (now ${DATA.difficulty.potionHeal})` && alchemyDesc('infusion', true) === `potion armor +0 (+${tr.infusion.armorPerLevel} / lv)`
-    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} per level`) // (the long line carries it too, 0.00209)
-    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === '2/4 — price climbs per buy'
+    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} / level`) // (the long line carries it too, 0.00209)
+    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === 'price climbs per buy' && potionCount({ potions: 2, potionCap: 4 }) === '2/4'
     && satchelDesc({ potionCap: 4 }, false, true) === '+1 capacity (now 4)' && satchelDesc({ potionCap: 6 }, true, true) === 'carries 6 (max)'
-    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
+    && statDesc('power', 0) === `+${pl.dmgPerPower} damage / level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
   // coins buy in two places: the dots follow each (0.00209)
   fresh();
   const forge = getProfile(); forge.equipment.weapon = 'knights_blade'; forge.potions = forge.potionCap; forge.coins = forgeCost('knights_blade');
@@ -696,4 +696,24 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   dlg4.all((n) => n.tagName === 'textarea')[0].value = code;
   ok('Import Save: Space loads a good code (Load Save is the way on)', handleKey(' ') === true && !anyDialogOpen() && getProfile().coins === 4242);
   closeAllDialogs(); fresh();
+}
+
+// A purchase makes the attribute it raised glow (0.00233): Power rolls Attack
+// up with the pulse, Coins / XP (what was spent) and the untouched boxes stay put.
+{
+  fresh();
+  await withAnimations(async () => {
+    const p = getProfile(); p.name = 'Glow'; p.xp = 1e6; p.coins = 0;
+    const scene = hubScene(); scene.enter(registry.app);
+    const box = (label) => registry.app.all((n) => /\bstat-box\b/.test(n.className ?? '') && n.children[0]?.textContent === label)[0]?.children[1];
+    const before = Number(box('Attack').textContent);
+    registry.app.all((n) => n.tagName === 'button' && /^Train/.test(n.textContent))[0].listeners.click[0](); // Power
+    const atk = box('Attack'), hp = box('HP'), xp = registry.app.all((n) => /\bpurse\b/.test(n.className ?? ''))[0]?.children[1];
+    ok('training Power: Attack glows', atk.animations?.length === 1 && !hp.animations && xp && !xp.animations);
+    await sleep(1000);
+    ok('…and rolls up to its new value', Number(atk.textContent) === before + DATA.difficulty.player.dmgPerPower, `${before} → ${atk.textContent}`);
+    scene.enter(registry.app); // re-entering the hall is not a purchase
+    ok('entering the hall glows nothing', !box('Attack').animations);
+  });
+  fresh();
 }

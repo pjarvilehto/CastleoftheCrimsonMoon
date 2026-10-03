@@ -1,5 +1,5 @@
 // labs/world/lab.js — the World Lab (0.00210): the world map above the
-// dungeon as a prototype. The owner's reference painting under a layer of
+// dungeon as a prototype. The developer's reference painting under a layer of
 // clouds; places as pins; clearing a place (faked here) burns the clouds
 // away around it and its roads; two looks — THE KNOWN WORLD (top-down,
 // the camera framing what is known) and FROM THE SKY (low and tilted over
@@ -30,7 +30,7 @@ const WORLD = {
       blurb: 'Where the sea turns to stone and the stone remembers.' },
   ],
 };
-const DEFAULTS = { density: 0.4, drift: 23, dark: 0.5, cleared: 220, open: 130, burn: 2.5, red: 0.55, tilt: 14, skyZoom: 2.5 }; // the owner's picks (0.00213: sparser, darker, faster clouds; tighter windows)
+const DEFAULTS = { density: 0.4, drift: 23, dark: 0.5, cleared: 220, open: 130, burn: 2.5, red: 0.55, tilt: 14, skyZoom: 2.5 }; // the developer's picks (0.00213: sparser, darker, faster clouds; tighter windows)
 let T = { ...DEFAULTS };
 try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.T) T = { ...DEFAULTS, ...saved.T }; } catch { /* fresh */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ T })); } catch { /* private mode */ } };
