@@ -26,7 +26,7 @@ let copyOut = ''; // a report's JSON shown for hand copying where the clipboard 
 const read = (k) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null'); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
 
-// Tester names (0.136): who is behind a player, set here by the owner and
+// Tester names (0.136): who is behind a player, set here by the developer and
 // kept in this browser, shown before the player's own name everywhere on
 // the page ("tester · player name"). The renames of
 // 0.102-0.135 (for players without a typed name) become tester names.

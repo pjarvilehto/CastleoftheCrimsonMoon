@@ -18,7 +18,7 @@ hit effects still fit.
      design in. A character whose portrait is no reference (the gargoyle)
      is drawn onto the best original of its colour family instead
      (`--from-sheet skeleton`; `tools/gen-art.mjs STYLE_REF`, `--refs
-     family`); `--refs sheets` uses the owner's inked sheets in
+     family`); `--refs sheets` uses the developer's inked sheets in
      `assets/style/`, `--style` any picture.
 2. Paste the **style block** below, then that character's **character
    line**.

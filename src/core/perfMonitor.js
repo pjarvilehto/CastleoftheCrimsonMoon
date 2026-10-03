@@ -131,7 +131,7 @@ export function spansOf(rec) {
 // late rule and RATES define the measurement: a stored record compares
 // with another only under one definition, so they live here and change
 // with a build (and a new benchmark round), like the benchmark's PHASES.
-// nearShare and paceShare are judgments the owner's data keeps moving:
+// nearShare and paceShare are judgments the developer's data keeps moving:
 // telemetry.json perf (rule 2).
 const MODE_BINS = 9;    // the busiest 2.25 ms: wider than a lobe's catch-up shoulder
 const PACE_BAND = 0.04; // "on a rate's pace" = within 4% of its interval

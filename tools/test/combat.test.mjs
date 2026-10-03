@@ -719,7 +719,7 @@ await withSeedAsync(4, async () => {
   // 0.159: no native image drag from a sloppy click on a portrait, nothing to select in the line
   const { mountBattle } = await import('../../src/ui/battleRoom.js');
   const bl = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
-  // the death's own step only while a card sits partly off screen (the owner's call): a row that fits runs on
+  // the death's own step only while a card sits partly off screen (the developer's call): a row that fits runs on
   {
     const two = mountBattle(createRun(), { enemies: [scaleEnemy('rat', 1), scaleEnemy('rat', 1)], over: false, heavyCd: 0 }, { onHeavy() {}, onPotion() {}, onAttack() {} });
     const wBefore = globalThis.innerWidth; globalThis.innerWidth = 1000;
@@ -738,7 +738,7 @@ await withSeedAsync(4, async () => {
     u.portrait.attrs.draggable === 'false' && prevented === 1 && cssL.includes('.battle-line, .unit-actions { user-select: none;') && cssL.includes('.portrait { -webkit-user-drag: none;'));
 }
 
-// T98: 0.00220 (the owner's call) — a death is a playback step of its own:
+// T98: 0.00220 (the developer's call) — a death is a playback step of its own:
 // after the death line's sink tick the log waits for the card to leave the
 // row (onDeath's promise), lets the row close up for combatPacing.restackMs,
 // and only then prints the next line; deathMaxMs caps the wait (a hidden

@@ -88,7 +88,7 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   }
 
   const whenGone = (i) => gone[i] ?? Promise.resolve();
-  // The death's own step (0.00220) only where the row needs it (the owner's
+  // The death's own step (0.00220) only where the row needs it (the developer's
   // call): while an enemy card sits partly off the screen — a crowded row on
   // a phone — the fallen card's leaving brings it in, so the playback waits
   // for that restack. A row that fits keeps the quick pace: a heavy blow

@@ -36,7 +36,7 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 // 0.00227: every lit card draws on a WebGL canvas of its own from a pool
 // of at most POOL_MAX, handed from room to room (the first device report
 // put Safari's createImageBitmap(canvas) — the copy out of the one hidden
-// context — at 13.5 ms a tick on the owner's iPhone); the copy path stays
+// context — at 13.5 ms a tick on the developer's iPhone); the copy path stays
 // for the cards past the pool and where no pool canvas can be made
 {
   const src = readFileSync('src/ui/cardFx.js', 'utf8');

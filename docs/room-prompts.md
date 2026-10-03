@@ -1,7 +1,7 @@
 # Room prompts: new paintings in the rooms' style
 
 The 48 room, throne, treasure and shrine paintings in `assets/bg/` are the style
-(the owner's batches, 0.153–0.182; all of them approved as they are,
+(the developer's batches, 0.153–0.182; all of them approved as they are,
 0.00236). A new room is painted from two of them as references by
 `tools/gen-bg.mjs` — one model picked by the bake-off below — into
 `assets/bg/candidates/`, and imported as a 2048x1152 JPEG with its depth
@@ -9,7 +9,7 @@ map (`python3 tools/gen-depth.py`) under a NEW filename.
 
 ## The recipe the paintings were made with
 
-`docs/image-prompting-guide.md` (the owner's, 0.00237: every prompt the
+`docs/image-prompting-guide.md` (the developer's, 0.00237: every prompt the
 paintings came from, Kimi's image service) — the style is carried by the
 wording alone, no reference pictures. Three parts, in this order:
 

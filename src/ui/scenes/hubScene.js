@@ -137,7 +137,7 @@ export function hubScene(opts = {}) {
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
     if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); settleStats(boxes, vals, purchase); return; }
-    // The desktop and the tablet (0.00238, the owner's layout): the hall's
+    // The desktop and the tablet (0.00238, the developer's layout): the hall's
     // name and the records up top; the knight with his gear and numbers,
     // TRAIN and ALCHEMY as three panels of one height; the way on at the
     // foot. Each purse sits in the head of the section that spends it.
@@ -162,7 +162,7 @@ export function hubScene(opts = {}) {
 // something there can be bought (the desktop shows all three panels at
 // once; a phone shows one). The pick lasts the session, so a purchase's
 // re-render stays on the same sheet.
-// A purchase's feedback (0.00216, the owner's ask): the row just bought
+// A purchase's feedback (0.00216, the developer's ask): the row just bought
 // re-renders at its new level and its label glows, grows a little and
 // flashes — Precision LV2 to LV3, 3/4 potions to 4/4. The handlers name
 // the row (data-row) before the re-render; settleFlash finds it after.
@@ -174,7 +174,7 @@ function settleFlash(root) {
   const label = row?.querySelector?.('.equip-item, .slot-name, .row-title') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus; an upgrade: its title, not the small line)
   if (label) { label.style.display = 'inline-block'; label.style.transformOrigin = 'left center'; pulseNumber(label); } // (a block would scale around its own centre, off the row)
 }
-// ...and the attribute it raised (0.00235, the owner's ask): a box whose
+// ...and the attribute it raised (0.00235, the developer's ask): a box whose
 // value a purchase changed — Attack after Power or a forged blade, HP after
 // Vitality, Armor after Endurance or forged armor, the Level every fifth
 // trained level, Potions after a buy or a bigger satchel — rolls up to its

@@ -543,7 +543,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     && osOf(iphone.userAgent, true) === 'iOS' && osOf(android.userAgent, true) === 'Android' && osOf(win.userAgent, true) === 'Windows');
 }
 
-// 0.154 — transitions strictly in order (the owner's call): the windows fade
+// 0.154 — transitions strictly in order (the developer's call): the windows fade
 // out fully before the background changes, and come back only once the new
 // painting has fully faded in (keys ignored meanwhile); no background change,
 // no wait; a painting that never arrives holds them 4s at most

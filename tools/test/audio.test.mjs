@@ -174,7 +174,7 @@ fresh();
     && read('src/main.js').includes('volumeToggle(),'));
 }
 
-// T70: 0.173 — the room change's swoosh: the owner's SFX pitched down half
+// T70: 0.173 — the room change's swoosh: the developer's SFX pitched down half
 // an octave, then a quarter more and 30% quieter (0.175, a new file), played so its loudest moment lands in the middle
 // of the transition (1 s out + 2 s crossfade + 1 s in = 2 s), with a little
 // random pitch, tone and level each time; the generated whoosh is gone.

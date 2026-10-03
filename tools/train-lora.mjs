@@ -10,18 +10,18 @@
 //   node tools/train-lora.mjs                     # the characters: build the set, upload it, train, wait, record it
 //   node tools/train-lora.mjs --set rooms         # the rooms' LoRA: every painting in assets/bg (all of them approved)
 //   node tools/train-lora.mjs --steps 1500 --rank 16 --rooms --sheets   # knobs; --rooms adds the room paintings
-//                                                 # to the CHARACTER set, --sheets the owner's inked sheets (both
+//                                                 # to the CHARACTER set, --sheets the developer's inked sheets (both
 //                                                 # off: a different style)
 //   node tools/train-lora.mjs --status [--set rooms]   # the set's last training (assets/data/lora.json)
 //   node tools/train-lora.mjs --cancel [--set rooms]   # cancel it (billed to the minute it stops)
 //
 // The character set (assets/data/lora.json records what went in): the
-// APPROVED candidates' raw pictures (the owner's picks in the Art Lab,
+// APPROVED candidates' raw pictures (the developer's picks in the Art Lab,
 // art.json verdict ok — the direction that stuck, 0.00201: the originals'
 // own photoreal rendering), captioned from docs/portrait-prompts.md's
-// character line, each with the trigger word. Never a candidate the owner
-// has not approved. The room set: the 47 paintings the game ships (the
-// owner's batches, approved as they are), captioned with the room's name
+// character line, each with the trigger word. Never a candidate the developer
+// has not approved. The room set: the paintings the game ships (48 at the first training; the
+// developer's batches, approved as they are), captioned with the room's name
 // and the style as docs/room-prompts.md describes it. Captions are
 // written, not auto-generated: the trainer's captioner would describe a
 // picture in its own words and the style would drift toward them.

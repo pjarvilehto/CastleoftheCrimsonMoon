@@ -21,7 +21,7 @@ import {
 import { describeItem, itemName, rarityClass, statBox, potionLevel } from './hud.js';
 import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
 
-// A row's text (0.00232, the owner's ask): the title — the name and its
+// A row's text (0.00232, the developer's ask): the title — the name and its
 // level or count, what the eye looks for — over a small, muted line of
 // what it does (the phone keeps both on one line, styles.css section 16).
 const rowText = (title, level, desc) => el('div', { class: 'row-text' },
@@ -136,7 +136,7 @@ export function equipSection(p, done) {
     slotRow('Amulet', eq.amulet));
 }
 
-// ---- THE KNIGHT (0.00238, the desktop's left panel; the owner's layout): his
+// ---- THE KNIGHT (0.00238, the desktop's left panel; the developer's layout): his
 // name and level, the card with his gear around it — weapon, armor, boots
 // on the left, the rings, trinket and amulet on the right, each slot as tall
 // as the card allows and its Forge button in the outer top corner — and his

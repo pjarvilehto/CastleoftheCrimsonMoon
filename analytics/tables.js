@@ -1,5 +1,5 @@
 // analytics/tables.js — the dashboard's tables (0.136: split out of
-// dashboard.js): by build, players (with the owner's tester names), recent
+// dashboard.js): by build, players (with the developer's tester names), recent
 // runs. Every string from a save goes through esc(). `names` carries the
 // page's lookups: { enemyName, itemName, boonName, labelOf, offers() }.
 

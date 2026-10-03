@@ -4,7 +4,7 @@
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), LABS (0.168: the menu of the
 // testing pages, labs/index.html — a card per labs/<name>/ folder, kept in
 // step by the suite — in a new tab) and
-// BENCHMARK (0.131, ui/benchmark.js). 0.00242 (the owner's call): DEBUG
+// BENCHMARK (0.131, ui/benchmark.js). 0.00242 (the developer's call): DEBUG
 // MODE ON/OFF, the last item of the SETTINGS menu, shows them — remembered
 // in this browser, so testers need no ?debug in the address (?debug still
 // turns it on for the visit; the headless checks use it).

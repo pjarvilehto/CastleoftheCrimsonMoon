@@ -304,7 +304,7 @@ fresh();
   ok('particle lab: no embedded copies, not indexed', !lab.includes('base64') && lab.includes('name="robots" content="noindex"'));
 }
 
-// 0.00210: the World Lab — the owner's world painting under clouds, the
+// 0.00210: the World Lab — the developer's world painting under clouds, the
 // places as the future world.json (every road leads from a place that
 // exists), the two looks and the dive, booted like every lab.
 {
@@ -361,7 +361,7 @@ fresh();
 // (a painting, its depth map, a sound, a take, a portrait or frame, an
 // icon) — an orphan is weight every clone and deploy carries for nothing.
 // (assets/style, assets/chars/candidates and assets/world are the labs' and
-// the owner's, outside this check; assets/fonts is the one font.)
+// the developer's, outside this check; assets/fonts is the one font.)
 {
   const bg = DATA.backgrounds;
   const { depthUrl } = await import('../../src/core/bg3d.js');

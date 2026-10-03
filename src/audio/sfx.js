@@ -114,7 +114,7 @@ export function sfx(name, opts = {}) {
     .catch(() => { /* audio must never break gameplay */ });
 }
 
-// A room change's swoosh (0.173, audio.json transition): the owner's SFX,
+// A room change's swoosh (0.173, audio.json transition): the developer's SFX,
 // scheduled so the clip's loudest moment (clips.<clip>.peakMs) lands
 // peakAtMs into the transition — the middle of windows out, crossfade,
 // windows in. Its variation entry and jitterDb vary each play a little.

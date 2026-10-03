@@ -11,7 +11,7 @@ const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
 
 // short (0.00208): the phone's wording — the same numbers in a 45%-wide
 // sheet (hubScene's phone assembly); the desktop keeps the sentences.
-// 0.00232 (the owner's ask): every line is the small, muted text under a
+// 0.00232 (the developer's ask): every line is the small, muted text under a
 // row's title (name + level, hubSections.js rowText) — compact, the
 // level never repeated here.
 export function statDesc(stat, currentLevel, short = false) {

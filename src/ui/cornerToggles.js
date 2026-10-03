@@ -40,7 +40,7 @@ export function panelToggle(label, cls, build) {
 // A group's small heading inside the menu (0.00242).
 export const menuHead = (label) => el('div', { class: 'menu-head' }, label);
 
-// The corner (0.00242, the owner's call — the column had grown to seven
+// The corner (0.00242, the developer's call — the column had grown to seven
 // buttons): one ☰ SETTINGS button whose menu drops down under it, closed by
 // a click anywhere else (the click that closes it does nothing else, so it
 // never strikes a card underneath). `lead` buttons sit beside SETTINGS and

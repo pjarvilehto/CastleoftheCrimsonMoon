@@ -9,7 +9,7 @@
 //   node tools/gen-art.mjs --dry-run                      # what would be sent, and to which model
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
 //   node tools/gen-art.mjs --refs family|sheets           # image 2 = the colour family's best original (STYLE_REF) or the
-//                                                         # owner's inked sheet instead of the character's own portrait
+//                                                         # developer's inked sheet instead of the character's own portrait
 //   node tools/gen-art.mjs --style castle_courtyard.jpg   # any picture by path or painting as the reference
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro; also banana, bananapro (Google
 //                                                         # Nano Banana / Pro), seedream (ByteDance Seedream 4), gpt (OpenAI
@@ -116,7 +116,7 @@ export function fromSheetPrompt(doc, c, hint = '') {
   return `Replace the character in this picture with a different one, drawn in exactly the same style, on the same plain flat grey background: ${c.line.replace(/^CHARACTER:\s*/, '')}\n\n${style}${hint ? `\n\n${hint.trim()}` : ''}`;
 }
 // The style reference for a character, when nothing is asked (--style, a
-// re-roll's style): its own finished sheet in the target style if the owner
+// re-roll's style): its own finished sheet in the target style if the developer
 // put one in assets/style/<id>.png (0.191: seven of them — a sheet steers
 // Kontext far better than a room painting: flat grey, no shadow), else the
 // painting in DEFAULTS.style.
@@ -126,7 +126,7 @@ export const STYLE_DIR = 'assets/style';
 // destination, and another character's picture bleeds its design in (the
 // Cinderborn grew the Blood Knight's armour from a "family" reference);
 // --refs family = the best original of the colour family (for --from-sheet,
-// where the character has no usable original); --refs sheets = the owner's
+// where the character has no usable original); --refs sheets = the developer's
 // inked sheets (a detour that cost the glows).
 export const STYLE_REF = {
   fire: { ref: 'blood_knight.webp', ids: ['ghoul', 'hollow_hound', 'crypt_spider', 'blood_knight', 'golem', 'cultist'] },

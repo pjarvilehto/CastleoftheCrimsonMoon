@@ -165,7 +165,8 @@ assets/
                         font as WOFF2 + the TTF fallback, 0.00223)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog; narration, art (generated: the takes, the redraws)
+                        changelog; narration, art, rooms-art, lora (generated: the takes,
+                        the redrawn portraits, the painted rooms, the LoRA trainings)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
@@ -190,7 +191,7 @@ labs/                   the testing pages (?debug LABS button): index.html is th
                         at the game's size over one, a compare beside a game painting;
                         COPY JSON -> rooms-rerender.json for gen-bg.mjs --rerender (0.00242)
   world/                the world map above the dungeon (0.00210, a prototype): the
-                        owner's painting under clouds, places as pins, the reveal,
+                        developer's painting under clouds, places as pins, the reveal,
                         two looks and the dive; WORLD in lab.js = the future world.json
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
@@ -207,7 +208,7 @@ tools/
   gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
                         Banana and five others; MODELS) -> assets/chars/candidates + art.json;
                         --import puts one in the game; --model lora draws from the line alone
-  gen-bg.mjs            new room paintings: docs/room-prompts.md (the owner's prompting guide's
+  gen-bg.mjs            new room paintings: docs/room-prompts.md (the developer's prompting guide's
                         recipe) -> Seedream 4 -> assets/bg/candidates + rooms-art.json; --rerender
                         takes the Background Lab's verdicts, --prune, --import makes the game's JPEG
   train-lora.mjs        the two style LoRAs (characters on the approved candidates, rooms on the
@@ -318,5 +319,5 @@ prompt polls every minute while the tab is visible, and once on its return.
 save codes carry a save between origins.
 
 **Legacy:** up to 0.042 builds shipped as zips; a Kimi staging site
-(ublgmuyncizrq.kimi.page) was published by the owner from version cards
+(ublgmuyncizrq.kimi.page) was published by the developer from version cards
 and is not maintained here.

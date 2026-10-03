@@ -29,7 +29,7 @@
 //                                                         # room's line alone, no reference paintings, 1 MP (upscaled at import)
 //
 // The prompt is the recipe the paintings were made with (docs/room-prompts.md
-// and the owner's docs/image-prompting-guide.md, 0.00237): the room's line,
+// and the developer's docs/image-prompting-guide.md, 0.00237): the room's line,
 // the guide's mood (a boss arena's composition for an arena), the style
 // block word for word, as text alone; --refs attaches two of the game's paintings through gen-art's
 // MODELS adapters (the prompt then names them). GPT Image paints 3:2 and
@@ -51,7 +51,7 @@ const REGISTRY = join(ROOT, 'assets', 'data', 'rooms-art.json');
 const BACKGROUNDS = join(ROOT, 'assets', 'data', 'backgrounds.json');
 const WEB = 'assets/bg/candidates';
 
-export const DEFAULTS = { n: 2, model: 'seedream', aspect: '16:9', concurrency: 3 }; // Seedream 4: the owner's pick (0.00242) from the verbatim round
+export const DEFAULTS = { n: 2, model: 'seedream', aspect: '16:9', concurrency: 3 }; // Seedream 4: the developer's pick (0.00242) from the verbatim round
 /** The guide's mood / composition modifiers: a room, or a boss arena (the Kind column). */
 export const MOOD = 'gloomy and moody, deep shadows, oppressive atmosphere';
 export const ARENA = 'video game boss arena background art, wide symmetrical battle stage composition with open floor space in the center';

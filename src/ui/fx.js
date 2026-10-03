@@ -18,7 +18,7 @@ export function deathFlash(onPeak) {
 }
 
 // A number that just changed glows and grows for a moment (0.00216, the
-// owner's ask: XP and coins in combat, the hall's rows): one element.animate,
+// developer's ask: XP and coins in combat, the hall's rows): one element.animate,
 // transform and a text glow — never a loop.
 export function pulseNumber(el, ms = 820) {
   el?.animate?.([

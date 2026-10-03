@@ -86,7 +86,7 @@ export function go(name, ...args) {
 // Fade the windows out, run `work()` (swap content and/or background),
 // then fade the windows back in. Ignored if a transition is already
 // running — this is what makes rapid hotkey presses safe.
-// 0.154 (the owner's call): strictly in order — the windows fade out
+// 0.154 (the developer's call): strictly in order — the windows fade out
 // fully before the background changes, and when work() changed it, the
 // windows come back only once the new painting has fully faded in (the
 // scene's keys stay ignored meanwhile: isTransitioning(); a dialog's work).

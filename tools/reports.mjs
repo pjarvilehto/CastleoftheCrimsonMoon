@@ -2,7 +2,7 @@
 // (0.00229): every player's device, runs, benchmarks and device reports,
 // as the /analytics/ dashboard sees them, into the session — no more Copy
 // all and paste. Reads telemetry.json `endpoint` and the collector's read
-// key from the environment variable CASTLE_READ_KEY (the owner's secret,
+// key from the environment variable CASTLE_READ_KEY (the developer's secret,
 // set in the cloud environment's settings; never printed, never in the
 // chat). The environment's network policy must allow the collector's host.
 //

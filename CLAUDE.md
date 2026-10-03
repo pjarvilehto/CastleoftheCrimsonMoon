@@ -47,7 +47,7 @@ before structural changes. This file is the rules and the per-system notes.
     0.181: a Plate opacity slider fades the card's dark inside and its
     light under an untouched border (the frame art cut in two for the lab,
     `card_*_border.png` / `card_*_plate.png`; the game's one PNG is 0.85).
-    COPY JSON gives the picks back; the owner's picks shipped in 0.183
+    COPY JSON gives the picks back; the developer's picks shipped in 0.183
     (see "Card effects" below). The lab draws the game's shader
     (`src/ui/cardFx.js`) and the units' own glint, so a look changed there
     changes here too; Reset is cards.json's shipped picks and the boss
@@ -76,7 +76,7 @@ before structural changes. This file is the rules and the per-system notes.
     re-rolls per room; COPY JSON packs the verdicts and re-rolls as
     `rooms-rerender.json` for `node tools/gen-bg.mjs --rerender`.
   - **World Lab (0.00210):** `labs/world/` — the world map above the
-    dungeon, a prototype: the owner's painting (`assets/world/world_v1.webp`,
+    dungeon, a prototype: the developer's painting (`assets/world/world_v1.webp`,
     1500 px; the real one wants three times that or tiles) under a canvas of
     cloud puffs, the places as pins (the castle you play today is the first;
     the data in `lab.js WORLD` is shaped as the future `world.json`: position,
@@ -84,12 +84,12 @@ before structural changes. This file is the rules and the per-system notes.
     road), a cleared place burning the clouds away (`destination-out`
     circles, a radius per state, a timed burn) around it and its roads; two
     looks (THE KNOWN WORLD frames every revealed circle from above; FROM THE
-    SKY hangs low and tilted over one place — the owner's picks; a
+    SKY hangs low and tilted over one place — the developer's picks; a
     cartographer's-table look was dropped as unimmersive) and DESCEND, the
     dive through the clouds to the place's first room. Drag, wheel and
     pinch; CLEAR fakes progress; COPY JSON gives the data and tuning back.
     Nothing touches the save; the design it prototypes is in the Backlog.
-- **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
+- **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the developer from
   Kimi version cards — not maintained here.
 
 ## Quick start
@@ -105,6 +105,9 @@ node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500          # per-boon shrine balance (paired runs)
 node tools/stat-study.mjs [--set path=json]  # what each upgrade is worth
 node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (ElevenLabs; needs ELEVENLABS_API_KEY)
+node tools/gen-art.mjs [--only rat] [--model banana]   # redraw portraits on Replicate (needs REPLICATE_API_TOKEN; NODE_USE_ENV_PROXY=1 behind a proxy)
+node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-prompts.md (Seedream 4); --rerender / --prune / --import are the stages
+node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 ```
 
@@ -212,13 +215,13 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
    hall), screenshots to look at. The labs never set `html.phone`, so the
    layer never reaches them.
 
-## Working with the owner
+## Working with the developer
 
 - `main` is the live site: merge what lands there, never force-push it.
-  Don't touch `CNAME` or the Pages / DNS settings — the owner handles them.
+  Don't touch `CNAME` or the Pages / DNS settings — the developer handles them.
 - **The collector is deployed by hand:** after changing
   `collector/worker.js`, bump its `VERSION` and `telemetry.json
-  collectorVersion` together and ask the owner to paste the file into the
+  collectorVersion` together and ask the developer to paste the file into the
   Cloudflare dashboard (Edit code → Deploy; copy the raw file — GitHub's
   normal view can truncate a selection). Until then the dashboard warns
   that the collector is older, and the old Worker drops new fields (saves
@@ -228,7 +231,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
   phone power / stall fields (0.00222) and the run-record clamp (a run
   whose `room` is not a whole number up to 999 is dropped, the counts
   clamped; one such record used to break the whole dashboard).
-- The collector's `READ_KEY` is the owner's secret: never ask for it.
+- The collector's `READ_KEY` is the developer's secret: never ask for it.
   **Reading the stats from a session (0.00229):** `node tools/reports.mjs`
   pulls every player (device, runs, benchmarks, device reports) from the
   collector when the cloud environment allows the host
@@ -239,7 +242,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
   answer, `--player x` one player. The tool never prints the key. Where
   the environment lacks them, the data arrives as screenshots of the
   dashboard or its Copy all pasted into the chat.
-- CI's deploy job stays off until the owner opts in (see Testing).
+- CI's deploy job stays off until the developer opts in (see Testing).
 
 ## Architecture in one paragraph
 
@@ -280,7 +283,7 @@ the boss. The win (0.121): beating the boss of `finalBossRoom` (24) shows
 `ui/victoryModal.js` once per save; move the knob when deeper content lands.
 `node tools/simulate.mjs --tactic suggested|boss|summons` compares targeting.
 
-**Progression.** The opening and the ramp (0.00230, the owner's call:
+**Progression.** The opening and the ramp (0.00230, the developer's call:
 an easier first run that reaches about room 3, the overpowered phase in
 the early rooms a little later, the march to room 24 unchanged): the
 tier-1 enemies hit ~25% softer (rat 30, Cave Shrieker 22, skeleton 45,
@@ -289,7 +292,7 @@ gives +2 damage / +72 HP / +8 armor (was 3 / 90 / 10) for a base cost of
 13 XP (was 15). The simulator, 12 campaigns: the first run reaches room
 3-4 (was 2), rooms 1-5 cost under 10% of max HP from about run 12-13
 (was about run 11), room 24 first reached at run ~33 (was ~31), its boss
-beaten at ~41 (was ~39). Tried and turned down by the owner: early rooms
+beaten at ~41 (was ~39). Tried and turned down by the developer: early rooms
 that grow with the best room ("the castle remembers"), and starting a run
 at a beaten boss's next stretch (waypoints — it also slowed room 24 to
 run ~44). HP scale (0.093): player HP, enemy damage, armor, potion
@@ -316,7 +319,7 @@ sits beside buttons with no glow.
 items, and use `element.animate` so they never restart the CSS idle loops
 (per enemy FAMILY: `battleLine.js IDLE_FAMILY` + `.idle-<family>`; loops
 animate only translate/rotate/scale, never filter). **Card effects
-(0.183, the owner's picks from the Card Lab; tuning `cards.json`):**
+(0.183, the developer's picks from the Card Lab; tuning `cards.json`):**
 `ui/cardFx.js` lights every card from behind — a slow fog, blood, flames,
 embers or ether by the enemy's particle material (`cardStyle`: bone fog,
 embers flames, the wraith ether, flesh blood; the boss flames, the knight
@@ -332,7 +335,7 @@ clear the root — gets its canvas on the next tick, `place`, after the
 tick's filter has returned the last room's). Before 0.00227 ONE hidden context
 drew every card in turn and each card's 2D canvas took its picture as
 an ImageBitmap (a `bitmaprenderer` context, 0.00197): the first device
-report (0.00225, the owner's iPhone) put that at 13.5 ms of main thread
+report (0.00225, the developer's iPhone) put that at 13.5 ms of main thread
 per tick at rest and 6-8 ms in the fights — Safari serves
 `createImageBitmap()` of a WebGL canvas as a GPU readback, one per lit
 card per tick. That copy path stays for the cards past the pool and
@@ -405,14 +408,14 @@ a copy for experiments: keep it in step when a look changes.
 `backgrounds.json parallax`, per-file `overrides`, `enabled: false` = kill
 switch): the art on a depth-displaced mesh with a slowly swaying camera;
 flat CSS fallback with no WebGL, software GL, context loss or reduced
-motion. **The phone power profile (0.00222, the owner's iPhone ran hot):**
+motion. **The phone power profile (0.00222, the developer's iPhone ran hot):**
 `parallax.phone` = the knobs that differ on a phone — `maxDpr` 1.5 (1278
 px wide on an 852-px phone, 44% fewer fragments than DPR 2), `maxFps` 24
 at rest, `motionMaxFps` 30, `puffDiv` 3 (the mist buffer at a third of
 the canvas; `puffDiv` 2 on the desktop — a constant in the renderer
 before) — merged by `bg3dTuning.js tuning()` under the per-file
 overrides on a phone (`platform.js deviceBlock`, the device, once per
-session; `?desktop` keeps the desktop values, so the owner can A/B on one
+session; `?desktop` keeps the desktop values, so the developer can A/B on one
 phone). The same build: the painting and its depth map arrive decoded
 off the main thread (`bg3dGL.js loadPicture`: fetch + createImageBitmap,
 closed after the upload; an `<img>` handed to texImage2D re-decoded the
@@ -464,7 +467,7 @@ read); `parallax.mist` = the puffs' lighting (`shade` self-shadow
 strength, `litTint` / `shadeTint`, `sceneLight` = the painting's own
 bright pixels glow through the mist, read with a mip bias, `nearBright`);
 `parallax.haze` = the distance haze's shape. 0.166–0.169: the shipped base
-is the lab's Rolling Mist toned down to the owner's reference (drift
+is the lab's Rolling Mist toned down to the developer's reference (drift
 spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
 0.3; drift 3.5, haze 0.38 / curve 1.55), and every painting has its own
 `fog` + `fogWind` override
@@ -483,7 +486,7 @@ eases back. The flat fallback scales the CSS layers the same way
 (`.bg-layer.push` / `.pushed`, off under reduced motion). The Fog Lab's
 arrows play the game's sequence (push, a second, the painting) with the
 three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
-1 s in) are the owner's and unchanged.
+1 s in) are the developer's and unchanged.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
@@ -500,7 +503,7 @@ ACCENT per character; a boss gets its own wide, waist-up COMPOSITION,
 `gen-art.mjs BOSS_COMPOSITION`). The direction that stuck is the
 originals' own rendering — photoreal dark-fantasy, the character's glow
 lighting it, one hue family each — NOT the inked room style: the inked
-sheets in `assets/style/` (the owner's, 0.191) and a Mignola / Darkest
+sheets in `assets/style/` (the developer's, 0.191) and a Mignola / Darkest
 Dungeon block cost the glows and the presence, and were dropped. Image 1
 is the current portrait, image 2 the character's OWN portrait (`--refs
 own`; `family` = the colour family's best original, `sheets` = the inked
@@ -508,7 +511,7 @@ sheets); a character whose art is no reference (the gargoyle) is drawn
 onto another's original with `--from-sheet skeleton` (the picture's
 figure replaced). **Models** (`--model`, one adapter each in `MODELS`):
 Kontext Pro / Max (two input pictures), Nano Banana (`banana`, the
-owner's pick: faithful, cheap, ~$0.04) and Nano Banana Pro (`bananapro`,
+developer's pick: faithful, cheap, ~$0.04) and Nano Banana Pro (`bananapro`,
 2K, ~$0.15), Seedream 4 (`seedream`, the most dramatic — the only boss
 that read as one), GPT Image 1.5 (`gpt`, slow, shades its backgrounds),
 FLUX 2 Pro (`flux2`); prices from memory, the API has none. Inputs go
@@ -555,9 +558,10 @@ run. **Every Replicate call goes through `tools/replicate.mjs`** (the
 token, the Files API, `predict` by model name, `predictVersion` by
 version, `latestVersion`).
 
-**Room paintings (0.00236–0.00237).** The 48 interiors in `assets/bg/`
-are the style, all approved as they are. **They were made with a
-prompt, not references:** `docs/image-prompting-guide.md` (the owner's,
+**Room paintings (0.00236–0.00244).** The interiors in `assets/bg/`
+(48 of the developer's, all approved as they are; 50 with the two the
+generator made, 0.00244) are the style. **They were made with a
+prompt, not references:** `docs/image-prompting-guide.md` (the developer's,
 from Kimi: every background, icon and portrait prompt used) — a short
 subject sentence with the palette cue last, a mood ("gloomy and moody,
 deep shadows, oppressive atmosphere"; a boss arena gets "video game boss
@@ -571,7 +575,7 @@ background art, wide shot, no characters". New rooms
 (the recipe, the style block, a table of rooms: id, name, hue family,
 kind room / arena, line — the guide's own unused rooms are there with
 its lines) → `node tools/gen-bg.mjs [--only id]` sends the line + the
-mood + the block as text alone to **Seedream 4** (the owner's pick from
+mood + the block as text alone to **Seedream 4** (the developer's pick from
 the verbatim round, `DEFAULTS.model`; two versions a room; `--refs`
 attaches two of the game's paintings of the hue family, `REFS` — it
 adds little; `--prompt "..." --id x` sends a prompt exactly as written)
@@ -629,7 +633,7 @@ share `shared/prefs.js mutePref` (0.00223). A second duck under a
 longer one keeps the longer release (0.00223: a short stinger under a
 narrator line used to bring the music back early). Combat lines go through `ui/combatSfx.js` (panned to the
 card, timed to the blow, crit/mega/overkill sweeteners). The room change's
-swoosh (0.173, `audio.json transition`): the owner's SFX pitched down three
+swoosh (0.173, `audio.json transition`): the developer's SFX pitched down three
 quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.178), played by `sfx.js transitionSfx()`
 from `main.js onTransition` so its measured loudest moment (`peakMs`)
 lands `peakAtMs` (2 s, the middle) into every transition, varied a little
@@ -665,13 +669,13 @@ the line playing and drops the ones waiting (0.00223). Once-per-save lines (vict
 callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
 audio.json, a `narrate()` call — the suite checks the three agree.
 **Reviewing takes** (0.163): the VO Lab (`labs/vo/`) plays each take as the
-game levels it; the owner approves or disapproves (volatility less/more =
+game levels it; the developer approves or disapproves (volatility less/more =
 stability, shouty less/more = style and speed; `gen-vo.mjs NUDGE`), and
 RE-RENDER downloads `vo-rerender.json` (also to the clipboard). Then
 `node tools/gen-vo.mjs --rerender vo-rerender.json` marks the approvals in
 narration.json (`approved`), re-renders the disapproved takes nudged from
 the settings they were rendered at (`settings`, recorded per take; a redo
-gets a fresh seed), measures them, bumps and ships as usual — the owner
+gets a fresh seed), measures them, bumps and ships as usual — the developer
 can paste the JSON into the chat for that. A re-rendered take comes back
 unapproved. Edge caches: a re-rendered take keeps its filename, but
 `--rerender` stamps it (`rendered` in narration.json) and `narrator.js
@@ -706,7 +710,7 @@ be served stale for ~4 hours.
   `ui/hubSections.js` (0.00223; each row's text is `rowText`: a title —
   name + level or count — over a small muted line, one line on a phone,
   0.00232); `hubScene.js` keeps the hall's table,
-  **the desktop / tablet hall (0.00238, the owner's layout; the phone keeps
+  **the desktop / tablet hall (0.00238, the developer's layout; the phone keeps
   its sheets until its own pass):** the name and the records up top, then
   the knight (`hubSections.js knightSection`: his card with the gear
   around it — three slots left, four right, as tall as the card, the
@@ -736,7 +740,7 @@ be served stale for ~4 hours.
   static glow; a smoke check parses every infinite `@keyframes`. The
   panel rooms' HP number and bar turn red at `lowHpShare` like the chip.
 - Upper-right corner (`ui/cornerToggles.js`; a SETTINGS menu since
-  0.00243, the owner's call): the top row is FULLSCREEN (an icon, not on a
+  0.00243, the developer's call): the top row is FULLSCREEN (an icon, not on a
   phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
   SAVER), GAME (CHANGELIST) — and DEBUG MODE last. Add items in main.js's
@@ -749,7 +753,7 @@ be served stale for ~4 hours.
   and only `?debug` in the address lets software GL draw the 3D background
   (the headless checks). OFF clears every testing switch. No pixel offsets.
 - A scene that is mid-run sets `inRun: true` (the update prompt waits).
-- Transitions go strictly in order (0.154, the owner's call):
+- Transitions go strictly in order (0.154, the developer's call):
   `transitionTo` fades the windows out fully, runs the swap, and when it
   changed the background waits for `setBackground`'s promise (the painting
   fully faded in: bg3d's `fadeMs`, or the CSS layer's own fade, after the
@@ -790,21 +794,21 @@ be served stale for ~4 hours.
   dialog; its tap is the audio gesture and the narrator's welcome; Android
   goes fullscreen and locks landscape, iPhone gets the Share → Add to Home
   Screen line (0.00216: no "aA, then Hide Toolbar" — that menu is Safari's
-  own; the owner tests in Brave); a home-screen app skips it; leaving fullscreen on Android
+  own; the developer tests in Brave); a home-screen app skips it; leaving fullscreen on Android
   brings it back). iOS: the home-screen app has its OWN storage — a save
   made in Safari is not there (the title's save code carries it; Export /
   Import are dialogs since 0.00209). Hover-only text (a boon's full line,
   the elite star) has no touch path yet (backlog).
 - Asset loading (`shared/preload.js`): boot waits for the title + Great
   Hall art only; the hub's Descend waits only for the essentials (shrine /
-  death art, portraits); the 47 room, throne and treasure paintings
-  (~17MB; `preload.js roomUrls`, the entrance corridors first) keep
+  death art, portraits); the 49 room, throne and treasure paintings
+  (~18MB; `preload.js roomUrls`, the entrance corridors first) keep
   loading behind — a room whose painting isn't in yet keeps the last one up
   (0.00222: into the HTTP cache only, `fetchOnly` — the renderer decodes a
   painting itself as the room is entered; decoding 34 of them here warmed
   nothing it could reuse). The display font ships as WOFF2 (~68KB,
   0.00223) with the TTF (212KB) as the fallback and for the labs.
-- **Only fights are numbered (0.171, the owner's call):** `run.roomNumber`
+- **Only fights are numbered (0.171, the developer's call):** `run.roomNumber`
   counts fights (the boss's included), so room 8 is always the throne room.
   The shrine and the treasure room are interludes met on the way to a
   numbered room (`runState.enterNextRoom`, `roomGen.generateInterlude`):
@@ -834,7 +838,7 @@ be served stale for ~4 hours.
   kill, `killedBy: 'reliquary'`; inside, a relic with `relicChance` from
   t4MinRoom, one per run, else a tier-3 item). Shares the shrine's panel
   (`shrineUI.js renderPanelRoom`); the sim's bot opens the gilded chest.
-- Painted icons (0.177, the owner's art): every shrine boon (`shrines.json
+- Painted icons (0.177, the developer's art): every shrine boon (`shrines.json
   offers[].img`) and treasure chest (`treasureUI.js LOOK`) shows a picture
   from `assets/icons/` (192px WebP with alpha, `buffs.js iconArt`; the
   glyph in `icon` is its alt text), on the cards and in the buff bar;
@@ -843,7 +847,7 @@ be served stale for ~4 hours.
 - **BATTERY SAVER** and the other corner toggles are `onOffToggle`s in
   `main.js cornerBar` (0.00222: the saver remembers its state in
   `shared/prefs.js`, key `castle-power-saver`).
-- The boss's card is twice as wide (0.196, the owner's call): `.boss-card`
+- The boss's card is twice as wide (0.196, the developer's call): `.boss-card`
   aspect 826 / 1106, its frame a 9-slice of `card_enemy.png` (border-image,
   so corners and border keep their shape); `battleRoom.js BOSS_SLOTS`
   counts it as two enemy widths in the row's `--slots` (the `--card-h`
@@ -851,18 +855,18 @@ be served stale for ~4 hours.
   without shrinking at 16:9. New boss art should suit a wide card.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`). A fallen enemy's figure
-  collapses and its whole card leaves the row (0.00216, the owner's call —
+  collapses and its whole card leaves the row (0.00216, the developer's call —
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards
   left grow into the room (`.char-card` eases its height). Combat ends
   with an empty row. **The death is a step of its own (0.00220, the
-  owner's call — the restack used to land in the middle of the enemies'
+  developer's call — the restack used to land in the middle of the enemies'
   turn):** after the death line's sink tick the playback waits for the
   card to leave (`battleRoom.js whenGone(i)` through the scene's
   `onDeath` hook), lets the row close up for `combatPacing.restackMs`,
   and only then prints the loot and the enemy phase; `deathMaxMs` caps
   the wait (a hidden tab pauses animations), `reset()` drops it. **Only
-  while a card is off screen (the owner's call, after the heavy blow
+  while a card is off screen (the developer's call, after the heavy blow
   had slowed to a pause per victim):** `battleRoom.js deathStep` hands
   the playback the card's leaving only when an enemy card sits partly
   off the screen (`restackDue`, the cards' rects against the window);
@@ -870,7 +874,7 @@ be served stale for ~4 hours.
   enemies — keeps the old quick pace, the row closing up behind it. A
   multi-kill does this per victim, in order; an OVERKILL's victims fall
   together as the replay ends (their kills are silent).
-- Room art (0.153): 26 rooms from the owner's batch (`dungeon_*` /
+- Room art (0.153): 26 rooms from the developer's batch (`dungeon_*` /
   `treasure_*`, names in `backgrounds.json roomNames`) join the 8 castle
   rooms in the random pick. Source PNGs → 2048x1152 JPEG q86 (~370KB);
   `treasure_frozen_tribute` had an image-generator sparkle in its corner and
@@ -894,7 +898,7 @@ mode — recorded from dungeon entry to the run's end). **The refresh rate
 frames sit on its pace, and the average corrects it when it beats the
 display (`perf.nearShare`; `telemetry.json perf` holds the judgments,
 the definition stays in src — rule 2). The fastest 10% of frames used to
-decide, and jittered timestamps put them a refresh short: the owner's
+decide, and jittered timestamps put them a refresh short: the developer's
 120 Hz Macs read 144 Hz (119.8 fps graded amber), the 60 Hz iPhones 90
 and 75 with 56-61% "dropped" at 59 fps. Records before `perf.hzSince`
 carry the old reading: the dashboard grades such a row by its fps (full
@@ -908,13 +912,13 @@ the collector (endpoint in `telemetry.json`; off when empty, never from
 localhost). The collector (`collector/worker.js`, Cloudflare KV) keeps only
 the dashboard's fields, typed and capped, merges history by timestamp and
 rate-limits; reads need the Bearer `READ_KEY`. Collector 0.00222 keeps
-`stalls`, `worstOut` and `power` — the owner pastes the Worker; until
+`stalls`, `worstOut` and `power` — the developer pastes the Worker; until
 then the old one drops the three fields (the saves keep them). The dashboard shows the
 collected players and this browser's save (every record untrusted:
 `sanitizeProfile()`; pasting save codes went in 0.00224 — every tester is
 collected), deduped by playerId; its By build table shows the newest ten
 builds and the three most played older ones (`stats.js condenseBuilds`);
-the owner can give each player a
+the developer can give each player a
 **tester name** (kept in that browser, shown as "tester · player name").
 **The device report (0.00225, `meta/perfReport.js`):** what a later speed
 optimization needs that the run summary does not say, sent with the
@@ -1038,9 +1042,9 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
 - `wrangler.jsonc` + `.assetsignore` (Cloudflare Workers static assets) are
   an alternative hosting path, unused.
 
-## Art batches from the owner (the workflow, 0.153 / 0.156)
+## Art batches from the developer (the workflow, 0.153 / 0.156)
 
-The owner uploads PNGs through GitHub's web upload (to `main` or the
+The developer uploads PNGs through GitHub's web upload (to `main` or the
 working branch, usually the repo root). Per batch: review a contact sheet
 and the bottom-right corners (image-generator watermarks: crop them out,
 see 0.153), convert to 2048x1152 JPEG q86 in `assets/bg/` (new names, never
@@ -1064,12 +1068,12 @@ sometimes — fetch all branches to find it.
   the new session is given.
 - Ship with `node tools/ship.mjs --note "..."` (rule 6): it is the
   bump-suite-fetch-merge-push loop with the collision handling two
-  threads need. No PRs unless the owner asks. **Two sessions may ship at
+  threads need. No PRs unless the developer asks. **Two sessions may ship at
   once** (0.161–0.195 came from two threads; 0.182, 0.193 and 0.194 were
   each taken twice): never pick a build number by hand, and read the
   suite's exit code, never its last line through a pipe.
 
-## State at handover (0.00223)
+## State at handover (0.00244)
 
 - Live: the card effects from the Card Lab (0.183–0.195: a glow behind
   every portrait by material, the cards in 3D, the glint, see-through
@@ -1165,11 +1169,24 @@ sometimes — fetch all branches to find it.
   gone (every tester is collected); the device report with every run and
   benchmark, the collector keeping the newest three, the dashboard's
   Device reports card with Copy / Copy all (the phone's heat is gone
-  since 0.00222, the owner reports). The first report (0.00225, the
+  since 0.00222, the developer reports). The first report (0.00225, the
   iPhone): the renderer's draw 0.1-0.3 ms of main thread, the card light
   13.5 ms a tick in Idle and 6-8 ms in the fights — Safari's
   `createImageBitmap` from a WebGL canvas is a readback — hence the Idle
   phase's 29% dropped frames at the display rate.
+- 0.00231–0.00244 (the art thread): the portraits redrawn by Nano
+  Banana in their own photoreal rendering, 31 candidates approved across
+  all 13 characters (none imported yet — the game still draws the
+  originals; `gen-art.mjs --import` with `--pick` per character is the
+  step); the character LoRA trained on them (`crimson-moon-style`: a
+  character from its line alone, the mimic chest first) and the room
+  LoRA on the paintings (`crimson-moon-rooms`; both private models,
+  run by version); the background bake-off on nine models with the
+  developer's prompting guide (`docs/image-prompting-guide.md`): Seedream
+  4 the pick; `tools/gen-bg.mjs` with its stages and the Background Lab
+  (`labs/backgrounds/`); the first two generated rooms in the castle,
+  The Clock Tower and The Blood Baths (0.00244); `tools/replicate.mjs`
+  shared by the three art tools. Six rooms sit in the lab as drafts.
 - 0.00227: the card light's pool — a WebGL canvas per lit card, reused
   across rooms, no copy at all (an OffscreenCanvas whose
   `transferToImageBitmap` MOVES the picture was tried first and measured
@@ -1181,7 +1198,7 @@ sometimes — fetch all branches to find it.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
-  design — a padded maskable variant would be the owner's art);
+  design — a padded maskable variant would be the developer's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
   `assets/chars/candidates` (12.6MB) and `assets/style` (9MB) are
@@ -1191,10 +1208,10 @@ sometimes — fetch all branches to find it.
   not quality: re-encoding saved 3%). The `.pyc` cache file under
   `tools/__pycache__` is no longer tracked (0.00223).
 
-## Backlog (as of 0.00223)
+## Backlog (as of 0.00244)
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
-  key is the owner's (quota per key).
+  key is the developer's (quota per key).
 - Game: merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
@@ -1211,26 +1228,38 @@ sometimes — fetch all branches to find it.
 - Engineering: the SETTINGS menu's and the thorns fix's comments (cornerToggles.js, debugToggles.js, main.js, styles.css, combat.js) say 0.00242 for 0.00243 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
-  test patches it · the Actions deploy job (off until the owner opts in)
+  test patches it · the Actions deploy job (off until the developer opts in)
   should exclude `assets/chars/candidates`, `assets/style`, `tools`,
-  `docs`, `collector` · import the nine approved portraits
-  (`gen-art.mjs --import`) once the owner decides the last four ·
+  `docs`, `collector` · import the approved portraits
+  (`gen-art.mjs --import`, `--pick id=N` where a character has several
+  approvals) once the developer wants the redraws live ·
+  `gen-bg.mjs --import` rewrites backgrounds.json through
+  JSON.stringify (1.0 → 1, the phone block on several lines — harmless,
+  noisy; 0.00244 added its two rooms by hand) · the room LoRA's captions
+  are mine, not the guide's: retrain with the guide's words if it is to
+  be used ·
   ship.mjs: one commit per ship (the work commit carries the previous
   build's number; rehearse against a bare scratch remote) · the Particle
   Lab's shipped-mix stage: rewire to `particleLooks.spawnParticles` or
-  retire the lab (the owner's call) · WebP room paintings under new names
-  (~49% smaller at q80; the owner judges q80 / q85 in the Fog Lab;
+  retire the lab (the developer's call) · WebP room paintings under new names
+  (~49% smaller at q80; the developer judges q80 / q85 in the Fog Lab;
   `bg3dPuffs seedOf` should hash the stem first) · `combatFx.js` could
   hand kick / enter / deal to a `cardMotion.js` of its own (contested:
   the kick is part of the hit's choreography).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget
-  disagree · a real-device pass (the owner's) is still owed.
+  disagree · a real-device pass (the developer's) is still owed.
+- Art: the Background Lab's six draft rooms await verdicts (The Rookery,
+  The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned
+  Throne, the ossuary test); the guide's other unused rooms are the next
+  batch (`docs/image-prompting-guide.md` §3: arenas, thrones, corridors,
+  antechambers, shrines) · a generated painting's fog is a default until
+  the Fog Lab tunes it · the mimic chest has art but no enemy entry.
 - Other: orphaned legacy staging site cleanup.
 
 **Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon
 Lab (generated floors, themed rooms, the game's fights in them) and a
-`?debug` mode walking 3D corridors between the game's rooms. The owner
+`?debug` mode walking 3D corridors between the game's rooms. The developer
 dropped it in 0.152 — it didn't fit the creative direction; the game is
 back to its 0.138 shape. The code is in git history (0.151, `6081e7a`).
