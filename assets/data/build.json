@@ -1,5 +1,5 @@
 {
-  "version": "0.00322",
+  "version": "0.00323",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -102,6 +102,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00323": [
+      "Under the hood: the LOOT row, the look switcher and the save dialogs tidied; the code map and the notes brought up to date"
+    ],
     "0.00322": [
       "Play stats: Recent runs now show the hero played (and its look), the turns, the XP, the coins banked of the coins won, and the finds with a star for a relic",
       "Under the hood: the balance studies and the art tools share their loops and registries"
@@ -145,9 +148,6 @@
     ],
     "0.00309": [
       "The title's fly-in has sound: a whoosh mid-flight and the Descend strike as the title appears (where the browser lets the music start on its own, and on a phone after PLAY)."
-    ],
-    "0.00308": [
-      "The title's fly-in fades into the living painting a little earlier, while the film is still arriving."
     ]
   }
 }

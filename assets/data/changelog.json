@@ -1,4 +1,7 @@
 {
+  "0.00323": [
+    "Under the hood: the LOOT row, the look switcher and the save dialogs tidied; the code map and the notes brought up to date"
+  ],
   "0.00322": [
     "Play stats: Recent runs now show the hero played (and its look), the turns, the XP, the coins banked of the coins won, and the finds with a star for a relic",
     "Under the hood: the balance studies and the art tools share their loops and registries"
