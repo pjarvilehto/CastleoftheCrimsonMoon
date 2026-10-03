@@ -1063,7 +1063,15 @@ against the Descend essentials; 0.00223: a file already queued is moved
 to the front when it is asked to play — the title's welcome take used to
 wait behind the whole score — and a MUSIC: OFF / NARRATOR: OFF player no
 longer downloads the beds or the takes, turning either on warms them
-then). Muting the music stops the bed and frees its decoded buffer (two
+then). **The title bed from the title screen on (0.00283, the developer's ask):**
+`music.js startEarly` fetches and decodes the title bed at boot (MUSIC ON
+only) — on a desktop the first gesture is usually Enter the Castle, and
+the download and decode after it put the music's start in the Great Hall
+— and resumes the context at once: where the browser lets a page sound
+before any click (Chrome's media engagement, Firefox's
+`getAutoplayPolicy`) the bed plays over the title; elsewhere the first
+click or key starts the decoded bed at once. The hero screen and the hall
+ask for the same bed, so it plays on until the descent. Muting the music stops the bed and frees its decoded buffer (two
 asks for one bed inside its decode start one loop, and a bed asked for
 while MUSIC went OFF and ON is the one that plays — 0.00223); the
 narrator's lines decode in the order they were asked for (a death and
@@ -1194,7 +1202,12 @@ be served stale for ~4 hours.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
   `'active active-red'`. The Great Hall's Descend pulses while nothing
   there can be bought (a new player's first visit: three panels of
-  upgrades and nothing to spend; 0.00200). Buy Potion pulses whenever a
+  upgrades and nothing to spend; 0.00200). **The Forge never stops a
+  descent (0.00283, the developer's call: its use is very optional):**
+  the "Descend Now?" prompt counts XP (`canSpendXp`) and Alchemy
+  (`canSpendAlchemy`) only, and Descend pulses when only a Forge level is
+  affordable; the green Coins box and the phone's Equipment dot still
+  point at the Forge (`canSpendCoins` / `canForgeAny`). Buy Potion pulses whenever a
   potion can be bought (0.00216; it used to wait for the stock to run low).
   **A purchase's feedback (0.00216):** every hub row carries `data-row`;
   a handler calls `flashNext(row)` and then its own `render(root)`, and

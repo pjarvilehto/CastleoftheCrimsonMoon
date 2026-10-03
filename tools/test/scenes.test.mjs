@@ -362,6 +362,23 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   handleKey('y');
   await sleep(1300);
   ok('Descend Anyway goes down', !dialog() && t().includes('Room 1'));
+  // 0.00283 (the developer's call): coins only the Forge could take never stop a descent, and Descend pulses
+  {
+    const { forgeCost, forgeable } = await import('../../src/meta/leveling.js');
+    const { canForgeAny, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');
+    resetProfile();
+    const q = getProfile(); q.xp = 0; q.equipment.weapon = 'knights_blade'; // (a forgeable weapon: the starting gear is tier 1)
+    q.alchemy.efficiency = 200; q.alchemy.potency = 1e9; q.alchemy.infusion = 1e9; q.potionCap = DATA.difficulty.potions.maxCap; q.potions = q.potionCap; // (Alchemy priced out: every track maxed, the satchel full and maxed — progression.test's recipe)
+    const slot = 'weapon';
+    q.coins = forgeCost(q.equipment[slot]);
+    const fits = forgeable(q.equipment[slot]) && canForgeAny(q) && !canSpendAlchemy(q);
+    show(hubScene());
+    await sleep(1100);
+    const pulsing = document.querySelectorAll('button[data-key="d"]:not([disabled])').some((b) => /Descend into/.test(b.textContent) && (b.classList.contains('active') || b.className.split(' ').includes('active')));
+    handleKey('d');
+    await sleep(1300);
+    ok('coins only the Forge could take: Descend pulses and goes straight down, no prompt', fits && pulsing && !dialog() && t().includes('Room 1'), `forge ${q.coins} on ${q.equipment[slot]}, alchemy ${canSpendAlchemy(q)}`);
+  }
   globalThis.document.body = realBody;
   resetProfile();
 }
