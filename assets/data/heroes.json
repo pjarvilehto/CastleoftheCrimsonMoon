@@ -13,7 +13,11 @@
       ],
       "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
-        { "art": "knight_v1_k2.webp", "fh": 0.739 }
+        { "art": "knight_v2.webp", "fh": 0.95 },
+        { "art": "knight_alt_v1.webp", "fh": 0.961 },
+        { "art": "knight_alt_v2.webp", "fh": 0.969 },
+        { "art": "knight_alt_v4.webp", "fh": 0.945 },
+        { "art": "knight_v1_k2.webp", "fh": 0.739, "sprite": true }
       ]
     },
     {

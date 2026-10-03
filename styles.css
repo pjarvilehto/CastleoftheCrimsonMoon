@@ -1479,7 +1479,7 @@ html.phone .gate-card .btn-row button { min-height: 44px; padding: 0 22px; font-
 html.phone .hero-screen { padding: 6px calc(2vw + env(safe-area-inset-right, 0px)) 4px calc(2vw + env(safe-area-inset-left, 0px)); gap: 2px; }
 html.phone .hero-head h1 { font-size: 1.25rem; letter-spacing: 0.14em; }
 html.phone .hero-head .subtitle { font-size: 0.6rem; margin: 0; }
-html.phone .hero-row { --hero-h: min(46svh, calc((94vw - (var(--n, 5) - 1) * 2vw) / (var(--n, 5) * var(--ratio-e)))); gap: 2vw; margin-top: calc(var(--hero-h) * 0.12); }
+html.phone .hero-row { --hero-h: min(46svh, calc((94vw - (var(--n, 5) - 1) * 2vw) / (var(--n, 5) * var(--ratio-e)))); gap: 2vw; margin-top: calc(var(--hero-h) * 0.15); } /* (0.00264: 0.15, so a tall chosen figure — the standing knight, the hexhunter's hat — clears the subtitle) */
 html.phone .hero .figure { filter: none; } /* (iOS re-renders a filtered layer per frame) */
 html.phone .hero .looks { margin-top: 2px; gap: 6px; }
 html.phone .hero .looks button { width: 32px; height: 32px; font-size: 1.1rem; }

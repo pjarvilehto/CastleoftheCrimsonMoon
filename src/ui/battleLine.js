@@ -15,7 +15,7 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf, defaultHero } from '../shared/heroes.js';
+import { heroOf, cleanHero, lookIsSprite } from '../shared/heroes.js';
 import { potionHealAmount } from '../meta/leveling.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
 
@@ -242,7 +242,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),
       el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`),
       armorVal));
-  const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite)
+  const card = el('div', { class: `char-card player-card${lookIsSprite(heroOf(p), cleanHero(p.hero).look) ? '' : ' hero-standing'}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite; 0.00264: the knight stands too, but for his crouching look)
     plate, gear, img, chip, potions);
   const back = cardBack(run);
   card.append(back.el);

@@ -17,7 +17,7 @@
 import { CHEST_ICONS } from '../run/treasure.js';
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
-import { portraitUrl } from './portraits.js';
+import { portraitUrl, portraitFile, PORTRAIT_DIR } from './portraits.js';
 import { heroFirstUrls, heroArtUrls } from './heroes.js';
 import { itemArtUrls } from './itemArt.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
@@ -39,7 +39,7 @@ export function essentialUrls() {
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
   const icons = [...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)]; // (0.177; one table, run/treasure.js)
-  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons])]; // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
+  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), `${PORTRAIT_DIR}/${portraitFile('player')}`, ...icons])]; // (0.00264: the knight's wide sprite — his crouching look's — too, now the player's portrait is a standing figure) // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
 }
 
 // The room paintings (and their depth maps) not already loaded above —

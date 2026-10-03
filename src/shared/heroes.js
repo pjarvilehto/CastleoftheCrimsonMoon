@@ -26,6 +26,9 @@ export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
 export const heroTheme = (hero) => hero.theme;
 /** A hero's look, whole: { art, fh } (an index past the list is clamped). */
 export const lookOf = (hero, look = 0) => hero.looks[Math.min(Math.max(0, look), hero.looks.length - 1)];
+/** A look drawn in combat as the knight's wide sprite (0.00264): `sprite: true` in heroes.json — the knight's
+ *  first, crouching look; his card then draws cards.json player.art (the Art Lab's import path), a standing look its figure. */
+export const lookIsSprite = (hero, look = 0) => !!lookOf(hero, look).sprite;
 /** Where a hero's look is drawn from. */
 export const lookUrl = (hero, look = 0) => `${HERO_DIR}/${lookOf(hero, look).art}`;
 /** Every look of every hero. */

@@ -741,9 +741,10 @@ name, epithet, lore, traits — placeholders of mine for the lines — and
 share of the sheet's height so the heroes read in scale with one another),
 read through `shared/heroes.js` (`heroList`, `heroById`, `cleanHero`,
 `heroOf`, `lookUrl`, `lookOf`, the preload lists). Seven so far: the
-Curious Knight (one look, the chat's sheet) and the developer's Barbarian
-(5), Wizard (8), Necromancer (8), Druid (5), Hexhunter (4) and Plague
-Sister (4), 35 figures. **The art:** the developer uploads 1024x1536 sheets
+Curious Knight (5 since 0.00264: the developer's four standing sheets
+first, then the chat's crouching sheet — the one look marked `sprite`)
+and the developer's Barbarian (5), Wizard (8), Necromancer (8), Druid
+(5), Hexhunter (4) and Plague Sister (4), 39 figures. **The art:** the developer uploads 1024x1536 sheets
 on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
 tools/cut-heroes.mjs --import .` converts them to
 `assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
@@ -780,7 +781,7 @@ later: a click on the hall's portrait (`.knight-card.pickable`, its
 `.look-tag` says which look; the phone's Equipment sheet has a Look row,
 `L`) opens `ui/lookPicker.js` — the hero large between ‹ › (the arrow
 keys, A / D), saved as it turns, shared with the stats on close; a hero
-with one look (the knight) is not pickable. **The stats (0.00253):**
+with one look is not pickable (none since the knight's sheets, 0.00264). **The stats (0.00253):**
 every run record carries `hero` and `look` (`history.js runRecord`), the
 upload carries `profile.hero`, the collector keeps both (Worker 0.00253
 — paste it; the old one drops them), the dashboard shows a Hero column
@@ -798,13 +799,16 @@ Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
 with fog — my picks, tuned in the data. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
-hero's figure (`shared/portraits.js portraitUrl('player')`; the default
-hero keeps `cards.json player.art`, the file the Art Lab's import
-writes) and the card is named after the class — the name ABOVE the
+hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
+the knight's standing looks too — only a look marked `sprite: true`
+(`heroes.js lookIsSprite`, the knight's crouch) draws `cards.json
+player.art`, the file the Art Lab's import writes, as the wide sprite,
+and its card drops `.hero-standing`; the preload fetches that sprite
+with the essentials) and the card is named after the class — the name ABOVE the
 card (`.hero-title`, 0.00251, the developer's layout), the gear as two
 columns at the card's top (`.gear-block`: names left, LV / damage /
 armor right) and a standing hero a full card tall behind them
-(`.hero-standing`), the knight's wide sprite as it was; the numbers are the same
+(`.hero-standing`), the knight's crouching look as the wide sprite it was; the numbers are the same
 for every class — the gameplay side is the developer's next call. The
 preloader fetches the figures the screen opens on (every hero's first
 look and the profile's own) first among the Descend essentials, the
@@ -1444,8 +1448,7 @@ sometimes — fetch all branches to find it.
 - Game: the classes' gameplay (0.00248 made the choice cosmetic: a class
   could carry its own base stats, starting gear, a signature move — the
   knight's heavy blow, the necromancer's thralls — and the Art Lab's
-  photoreal redraw path for its card) · a knight sheet in the standing
-  pose and his own looks · merchant room (endgame coin sink) · more bosses (only the Vampire
+  photoreal redraw path for its card) · merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
