@@ -94,6 +94,7 @@ node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
 node tools/shrine-study.mjs --n 500          # per-boon shrine balance (paired runs)
 node tools/stat-study.mjs [--set path=json]  # what each upgrade is worth
 node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (ElevenLabs; needs ELEVENLABS_API_KEY)
+node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 ```
 
 ## The rules that matter
@@ -216,9 +217,17 @@ node tools/gen-vo.mjs [--dry-run|--only id]  # render missing voice-over takes (
   phone power / stall fields (0.00222) and the run-record clamp (a run
   whose `room` is not a whole number up to 999 is dropped, the counts
   clamped; one such record used to break the whole dashboard).
-- The collector's `READ_KEY` is the owner's secret: never ask for it. Cloud
-  sessions can't reach the collector anyway; **play-stats data arrives as
-  screenshots of the dashboard.**
+- The collector's `READ_KEY` is the owner's secret: never ask for it.
+  **Reading the stats from a session (0.00229):** `node tools/reports.mjs`
+  pulls every player (device, runs, benchmarks, device reports) from the
+  collector when the cloud environment allows the host
+  `castle-stats.petri-jarvilehto.workers.dev` in its network policy and
+  carries the key as the environment secret `CASTLE_READ_KEY` (a
+  session started before either was set has neither: start a new one);
+  `--reports` is the dashboard's Copy all, `--json` / `--out` the raw
+  answer, `--player x` one player. The tool never prints the key. Where
+  the environment lacks them, the data arrives as screenshots of the
+  dashboard or its Copy all pasted into the chat.
 - CI's deploy job stays off until the owner opts in (see Testing).
 
 ## Architecture in one paragraph

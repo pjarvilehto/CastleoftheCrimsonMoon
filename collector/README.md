@@ -68,6 +68,10 @@ the KV binding stay as they are.
   `?key=READ_KEY` still works) — every player
 - `GET /version` — the deployed collector's version
 
+From a cloud session `node tools/reports.mjs` reads `/players` with the key
+from the environment secret `CASTLE_READ_KEY` (0.00229) and summarizes
+every player, or hands the device reports over as JSON (`--reports`).
+
 ## Optional extra protection
 
 For a hard, edge-level limit (the in-memory one is per Worker instance):

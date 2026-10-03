@@ -536,3 +536,30 @@ fresh();
   const wk = await import('../../collector/worker.js');
   ok('collector keeps stalls and worstOut; its version moved with telemetry.json', wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).stalls === 2 && wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).worstOut === 1 && wk.VERSION === DATA.telemetry.collectorVersion);
 }
+
+// tools/reports.mjs (0.00229): the collector pulled into the session — one
+// player summarized with the newest benchmark and report, a missing key
+// and a refused key named plainly (never the key itself), the players
+// list taken from the Worker's answer
+{
+  const { summarize, render, fetchPlayers, matches, KEY_VAR } = await import('../reports.mjs');
+  const pl = { playerId: 'abcdef0123456789', lastSeen: Date.UTC(2026, 9, 3, 6, 0), build: '0.00228', device: { gpu: 'Apple GPU', browser: 'Safari 26', os: 'iOS', cores: 6 },
+    profile: { name: 'Petri', records: { bestRoom: 9 }, history: [{ at: 1 }, { at: 2 }], bench: [{ at: 5, build: '0.00225', bg: '3d', q: 0, vw: 852, vh: 393, dpr: 3, phases: { idle: { fps: 59.8, hz: 60, p95: 28, drop: 12 } } }, { at: 9, build: '0.00228', bg: '3d', q: 1, vw: 852, vh: 393, dpr: 3, phases: { idle: { fps: 60, hz: 60, p95: 17, drop: 0.4 }, combat: { fps: 59.9, hz: 60, p95: 21, drop: 1 } } }] },
+    reports: [{ at: 7, kind: 'bench', build: '0.00228', phases: { idle: { split: { cards: { avg: 0.05 }, bg: { avg: 0.2 } }, stalls: [{ ms: 120 }] }, combat: { split: { cards: { avg: 0.1 } }, stalls: [] } }, cards: { lit: 7, own: 7, pool: 8 } }] };
+  const s = summarize(pl);
+  ok('reports: a player summarized — name, short id, device, counts, the NEWEST benchmark and report', s.name === 'Petri' && s.id === 'abcdef01' && s.device === 'Apple GPU · Safari 26 · iOS · 6 cores' && s.runs === 2 && s.bestRoom === 9 && s.benchmarks === 2
+    && s.bench.build === '0.00228' && s.bench.q === 1 && s.bench.idle.startsWith('60.0/60 Hz, p95 17 ms, drop 0.4%') && s.bench.overkill === '—' && s.report.kind === 'bench' && s.report.stalls === 1 && s.report.spans.idle === 'cards 0.05 ms, bg 0.20 ms' && s.report.cards.pool === 8);
+  const text = render(s);
+  ok('reports: the text names the player, the benchmark phases and the spans', text.includes('Petri  (abcdef01)') && text.includes('combat 59.9/60 Hz') && text.includes('idle: cards 0.05 ms, bg 0.20 ms') && text.includes('"own":7'));
+  ok('reports: --player matches the name, the id or the device, case aside', matches(pl, 'petri') && matches(pl, 'abcdef') && matches(pl, 'safari') && !matches(pl, 'android') && matches(pl, null));
+  const got = await fetchPlayers({ endpoint: 'https://stats.example/', key: 'k', fetchFn: async (u, o) => ({ ok: true, status: 200, json: async () => ({ players: [pl] }), u, o }) });
+  ok('reports: the players come from the Worker\'s answer', got.length === 1 && got[0] === pl);
+  let seen = null;
+  await fetchPlayers({ endpoint: 'https://stats.example/', key: 'secret-k', fetchFn: async (u, o) => { seen = { u, o }; return { ok: true, status: 200, json: async () => ({}) }; } });
+  ok('reports: the key goes in the Bearer header, the URL has no trailing slash doubled', seen.u === 'https://stats.example/players' && seen.o.headers.authorization === 'Bearer secret-k');
+  const err = async (args) => { try { await fetchPlayers(args); return ''; } catch (e) { return e.message; } };
+  const noKey = await err({ endpoint: 'https://stats.example', key: '' });
+  const refused = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => ({ ok: false, status: 401 }) });
+  const down = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
+  ok('reports: no key, a refused key and an unreachable host each say what to set, and never the key', noKey.includes(KEY_VAR) && noKey.includes('new session') && refused.includes('401') && !refused.includes('secret-k') && down.includes('network policy') && !down.includes('secret-k'));
+}
