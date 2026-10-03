@@ -1,5 +1,5 @@
 {
-  "version": "0.00297",
+  "version": "0.00298",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -99,6 +99,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00298": [
+      "A huge tom strikes as you Push Deeper and as the descent from the Great Hall begins.",
+      "The room-change whooshes play much louder (they sat where the old quiet swoosh did)."
+    ],
     "0.00297": [
       "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
       "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
@@ -143,10 +147,6 @@
     ],
     "0.00284": [
       "Housekeeping: the notes in the code name the build the refactors shipped in"
-    ],
-    "0.00283": [
-      "Under the hood: the classes' heavies, passives and effects in registries of their own; the fight reads its class from the run",
-      "The sound tools share one ElevenLabs module; the test harness restores the data between files"
     ]
   }
 }
