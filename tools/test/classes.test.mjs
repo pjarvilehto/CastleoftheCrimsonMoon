@@ -160,6 +160,19 @@ const types = (evs) => evs.map((e) => e.type);
   ok('a foe\'s card tags HEXED, the blight stacks and the roots\' turns, the hexed card marked', tag.textContent === 'HEXED · BLIGHT ×2 · ROOTED 1' && tag.classList.contains('on') && e.card.classList.contains('hexed'));
   e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: false, blight: 0, entangled: 0 });
   ok('…and clears them', tag.textContent === '' && !tag.classList.contains('on') && !e.card.classList.contains('hexed'));
+  // the status in the figure (0.00272): the card's classes tint the portrait and slow its loop (styles.css), the flash's cached filter dropped on a change
+  e.baseFilter = 'cached';
+  e.update({ hp: 100, dead: false, printing: false, combatOver: false, blight: 1, entangled: 0 });
+  ok('a blighted foe\'s card is blighted and slowed, the flash\'s cached filter dropped', e.card.classList.contains('blighted') && e.card.classList.contains('slowed') && !e.card.classList.contains('rooted') && e.baseFilter === undefined);
+  e.baseFilter = 'cached';
+  e.update({ hp: 100, dead: false, printing: false, combatOver: false, blight: 1, entangled: 2 });
+  ok('…rooted too when bound; the same status keeps the cache', e.card.classList.contains('rooted') && e.card.classList.contains('blighted') && e.baseFilter === undefined
+    && (e.baseFilter = 'cached', e.update({ hp: 100, dead: false, printing: false, combatOver: false, blight: 2, entangled: 1 }), e.baseFilter === 'cached'));
+  e.update({ hp: 100, dead: false, printing: false, combatOver: false, blight: 0, entangled: 0 });
+  ok('…and back to plain', !e.card.classList.contains('blighted') && !e.card.classList.contains('rooted') && !e.card.classList.contains('slowed'));
+  const css2 = readFileSync('styles.css', 'utf8');
+  ok('the looks are static filters and slower loops per family, the phone keeping the figure plain', /\.char-card\.blighted \.portrait:not\(\.glint\) \{ filter: [^}]*sepia/.test(css2) && /\.char-card\.rooted \.portrait:not\(\.glint\) \{ filter: [^}]*sepia/.test(css2)
+    && ['hover', 'heavy', 'prowl', 'boss'].every((f) => new RegExp(`\\.char-card\\.slowed \\.idle-${f} \\{ animation-duration: [\\d.]+s; \\}`).test(css2)) && css2.includes('html.phone .char-card.blighted .portrait:not(.glint) { filter: none; }'));
   const css = readFileSync('styles.css', 'utf8');
   ok('every class event has a log colour (mark, blight, entangle, entangled, charge, thrall, thrallhit, thrallfall)', ['mark', 'blight', 'entangle', 'entangled', 'charge', 'thrall', 'thrallhit', 'thrallfall'].every((c) => css.includes(`#combat-log .${c} `)));
 }

@@ -900,6 +900,17 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @keyframes idle-boss  { 0%, 100% { rotate: -0.9deg; scale: 1; } 50% { rotate: 0.9deg; scale: 1.015; } }
 @keyframes idle-player { 0%, 100% { scale: 1; } 50% { scale: 1.006 1.012; } }
 @media (prefers-reduced-motion: reduce) { .portrait { animation: none !important; } }
+/* a foe's status in its figure (0.00272, the developer's ask): the blight turns it sickly (a green cast, drained), the roots earthy brown;
+   both slow its weave and bob (each family's loop at 1.5x its length — a static filter, never animated: the hit flash reads the figure's
+   filter as its base, battleLine.js resets that cache when the status changes). The phone keeps the slowed loop and the tag, not the
+   tint (section 16: a filter on a looping layer is a software filter per frame on iOS). */
+.char-card.blighted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.5) hue-rotate(50deg) saturate(0.75) brightness(0.9); }
+.char-card.rooted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.85) saturate(1.05) hue-rotate(-12deg) brightness(0.84); }
+.char-card.blighted.rooted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.7) hue-rotate(30deg) saturate(0.6) brightness(0.82); }
+.char-card.slowed .idle-hover { animation-duration: 6.3s; }
+.char-card.slowed .idle-heavy { animation-duration: 7.8s; }
+.char-card.slowed .idle-prowl { animation-duration: 5.4s; }
+.char-card.slowed .idle-boss { animation-duration: 9.75s; }
 
 /* elite/boss aura (0.089): a pre-rendered radial glow behind the figure;
    only opacity/scale animate (compositor-only) */
@@ -1374,6 +1385,9 @@ html.phone .enemy-unit .unit-actions { display: none; }           /* the card is
 /* the figures' drop shadow (0.00222): on iOS a shadow filter on a looping layer is re-rendered every frame, and it turns
    every hit flash into a software filter — the phone keeps the figure, not the shadow (the glint copy keeps its own filter) */
 html.phone .portrait:not(.glint) { filter: none; }
+html.phone .char-card.blighted .portrait:not(.glint) { filter: none; } /* the status looks (0.00272): the tag and the slowed loop say it on a phone, no filter on the looping figure */
+html.phone .char-card.rooted .portrait:not(.glint) { filter: none; }
+html.phone .char-card.blighted.rooted .portrait:not(.glint) { filter: none; }
 html.phone .player-unit { position: relative; }
 html.phone .player-unit .unit-actions { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; } /* under the card, outside the row: every card bottom on one line */
 html.phone .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }

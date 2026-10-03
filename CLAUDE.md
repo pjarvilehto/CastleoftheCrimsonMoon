@@ -894,7 +894,16 @@ and, for a charge class, its charges as pips (◆◆◇) in place of the
 cooldown (`battleRoom.js update` hands `charges` to the unit); a foe's
 card tags HEXED / BLIGHT ×n / ROOTED n above its HP line (`.foe-tag`, the
 hexed card rimmed violet; `hexed` / `blight` / `entangled` in its
-snapshot); every new log line has a colour (mark, blight, entangle,
+snapshot); **the status in the figure (0.00272, the developer's ask):** a
+blighted foe's portrait turns sickly (a static sepia + green hue-rotate,
+drained) and a rooted one earth-brown (`.char-card.blighted` /
+`.rooted`, the two together darker), and either slows its idle loop
+(`.slowed`: each family's duration at 1.5x) — never an animated filter;
+the hit flash reads the portrait's filter as its base, so the unit drops
+that cache (`baseFilter`) when the status changes; the phone keeps the
+slowed loop and the tag, not the tint (section 16's twins set `filter:
+none` — a filter on a looping figure is a per-frame software filter on
+iOS); every new log line has a colour (mark, blight, entangle,
 entangled, charge, thrall, thrallhit, thrallfall; `styles.css`). Not yet: a
 thrall card (the log alone says it rose, took a blow, crumbled), a rage
 chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**

@@ -344,6 +344,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
+  let lastStatus = ''; // the figure's status look (0.00272)
   let canHit = false; // the Attack button is live (the card clicks through to it)
   const atkDisabled = disabler(atk);
   const update = (s) => {
@@ -362,6 +363,13 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     setText(foeTag, tag);
     setClass(foeTag, 'on', !!tag);
     setClass(card, 'hexed', !!s.hexed);
+    // the status in the figure (0.00272): blighted = sickly green, rooted = earth-brown, either slows its idle loop (styles.css);
+    // a change re-reads the portrait's filter for the hit flash (fxParts.js baseFilter caches it)
+    const status = `${s.blight > 0 ? 'b' : ''}${s.entangled > 0 ? 'r' : ''}`;
+    if (status !== lastStatus) { lastStatus = status; self.baseFilter = undefined; }
+    setClass(card, 'blighted', s.blight > 0);
+    setClass(card, 'rooted', s.entangled > 0);
+    setClass(card, 'slowed', s.blight > 0 || s.entangled > 0);
     setClass(atk, 'ghost-btn', s.dead);
     atkDisabled(s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);
