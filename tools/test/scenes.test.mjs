@@ -362,7 +362,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   handleKey('y');
   await sleep(1300);
   ok('Descend Anyway goes down', !dialog() && t().includes('Room 1'));
-  // 0.00283 (the developer's call): coins only the Forge could take never stop a descent, and Descend pulses
+  // 0.00285 (the developer's call): coins only the Forge could take never stop a descent, and Descend pulses
   {
     const { forgeCost, forgeable } = await import('../../src/meta/leveling.js');
     const { canForgeAny, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');
