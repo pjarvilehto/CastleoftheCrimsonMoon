@@ -263,7 +263,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
   ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
   ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
-  ok('CHANGELIST sits in the SETTINGS menu, under GAME', /menuHead\('Game'\),\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
+  ok('CHANGELIST sits in the SETTINGS menu, under GAME (after the save items, 0.00301)', /menuHead\('Game'\),\s*exportSaveToggle\(\),\s*importSaveToggle\([^\n]*\n\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
 
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -683,14 +683,20 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 // T91: 0.00209 — Export / Import Save are dialogs (the title used to expand a
 // textarea at its foot, under a phone's keyboard): Export shows the code
 // and closes on Done; Import loads a pasted code or says it is not one.
+// 0.00301: they are SETTINGS menu items (ui/saveTransfer.js), not the title's.
 {
   const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
   const { exportSave } = await import('../../src/meta/profile.js');
+  const { exportSaveToggle, importSaveToggle } = await import('../../src/ui/saveTransfer.js');
   fresh();
   getProfile().coins = 4242; getProfile().name = 'Tester';
   titleScene().enter(registry.app);
-  const btn = (re) => registry.app.all((n) => n.tagName === 'button' && re.test(n.textContent))[0];
-  btn(/Export Save/).listeners.click[0]();
+  ok('the title no longer carries the save buttons (0.00301: the menu does)', !registry.app.all((n) => n.tagName === 'button' && /Export Save|Import Save/i.test(n.textContent)).length);
+  let loaded = 0;
+  const exp = exportSaveToggle(), imp = importSaveToggle(() => loaded++);
+  const btn = (re) => (re.test('EXPORT SAVE') ? exp : imp);
+  ok('the menu items read EXPORT SAVE and IMPORT SAVE', exp.textContent === 'EXPORT SAVE' && imp.textContent === 'IMPORT SAVE');
+  btn(/Export Save/i).listeners.click[0]();
   const dlg = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
   const ta = dlg && dlg.all((n) => n.tagName === 'textarea')[0];
   ok('Export Save opens a dialog holding the save code', anyDialogOpen() && ta && ta.textContent === exportSave() && /save-code/.test(ta.className));
@@ -698,27 +704,25 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('...Done closes it', !anyDialogOpen());
   const code = exportSave();
   resetProfile(); getProfile().name = 'Tester';
-  titleScene().enter(registry.app);
-  btn(/Import Save/).listeners.click[0]();
+  btn(/Import Save/i).listeners.click[0]();
   const dlg2 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
   const ta2 = dlg2.all((n) => n.tagName === 'textarea')[0];
   const load = dlg2.all((n) => n.tagName === 'button' && /Load Save/.test(n.textContent))[0];
   ta2.value = 'not a code'; load.listeners.click[0]();
-  ok('Import Save: a bad code is refused in the dialog', anyDialogOpen() && dlg2.textContent.includes('valid save') && getProfile().coins !== 4242);
+  ok('Import Save: a bad code is refused in the dialog', anyDialogOpen() && dlg2.textContent.includes('valid save') && getProfile().coins !== 4242 && loaded === 0);
   ta2.value = code; load.listeners.click[0]();
-  ok('...a good code loads and closes it', !anyDialogOpen() && getProfile().coins === 4242);
+  ok('...a good code loads, closes it and hands back (to the title)', !anyDialogOpen() && getProfile().coins === 4242 && loaded === 1);
   // 0.00223: the save dialogs from the keyboard — Escape closes, Space is the way on (Done / Load Save)
-  btn(/Export Save/).listeners.click[0]();
+  btn(/Export Save/i).listeners.click[0]();
   ok('Export Save: Escape closes it', anyDialogOpen() && handleKey('escape') === true && !anyDialogOpen());
-  btn(/Export Save/).listeners.click[0]();
+  btn(/Export Save/i).listeners.click[0]();
   ok('...and Space (Done is the way on)', anyDialogOpen() && handleKey(' ') === true && !anyDialogOpen());
   resetProfile(); getProfile().name = 'Tester';
-  titleScene().enter(registry.app);
-  btn(/Import Save/).listeners.click[0]();
+  btn(/Import Save/i).listeners.click[0]();
   const dlg3 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
   dlg3.all((n) => n.tagName === 'textarea')[0].value = 'not a code';
   ok('Import Save: a bad value closes on Escape without loading', handleKey('escape') === true && !anyDialogOpen() && getProfile().coins !== 4242);
-  btn(/Import Save/).listeners.click[0]();
+  btn(/Import Save/i).listeners.click[0]();
   const dlg4 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
   dlg4.all((n) => n.tagName === 'textarea')[0].value = code;
   ok('Import Save: Space loads a good code (Load Save is the way on)', handleKey(' ') === true && !anyDialogOpen() && getProfile().coins === 4242);

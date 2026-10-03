@@ -108,6 +108,25 @@ before structural changes. This file is the rules and the per-system notes.
     game's own among them — and hides the models; Approve / Reject with a
     note, re-rolls queued per bed; COPY JSON packs them as
     `music-rerender.json` for `node tools/gen-score.mjs --rerender`.
+  - **SFX Lab (0.00301):** `labs/sfx/` — every clip of the sound registry
+    (`audio.json clips`) by where the game plays it (the Great Hall,
+    combat, the classes' and the foes' sounds, the shrine and treasure
+    rooms, the room change, the run's end; a table in `lab.js SECTIONS`,
+    the class, foe and whoosh rows from the data), played through the
+    game's own `sfx.js` / `mixer.js` / `music.js` — the trims, the random
+    variation layers (VARIATION off = the dry clip, `sfx()`'s `plain`),
+    the stingers' ducking are the game's — with MUSIC ON playing each
+    section's bed under them (the music bus muted until then; the bed
+    selector overrides the section's). Per clip Volume (dB), Pitch
+    (semitones) and Speed (%, the pitch kept: an overlap-add stretch in
+    the page, played through `sfx.sfxFrom`; one knob for a synth clip),
+    Approve, a note; COPY JSON = `sfx-review.json` for `node
+    tools/render-sfx.mjs --apply` (an approval = `approved: true` on the
+    clip, nothing in the game reads it; a volume edit = the trim; a pitch
+    or speed edit re-rendered by ffmpeg into a new file, rule 7, measured
+    again — `elevenlabs.mjs measurePeak`, the level kept plus the offset,
+    the old file removed; `--dry-run` says what it would do; run
+    `audio-check.mjs` after for the browser's reading).
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the developer from
   Kimi version cards — not maintained here.
 
@@ -132,6 +151,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
 node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the foes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
+node tools/render-sfx.mjs --apply sfx-review.json [--dry-run]   # the SFX Lab's verdicts and edits into the registry (a pitch / speed edit re-rendered into a new file)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
 node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a take into the game: the loop seam found, cut, levelled, audio.json pointed at it
@@ -1371,7 +1391,12 @@ developer found it too high). **The descent's strike (0.00298):** the
 no duck — it plays every room), struck as the player chooses Push Deeper
 (`dungeonScene.js nextRoom`, not the first room's entry) and as the hall's
 Descend actually begins (`hubScene.js enterDungeon`, after the prompt and
-the art's gathering), a moment before the whoosh.
+the art's gathering), a moment before the whoosh. **Reviewing the
+sounds:** the SFX Lab (`labs/sfx/`, "Where things live") plays every clip
+where it belongs with the bed under it and hands the edits to
+`tools/render-sfx.mjs`; `sfx()` takes `plain` (no variation, no jitter)
+and `sfxFrom(name, buffer, opts)` plays a buffer of the caller's through
+the same path (both 0.00301, the lab's).
 
 #### Music beds
 
@@ -1588,7 +1613,9 @@ be served stale for ~4 hours.
   0.00243, the developer's call): the top row is FULLSCREEN (an icon, not on a
   phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
-  SAVER), GAME (CHANGELIST) — and DEBUG MODE last. Add items in main.js's
+  SAVER), GAME (EXPORT SAVE, IMPORT SAVE — 0.00301, the developer's call:
+  they were buttons at the title's foot; `ui/saveTransfer.js`, a loaded
+  save returns to the title — and CHANGELIST) — and DEBUG MODE last. Add items in main.js's
   `cornerBar([...], lead)` with `menuHead` / `onOffToggle` / `panelToggle`.
   A click outside the open menu closes it and is swallowed, except inside
   a dialog an item opened (0.00255: BENCHMARK's Start was eaten).

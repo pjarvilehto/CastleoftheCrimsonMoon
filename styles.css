@@ -395,9 +395,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    top margin overrides #app's centering */
 #app > .panel.title-panel { margin-top: auto; margin-bottom: 1.5vh; }
 /* Save transfer: quiet buttons + copy/paste code box */
-.save-transfer { margin-top: 16px; display: flex; gap: 10px; justify-content: center; }
-.save-transfer button { font-size: 0.85rem; padding: 6px 14px; opacity: 0.8; }
-@media (hover: hover) { .save-transfer button:hover:not(:disabled) { opacity: 1; } }
 .save-code {
   width: 100%; margin-top: 10px;
   background: #14100a; color: var(--parchment);
