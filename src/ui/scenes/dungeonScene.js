@@ -16,6 +16,8 @@
 import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
+import { derivedStats } from '../../meta/stats.js';
+import { heroOf } from '../../shared/heroes.js';
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
@@ -89,6 +91,23 @@ export function dungeonScene() {
     // DEBUG MODE's BENCHMARK mid-run (0.00256): the run settles as it stands
     // (a retreat; a death if the knight is down), then `next` instead of the run's end.
     leaveRun: (next) => endRun(null, run.hp > 0 ? 'retreat' : 'death', next),
+    // DEBUG MODE's SWITCH CLASS mid-run (0.00269, ui/debugToggles.js): the
+    // run's stats rebuilt for the class now on the profile (this run's
+    // shrine boons go with the old ones — a debug tool), its health kept
+    // as a share of the new maximum, the fight's class state reset and the
+    // room rendered again — the battle line is rebuilt in place, dealt in.
+    switchClass(root) {
+      const stats = derivedStats();
+      const share = run.maxHp > 0 ? run.hp / run.maxHp : 1;
+      run.stats = stats;
+      run.maxHp = stats.maxHp;
+      run.hp = Math.max(1, Math.min(run.maxHp, Math.round(run.maxHp * share)));
+      if (combat) { combat.charges = stats.klass.charges; combat.marked = -1; combat.thrall = null; for (const e of combat.enemies) e.entangled = 0; combat.heavyCd = Math.min(combat.heavyCd, run.stats.heavyCdMax); }
+      playback.reset();
+      ui = null;
+      logLine(logEl, `DEBUG: you fight on as ${heroOf(getProfile()).name} (the run's boons reset).`, 'sys');
+      render(root);
+    },
     enter(root) {
       startPerf(); // the run's frame rate, for the play stats (0.130)
       narratorRun();

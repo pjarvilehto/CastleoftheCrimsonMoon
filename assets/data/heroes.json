@@ -6,11 +6,13 @@
       "name": "The Curious Knight",
       "epithet": "Steel and stubbornness",
       "lore": "A wanderer who came for the legend and stayed for the fight. A sword, a coat of mail and no sense of when to leave.",
+      "heavyName": "Heavy Attack",
       "traits": [
         "Sword",
         "Heavy blows",
         "Armor"
       ],
+      "class": { "hpMult": 1, "dmgMult": 1, "armorMult": 1, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "blow", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "rusty_sword", "armor": "oak_shield" },
       "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
@@ -26,11 +28,13 @@
       "name": "The Barbarian",
       "epithet": "The axe decides",
       "lore": "From the frozen marches, where the moon is one more thing to kill. Hits harder, bleeds more, drinks last.",
+      "heavyName": "Cleave",
       "traits": [
         "Great axe",
         "Rage",
         "No armor"
       ],
+      "class": { "hpMult": 1.15, "dmgMult": 1.1, "armorMult": 0.6, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 1, "heavy": "cleave", "charges": 0, "cleaveShare": 0.5, "rage": 0.35, "drainShare": 0, "thrallShare": 0, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "notched_hand_axe", "armor": "wolfhide_jerkin" },
       "theme": { "plate": "#9e3e1a", "light": "embers", "tint": [0.95, 0.45, 0.15] },
       "looks": [
@@ -46,11 +50,13 @@
       "name": "The Wizard",
       "epithet": "Old fire, older book",
       "lore": "He has read what the castle is and came anyway, with a staff, a chained grimoire and three good spells.",
+      "heavyName": "Fireball",
       "traits": [
         "Staff",
         "Spells",
         "Frail"
       ],
+      "class": { "hpMult": 0.9, "dmgMult": 1.1, "armorMult": 0.7, "potionHealMult": 0.9, "dodge": 0, "heavyCd": 1, "heavyMult": 0.9, "heavy": "fireball", "charges": 3, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 1 },
       "kit": { "weapon": "apprentices_staff", "armor": "threadbare_robe" },
       "theme": { "plate": "#24479a", "light": "ether", "tint": [0.4, 0.6, 1.0] },
       "looks": [
@@ -69,11 +75,13 @@
       "name": "The Necromancer",
       "epithet": "The dead owe him",
       "lore": "The castle's own trade, turned against it. Every corpse on the floor is a servant waiting for its word.",
+      "heavyName": "Soul Drain",
       "traits": [
         "Ritual dagger",
         "Thralls",
         "Lifesteal"
       ],
+      "class": { "hpMult": 0.9, "dmgMult": 1, "armorMult": 0.8, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "drain", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0.6, "thrallShare": 0.6, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "grave_knife", "armor": "gravediggers_shroud" },
       "theme": { "plate": "#246b38", "light": "ether", "tint": [0.35, 0.9, 0.45] },
       "looks": [
@@ -92,11 +100,13 @@
       "name": "The Druid",
       "epithet": "The forest remembers",
       "lore": "Antlers, feathers and a staff that still grows. The wild has its own quarrel with the Crimson Moon.",
+      "heavyName": "Entangle",
       "traits": [
         "Living staff",
         "Mending",
-        "Wild shape"
+        "Entangling roots"
       ],
+      "class": { "hpMult": 1.1, "dmgMult": 0.9, "armorMult": 0.9, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 1, "heavy": "entangle", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "entangleTurns": 2, "entangleChance": 0.4, "mend": 0.04, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "budding_branch", "armor": "bark_vest" },
       "theme": { "plate": "#4a7a24", "light": "fog", "tint": [0.55, 0.8, 0.4] },
       "looks": [
@@ -112,11 +122,13 @@
       "name": "The Hexhunter",
       "epithet": "Silver bolts, cold eyes",
       "lore": "A witchfinder who turned her craft on the things that made the witches. A crossbow, a pocket of charms and no mercy left to spend.",
+      "heavyName": "Hex",
       "traits": [
         "Crossbow",
         "Hexes",
         "Quick"
       ],
+      "class": { "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.8, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0.3, "chargeOnKill": 0 },
       "kit": { "weapon": "worn_hand_crossbow", "armor": "witchfinders_coat" },
       "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
@@ -131,11 +143,13 @@
       "name": "The Plague Sister",
       "epithet": "Mercy, by the censer",
       "lore": "A nursing order that outlived its abbey. She carries its reliquary on her back and its fever in a censer, and tends the dying either way.",
+      "heavyName": "Last Rites",
       "traits": [
         "Censer",
         "Blight",
         "Endurance"
       ],
+      "class": { "hpMult": 1.15, "dmgMult": 0.85, "armorMult": 1.2, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 0.45, "heavy": "censer", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "entangleTurns": 0, "entangleChance": 0, "mend": 0, "blightShare": 0.3, "potionArmor": 30, "markCrit": 0, "chargeOnKill": 0 },
       "kit": { "weapon": "tin_censer", "armor": "sisters_habit" },
       "theme": { "plate": "#8a7420", "light": "fog", "tint": [0.8, 0.75, 0.35] },
       "looks": [
@@ -145,5 +159,6 @@
         { "art": "plaguesister_v4_k2.webp", "fh": 0.962 }
       ]
     }
-  ]
+  ],
+  "_class": "class (drafted 0.00258 under the simulator's --hero, live since 0.00267 — the developer's call, to tune in play; heavyName above names the heavy): hpMult / dmgMult / armorMult scale the knight's derived max HP, damage and armor (gear included); potionHealMult a potion's heal; dodge adds to the relics' dodge (under player.dodgeCap); heavyCd the heavy's cooldown in ordinary turns (relics and Quicken lower it); heavyMult a factor on combat.heavyMult; heavy = what the heavy button does: blow (the knight's, with spill and OVERKILL) | cleave (the blow, and cleaveShare of it on every other foe) | fireball (the blow on every foe; charges per fight) | drain (the blow heals drainShare of it) | mark (a hit that marks the target: every hit on it crits) | censer (a hit, and a blight stack on every foe: blightShare of your damage a stack a turn) | entangle (a hit, then roots bind every living foe for entangleTurns of its turns: each time a bound foe attacks it fails with entangleChance — 'Entangled!' — the Druid, 0.00271); passives: rage = up to this share more damage at no HP, thrallShare = a kill raises a thrall of this share of its max HP that takes the foes' blows first, mend = this share of max HP healed a turn, potionArmor = armor a potion adds for the room; markCrit = crit damage added to every hit on the hexed foe (the hexhunter); chargeOnKill = charges a kill gives back, up to charges (the wizard). Quicken at a shrine gives a charge class a charge instead of cutting its cooldown (run/shrine.js). Every key is present on every hero (0 = off)."
 }

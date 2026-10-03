@@ -22,7 +22,9 @@
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
+import { reduced, can, spray, classSpray, centreOf, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
+import { getProfile } from '../meta/profile.js';
+import { heroOf } from '../shared/heroes.js';
 import { markActivity } from '../core/perfSpans.js';
 import { findPop, potionPop } from './findFx.js';
 
@@ -31,16 +33,25 @@ import { findPop, potionPop } from './findFx.js';
 // who: { maxHp } of the knight — sizes hits on him (big-hit sway).
 export function fxFor(ev, who = {}) {
   switch (ev.type) {
-    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy };
-    case 'spill': return { kind: 'hit', to: ev.target, dmg: ev.dmg };
+    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy, marked: !!ev.marked }; // (marked: the class's trace, 0.00268)
+    case 'spill': return { kind: 'hit', to: ev.target, dmg: ev.dmg, via: ev.via }; // (via: the fire's, the cleave's or the blight's own trace)
     case 'thorns': return { kind: 'hit', to: ev.target, dmg: ev.dmg, thorns: true };
     case 'dmg': return { kind: 'attack', from: ev.source, to: 'player', dmg: ev.taken, share: who.maxHp ? ev.taken / who.maxHp : 0 };
     case 'dodge': return { kind: 'dodge', from: ev.source, to: 'player' };
-    case 'heal': return { kind: 'heal', to: 'player', amount: ev.healed };
+    case 'heal': return { kind: 'heal', to: 'player', amount: ev.healed, drain: !!ev.drain, from: ev.drain ? ev.target : undefined }; // (the drain's wisps fly from the foe)
     case 'overkill': return { kind: 'overkill', dmg: ev.dmg, victims: ev.victims ?? [] };
     case 'multi': return { kind: 'multi' };
     case 'revive': return { kind: 'revive', to: 'player' };
     case 'summon': return { kind: 'summon', from: ev.source, to: ev.target };
+    // the classes' events (0.00268): each bursts in its class's colour
+    case 'mark': return { kind: 'mark', to: ev.target };
+    case 'blight': return { kind: 'blight' };
+    case 'entangle': return { kind: 'entangle' };
+    case 'entangled': return { kind: 'entangled', from: ev.source };
+    case 'charge': return { kind: 'charge', to: 'player' };
+    case 'thrall': return { kind: 'thrall', to: 'player' };
+    case 'thrallhit': return { kind: 'thrallhit', from: ev.source, to: 'player', taken: ev.taken };
+    case 'thrallfall': return { kind: 'thrallfall', to: 'player' };
     default: return null;
   }
 }
@@ -80,6 +91,14 @@ export function playFx(fx, ctx) {
     case 'summon': return summon(fx, ctx);
     case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies into the LOOT row (0.00260)
     case 'potion': return potionPop(ctx); // a found potion: its card flies into the hero card's count (0.00263)
+    case 'mark': return mark(fx, ctx);
+    case 'blight': return blight(ctx);
+    case 'entangle': return entangle(ctx);
+    case 'entangled': return entangled(fx, ctx);
+    case 'charge': return classSpray(ctx.unit('player'), 'charge');
+    case 'thrall': return thrall(ctx);
+    case 'thrallhit': return thrallHit(fx, ctx);
+    case 'thrallfall': return classSpray(ctx.unit('player'), 'thrallfall');
     default: return undefined;
   }
 }
@@ -206,12 +225,94 @@ function hit(u, fx, delay, ctx, stop = 0, re = null, rc = null) {
     ], { duration: 260, delay, easing: 'ease-out' });
   }
   if (fx.dmg > 0) setTimeout(() => spray(u, away, fx.heavy || fx.crit ? 1.5 : 1, false, rc), delay);
+  if (fx.dmg > 0 && u !== ctx.unit('player')) setTimeout(() => classTrace(u, fx, rc, ctx), delay); // the class's own trace over the foe's burst (0.00268)
   if (fx.dmg > 0) barFlash(u, 'damage', delay);
   if (fx.dmg > 0) {
     const cls = fx.mega ? 'fx-crit fx-mega' : fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
     floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.mega ? 'MEGA CRIT!' : fx.crit ? 'CRIT!' : null, rc); // 0.095: CRIT! caption
   }
   return rc;
+}
+
+// ---- the classes' traces (0.00268, the developer's ask: each class's
+// attacks their own) — particleLooks.js spawnClassBurst draws them ----
+const heavyKind = () => heroOf(getProfile()).class.heavy;
+// Which trace a blow on a foe leaves, by the class and the blow: the
+// knight's heavy a steel clash; the Barbarian's Cleave a crescent (its
+// reach a smaller one), his blows embers; the Wizard's Fireball a bloom on
+// every foe it takes, his blows arcane; the Necromancer's blows grave
+// motes, his Soul Drain the wisps torn out of the foe flying to him; the Druid's heavy
+// three rakes of the living staff, his blows one; the Hexhunter's blows on the hexed
+// foe flare its sigil, the others violet sparks (the Hex itself on the
+// mark line); the Plague Sister's blows a swing of the censer, the blight's
+// gnawing a wisp of it. null = the foe's own burst alone.
+export function traceFor(fx, heavy) {
+  if (fx.via === 'fireball') return 'fireball';
+  if (fx.via === 'cleave') return 'cleavespill';
+  if (fx.via === 'blight') return 'blight';
+  if (fx.kind !== 'attack' || fx.from !== 'player') return null;
+  switch (heavy) {
+    case 'blow': return fx.heavy ? 'steel' : null;
+    case 'cleave': return fx.heavy ? 'cleave' : 'rage';
+    case 'fireball': return fx.heavy ? 'fireball' : 'arcane';
+    case 'drain': return fx.heavy ? 'drain' : 'grave';
+    case 'entangle': return fx.heavy ? 'claw' : 'thorn';
+    case 'mark': return fx.marked ? 'hexhit' : 'hexspark';
+    case 'censer': return 'incense';
+    default: return null;
+  }
+}
+function classTrace(u, fx, rc, ctx) {
+  const look = traceFor(fx, heavyKind());
+  if (!look) return;
+  classSpray(u, look, { dir: 1, kind: fx.heavy || fx.crit ? 'crit' : 'hit', to: look === 'drain' ? centreOf(ctx.unit('player')) : null }, rc); // (the drain's wisps fly to the Necromancer)
+}
+// Hex: the sigil turns on the foe, which flares violet.
+function mark(fx, ctx) {
+  const u = ctx.unit(fx.to);
+  classSpray(u, 'hex');
+  glow(u, 'sepia(1) saturate(4) hue-rotate(220deg) brightness(1.3)', 700);
+}
+// Last Rites: the censer's smoke settles on every foe still standing.
+function blight(ctx) {
+  for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'censer'), i * 60);
+}
+// Entangle (0.00271): roots burst from the ground at every foe's feet, a green light in the scene, the line trembles.
+function entangle(ctx) {
+  for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'roots', { at: 'feet' }), i * 70);
+  shake(ctx, 0.5);
+  bgLight('potion', ctx.unit('player')?.card?.getBoundingClientRect?.());
+}
+// A bound foe strains and fails: the roots tug, the card shivers in place, the word floats up.
+function entangled(fx, ctx) {
+  const u = ctx.unit(fx.from);
+  if (!u) return;
+  classSpray(u, 'rooted', { at: 'feet' });
+  if (can(u.el) && !reduced()) u.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'translateX(0)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
+  floatNumber(ctx, u, 'ENTANGLED', 'fx-miss');
+}
+// A foe rises again at the Necromancer's side.
+function thrall(ctx) {
+  const p = ctx.unit('player');
+  classSpray(p, 'thrall');
+  glow(p, 'sepia(1) saturate(4) hue-rotate(80deg) brightness(1.3)', 800);
+}
+// A foe's blow lands on the thrall: the lunge, a grey number, grave motes — the Necromancer stands untouched.
+function thrallHit(fx, ctx) {
+  const a = ctx.unit(fx.from), p = ctx.unit('player');
+  const strike = strikeMs(fx);
+  if (can(a?.el) && can(p?.el) && !reduced()) {
+    const ra = a.el.getBoundingClientRect(), rp = p.el.getBoundingClientRect();
+    const reach = -Math.min(Math.abs((ra.left + ra.width / 2) - (rp.left + rp.width / 2)) * 0.14, ra.width * 0.35);
+    a.el.animate([
+      { transform: 'translateX(0)' },
+      { transform: `translateX(${-reach * 0.18}px)`, offset: 0.25 },
+      { transform: `translateX(${reach}px)`, offset: STRIKE_AT },
+      { transform: 'translateX(0)' },
+    ], { duration: LUNGE_MS, easing: 'ease-in-out', composite: 'add' });
+  }
+  setTimeout(() => classSpray(p, 'thrallhit'), strike);
+  if (fx.taken > 0) floatNumber(ctx, p, `-${fx.taken}`, 'fx-thrall', strike, 'THRALL');
 }
 
 // Enemy swings and misses: the lunge still happens, the knight side-steps.
@@ -242,6 +343,7 @@ function heal(fx, ctx) {
   const p = ctx.unit(fx.to);
   if (fx.amount > 0) floatNumber(ctx, p, `+${fx.amount}`, fx.potion ? 'fx-heal fx-potion' : 'fx-heal');
   barFlash(p, 'heal', 0, fx.potion ? 1300 : 700);
+  if (fx.drain) classSpray(p, 'grave'); // Soul Drain (0.00268): the wisps flew with the blow; the heal line is their arrival
   if (!fx.potion) { glow(p, 'sepia(1) saturate(4) hue-rotate(60deg) brightness(1.35)', 420); return; }
   glow(p, 'sepia(1) saturate(5) hue-rotate(65deg) brightness(1.6)', 1100);
   bgLight('potion', p?.card?.getBoundingClientRect?.()); // green light in the scene (0.100)

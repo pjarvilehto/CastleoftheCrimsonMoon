@@ -22,6 +22,8 @@ export function cleanHero(h) {
 }
 /** The hero a profile plays, whole. */
 export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
+/** The name of a profile's heavy attack (0.00267, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Entangle, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; the blow itself is the same for every class. */
+export const heavyName = (p) => heroOf(p).heavyName;
 /** A hero's colour theme (0.00254): { plate, light, tint } — the card plates' colour, the card light's look and tint. */
 export const heroTheme = (hero) => hero.theme;
 /** A hero's look, whole: { art, fh } (an index past the list is clamped). */

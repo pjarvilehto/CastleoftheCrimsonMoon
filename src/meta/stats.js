@@ -5,6 +5,7 @@
 // profile + the data; nothing here saves.
 
 import { DATA } from '../shared/data.js';
+import { heroOf } from '../shared/heroes.js';
 import { levelFromStats } from '../shared/level.js';
 import { equippedItemIds } from './equipment.js';
 import { getProfile } from './profile.js';
@@ -83,16 +84,17 @@ export function derivedStats(p = getProfile()) {
   const critCap = pl.critCap;
 
   // T4 relic powers
-  const dodge = Math.min(pl.dodgeCap, gear.reduce((s, g) => s + (g.dodge || 0), 0));
+  const cls = heroOf(p).class; // the class (0.00258): multipliers on the knight's numbers, its own heavy and passives (heroes.json)
+  const dodge = Math.min(pl.dodgeCap, cls.dodge + gear.reduce((s, g) => s + (g.dodge || 0), 0));
   const thorns = gear.reduce((s, g) => s + (g.thorns || 0), 0);
-  const heavyCdMax = Math.max(1, pl.baseHeavyCd - gear.reduce((s, g) => s + (g.heavyCd || 0), 0));
+  const heavyCdMax = Math.max(1, cls.heavyCd - gear.reduce((s, g) => s + (g.heavyCd || 0), 0)); // (the class's cooldown; the knight's is player.baseHeavyCd's 3)
   const revive = gear.some((g) => g.revive);
 
   return {
     // 0.072: hpPerVitality was 12 — HP stacking out-scaled everything
-    maxHp: pl.baseHp + trainedLevel(p, 'vitality') * pl.hpPerVitality + gearHp,
-    dmg: pl.baseDmg + trainedLevel(p, 'power') * pl.dmgPerPower + gearDmg,
-    armor: trainedLevel(p, 'endurance') * pl.armorPerEndurance + gearArmor,
+    maxHp: Math.round((pl.baseHp + trainedLevel(p, 'vitality') * pl.hpPerVitality + gearHp) * cls.hpMult),
+    dmg: Math.round((pl.baseDmg + trainedLevel(p, 'power') * pl.dmgPerPower + gearDmg) * cls.dmgMult),
+    armor: Math.round((trainedLevel(p, 'endurance') * pl.armorPerEndurance + gearArmor) * cls.armorMult),
     crit: Math.min(critCap, crit),
     // 0.112: crit chance past the cap isn't lost — it becomes crit damage
     // (critOverflowDamage x the excess, added to the crit multiplier)
@@ -110,5 +112,6 @@ export function derivedStats(p = getProfile()) {
     fortuneBonus: trainedLevel(p, 'fortune') * DATA.difficulty.fortuneLootBonus,
     potions: p.potions,
     potionCap: p.potionCap,
+    klass: { ...cls }, // the class block, snapshotted with the rest — a copy, a shrine's Quicken adds a charge to it (run/combat.js reads the heavy and the passives from it)
   };
 }

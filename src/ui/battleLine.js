@@ -15,7 +15,7 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf, cleanHero, lookIsSprite } from '../shared/heroes.js';
+import { heroOf, cleanHero, lookIsSprite, heavyName } from '../shared/heroes.js';
 import { potionHealAmount } from '../meta/leveling.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
 
@@ -152,7 +152,7 @@ function statsPage(run) {
     ['Crit chance', () => pct(run.stats.crit), 'crit'],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`, 'crit'],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—'), 'ls'],
-    ['Heavy blow', () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`],
+    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00267: the class's name for its heavy)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
     ['Potion heals', () => `${potionHealAmount()} HP`, 'hp'],
   ].map(([label, val, st]) => ({ val, b: el('b', {}, val()), label, st }));
@@ -262,7 +262,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   });
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
+  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
@@ -273,7 +273,12 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setText(potionCount, shownPotions());
     setText(armorVal, armorText());
     if (page > 0) back.set(PAGES[page]);
-    setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
+    // 0.00267, the classes: a charge class (the wizard) shows its charges
+    // left as pips in place of the cooldown
+    const k = run.stats.klass;
+    const charges = Math.max(0, Math.min(k.charges, Number(s.charges) || 0));
+    setText(cd, k.charges > 0 ? ` ${'◆'.repeat(charges)}${'◇'.repeat(k.charges - charges)}`
+      : s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
@@ -320,6 +325,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
   const plate = frame();
+  const foeTag = el('div', { class: 'foe-tag card-sub' }, ''); // (0.00267: HEXED by the hexhunter, BLIGHT ×n under the plague sister's censer; empty otherwise)
   const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
     plate,
     el('div', { class: 'card-head' },
@@ -328,6 +334,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
+    foeTag,
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
@@ -337,6 +344,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
+  let lastStatus = ''; // the figure's status look (0.00272)
   let canHit = false; // the Attack button is live (the card clicks through to it)
   const atkDisabled = disabler(atk);
   const update = (s) => {
@@ -351,6 +359,17 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       setClass(card, 'dying', true);
       collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
+    const tag = [s.hexed ? 'HEXED' : '', s.blight > 0 ? `BLIGHT ×${s.blight}` : '', s.entangled > 0 ? `ROOTED ${s.entangled}` : ''].filter(Boolean).join(' · '); // (0.00271: the Druid's roots, turns left)
+    setText(foeTag, tag);
+    setClass(foeTag, 'on', !!tag);
+    setClass(card, 'hexed', !!s.hexed);
+    // the status in the figure (0.00272): blighted = sickly green, rooted = earth-brown, either slows its idle loop (styles.css);
+    // a change re-reads the portrait's filter for the hit flash (fxParts.js baseFilter caches it)
+    const status = `${s.blight > 0 ? 'b' : ''}${s.entangled > 0 ? 'r' : ''}`;
+    if (status !== lastStatus) { lastStatus = status; self.baseFilter = undefined; }
+    setClass(card, 'blighted', s.blight > 0);
+    setClass(card, 'rooted', s.entangled > 0);
+    setClass(card, 'slowed', s.blight > 0 || s.entangled > 0);
     setClass(atk, 'ghost-btn', s.dead);
     atkDisabled(s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);

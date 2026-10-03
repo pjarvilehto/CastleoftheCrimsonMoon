@@ -7,18 +7,18 @@
 // back to flat (the renderer's own weak-device signal).
 
 import { isBg3dActive, bgQualityLevel } from '../core/bg3d.js';
-import { spawnParticles, R, rr } from './particleLooks.js';
+import { spawnParticles, spawnClassBurst, R, rr } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
 import { DATA } from '../shared/data.js';
 import { deviceBlock } from '../shared/platform.js';
 import { span } from '../core/perfSpans.js';
 
-export { MATERIAL, materialOf, STYLE_OF, spawnParticles } from './particleLooks.js';
+export { MATERIAL, materialOf, STYLE_OF, spawnParticles, spawnClassBurst, CLASS_LOOKS, CLASS_PAL } from './particleLooks.js';
 
 // cards.json particles (0.00222: budget, max, keepFloor and the DPR cap were numbers here; a phone has its own block)
 let P = null;
 const knobs = () => (P ??= deviceBlock(DATA.cards.particles));
-const THINNABLE = new Set(['streak', 'blob', 'dot']);
+const THINNABLE = new Set(['streak', 'blob', 'dot', 'puff']);
 let canvas = null, ctx2d = null, parts = [], running = false, last = 0, scale = 1;
 let box = null; // last frame's painted area, device px: [x0, y0, x1, y1]
 
@@ -56,10 +56,18 @@ export function attachParticles(layer) {
 // where ink drops land.
 export function burst(material, x, y, opts = {}) {
   if (!canvas?.isConnected) return;
+  push(spawnParticles(material, x, y, opts));
+}
+// A class's own trace (0.00268, particleLooks.js spawnClassBurst): the
+// same canvas, the same budget.
+export function burstClass(look, x, y, opts = {}) {
+  if (!canvas?.isConnected) return;
+  push(spawnClassBurst(look, x, y, opts));
+}
+function push(list) {
   // Crowded (OVERKILL: a kill burst on every card at once): past BUDGET
   // live particles a new burst keeps its rings, flashes and slashes but
   // only some of its streaks, blobs and sparks (0.129).
-  const list = spawnParticles(material, x, y, opts);
   const { budget, max, keepFloor } = knobs();
   const keep = Math.min(1, Math.max(keepFloor, (budget - parts.length) / list.length));
   for (const p of list) {
@@ -82,6 +90,11 @@ const qa = (a) => Math.round(Math.min(1, a) * ALPHA_STEPS) / ALPHA_STEPS;
 
 function step(p, dt) {
   if (p.vx === undefined) return;
+  if (p.pull) { // a wisp seeking a point (the soul drain): pulled harder as it goes, gone when it arrives
+    const dx = p.tx - p.x, dy = p.ty - p.y, dist = Math.hypot(dx, dy) || 1, k = p.pull * (0.4 + p.age / p.life) * dt;
+    p.vx += (dx / dist) * k; p.vy += (dy / dist) * k;
+    if (dist < 14) p.age = p.life;
+  }
   const d = Math.exp(-p.drag * dt);
   p.vx *= d;
   p.vy = p.vy * d + p.g * dt;
@@ -163,6 +176,32 @@ function drawOne(c, p, k) {
       c.globalAlpha = 0.9 * k;
       c.drawImage(glowSprite(p.color), p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
       return p.size;
+    // the classes' kinds (0.00268)
+    case 'puff': { // soft smoke: the glow sprite drawn source-over, thin, growing as it fades
+      const t = p.age / p.life, s = p.size * (1 + t * p.grow);
+      c.globalAlpha = p.alpha * Math.sin(Math.PI * Math.min(1, t)) ;
+      c.drawImage(glowSprite(p.color), p.x - s, p.y - s, s * 2, s * 2);
+      return s;
+    }
+    case 'sigil': { // a pentagram turning inside a ring, fading in and out
+      const t = p.age / p.life, a = Math.sin(Math.PI * Math.min(1, t)), rot = p.spin * p.age, r = p.r * (0.85 + 0.15 * t);
+      c.globalAlpha = 0.9 * a; c.strokeStyle = `rgb(${p.edge})`; c.lineWidth = 2.2;
+      c.beginPath(); c.arc(p.x, p.y, r, 0, TAU); c.stroke();
+      c.strokeStyle = `rgb(${p.color})`; c.lineWidth = Math.max(1, 1.6);
+      c.beginPath();
+      for (let i = 0; i <= 5; i++) { const ang = rot + ((i * 2) % 5) * (TAU / 5) - Math.PI / 2; const px = p.x + Math.cos(ang) * r * 0.92, py = p.y + Math.sin(ang) * r * 0.92; if (i === 0) c.moveTo(px, py); else c.lineTo(px, py); }
+      c.stroke();
+      return r + 3;
+    }
+    case 'arc': { // a crescent swung across the figure: the stroke grows along its sweep, then thins and fades
+      const t = p.age / p.life, done = Math.min(1, t * 2.4), a0 = p.a0, a1 = p.a0 + p.sweep * done;
+      c.globalAlpha = 0.85 * (1 - t); c.lineCap = 'round';
+      c.strokeStyle = `rgb(${p.color})`; c.lineWidth = Math.max(1, p.w * (1 - t * 0.7));
+      c.beginPath(); c.arc(p.x, p.y, p.r, Math.min(a0, a1), Math.max(a0, a1)); c.stroke();
+      c.strokeStyle = `rgb(${p.edge})`; c.lineWidth = Math.max(1, p.w * 0.3 * (1 - t));
+      c.beginPath(); c.arc(p.x, p.y, p.r * 1.04, Math.min(a0, a1), Math.max(a0, a1)); c.stroke();
+      return p.r + p.w;
+    }
     default: return 0;
   }
 }
@@ -194,7 +233,7 @@ function render(c) {
     const k = Math.max(0, 1 - p.age / p.life);
     const r = add(buckets, p, k);
     if (r >= 0) grow(p, r);
-    else (p.kind === 'splat' ? floor : p.kind === 'slash' ? ink : glow).push(p);
+    else (p.kind === 'splat' ? floor : p.kind === 'slash' || p.kind === 'puff' ? ink : glow).push(p); // (0.00268: a puff is smoke — source-over, under the glow pass)
   }
   // pass 1: ink (source-over); pass 2: glow ('lighter')
   for (const pass of [false, true]) {

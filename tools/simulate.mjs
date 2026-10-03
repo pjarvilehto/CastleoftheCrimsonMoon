@@ -12,6 +12,7 @@
 //   node tools/simulate.mjs --retreat       # bot banks the run when it's risky
 //   node tools/simulate.mjs --seeds 1-8     # 8 independent campaigns, mean ± sd
 //   node tools/simulate.mjs --tactic boss   # targeting: suggested (default) | boss | summons
+//   node tools/simulate.mjs --hero wizard   # a class (heroes.json); the knight when unset (0.00258)
 //   (per-boon shrine balance: node tools/shrine-study.mjs)
 //
 // The bot policy (a competent, greedy player):
@@ -30,13 +31,14 @@ import { loadSim, withSeed, newAgg, STAT_PRIORITY } from './simCore.mjs';
 
 // One campaign: a fresh profile plays `runs` runs, spending in the hub
 // between them. (Engine + policies live in simCore.mjs since 0.091.)
-export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false, tactic = 'suggested' } = {}) {
+export async function simulate({ runs = 40, seed = 1, verbose = false, retreat = false, tactic = 'suggested', hero = null } = {}) {
   const sim = await loadSim();
   const agg = newAgg();
   const t4MinRoom = sim.DATA.difficulty.t4MinRoom;
   agg.potionDropChance = sim.DATA.difficulty.potionDropChance;
   return withSeed(seed, () => {
     sim.fresh();
+    if (hero) sim.getProfile().hero = { id: hero, look: 0 }; // the class under study (0.00258; the knight when unset)
     for (let r = 0; r < runs; r++) {
       const rec = sim.playRun({ agg, retreat, tactic });
       if (rec.bossesBeaten >= 1 && agg.firstBossClearRun == null) agg.firstBossClearRun = r + 1;
@@ -192,10 +194,10 @@ export function renderReport(agg, { runs, seed }) {
 }
 
 // ── Multi-seed summary: independent campaigns, mean ± sd per metric ──
-async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested' } = {}) {
+async function multiSeed(seeds, { runs = 40, retreat = false, tactic = 'suggested', hero = null } = {}) {
   const rows = [];
   for (const seed of seeds) {
-    const agg = await simulate({ runs, seed, retreat, tactic });
+    const agg = await simulate({ runs, seed, retreat, tactic, hero });
     const { median, mean } = analyze(agg);
     const rate = (r) => (agg.bossSeen[r] ? (agg.bossBeaten[r] ?? 0) / agg.bossSeen[r] : NaN);
     const early = agg.depths.slice(0, 10);
@@ -245,12 +247,13 @@ if (invokedDirectly) {
   const retreat = process.argv.includes('--retreat');
   const tactic = arg('tactic', 'suggested');
   const seeds = arg('seeds', null); // e.g. 1-8
+  const hero = arg('hero', null); // a class (heroes.json id); the knight when unset (0.00258)
   if (seeds) {
     const [from, to] = seeds.split('-').map(Number);
     const list = Array.from({ length: (to ?? from) - from + 1 }, (_, i) => from + i);
-    console.log(renderMultiSeed(await multiSeed(list, { runs, retreat, tactic }), { runs, retreat }));
+    console.log(renderMultiSeed(await multiSeed(list, { runs, retreat, tactic, hero }), { runs, retreat }));
   } else {
-    const agg = await simulate({ runs, seed, verbose, retreat, tactic });
+    const agg = await simulate({ runs, seed, verbose, retreat, tactic, hero });
     console.log(renderReport(agg, { runs, seed }));
   }
 }

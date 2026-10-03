@@ -93,53 +93,54 @@ const LINES = DATA.narration.lines;
   const started = () => ctx.started.filter((s) => s.kind === 'buffer' && s.buffer?.duration === 2 && s.started[2] === undefined); // the narrator's (a music loop starts with a duration)
   const gainOf = (src) => src.outs[0]?.gain?.value;
   nar.narratorRun();
-  ctx.currentTime = 100;
+  const T0 = Math.max(100, Math.ceil(ctx.currentTime / 100) * 100 + 100); // (the clock relative to what is there: the audio test leaves it a second past every registered clip — 0.00272, with 59 file clips it passed 100)
+  ctx.currentTime = T0;
   const n0 = started().length;
   ok('a line plays: the moment counts', nar.narrate('descent_begin') === true);
   await sleep(10);
   const a = started()[n0];
   const levels = LINES.descent_begin.map((t) => dbToGain(N.targetDb - t.measuredDb));
-  ok('...a take starts now through the effects bus, levelled to targetDb', !!a && a.started[0] === 100 && a.outs[0].outs[0] === mx.mixer().sfx
+  ok('...a take starts now through the effects bus, levelled to targetDb', !!a && a.started[0] === T0 && a.outs[0].outs[0] === mx.mixer().sfx
     && levels.some((g) => Math.abs(g - gainOf(a)) < 1e-9), a && `${a.started} ${gainOf(a)}`);
   const duck = mx.mixer().duck.gain.events;
-  ok('...the music ducks under it', duck.some((e) => e[0] === 'target' && Math.abs(e[1] - dbToGain(DATA.audio.duck.db)) < 1e-9 && e[2] === 100));
+  ok('...the music ducks under it', duck.some((e) => e[0] === 'target' && Math.abs(e[1] - dbToGain(DATA.audio.duck.db)) < 1e-9 && e[2] === T0));
   nar.narrate('boss_enter');
   await sleep(10);
   const b = started()[n0 + 1];
-  ok('a second line waits for the first, a gap between', !!b && Math.abs(b.started[0] - (100 + 2 + N.gapS)) < 1e-9, b && `${b.started}`);
-  ctx.currentTime = 103; // the second line still has 1.8 s to go
+  ok('a second line waits for the first, a gap between', !!b && Math.abs(b.started[0] - (T0 + 2 + N.gapS)) < 1e-9, b && `${b.started}`);
+  ctx.currentTime = T0 + 3; // the second line still has 1.8 s to go
   nar.narrate('shrine_enter', { delayMs: 500 });
   await sleep(10);
   const c = started()[n0 + 2];
-  ok('a delayed line starts after its delay or the queue, whichever is later', !!c && Math.abs(c.started[0] - (100 + 2 * (2 + N.gapS))) < 1e-9, c && `${c.started}`);
+  ok('a delayed line starts after its delay or the queue, whichever is later', !!c && Math.abs(c.started[0] - (T0 + 2 * (2 + N.gapS))) < 1e-9, c && `${c.started}`);
   const n1 = started().length;
   for (let i = 0; i < 4; i++) nar.narrate('treasure_enter');
   await sleep(10);
-  ok('lines that would wait longer than maxWaitS are dropped', started().length < n1 + 4 && started().every((s) => s.started[0] - 103 <= N.maxWaitS + 1e-9));
+  ok('lines that would wait longer than maxWaitS are dropped', started().length < n1 + 4 && started().every((s) => s.started[0] - (T0 + 3) <= N.maxWaitS + 1e-9));
 
   // SOUND: OFF (0.00223): nothing to hear, so no take is spent and the music is not ducked
   mx.setBusMuted('sfx', true);
-  ctx.currentTime = 150;
+  ctx.currentTime = T0 + 50;
   const nS = started().length, nD = mx.mixer().duck.gain.events.length;
   ok('SOUND: OFF — the moment counts, no take plays, no duck', nar.narrate('boss_enter') === true && (await sleep(10), started().length === nS && mx.mixer().duck.gain.events.length === nD));
   mx.setBusMuted('sfx', false);
 
   // a line dropped for the wait gives its once-per rule back (0.00223)
-  ctx.currentTime = 160; nar.narratorRun();
+  ctx.currentTime = T0 + 60; nar.narratorRun();
   nar.narrate('boss_enter'); nar.narrate('shrine_enter'); // 2 x (2 s + the gap) queued: a third would wait past maxWaitS
   const nU = started().length;
   ok('a line dropped for the wait keeps its once per run', nar.narrate('new_record') === true && (await sleep(10), started().length === nU + 2)
-    && (ctx.currentTime = 170, nar.narrate('new_record') === true) && (await sleep(10), started().length === nU + 3));
+    && (ctx.currentTime = T0 + 70, nar.narrate('new_record') === true) && (await sleep(10), started().length === nU + 3));
   const rnd = Math.random; Math.random = () => 0; // (the forge's chance roll always passes)
-  ctx.currentTime = 180;
+  ctx.currentTime = T0 + 80;
   nar.narrate('boss_enter'); nar.narrate('shrine_enter');
   const nF = started().length;
   ok('...and its once per session', nar.narrate('forge') === true && (await sleep(10), started().length === nF + 2)
-    && (ctx.currentTime = 190, nar.narrate('forge') === true) && (await sleep(10), started().length === nF + 3)
-    && (ctx.currentTime = 195, nar.narrate('forge') === false)); // (heard once: the session rule holds)
+    && (ctx.currentTime = T0 + 90, nar.narrate('forge') === true) && (await sleep(10), started().length === nF + 3)
+    && (ctx.currentTime = T0 + 95, nar.narrate('forge') === false)); // (heard once: the session rule holds)
   Math.random = rnd;
 
-  ctx.currentTime = 200;
+  ctx.currentTime = T0 + 100;
   nar.narrate('retreat'); await sleep(10);
   const playing = started().at(-1);
   nar.toggleNarrator(); // OFF

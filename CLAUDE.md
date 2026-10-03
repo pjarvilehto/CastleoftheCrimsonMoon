@@ -116,6 +116,7 @@ node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-pr
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
+node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 ```
 
@@ -390,7 +391,7 @@ screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
 see-through opacity, so the plate stays as transparent as the lab's
 (0.195) — masked to the frame's window or a panel's rounded edge). Drawn at `fx.scale` of the card's
-pixels at `fx.fps` (60 since 0.00255: the 30 of the copy-out days read
+pixels at `fx.fps` (60 since 0.00257: the 30 of the copy-out days read
 as a jerk beside 120 Hz motion on the developer's Mac — the pool draws
 each card straight, a few hundredths of a ms a tick; a phone keeps 20,
 the saver 15), a fallen card lit until its unit leaves the row
@@ -436,7 +437,35 @@ pattern: a layer whose opacity breathes — the low-HP bar, the summon
 bar, the record tag); a phone shows the figures without the
 drop-shadow filter (an iOS re-render per frame on a looping layer) and
 the rarity / low-HP text without its breathing (`styles.css` section 16). The benchmark draws all of it from 0.183 on (its numbers moved
-with it). **Particles** (looks
+with it). **The classes' particles (0.00268, the developer's ask: each class's
+attacks unique):** a blow by the hero lays the class's own trace over the
+foe's material burst — `particleLooks.js spawnClassBurst(look, x, y, {
+size, dir, kind, to })`, pure like `spawnParticles`, palettes `CLASS_PAL`
+(steel, rust, fire, arcane, grave, moss, violet, ochre), the looks
+`CLASS_LOOKS`; `combatFx.js traceFor(fx, heavy)` picks the look from the
+class and the blow (the Knight's heavy a steel clash, his blows none;
+Cleave a crescent arc swung through the foe with embers, its reach a
+smaller one, the Barbarian's blows embers; Fireball an amber bloom with
+cinders and smoke on every foe it takes, the Wizard's blows an arcane
+flash; Soul Drain wisps torn out of the foe that seek the Necromancer's
+card — `to`, a dot with `tx` / `ty` / `pull`, gone on arrival — his blows
+grave motes; the Druid's heavy three rakes of the living staff and
+leaves, his blows one; a blow on the hexed foe flares the sigil, the Hexhunter's
+others violet sparks; the Plague Sister's blows a swing of the censer,
+the blight's gnawing a wisp of it) and the class events burst on their
+own (`playFx`: the Hex a turning pentagram in a ring, Last Rites the
+censer's smoke on every foe, Entangle roots shooting up from the ground at
+every foe's feet — `classSpray(..., { at: 'feet' })`, the `roots` look's
+`tendrils`: thick earth-coloured streaks rising and pulled back down, a
+green tip — with a green light, a bound foe's strain a tug (`rooted`), a
+shiver and ENTANGLED floating up; a charge back, the thrall's rise, a
+blow it took — the attacker lunges, a green THRALL number — and its
+crumbling). The events say what the blow was (`combat.js`: `marked` on
+the blow, `via` on a
+heavy's reach and the blight tick, `drain` + `target` on the heal). Three
+kinds joined the renderer: `puff` (soft smoke, source-over under the
+glow pass, growing; thinned with the rest), `sigil`, `arc`. The tests
+are in `classes.test.mjs`. **Particles** (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
 blood = Ink & Gore (ink slash, stretched blobs, floor splats); bone,
@@ -818,10 +847,66 @@ the class's — on every card of CHOOSE YOUR HERO (`--theme` on the card,
 the chosen one's pulse in it too), on the knight's card in combat
 (`battleLine.js frame(theme)`) and on the hall's portrait), `light` and
 `tint` (the card light behind the player: `cardFx.js cardStyle('player')`
-reads them, the knight's ether as before). The knight crimson, the
+reads them, the knight's ether as before; `heavyName`, the heavy
+attack's name on the button and the STATS row — 0.00267, the
+developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Go
+Feral, Hex, Last Rites; the blow is the same for every class,
+`shared/heroes.js heavyName`). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
-with fog — my picks, tuned in the data. **What it changes:**
+with fog — my picks, tuned in the data. **The classes' gameplay (drafted
+0.00258 under the simulator, LIVE since 0.00267 — the developer's call: play
+it, then tune; the knight's path is the game as it was):**
+`heroes.json class` per hero (every key on every hero, `_class` says
+what each does) — multipliers on the derived HP / damage / armor, a
+potion's heal, dodge, the heavy's cooldown and factor, and `heavy`: the
+knight's `blow` (spill, OVERKILL), the Barbarian's `cleave` (+ rage), the
+Wizard's `fireball` (charges a fight), the Necromancer's `drain` (+ a
+thrall raised from a kill that takes the foes' blows), the Druid's
+`entangle` (0.00271, the developer's call, in place of Go Feral's wild
+shape: roots bind every living foe for `entangleTurns` (2) of their turns —
+`e.entangled`, loosened one a turn at the end of the enemy phase — and a
+bound foe's attack fails with `entangleChance` (0.4): "Entangled!", no
+blow, `enemyStrike`; the simulator at 0.4 puts him beside the knight,
+16.5 / room-24 boss 18%; 0.5 was 17.8 / 18%, 0.6 and three turns ran to
+20 / 33%; + mending a turn), the Hexhunter's `mark` (every hit on it
+crits; + dodge), the Plague Sister's `censer` (blight stacks ticking a
+turn; + armor per potion) — `stats.js derivedStats` applies the
+multipliers and snapshots the block as `run.stats.klass`, `combat.js
+classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
+`canHeavy` do the rest. `node
+tools/simulate.mjs --hero <id>` plays a class; the second tuning round
+(4 campaigns x 40 runs, the knight at median 15.8 / room-24 boss 6%):
+Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
+16.0 / 0% (the developer's call: less glass, less cannon — HP 0.9, armor
+0.7, damage 1.05, the fireball 0.9; rooms in under 3 turns, bosses
+still hurt), Necromancer 16.0 / 5%, Hexhunter 15.3 / 0% — then (the developer's call) the Hexhunter made
+to reach room 24 (the hex adds `markCrit` 0.3 crit damage on the hexed
+foe, the heavy at 0.8: 16.5 / 6%) and the Wizard made to fare better
+against bosses (`chargeOnKill`: a kill gives a charge back, up to
+`charges`, now 3; damage 1.1; Quicken at a shrine gives a charge class a
+charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
+78% from 68%). No difficulty label on the cards (the developer's call:
+the variance stays quiet). **The combat UI's minimum (0.00267, shipped
+with it so the classes can be played; the mock-ups in the chat are the
+design to grow into):** the heavy button carries the class's name (above)
+and, for a charge class, its charges as pips (◆◆◇) in place of the
+cooldown (`battleRoom.js update` hands `charges` to the unit); a foe's
+card tags HEXED / BLIGHT ×n / ROOTED n above its HP line (`.foe-tag`, the
+hexed card rimmed violet; `hexed` / `blight` / `entangled` in its
+snapshot); **the status in the figure (0.00272, the developer's ask):** a
+blighted foe's portrait turns sickly (a static sepia + green hue-rotate,
+drained) and a rooted one earth-brown (`.char-card.blighted` /
+`.rooted`, the two together darker), and either slows its idle loop
+(`.slowed`: each family's duration at 1.5x) — never an animated filter;
+the hit flash reads the portrait's filter as its base, so the unit drops
+that cache (`baseFilter`) when the status changes; the phone keeps the
+slowed loop and the tag, not the tint (section 16's twins set `filter:
+none` — a filter on a looping figure is a per-frame software filter on
+iOS); every new log line has a colour (mark, blight, entangle,
+entangled, charge, thrall, thrallhit, thrallfall; `styles.css`). Not yet: a
+thrall card (the log alone says it rose, took a blow, crumbled), a rage
+chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
 the knight's standing looks too — only a look marked `sprite: true`
@@ -843,7 +928,40 @@ figure clear of it, the switcher clear of the bar, Proceed on screen) and
 runs the hall and the dungeon as the Necromancer, so a standing figure
 on the cards is looked at; the knight's wide sprite is the easy case.
 
-**Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
+**The classes' sounds (0.00270, the developer's ask: each class its own
+attack and get-hit sounds).** `audio.json clips` has `atk_<id>`,
+`heavy_<id>` and `hurt_<id>` per hero — the developer's two recordings
+(`sfx-attack.mp3`, `sfx-hurt.mp3`) pitched per class (`rate`: the
+Barbarian low and slow, the Wizard and the women higher) with their own
+`variation` layers from `audio/synth.js`: `swing` (a heavy swing),
+`crackle` (fire: a roar bed and pops), `zap` (an arcane buzz falling),
+`wail` (a grave voice with vibrato, breath under it; low, a growl),
+`rake` (three claws), `chime` (an inharmonic bell), `hiss` (censer smoke
+with the chain's rattle) and `grunt` (the hero struck: a buzz through two
+vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
+~1.25 the Hexhunter and the Plague Sister). `combatQueue.js sfxFor(ev)`
+picks them by the save's class (a class without the clip falls back to
+the plain one); the class events have sounds too (`EV_SFX`: the hex a
+chime, the blight a hiss, Entangle a thud and a bound foe's strain a
+swoosh, a charge a zap, the thrall a wail, its blows a thud); `dataCheck`
+wants the three clips per hero. **The recordings (0.00272):** the
+developer gave the key the `sound_generation` permission, and
+`tools/gen-sfx.mjs` rendered `docs/sfx-prompts.md` (a line per clip: id,
+seconds, prompt) through ElevenLabs' sound generation into
+`assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7; `--redo <clip>` a
+fresh take as `_v<k+1>`), measured each with ffmpeg (the loudest 50 ms)
+and pointed the clip's `file` / `measuredDb` at it — then every
+rendered clip's `measuredDb` was replaced by the browser's own reading
+(`tools/audio-check.mjs`: ffmpeg's 16 kHz downsample under-read the hissy
+ones, a zap or a smoke hiss, by up to 4 dB) and the `gainDb` trims set so
+every clip lands at its level (a hero's blow and hurt
+-12 dB like the hits, a heavy -10, a foe's own sound -14, under the
+hero's). The synth layers stay as the class's colour over the
+recordings. **The foes' sounds (0.00272, "every character"):** `eatk_<id>`
+/ `ehurt_<id>` per enemy (the same doc and tool): `combatSfx.js` plays
+the struck foe's cry with the hero's blow and the striking foe's attack
+with the hero's hurt, by the unit's id on the strike's pan and timing; a
+foe without a clip is as before. **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
 and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
@@ -991,7 +1109,14 @@ be served stale for ~4 hours.
   dungeon scene's `leaveRun(next)`), then runs and returns to the hall.
   **DEBUG MODE** (`ui/debugToggles.js debugMenu`): ON shows the testing
   tools under it (INVULNERABLE, background views and tuning, FORCE CRITS,
-  LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
+  SWITCH CLASS (0.00269, the developer's ask: each click moves the save to
+  the next class, first look, kit as worn, and re-renders the screen — the
+  hall and CHOOSE YOUR HERO through `relayout()`, a run through the dungeon
+  scene's `switchClass()`: the run's stats rebuilt for the class, this run's
+  shrine boons dropped, health kept as a share of the new maximum, the
+  fight's charges / hex / thrall / wild shape reset, the battle line
+  rebuilt in place and dealt in, a DEBUG line in the log; `debugToggles.js
+  switchClassButton`), LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
   carries `.debug-on`); remembered in this browser (`castle-debug-mode`),
   so testers need no `?debug` — `?debug` still turns it on for the visit,
   and only `?debug` in the address lets software GL draw the 3D background

@@ -126,13 +126,14 @@ export function addPotion(run) {
 // (0.00223: a potion drunk after the win announced armor the next room threw away).
 export function drinkPotion(run, inCombat = true) {
   if (run.potions <= 0 || run.hp >= run.maxHp) return false;
-  const healed = potionHealAmount(); // potency-trained
+  const healed = Math.round(potionHealAmount() * run.stats.klass.potionHealMult); // potency-trained (x the class's share, 0.00258)
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;
   run.potionsDrunk += 1;
   run.hp = Math.min(run.maxHp, run.hp + healed);
   const armor = inCombat ? infusionArmor() : 0;
   if (armor > 0) run.tempArmor += armor;
+  if (run.stats.klass.potionArmor > 0) run.tempArmor += run.stats.klass.potionArmor; // (the Plague Sister's endurance, 0.00258)
   return { healed, free, armor };
 }
 

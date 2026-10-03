@@ -7,13 +7,28 @@
 import { applyLoot } from '../run/runState.js';
 import { fxFor, holdFor } from './combatFx.js';
 import { isLowHp } from './hud.js';
+import { DATA } from '../shared/data.js';
+import { getProfile } from '../meta/profile.js';
+import { heroOf } from '../shared/heroes.js';
 
 // Combat event -> sound effect, fired when its line PRINTS (not on click).
 const EV_SFX = {
   atk: 'attack', spill: 'attack', thorns: 'attack',
   dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
   kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'shrine', summon: 'shrine',
+  // the classes' events (0.00270): the hex a chime, the blight a hiss, the roots a thud and a bound foe's strain a swoosh, a charge back a zap, the thrall's rise a wail, its blows and fall a thud (audio/synth.js)
+  mark: 'chime', blight: 'hiss', entangle: 'thud', entangled: 'swoosh', charge: 'zap', thrall: 'wail', thrallhit: 'thud', thrallfall: 'thud',
 };
+// The class's own sounds (0.00270, the developer's ask): the hero's blow
+// is atk_<class>, its heavy heavy_<class>, a blow on the hero hurt_<class>
+// (audio.json clips: the two recordings pitched per class, the class's
+// synth layers under them); a class without the clip falls back to the
+// plain one, so the registry can grow a class at a time.
+export function sfxFor(ev, hero = heroOf(getProfile())) {
+  const plain = EV_SFX[ev.type];
+  const own = ev.type === 'atk' ? (ev.heavy ? `heavy_${hero.id}` : `atk_${hero.id}`) : ev.type === 'spill' ? `atk_${hero.id}` : ev.type === 'dmg' ? `hurt_${hero.id}` : null;
+  return own && DATA.audio.clips[own] ? own : plain;
+}
 
 // Combat event -> narrator line (audio/narrator.js decides whether it is
 // said; 0.161): OVERKILL, a multi-kill ("SMASH"), a mega crit, the revive
@@ -49,6 +64,6 @@ export function queueEvents(events, { run, combat, playback, potionQueued = () =
     }
     const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;
     const fx = fxFor(ev, { maxHp: run.maxHp });
-    playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx, hold: holdFor(fx), sfx: EV_SFX[ev.type], vo: voFor(ev, { run, combat }) });
+    playback.enqueue({ text: ev.text, cls, snap: ev.snap, fx, hold: holdFor(fx), sfx: sfxFor(ev), vo: voFor(ev, { run, combat }) });
   }
 }

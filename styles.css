@@ -756,6 +756,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .player-card .card-name { font-size: 1.1em; }
 .enemy-char .card-name { text-transform: uppercase; } /* data stays title case */
 .lv-badge { color: var(--gold); font-size: 1em; white-space: nowrap; }
+/* a foe's class state (0.00267): HEXED (the hexhunter's hex: every blow crits) / BLIGHT ×n (the plague sister's censer, ticking a turn) — a small chip above the HP line, empty and hidden otherwise */
+.foe-tag { display: none; font-size: 0.68em; letter-spacing: 0.14em; padding: 0.15em 0.6em 0.05em; border: 1px solid #c9d26a; border-radius: 3px; color: #c9d26a; background: rgba(10,7,5,0.8); text-shadow: 0 1px 3px #000; white-space: nowrap; margin-bottom: 0.3em; }
+.foe-tag.on { display: inline-block; }
+.char-card.hexed { box-shadow: inset 0 0 0 2px #b36cff, 0 0 18px rgba(179,108,255,0.6); border-radius: 4% / 1.5%; }
+.char-card.hexed .foe-tag { border-color: #c99bff; color: #c99bff; }
 /* Gold star next to bosses and T3-strength elites — the only enemies
    that can drop T4 crimson relics (same rule as isElite in balance.js).
    The star comes from a fallback font whose taller line box pushed elite
@@ -895,6 +900,17 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @keyframes idle-boss  { 0%, 100% { rotate: -0.9deg; scale: 1; } 50% { rotate: 0.9deg; scale: 1.015; } }
 @keyframes idle-player { 0%, 100% { scale: 1; } 50% { scale: 1.006 1.012; } }
 @media (prefers-reduced-motion: reduce) { .portrait { animation: none !important; } }
+/* a foe's status in its figure (0.00272, the developer's ask): the blight turns it sickly (a green cast, drained), the roots earthy brown;
+   both slow its weave and bob (each family's loop at 1.5x its length — a static filter, never animated: the hit flash reads the figure's
+   filter as its base, battleLine.js resets that cache when the status changes). The phone keeps the slowed loop and the tag, not the
+   tint (section 16: a filter on a looping layer is a software filter per frame on iOS). */
+.char-card.blighted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.5) hue-rotate(50deg) saturate(0.75) brightness(0.9); }
+.char-card.rooted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.85) saturate(1.05) hue-rotate(-12deg) brightness(0.84); }
+.char-card.blighted.rooted .portrait:not(.glint) { filter: drop-shadow(0 0.3em 0.5em rgba(0,0,0,0.65)) sepia(0.7) hue-rotate(30deg) saturate(0.6) brightness(0.82); }
+.char-card.slowed .idle-hover { animation-duration: 6.3s; }
+.char-card.slowed .idle-heavy { animation-duration: 7.8s; }
+.char-card.slowed .idle-prowl { animation-duration: 5.4s; }
+.char-card.slowed .idle-boss { animation-duration: 9.75s; }
 
 /* elite/boss aura (0.089): a pre-rendered radial glow behind the figure;
    only opacity/scale animate (compositor-only) */
@@ -943,6 +959,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 #combat-log .dodge { color: #8fd3e8; }
 #combat-log .thorns { color: #ff6b4a; }
 #combat-log .revive { color: var(--gold); font-weight: bold; }
+/* the classes' lines (0.00267): the hex, the blight, the roots (0.00271), a charge back, the thrall */
+#combat-log .mark { color: #c99bff; }
+#combat-log .blight { color: #c9d26a; }
+#combat-log .entangle { color: #9ee06a; font-weight: bold; }
+#combat-log .entangled { color: #9ee06a; }
+#combat-log .charge { color: #9ab4ff; }
+#combat-log .thrall { color: #8fe0a0; font-weight: bold; }
+#combat-log .thrallhit { color: #9a8b6a; }
+#combat-log .thrallfall { color: #9a8b6a; font-style: italic; }
 /* SMASH / OVERKILL: heavy attack room-wipe, one snappy line */
 #combat-log .overkill { color: #ffd700; font-weight: bold; letter-spacing: 0.08em; font-size: 1.05em; } /* (the event's name since 0.00223) */
 /* EPIC ITEM line (0.063) */
@@ -1048,6 +1073,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .fx-thorns { color: #c38cff; }
 .fx-miss { color: #d8d0c0; letter-spacing: 0.12em; }
 .fx-heal { color: #6fe07a; }
+.fx-thrall { color: #8fe0a0; opacity: 0.85; } /* a blow the Necromancer's thrall took (0.00268) */
 .fx-potion { font-size: calc(var(--num, 24px) * 1.35); text-shadow: 0 0 12px rgba(110, 255, 130, 0.9), 0 2px 4px #000; }
 .fx-revive { color: #ffd24a; letter-spacing: 0.12em; text-shadow: 0 0 14px rgba(255, 200, 60, 1), 0 2px 4px #000; }
 /* particles canvas (0.089, ui/particles.js): under the numbers */
@@ -1359,6 +1385,9 @@ html.phone .enemy-unit .unit-actions { display: none; }           /* the card is
 /* the figures' drop shadow (0.00222): on iOS a shadow filter on a looping layer is re-rendered every frame, and it turns
    every hit flash into a software filter — the phone keeps the figure, not the shadow (the glint copy keeps its own filter) */
 html.phone .portrait:not(.glint) { filter: none; }
+html.phone .char-card.blighted .portrait:not(.glint) { filter: none; } /* the status looks (0.00272): the tag and the slowed loop say it on a phone, no filter on the looping figure */
+html.phone .char-card.rooted .portrait:not(.glint) { filter: none; }
+html.phone .char-card.blighted.rooted .portrait:not(.glint) { filter: none; }
 html.phone .player-unit { position: relative; }
 html.phone .player-unit .unit-actions { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; } /* under the card, outside the row: every card bottom on one line */
 html.phone .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }

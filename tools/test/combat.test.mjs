@@ -505,7 +505,7 @@ await withSeedAsync(4, async () => {
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
   ok('crit toggles only under DEBUG MODE', main.includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]")
-    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|LABS|BENCHMARK', labels.join('|'));
+    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|SWITCH CLASS: CURIOUS KNIGHT|LABS|BENCHMARK', labels.join('|'));
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
   ok('INVULNERABLE toggle flips the debug flag', DEBUG.invulnerable === true && inv.textContent === 'INVULNERABLE: ON');
@@ -672,7 +672,7 @@ await withSeedAsync(4, async () => {
     src.includes('function bucket(buckets, glow, stroke, rgb, a, w = 0)') && src.includes('glowSprite(p.color)')
     && src.includes('c.clearRect(box[0], box[1]') && src.includes('if (!shared) {') && !/\.save\(\)|createRadialGradient\(p\./.test(src));
   ok('particles: the DPR cap, budget and floor are data (a phone has its own), 1x once the background stepped down; crowded bursts thin out',
-    src.includes('bgQualityLevel() > 0 ? 1 : knobs().dprCap') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);") && !/\b(450|300|1\.25)\b/.test(src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))
+    src.includes('bgQualityLevel() > 0 ? 1 : knobs().dprCap') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot', 'puff']);") && !/\b(450|300|1\.25)\b/.test(src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))
     && DATA.cards.particles.budget === 300 && DATA.cards.particles.phone.budget < DATA.cards.particles.budget && DATA.cards.particles.phone.dprCap === 1
     && src.includes("canvas.style.opacity = '0'") && src.includes("canvas.style.opacity = ''"));
 }

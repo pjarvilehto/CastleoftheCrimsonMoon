@@ -1,4 +1,26 @@
 {
+  "0.00272": [
+    "A foe's status shows in its figure: blighted foes turn sickly green and drained, rooted foes earthy brown, and either moves slower, its weave and bob stretched. (Phones keep the tag and the slower motion.)"
+  ],
+  "0.00271": [
+    "The Druid's heavy is now Entangle: roots burst from the ground at every foe's feet and bind them for two turns; a bound foe that tries to attack may strain against the roots and lose its blow (Entangled!). Go Feral is gone (potions are never blocked). Tuned in the simulator to sit beside the Knight.",
+    "Every class's attack, heavy and get-hit sounds are real recordings now, made for each class: the Knight's sword, the Barbarian's axe and roar, the Wizard's staff and fireball, the Necromancer's knife and soul-drain, the Druid's staff and roots, the Hexhunter's crossbow and hex, the Plague Sister's censer and rites, and each one's own cry when struck.",
+    "Every foe has its own voice too: its attack as it strikes you and its cry as you strike it — the rat's squeak, the skeleton's clatter, the wraith's wail, the golem's clang, the vampire lord's hiss and the rest."
+  ],
+  "0.00270": [
+    "Every class sounds its own: the blows, the heavy and a blow taken are pitched per class (the Barbarian low and heavy, the Wizard and the two women higher) with each class's own voice under them — a wide swing for Cleave, a fireball's roar and crackle, the Necromancer's grave wail, the Druid's claws and growl, the Hexhunter's crossbow click and hex chime, the Plague Sister's censer chain and smoke hiss — and a grunt in the hero's own voice when struck. The hex chimes, the blight hisses, Go Feral growls, a charge back zaps, the thrall wails as it rises and thuds as it takes a blow."
+  ],
+  "0.00269": [
+    "Debug menu: SWITCH CLASS flips your save to the next class on each click, mid-fight too (the fight carries on as the new class, this run's shrine boons reset), to try the classes quickly."
+  ],
+  "0.00268": [
+    "Every class's attacks have their own particles: the Knight's heavy a steel clash; the Barbarian's Cleave a crescent swung through the foes with embers, his blows shedding sparks; the Wizard's Fireball an amber bloom with cinders and smoke on every foe it takes, his blows an arcane flash; the Necromancer's Soul Drain wisps torn out of the foe that fly into him; the Druid's feral blows three rakes and leaves, Go Feral a burst of leaves and a green light; the Hexhunter's Hex a turning pentagram on the foe that flares with every blow on it; the Plague Sister's Last Rites the censer's smoke settling on every foe, the blight a wisp of it as it gnaws. A blow the Necromancer's thrall takes shows as a lunge and a green THRALL number."
+  ],
+  "0.00267": [
+    "Every class now fights its own way: the Barbarian's Cleave reaches every foe (and his blows harden as his health falls), the Wizard's Fireball burns them all (three charges a fight, a kill gives one back), the Necromancer's Soul Drain heals and a slain foe rises as his thrall to take the blows, the Druid's Go Feral is three turns of a beast's damage (no potion meanwhile) and his wounds knit each turn, the Hexhunter's Hex makes every blow on that foe a crit and she dodges a fifth of the blows, the Plague Sister's Last Rites blights every foe to gnaw them each turn and her potions harden her armor. Health, damage and armor differ a little by class; the Knight is as he was. A first pass, to be tuned in play.",
+    "The heavy button carries the class's name (Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites), the Wizard's charges show as pips on it and the Druid's feral turns in brackets; a hexed or blighted foe wears a tag on its card, and the log colours the new lines.",
+    "Shrines: Quicken gives the Wizard a charge instead of a shorter cooldown."
+  ],
   "0.00266": [
     "Stats have colours: damage rust, HP sage, armor slate, crit verdigris, loot ochre — the same on the Train row that raises a stat and wherever it shows (your gear, the stat boxes, your hero's card), so you can see what training moves."
   ],

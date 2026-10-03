@@ -256,7 +256,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
-| `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
+| `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (named per class since 0.00267: Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites) / Drink Potion |
 | `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `G` | run end | Return to the Great Hall |

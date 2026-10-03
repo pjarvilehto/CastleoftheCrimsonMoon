@@ -62,7 +62,15 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   ok('the knight\'s card is named after the class, above the card (0.00251)', u.el.all((n) => n.className === 'hero-title card-name')[0].textContent === 'THE NECROMANCER' && !u.card.all((n) => n.className.includes('card-name')).length
     && u.card.all((n) => n.className === 'gear-vals')[0].textContent.includes('LV1'));
+  // the heavy's name per class (0.00267, the developer's picks)
+  const heavyLabel = (unit) => unit.el.all((n) => n.className === 'btn-label')[0].textContent.replace(/\s*\(\d+\)$/, '');
+  ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), on the H key still', heavyLabel(u) === 'Soul Drain' && u.el.all((n) => n.tagName === 'button')[0].attrs['data-key'] === 'h'
+    && u.card.all((n) => n.className === 'back-row').some((r) => r.textContent.startsWith('Soul Drain')));
+  getProfile().hero = { id: 'knight', look: 0 };
+  ok('the knight keeps Heavy Attack', heavyLabel(createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} })) === 'Heavy Attack');
   getProfile().hero = null;
+  ok('every hero names its heavy (heroes.json heavyName, checked at load)', heroList().every((h) => typeof h.heavyName === 'string' && h.heavyName.trim())
+    && checkData({ ...DATA, heroes: { ...DATA.heroes, heroes: DATA.heroes.heroes.map((h) => (h.id === 'druid' ? { ...h, heavyName: '' } : h)) } }).some((m) => m.includes('druid.heavyName')));
 }
 
 // the screen

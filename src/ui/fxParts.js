@@ -6,7 +6,7 @@
 import { DATA } from '../shared/data.js';
 import { unmountGlint } from './battleLine.js';
 import { reducedMotion } from '../shared/motion.js';
-import { burst, materialOf } from './particles.js';
+import { burst, burstClass, materialOf } from './particles.js';
 
 export const reduced = reducedMotion; // (shared/motion.js, 0.00197)
 export const can = (node) => !!node?.animate;
@@ -59,6 +59,22 @@ export function spray(u, dir, power = 1, big = false, rect = null) {
     r.left + r.width * (0.5 + (Math.random() - 0.5) * 0.5),
     r.top + r.height * (0.3 + Math.random() * 0.3),
     { dir: big ? 0 : dir, size: r.height, kind: big ? 'kill' : power > 1.2 ? 'crit' : 'hit', floor: r.bottom - 4 });
+}
+
+// A class's own trace on a unit (0.00268, particleLooks.js spawnClassBurst):
+// at the figure like spray(); `to` = a point the burst flies to (the
+// drain's wisps), `kind` 'hit' | 'crit'. rect as spray()'s.
+export function classSpray(u, look, { dir = 1, kind = 'hit', to = null, at = 'figure' } = {}, rect = null) {
+  if (!u?.card?.getBoundingClientRect) return;
+  const r = rect ?? u.card.getBoundingClientRect();
+  if (!(r.width > 0)) return; // a card that has left the row
+  const y = at === 'feet' ? r.top + r.height * 0.78 : r.top + r.height * (0.35 + Math.random() * 0.25); // (at: 'feet' — the Druid's roots rise from the card's floor, 0.00271)
+  burstClass(look, r.left + r.width * (0.5 + (Math.random() - 0.5) * 0.3), y, { dir, kind, size: r.height, to });
+}
+// The middle of a unit's figure, for a burst that flies there.
+export function centreOf(u) {
+  const r = u?.card?.getBoundingClientRect?.();
+  return r && r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height * 0.45 } : null;
 }
 
 // The whole battle line trembles (heavy blows, SMASH, multi-kills).

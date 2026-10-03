@@ -282,5 +282,5 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const hero = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const backRow = (label) => hero.card.all((n) => n.className?.startsWith?.('back-row') && n.children[0]?.textContent === label)[0];
   ok('the hero card: DMG and ARMOR in their colours; its STATS page by stat, the potion\'s heal as HP', hero.card.all((n) => n.className === 'weapon-dmg st st-dmg').length === 1
-    && backRow('Attack').classList.contains('st-dmg') && backRow('Crit damage').classList.contains('st-crit') && backRow('Potion heals').classList.contains('st-hp') && !backRow('Heavy blow').classList.contains('st'));
+    && backRow('Attack').classList.contains('st-dmg') && backRow('Crit damage').classList.contains('st-crit') && backRow('Potion heals').classList.contains('st-hp') && !backRow('Heavy Attack').classList.contains('st')); // (0.00267: the heavy's row is named per class — the knight's is Heavy Attack)
 }
