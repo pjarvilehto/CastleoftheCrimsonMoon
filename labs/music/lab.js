@@ -32,7 +32,8 @@ const verdictOf = (t) => (S.verdicts[t.file] ?? (t.verdict ? { v: t.verdict, not
 /** A bed's takes: the game's own first, then the candidates; blind = a fixed shuffle per bed, lettered. */
 function takesOf(id) {
   const b = BEDS[id] ?? {}, tr = TRACKS[id];
-  const cur = tr ? [{ file: tr.file, current: true, label: 'The procedural bed', lufs: b.current?.file === tr.file ? b.current.lufs : null, seconds: b.current?.seconds, loopS: tr.loopS }] : [];
+  const from = (b.candidates ?? []).find((k) => k.imported?.file === tr?.file); // the take the game's bed was cut from (gen-score.mjs --import marks it `imported`, 0.00280)
+  const cur = tr ? [{ file: tr.file, current: true, label: from ? `cut from Take ${from.n} (${from.label})` : 'the bed in the game', lufs: b.current?.file === tr.file ? b.current.lufs : null, seconds: b.current?.seconds, loopS: tr.loopS }] : [];
   const list = [...cur, ...(b.candidates ?? []).map((k) => ({ ...k }))];
   if (!S.blind) return list;
   const seed = (S.seeds[id] ??= Math.floor(Math.random() * 1e9));
@@ -45,7 +46,7 @@ function takesOf(id) {
 const titleOf = (t, i) => (S.blind && !S.revealed[S.bed] ? `Take ${String.fromCharCode(65 + i)}` : t.current ? 'Now in the game' : `Take ${t.n}`);
 const metaOf = (t) => {
   if (S.blind && !S.revealed[S.bed]) return `${fmt(t.seconds)}${t.lufs != null ? ` · ${t.lufs} LUFS` : ''}`;
-  if (t.current) return `procedural (tools/gen-music.py) · loops at ${fmt(t.loopS)}${t.lufs != null ? ` · ${t.lufs} LUFS` : ''}`;
+  if (t.current) return `${t.label} · loops at ${fmt(t.loopS)}${t.lufs != null ? ` · ${t.lufs} LUFS` : ''}`; // (0.00299: it said "procedural (tools/gen-music.py)" long after every bed was a generated score)
   return `${t.label}${t.image ? ' + the painting' : ''} · ${fmt(t.seconds)} of ${fmt(t.asked)} asked · ${t.lufs} LUFS${t.hint ? ` · "${t.hint}"` : ''}`;
 };
 function fmt(s) { if (!Number.isFinite(s)) return '–'; s = Math.round(s); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }

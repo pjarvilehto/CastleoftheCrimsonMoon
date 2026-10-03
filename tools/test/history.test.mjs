@@ -207,7 +207,23 @@ fresh();
   ok('...Copy all packs every player\'s reports with the device; the page copies to the clipboard, else shows the text', JSON.parse(pfr.reportsText([{ label: 'Pete', device: null, reports: reps }, { label: 'None', reports: [] }])).length === 1
     && dash.includes("act === 'copy-report' || act === 'copy-all'") && dash.includes('navigator.clipboard?.writeText') && dash.includes("card('Device reports") && dash.includes('reports: sanitizeReports(r.reports)'));
   ok('dashboard: no save-code entry any more — every tester is collected (0.00224)', !dash.includes('addCode') && !dash.includes('add-code') && !dash.includes('decodeSave') && !readFileSync('analytics/tables.js', 'utf8').includes("data-act=\"remove\""));
-  ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
+  { // a name change is sent to the collector at once (0.00299: the prompt driven — Save posts the save with its new name — not a source grep)
+    const { namePrompt } = await import('../../src/ui/namePrompt.js');
+    const realFetch = globalThis.fetch, realLoc = globalThis.location, ep = DATA.telemetry.endpoint;
+    const posts = [];
+    globalThis.fetch = async (url, opts) => { posts.push({ url, opts }); return { ok: true }; };
+    globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; DATA.telemetry.endpoint = 'https://stats.example';
+    const p = getProfile(); const name0 = p.name, hist0 = p.history;
+    p.history = [{ at: 1, room: 1, outcome: 'death' }]; // (a save with no runs sends nothing)
+    const prompt = namePrompt();
+    prompt.input.value = '  Lady   Morgana ';
+    prompt.ok.listeners.click[0]();
+    await sleep(1);
+    ok('a name change is sent to the collector at once', posts.length === 1 && posts[0].url === 'https://stats.example/collect' && posts[0].opts.method === 'POST'
+      && JSON.parse(posts[0].opts.body).profile.name === 'Lady Morgana' && getProfile().name === 'Lady Morgana', `${posts.length} posts`);
+    getProfile().name = name0; getProfile().history = hist0;
+    globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
+  }
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
 }
@@ -267,6 +283,26 @@ fresh();
   pr.keepReport(rep);
   const withReport = tm.statsPayload(getProfile()), without = tm.statsPayload(getProfile());
   ok('the upload carries the report waiting, once', withReport.report === rep && !('report' in without) && pr.takeReport() === null);
+  { // 0.00299: a failed upload hands the report back for the next one (it used to be taken before the fetch and lost with it)
+    const realFetch = globalThis.fetch, realLoc = globalThis.location, ep = DATA.telemetry.endpoint;
+    globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; DATA.telemetry.endpoint = 'https://stats.example';
+    const withRuns = { ...getProfile(), history: [{ at: 1, room: 1, outcome: 'death' }] };
+    let posts = 0;
+    globalThis.fetch = async () => { posts++; throw new Error('offline'); };
+    pr.keepReport(rep); tm.shareStats(withRuns); await sleep(1);
+    ok('a rejected upload keeps the device report for the next one', posts === 1 && pr.takeReport() === rep);
+    globalThis.fetch = async () => ({ ok: false, status: 500 });
+    pr.keepReport(rep); tm.shareStats(withRuns); await sleep(1);
+    ok('...a refused one (not ok) too', pr.takeReport() === rep);
+    globalThis.fetch = async () => ({ ok: true });
+    pr.keepReport(rep); tm.shareStats(withRuns); await sleep(1);
+    ok('...a sent one is gone', pr.takeReport() === null);
+    const newer = { ...rep, at: rep.at + 1 };
+    let fail; globalThis.fetch = () => new Promise((_, rej) => { fail = rej; });
+    pr.keepReport(rep); tm.shareStats(withRuns); pr.keepReport(newer); fail(new Error('offline')); await sleep(1);
+    ok('...and a newer report kept meanwhile stands over the one handed back', pr.takeReport() === newer);
+    globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
+  }
   ok('a run with nothing recorded makes no report', pr.runReport(getProfile()) === null || typeof pr.runReport(getProfile()) === 'object');
   const dev = wk.cleanDevice({ gpu: 'g'.repeat(500), browser: 'Chrome 129', os: 'macOS', cores: '10', mem: 16, extra: 'x' });
   ok('collector keeps the device, capped', dev.gpu.length === 120 && dev.cores === 10 && !('extra' in dev) && wk.cleanDevice('nope') === null

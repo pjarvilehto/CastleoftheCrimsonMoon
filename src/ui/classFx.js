@@ -91,7 +91,7 @@ export function thrall(ctx) {
   glow(p, 'sepia(1) saturate(4) hue-rotate(80deg) brightness(1.3)', 800);
 }
 // A foe's blow lands on the thrall: the lunge, a green THRALL number (.fx-thrall), grave motes — the Necromancer stands untouched.
-export function thrallHit(fx, ctx) {
+function thrallHit(fx, ctx) {
   const a = ctx.unit(fx.from), p = ctx.unit('player');
   const strike = strikeMs(fx);
   if (can(p?.el)) lunge(a, p.el.getBoundingClientRect?.() ?? null);

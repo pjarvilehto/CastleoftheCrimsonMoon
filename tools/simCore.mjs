@@ -6,6 +6,12 @@
 //   const sim = await loadSim();
 //   withSeed(7, () => { sim.fresh(); const rec = sim.playRun({ agg }); sim.spendInHub(agg); });
 //
+// fresh(hero = 'knight') is the campaign's start (0.00299): a reset profile
+// with the class chosen and its kit on, as a new save stands after PROCEED —
+// one setup for simulate.mjs and the two studies (the studies used to play
+// a CLASSLESS knight: profile.hero null, so canUse() took every item and no
+// classDropShare roll was spent; their runs were not the game's).
+//
 // Policies (playRun options):
 //   shrine:  'priority' (default: best affordable boon, SHRINE_PRIORITY)
 //            | 'none' (always walk away) | '<boon id>' (FORCE that boon:
@@ -96,6 +102,7 @@ export async function loadSim() {
   const cb = await import('../src/run/combat.js');
   const sh = await import('../src/run/shrine.js');
   const tr = await import('../src/run/treasure.js');
+  const cg = await import('../src/shared/classGear.js');
   const noop = () => {};
   const P = () => profile.getProfile();
 
@@ -254,7 +261,15 @@ export async function loadSim() {
     for (const k of Object.keys(p)) delete p[k];
     Object.assign(p, structuredClone(snap));
   }
-  const fresh = () => profile.resetProfile();
+  // A fresh save that has chosen its class (0.00299): the hero on the profile
+  // (the knight when unset — 0.00274: set, so the item matrix applies to him
+  // too) and the class's kit worn, as a new save puts it on at PROCEED.
+  function fresh(hero = 'knight') {
+    if (!DATA.heroes.heroes.some((h) => h.id === hero)) throw new Error(`unknown hero ${hero}`);
+    profile.resetProfile();
+    P().hero = { id: hero, look: 0 };
+    cg.fitGearToClass(P());
+  }
 
   return { DATA, playRun, spendInHub, snapshot, restore, fresh, derivedStats: stats.derivedStats, getProfile: P };
 }

@@ -32,7 +32,7 @@ export function showVictoryModal(run, onClose = null) {
         'To play it all again from the beginning, choose Start a New Game on the main menu.'),
       el('div', { class: 'btn-row' }, onward),
     ],
-    onKey: (k, close) => { if (['o', 'enter', 'escape'].includes(k)) close(); },
+    closeKeys: ['o'],
   });
   return dlg;
 }

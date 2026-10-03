@@ -3,7 +3,7 @@
 import { DATA } from '../shared/data.js';
 import { rollCoins, isElite, pick } from '../shared/balance.js';
 import { equipItems, salvageValue } from '../meta/equipment.js';
-import { canUse } from '../shared/classGear.js';
+import { canUse, usersOf, className } from '../shared/classGear.js';
 
 export const RELIC_TIER = 4;
 export const relicIds = () => Object.keys(DATA.items).filter((id) => DATA.items[id].tier === RELIC_TIER);
@@ -65,7 +65,7 @@ export function takeItem(run, itemId, log) {
     log(['Found: ', { item, id: itemId }, ` — ${whose}, salvaged at the end.`], 'loot', { find: { id: itemId, slot: item.slot === 'ring' ? 'rings' : item.slot, index: 0, from: null, offClass: whose } });
     return { itemId, kept: false, offClass: true };
   }
-  const preview = equipItems({ equipment: run.gearPreview, hero: run.heroId ? { id: run.heroId } : null }, [itemId]); // (moves the preview on: the next find is judged against this one)
+  const preview = equipItems(previewProfile(run), [itemId]); // (moves the preview on: the next find is judged against this one)
   if (preview.equipped.length > 0) {
     run.itemsFound.push(itemId);
     const change = preview.changes.find((c) => c.to === itemId) ?? preview.changes[0];
@@ -81,10 +81,19 @@ export function takeItem(run, itemId, log) {
   return { itemId, kept: false, coins };
 }
 
-// "Barbarian gear", "Wizard and Necromancer gear" — whose an item another class can use is.
+// The run's gear as it will be, shaped like a profile for meta/equipment.js
+// equipItems (0.00299: one place for the literal — loot and the chests judge a
+// find against it, the debug SWITCH CLASS refits it): run.gearPreview and
+// the class (run.heroId; null = the knight's gear before a pick), nothing
+// else. `equipment` = another set to judge against (treasure.js hands a copy:
+// a chest asks what WOULD improve without moving the preview on).
+export const previewProfile = (run, equipment = run.gearPreview) => ({ equipment, hero: run.heroId ? { id: run.heroId } : null });
+
+// "Barbarian gear", "Wizard and Necromancer gear" — whose an item another class can use is
+// (0.00299: on classGear.js usersOf / className, which it used to re-implement).
 export function offClassText(itemId) {
   const it = DATA.items[itemId];
-  const users = DATA.heroes.heroes.filter((h) => canUse(h.id, itemId)).map((h) => h.name.replace(/^The (Curious )?/, ''));
+  const users = usersOf(itemId).map(className);
   return `${users.length > 2 ? 'another class\'s' : users.join(' and ')} ${it.slot === 'weapon' ? 'weapon' : it.slot === 'armor' ? 'armor' : 'gear'}`;
 }
 

@@ -122,7 +122,6 @@
     "critOverflowDamage": 1.5,
     "critDamagePerPrecision": 0.01,
     "dodgeCap": 0.35,
-    "baseHeavyCd": 3,
     "reviveHpPct": 0.5,
     "precisionTaper": {
       "perLevel": 0.03,

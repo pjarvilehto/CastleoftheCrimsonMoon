@@ -13,7 +13,7 @@
 
 import { DATA } from '../shared/data.js';
 import { deviceInfo } from '../core/perfMonitor.js';
-import { takeReport } from './perfReport.js';
+import { takeReport, restoreReport } from './perfReport.js';
 
 const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|$)/;
 
@@ -44,8 +44,10 @@ export function shareStats(p) {
   // save's id isn't stored yet)
   if (!p?.playerId || !(p.history?.length || p.bench?.length) || !telemetryEnabled()) return false;
   // text/plain: a "simple" request, no CORS preflight round trip
+  const report = takeReport(); // (0.00299: taken here, not inside statsPayload, so a failed upload can hand it back)
   globalThis.fetch?.(`${DATA.telemetry.endpoint.replace(/\/$/, '')}/collect`, {
-    method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify(statsPayload(p)),
-  }).catch(() => {});
+    method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify(statsPayload(p, report)),
+  }).then((res) => { if (!res?.ok) restoreReport(report); }, () => restoreReport(report)) // a rejected or refused POST: the report waits for the next upload (one flaky upload used to lose the run's device report for good)
+    .catch(() => {});
   return true;
 }

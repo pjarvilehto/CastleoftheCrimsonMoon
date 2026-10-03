@@ -7,7 +7,8 @@
 
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText, itemStrip } from './hud.js';
+import { hpBar, isLowHp, potionPic, itemStrip, itemTitle, gearLabel, wornId } from './hud.js';
+import { openLootDialog } from './lootDialog.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -143,13 +144,13 @@ const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) ret
 // The hero card's back (0.00256, the developer's call): a tap turns the
 // card around to STATS — the run's own numbers (run.stats: base, training,
 // gear and the shrine boons), the totals only — a second to INVENTORY
-// (0.00258: the gear worn, and this run's finds, worn from the run's end),
-// a third back to the hero. set() refreshes the shown page; the update
-// tick calls it while the card is turned.
+// (0.00258; 0.00290: the gear worn as strips, this run's finds behind the
+// FINDS line that opens the LOOT pop-up, 0.00299), a third back to the hero.
+// set() refreshes the shown page; the update tick calls it while the card
+// is turned.
 const FLIP_MS = 420;
 const PAGES = ['front', 'stats', 'inv'];
 const dots = (n) => el('div', { class: 'page-dots' }, ...PAGES.map((_, k) => el('i', { class: k === n ? 'on' : '' })));
-const SLOT_NAME = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', rings: 'Ring', ring: 'Ring', trinket: 'Trinket', amulet: 'Amulet' };
 function statsPage(run) {
   const tune = DATA.difficulty.combat;
   const pct = (x) => `${Math.round(x * 100)}%`;
@@ -172,24 +173,32 @@ function statsPage(run) {
 }
 // The gear as worn (forge levels in), a strip per slot like the Great Hall's
 // slots (0.00290, the developer's layout): the item's picture on the right,
-// fading into the dark under its name and stats on the left. The run's finds
-// are not listed here (a list of their own is to come) — the page is the
-// save's gear and does not change mid-run.
-function invPage() {
+// fading into the dark under its name and stats on the left — the save's
+// gear, which does not change mid-run. Under the strips the run's finds as a
+// count, "FINDS · n ›" (0.00299), a button that opens the LOOT pop-up
+// (ui/lootDialog.js): on a phone, whose top strip has no LOOT row, the one
+// way to it; it carries no key — the desktop's LOOT row answers to I — and
+// is a div with the button's role, not a <button>: the unit's first button is
+// the heavy's. Its click stays in it (the card's own click would turn it over).
+function invPage(run) {
   const p = getProfile();
-  const worn = GEAR_SLOTS.map(([key, i]) => {
-    const id = i === undefined ? p.equipment[key] : p.equipment[key]?.[i];
+  const worn = GEAR_SLOTS.map((slot) => {
+    const id = wornId(p.equipment, slot);
     const item = id ? itemWithForge(id, p) : null;
-    if (!item) return el('div', { class: 'inv-row empty' }, el('span', { class: 'inv-name inv-empty' }, `${SLOT_NAME[key]} — empty`));
+    if (!item) return el('div', { class: 'inv-row empty' }, el('span', { class: 'inv-name inv-empty' }, `${gearLabel({ slot: slot[0], index: slot[1] })} — empty`));
     return itemStrip(id, item);
   });
+  const found = () => run.itemsFound?.length ?? 0; // (the tests' bare runs carry no list)
+  const count = el('b', {}, String(found()));
+  const finds = el('div', { class: 'inv-finds', role: 'button', tabindex: '0', title: 'Show the loot', onclick: (e) => { e?.stopPropagation?.(); if (found()) openLootDialog(run); } }, 'Finds · ', count, ' ›');
   const page = el('div', { class: 'back-page back-inv' },
     el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list inv-strips' }, ...worn),
-    dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
-  return { el: page, set: () => {} };
+    finds, dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
+  return { el: page, set: () => { setText(count, String(found())); setClass(finds, 'none', found() === 0); } };
 }
 function cardBack(run) {
-  const stats = statsPage(run), inv = invPage();
+  const stats = statsPage(run), inv = invPage(run);
+  inv.set();
   return { el: el('div', { class: 'card-back' }, stats.el, inv.el), set: (page) => (page === 'inv' ? inv : stats).set() };
 }
 
@@ -235,8 +244,8 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   // armor on the right — so the figure stands tall behind them.
   const gear = el('div', { class: 'gear-block' },
     el('div', { class: 'gear-names' },
-      weapon ? el('span', { class: rarityClass(weapon) }, weapon.name.toUpperCase() + (weapon.forgeLvl ? ` +${weapon.forgeLvl}` : '')) : el('span', {}, 'UNARMED'),
-      armor ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : '')) : el('span', { class: 'no-item' }, 'NO ARMOR'),
+      weapon ? itemTitle(weapon, { upper: true, inside: true }) : el('span', {}, 'UNARMED'), // (0.00299: hud.js itemTitle — the name and its forge level, built once for every place they show)
+      armor ? itemTitle(armor, { upper: true, inside: true }) : el('span', { class: 'no-item' }, 'NO ARMOR'),
       el('span', { class: 'info-i', 'aria-hidden': 'true' }, 'i')), // (0.00258: says the card turns over)
     el('div', { class: 'gear-vals' },
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),

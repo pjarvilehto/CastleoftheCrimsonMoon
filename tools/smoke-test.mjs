@@ -11,10 +11,13 @@
 
 import { counts, readdirSync } from './test/harness.mjs';
 
-// Every tools/test/*.test.mjs, in the suite's order (new files join at the end).
-const ORDER = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history', 'narration', 'art', 'cards', 'layout'];
+// Every tools/test/*.test.mjs, in the suite's order; layout runs LAST (it checks the phone layer's twins against
+// the code the other files exercised, rule 8) — a new file is added here before it (0.00299: a file left out
+// sorted to the end, after layout; classes, fx, heroes and items did).
+const ORDER = ['scenes', 'combat', 'shrines', 'progression', 'content', 'backgrounds', 'audio', 'sim', 'history', 'narration', 'art', 'cards', 'classes', 'fx', 'heroes', 'items', 'layout'];
 const FILES = readdirSync('tools/test').filter((f) => f.endsWith('.test.mjs')).map((f) => f.slice(0, -'.test.mjs'.length))
-  .sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  .sort((a, b) => rank(a) - rank(b));
+function rank(f) { const i = ORDER.indexOf(f); return i >= 0 ? i : ORDER.indexOf('layout') - 0.5; } // (a file not listed runs just before layout, never after it)
 const filter = process.argv.slice(2);
 if (filter.length && !FILES.some((f) => filter.some((q) => f.includes(q)))) { console.error(`no test file matches ${filter.join(', ')} (areas: ${FILES.join(', ')})`); process.exit(1); }
 const t0 = process.hrtime.bigint();

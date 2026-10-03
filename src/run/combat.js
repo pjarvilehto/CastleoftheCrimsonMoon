@@ -19,7 +19,7 @@ import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
 import { tryRevive } from './loot.js';
-import { HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, rollImmune, immuneEvent } from './classes.js';
+import { HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, rollImmune, immuneEvent, living, multiKill } from './classes.js';
 
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
@@ -49,10 +49,6 @@ export function createCombat(run, room) {
     marked: -1,
     thrall: null,
   };
-}
-
-function living(combat) {
-  return combat.enemies.filter((e) => e.hp > 0);
 }
 
 // Takes `dmg` off the foe at `idx` — never past its HP — and pushes its line
@@ -97,10 +93,14 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 
   const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258, live 0.00267)
   const hit = rollHit(combat, heavy, targetIndex);
-  // an elemental heavy on a foe immune to it (0.00293, the developer's ask): the blow does nothing —
-  // no damage, no lifesteal — and "Immune!" prints in its place; the heavy's reach still plays
-  // (classes.js: the fire rolls every other foe), the charge or the cooldown is spent all the same
-  const element = heavy ? HEAVIES[combat.run.stats.klass.heavy].element : null;
+  // a heavy whose blow is its element (0.00293, the developer's ask; classes.js HEAVIES elementalBlow —
+  // the fireball) on a foe immune to it: the blow does nothing — no damage, no lifesteal — and
+  // "Immune!" prints in its place; the heavy's reach still plays (classes.js: the fire rolls every
+  // other foe), the charge or the cooldown is spent all the same. 0.00299: the censer's swing is a
+  // plain mace blow and lands whatever the foe — only its smoke rolls, in onHeavy (it used to roll
+  // the target here too: two Immune! lines for one foe, and a swing shrugged off by the undead).
+  const h = heavy ? HEAVIES[combat.run.stats.klass.heavy] : null;
+  const element = h?.element && h.elementalBlow ? h.element : null;
   if (element && rollImmune(target, element)) push(immuneEvent(combat, targetIndex, element));
   else {
     if (!smash(combat, hit, turn)) strike(combat, targetIndex, hit, turn);
@@ -182,7 +182,7 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, tur
       : { type: 'spill', text: `...the blow strikes through into ${t.name} for ${applied} dmg!`, target: idx, dmg: applied }));
     if (t.hp === 0) kills += 1;
   });
-  if (kills >= 2) turn.push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+  multiKill(kills, turn.push);
 }
 
 // The class's own turn (0.00258; live since 0.00267 — the UI plays every
@@ -296,9 +296,10 @@ export function canHeavy(combat) {
 }
 
 export function useHeavy(combat) {
-  // The cooldown starts at player.baseHeavyCd (meta/stats.js derivedStats);
-  // relics and the quicken boon lower it (floor 1): that many ordinary
-  // turns pass before the next heavy.
+  // The cooldown starts at the class's heroes.json class.heavyCd (meta/stats.js
+  // derivedStats; 0.00299: difficulty.json player.baseHeavyCd was a dead knob
+  // beside it and went); relics and the quicken boon lower it (floor 1): that
+  // many ordinary turns pass before the next heavy.
   combat.heavyCd = combat.run.stats.heavyCdMax;
   if (usesCharges(combat.run.stats.klass)) combat.charges -= 1; // (0.00258, live 0.00267)
 }

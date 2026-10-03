@@ -18,7 +18,7 @@ const LINES = DATA.narration.lines;
   const { parseScript, cleanTake } = await import('../gen-vo.mjs');
   const script = parseScript(read('docs/narration-script.md'));
   const ids = script.map((l) => l.id);
-  ok('the script has 33 lines in 136 takes (OVERKILL nine since 0.188; crit five and mega crit eight since 0.00283)', ids.length === 33 && script.reduce((n, l) => n + l.takes.length, 0) === 136
+  ok('the script has 33 lines in 136 takes (OVERKILL nine since 0.188; crit five and mega crit eight since 0.00278, re-recorded in 0.00279)', ids.length === 33 && script.reduce((n, l) => n + l.takes.length, 0) === 136
     && script.find((l) => l.id === 'overkill').takes.length === 9 && script.find((l) => l.id === 'crit').takes.length === 5 && script.find((l) => l.id === 'mega_crit').takes.length === 8);
   ok('every line of the script is in narration.json with every take', script.every((l) => l.takes.every((t) => LINES[l.id]?.some((x) => x.take === t.take && x.text === t.text))));
   ok('narration.json has no line the script lacks', Object.keys(LINES).every((id) => ids.includes(id)));
@@ -155,8 +155,16 @@ const LINES = DATA.narration.lines;
   nar.toggleNarrator(); // OFF while it decodes
   release(); await sleep(10);
   ok('...and drops a line still decoding when it came', started().length === n2);
-  ctx.decodeAudioData = decode2s;
   nar.toggleNarrator(); // ON
+  // 0.00299: SOUND going to 0 (the slider; the toggle reads the same, busGain 0) between the ask and the decode — the take used to start through the silent bus and duck the music for its length
+  const vol0 = mx.getVolumes().sfx, nD2 = mx.mixer().duck.gain.events.length;
+  ctx.decodeAudioData = () => new Promise((r) => { release = () => r(ctx.createBuffer(1, 2 * 48000, 48000)); });
+  const counted = nar.narrate('retreat'); await sleep(1); // its decode held open
+  mx.setVolume('sfx', 0); // the SOUND slider to 0 while it decodes
+  release(); await sleep(10);
+  ok('SOUND to 0 during the decode: the moment counted, no take starts, no duck (0.00299)', counted === true && started().length === n2 && mx.mixer().duck.gain.events.length === nD2);
+  mx.setVolume('sfx', vol0);
+  ctx.decodeAudioData = decode2s;
   ok('an unknown line is ignored', nar.narrate('nope') === false);
   ok('no audio errors', ctx.errors.length === 0, ctx.errors.join('; '));
 

@@ -25,6 +25,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { post, hasKey, measureDb } from './elevenlabs.mjs';
+import { cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'sfx-prompts.md');
@@ -32,9 +33,7 @@ const OUT = join(ROOT, 'assets', 'audio', 'sfx');
 const WEB = 'assets/audio/sfx';
 const REGISTRY = join(ROOT, 'assets', 'data', 'audio.json');
 
-const args = process.argv.slice(2);
-const flag = (name) => args.includes(name);
-const opt = (name, def) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
+const { flag, opt } = cli(); // (tools/util.mjs, 0.00299)
 const only = opt('--only', '').split(',').filter(Boolean);
 const redo = opt('--redo', '').split(',').filter(Boolean);
 const influence = Number(opt('--influence', '0.3'));
@@ -49,7 +48,7 @@ export function nextFile(clip, exists = (f) => existsSync(join(OUT, f))) {
   for (let k = 1; ; k++) { const f = `${clip}_v${k}.mp3`; if (!exists(f)) return f; }
 }
 
-const render = (prompt, seconds) => post('sound-generation', { text: prompt, duration_seconds: seconds, prompt_influence: influence });
+const render = (prompt, seconds) => post('sound-generation', { text: prompt, duration_seconds: seconds, prompt_influence: influence }, { retries: 5 }); // (a 429 waits and tries again, 0.00299)
 
 const main = async () => {
   const reg = JSON.parse(readFileSync(REGISTRY, 'utf8'));

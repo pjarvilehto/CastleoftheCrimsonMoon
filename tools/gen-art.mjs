@@ -33,6 +33,9 @@
 //                                                         # --holes 0 keeps enclosed patches of the paper's tone)
 //   node tools/gen-art.mjs --clean rat_c4                 # a new candidate: the same picture with the ground
 //                                                         # shadow, panel and signature painted out by Kontext
+//   node tools/gen-art.mjs --recut rat_c2 --flip          # the figure mirrored on the cut (a candidate drawn facing the
+//                                                         # wrong way; the lab's Flip records it per candidate as k.flip,
+//                                                         # which --import honours — --import --flip mirrors every pick)
 //   node tools/gen-art.mjs --import [--only rat] [--pick rat=2]   # the approved candidate (or the pick)
 //                                                         # into the game under a NEW filename (rat_v2.webp)
 //   node tools/gen-art.mjs --prune [--only rat]           # a character with an approved candidate loses its
@@ -65,6 +68,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { keyOut, applyAlpha, bbox, placeOn, dropStray, fillHoles, SHADOW, PAPER } from './cutout.mjs';
 import { API, token, headers, upload, predict, predictVersion, latestVersion } from './replicate.mjs';
+import { seedFor as seedOf, cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'portrait-prompts.md');
@@ -188,12 +192,8 @@ export function promptFor(doc, c, hint = '') {
   return `${style.replace(/\[FACING\]/g, facing(c.id))}\n\n${c.line}\nFACING: the figure faces ${side}, its head and eyes turned toward the ${side} edge of the picture.${hint ? `\n\n${hint.trim()}` : ''}`;
 }
 
-/** A stable seed per candidate; a re-roll gets a fresh one. */
-function seedFor(id, n) {
-  let h = 2166136261;
-  for (const ch of `${id}/${n}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-  return h % 2147483647;
-}
+/** A stable seed per candidate; a re-roll gets a fresh one (tools/util.mjs seedFor since 0.00299: the same hash, the same seeds). */
+const seedFor = (id, n) => seedOf(id, n);
 
 // ---- Replicate ----
 // The inputs go inline as data URIs by default (--inputs data): the model's
@@ -280,9 +280,7 @@ function nextN(entry) { return entry.candidates.reduce((m, k) => Math.max(m, k.n
 
 // ---- main ----
 async function main() {
-  const args = process.argv.slice(2);
-  const has = (f) => args.includes(f);
-  const val = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
+  const { argv: args, flag: has, opt: val } = cli(); // (tools/util.mjs, 0.00299)
   const doc = parsePrompts(readFileSync(DOC, 'utf8'));
   const reg = loadRegistry();
   if (val('--new')) { // a character the game does not have yet: its line from the command line (or the registry, from an earlier run)

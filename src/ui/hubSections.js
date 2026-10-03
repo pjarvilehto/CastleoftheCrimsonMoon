@@ -20,7 +20,8 @@ import {
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../meta/leveling.js';
-import { describeItem, itemName, itemPic, rarityClass, statBox, potionLevel, gearLabel, statText, ST_TRAIN } from './hud.js';
+import { describeItem, itemPic, rarityClass, statBox, potionLevel, gearLabel, statText, ST_TRAIN, itemTitle, wornId } from './hud.js';
+import { GEAR_SLOTS } from '../meta/equipment.js';
 import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
 
 // A row's text (0.00232, the developer's ask): the title — the name and its
@@ -111,7 +112,6 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
   const eq = p.equipment;
   const slotRow = (label, id) => {
     const item = id ? itemWithForge(id, p) : null;
-    const forgeLvl = id ? (p.forged[id] ?? 0) : 0;
     // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
     // worth the coins, so it gets no enhance button at all (0.068).
     const canForge = !!item && forgeable(id) && !waiting.has(label);
@@ -122,7 +122,7 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
       item
         ? el('div', { class: 'equip-right' },
             el('div', { class: 'equip-item' },
-              el('div', {}, itemName(item), forgeLvl ? ` +${forgeLvl}` : null),
+              el('div', {}, ...itemTitle(item)), // (0.00299: hud.js itemTitle — the name and its forge level)
               el('div', { class: 'equip-desc' }, ...statText(describeItem(item)))),
             !canForge
             ? null
@@ -144,13 +144,7 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
       looks > 1 ? el('button', { class: 'forge-btn', key: 'l', onclick: () => openLookPicker((changed) => { if (changed) done('look'); }) }, 'Look') : null));
   return el('div', {},
     lookRow,
-    slotRow('Weapon', eq.weapon),
-    slotRow('Armor', eq.armor),
-    slotRow('Boots', eq.boots),
-    slotRow('Ring I', eq.rings[0]),
-    slotRow('Ring II', eq.rings[1]),
-    slotRow('Trinket', eq.trinket),
-    slotRow('Amulet', eq.amulet));
+    ...GEAR_SLOTS.map((slot) => slotRow(gearLabel({ slot: slot[0], index: slot[1] }), wornId(eq, slot)))); // (0.00299: the slots in the hall's order, named by gearLabel — the list used to be written out here)
 }
 
 // ---- THE KNIGHT (0.00238, the desktop's left panel; the developer's layout): his
@@ -165,7 +159,6 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
   const slot = (label, id) => {
     const item = id ? itemWithForge(id, p) : null;
     if (!item) return el('div', { class: 'gear-slot empty', 'data-row': `slot-${label}` }, el('div', { class: 'slot-kind' }, label), el('div', { class: 'slot-name' }, '— empty —'));
-    const forgeLvl = p.forged[id] ?? 0;
     const pic = itemPic(id);
     return el('div', { class: `gear-slot gear-${rarityClass(item)}${found.has(label) ? ' found' : ''}${pic ? ' has-art' : ''}`, 'data-row': `slot-${label}` },
       pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00260: the item's picture on the slot's outer side, fading toward the card; the text over it)
@@ -178,10 +171,12 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
             onclick: () => { sfx('forge'); narrate('forge'); forgeItem(id); done(`slot-${label}`); },
           }, `Forge ${forgeCost(id)}c`)
         : forgeable(id) ? el('span', { class: 'forge-max' }, 'MAX') : null,
-      el('div', { class: 'slot-name' }, itemName(item), forgeLvl ? el('span', { class: 'slot-plus' }, ` +${forgeLvl}`) : null),
+      el('div', { class: 'slot-name' }, ...itemTitle(item, { forgeCls: 'slot-plus' })), // (0.00299: hud.js itemTitle)
       el('div', { class: 'slot-desc' }, ...statText(describeItem(item))));
   };
   const hero = heroOf(p), looks = hero.looks.length;
+  // the doll's two columns (0.00299: GEAR_SLOTS in the hall's order — three slots left, four right; the lists used to be written out here)
+  const col = (slots) => slots.map((s) => slot(gearLabel({ slot: s[0], index: s[1] }), wornId(eq, s)));
   const level = el('div', { class: 'knight-level' }, el('span', {}, 'Level '), el('b', {}, String(playerLevel(p))));
   const vals = { Level: playerLevel(p), Attack: s.dmg, HP: s.maxHp, Armor: s.armor, Crit: pct(s.crit), Lifesteal: s.lifesteal ? pct(s.lifesteal) : '—', Potions: `${p.potions}/${p.potionCap}` };
   const ST = { Attack: 'dmg', HP: 'hp', Armor: 'armor', Crit: 'crit', Lifesteal: 'ls' }; // (0.00266: each box in its stat's colour)
@@ -192,13 +187,13 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     level,
     el('div', { class: 'sec-hint' }, 'worn gear · the forge enhances tier 2+ for coins'),
     el('div', { class: 'knight-doll' },
-      el('div', { class: 'gear-col gear-left' }, slot('Weapon', eq.weapon), slot('Armor', eq.armor), slot('Boots', eq.boots)),
+      el('div', { class: 'gear-col gear-left' }, ...col(GEAR_SLOTS.slice(0, 3))),
       // the portrait opens the look picker (0.00253): the same class, another of its looks
       el('div', { class: `knight-card${looks > 1 ? ' pickable' : ''}`, 'data-row': 'look', style: `--theme:${hero.theme.plate}`, title: looks > 1 ? 'Change your look' : null, onclick: looks > 1 ? () => openLookPicker((changed) => { if (changed) done('look'); }) : null },
         el('div', { class: 'tone' }), // (0.00254: the class's colour on the plate)
         el('img', { src: portraitUrl('player'), alt: '' }),
         el('div', { class: 'look-tag' }, looks > 1 ? `Look ${cleanHero(p.hero).look + 1} of ${looks} · click to change` : hero.name)),
-      el('div', { class: 'gear-col gear-right' }, slot('Ring I', eq.rings[0]), slot('Ring II', eq.rings[1]), slot('Trinket', eq.trinket), slot('Amulet', eq.amulet))),
+      el('div', { class: 'gear-col gear-right' }, ...col(GEAR_SLOTS.slice(3)))),
     el('div', { class: 'knight-stats' }, ...['Attack', 'HP', 'Armor', 'Crit', 'Lifesteal', 'Potions'].map((k) => boxes[k])));
   return { panel, boxes, vals };
 }

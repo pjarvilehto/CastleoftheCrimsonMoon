@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, withAnimations, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, withAnimations, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, heroScene, resetProfile, getProfile, readFileSync, statSync, byClass } from './harness.mjs';
 
 fresh();
 
@@ -774,4 +774,20 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     ok('...and the next in turn (the ring)', /Ring of Might/i.test(slot('Ring I')?.textContent ?? '') && /New/.test(slot('Ring I')?.textContent ?? ''));
   });
   fresh();
+}
+
+// 0.00299: a re-render of CHOOSE YOUR HERO — the phone query flipping on a resize (relayout), the debug SWITCH CLASS —
+// replaces the screen; it used to stack a stale one under the live one, and the hotkeys (the first match) drove the
+// stale buttons, so PROCEED could save a class the player no longer saw.
+{
+  fresh();
+  const { heroList } = await import('../../src/shared/heroes.js');
+  const scene = heroScene();
+  show(scene);
+  await sleep(1100);
+  scene.relayout(registry.app); scene.relayout(registry.app);
+  ok('a re-render of CHOOSE YOUR HERO leaves one screen under #app', byClass(registry.app, 'hero-screen').length === 1 && byClass(registry.app, 'hero').length === 7);
+  handleKey('2'); handleKey('p');
+  await sleep(1300);
+  ok('…and the keys drive the live screen: 2 then Proceed saves the second hero', getProfile().hero?.id === heroList()[1].id && t().includes('GREAT HALL'), getProfile().hero?.id);
 }

@@ -14,8 +14,10 @@
 // Reports levels bought, mean depth gain (± standard error), coins and
 // relic rate. A DEAD upgrade buys levels that change nothing.
 //
-// Usage: node tools/stat-study.mjs [--n 200] [--seed 1] [--stages 5,15,30,60]
+// Usage: node tools/stat-study.mjs [--n 200] [--seed 1] [--stages 5,15,30,60] [--hero wizard]
 //        [--set player.hpPerVitality=130 --set ...]   try a tuning without editing the data
+// --hero: the class whose campaign is studied (heroes.json id; the knight when
+// unset — 0.00299: the study used to play a classless knight, see simCore.fresh).
 
 import { fileURLToPath } from 'node:url';
 import { loadSim, withSeed, newAgg } from './simCore.mjs';
@@ -26,7 +28,7 @@ const se = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (
 import { DISCIPLINES } from '../src/shared/level.js';
 const TRACKS = ['potency', 'efficiency', 'infusion'];
 
-export async function statStudy({ n = 200, seed = 1, stages = [5, 15, 30, 60], runsOfBudget = 3, sets = [] } = {}) {
+export async function statStudy({ n = 200, seed = 1, stages = [5, 15, 30, 60], runsOfBudget = 3, sets = [], hero = 'knight' } = {}) {
   const sim = await loadSim();
   for (const s of sets) { // "a.b.c=json" -> DATA.difficulty.a.b.c
     const [path, raw] = s.split('=');
@@ -38,7 +40,7 @@ export async function statStudy({ n = 200, seed = 1, stages = [5, 15, 30, 60], r
   const lv = await import('../src/meta/leveling.js');
   const snaps = [];
   withSeed(seed, () => {
-    sim.fresh();
+    sim.fresh(hero);
     const agg = newAgg();
     for (let r = 0; r <= Math.max(...stages); r++) {
       if (stages.includes(r)) {
@@ -93,7 +95,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const n = Number(arg('n', 200)), seed = Number(arg('seed', 1));
   const stages = String(arg('stages', '5,15,30,60')).split(',').map(Number);
   const sets = process.argv.flatMap((a, i) => (a === '--set' ? [process.argv[i + 1]] : []));
-  const rows = await statStudy({ n, seed, stages, sets });
+  const rows = await statStudy({ n, seed, stages, sets, hero: arg('hero', 'knight') });
   console.log('| stage | upgrade | budget | levels | depth gain | ± se | coins/run | relics/run |');
   console.log('|---|---|---|---|---|---|---|---|');
   for (const r of rows) {

@@ -88,7 +88,7 @@ export function derivedStats(p = getProfile()) {
   const cls = heroOf(p).class; // the class (0.00258, live 0.00267): multipliers on the hero's numbers, its own heavy and passives (heroes.json)
   const dodge = Math.min(pl.dodgeCap, cls.dodge + gear.reduce((s, g) => s + (g.dodge || 0), 0));
   const thorns = gear.reduce((s, g) => s + (g.thorns || 0), 0);
-  const heavyCdMax = Math.max(1, cls.heavyCd - gear.reduce((s, g) => s + (g.heavyCd || 0), 0)); // (the class's cooldown; the knight's is player.baseHeavyCd's 3)
+  const heavyCdMax = Math.max(1, cls.heavyCd - gear.reduce((s, g) => s + (g.heavyCd || 0), 0)); // (the class's cooldown, heroes.json class.heavyCd — the knight's 3; 0.00299: difficulty.json's baseHeavyCd copy of it went)
   const revive = gear.some((g) => g.revive);
 
   return {

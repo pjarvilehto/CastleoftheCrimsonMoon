@@ -2,7 +2,7 @@
 
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
-import { itemArtUrl, potionArtUrl } from '../shared/itemArt.js';
+import { itemArtUrl, potionArtUrl, gainLine } from '../shared/itemArt.js';
 import { masteryText } from '../shared/classGear.js';
 import { heroById } from '../shared/heroes.js';
 
@@ -98,10 +98,11 @@ export function logLine(logEl, content, cls = 'sys') {
 
 // Item rarity scheme driven by items.json `tier` (see styles.css):
 // T1 worn ash, T2 rare azure (soft pulse), T3 epic amethyst (strong pulse),
-// T4 crimson relics (rarityClass clamps at 4).
+// T4 crimson relics. tierOf clamps the tier to 1-4 (0.00299: one copy — the
+// rim, the find cards and the rarity class each clamped on their own).
+export const tierOf = (item) => Math.min(4, Math.max(1, item.tier || 1));
 export function rarityClass(item) {
-  const t = Math.min(4, Math.max(1, item.tier || 1));
-  return `rarity-${t}`;
+  return `rarity-${tierOf(item)}`;
 }
 
 // Item name span colored by rarity tier.
@@ -109,11 +110,22 @@ export function itemName(item) {
   return el('span', { class: rarityClass(item) }, item.name);
 }
 
+// An item's title (0.00299): its name in its rarity's colour and, forged, " +N" — the hero card's gear
+// line, the inventory strips, the hall's Equipment rows and the knight's slots used to build it four
+// ways. `upper` sets the name in capitals, `cls` joins the name span's classes, `forgeCls` gives the
+// forge its own span (else plain text), and `inside` puts the forge inside the name's span (the card and
+// the strips); the hall keeps it beside the name, outside the rarity's colour. For el()'s children.
+export function itemTitle(item, { upper = false, cls = '', forgeCls = null, inside = false } = {}) {
+  const forge = item.forgeLvl ? (forgeCls ? el('span', { class: forgeCls }, ` +${item.forgeLvl}`) : ` +${item.forgeLvl}`) : null;
+  const name = el('span', { class: `${cls ? `${cls} ` : ''}${rarityClass(item)}` }, upper ? item.name.toUpperCase() : item.name, inside ? forge : null);
+  return inside ? [name] : [name, forge];
+}
+
 // An item's picture (0.00260, items.json art): an <img> classed `item-pic
 // tier-N` (+ cls) for the rarity rim, or null for an item with none.
 export function itemPic(id, cls = '') {
   const src = itemArtUrl(id), item = DATA.items[id];
-  return src ? el('img', { class: `item-pic tier-${Math.min(4, Math.max(1, item.tier || 1))}${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
+  return src ? el('img', { class: `item-pic tier-${tierOf(item)}${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
 }
 
 // The healing potion's picture (0.00263): the hero card's count, the potion's card in combat.
@@ -126,8 +138,10 @@ export function potionPic(cls = '') {
 // find card names it too): the settle record's { slot, index }.
 const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', amulet: 'Amulet' };
 export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);
+// What a worn slot holds (0.00299): equipment.js GEAR_SLOTS' [key, index] against a profile's or the
+// run preview's equipment — the hall's two builders and the hero card's inventory page loop the slots.
+export const wornId = (eq, [key, i]) => (i === undefined ? eq[key] : eq[key]?.[i]) ?? null;
 
-// One-line description of an item's stat bonuses, e.g. "+9 dmg".
 // An item as a strip (the hero card's inventory, 0.00290; the LOOT pop-up, 0.00292): its picture on
 // the right fading under its name, forge level and stats on the left, the rarity's rim (styles.css
 // .inv-strips). `tag` (optional) sits in the strip's top right corner.
@@ -135,10 +149,35 @@ export function itemStrip(id, item, tag = null) {
   const pic = itemPic(id);
   return el('div', { class: `inv-row gear-${rarityClass(item)}` },
     pic ? el('div', { class: 'slot-art' }, pic) : null,
-    el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase(), ...(item.forgeLvl ? [el('span', { class: 'inv-forge' }, ` +${item.forgeLvl}`)] : [])),
+    ...itemTitle(item, { upper: true, cls: 'inv-name', forgeCls: 'inv-forge', inside: true }),
     el('span', { class: 'inv-desc' }, ...statText(describeItem(item))),
     tag);
 }
+
+// A find card's body (0.00299): the picture, then the slot, the name, the stats and what the find beat —
+// the combat find card (findFx.js, classes `fp-*`) and the run end's (runEndScene.js, `fc-*`) share it,
+// each with its prefix and its words: `kind(label)` = the slot row's children, `over` / `empty` = the
+// comparison's ("replaces X" / "an empty slot" in combat, "over X" / "into an empty slot" at the end).
+// Another class's find (`offClass`, whose it is) says it is salvaged at the end instead. Returns [art, text].
+export function findBody(id, { slot, index, from = null, offClass = null }, prefix, { kind = (label) => [label], over = 'over', empty = 'into an empty slot' } = {}) {
+  const it = DATA.items[id];
+  const was = from && DATA.items[from] ? DATA.items[from] : null;
+  const gain = gainLine(from, id);
+  const label = gearLabel({ slot: slot === 'ring' ? 'rings' : slot, index: index ?? 0 }) ?? it.slot;
+  const c = (k) => `${prefix}-${k}`;
+  return [
+    el('div', { class: c('art') }, itemPic(id)),
+    el('div', { class: c('text') },
+      el('div', { class: c('kind') }, ...kind(label)),
+      el('div', { class: c('name') }, it.name),
+      el('div', { class: c('desc') }, ...statText(describeItem(it))),
+      offClass // (0.00274: another class's gear — carried to the run's end and salvaged there)
+        ? el('div', { class: `${c('cmp')} ${c('off')}` }, `${offClass} · salvaged at the end`)
+        : el('div', { class: c('cmp') }, was ? `${over} ${was.name}` : empty, gain ? [' · ', el('span', { class: 'up' }, gain)] : null)),
+  ];
+}
+
+// One-line description of an item's stat bonuses, e.g. "+9 dmg".
 
 export function describeItem(item) {
   const parts = [];

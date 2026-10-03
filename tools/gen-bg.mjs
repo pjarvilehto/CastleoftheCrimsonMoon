@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { MODELS, loraVersion } from './gen-art.mjs';
 import { token, predict, predictVersion } from './replicate.mjs';
 import { LORAS, ROOM_CAPTION } from './train-lora.mjs';
+import { seedFor as seedOf, cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'room-prompts.md');
@@ -101,11 +102,7 @@ export function promptFor(doc, room, hint = '', refs = null, list = true) {
 }
 /** --refs alone = the hue family's two paintings; --refs a.jpg,b.jpg = those; no --refs = none (text alone). */
 export const refsFor = (room, over) => (over === true || over === '' ? REFS[room.hue] ?? REFS.cold : over ? over.split(',') : null);
-function seedFor(id, n) {
-  let h = 2166136261;
-  for (const ch of `bg/${id}/${n}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-  return h % 2147483647;
-}
+const seedFor = (id, n) => seedOf('bg', id, n); // (tools/util.mjs since 0.00299; the same seeds)
 
 const sharp = async () => (await import('sharp')).default;
 async function inline(path) {
@@ -163,9 +160,7 @@ async function sheet(reg, out, only) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const has = (f) => args.includes(f);
-  const val = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
+  const { argv: args, flag: has, opt: val } = cli(); // (tools/util.mjs, 0.00299)
   const doc = parseRooms(readFileSync(DOC, 'utf8'));
   const only = val('--only', '')?.split(',').filter(Boolean);
   const reg = loadRegistry();

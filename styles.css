@@ -30,6 +30,10 @@
   /* the stat colours (0.00266, the developer's call — the "moody" set): one per stat, shared by the Train row that raises
      it and everywhere the stat shows (hud.js statText / statBox, ST_TRAIN) */
   --st-dmg: #b8734f; --st-hp: #829c6c; --st-armor: #8797a8; --st-crit: #6f9e9b; --st-ls: #a46e78; --st-loot: #b39657; --st-dodge: #8f84a6;
+  /* the rarity tiers' colours (0.00299: one copy — the rarity lines, the pictures' rims, the hall's slot borders and the two
+     find cards each spelt them out): T1 worn ash, T2 azure, T3 amethyst, T4 crimson; --tN-rgb = the same colour as the
+     channels for an rgba() at the site's own alpha */
+  --t1: #a39b87; --t1-rgb: 163, 155, 135; --t2: #6fa8dc; --t2-rgb: 111, 168, 220; --t3: #c07ae8; --t3-rgb: 192, 122, 232; --t4: #ff6b4a; --t4-rgb: 255, 107, 74;
   --gold-dim: #8a7020;
   --parchment: #d8c9a3;
   --blood: #8e2323;
@@ -347,10 +351,10 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    frame and the pulse is the line's opacity in a narrow band (0.00223: a
    text-shadow loop repainted the line every frame it was on screen — the
    hall's equipment panel, the knight's weapon line through every fight). */
-.rarity-1 { color: #a39b87; }
-.rarity-2 { color: #6fa8dc; text-shadow: 0 0 12px rgba(111, 168, 220, 0.8); animation: rarity-pulse-2 2.8s ease-in-out infinite; }
-.rarity-3 { color: #c07ae8; font-weight: bold; text-shadow: 0 0 18px rgba(192, 122, 232, 1), 0 0 34px rgba(192, 122, 232, 0.5); animation: rarity-pulse-3 2.2s ease-in-out infinite; }
-.rarity-4 { color: #ff6b4a; font-weight: bold; text-shadow: 0 0 18px rgba(255, 90, 60, 1), 0 0 36px rgba(255, 170, 60, 0.6); animation: rarity-pulse-4 1.8s ease-in-out infinite; }
+.rarity-1 { color: var(--t1); }
+.rarity-2 { color: var(--t2); text-shadow: 0 0 12px rgba(var(--t2-rgb), 0.8); animation: rarity-pulse-2 2.8s ease-in-out infinite; }
+.rarity-3 { color: var(--t3); font-weight: bold; text-shadow: 0 0 18px rgba(var(--t3-rgb), 1), 0 0 34px rgba(var(--t3-rgb), 0.5); animation: rarity-pulse-3 2.2s ease-in-out infinite; }
+.rarity-4 { color: var(--t4); font-weight: bold; text-shadow: 0 0 18px rgba(255, 90, 60, 1), 0 0 36px rgba(255, 170, 60, 0.6); animation: rarity-pulse-4 1.8s ease-in-out infinite; } /* (the relic's burn is its own red-gold, not the tier's colour) */
 /* Stat colours (0.00266): a stat word or number (.st-*), a stat box (.st-box: its value, its label, a hairline on top), a Train row (.st-row: its name, a bar on its left) */
 .st-dmg { --c: var(--st-dmg); } .st-hp { --c: var(--st-hp); } .st-armor { --c: var(--st-armor); } .st-crit { --c: var(--st-crit); } .st-ls { --c: var(--st-ls); } .st-loot { --c: var(--st-loot); } .st-dodge { --c: var(--st-dodge); }
 .st { color: var(--c); }
@@ -362,10 +366,10 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .item-row.st-row .row-lv { color: color-mix(in srgb, var(--c) 55%, #e8d9b0); }
 /* An item's picture (0.00260, hud.js itemPic; items.json art): a small one gets a rim in its rarity's colour */
 .item-pic { display: block; object-fit: cover; }
-.item-pic.tier-1 { --rim: rgba(163, 155, 135, 0.55); --rim-glow: transparent; }
-.item-pic.tier-2 { --rim: rgba(111, 168, 220, 0.75); --rim-glow: rgba(111, 168, 220, 0.35); }
-.item-pic.tier-3 { --rim: rgba(192, 122, 232, 0.8); --rim-glow: rgba(192, 122, 232, 0.4); }
-.item-pic.tier-4 { --rim: rgba(255, 107, 74, 0.85); --rim-glow: rgba(255, 107, 74, 0.45); }
+.item-pic.tier-1 { --rim: rgba(var(--t1-rgb), 0.55); --rim-glow: transparent; }
+.item-pic.tier-2 { --rim: rgba(var(--t2-rgb), 0.75); --rim-glow: rgba(var(--t2-rgb), 0.35); }
+.item-pic.tier-3 { --rim: rgba(var(--t3-rgb), 0.8); --rim-glow: rgba(var(--t3-rgb), 0.4); }
+.item-pic.tier-4 { --rim: rgba(var(--t4-rgb), 0.85); --rim-glow: rgba(var(--t4-rgb), 0.45); }
 .item-pic.potion-pic { --rim: rgba(224, 70, 60, 0.8); --rim-glow: rgba(224, 50, 40, 0.4); } /* the healing potion's (0.00263) */
 @keyframes rarity-pulse-2 { 0%, 100% { opacity: 0.78; } 50% { opacity: 1; } }
 @keyframes rarity-pulse-3 { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
@@ -450,7 +454,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hero.chosen .looks { display: flex; }
 .hero .looks.single { visibility: hidden; } /* (a hero with one look: the gap stays, the switcher does not) */
 .hero .looks button { font-size: calc(var(--hero-h) * 0.08); line-height: 1; color: var(--gold); background: rgba(10, 7, 5, 0.75); border: 1px solid var(--panel-border); border-radius: 50%; width: 1.5em; height: 1.5em; min-width: 0; min-height: 0; padding: 0 0 0.1em; display: grid; place-items: center; text-shadow: 0 1px 3px #000; }
-.hero .looks button .key-hint { display: none; }
 .hero .looks .dots { display: flex; gap: 0.45em; font-size: calc(var(--hero-h) * 0.036); }
 .hero .looks .dots i { width: 1em; height: 1em; border-radius: 50%; border: 1px solid var(--gold); background: transparent; }
 .hero .looks .dots i.on { background: var(--gold); box-shadow: 0 0 0.6em rgba(201,162,39,0.8); }
@@ -493,9 +496,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 }
 /* compact hub chrome so the Great Hall fits a single viewport */
 .hub-wrap .panel { width: auto; max-width: none; max-height: min(746px, calc(100vh - 124px)); /* 76% of design height; a 768px-tall tablet keeps Descend on screen (0.00205). 124px = what sits around the panels: #app's 48px of padding, the Descend row's 20px margin and 51px height, 5px slack — 0.00205 took 200px, which put a scrollbar on a MacBook's Great Hall whose 686px of panel used to fit (0.00207) */ overflow-y: auto; padding: 18px 24px; }
-.hub-wrap h1 { font-size: 2.2rem; margin-bottom: 4px; }
-.hub-wrap .subtitle { margin-bottom: 12px; }
-.hub-wrap .stat-grid { gap: 8px; margin: 10px 0; }
 .hub-wrap .stat-box { padding: 8px 12px; }
 .hub-wrap .stat-box .value { font-size: 1.35rem; }
 .hub-wrap h2 { margin: 10px 0 6px; }
@@ -514,7 +514,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   .hub-wrap .panel { max-height: 60vh; }
   .hub-container:not(.phone-hub) { max-height: 100%; overflow-y: auto; } /* one column: the stack is taller than the window, so the container scrolls — body does not, and Descend is reachable (0.00223) */
 }
-/* middle column: alchemy panel + records panel stacked */
 /* ---- the desktop and tablet hall (0.00238, the developer's layout): the name and records up top, the knight | TRAIN |
    ALCHEMY as three panels of one height, the way on at the foot. The phone keeps its sheets (.phone-hub, section 16). ---- */
 .hall-desk { height: 100%; justify-content: space-between; gap: 14px; }
@@ -565,9 +564,9 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .gear-slot { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 6px 9px 7px; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 4px; background: rgba(0, 0, 0, 0.45); text-transform: uppercase; }
 .gear-left .gear-slot { text-align: right; }
 .gear-slot.empty { justify-content: center; }
-.gear-rarity-2 { border-color: rgba(111, 168, 220, 0.45); }
-.gear-rarity-3 { border-color: rgba(192, 122, 232, 0.5); }
-.gear-rarity-4 { border-color: rgba(255, 107, 74, 0.5); }
+.gear-rarity-2 { border-color: rgba(var(--t2-rgb), 0.45); }
+.gear-rarity-3 { border-color: rgba(var(--t3-rgb), 0.5); }
+.gear-rarity-4 { border-color: rgba(var(--t4-rgb), 0.5); }
 .slot-kind { position: absolute; top: 7px; color: #85775a; font-size: 0.68rem; letter-spacing: 0.12em; }
 .gear-left .slot-kind { right: 9px; }
 .gear-right .slot-kind { left: 9px; }
@@ -601,11 +600,9 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .knight-stats .potions-low .value { color: #e05a4a; }
 .records-line { margin-bottom: 0; }
 
-/* Great Hall stats (0.081): three fixed columns; each box has its label
-   pinned top-left and the value bottom-right. Potions sits alone in the
-   middle column of the third row. (After .hub-wrap .stat-box: same
-   specificity, these win.) */
-.hub-wrap .stat-grid.hub-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Great Hall stats (0.081): each box has its label pinned top-left and the
+   value bottom-right. (After .hub-wrap .stat-box: same specificity, these
+   win.) */
 .hub-stats .stat-box {
   display: flex; flex-direction: column; justify-content: space-between;
   min-height: 64px; padding: 6px 12px 4px;
@@ -762,7 +759,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* text rows stay above the overflowing portrait art (0.075) */
 .card-head, .card-sub { position: relative; z-index: 2; }
 .card-name { font-weight: bold; font-size: 1em; letter-spacing: 0.08em; }
-.player-card .card-name { font-size: 1.1em; }
 .enemy-char .card-name { text-transform: uppercase; } /* data stays title case */
 .lv-badge { color: var(--gold); font-size: 1em; white-space: nowrap; }
 /* a foe's class state (0.00267): HEXED (the hexhunter's hex: every blow crits) / BLIGHT ×n (the plague sister's censer, ticking a turn) — a small chip above the HP line, empty and hidden otherwise */
@@ -852,7 +848,6 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .card-back .back-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5em; margin: 0 7%; padding: 0.24em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); }
 .card-back .back-row span { color: #9a8b6a; letter-spacing: 0.12em; font-size: 0.75em; white-space: nowrap; }
 .card-back .back-row b { color: #e8d9b0; font-weight: normal; font-size: 1.15em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.card-back .back-row b.gold { color: var(--gold); }
 .card-back .back-row.st b { color: var(--c); } /* (0.00266: a stat's row in its colour, the label a shade of it) */
 .card-back .back-row.st span { color: color-mix(in srgb, var(--c) 65%, #9a8b6a); }
 .card-back .back-inv h2 { font-size: 1.55em; }
@@ -875,7 +870,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .loot-sub { color: #9a8b6a; letter-spacing: 0.1em; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 14px; }
 .loot-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(4 * 64px + 3 * 8px); overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; font-size: 24px; text-align: left; text-transform: uppercase; margin-bottom: 18px; padding-right: 4px; }
 .loot-list .inv-row { flex: none; height: 64px; scroll-snap-align: start; }
-.res-loot { cursor: pointer; }
+/* the inventory page's FINDS line (0.00299): a small button under the strips, the run's finds counted — it opens the pop-up
+   (the phone's one way to it); gone while the run has found nothing */
+.card-back .inv-finds { align-self: center; margin: 0 0 0.3em; padding: 0.18em 0.9em 0.1em; font-size: 0.6em; line-height: 1.2; letter-spacing: 0.14em; color: #c9b07a; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(201, 162, 39, 0.35); border-radius: 0.3em; cursor: pointer; }
+.card-back .inv-finds b { color: var(--gold); font-weight: normal; }
+.card-back .inv-finds.none { display: none; }
 .inv-strips .inv-name { font-size: 0.85em; animation: none; }
 .inv-strips .inv-forge { color: var(--gold); }
 .inv-strips .inv-empty { color: #4a4234; font-size: 0.66em; letter-spacing: 0.12em; text-shadow: none; }
@@ -1004,8 +1003,12 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .res-row { display: flex; gap: 1vw; align-items: baseline; font-size: 2vh; }
 .res-label { color: #9a8b6a; letter-spacing: 0.25vh; width: 5em; }
 .res-row b { color: var(--parchment); font-size: 1.2em; display: inline-block; transform-origin: left center; } /* (the pulse when a number changes, fx.js pulseNumber, grows from the left) */
-/* LOOT (0.00260, dungeonScene.js showLoot): the run's finds so far as small pictures, the newest last */
-.res-loot { align-items: center; gap: 0.8vw; }
+/* LOOT (0.00260, dungeonScene.js showLoot): the run's finds so far as small pictures, the newest last. A button since
+   0.00299 (a click or I opens the LOOT pop-up): the row's look, none of a button's chrome — el() wraps its children in
+   .btn-label, so that span is the row */
+button.res-loot { cursor: pointer; background: none; border: 0; border-radius: 0; padding: 0; min-width: 0; min-height: 0; box-shadow: none; transition: none; }
+button.res-loot .btn-label { top: 0; padding-block: 0; text-box: normal; display: flex; align-items: center; gap: 0.8vw; }
+@media (hover: hover) { button.res-loot:hover:not(:disabled) { box-shadow: none; transform: none; color: var(--parchment); } }
 .res-loot .res-label { width: auto; } /* (its own width, not the 5em column: six finds and the label keep left of the log in a 960 px window) */
 .res-loot.none { display: none; }
 .loot-tray { display: flex; gap: 0.4vh; }
@@ -1066,10 +1069,13 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* A find in combat (0.00260, ui/findFx.js): the item rising as a card over the foes, then flying into the hero's card */
 .find-pop { position: fixed; left: 0; top: 0; width: min(400px, 34vw); height: min(104px, 12.8vh); min-height: 64px; overflow: hidden; border: 1px solid var(--rim); border-radius: 5px; text-transform: uppercase;
   background: linear-gradient(to right, rgba(8, 5, 3, 0.2), rgba(8, 5, 3, 0.92) 46%); box-shadow: 0 0 28px 4px var(--rim-glow), 0 10px 30px rgba(0, 0, 0, 0.9); will-change: transform, opacity; }
-.find-pop.tier-1 { --rim: rgba(163, 155, 135, 0.6); --rim-glow: rgba(163, 155, 135, 0.15); --name: #c9bfa8; }
-.find-pop.tier-2 { --rim: #6fa8dc; --rim-glow: rgba(111, 168, 220, 0.45); --name: #6fa8dc; }
-.find-pop.tier-3 { --rim: #c07ae8; --rim-glow: rgba(192, 122, 232, 0.5); --name: #c07ae8; }
-.find-pop.tier-4 { --rim: #ff6b4a; --rim-glow: rgba(255, 107, 74, 0.6); --name: #ff6b4a; }
+/* the two find cards' tiers (0.00299: one block for combat's card and the run end's, from the :root tokens); a tier-1
+   find at the run's end has no glow */
+.find-pop.tier-1, .find-card.tier-1 { --rim: rgba(var(--t1-rgb), 0.6); --rim-glow: rgba(var(--t1-rgb), 0.15); --name: #c9bfa8; }
+.find-pop.tier-2, .find-card.tier-2 { --rim: var(--t2); --rim-glow: rgba(var(--t2-rgb), 0.45); --name: var(--t2); }
+.find-pop.tier-3, .find-card.tier-3 { --rim: var(--t3); --rim-glow: rgba(var(--t3-rgb), 0.5); --name: var(--t3); }
+.find-pop.tier-4, .find-card.tier-4 { --rim: var(--t4); --rim-glow: rgba(var(--t4-rgb), 0.6); --name: var(--t4); }
+.find-card.tier-1 { --rim-glow: transparent; }
 .find-pop.potion-pop { --rim: rgba(224, 70, 60, 0.85); --rim-glow: rgba(224, 50, 40, 0.45); --name: #ff8a78; } /* a found potion (0.00263): flies into the hero card's count */
 .find-pop::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 18% 50%, var(--rim-glow), transparent 55%); }
 .find-pop .fp-art { position: absolute; left: -4%; top: -25%; height: 150%; aspect-ratio: 1; -webkit-mask-image: linear-gradient(to right, #000 50%, transparent 95%); mask-image: linear-gradient(to right, #000 50%, transparent 95%); }
@@ -1153,7 +1159,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* The run's finds (0.00260, runEndScene.js findCard): a card per slot they changed, the picture fading down into the name; what was salvaged as grey chips */
 .loot-summary { text-align: center; }
 .finds-row { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
-/* The run's end (0.00293, the developer's call): a wider panel, the five numbers on one line, the find
+/* The run's end (0.00294, the developer's call): a wider panel, the five numbers on one line, the find
    cards a third larger to read; the phone keeps its own (section 16 outranks these) */
 #app > .panel.run-end { max-width: 940px; }
 .run-end .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -1163,14 +1169,10 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @media (min-height: 801px) and (max-height: 899px) { .run-end .finds-row:has(> .find-card:nth-child(5)) > .find-card { flex-basis: 150px; min-width: 140px; } } /* (a MacBook's 813 px window: two rows of the old card size) */
 @media (max-height: 800px) { .run-end .finds-row { flex-wrap: nowrap; } .run-end .find-card { min-width: 0; } } /* (a short window, every phone among them: one row as before, Return on screen) */
 .find-card { position: relative; flex: 0 1 150px; min-width: 0; aspect-ratio: 150 / 196; container-type: inline-size; overflow: hidden; border: 1px solid var(--rim); border-radius: 5px; background: #0b0705; box-shadow: 0 0 16px var(--rim-glow); text-transform: uppercase; }
-.find-card.tier-1 { --rim: rgba(163, 155, 135, 0.6); --rim-glow: transparent; --name: #c9bfa8; }
-.find-card.tier-2 { --rim: #6fa8dc; --rim-glow: rgba(111, 168, 220, 0.45); --name: #6fa8dc; }
-.find-card.tier-3 { --rim: #c07ae8; --rim-glow: rgba(192, 122, 232, 0.5); --name: #c07ae8; }
-.find-card.tier-4 { --rim: #ff6b4a; --rim-glow: rgba(255, 107, 74, 0.6); --name: #ff6b4a; }
 .find-card .fc-art { position: absolute; left: -8%; right: -8%; top: -6%; aspect-ratio: 1; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 92%); mask-image: linear-gradient(to bottom, #000 55%, transparent 92%); }
 .find-card .fc-art img { width: 100%; height: 100%; filter: brightness(1.25); }
 .find-card .fc-text { position: absolute; left: 5%; right: 5%; bottom: 5%; text-align: center; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
-.fc-slot { font-size: 6.5cqw; letter-spacing: 0.16em; color: #b9a578; }
+.fc-kind { font-size: 6.5cqw; letter-spacing: 0.16em; color: #b9a578; } /* (0.00299: named like the combat card's row, hud.js findBody builds both) */
 .fc-name { font-size: 10.5cqw; line-height: 1.05; color: var(--name); margin: 1px 0 2px; }
 .fc-desc { font-size: 6.6cqw; letter-spacing: 0.04em; color: #b3a382; }
 .fc-cmp { font-size: 6.4cqw; letter-spacing: 0.04em; color: #7d6f52; margin-top: 2px; }
@@ -1431,6 +1433,7 @@ html.phone .hud-chip .hpbar { width: 64px; }
 html.phone .player-card.flipped .card-back { font-size: 0.74em; padding-top: 0.5em; inset: 4% 5%; } /* the stats back (0.00256): nine rows in a card at the phone's larger type */
 html.phone .card-back .back-row { padding: 0.12em 0; }
 html.phone .card-back h2 { font-size: 1.6em; }
+html.phone .card-back .inv-finds { font-size: 0.85em; padding: 0.35em 1.2em 0.25em; } /* the FINDS line (0.00299): the phone's one way to the LOOT pop-up, so a finger-sized chip (11px tall at the desktop's size) */
 html.phone .room-title { top: 6px; font-size: 1.05rem; letter-spacing: 0.08em; left: calc(12px + env(safe-area-inset-left, 0px) + var(--tag-w) + 8px + var(--res-w)); right: calc(12px + env(safe-area-inset-right, 0px) + 60px); transform: none; text-align: center; overflow: hidden; text-overflow: ellipsis; padding-bottom: 6px; } /* between XP / COINS and ☰, an ellipsis past that (0.00223: a long name with the record tag ran into the counters on the smallest phones) */
 html.phone #combat-log.docked {                                     /* one line: the latest, flashed in; the strip beside the knight's buttons */
   left: calc(1vw + env(safe-area-inset-left, 0px) + var(--knight-w) + 10px); right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px));
@@ -1579,7 +1582,8 @@ html.phone .phone-hub .item-row .slot-art { position: absolute; inset: 0; overfl
 html.phone .phone-hub .item-row .slot-art img { position: absolute; left: -4px; top: -37.5%; height: 175%; width: auto; aspect-ratio: 1; filter: brightness(1.45) contrast(1.08) saturate(1.1); -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 100%); mask-image: linear-gradient(to right, #000 45%, transparent 100%); }
 html.phone .phone-hub .item-row.has-art > :not(.slot-art) { position: relative; }
 html.phone .phone-hub .item-row.has-art .equip-slot { padding-left: 46px; text-shadow: 0 0 4px #000, 0 0 8px #000, 0 1px 2px #000; }
-html.phone .resources .res-row.res-loot { display: none; } /* (the top strip is the room title's: on a phone the finds are on the hero card's inventory page) */
+html.phone .resources .res-row.res-loot { display: none; } /* (the top strip is the room title's: on a phone the way to the finds is the hero card's inventory page's FINDS line, 0.00299) */
+html.phone .loot-list { max-height: calc(2 * 64px + 8px); } /* the LOOT pop-up (0.00299): two strips in view, so Close stays inside the 94svh modal */
 html.phone .find-pop { width: min(300px, 42vw); height: 76px; min-height: 0; }
 html.phone .find-pop .fp-text { left: 32%; right: 10px; }
 html.phone .fp-name { font-size: 1rem; }

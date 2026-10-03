@@ -114,7 +114,7 @@ export function showBenchmarkResult(r, onClose, thanks = false) {
         el('p', { class: 'update-ask bench-note' }, thanks ? 'The Great Hall will ask again on another visit. Keep the game in front for the whole run.' : 'Run it again and keep the game in front for the whole run.'),
         el('div', { class: 'btn-row' }, ok),
       ],
-      onKey: (k, closeIt) => { if (k === 'c' || k === 'enter' || k === 'escape') closeIt(); },
+      closeKeys: ['c'],
     });
     return dlg;
   }
@@ -139,7 +139,7 @@ export function showBenchmarkResult(r, onClose, thanks = false) {
       el('p', { class: 'update-ask bench-note' }, 'Saved. It goes to the play stats with this browser’s runs.'),
       el('div', { class: 'btn-row' }, close),
     ],
-    onKey: (k, closeIt) => { if (k === 'c' || k === 'enter' || k === 'escape') closeIt(); },
+    closeKeys: ['c'],
   });
   return dlg;
 }
