@@ -736,7 +736,7 @@ be served stale for ~4 hours.
   static glow; a smoke check parses every infinite `@keyframes`. The
   panel rooms' HP number and bar turn red at `lowHpShare` like the chip.
 - Upper-right corner (`ui/cornerToggles.js`; a SETTINGS menu since
-  0.00242, the owner's call): the top row is FULLSCREEN (an icon, not on a
+  0.00243, the owner's call): the top row is FULLSCREEN (an icon, not on a
   phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
   SAVER), GAME (CHANGELIST) — and DEBUG MODE last. Add items in main.js's
@@ -1199,7 +1199,7 @@ sometimes — fetch all branches to find it.
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
-  against scaled enemy HP (it can finish a foe since 0.00242) · more room kinds · a portrait phone layout
+  against scaled enemy HP (it can finish a foe since 0.00243) · more room kinds · a portrait phone layout
   (0.00208 plays sideways only) · the reliquary's revive is not narrated
   · treasure rooms are not in the play stats · the world map (the World
   Lab's design, 0.00210: a scene between the Great Hall and the dungeon;
@@ -1208,7 +1208,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: the SETTINGS menu's and the thorns fix's comments (cornerToggles.js, debugToggles.js, main.js, styles.css, combat.js) say 0.00242 for 0.00243 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)
