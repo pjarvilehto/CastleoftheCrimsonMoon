@@ -47,14 +47,14 @@ html, body { overflow: hidden; }
 
 /* the row of hero cards: --hero-h is a card's height, the card art the enemy frame (tall, 413 / 1106) */
 /* the row keeps a margin above for the figures that climb over their frames and the chosen card's lift */
-.hero-row { display: flex; gap: 1.4vw; align-items: flex-end; justify-content: center; perspective: 150vh; perspective-origin: 50% 40%; --hero-h: min(50vh, 24vw); margin-top: calc(var(--hero-h) * 0.16); }
+.hero-row { display: flex; gap: 1.4vw; align-items: flex-end; justify-content: center; perspective: 150vh; perspective-origin: 50% 40%; --hero-h: min(64vh, 28vw); margin-top: calc(var(--hero-h) * 0.14); }
 .hero { position: relative; flex: 0 0 auto; width: calc(var(--hero-h) * 0.3734); height: var(--hero-h); cursor: pointer; transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s; filter: brightness(0.72) saturate(0.85); }
 .hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%) rotateY(var(--ry, 0deg)); }
-.hero.chosen { filter: none; transform: translateY(-4%) scale(1.07) rotateY(var(--ry, 0deg)); z-index: 2; }
+.hero.chosen { filter: none; transform: translateY(-3%) scale(1.05) rotateY(var(--ry, 0deg)); z-index: 2; }
 .hero-row.fan .hero { transform: rotateY(var(--ry)); }
 .hero-row.fan .hero:hover { transform: translateY(-1.5%) rotateY(var(--ry)); }
-.hero-row.fan .hero.chosen { transform: translateY(-4%) scale(1.07) rotateY(0deg); }
+.hero-row.fan .hero.chosen { transform: translateY(-3%) scale(1.05) rotateY(0deg); }
 .hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
 /* the chosen card's gold rim: a layer whose opacity breathes (never the box-shadow itself) */
 .hero .rim { position: absolute; inset: -0.6%; border-radius: 4% / 1.6%; box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); opacity: 0; pointer-events: none; }
@@ -66,17 +66,30 @@ html, body { overflow: hidden; }
 .hero .name { position: absolute; left: 4%; right: 4%; bottom: 3.5%; text-align: center; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--parchment); font-size: calc(var(--hero-h) * 0.048); line-height: 1.05; text-shadow: 0 1px 4px #000; }
 .hero .name small { display: block; font-size: 0.62em; letter-spacing: 0.16em; color: var(--muted); margin-top: 0.15em; }
 .hero.chosen .name { color: var(--gold); }
+/* the looks: four versions of the chosen hero's figure, switched by the arrows under the card (the art is a stand-in: the same sheet mirrored or tinted) */
+.hero .looks { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 1vh; display: none; align-items: center; gap: 0.6vw; white-space: nowrap; }
+.hero.chosen .looks { display: flex; }
+.hero .looks button { font-family: var(--display); font-size: calc(var(--hero-h) * 0.08); line-height: 1; color: var(--gold); background: rgba(10, 7, 5, 0.75); border: 1px solid var(--panel-border); border-radius: 50%; width: 1.5em; height: 1.5em; padding: 0 0 0.1em; cursor: pointer; display: grid; place-items: center; text-shadow: 0 1px 3px #000; }
+.hero .looks button:hover { border-color: var(--gold); color: #fff; }
+.hero .looks .dots { display: flex; gap: 0.45em; font-size: calc(var(--hero-h) * 0.036); }
+.hero .looks .dots i { width: 1em; height: 1em; border-radius: 50%; border: 1px solid var(--gold); background: transparent; }
+.hero .looks .dots i.on { background: var(--gold); box-shadow: 0 0 0.6em rgba(201,162,39,0.8); }
+.hero .looks .which { font-family: var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-size: calc(var(--hero-h) * 0.034); text-shadow: 0 1px 3px #000; }
+.hero .figure.look-2 { transform: translateX(-50%) scaleX(-1); }
+.hero .figure.look-3 { filter: drop-shadow(0 0.8vh 1.2vh rgba(0,0,0,0.7)) hue-rotate(35deg); }
+.hero .figure.look-4 { filter: drop-shadow(0 0.8vh 1.2vh rgba(0,0,0,0.7)) hue-rotate(-40deg) saturate(0.8); }
 .hero .num { position: absolute; left: 6%; top: 3%; font-family: var(--display); font-size: calc(var(--hero-h) * 0.04); color: var(--muted); letter-spacing: 0.1em; opacity: 0.7; }
 
 /* the chosen hero's lines and the way forward (the game's panel look) */
-.detail { width: min(72vw, 980px); padding: 1.2vh 2.2vw 1.1vh; text-align: center; display: grid; grid-template-columns: 1fr; gap: 0.4vh; }
+.detail { width: min(78vw, 1180px); max-width: none; padding: 1.4vh 2.2vw 1.3vh; text-align: left; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name go" "epithet go" "lore go" "traits go" "note go"; column-gap: 2.4vw; row-gap: 0.25vh; align-items: center; margin-top: calc(var(--hero-h, 50vh) * 0.09); }
+.detail h2 { grid-area: name; } .detail .epithet { grid-area: epithet; } .detail .lore { grid-area: lore; } .detail .traits { grid-area: traits; } .detail .placeholder { grid-area: note; } .detail .btn-row { grid-area: go; align-self: center; }
 .detail h2 { margin: 0; font-size: min(3.2vh, 2.8vw); letter-spacing: 0.16em; text-transform: uppercase; }
 .detail .epithet { color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); }
-.detail .lore { font-family: var(--body); color: var(--parchment); font-size: min(1.9vh, 1.6vw); line-height: 1.35; max-width: 60ch; margin: 0.3em auto 0; }
-.detail .traits { display: flex; gap: 0.8vw; justify-content: center; margin-top: 0.6vh; flex-wrap: wrap; }
+.detail .lore { font-family: var(--body); color: var(--parchment); font-size: min(2vh, 1.6vw); line-height: 1.35; max-width: 64ch; margin: 0.2em 0 0; }
+.detail .traits { display: flex; gap: 0.8vw; justify-content: flex-start; margin-top: 0.5vh; flex-wrap: wrap; }
 .detail .traits span { font-family: var(--display); letter-spacing: 0.12em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); color: var(--parchment); border: 1px solid var(--panel-border); border-radius: 3px; padding: 0.25em 0.8em 0.15em; background: rgba(0,0,0,0.35); }
-.detail .btn-row { margin-top: 0.8vh; justify-content: center; }
-.detail .btn-row button { font-size: min(2.2vh, 1.9vw); }
+.detail .btn-row { margin-top: 0; justify-content: center; }
+.detail .btn-row button { font-size: min(2.6vh, 2.2vw); padding-inline: 2.2em; }
 .detail .placeholder { color: var(--muted); font-family: var(--body); font-size: 0.78rem; margin-top: 0.4vh; opacity: 0.8; }
 
 /* ---- SHOWCASE: the chosen hero large beside the lines, the five as a strip ---- */
@@ -109,7 +122,7 @@ body:not(.showcase) .stage { display: none; }
   <select id="painting" title="The painting behind the screen"></select>
   <button id="copy">Copy JSON</button>
   <span id="status"></span>
-  <span class="hint">1-5 / ←→ choose · Space begin · L layout · F fan · P painting</span>
+  <span class="hint">1-5 / ←→ choose · A/D look · Space proceed · L layout · F fan · P painting</span>
 </div>
 <!-- the versioned boot (labs/boot.js): the game's modules and this lab's script under ?v=<build> -->
 <script src="labs/boot.js" data-lab="labs/heroes/lab.js"></script>

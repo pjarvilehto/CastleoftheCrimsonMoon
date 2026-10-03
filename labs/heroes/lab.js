@@ -27,21 +27,29 @@ const B = DATA.backgrounds;
 const PAINTINGS = [...new Set([B.hub, B.title, B.shrine, ...B.entrance, ...B.bosses, ...B.rooms, ...B.treasure])];
 
 // ---- state (this browser) ----
-let S = { layout: 'lineup', fan: false, painting: B.hub, chosen: 'knight' };
+let S = { layout: 'lineup', fan: false, painting: B.hub, chosen: 'knight', look: {} };
 try { S = { ...S, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { /* fresh */ }
 if (!HEROES.some((h) => h.id === S.chosen)) S.chosen = 'knight';
 if (!PAINTINGS.includes(S.painting)) S.painting = B.hub;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode */ } };
 const index = () => HEROES.findIndex((h) => h.id === S.chosen);
 const hero = () => HEROES[index()];
+const LOOKS = 4; // versions of each hero's figure (stand-ins until the art exists)
+const lookOf = (id) => S.look?.[id] ?? 1;
+function setLook(id, n) { S.look = { ...S.look, [id]: ((n - 1 + LOOKS) % LOOKS) + 1 }; render(); }
 
 // ---- the screen ----
 function card(h, i) {
   const c = el('div', { class: 'hero', 'data-id': h.id, style: `--fh:${h.fh.toFixed(4)}`, onclick: () => choose(h.id) },
     el('div', { class: 'plate' }), el('div', { class: 'rim' }),
-    el('img', { class: 'figure', src: h.art, alt: h.name, draggable: 'false' }),
+    el('img', { class: `figure look-${lookOf(h.id)}`, src: h.art, alt: h.name, draggable: 'false' }),
     el('div', { class: 'num' }, String(i + 1)),
-    el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)));
+    el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)),
+    el('div', { class: 'looks' },
+      el('button', { title: 'Previous look', onclick: (e) => { e.stopPropagation(); setLook(h.id, lookOf(h.id) - 1); } }, '‹'),
+      el('div', { class: 'dots' }, ...Array.from({ length: LOOKS }, (_, n) => el('i', { class: n + 1 === lookOf(h.id) ? 'on' : '' }))),
+      el('button', { title: 'Next look', onclick: (e) => { e.stopPropagation(); setLook(h.id, lookOf(h.id) + 1); } }, '›'),
+      el('span', { class: 'which' }, `Look ${lookOf(h.id)} of ${LOOKS}`)));
   return c;
 }
 function render() {
@@ -62,9 +70,8 @@ function render() {
     el('h2', {}, h.name), el('div', { class: 'epithet' }, h.epithet), el('p', { class: 'lore' }, h.lore),
     el('div', { class: 'traits' }, ...h.traits.map((t) => el('span', {}, t))),
     el('div', { class: 'btn-row' },
-      el('button', { class: 'primary proceed', onclick: begin }, 'Begin the Descent', el('span', { class: 'key-hint' }, '[space]')),
-      el('button', { onclick: () => say('Back would return to the title.') }, 'Back')),
-    el('div', { class: 'placeholder' }, 'Draft: the names, lines and traits are placeholders; the choice changes the look only.'));
+      el('button', { class: 'primary proceed', onclick: begin }, 'Proceed', el('span', { class: 'key-hint' }, '[space]'))),
+    el('div', { class: 'placeholder' }, 'Draft: the names, lines and traits are placeholders; the looks are stand-ins (mirrored or tinted) until the art exists.'));
   for (const [id] of LAYOUTS) $(`layout-${id}`).classList.toggle('on', S.layout === id);
   $('fan').classList.toggle('on', S.fan);
   $('painting').value = S.painting;
@@ -72,7 +79,7 @@ function render() {
 }
 function choose(id) { S.chosen = id; render(); }
 function step(d) { choose(HEROES[(index() + d + HEROES.length) % HEROES.length].id); }
-function begin() { say(`${hero().name} enters the castle (the real screen would go to the Great Hall).`); }
+function begin() { say(`${hero().name}, look ${lookOf(hero().id)}: the real screen fades its pieces out and the Great Hall's in over the same painting.`); }
 let sayTimer = 0;
 function say(msg) { $('status').textContent = msg; clearTimeout(sayTimer); sayTimer = setTimeout(() => { $('status').textContent = ''; }, 3500); }
 
@@ -82,7 +89,7 @@ $('fan').addEventListener('click', () => { S.fan = !S.fan; render(); });
 $('painting').append(...PAINTINGS.map((f) => el('option', { value: f }, B.roomNames?.[f] ?? f.replace(/\.jpg$/, '').replace(/_/g, ' '))));
 $('painting').addEventListener('change', (e) => { S.painting = e.target.value; render(); });
 $('copy').addEventListener('click', async () => {
-  const json = JSON.stringify({ layout: S.layout, fan: S.fan, painting: S.painting, chosen: S.chosen, heroes: HEROES.map((h) => h.id) }, null, 2);
+  const json = JSON.stringify({ layout: S.layout, fan: S.fan, painting: S.painting, chosen: S.chosen, look: lookOf(S.chosen), heroes: HEROES.map((h) => h.id) }, null, 2);
   try { await navigator.clipboard.writeText(json); say('Copied.'); } catch { say(json); }
 });
 addEventListener('keydown', (e) => {
@@ -91,6 +98,8 @@ addEventListener('keydown', (e) => {
   if (n >= 1 && n <= HEROES.length) choose(HEROES[n - 1].id);
   else if (e.key === 'ArrowLeft') step(-1);
   else if (e.key === 'ArrowRight') step(1);
+  else if (e.key === 'a' || e.key === 'A') setLook(hero().id, lookOf(hero().id) - 1);
+  else if (e.key === 'd' || e.key === 'D') setLook(hero().id, lookOf(hero().id) + 1);
   else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); begin(); }
   else if (e.key === 'l' || e.key === 'L') { S.layout = S.layout === 'lineup' ? 'showcase' : 'lineup'; render(); }
   else if (e.key === 'f' || e.key === 'F') { S.fan = !S.fan; render(); }
