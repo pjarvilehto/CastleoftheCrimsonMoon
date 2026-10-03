@@ -1,4 +1,9 @@
 {
+  "0.00297": [
+    "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
+    "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
+    "The coin jingle plays an octave lower."
+  ],
   "0.00296": [
     "On a computer, Enter the Castle now switches the game to full screen (Esc or the corner icon leaves it)."
   ],
