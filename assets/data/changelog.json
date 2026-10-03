@@ -1,4 +1,11 @@
 {
+  "0.00234": [
+    "Art Lab: the wraith's c10 approved (every character now has an approved portrait) and its other candidates pruned; the LoRA tool can cancel a training"
+  ],
+  "0.00233": [
+    "Art Lab: 30 candidates approved across twelve characters; the wraith redrawn from its best candidate with the owner's note (dead black eyes, the red heart kept); the unapproved candidates pruned",
+    "The style LoRA trains on the approved pictures only (tools/train-lora.mjs; the inked sheets and the room paintings are opt-in)"
+  ],
   "0.00232": [
     "The Great Hall reads at a glance: each upgrade's name and level stand out, with a shorter, quieter line under it saying what it does"
   ],

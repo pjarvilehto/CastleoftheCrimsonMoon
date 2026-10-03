@@ -347,6 +347,344 @@
       ],
       "status": "canceled",
       "finished": "2026-10-03T03:39:25Z"
+    },
+    {
+      "id": "67q8j51svnrmy0d100bt23bmtg",
+      "started": "2026-10-03T04:48:04Z",
+      "trainer": "ostris/flux-dev-lora-trainer:26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2",
+      "destination": "pjarvilehto/crimson-moon-style",
+      "trigger": "CRMSNMOON",
+      "knobs": {
+        "steps": 1200,
+        "rank": 16,
+        "resolution": "768,1024",
+        "learningRate": 0.0004
+      },
+      "set": [
+        {
+          "name": "approved_player_c11",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a young dark-haired knight with no helmet, worn leather and chainmail, a long straight sword held low in a lunging fighting stance. warm leather browns and dull steel, a dark red scarf; no glow."
+        },
+        {
+          "name": "approved_rat_c10",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a huge hunched black sewer rat, matted fur, pink ears and scaly tail, small glowing pale eyes, bared yellow fangs, clawed forepaws. black fur, pink ears and tail, small pale glowing eyes."
+        },
+        {
+          "name": "approved_rat_c11",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a huge hunched black sewer rat, matted fur, pink ears and scaly tail, small glowing pale eyes, bared yellow fangs, clawed forepaws. black fur, pink ears and tail, small pale glowing eyes."
+        },
+        {
+          "name": "approved_vampire_lord_c25",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_vampire_lord_c30",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_vampire_lord_c37",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_bat_c13",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_bat_c14",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_bat_c15",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_skeleton_c3",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_skeleton_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_skeleton_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_ghoul_c32",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a tall hooded figure in a charred robe, a burning ember heart in its chest, glowing orange cracks in the cloth and embers drifting off it. charred black cloth split by bright orange-red ember cracks, the heart a blaze of fire, embers drifting off it."
+        },
+        {
+          "name": "approved_cultist_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hooded cultist in heavy black robes with a leather belt and sash, a blank mask with two glowing orange eye slits, a curved dagger in one hand. black robes; the two eye slits glow bright orange."
+        },
+        {
+          "name": "approved_cultist_c8",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hooded cultist in heavy black robes with a leather belt and sash, a blank mask with two glowing orange eye slits, a curved dagger in one hand. black robes; the two eye slits glow bright orange."
+        },
+        {
+          "name": "approved_golem_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c8",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c9",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c10",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_gargoyle_c16",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a crouching stone gargoyle of pale cracked stone, curved horns, a snarling fanged face, folded bat wings, clawed feet. pale grey-blue cracked stone, dark hollows; no glow."
+        },
+        {
+          "name": "approved_gargoyle_c17",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a crouching stone gargoyle of pale cracked stone, curved horns, a snarling fanged face, folded bat wings, clawed feet. pale grey-blue cracked stone, dark hollows; no glow."
+        },
+        {
+          "name": "approved_crypt_spider_c3",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_hollow_hound_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_blood_knight_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a knight in jagged crimson armour and a hood, a glowing red sigil on the chest, holding a long blood-red sword point down. crimson armour; the sword and the chest sigil burn bright red."
+        }
+      ],
+      "status": "canceled",
+      "finished": "2026-10-03T04:49:35Z"
+    },
+    {
+      "id": "ry2nscp41xrmy0d100caswsagw",
+      "started": "2026-10-03T04:49:45Z",
+      "trainer": "ostris/flux-dev-lora-trainer:26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2",
+      "destination": "pjarvilehto/crimson-moon-style",
+      "trigger": "CRMSNMOON",
+      "knobs": {
+        "steps": 1200,
+        "rank": 16,
+        "resolution": "768,1024",
+        "learningRate": 0.0004
+      },
+      "set": [
+        {
+          "name": "approved_player_c11",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a young dark-haired knight with no helmet, worn leather and chainmail, a long straight sword held low in a lunging fighting stance. warm leather browns and dull steel, a dark red scarf; no glow."
+        },
+        {
+          "name": "approved_rat_c10",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a huge hunched black sewer rat, matted fur, pink ears and scaly tail, small glowing pale eyes, bared yellow fangs, clawed forepaws. black fur, pink ears and tail, small pale glowing eyes."
+        },
+        {
+          "name": "approved_rat_c11",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a huge hunched black sewer rat, matted fur, pink ears and scaly tail, small glowing pale eyes, bared yellow fangs, clawed forepaws. black fur, pink ears and tail, small pale glowing eyes."
+        },
+        {
+          "name": "approved_vampire_lord_c25",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_vampire_lord_c30",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_vampire_lord_c37",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: the Vampire Lord, a tall gaunt lord with a skull-like face in a long dark high-collared cloak, holding a curved golden sword. Regal and terrifying, the boss. ornate gold armour under the cloak, a tall collar, a thin crown, embers in the air — a lord, not a reaper. black cloak with gold trim and a high collar, the golden sword glowing warm, ember-orange eyes; regal, not ragged."
+        },
+        {
+          "name": "approved_bat_c13",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_bat_c14",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_bat_c15",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: an emaciated bat-like cave horror with wet blue-black skin, long spindly clawed limbs, torn wing membranes and a gaping fanged maw, hunched forward. wet blue-black skin with cold blue highlights, pale glowing eyes."
+        },
+        {
+          "name": "approved_skeleton_c3",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_skeleton_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_skeleton_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeleton warrior in rusted scraps of armour and rags, small glowing eyes, holding a notched sword whose blade glows a faint cold blue. cold blue-grey bone and rusted iron; the blade glows a bright cold blue."
+        },
+        {
+          "name": "approved_ghoul_c32",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a tall hooded figure in a charred robe, a burning ember heart in its chest, glowing orange cracks in the cloth and embers drifting off it. charred black cloth split by bright orange-red ember cracks, the heart a blaze of fire, embers drifting off it."
+        },
+        {
+          "name": "approved_cultist_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hooded cultist in heavy black robes with a leather belt and sash, a blank mask with two glowing orange eye slits, a curved dagger in one hand. black robes; the two eye slits glow bright orange."
+        },
+        {
+          "name": "approved_cultist_c8",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hooded cultist in heavy black robes with a leather belt and sash, a blank mask with two glowing orange eye slits, a curved dagger in one hand. black robes; the two eye slits glow bright orange."
+        },
+        {
+          "name": "approved_golem_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c8",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c9",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_golem_c10",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a hulking shaggy brute with glowing red eyes, dragging a huge rusted greatsword, a faint red haze around its lower body. black shaggy hide, bright red glowing eyes, a crimson haze about its feet."
+        },
+        {
+          "name": "approved_wraith_c10",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a floating hooded spectre with a skull face, a tattered shroud that dissolves into mist at the bottom, long bony hands. Cold, ghostly, no feet. cold blue-grey shroud and pale bone, a dim red sigil on the chest, cold blue mist at the hem."
+        },
+        {
+          "name": "approved_gargoyle_c16",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a crouching stone gargoyle of pale cracked stone, curved horns, a snarling fanged face, folded bat wings, clawed feet. pale grey-blue cracked stone, dark hollows; no glow."
+        },
+        {
+          "name": "approved_gargoyle_c17",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a crouching stone gargoyle of pale cracked stone, curved horns, a snarling fanged face, folded bat wings, clawed feet. pale grey-blue cracked stone, dark hollows; no glow."
+        },
+        {
+          "name": "approved_crypt_spider_c3",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_crypt_spider_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a giant spider with a black spiked carapace, glowing red eyes and a glowing red rune on its back, long jagged legs. black spiked carapace; the eyes and the rune on its back blaze bright red."
+        },
+        {
+          "name": "approved_hollow_hound_c4",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c5",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_hollow_hound_c7",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a skeletal hellhound with dark cracked hide, glowing red cracks and a burning red core in its chest, bared fangs. black cracked hide split by burning red cracks, the core in its chest a bright red blaze."
+        },
+        {
+          "name": "approved_blood_knight_c6",
+          "kind": "character",
+          "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a knight in jagged crimson armour and a hood, a glowing red sigil on the chest, holding a long blood-red sword point down. crimson armour; the sword and the chest sigil burn bright red."
+        }
+      ],
+      "status": "starting"
     }
   ]
 }
