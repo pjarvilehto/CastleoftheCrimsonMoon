@@ -1,5 +1,5 @@
 {
-  "version": "0.00227",
+  "version": "0.00228",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00228": [
+      "Benchmark round: 0.00228 — 0.00227's note named 0.00226, another build that landed first; a benchmark from 0.00227 does not count, please run it once more on this build."
+    ],
     "0.00227": [
       "Card light: every card now draws its glow on a canvas of its own, handed from room to room, instead of copying each card's picture out of one hidden canvas every frame (the iPhone spent 13 ms a tick on that at rest).",
       "A new benchmark round (0.00226): please run the benchmark again on each device — the Great Hall asks once past room 6, the ?debug BENCHMARK button any time."
@@ -152,9 +155,6 @@
     ],
     "0.00214": [
       "World Lab: the clouds drift without seams (whole-pixel tiles), they reach a whole painting past every edge with the painting's margins fading into the clouded land beneath, and the map zooms out far enough to see it"
-    ],
-    "0.00213": [
-      "World Lab: the owner's cloud picks — sparser, darker and faster clouds with the world dim beneath them, tighter windows around what is cleared, the sky view a touch lower and steeper"
     ]
   }
 }
