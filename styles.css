@@ -1152,6 +1152,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* The run's finds (0.00260, runEndScene.js findCard): a card per slot they changed, the picture fading down into the name; what was salvaged as grey chips */
 .loot-summary { text-align: center; }
 .finds-row { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
+/* The run's end (0.00293, the developer's call): a wider panel, the five numbers on one line, the find
+   cards a third larger to read; the phone keeps its own (section 16 outranks these) */
+#app > .panel.run-end { max-width: 940px; }
+.run-end .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.run-end .finds-row { flex-wrap: wrap; } /* (seven finds: two rows of readable cards, not seven small ones) */
+.run-end .find-card { flex-basis: 200px; min-width: 165px; }
+@media (min-height: 900px) { .run-end .finds-row:has(> .find-card:nth-child(5)) > .find-card { flex-basis: 175px; } } /* (five or more: two rows that fit a 900 px window) */
+@media (min-height: 801px) and (max-height: 899px) { .run-end .finds-row:has(> .find-card:nth-child(5)) > .find-card { flex-basis: 150px; min-width: 140px; } } /* (a MacBook's 813 px window: two rows of the old card size) */
+@media (max-height: 800px) { .run-end .finds-row { flex-wrap: nowrap; } .run-end .find-card { min-width: 0; } } /* (a short window, every phone among them: one row as before, Return on screen) */
 .find-card { position: relative; flex: 0 1 150px; min-width: 0; aspect-ratio: 150 / 196; container-type: inline-size; overflow: hidden; border: 1px solid var(--rim); border-radius: 5px; background: #0b0705; box-shadow: 0 0 16px var(--rim-glow); text-transform: uppercase; }
 .find-card.tier-1 { --rim: rgba(163, 155, 135, 0.6); --rim-glow: transparent; --name: #c9bfa8; }
 .find-card.tier-2 { --rim: #6fa8dc; --rim-glow: rgba(111, 168, 220, 0.45); --name: #6fa8dc; }
