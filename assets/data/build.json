@@ -1,5 +1,5 @@
 {
-  "version": "0.00283",
+  "version": "0.00284",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -98,6 +98,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00284": [
+      "Housekeeping: the notes in the code name the build the refactors shipped in"
+    ],
     "0.00283": [
       "Under the hood: the classes' heavies, passives and effects in registries of their own; the fight reads its class from the run",
       "The sound tools share one ElevenLabs module; the test harness restores the data between files"
@@ -146,9 +149,6 @@
     ],
     "0.00270": [
       "Every class sounds its own: the blows, the heavy and a blow taken are pitched per class (the Barbarian low and heavy, the Wizard and the two women higher) with each class's own voice under them — a wide swing for Cleave, a fireball's roar and crackle, the Necromancer's grave wail, the Druid's claws and growl, the Hexhunter's crossbow click and hex chime, the Plague Sister's censer chain and smoke hiss — and a grunt in the hero's own voice when struck. The hex chimes, the blight hisses, Go Feral growls, a charge back zaps, the thrall wails as it rises and thuds as it takes a blow."
-    ],
-    "0.00269": [
-      "Debug menu: SWITCH CLASS flips your save to the next class on each click, mid-fight too (the fight carries on as the new class, this run's shrine boons reset), to try the classes quickly."
     ]
   }
 }
