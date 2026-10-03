@@ -1066,7 +1066,7 @@ against the Descend essentials; 0.00223: a file already queued is moved
 to the front when it is asked to play — the title's welcome take used to
 wait behind the whole score — and a MUSIC: OFF / NARRATOR: OFF player no
 longer downloads the beds or the takes, turning either on warms them
-then). **The title bed from the title screen on (0.00285, the developer's ask):**
+then). **The title bed from the title screen on (0.00286, the developer's ask):**
 `music.js startEarly` fetches and decodes the title bed at boot (MUSIC ON
 only) — on a desktop the first gesture is usually Enter the Castle, and
 the download and decode after it put the music's start in the Great Hall
@@ -1199,7 +1199,7 @@ be served stale for ~4 hours.
   under it). Yes/no: `ui/confirmPrompt.js` (the title's Start a New Game
   included). Never the browser's `confirm()`.
 - Keyboard-reachable buttons get `key: 'x'` in `el()` (a second key: a
-  `data-key-alt` attribute, served after every button's own — 0.00285: H on
+  `data-key-alt` attribute, served after every button's own — 0.00286: H on
   every class's special, whose own key is a letter of its name, `heroes.json
   heavyKey`); a screen's way
   forward also gets `proceed: true` (Space clicks it, a tiny `[space]` sits
@@ -1209,7 +1209,7 @@ be served stale for ~4 hours.
   `'active active-red'`. The Great Hall's Descend pulses while nothing
   there can be bought (a new player's first visit: three panels of
   upgrades and nothing to spend; 0.00200). **The Forge never stops a
-  descent (0.00285, the developer's call: its use is very optional):**
+  descent (0.00286, the developer's call: its use is very optional):**
   the "Descend Now?" prompt counts XP (`canSpendXp`) and Alchemy
   (`canSpendAlchemy`) only, and Descend pulses when only a Forge level is
   affordable; the green Coins box and the phone's Equipment dot still
@@ -1832,7 +1832,7 @@ sometimes — fetch all branches to find it.
   `combatPlayback.statusOf`); SWITCH CLASS resets the blight; the orphan
   check reads `assets/audio/sfx`; the hurt clips lost the synth grunt layer
   (the recordings carry each class's cry).
-- Engineering: the 0.00285 comments in `src/audio/music.js` (startEarly)
+- Engineering: the 0.00286 comments in `src/audio/music.js` (startEarly)
   and `src/ui/scenes/hubScene.js` (the Forge and Descend) say 0.00283 —
   fix with the next build · `go()` is silently dropped
   during a transition (queue it) · about 160 of the ~1100 checks still

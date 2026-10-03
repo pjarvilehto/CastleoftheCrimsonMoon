@@ -316,7 +316,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
 | `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (the button carries the class's name, `heroes.json heavyName`, 0.00267) / Drink Potion |
-| `H` `C` `F` `S` `E` `L` | dungeon | the special also answers to a letter of its own name, underlined on the button (`heroes.json heavyKey`, 0.00285): Heavy Attack H, Cleave C, Fireball F, Soul Drain S, Entangle E, Hex H, Last Rites L — and H on every class (`data-key-alt`, served after every button's own key); `dataCheck` keeps it a letter of the name and off A / P / D / R |
+| `H` `C` `F` `S` `E` `L` | dungeon | the special also answers to a letter of its own name, underlined on the button (`heroes.json heavyKey`, 0.00286): Heavy Attack H, Cleave C, Fireball F, Soul Drain S, Entangle E, Hex H, Last Rites L — and H on every class (`data-key-alt`, served after every button's own key); `dataCheck` keeps it a letter of the name and off A / P / D / R |
 | `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `G` | run end | Return to the Great Hall |

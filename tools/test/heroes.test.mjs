@@ -67,7 +67,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   // the heavy's name per class (0.00267, the developer's picks)
   const heavyLabel = (unit) => unit.el.all((n) => n.className === 'btn-label')[0].textContent.replace(/\s*\(\d+\)$/, '');
   const hb = u.el.all((n) => n.tagName === 'button')[0];
-  ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), keyed to its own S (underlined) and H still (0.00285)', heavyLabel(u) === 'Soul Drain' && hb.attrs['data-key'] === 's' && hb.attrs['data-key-alt'] === 'h'
+  ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), keyed to its own S (underlined) and H still (0.00286)', heavyLabel(u) === 'Soul Drain' && hb.attrs['data-key'] === 's' && hb.attrs['data-key-alt'] === 'h'
     && hb.all((n) => n.tagName === 'u')[0]?.textContent === 'S'
     && u.card.all((n) => n.className === 'back-row').some((r) => r.textContent.startsWith('Soul Drain')));
   getProfile().hero = { id: 'knight', look: 0 };
@@ -79,7 +79,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   ok('every special has its own key: a letter of its name, none of A / P / D / R (checked at load)', heroList().every((h) => h.heavyName.toLowerCase().includes(h.heavyKey) && !'apdr'.includes(h.heavyKey))
     && !bad('e') && bad('z') && bad('a') && bad(undefined));
 }
-// H, or the special's own letter, fires it in a fight (0.00285)
+// H, or the special's own letter, fires it in a fight (0.00286)
 {
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const { createRun } = await import('../../src/run/runState.js');

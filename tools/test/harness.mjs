@@ -130,7 +130,7 @@ function match(el, sel) {
     return el.tagName === 'button' && el.className.split(' ').includes('primary') && el.attrs.disabled === undefined;
   const m = sel.match(/^button\[data-key="([a-z0-9]|arrow(?:left|right|up|down))"\]:not\(\[disabled\]\)$/); // (0.00248: the arrow keys reach buttons too)
   if (m) return el.tagName === 'button' && el.attrs['data-key'] === m[1] && el.attrs.disabled === undefined;
-  const ma = sel.match(/^button\[data-key-alt="([a-z0-9])"\]:not\(\[disabled\]\)$/); // (0.00285: a button's second key)
+  const ma = sel.match(/^button\[data-key-alt="([a-z0-9])"\]:not\(\[disabled\]\)$/); // (0.00286: a button's second key)
   if (ma) return el.tagName === 'button' && el.attrs['data-key-alt'] === ma[1] && el.attrs.disabled === undefined;
   if (sel === 'button[data-key2=" "]:not([disabled])')
     return el.tagName === 'button' && el.attrs['data-key2'] === ' ' && el.attrs.disabled === undefined;

@@ -48,7 +48,7 @@ export function handleKey(key) {
   if (!/^[a-z0-9]$/.test(k) && !/^arrow(left|right|up|down)$/.test(k)) return false; // (0.00248: the arrows reach a button keyed to them — CHOOSE YOUR HERO)
   const btns = document.querySelectorAll(`button[data-key="${k}"]:not([disabled])`);
   if (btns.length) { btns[0].click(); return true; }
-  // a second key a button answers to, after every button's own (0.00285: H for every class's special)
+  // a second key a button answers to, after every button's own (0.00286: H for every class's special)
   const alts = document.querySelectorAll(`button[data-key-alt="${k}"]:not([disabled])`);
   if (alts.length) { alts[0].click(); return true; }
   return false;
