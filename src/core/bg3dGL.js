@@ -9,10 +9,10 @@ import { MAX_LIGHTS } from './bg3dLights.js';
 // near the light flare, the far wall barely catches it. Shared by the
 // background and the fog puffs (core/bg3dPuffGL.js).
 export const LIGHT_GLSL = `
-uniform vec3 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}]; uniform float uLightR2;
+uniform vec3 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}]; uniform float uLightR2[${MAX_LIGHTS}];
 vec3 lightAt(vec3 p) {
   vec3 l = vec3(0.0);
-  for (int i = 0; i < ${MAX_LIGHTS}; i++) { vec3 d = p - uLightPos[i]; l += uLightCol[i] * exp(-dot(d, d) / uLightR2); }
+  for (int i = 0; i < ${MAX_LIGHTS}; i++) { vec3 d = p - uLightPos[i]; l += uLightCol[i] * exp(-dot(d, d) / uLightR2[i]); }
   return l;
 }`;
 

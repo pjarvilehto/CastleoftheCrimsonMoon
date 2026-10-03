@@ -203,8 +203,13 @@ panel.append(
       note(label),
       slider(`lights.${k}.strength`, `${label} strength`, 0, 6, 0.05),
       slider(`lights.${k}.fade`, `${label} fade s`, 0.05, 2, 0.01, 'how fast it dies away after its peak'),
-      slider(`lights.${k}.life`, `${label} life s`, 0.2, 5, 0.1, 'when it is gone for good'),
-    ])),
+      slider(`lights.${k}.life`, `${label} life s`, 0.2, 5, 0.1, k.startsWith('find') ? 'the tail after the card lands' : 'when it is gone for good'),
+      ...(k.startsWith('find') ? [slider(`lights.${k}.radius`, `${label} reach`, 0.1, 1.5, 0.01, 'its own reach (the other flashes share Reach)')] : []),
+    ]),
+    note('Finds (0.00320): a flare as the card appears, settling while it is read, then fading and shrinking as it flies into the LOOT row.'),
+    slider('lights.find.settle', 'Find settle', 0, 1, 0.01, 'the share of the flare left while the card is read'),
+    slider('lights.find.flare', 'Find flare s', 0.05, 2, 0.01, 'how fast the flare settles'),
+    slider('lights.find.shrink', 'Find shrink', 0.05, 1, 0.01, 'its reach at the LOOT row, a share of its own')),
   group('Light', 'how the mist is lit', true,
     slider('mist.shade', 'Self-shadow', 0, 2, 0.05, 'how strongly a puff\'s own lumps shade it (0 = flat)'),
     slider('light.warm', 'Lit side warmth', 0, 1, 0.02, 'a warm tint on the lit (upper) side'), slider('light.lit', 'Lit side level', 0.5, 2, 0.02),
@@ -237,7 +242,7 @@ function findFlight(kind) {
     const t = performance.now() - t0, k = Math.min(1, Math.max(0, (t - FIND_IN - FIND_HOLD) / FIND_FLY)), e = k * k;
     return { left: from.left + (to.left - from.left) * e, top: from.top + (to.top - from.top) * e, width: from.width + (to.width - from.width) * e, height: from.height + (to.height - from.height) * e };
   };
-  bgTrackLight(kind, rect, FIND_IN + FIND_HOLD + FIND_FLY);
+  bgTrackLight(kind, rect, { flyMs: FIND_IN + FIND_HOLD, landMs: FIND_IN + FIND_HOLD + FIND_FLY });
 }
 function flash(kind) {
   if (kind.startsWith('find')) return findFlight(kind);

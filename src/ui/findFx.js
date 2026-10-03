@@ -54,7 +54,7 @@ export function findPop(fx, ctx) {
   const ms = riseAndFly(card, ctx, () => lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0)); // (ms until it lands: the scene's LOOT row takes it then)
   // a small light in the scene that rides with the card, warmer and wider the rarer the find (0.00319,
   // the developer's ask: subtle; parallax.lights find1-4), fading once the card has landed
-  bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), ms);
+  bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), { flyMs: IN_MS + HOLD_MS, landMs: ms }); // (0.00320: a flare as it appears, fading and shrinking as it flies)
   return ms;
 }
 

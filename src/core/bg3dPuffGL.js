@@ -146,7 +146,7 @@ export function createPuffRenderer(gl) {
 
   // One scene's puffs over what is drawn so far. frame: puffFrame(); u:
   // { mvp, plane, uvScale, depthScale, pivot, depthTex, artTex, mist, lights,
-  //   r2, soft, amount, alpha (the layer's crossfade), width, height,
+  //   lights (pos, col, r2 — each light's reach, 0.00320), soft, amount, alpha (the layer's crossfade), width, height,
   //   flow: [t, scale, amount], light: parallax.mist, div: parallax.puffDiv }.
   function draw(frame, u) {
     if (!frame.length) return;
@@ -172,7 +172,7 @@ export function createPuffRenderer(gl) {
     gl.uniform3fv(P.uShadeTint, u.light.shadeTint);
     gl.uniform3fv(P.uLightPos, u.lights.pos);
     gl.uniform3fv(P.uLightCol, u.lights.col);
-    gl.uniform1f(P.uLightR2, u.r2);
+    gl.uniform1fv(P.uLightR2, u.lights.r2);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, sprite);
     gl.uniform1i(P.uSprite, 2);

@@ -296,9 +296,10 @@
           0.8,
           0.7
         ],
-        "strength": 0.12,
-        "fade": 0.35,
-        "life": 1.2
+        "strength": 0.9,
+        "radius": 0.5,
+        "fade": 0.3,
+        "life": 0.8
       },
       "find2": {
         "color": [
@@ -306,9 +307,10 @@
           0.65,
           1.0
         ],
-        "strength": 0.2,
-        "fade": 0.35,
-        "life": 1.2
+        "strength": 1.2,
+        "radius": 0.55,
+        "fade": 0.3,
+        "life": 0.8
       },
       "find3": {
         "color": [
@@ -316,9 +318,10 @@
           0.45,
           1.0
         ],
-        "strength": 0.3,
-        "fade": 0.35,
-        "life": 1.2
+        "strength": 1.6,
+        "radius": 0.62,
+        "fade": 0.3,
+        "life": 0.8
       },
       "find4": {
         "color": [
@@ -326,9 +329,15 @@
           0.45,
           0.2
         ],
-        "strength": 0.45,
-        "fade": 0.35,
-        "life": 1.2
+        "strength": 2.2,
+        "radius": 0.7,
+        "fade": 0.3,
+        "life": 0.8
+      },
+      "find": {
+        "settle": 0.35,
+        "flare": 0.5,
+        "shrink": 0.3
       },
       "rise": 0.08
     },

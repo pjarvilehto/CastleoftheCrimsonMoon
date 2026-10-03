@@ -105,11 +105,13 @@ export function bgLight(kind, rect) {
 // (a card's live rect, its animation included; a removed card's 0x0 keeps
 // the last place), full strength for holdMs, then the kind's fade — its
 // life counted from the hold's end.
-export function bgTrackLight(kind, rectOf, holdMs) {
+export function bgTrackLight(kind, rectOf, { flyMs, landMs }) {
   if (!gl || view !== '3d') return;
   const f = flashAt(kind, rectOf(), canvas.clientWidth || 1, canvas.clientHeight || 1, cfg.fovDeg, cfg.lights, performance.now());
   if (!f) return;
-  f.track = rectOf; f.hold = holdMs / 1000; f.life += f.hold;
+  const F = cfg.lights.find; // (0.00320: the flare, the settle while it is read, the shrink in flight — bg3dLights.js flightShape)
+  Object.assign(f, { track: rectOf, flyAt: flyMs / 1000, landAt: landMs / 1000, settle: F.settle, flare: F.flare, shrink: F.shrink });
+  f.life += f.landAt;
   flashes.push(f);
 }
 const trackFlashes = () => {
@@ -305,13 +307,13 @@ function frame(now) {
   const aspect = canvas.width / canvas.height;
   if (push) settlePush(now);
   const f = { mvp: null, plane: [Math.tan(fov / 2) * aspect, Math.tan(fov / 2)],
-    lights: activeLights(view === '3d' ? flashes : [], now), r2: cfg.lights.radius ** 2 };
+    lights: activeLights(view === '3d' ? flashes : [], now) }; // (0.00320: each light its own reach, lights.r2)
   gl.uniform2fv(loc.uPlane, f.plane);
   gl.uniform1f(loc.uShowDepth, view === 'depth' ? 1 : 0);
   fogIn = Math.min(1, (now - firstFrame) / cfg.fogFadeMs); // the mist rises after the handover
   gl.uniform3fv(loc.uLightPos, f.lights.pos);
   gl.uniform3fv(loc.uLightCol, f.lights.col);
-  gl.uniform1f(loc.uLightR2, f.r2);
+  gl.uniform1fv(loc.uLightR2, f.lights.r2);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   layers.forEach((L, i) => {
     // crossfade like the CSS layers (2s ease-in-out): new layer over old

@@ -54,6 +54,7 @@ const NUM = {
     'parallax.push.dist', 'parallax.push.inMs', 'parallax.push.outMs',
     ...['crit', 'megacrit', 'overkill', 'potion', 'revive', 'find1', 'find2', 'find3', 'find4'].flatMap((kind) => // (find1-4, 0.00319: a find's light by its rarity, findFx.js)
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
+    ...['find1', 'find2', 'find3', 'find4'].map((kind) => `parallax.lights.${kind}.radius`), 'parallax.lights.find.settle', 'parallax.lights.find.flare', 'parallax.lights.find.shrink', // (0.00320: a find's own reach, its flare and its shrink)
   ],
   telemetry: ['benchmarkPromptRoom', 'perf.nearShare', 'perf.paceShare', 'perf.goodShare', 'perf.okFps', 'report.runs', 'report.stalls'],
   cards: [ // the card effects (0.183): ui/cardFx.js, combatFx.js, fxParts.js

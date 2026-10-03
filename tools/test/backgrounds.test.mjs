@@ -208,9 +208,14 @@ fresh();
     const k = { rise: 0.08, fade: 0.35, life: 3.2, hold: 2 };
     ok('a held light stays full through its hold, then fades', L.envelope(1.5, k) === 1 && L.envelope(2, k) === 1 && L.envelope(2.35, k) < 0.4 && L.envelope(0.04, k) === 0.5
       && L.envelope(0.5, { rise: 0.08, fade: 0.35, life: 1.2 }) === Math.exp(-(0.5 - 0.08) / 0.35));
-    const lights = DATA.backgrounds.parallax.lights, s4 = [1, 2, 3, 4].map((t) => lights[`find${t}`].strength);
-    ok('a find lights the scene by its rarity, the rarer the stronger, and subtle beside a crit', s4.every((v, i) => !i || v > s4[i - 1]) && s4[3] < lights.crit.strength
-      && readFileSync('src/ui/findFx.js', 'utf8').includes("bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), ms)"));
+    const lights = DATA.backgrounds.parallax.lights, s4 = [1, 2, 3, 4].map((t) => lights[`find${t}`].strength), r4 = [1, 2, 3, 4].map((t) => lights[`find${t}`].radius);
+    ok('a find lights the scene by its rarity: the rarer the stronger and the wider (0.00320)', s4.every((v, i) => !i || v > s4[i - 1]) && r4.every((v, i) => !i || v > r4[i - 1])
+      && readFileSync('src/ui/findFx.js', 'utf8').includes("bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), { flyMs: IN_MS + HOLD_MS, landMs: ms })"));
+    const F = { rise: 0.08, flyAt: 1.76, landAt: 2.28, life: 3.1, fade: 0.3, ...lights.find };
+    const at = (x) => L.flightShape(x, F);
+    ok('a find\'s light flares as the card appears, settles while it is read, fades and shrinks in flight (0.00320)',
+      at(0.08).k === 1 && at(1.0).k < at(0.3).k && at(1.7).k > F.settle && at(2.0).k < at(1.76).k && at(2.28).k < 0.15 * at(1.76).k + 1e-9
+      && at(1.0).s === 1 && Math.abs(at(2.28).s - F.shrink) < 1e-9 && at(2.0).s < 1 && at(3.2).k === 0);
   }
   ok('no flashes: every light slot dark', none.count === 0 && none.col.every((v) => v === 0) && none.col.length === L.MAX_LIGHTS * 3);
   const three = L.activeLights([mk(900, 0.5, [1, 1, -1]), mk(900, 2, [2, 2, -2]), mk(900, 1, [3, 3, -3]), mk(-5000, 9, [4, 4, -4])], 1000);
