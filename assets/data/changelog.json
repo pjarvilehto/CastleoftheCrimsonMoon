@@ -1,4 +1,7 @@
 {
+  "0.00314": [
+    "Housekeeping: the paintings are decoded with the option Chrome now asks for (a deprecation warning in the console is gone)"
+  ],
   "0.00313": [
     "The descent's drum strikes the moment you press Descend or Enter the Castle (its recording's silent start trimmed, the sound decoded ahead), as well as on Push Deeper."
   ],
