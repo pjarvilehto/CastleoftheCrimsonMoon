@@ -7,10 +7,10 @@
 // minimum: the charges on the hero's button, the HEXED / BLIGHT / ROOTED
 // tag on a foe's card, a colour per new log line — the UI reading the class
 // from run.hero, never the profile.
-import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync, scaleEnemy } from './harness.mjs';
+import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, handleKey, dungeonScene, hubScene, withSeedAsync, scaleEnemy, enemy, fight, heavy, types, heroProfile, byClass, click } from './harness.mjs';
 import { readdirSync } from 'node:fs';
 
-const { useHeavy, canHeavy } = await import('../../src/run/combat.js');
+const { canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
 const { createPlayerUnit, createEnemyUnit } = await import('../../src/ui/battleLine.js');
 const { derivedStats } = await import('../../src/meta/stats.js');
@@ -18,11 +18,8 @@ const { HEAVY_KINDS, CLASS_KEYS, HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, ELE
 const { heroSnapshot, heroById, lookUrl } = await import('../../src/shared/heroes.js');
 const { checkData } = await import('../../src/shared/dataCheck.js');
 
-const as = (id) => { getProfile().hero = { id, look: 0 }; const run = createRun(); run.stats.crit = 0; return run; };
-const foe = (hp, dmg = 0, name = 'Rat') => ({ id: 'rat', name, maxHp: hp, hp, dmg, xp: 1, coins: [1, 1] });
-const room = (run, enemies) => createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x', name: 'T', enemies });
-const heavy = (cb, i = 0) => { useHeavy(cb); return playerAttack(cb, i, true); };
-const types = (evs) => evs.map((e) => e.type);
+// a run as the class, with no crits (the fixtures — enemy, fight, heavy, types — are the harness's since 0.00299)
+const as = (id) => { heroProfile(id); const run = createRun(); run.stats.crit = 0; return run; };
 
 // the block itself
 {
@@ -61,7 +58,7 @@ const types = (evs) => evs.map((e) => e.type);
   ok('no fallback copies of a class key\'s number in src', copies.length === 0, copies.join('; '));
   ok('the doc string in heroes.json points at the registry', DATA.heroes._class.includes('run/classes.js') && DATA.heroes._class.includes('CLASS_KEYS') && DATA.heroes._class.includes('HEAVY_KINDS'));
   // the statuses are numbers from the first line: the room's foes and a summon alike (the hooks count on it), the room's own objects untouched
-  const summoner = { ...foe(100000, 0, 'Lord'), summonEvery: 1, summonMeter: 0 };
+  const summoner = { ...enemy(100000, 0, 'Lord'), summonEvery: 1, summonMeter: 0 };
   const roomObj = { number: 9, kind: 'combat', isBoss: true, background: 'x', name: 'T', enemies: [summoner] };
   const cb = createCombat(as('knight'), roomObj);
   ok('createCombat gives every foe blight 0 and entangled 0; the room\'s objects stay as they were', cb.enemies[0].blight === 0 && cb.enemies[0].entangled === 0 && summoner.blight === undefined && summoner.entangled === undefined);
@@ -73,16 +70,16 @@ const types = (evs) => evs.map((e) => e.type);
 {
   fresh();
   const run = as('barbarian');
-  const cb = room(run, [foe(100000), foe(100000), foe(100000)]);
+  const cb = fight(run, [enemy(100000), enemy(100000), enemy(100000)]);
   const evs = heavy(cb, 1);
   const spills = evs.filter((e) => e.type === 'spill');
   const share = run.stats.klass.cleaveShare, blow = evs.find((e) => e.type === 'atk').dmg;
   ok('Cleave: the blow lands, and cleaveShare of it on every other living foe', spills.length === 2 && spills.every((s) => s.dmg === Math.round(blow * share) && s.target !== 1) && cb.enemies[0].hp === 100000 - Math.round(blow * share));
   run.hp = Math.round(run.maxHp * 0.1);
-  const low = room(run, [foe(100000)]);
+  const low = fight(run, [enemy(100000)]);
   const dmgLow = playerAttack(low, 0, false).find((e) => e.type === 'atk').dmg;
   run.hp = run.maxHp;
-  const dmgFull = playerAttack(room(run, [foe(100000)]), 0, false).find((e) => e.type === 'atk').dmg;
+  const dmgFull = playerAttack(fight(run, [enemy(100000)]), 0, false).find((e) => e.type === 'atk').dmg;
   ok('rage: a blow hits harder the lower the Barbarian\'s HP', dmgLow > dmgFull);
 }
 
@@ -91,13 +88,13 @@ const types = (evs) => evs.map((e) => e.type);
   fresh();
   const run = as('wizard');
   const k = run.stats.klass;
-  const cb = room(run, [foe(100000), foe(100000), foe(1)]);
+  const cb = fight(run, [enemy(100000), enemy(100000), enemy(1)]);
   ok('the Wizard starts a fight with its charges', cb.charges === k.charges && canHeavy(cb));
   const evs = heavy(cb, 0);
   const blow = evs.find((e) => e.type === 'atk').dmg, spills = evs.filter((e) => e.type === 'spill');
   ok('Fireball: the full blow on every other foe', spills.length === 2 && spills.some((s) => s.dmg === blow) && cb.enemies[2].hp === 0);
   ok('a kill feeds the grimoire (chargeOnKill): the charge spent comes back, the log says so', cb.charges === k.charges && types(evs).includes('charge') && types(evs).includes('kill'));
-  const dry = room(run, [foe(100000)]);
+  const dry = fight(run, [enemy(100000)]);
   for (let i = 0; i < k.charges; i++) { heavy(dry, 0); dry.heavyCd = 0; }
   ok('out of charges the heavy button is dead until a kill', dry.charges === 0 && !canHeavy(dry));
 }
@@ -107,12 +104,16 @@ const types = (evs) => evs.map((e) => e.type);
   fresh();
   const run = as('necromancer');
   run.hp = Math.round(run.maxHp / 2);
-  const cb = room(run, [foe(1, 50), foe(100000, 50)]);
+  const cb = fight(run, [enemy(1, 50), enemy(100000, 50)]);
   const evs = heavy(cb, 0);
   const healEv = evs.find((e) => e.type === 'heal');
   ok('Soul Drain heals drainShare of the blow', healEv && healEv.healed === Math.round(evs.find((e) => e.type === 'atk').dmg * run.stats.klass.drainShare));
   ok('the kill raises a thrall of thrallShare of its max HP', types(evs).includes('thrall') && cb.thrall && cb.thrall.maxHp === Math.max(1, Math.round(1 * run.stats.klass.thrallShare)));
   ok('the foes\' blows land on the thrall, not the Necromancer (thrallhit, then thrallfall)', types(evs).includes('thrallhit') && !types(evs).includes('dmg') && (cb.thrall.hp === 0 ? types(evs).includes('thrallfall') : true));
+  // 0.00299: no thrall rises in a cleared room (the last foe's death used to print "X rises again" before "The room is cleared.")
+  const last = fight(run, [enemy(1, 50)]);
+  const lastEvs = heavy(last, 0);
+  ok('the last foe\'s fall raises no thrall: the room is cleared, nothing rises', last.over && last.victory && !types(lastEvs).includes('thrall') && last.thrall === null && types(lastEvs).includes('kill'));
 }
 
 // the Druid: Entangle (0.00271, the developer's call) — roots bind every foe for entangleTurns of their turns; a bound foe's attack fails with entangleChance; mend a turn
@@ -121,7 +122,7 @@ const types = (evs) => evs.map((e) => e.type);
   const run = as('druid');
   const k = run.stats.klass;
   run.potions = 3; run.hp = Math.round(run.maxHp / 2);
-  const cb = room(run, [foe(100000, 50), foe(100000, 50)]);
+  const cb = fight(run, [enemy(100000, 50), enemy(100000, 50)]);
   const hpBefore = run.hp;
   const evs = heavy(cb, 0);
   ok('Entangle binds every living foe for entangleTurns and says so', types(evs).includes('entangle') && k.entangleTurns === 2 && k.entangleChance > 0 && k.heavy === 'entangle');
@@ -130,23 +131,23 @@ const types = (evs) => evs.map((e) => e.type);
   ok('mend: the Druid\'s wounds knit a share of max HP a turn', evs.some((e) => e.type === 'heal' && e.healed === Math.max(1, Math.round(run.maxHp * k.mend))) && run.hp > hpBefore);
   // the roll: with the chance at 1 every bound foe fails ('Entangled!'), at 0 none; the blow is skipped entirely
   const cert = as('druid'); cert.stats.klass.entangleChance = 1;
-  const c1 = room(cert, [foe(100000, 50), foe(100000, 50)]);
+  const c1 = fight(cert, [enemy(100000, 50), enemy(100000, 50)]);
   const e1 = heavy(c1, 0);
   ok('a bound foe that fails its roll does not attack at all: an entangled line, no dmg line', e1.filter((e) => e.type === 'entangled').length === 2 && !e1.some((e) => e.type === 'dmg') && e1.find((e) => e.type === 'entangled').text.includes('Entangled!') && e1.find((e) => e.type === 'entangled').source === 0);
   const t2 = playerAttack(c1, 0, false);
   ok('…the second turn too, then the roots are gone and the foes strike again', t2.filter((e) => e.type === 'entangled').length === 2 && c1.enemies.every((e) => e.entangled === 0) && playerAttack(c1, 0, false).filter((e) => e.type === 'dmg').length === 2);
   const never = as('druid'); never.stats.klass.entangleChance = 0;
-  const c0 = room(never, [foe(100000, 50)]);
+  const c0 = fight(never, [enemy(100000, 50)]);
   ok('at chance 0 a bound foe always strikes', !heavy(c0, 0).some((e) => e.type === 'entangled') && heavy(c0, 0).some((e) => e.type === 'dmg'));
   const kn = as('knight');
-  ok('the knight\'s foes are never bound (no roll spent)', !heavy(room(kn, [foe(100000, 50)]), 0).some((e) => e.type === 'entangled'));
+  ok('the knight\'s foes are never bound (no roll spent)', !heavy(fight(kn, [enemy(100000, 50)]), 0).some((e) => e.type === 'entangled'));
 }
 
 // the Hexhunter: every blow on the hexed foe crits, with the hex's own crit damage
 {
   fresh();
   const run = as('hexhunter');
-  const cb = room(run, [foe(100000), foe(100000)]);
+  const cb = fight(run, [enemy(100000), enemy(100000)]);
   const evs = heavy(cb, 1);
   ok('Hex marks the target (the log names it)', types(evs).includes('mark') && cb.marked === 1 && evs.find((e) => e.type === 'mark').text.includes('Rat'));
   const onMark = playerAttack(cb, 1, false).find((e) => e.type === 'atk');
@@ -176,26 +177,35 @@ const types = (evs) => evs.map((e) => e.type);
     && (() => { const r = Math.random; let n = 0; Math.random = () => { n++; return 0; }; const a = rollImmune({ immune: { fire: 0 } }, 'fire'), b = rollImmune({ immune: { fire: 0.5 } }, 'fire'), c = rollImmune({}, 'fire'); Math.random = r; return a === false && b === true && c === false && n === 1; })());
   // Last Rites over a foe that always shrugs it off and one that never does
   const run = as('plaguesister');
-  const cb = room(run, [{ ...foe(100000, 0, 'Bones'), immune: { blight: 1, fire: 0 } }, { ...foe(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }]);
+  const cb = fight(run, [{ ...enemy(100000, 0, 'Bones'), immune: { blight: 1, fire: 0 } }, { ...enemy(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }]);
   const evs = heavy(cb, 1);
   const im = evs.filter((e) => e.type === 'immune');
   ok('Last Rites: the immune foe prints Immune! (its target and element on the event) and takes no stack; the other is blighted and gnawed',
     im.length === 1 && im[0].target === 0 && im[0].element === 'blight' && im[0].text.endsWith('Immune!') && cb.enemies[0].blight === 0 && cb.enemies[1].blight === 1
     && evs.filter((e) => e.type === 'spill').length === 1 && types(evs).indexOf('blight') < types(evs).indexOf('immune'));
   ok('…the smoke\'s line already shows the stacks that landed (the snapshot)', evs.find((e) => e.type === 'blight').snap.status[1].blight === 1);
+  // 0.00299: the censer's swing is a mace blow — only its smoke is blight. Last Rites ON the immune foe: the blow
+  // lands, one Immune! for it (the smoke's), no stack on it, a stack on the plain foe (it used to roll the swing
+  // against the blight too: no blow, and a second Immune! line for the same foe)
+  const onBones = fight(as('plaguesister'), [{ ...enemy(100000, 0, 'Bones'), immune: { blight: 1, fire: 0 } }, { ...enemy(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }]);
+  const bevs = heavy(onBones, 0);
+  ok('Last Rites on a blight-immune foe: the swing lands (atk, its HP down), exactly one Immune! for it, no stack on it, a stack on the other',
+    types(bevs).includes('atk') && bevs.find((e) => e.type === 'atk').target === 0 && onBones.enemies[0].hp < 100000 && bevs.filter((e) => e.type === 'immune').length === 1 && bevs.find((e) => e.type === 'immune').target === 0
+    && onBones.enemies[0].blight === 0 && onBones.enemies[1].blight === 1, types(bevs).join());
+  ok('the fireball alone carries elementalBlow (its blow is the fire); the censer\'s swing is a weapon stroke', HEAVIES.fireball.elementalBlow === true && !HEAVIES.censer.elementalBlow && Object.keys(HEAVIES).filter((k) => HEAVIES[k].elementalBlow).join() === 'fireball');
   // Fireball on an immune target: no blow, no lifesteal, the charge spent; the fire still reaches the others, each rolling
   const wiz = as('wizard'); wiz.stats.lifesteal = 0.5; wiz.hp = Math.round(wiz.maxHp / 2);
-  const cf = room(wiz, [{ ...foe(100000, 0, 'Cinderborn'), immune: { blight: 0, fire: 1 } }, { ...foe(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }, { ...foe(100000, 0, 'Ember'), immune: { blight: 0, fire: 1 } }]);
+  const cf = fight(wiz, [{ ...enemy(100000, 0, 'Cinderborn'), immune: { blight: 0, fire: 1 } }, { ...enemy(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }, { ...enemy(100000, 0, 'Ember'), immune: { blight: 0, fire: 1 } }]);
   const charges = cf.charges;
   const fevs = heavy(cf, 0);
   const fim = fevs.filter((e) => e.type === 'immune');
   ok('Fireball on a fire-born target: Immune! in place of the blow, no damage and no lifesteal, the charge spent; the fire takes the plain foe and the other fire-born shrugs it off too',
     fim.length === 2 && fim.map((e) => e.target).join() === '0,2' && fim.every((e) => e.element === 'fire') && !types(fevs).includes('atk') && !types(fevs).includes('heal')
     && cf.enemies[0].hp === 100000 && cf.enemies[2].hp === 100000 && cf.enemies[1].hp < 100000 && fevs.filter((e) => e.type === 'spill').length === 1 && cf.charges === charges - 1 && wiz.hp <= Math.round(wiz.maxHp / 2));
-  const plain = room(as('wizard'), [{ ...foe(100000), immune: { blight: 0, fire: 0 } }, { ...foe(100000), immune: { blight: 0, fire: 0 } }]);
+  const plain = fight(as('wizard'), [{ ...enemy(100000), immune: { blight: 0, fire: 0 } }, { ...enemy(100000), immune: { blight: 0, fire: 0 } }]);
   ok('…and a plain room burns as before', types(heavy(plain, 0)).filter((t) => t === 'atk' || t === 'spill').length === 2);
   // the knight's heavy has no element: a fire-born foe takes it in full
-  const kn = room(as('knight'), [{ ...foe(100000, 0, 'Cinderborn'), immune: { blight: 1, fire: 1 } }]);
+  const kn = fight(as('knight'), [{ ...enemy(100000, 0, 'Cinderborn'), immune: { blight: 1, fire: 1 } }]);
   ok('a heavy without an element ignores the immunities (the knight\'s blow on a Cinderborn lands)', types(heavy(kn, 0)).includes('atk') && kn.enemies[0].hp < 100000);
   // the UI: the effect, the sound, the colour
   const { fxFor } = await import('../../src/ui/combatFx.js');
@@ -210,7 +220,7 @@ const types = (evs) => evs.map((e) => e.type);
   fresh();
   const run = as('plaguesister');
   const k = run.stats.klass;
-  const cb = room(run, [foe(100000), foe(100000)]);
+  const cb = fight(run, [enemy(100000), enemy(100000)]);
   const evs = heavy(cb, 0);
   ok('Last Rites: a blight stack on every living foe, ticking the same turn', types(evs).includes('blight') && cb.enemies.every((e) => e.blight === 1) && evs.filter((e) => e.type === 'spill').length === 2);
   const tick = playerAttack(cb, 0, false).filter((e) => e.type === 'spill');
@@ -239,7 +249,7 @@ const types = (evs) => evs.map((e) => e.type);
   const potionBtn = du.el.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'p')[0];
   ok('the Druid\'s button is Entangle with a plain cooldown, the potion live', dl().startsWith('Entangle') && dl().includes('(3)') && potionBtn.attrs.disabled === undefined);
   getProfile().hero = null;
-  const e = createEnemyUnit(foe(100), 0, { onAttack() {}, onGone() {} });
+  const e = createEnemyUnit(enemy(100), 0, { onAttack() {}, onGone() {} });
   const tag = e.card.all((n) => n.className.includes('foe-tag'))[0];
   e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: true, blight: 2, entangled: 1 });
   ok('a foe\'s card tags HEXED, the blight stacks and the roots\' turns, the hexed card marked', tag.textContent === 'HEXED · BLIGHT ×2 · ROOTED 1' && tag.classList.contains('on') && e.card.classList.contains('hexed'));
@@ -302,11 +312,11 @@ const types = (evs) => evs.map((e) => e.type);
     && fxFor({ type: 'atk', target: 0, dmg: 5, marked: true }).marked === true && fxFor({ type: 'atk', target: 0, dmg: 5 }).marked === false
     && fxFor({ type: 'spill', target: 1, dmg: 3, via: 'cleave' }).via === 'cleave' && fxFor({ type: 'heal', healed: 9, drain: true, target: 2 }).from === 2 && fxFor({ type: 'heal', healed: 9 }).drain === false);
   getProfile().hero = { id: 'hexhunter', look: 0 };
-  const hx = room(as('hexhunter'), [foe(100000), foe(100000)]);
+  const hx = fight(as('hexhunter'), [enemy(100000), enemy(100000)]);
   heavy(hx, 1);
   const onMark = playerAttack(hx, 1, false).find((e) => e.type === 'atk');
   ok('a blow on the hexed foe carries marked (the sigil flares)', onMark.marked === true && playerAttack(hx, 0, false).find((e) => e.type === 'atk').marked === false);
-  const nc = room(as('necromancer'), [foe(100000)]);
+  const nc = fight(as('necromancer'), [enemy(100000)]);
   ok('the drain\'s heal names its foe', (() => { const r = nc.run; r.hp = 1; const ev = heavy(nc, 0).find((e) => e.type === 'heal'); return ev?.drain === true && ev.target === 0; })());
   getProfile().hero = null;
 }
@@ -397,7 +407,7 @@ const types = (evs) => evs.map((e) => e.type);
     // queueEvents hands sfxFor the run's class, whatever the profile says
     const { queueEvents } = await import('../../src/ui/combatQueue.js');
     const run = as('wizard'); getProfile().hero = { id: 'knight', look: 0 };
-    const cb = room(run, [foe(100000)]);
+    const cb = fight(run, [enemy(100000)]);
     const items = [];
     queueEvents(playerAttack(cb, 0, false), { run, combat: cb, playback: { enqueue: (it) => items.push(it) } });
     ok('the queued blow carries the run\'s class\'s clip (the Wizard\'s), not the profile\'s', items.find((it) => it.text.startsWith('You attack'))?.sfx === 'atk_wizard');
@@ -456,7 +466,7 @@ const types = (evs) => evs.map((e) => e.type);
   const q = DATA.shrines.offers.find((o) => o.id === 'quicken');
   ok('the Quicken card reads as a charge for a charge class, the cooldown for the rest', buffText(q, wiz) === `HEAVY CHARGE +${q.cdReduce}` && buffText(q, kn) === q.buff && buffText(DATA.shrines.offers.find((o) => o.id !== 'quicken'), wiz) === DATA.shrines.offers.find((o) => o.id !== 'quicken').buff);
   // the statuses ride the replay's snapshot
-  const hx = room(as('hexhunter'), [foe(100000), foe(100000)]);
+  const hx = fight(as('hexhunter'), [enemy(100000), enemy(100000)]);
   const evs = heavy(hx, 1);
   const markEv = evs.find((e) => e.type === 'mark'), atkEv = evs.find((e) => e.type === 'atk');
   ok('every event\'s snapshot carries the foes\' statuses as they stood: hexed only from the mark line on', atkEv.snap.status[1].hexed === false && markEv.snap.status[1].hexed === true && markEv.snap.status[0].hexed === false && 'blight' in markEv.snap.status[0] && 'entangled' in markEv.snap.status[0]);
@@ -464,6 +474,21 @@ const types = (evs) => evs.map((e) => e.type);
   const pb = createPlayback({ logEl: () => ({ children: [], prepend() {}, append() {} }), onTick: () => {}, onEmpty: () => {}, logDelayMs: 100, tickMs: 50 });
   pb.begin({ enemies: [5, 5], hp: 10 });
   ok('the playback hands the snapshot\'s status, the live one for a foe not in it (a summon)', JSON.stringify(pb.statusOf(0, { hexed: true })) === JSON.stringify({ hexed: true }) || typeof pb.statusOf === 'function');
-  // SWITCH CLASS clears the blight with the rest
-  ok('SWITCH CLASS resets the blight too', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('{ e.entangled = 0; e.blight = 0; }'));
+  // SWITCH CLASS clears the blight with the rest (0.00299: played — a Last Rites that cannot kill, then the switch)
+  await withSeedAsync(11, async () => {
+    const { switchClassButton } = await import('../../src/ui/debugToggles.js');
+    heroProfile('plaguesister');
+    DATA.difficulty.player.baseDmg = 0; DATA.items.tin_censer.dmg = 1; // a swing of 1 and a gnaw of 1: no foe falls (fresh() puts the data back)
+    for (const e of Object.values(DATA.enemies)) e.immune.blight = 0; // (every stack lands; a chance of 0 spends no roll)
+    show(dungeonScene()); await sleep(1300);
+    const tags = () => byClass(registry.app, 'foe-tag').map((n) => n.textContent);
+    handleKey('l'); // Last Rites
+    await sleep(8000);
+    const blighted = tags().filter((x) => x.includes('BLIGHT ×1'));
+    ok('Last Rites leaves every foe tagged BLIGHT ×1 (the fight on, none fallen)', tags().length > 0 && blighted.length === tags().length && !t().includes('The room is cleared'), tags().join('|'));
+    click(switchClassButton()); // -> the knight: the run rebuilt, the blight reset with the hex, the thrall and the roots
+    await sleep(200);
+    ok('SWITCH CLASS resets the blight too: no card tags it after the switch', tags().length > 0 && tags().every((x) => !x.includes('BLIGHT')) && t().includes('DEBUG: you fight on as The Curious Knight'), tags().join('|'));
+  });
+  getProfile().hero = null;
 }

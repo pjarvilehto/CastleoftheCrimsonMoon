@@ -5,6 +5,7 @@
     "tier": 1,
     "kind": "sword",
     "class": "knight",
+    "starter": true,
     "art": "rusty_sword_v1.webp",
     "dmg": 6
   },
@@ -31,6 +32,7 @@
     "tier": 1,
     "kind": "heavy",
     "class": "knight",
+    "starter": true,
     "art": "oak_shield_v1.webp",
     "armor": 40,
     "hp": 80

@@ -83,6 +83,7 @@ for (let round = 1; round <= ROUNDS; round++) {
     const renumbered = [];
     for (const f of changed) {
       let text; try { text = readFileSync(join(ROOT, f), 'utf8'); } catch { continue; }
+      re.lastIndex = 0; // (0.00299: a global RegExp's test() moves lastIndex and only replace() resets it — a file whose mentions all sat on main's lines left it mid-file, and the next file's mention near its top read as no match, keeping the collided number)
       if (!re.test(text)) continue;
       // only the lines this branch ADDED carry its number (0.00209: a mention main shipped meanwhile in a shared file, CLAUDE.md say, must stay)
       const added = new Set(git('diff', '-U0', 'origin/main...HEAD', '--', f).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++')).map((l) => l.slice(1)));

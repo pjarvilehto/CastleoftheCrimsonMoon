@@ -6,8 +6,9 @@
 // hubScene's phoneHall, the ☰ column, the gate). A change to combat's
 // chrome, the Great Hall, a panel room or a dialog must hold on both — this
 // drives the REAL game headless through the title, the Great Hall, a fight,
-// a shrine and a treasure room at five screens (a desktop, a narrow desktop
-// window, a tablet, a phone, the smallest phone) and asserts what each
+// a shrine and a treasure room at seven screens (a desktop, a narrow desktop
+// window, two large desktops — 0.00299: the hall's up-steps of 0.00281 —
+// a tablet, a phone, the smallest phone) and asserts what each
 // layout promises (every card on one line on a phone, the log one line, the
 // foes' Attack buttons gone, the room title clear of the counters, the
 // boons clear of a panel room's log; the desktop's column, log box and
@@ -16,7 +17,7 @@
 // phone never scrolls; nothing overflowing sideways). Screenshots land in
 // --out for a look.
 //
-//   node tools/layout-check.mjs [--only phone|phone-small|tablet|desktop|narrow] [--out dir]
+//   node tools/layout-check.mjs [--only phone|phone-small|tablet|desktop|narrow|desktop-large|desktop-xl] [--out dir]
 //
 // Needs Playwright and a Chromium (PLAYWRIGHT_PATH / CHROMIUM env; the
 // cloud container's defaults below). Software GL: slow, so no timing is
@@ -56,6 +57,8 @@ const IPAD = 'Mozilla/5.0 (iPad; CPU OS 17_2 like Mac OS X) AppleWebKit/605.1.15
 const PROFILES = {
   desktop: { viewport: { width: 1440, height: 813 } },
   narrow: { viewport: { width: 960, height: 720 } }, // a desktop window under 1000px: the hall in one column, scrolling (0.00223)
+  'desktop-large': { viewport: { width: 1920, height: 1080 }, short: true }, // the hall zooms UP in steps on a large window (0.00281; checked since 0.00299): 1.15 here...
+  'desktop-xl': { viewport: { width: 2560, height: 1440 }, short: true }, // ...1.5 here (a Mac mini's screen). short: the title, the hero, the hall and the run's end — no fight, no panel rooms (the whole run under three minutes)
   tablet: { viewport: { width: 1180, height: 820 }, screen: { width: 1024, height: 1366 }, userAgent: IPAD, hasTouch: true, isMobile: true },
   phone: { viewport: { width: 852, height: 393 }, screen: { width: 390, height: 844 }, userAgent: IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 2 },
   'phone-small': { viewport: { width: 740, height: 360 }, screen: { width: 360, height: 740 }, userAgent: IPHONE, hasTouch: true, isMobile: true, deviceScaleFactor: 2 },
@@ -72,7 +75,7 @@ const settled = (page) => page.evaluate(async () => { const { isTransitioning, w
 const longestRoomName = JSON.parse(await readFile(join(ROOT, 'assets/data/backgrounds.json'), 'utf8'));
 const LONG_NAME = Object.values(longestRoomName.roomNames).reduce((a, b) => (b.length > a.length ? b : a), '');
 
-async function run(name, opts, url) {
+async function run(name, { short = false, ...opts }, url) {
   const { chromium } = await import(PW);
   const browser = await chromium.launch({ executablePath: CHROMIUM, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const ctx = await browser.newContext(opts);
@@ -81,6 +84,23 @@ async function run(name, opts, url) {
   page.on('pageerror', (e) => errors.push(e.message));
   const phone = name.startsWith('phone');
   const shot = (s) => page.screenshot({ path: join(OUT, `${name}-${s}.png`) });
+  // the run's end (0.00216: its button clipped on a phone), rendered in place — after the fight, or straight after the hall on a short profile
+  const runEnd = async () => {
+    await settled(page);
+    await page.evaluate(async () => {
+      const [{ runEndScene }, { show }, { createRun }] = await Promise.all([import('/src/ui/scenes/runEndScene.js'), import('/src/core/scene.js'), import('/src/run/runState.js')]);
+      // (0.00260: the worst case — every slot changed, a card each, and three salvaged)
+      const changes = [['weapon', 'rusty_sword', 'moonbrand'], ['armor', 'oak_shield', 'crimson_plate'], ['boots', null, 'umbral_treads'], ['rings', 'ring_of_might', 'vampiric_ring', 0], ['rings', null, 'ring_of_the_blood_moon', 1], ['trinket', null, 'lucky_charm'], ['amulet', null, 'amulet_of_the_blood_eclipse']]
+        .map(([slot, from, to, index]) => ({ slot, index, from, to }));
+      const salvaged = ['rusty_sword', 'oak_shield', 'ring_of_might'].map((id) => ({ id, name: id, tier: 1 }));
+      const run = createRun(); Object.assign(run, { roomNumber: 2, kills: 6, coins: 43, coinsRetrieved: 22, coinsLost: 21, tollPct: 0.5, xp: 40, itemsFound: changes.map((c) => c.to), potions: 4, equipSummary: { equipped: [], salvaged, coins: 24, changes } });
+      show(runEndScene(run, 'death'));
+    });
+    await page.waitForTimeout(1800);
+    const end = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /Great Hall/.test(x.textContent)); const r = b?.getBoundingClientRect(); const p = document.querySelector('#app > .panel'); return r ? { bottom: r.bottom, h: innerHeight, scroll: p ? p.scrollHeight - p.clientHeight : 0 } : null; });
+    check(name, 'run end: seven find cards and the salvage — Return to the Great Hall on screen, nothing to scroll', end && end.bottom <= end.h + 0.5 && end.scroll <= 0, end ? `bottom ${Math.round(end.bottom)} of ${end.h}, ${end.scroll}px hidden` : 'no button');
+    await shot('6b-runend');
+  };
   try {
     await page.goto(`${url}?debug`);
     if (phone) {
@@ -159,8 +179,17 @@ async function run(name, opts, url) {
       const hub = await page.evaluate(() => { const left = document.querySelector('.hub-wrap > .panel'); const bar = document.querySelector('.corner-bar').getBoundingClientRect(); const wrap = document.querySelector('.hub-wrap').getBoundingClientRect(); return { phone: !!document.querySelector('.phone-hub'), wrap: !!left, scroll: left ? left.scrollHeight - left.clientHeight : -1, clear: wrap.right <= bar.left + 1 }; });
       check(name, 'hub: the desktop columns, no phone hall', hub.wrap && !hub.phone);
       if (name === 'desktop') check(name, 'hub: the left panel does not scroll', hub.scroll <= 0, `${hub.scroll}px hidden`); // (a tablet's 44px tap targets make it scroll, Descend on screen — 0.00205's call)
+      if (name.startsWith('desktop-')) { // the up-steps (0.00281): the panels, the title and the buttons zoom up on a large window
+        const zoom = await page.evaluate(() => ['.hall-desk .hub-wrap', '.hall-desk .hall-top', '.hall-desk .btn-row'].map((q) => parseFloat(getComputedStyle(document.querySelector(q)).zoom) || 1));
+        check(name, 'hub: the hall zooms up on a large window (the panels, the title and the buttons alike)', zoom.every((z) => z > 1) && new Set(zoom).size === 1, `zoom ${zoom.join(' / ')}`);
+      }
       if (name === 'tablet') check(name, 'hub: the columns keep clear of the corner column', hub.clear);
       await shot('3-hub');
+    }
+    if (short) { // the large desktops: the hall's zoom was the question; the run's end has the find cards at their largest
+      await runEnd();
+      check(name, 'no page errors', errors.length === 0, errors.join(' | ').slice(0, 200));
+      return;
     }
     // a fight
     await settled(page);
@@ -197,10 +226,27 @@ async function run(name, opts, url) {
         const r = (e) => e.getBoundingClientRect(), res = r(document.querySelector('.resources'));
         const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
         const others = [...document.querySelectorAll('.player-unit .unit-actions button, #combat-log, .room-title')].filter((e) => r(e).width > 0);
-        return { shown: getComputedStyle(row).display === 'none' ? 0 : [...tray.children].filter((c) => getComputedStyle(c).display !== 'none').length, overlaps: others.filter((e) => hit(res, r(e))).map((e) => e.id || e.className.split(' ')[0] || e.tagName), right: res.right, w: innerWidth };
+        return { shown: getComputedStyle(row).display === 'none' ? 0 : [...tray.children].filter((c) => getComputedStyle(c).display !== 'none').length, overlaps: others.filter((e) => hit(res, r(e))).map((e) => e.id || e.className.split(' ')[0] || e.tagName), right: res.right, w: innerWidth,
+          button: row.tagName === 'BUTTON' && row.dataset.key === 'i' && getComputedStyle(row).backgroundImage === 'none' && getComputedStyle(row).borderTopWidth === '0px' };
       });
       check(name, 'fight: the LOOT row full — clear of the knight\'s buttons, the log and the room title', finds && finds.overlaps.length === 0 && finds.right <= finds.w && finds.shown === (phone ? 0 : 6), finds ? `${finds.shown} shown, overlaps: ${finds.overlaps.join(',') || 'none'}` : 'no LOOT row');
+      check(name, 'fight: the LOOT row is a button keyed I, in the row\'s own look (0.00299)', !!finds?.button);
       await shot('5a-fight-loot');
+    }
+    { // the hero card turned to INVENTORY (0.00256 / 0.00290): the FINDS line (0.00299, the phone's way to the LOOT pop-up) inside the card and the window
+      const turned = await page.evaluate(async () => {
+        const c = document.querySelector('.player-card'); if (!c) return null;
+        const wait = (f) => new Promise((r) => { const t0 = Date.now(); (function poll() { if (f() || Date.now() - t0 > 4000) r(); else setTimeout(poll, 50); })(); });
+        c.click(); await wait(() => c.classList.contains('flipped') && !c.classList.contains('page-inv')); await new Promise((r) => setTimeout(r, 500));
+        c.click(); await wait(() => c.classList.contains('page-inv')); await new Promise((r) => setTimeout(r, 500));
+        const f = document.querySelector('.inv-finds'); if (!f) return { page: c.classList.contains('page-inv'), line: false };
+        f.classList.remove('none'); // (the run has found nothing yet: show it as a find would)
+        const cr = c.getBoundingClientRect(), fr = f.getBoundingClientRect();
+        return { page: c.classList.contains('page-inv'), line: true, shown: getComputedStyle(f).display !== 'none' && fr.height > 0, inside: fr.top >= cr.top && fr.bottom <= cr.bottom + 0.5 && fr.left >= cr.left - 0.5 && fr.right <= cr.right + 0.5 && fr.bottom <= innerHeight, h: Math.round(fr.height), text: f.textContent };
+      });
+      check(name, 'fight: the hero card turns to INVENTORY, the FINDS line inside the card', turned && turned.page && turned.line && turned.shown && turned.inside, turned ? JSON.stringify(turned) : 'no hero card');
+      await shot('5c-inventory');
+      await page.evaluate(async () => { const c = document.querySelector('.player-card'); c.click(); await new Promise((r) => setTimeout(r, 900)); }); // (back to the front)
     }
     if (phone) {
       check(name, 'fight: every card bottom on one line', new Set(fight.cards).size === 1, fight.cards.join(','));
@@ -228,22 +274,8 @@ async function run(name, opts, url) {
     await page.evaluate(() => document.querySelector('.enemy-char.targetable')?.click());
     await page.waitForTimeout(1500);
     await shot('6-fight-hit');
-    // the panel rooms, rendered in place (a shrine is rooms away)
-    // the run's end (0.00216: its button clipped on a phone)
-    await settled(page);
-    await page.evaluate(async () => {
-      const [{ runEndScene }, { show }, { createRun }] = await Promise.all([import('/src/ui/scenes/runEndScene.js'), import('/src/core/scene.js'), import('/src/run/runState.js')]);
-      // (0.00260: the worst case — every slot changed, a card each, and three salvaged)
-      const changes = [['weapon', 'rusty_sword', 'moonbrand'], ['armor', 'oak_shield', 'crimson_plate'], ['boots', null, 'umbral_treads'], ['rings', 'ring_of_might', 'vampiric_ring', 0], ['rings', null, 'ring_of_the_blood_moon', 1], ['trinket', null, 'lucky_charm'], ['amulet', null, 'amulet_of_the_blood_eclipse']]
-        .map(([slot, from, to, index]) => ({ slot, index, from, to }));
-      const salvaged = ['rusty_sword', 'oak_shield', 'ring_of_might'].map((id) => ({ id, name: id, tier: 1 }));
-      const run = createRun(); Object.assign(run, { roomNumber: 2, kills: 6, coins: 43, coinsRetrieved: 22, coinsLost: 21, tollPct: 0.5, xp: 40, itemsFound: changes.map((c) => c.to), potions: 4, equipSummary: { equipped: [], salvaged, coins: 24, changes } });
-      show(runEndScene(run, 'death'));
-    });
-    await page.waitForTimeout(1800);
-    const end = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /Great Hall/.test(x.textContent)); const r = b?.getBoundingClientRect(); const p = document.querySelector('#app > .panel'); return r ? { bottom: r.bottom, h: innerHeight, scroll: p ? p.scrollHeight - p.clientHeight : 0 } : null; });
-    check(name, 'run end: seven find cards and the salvage — Return to the Great Hall on screen, nothing to scroll', end && end.bottom <= end.h + 0.5 && end.scroll <= 0, end ? `bottom ${Math.round(end.bottom)} of ${end.h}, ${end.scroll}px hidden` : 'no button');
-    await shot('6b-runend');
+    // the run's end, then the panel rooms, rendered in place (a shrine is rooms away)
+    await runEnd();
     for (const kind of ['shrine', 'treasure']) {
       await settled(page); // (the run end's fade: the room is rendered into a settled window)
       await page.evaluate(async (kind) => {

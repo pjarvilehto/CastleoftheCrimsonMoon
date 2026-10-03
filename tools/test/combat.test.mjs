@@ -1,7 +1,7 @@
 // tools/test/combat.test.mjs — combat engine + the battle line: attacks, spill, SMASH, death, playback, animation, summons.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync, byClass } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync, byClass, button, click, enemy, fight } from './harness.mjs';
 
 fresh();
 
@@ -53,16 +53,15 @@ await withSeedAsync(4, async () => {
 // T7: multi-kill spill — heavy attacks only (0.049: basic attacks are
 // strictly single-target, no matter how overpowered)
 {
-  const rat = (n) => ({ id: n, name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 2, xp: 1, coins: [1, 1] });
-  const room = () => ({ number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
+  const rats = () => ['A', 'B', 'C'].map((n) => enemy(16, 2, 'Rat ' + n, { id: n })); // (the harness's fixtures, 0.00299)
   const run = createRun();
   run.stats.dmg = 500; run.stats.crit = 0;
-  const cb1 = createCombat(run, room());
+  const cb1 = fight(run, rats());
   const evs1 = playerAttack(cb1, 0, false);
   ok('basic attack never spills (target only)', evs1.filter((e) => e.type === 'kill').length === 1 && !evs1.some((e) => e.type === 'multi'));
   run.hp = run.maxHp; // rats hit back during the basic attack
   run.stats.dmg = 20; // heavy doubles to 40: >= 2x target HP (spills) but < 48 room total (no smash)
-  const cb2 = createCombat(run, room());
+  const cb2 = fight(run, rats());
   const evs2 = playerAttack(cb2, 0, true);
   ok('heavy spill chains into multi-kill', evs2.filter((e) => e.type === 'kill').length === 2 && evs2.some((e) => e.type === 'multi'));
 }
@@ -103,10 +102,9 @@ await withSeedAsync(4, async () => {
 
 // T13: SMASH — heavy hit covering ALL living HP wipes the room in one line
 {
-  const rat = (n) => ({ id: n, name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 2, xp: 1, coins: [1, 1] });
   const run = createRun();
   run.stats.dmg = 500; run.stats.crit = 0;
-  const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
+  const cb = fight(run, ['A', 'B', 'C'].map((n) => enemy(16, 2, 'Rat ' + n, { id: n })));
   const evs = playerAttack(cb, 0, true);
   const kills = evs.filter((e) => e.type === 'kill');
   ok('OVERKILL wipes room in one silent event', evs.some((e) => e.type === 'overkill')
@@ -168,18 +166,43 @@ await withSeedAsync(4, async () => {
   ok('dialog at the peak, then red fades out', peaked && registry.flash.classList.contains('death-out') && !registry.flash.classList.contains('death-in'));
   ok('flash timings: 0.9s build, 2s fade to 75%', css.includes('#flash.death-in  { opacity: 0.75; transition: opacity 0.9s')
     && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
-  const m = readFileSync('src/main.js', 'utf8');
-  ok('INVULNERABLE only under DEBUG MODE (?debug, or the menu\'s toggle)', readFileSync('src/ui/debugToggles.js', 'utf8').includes(".has('debug')") && readFileSync('src/main.js', 'utf8').includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]"));
+}
+
+// DEBUG MODE (0.00243): the testing tools are items of the corner bar under the DEBUG MODE toggle, each marked
+// .dbg and shown only while the bar carries .debug-on (styles.css); OFF puts every switch back. Built here as
+// main.js builds it (0.00299: four source greps of debugToggles.js / main.js, here and in backgrounds.test.mjs, before)
+{
+  const { debugMenu } = await import('../../src/ui/debugToggles.js');
+  const { cornerBar, menuHead } = await import('../../src/ui/cornerToggles.js');
+  const { DEBUG } = await import('../../src/shared/debug.js');
+  registry.app.innerHTML = '';
+  const dbg = debugMenu();
+  const bar = cornerBar([menuHead('Game'), dbg.toggle, ...dbg.items]);
+  registry.app.append(bar);
+  const tools = ['INVULNERABLE', 'HIDE FOREGROUND', 'BG VIEW', 'NEXT BG', 'BG TUNING', 'FORCE CRITS', 'FORCE MEGA CRITS', 'SWITCH CLASS', 'LABS', 'BENCHMARK'];
+  const found = tools.map((l) => button(bar, l));
+  const gated = bar.children.filter((c) => c.classList?.contains('dbg')); // (.dbg goes on through classList: the shim's className does not follow it)
+  ok('INVULNERABLE, FORCE CRITS, BG TUNING, HIDE FOREGROUND and the rest sit in the corner bar after the DEBUG MODE toggle, each .dbg; the toggle itself is not',
+    found.length === tools.length && found.every((b) => b && b.classList.contains('dbg') && bar.children.indexOf(b) > bar.children.indexOf(dbg.toggle)) && gated.length >= tools.length + 1 && !dbg.toggle.classList.contains('dbg'),
+    `${tools.filter((l, i) => !found[i]).join(',')} gated ${gated.length}`);
+  if (dbg.toggle.textContent !== 'DEBUG MODE: ON') click(dbg.toggle);
+  ok('DEBUG MODE ON gates the tools through: the bar carries .debug-on, which styles.css shows the .dbg items under', bar.classList.contains('debug-on') && dbg.toggle.textContent === 'DEBUG MODE: ON'
+    && /\.corner-bar:not\(\.debug-on\) > \.dbg \{ display: none; \}/.test(readFileSync('styles.css', 'utf8')));
+  click(button(bar, 'INVULNERABLE')); click(button(bar, 'FORCE CRITS'));
+  const armed = DEBUG.invulnerable === true && DEBUG.forceCrit === true;
+  click(dbg.toggle);
+  ok('…OFF takes the gate off and clears every testing switch', armed && !bar.classList.contains('debug-on') && DEBUG.invulnerable === false && DEBUG.forceCrit === false && button(bar, 'INVULNERABLE').textContent === 'INVULNERABLE: OFF');
+  registry.app.innerHTML = '';
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
 // line is built once per room and patched in place; HP on screen follows
 // the log line by line (the player's too); effects ride on queue items.
 {
-  const rat = (n) => ({ id: 'rat', name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 3, xp: 1, coins: [1, 1] });
+  const rat = (n) => enemy(16, 3, 'Rat ' + n);
   const run = createRun();
   run.stats.dmg = 6; run.stats.crit = 0; run.stats.dodge = 0;
-  const cb = createCombat(run, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
+  const cb = fight(run, [rat('A'), rat('B')]);
   const evs = playerAttack(cb, 0, false);
   const atk = evs.find((e) => e.type === 'atk');
   ok('atk event snapshot = state after the hit', atk.snap.enemies[0] === 10 && atk.snap.enemies[1] === 16 && atk.heavy === false);
@@ -188,7 +211,7 @@ await withSeedAsync(4, async () => {
     hits.length === 2 && hits[0].source === 0 && hits[1].source === 1
     && hits[1].snap.hp === run.hp && hits[0].snap.hp === run.hp + hits[1].taken);
   const big = createRun(); big.stats.dmg = 500; big.stats.crit = 0;
-  const cb2 = createCombat(big, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
+  const cb2 = fight(big, [rat('A'), rat('B')]);
   const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'overkill');
   ok('SMASH snapshot shows the wiped room', sm && sm.snap.enemies.every((h) => h === 0));
   ok('the room-wipe line reads OVERKILL (0.095)', sm.text === 'OVERKILL! Everyone dies!');
@@ -376,7 +399,8 @@ await withSeedAsync(4, async () => {
   const { heavyTarget } = await import('../../src/run/combat.js');
   ok('Heavy targets the front summon, else the boss', heavyTarget(cb) === 1
     && heavyTarget({ enemies: [{ hp: 5 }, { hp: 0, summoned: true }] }) === 0);
-  ok('regular rooms have no summoners', generateRoom(3, createRun()).enemies.every((e) => !e.summonEvery));
+  const regular = generateRoom(3, createRun()).enemies;
+  ok('regular rooms have no summoners', regular.length > 0 && regular.every((e) => !e.summonEvery));
 
   const { fxFor, holdFor } = await import('../../src/ui/combatFx.js');
   const sfx = fxFor(sev);
@@ -501,11 +525,9 @@ await withSeedAsync(4, async () => {
   const c0 = hit();
   ok('FORCE CRITS: every attack crits (0% crit chance)', a.every((e) => e.crit) && !c0.crit);
   ok('FORCE MEGA CRITS: every attack mega crits', b.every((e) => e.crit && e.megaCrit && e.text.includes('MEGA CRIT!')));
-  const main = readFileSync('src/main.js', 'utf8');
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
-  ok('crit toggles only under DEBUG MODE', main.includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]")
-    && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|SWITCH CLASS: CURIOUS KNIGHT|LABS|BENCHMARK', labels.join('|'));
+  ok('the debug tools, in their order (the crit toggles among them; their place under DEBUG MODE is asserted above)', labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|SWITCH CLASS: CURIOUS KNIGHT|LABS|BENCHMARK', labels.join('|'));
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
   ok('INVULNERABLE toggle flips the debug flag', DEBUG.invulnerable === true && inv.textContent === 'INVULNERABLE: ON');
@@ -656,10 +678,9 @@ await withSeedAsync(4, async () => {
 // T89b: 0.128 — OVERKILL bursts particles on every enemy it wipes.
 {
   const { fxFor } = await import('../../src/ui/combatFx.js');
-  const rat = (n) => ({ id: 'rat', name: 'Rat ' + n, maxHp: 16, hp: 16, dmg: 2, xp: 1, coins: [1, 1] });
   const run = createRun();
   run.stats.dmg = 500; run.stats.crit = 0;
-  const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
+  const cb = fight(run, ['A', 'B', 'C'].map((n) => enemy(16, 2, 'Rat ' + n)));
   const sm = playerAttack(cb, 0, true).find((e) => e.type === 'overkill');
   const fx = fxFor(sm, { maxHp: run.maxHp });
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'

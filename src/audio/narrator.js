@@ -93,7 +93,7 @@ export function narrate(id, { delayMs = 0 } = {}) {
   // one chain (0.00197): two lines asked for in the same tick (a death and
   // the first-death line, a chest and its relic) used to race on decode
   queue = queue.then(() => decode(urlOf(take))).then((buffer) => {
-    if (mute.on) { unspend(); return; } // NARRATOR went OFF during the decode
+    if (mute.on || busGain('sfx') === 0) { unspend(); return; } // NARRATOR went OFF, or SOUND went OFF / its slider to 0, during the decode (0.00299: the take used to start through the silent bus and duck the music for its length)
     const now = ctx.currentTime;
     const at = Math.max(now + delayMs / 1000, busyUntil);
     if (at - now > N.maxWaitS) { unspend(); return; } // too long a queue: the moment has passed

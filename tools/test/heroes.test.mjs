@@ -6,7 +6,7 @@
 // (0.00283: the card from the run's snapshot, run.hero; the hall from the
 // profile — shared/portraits.js portraitUrl('player')).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, heroScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, heroScene, titleScene, resetProfile, getProfile, readFileSync, statSync, heroProfile } from './harness.mjs';
 
 const { heroList, heroById, defaultHero, cleanHero, heroOf, lookUrl, lookOf, heroArtUrls, heroFirstUrls, HERO_DIR } = await import('../../src/shared/heroes.js');
 const { portraitUrl } = await import('../../src/shared/portraits.js');
@@ -51,13 +51,13 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   {
     const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
     const { createRun } = await import('../../src/run/runState.js');
-    getProfile().hero = { id: 'knight', look: 1 };
+    heroProfile('knight', 1); // (the harness's, 0.00299)
     const standing = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} }).card.classList.contains('hero-standing');
-    getProfile().hero = { id: 'knight', look: crouch };
+    heroProfile('knight', crouch);
     const wide = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} }).card.classList.contains('hero-standing');
     ok('...his card stands like the other classes\', but for the crouch (the wide sprite)', standing && !wide);
   }
-  getProfile().hero = { id: 'necromancer', look: 2 };
+  heroProfile('necromancer', 2);
   ok('another hero\'s card draws that hero\'s look', portraitUrl('player') === lookUrl(heroById('necromancer'), 2) && portraitUrl('player').startsWith('assets/heroes/'));
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const { createRun } = await import('../../src/run/runState.js');
@@ -70,7 +70,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), keyed to its own S (underlined) and H still (0.00286)', heavyLabel(u) === 'Soul Drain' && hb.attrs['data-key'] === 's' && hb.attrs['data-key-alt'] === 'h'
     && hb.all((n) => n.tagName === 'u')[0]?.textContent === 'S'
     && u.card.all((n) => n.className === 'back-row').some((r) => r.textContent.startsWith('Soul Drain')));
-  getProfile().hero = { id: 'knight', look: 0 };
+  heroProfile('knight');
   ok('the knight keeps Heavy Attack', heavyLabel(createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} })) === 'Heavy Attack');
   getProfile().hero = null;
   ok('every hero names its heavy (heroes.json heavyName, checked at load)', heroList().every((h) => typeof h.heavyName === 'string' && h.heavyName.trim())
@@ -84,7 +84,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const { createRun } = await import('../../src/run/runState.js');
   for (const [id, own] of [['wizard', 'f'], ['knight', 'h']]) {
-    getProfile().hero = { id, look: 0 };
+    heroProfile(id);
     let fired = 0;
     const u = createPlayerUnit(createRun(), { onHeavy() { fired++; }, onPotion() {} });
     registry.app.append(u.el);

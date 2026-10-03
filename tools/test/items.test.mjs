@@ -5,7 +5,7 @@
 // Run via tools/smoke-test.mjs.
 
 import { existsSync, readFileSync } from 'node:fs';
-import { ok, fresh, El, DATA, createRun, getProfile, withAnimations, sleep, byClass } from './harness.mjs';
+import { ok, fresh, El, DATA, createRun, getProfile, withAnimations, sleep, byClass, handleKey } from './harness.mjs';
 
 fresh();
 const { itemArtUrl, itemArtUrls, potionArtUrl, gainLine } = await import('../../src/shared/itemArt.js');
@@ -100,7 +100,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const lootRow = () => {
     const res = Object.assign(new El('div'), { getBoundingClientRect: box(20, 700, 200, 90) });
     const row = Object.assign(new El('div'), { getBoundingClientRect: box(20, 760, 160, 30) });
-    const tray = Object.assign(new El('span'), { getBoundingClientRect: box(80, 762, 30, 26) });
+    const tray = Object.assign(new El('span'), { getBoundingClientRect: box(80, 762, 30, 26) }); tray.className = 'loot-tray'; // (0.00299: found by its class — the row is a button, its children under el()'s label span)
     tray.append(new El('img'));
     row.append(new El('span'), tray);
     res.append(row);
@@ -174,14 +174,50 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
     && !pics.includes(itemArtUrl('fang_of_the_eclipse')) && !Object.values(eq).flat().includes('fang_of_the_eclipse'));
 }
 
-// the dungeon's LOOT row under XP / COINS (the developer named it): there from the first room, hidden until a find
+// the dungeon's LOOT row under XP / COINS (the developer named it): there from the first room, hidden until a find;
+// 0.00299: a button keyed I — the one action on the combat screen that had no key — opening the LOOT pop-up once there is a find
 {
-  const { show, sleep, t, registry, dungeonScene } = await import('./harness.mjs');
+  const { show, sleep, t, registry, dungeonScene, handleKey, withSeedAsync } = await import('./harness.mjs');
+  const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
   fresh();
-  show(dungeonScene());
-  await sleep(1500);
-  const row = registry.app.all((n) => n.className?.includes?.('res-loot'))[0];
-  ok('the LOOT row: labelled LOOT, hidden while the run has found nothing', !!row && row.textContent === 'LOOT' && row.classList.contains('none') && t().includes('COINS'));
+  await withSeedAsync(11, async () => {
+    show(dungeonScene());
+    await sleep(1500);
+    const row = registry.app.all((n) => n.className?.includes?.('res-loot'))[0];
+    ok('the LOOT row: labelled LOOT, hidden while the run has found nothing', !!row && row.textContent === 'LOOT' && row.classList.contains('none') && t().includes('COINS'));
+    ok('…a button keyed I (0.00299); with nothing found, I opens nothing', row.tagName === 'button' && row.attrs['data-key'] === 'i' && (handleKey('i'), !anyDialogOpen()));
+    DATA.difficulty.dropChance = 1; // (a drop on every kill; the first into an empty slot is kept — fresh() puts the knob back)
+    for (let i = 0; i < 80 && !t().includes('Found:') && !t().includes('YOU DIED'); i++) {
+      if (t().includes('Push Deeper')) { handleKey('d'); await sleep(4500); } else { handleKey('a'); await sleep(900); }
+    }
+    const found = t().includes('Found:');
+    handleKey('i');
+    const strips = byClass(document.body, 'loot-list')[0]?.children ?? [];
+    ok('…once the run has a find, I opens the LOOT pop-up with it', found && anyDialogOpen() && strips.length >= 1, `found ${found}, ${strips.length} strips`);
+    handleKey('c');
+    ok('…and C closes it', !anyDialogOpen());
+    closeAllDialogs();
+  });
+}
+
+// the hero card's INVENTORY page's FINDS line (0.00299): the run's finds counted, a tap opens the LOOT pop-up (the phone's way
+// to it — its top strip has no LOOT row); gone while nothing is found; not a <button> (the unit's first button is the heavy's)
+{
+  fresh();
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
+  const run = createRun();
+  const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+  const line = () => byClass(u.card, 'inv-finds')[0];
+  ok('no finds: the FINDS line is hidden, a div with the button\'s role', line()?.classList.contains('none') && line().tagName === 'div' && line().attrs.role === 'button' && u.el.all((n) => n.tagName === 'button')[0]?.textContent.startsWith(run.hero.heavyName));
+  run.itemsFound.push('vampiric_ring', 'moonbrand');
+  u.update({ hp: run.hp, heavyCd: 0, heavyReady: true, dead: false, printing: false });
+  await u.card.listeners.click[0](); await u.card.listeners.click[0](); // (front → STATS → INVENTORY: the shown page refreshes)
+  ok('two finds: "Finds · 2 ›" on the INVENTORY page', !line().classList.contains('none') && line().textContent === 'Finds · 2 ›');
+  const flips = u.card.listeners.click.length;
+  line().listeners.click[0]({ stopPropagation() { this.stopped = true; } });
+  ok('…a tap opens the LOOT pop-up with both finds, and stays in the line (the card would turn over)', anyDialogOpen() && byClass(document.body, 'loot-list')[0]?.children.length === 2 && u.card.listeners.click.length === flips);
+  closeAllDialogs();
 }
 
 // the healing potion (0.00263): its picture on the hero card's count; a found potion's card flies into that count,
@@ -247,7 +283,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('every class has a kit: a weapon and an armor, with the starting gear\'s numbers, the knight\'s that gear', kits.length === 7 && kits.every((k) => DATA.items[k.weapon]?.slot === 'weapon' && DATA.items[k.armor]?.slot === 'armor'
     && stats(k.weapon) === stats(g.weapon) && stats(k.armor) === stats(g.armor)) && heroKit(heroById('knight')).weapon === g.weapon && new Set(kits.flatMap((k) => [k.weapon, k.armor])).size === 2 + 12);
   const starters = Object.keys(DATA.items).filter((id) => DATA.items[id].starter);
-  ok('...the twelve new ones are starters with their pictures; a starter never drops', starters.length === 12 && starters.every((id) => existsSync(itemArtUrl(id)) && !droppable(id)) && droppable('rusty_sword'));
+  ok('...the twelve new ones and the knight\'s two are starters with their pictures; a starter never drops (0.00299: the knight\'s used to drop as another class\'s off-class junk)', starters.length === 14 && starters.every((id) => existsSync(itemArtUrl(id)) && !droppable(id)) && !droppable('oak_shield'));
   const origR = Math.random, seen = new Set();
   try { for (let i = 0; i < 2000; i++) { Math.random = () => (i * 0.6180339) % 1; const r = rollLoot({ ...DATA.enemies.rat, id: 'rat', maxHp: 10 }, 1, 1, true); if (r.itemId) seen.add(r.itemId); } } finally { Math.random = origR; }
   ok('...a kill\'s loot never rolls one', seen.size > 3 && ![...seen].some((id) => DATA.items[id].starter), [...seen].join());
@@ -367,25 +403,40 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('the find card: another class\'s gear greyed, whose it is, salvaged at the end', card.className.includes('off-class') && card.textContent.includes('salvaged at the end') && !card.textContent.includes('replaces'));
 }
 
-// The LOOT pop-up (0.00292): the run's finds as strips, newest first, each with the slot it will
-// upgrade (another class's gear marked Salvage); the dialog closes on C / Escape.
+// The LOOT pop-up (0.00292): the run's finds as strips, newest first, each with what becomes of it when the run ends
+// (0.00299: judged against run.gearPreview, what settleRun will wear — a find a later one beat reads Beaten · salvaged;
+// another class's gear Salvage); the arrow keys scroll a strip and its gap; the dialog closes on C / Escape / Enter.
 {
   fresh();
   const { openLootDialog } = await import('../../src/ui/lootDialog.js');
   const { anyDialogOpen } = await import('../../src/ui/dialog.js');
+  const { takeItem } = await import('../../src/run/loot.js');
   const run = createRun();
   run.heroId = 'knight';
   const other = Object.keys(DATA.items).find((id) => DATA.items[id].slot === 'weapon' && DATA.items[id].class && DATA.items[id].class !== 'knight');
-  run.itemsFound.push('vampiric_ring', 'moonbrand', other, 'no_such_item');
+  for (const id of ['knights_blade', 'moonbrand', 'vampiric_ring', other]) takeItem(run, id, () => {}); // (the blade beaten by Moonbrand: both stay in itemsFound, the preview wears Moonbrand)
+  run.itemsFound.push('no_such_item');
   const dlg = openLootDialog(run);
-  const strips = byClass(document.body, 'loot-list')[0]?.children ?? [];
+  const list = byClass(document.body, 'loot-list')[0], strips = list?.children ?? [];
   const tags = strips.map((r) => byClass(r, 'inv-tag')[0]);
-  ok('the LOOT pop-up: every find of the run as a strip, newest first, with its slot or Salvage (an unknown id skipped)', anyDialogOpen() && strips.length === 3
-    && strips[0].textContent.includes(DATA.items[other].name.toUpperCase()) && tags[0].textContent === 'Salvage' && String(tags[0].className).includes('inv-off')
-    && strips[1].textContent.includes('MOONBRAND') && tags[1].textContent === 'Weapon ↑' && tags[2].textContent === 'Ring ↑'
-    && byClass(strips[1], 'slot-art')[0]?.children[0]?.attrs?.src === itemArtUrl('moonbrand'));
-  dlg.close();
-  ok('…and it closes', !anyDialogOpen());
+  const tag = (i) => `${tags[i].textContent}${String(tags[i].className).includes('inv-off') ? ' (off)' : ''}`;
+  ok('the LOOT pop-up: every find of the run as a strip, newest first (an unknown id skipped), the picture on each', anyDialogOpen() && strips.length === 4
+    && strips[0].textContent.includes(DATA.items[other].name.toUpperCase()) && strips[2].textContent.includes('MOONBRAND') && byClass(strips[2], 'slot-art')[0]?.children[0]?.attrs?.src === itemArtUrl('moonbrand'));
+  ok('…another class\'s gear Salvage; a worn find its slot (Ring I ↑, Weapon ↑); a find a later one beat Beaten · salvaged (0.00299)',
+    tag(0) === 'Salvage (off)' && tag(1) === 'Ring I ↑' && tag(2) === 'Weapon ↑' && tag(3) === 'Beaten · salvaged (off)' && run.gearPreview.weapon === 'moonbrand', [0, 1, 2, 3].map(tag).join(' | '));
+  ok('…the sub-line says the best of each slot is worn', byClass(document.body, 'loot-sub')[0]?.textContent === '4 found this run · the best of each slot is worn when the run ends');
+  const calls = [];
+  list.scrollBy = (o) => calls.push(o);
+  strips[0].offsetTop = 0; strips[0].offsetHeight = 64; strips[1].offsetTop = 72; // (a strip and the 8px gap under it)
+  handleKey('arrowdown');
+  ok('↓ scrolls one strip and its gap', calls.length === 1 && calls[0].top === 72 && calls[0].behavior === 'smooth', JSON.stringify(calls));
+  handleKey('arrowup');
+  ok('↑ scrolls back by the same', calls.length === 2 && calls[1].top === -72);
+  handleKey('c');
+  ok('…and C closes it (dialog.js closeKeys: Escape and Enter too)', !anyDialogOpen() && !dlg.isOpen());
+  const again = openLootDialog(run); handleKey('escape');
+  ok('…Escape as well', !again.isOpen());
   const css = readFileSync('styles.css', 'utf8');
-  ok('…four strips in view, the rest scrolled to', css.includes('.loot-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(4 * 64px + 3 * 8px); overflow-y: auto;') && css.includes('.loot-list .inv-row { flex: none; height: 64px;'));
+  ok('…four strips in view, the rest scrolled to; two on a phone (the 94svh modal keeps Close in view)', css.includes('.loot-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(4 * 64px + 3 * 8px); overflow-y: auto;') && css.includes('.loot-list .inv-row { flex: none; height: 64px;')
+    && css.includes('html.phone .loot-list { max-height: calc(2 * 64px + 8px); }'));
 }

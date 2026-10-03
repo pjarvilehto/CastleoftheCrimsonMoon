@@ -26,11 +26,14 @@ export function canUse(heroId, itemId) {
 /** The classes that can use an item (hero objects, heroes.json order). */
 export const usersOf = (itemId) => DATA.heroes.heroes.filter((h) => canUse(h.id, itemId));
 
+/** A class's short name for a line of text: "Knight", "Barbarian" (the article and the knight's epithet off). */
+export const className = (h) => h.name.replace(/^The /, '').replace(/^Curious /, ''); // (0.00299: run/loot.js offClassText had a regex of its own for the same cut)
+
 /** Who an item is for, in words: "Everyone", one class's name, or the names joined. */
 export function usersText(itemId) {
   const users = usersOf(itemId);
   if (users.length === DATA.heroes.heroes.length) return 'Everyone';
-  return users.map((h) => h.name.replace(/^The /, '').replace(/^Curious /, '')).join(', ');
+  return users.map(className).join(', ');
 }
 
 /** What a number of mastery points does for a class, in words ("+2 Fireball charges", "+30% Cleave reach"). */

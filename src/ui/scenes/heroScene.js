@@ -39,6 +39,7 @@ export function heroScene() {
   };
 
   function render(root) {
+    root.innerHTML = ''; // (0.00299: a re-render — the phone query flipping, the debug SWITCH CLASS — used to stack a stale screen under the live one; the hotkeys took the first match, so PROCEED could save a class the player no longer saw)
     const heroes = heroList();
     const start = cleanHero(getProfile().hero);
     let chosen = start.id;

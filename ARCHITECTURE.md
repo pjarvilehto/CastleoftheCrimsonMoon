@@ -105,7 +105,8 @@ src/
                         ELEMENTS / rollImmune (0.00293): a heavy's element
                         (fire, blight) against the foe's enemies.json immune
                         chance — "Immune!" in place of the blow or the stack
-    shrine.js           boon deal + costs + effects (ids map to code)
+    shrine.js           boon deal + BOONS, the registry (needs / afford / apply per id, like
+                        classes.js HEAVIES; dataCheck reads each boon's needs from it, 0.00299)
     loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
                         or salvage on the spot, for kills and chests alike;
                         tryRevive() (the Heart's revive, 0.00223: here so runState
@@ -113,14 +114,20 @@ src/
     treasure.js         treasure rooms: placement, the three chests (0.155)
   shared/               no DOM, used everywhere (and by the analytics page)
     data.js             loads assets/data/*.json into DATA
-    dataCheck.js        every number the code reads, checked at load
+    dataCheck.js        every number the code reads, checked at load (the class keys from
+                        classes.js, the boon keys from shrine.js BOONS)
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
     portraits.js        where a character's portrait is (enemies.json art); portraitUrl('player') is
-                        the chosen hero's look (assets/heroes/) — only the knight's crouching `sprite`
-                        look draws cards.json player.art (0.00264)
+                        the chosen hero's look (assets/heroes/) for every look since 0.00291 — the
+                        knight's crouch (`sprite`) too; cards.json player.art is the Art Lab's alone
     heroes.js           the classes (heroes.json): heroList / heroById / cleanHero / heroOf / lookOf /
-                        lookUrl / heavyName / heroKit, the preload lists heroFirstUrls / heroArtUrls (0.00248)
+                        lookUrl / heavyName / heroKit, the preload lists heroFirstUrls / heroArtUrls (0.00248);
+                        heroSnapshot = run.hero (id, name, heavyName, heavyKey, theme, look; 0.00283),
+                        lookIsSprite (the wide placement, 0.00291)
+    classGear.js        the item matrix (0.00274): canUse / usersOf / usersText (who wields a kind, wears a
+                        weight, owns a class item), masteryText / withMastery (the signature items'
+                        bonus on the class block), kitFor, fitGearToClass (a save's gear made legal)
     itemArt.js          an item's picture (items.json art, assets/items/) and gainLine — what a find raises over what it replaced (0.00260)
     platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp();
                         deviceName() / deviceBlock() (a data block's `phone` sub-block merged on a phone — the phone power profile, 0.00222)
@@ -133,7 +140,9 @@ src/
   audio/
     audioCore.js        one AudioContext, compressed bytes cache
     mixer.js            buses -> master -> limiter, sliders, ducking
-    music.js  musicLoop.js   five beds, seamless exact loops
+    music.js  musicLoop.js   five generated beds (ElevenLabs scores since 0.00280-0.00282): a loop of
+                        loopS + tailS of the music's own continuation, crossfaded by power
+                        (audioMath.fadeCurve); startEarly plays the title bed from the title (0.00285)
     sfx.js  synth.js  audioMath.js   clip registry (audio.json clips), voices,
                         generated sweeteners (synth.js: the classes' instruments
                         too — swing, crackle, zap, wail, rake, chime, hiss,
@@ -184,18 +193,22 @@ src/
                         overflow context, 2D drawImage as the last fallback);
                         looks per enemy / boon / chest
     shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
-    buffs.js  hud.js  fx.js
+    buffs.js  hud.js  fx.js   (hud.js: describeItem, statText, itemPic, itemStrip and the shared card
+                        builders tierOf / itemTitle / findBody / wornId / gearLabel, 0.00299)
     hubText.js          the Great Hall's lines from the data: statDesc / precisionDesc / efficiencyDesc / alchemyDesc / potionDesc / satchelDesc (each long, or `short` for the phone's 45%-wide sheets), recordsLine
     hubSections.js      the hall's three sections (Train / Alchemy / Equipment) as rows, each handler
                         naming its row for the purchase flash (0.00223; hubScene.js keeps the table, the
                         two assemblies, Descend and the flash)
-    dialog.js           openDialog(): overlay + keyboard; open-dialog registry
+    dialog.js           openDialog(): overlay + keyboard; open-dialog registry; closeKeys (0.00299)
     confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js   (the SETTINGS menu, 0.00243;
                         debugToggles.js = DEBUG MODE's tools, SWITCH CLASS among them, 0.00269)
     lookPicker.js       the hero's look, large between ‹ › (the hall's portrait, the phone's Look row; 0.00253)
+    lootDialog.js       the LOOT pop-up (0.00292): every find of the run as inventory strips, four in view,
+                        ↑ ↓ scroll, C / Esc / Enter close; opened from the LOOT row (I) or the hero card's
+                        INVENTORY page (0.00299)
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near); candidates/ = the new
@@ -210,15 +223,17 @@ assets/
   world/                the World Lab's painting (the prototype's, 0.00210)
   items/                the gear's pictures (256 px WebP, the file named in items.json art); candidates/ =
                         what tools/gen-items.mjs painted from docs/item-prompts.md (items-art.json; 0.00260)
-  audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; audio/sfx/: the 45
-                        class and foe recordings, tools/gen-sfx.mjs, 0.00271; fonts/: the display
-                        font as WOFF2 + the TTF fallback, 0.00223)
+  audio/  fonts/        (audio/: the five beds, music-<bed>-v<k>.mp3; audio/vo/: the narrator's 136
+                        takes, tools/gen-vo.mjs; audio/sfx/: the 45 class and foe recordings,
+                        tools/gen-sfx.mjs, 0.00271; audio/candidates/: the generated scores' takes,
+                        lab-only, 0.00273; fonts/: the display font as WOFF2 alone since 0.00226)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, heroes (the classes:
                         looks, kit, theme, class block), cards (the card light,
                         the particles, player.art), build, changelog; narration,
-                        art, rooms-art, items-art, lora (generated: the takes,
-                        the redrawn portraits, the painted rooms, the item pictures, the LoRA trainings)
+                        art, rooms-art, items-art, music-art, lora (generated: the takes,
+                        the redrawn portraits, the painted rooms, the item pictures, the
+                        scores, the LoRA trainings)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
@@ -247,17 +262,27 @@ labs/                   the testing pages (DEBUG MODE's LABS entry in the SETTIN
                         two looks and the dive; WORLD in lab.js = the future world.json
   heroes/               the CHOOSE YOUR HERO screen over any painting, from the game's own
                         data and stylesheet: the LINE-UP or a SHOWCASE alternative (0.00247)
+  music/                the generated scores beside the game's bed, level-matched, SYNC and
+                        BLIND; verdicts -> music-rerender.json for gen-score.mjs --rerender (0.00273)
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
-  layout-check.mjs  desktop AND phone: the real game headless at five screens, the layouts' promises asserted (rule 8)
-  simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
+  layout-check.mjs  desktop AND phone: the real game headless at seven screens (two large desktops since
+                        0.00299), the layouts' promises asserted (rule 8)
+  simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots (simCore.fresh(hero) is the
+                        campaign start all three share, --hero on each; 0.00299)
   ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197; a
                         crashed suite prints its stderr tail, 0.00223)
   check-bump.mjs        CI: a push to main that changes what players load needs a higher build
   bump.mjs              build number + module list + changelist notes
   audio-check.mjs       clip loudness + loops measured in Chromium
-  gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
+  gen-depth.py  gen-music.py (+ music/)   depth maps; the procedural beds (history since 0.00282)
+  gen-score.mjs  music-seam.mjs   the music beds as generated scores (docs/music-prompts.md -> ElevenLabs
+                        Music / Lyria 3 Pro / Stable Audio 2.5 -> assets/audio/candidates + music-art.json;
+                        0.00273); --import finds the loop seam (music-seam.mjs), cuts, levels and points
+                        audio.json at the new file (0.00280)
+  elevenlabs.mjs  util.mjs   the ElevenLabs client the three sound tools share (the key, one POST with the
+                        429 retry, measureDb; 0.00283) and the tools' small helpers (seedFor, cli; 0.00299)
   gen-vo.mjs            the voice-over: docs/narration-script.md -> ElevenLabs -> assets/audio/vo
   gen-sfx.mjs           the classes' and the foes' sounds: docs/sfx-prompts.md -> ElevenLabs sound
                         generation -> assets/audio/sfx + audio.json clips (0.00270)
@@ -319,6 +344,8 @@ primary button. While a dialog is open it owns the keyboard.
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
 | `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (the button carries the class's name, `heroes.json heavyName`, 0.00267) / Drink Potion |
+| `I` · click | dungeon | the LOOT pop-up (0.00292; the LOOT row bottom left, or the hero card's INVENTORY page): `↑` `↓` scroll a strip, `C` / Esc / Enter close |
+| click the hero card | dungeon | turn it over: front → STATS → INVENTORY → front (0.00256 / 0.00258) |
 | `H` `C` `F` `S` `E` `L` | dungeon | the special also answers to a letter of its own name, underlined on the button (`heroes.json heavyKey`, 0.00286): Heavy Attack H, Cleave C, Fireball F, Soul Drain S, Entangle E, Hex H, Last Rites L — and H on every class (`data-key-alt`, served after every button's own key); `dataCheck` keeps it a letter of the name and off A / P / D / R |
 | `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
@@ -367,7 +394,10 @@ x, a, y, n, l), as on the desktop where every panel shows.
   absolute, bottom-anchored and larger than the card; text rows sit above.
 - **Button labels** centre their capitals (`text-box: trim-both cap
   alphabetic`); the `[space]` hint sits in the bottom padding, out of flow.
-- **Keep files under ~300 lines**, one responsibility each.
+- **Keep files under ~300 lines**, one responsibility each (the six over it —
+  core/bg3d.js, ui/battleLine.js, ui/cardFx.js, ui/scenes/dungeonScene.js,
+  ui/combatFx.js, run/combat.js — are each one subsystem's core; split
+  when a part grows a name of its own, as classes.js and classFx.js did).
 - **Assets are never replaced in place** (edge caches ~4 h): new content,
   new filename.
 - **Every `src/` change ships with a build bump** — the boot loads modules

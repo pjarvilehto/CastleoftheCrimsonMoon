@@ -20,7 +20,7 @@ import { getProfile } from '../meta/profile.js';
 import { equipItems } from '../meta/equipment.js';
 import { rollCoins, randInt, pick } from '../shared/balance.js';
 import { roomEnemies } from './roomGen.js';
-import { takeItem, relicIds, tryRevive, droppable } from './loot.js';
+import { takeItem, relicIds, tryRevive, droppable, previewProfile } from './loot.js';
 import { canUse } from '../shared/classGear.js';
 
 const T = () => DATA.difficulty.treasure;
@@ -44,7 +44,7 @@ export const reliquaryCost = (run) => Math.round(run.maxHp * T().reliquary.hpCos
 // as it will be), or any item of that tier when none would.
 function gearFor(run, tier) {
   const ids = Object.keys(DATA.items).filter((id) => DATA.items[id].tier === tier && droppable(id) && canUse(run.heroId, id)); // (0.00265: never a class's starting kit; 0.00274: the gilded chest is made for the class)
-  const better = ids.filter((id) => equipItems({ equipment: structuredClone(run.gearPreview), hero: run.heroId ? { id: run.heroId } : null }, [id]).equipped.length > 0);
+  const better = ids.filter((id) => equipItems(previewProfile(run, structuredClone(run.gearPreview)), [id]).equipped.length > 0); // (a copy: asking, not taking — loot.js previewProfile, 0.00299)
   return pick(better.length ? better : ids);
 }
 

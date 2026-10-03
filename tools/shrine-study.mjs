@@ -16,7 +16,9 @@
 // nothing about the boon. Stages span the whole progression so no single
 // difficulty wall (where nothing matters) dominates.
 //
-// Usage: node tools/shrine-study.mjs [--n 300] [--seed 1] [--stages 2,5,10,15,20,25,30]
+// Usage: node tools/shrine-study.mjs [--n 300] [--seed 1] [--stages 2,5,10,15,20,25,30] [--hero wizard]
+// --hero: the class whose campaign is studied (heroes.json id; the knight when
+// unset — 0.00299: the study used to play a classless knight, see simCore.fresh).
 // Flags: OP (big, significant gain), TRAP (significantly worse than walking
 // away), DEAD (unaffordable most of the time).
 
@@ -26,13 +28,13 @@ import { loadSim, withSeed, newAgg } from './simCore.mjs';
 const mean = (a) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
 const sd = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1)); };
 
-export async function shrineStudy({ n = 300, seed = 1, stages = [2, 5, 10, 15, 20, 25, 30] } = {}) {
+export async function shrineStudy({ n = 300, seed = 1, stages = [2, 5, 10, 15, 20, 25, 30], hero = 'knight' } = {}) {
   const sim = await loadSim();
   const boons = sim.DATA.shrines.offers.map((o) => o.id);
   // 1. profile snapshots along one baseline campaign
   const snaps = [];
   withSeed(seed, () => {
-    sim.fresh();
+    sim.fresh(hero);
     const agg = newAgg();
     for (let r = 0; r <= Math.max(...stages); r++) {
       if (stages.includes(r)) snaps.push({ stage: r, profile: sim.snapshot(), derived: sim.derivedStats(sim.getProfile()) });
@@ -107,6 +109,7 @@ if (invokedDirectly) {
   const study = await shrineStudy({
     n: Number(arg('n', 300)), seed: Number(arg('seed', 1)),
     stages: arg('stages', '2,5,10,15,20,25,30').split(',').map(Number),
+    hero: arg('hero', 'knight'),
   });
   console.log(renderStudy(study));
 }

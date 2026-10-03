@@ -5,8 +5,9 @@
 // every candidate is kept (assets/audio/candidates/<bed>_c<n>.mp3, 192 kbps,
 // never overwritten) and recorded in assets/data/music-art.json with its
 // model, seed, prompt or plan, length and integrated loudness (LUFS, so the
-// Music Lab plays every take at one level). Lab-only until a bed is
-// imported: nothing here touches what the game plays.
+// Music Lab plays every take at one level). Generating and measuring touch
+// the lab's files alone; --import is the one step that changes what the
+// game plays (audio.json music.tracks and the bed's file).
 //
 //   node tools/gen-score.mjs --dry-run                  # what would be sent, to which model
 //   node tools/gen-score.mjs --bakeoff                  # title + combat on every model (BAKEOFF), two takes each
@@ -16,7 +17,12 @@
 //   node tools/gen-score.mjs --rerender music-rerender.json   # the Music Lab's verdicts (labs/music/): records the
 //                                                       # approvals and rejections (+ notes), generates the re-rolls
 //                                                       # ({ id, model, n, hint, image })
-//   node tools/gen-score.mjs --measure                  # (re)measure the shipped beds' loudness for the lab
+//   node tools/gen-score.mjs --measure                  # measure the shipped beds' loudness for the lab and stop: a bed
+//                                                       # not measured yet, or whose file changed (every generating run
+//                                                       # does the same measure before it starts; the switch alone makes
+//                                                       # a run with nothing to generate)
+//   node tools/gen-score.mjs ... --concurrency 2        # takes in flight at once across the models (DEFAULTS.concurrency 3;
+//                                                       # ElevenLabs is held to DEFAULTS.elevenConcurrency 2 within it)
 //   node tools/gen-score.mjs --import combat_c2 [--start 21-25] [--end 70-86] [--tail 3] [--min-loop 60] [--dry-run]
 //                                                       # a take into the game (0.00280): the loop seam found
 //                                                       # (tools/music-seam.mjs: the START and END that sound most
@@ -38,7 +44,9 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { token, predict } from './replicate.mjs';
+import { post } from './elevenlabs.mjs';
 import { decode, features, findSeam, alignEnd } from './music-seam.mjs';
+import { seedFor as seedOf, cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'music-prompts.md');
@@ -95,11 +103,7 @@ export const MODELS = {
   lyria: { label: 'Lyria 3 Pro', model: 'google/lyria-3-pro' },
   stable: { label: 'Stable Audio 2.5', model: 'stability-ai/stable-audio-2.5' },
 };
-export function seedFor(id, n) {
-  let h = 2166136261;
-  for (const ch of `score/${id}/${n}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-  return h % 2147483647;
-}
+export const seedFor = (id, n) => seedOf('score', id, n); // (tools/util.mjs since 0.00299; the same seeds)
 /** What a job sends: { model, request } — pure, for --dry-run and the tests. */
 export function requestFor(doc, bed, job) {
   const seed = seedFor(bed.id, job.n);
@@ -138,32 +142,15 @@ function toMp3(src, dest) {
 }
 
 // ---- the providers ----
+// ElevenLabs: at most elevenConcurrency requests in flight (the subscription's
+// two at a time); the POST itself — the 192 -> 128 kbps format fallback and
+// the 429 wait-and-retry — is tools/elevenlabs.mjs post's since 0.00299.
 let elevenBusy = 0;
 const elevenWait = [];
 async function eleven(body) {
   while (elevenBusy >= DEFAULTS.elevenConcurrency) await new Promise((r) => elevenWait.push(r));
   elevenBusy++;
-  try {
-    for (let i = 0; ; i++) { // (a 429 for heavy traffic or the concurrency limit waits and tries again: 10, 20, 40, 60, 60 s; a quota error does not)
-      try { return await elevenOnce(body); } catch (err) {
-        if (i >= 5 || !/HTTP 429/.test(err.message)) throw err;
-        const s = [10, 20, 40, 60, 60][i];
-        console.log(`  ElevenLabs busy (${err.message.match(/"code":"(\w+)"/)?.[1] ?? '429'}): again in ${s} s`);
-        await new Promise((r) => setTimeout(r, s * 1000));
-      }
-    }
-  } finally { elevenBusy--; elevenWait.shift()?.(); }
-}
-async function elevenOnce(body) {
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) throw new Error('ELEVENLABS_API_KEY is not set');
-  for (const fmt of ['mp3_44100_192', 'mp3_44100_128']) { // (192 kbps needs a Creator plan; 128 is every plan's)
-    const res = await fetch(`https://api.elevenlabs.io/v1/music?output_format=${fmt}`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (res.ok) return Buffer.from(await res.arrayBuffer());
-    const text = (await res.text()).slice(0, 400);
-    if (fmt === 'mp3_44100_192' && /output_format|subscription|tier/i.test(text)) continue;
-    throw new Error(`ElevenLabs: HTTP ${res.status} ${text}`);
-  }
+  try { return await post('music', body, { formats: ['mp3_44100_192', 'mp3_44100_128'], retries: 5 }); } finally { elevenBusy--; elevenWait.shift()?.(); }
 }
 /** The painting as a data URI (the game's 2048x1152 JPEG, ~370 KB: sent as it is, no resize — no sharp needed). */
 function inlinePainting(file) {
@@ -206,6 +193,8 @@ function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, minLoop =
   const bed = doc.beds.find((b) => b.id === id), e = reg.beds[id];
   const k = cn ? e?.candidates.find((c) => c.n === Number(cn)) : [...(e?.candidates ?? [])].reverse().find((c) => c.verdict === 'ok');
   if (!bed || !k) throw new Error(`--import ${ref}: no such take${cn ? '' : ' (and no approved take for the bed)'}`);
+  const tracksText = readFileSync(AUDIO, 'utf8'), audio = JSON.parse(tracksText), old = audio.music.tracks[id];
+  if (!old) throw new Error(`audio.json has no music.tracks.${id}: add its block first (file, loopS, tailS, gainDb — the import levels the take to the bed it replaces)`); // (0.00299: it used to fail with a TypeError after the seam search and the cut)
   const src = join(ROOT, k.file);
   const x = decode(src), f = features(x);
   const auto = autoRanges(f, tail);
@@ -215,18 +204,17 @@ function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, minLoop =
   const SR44 = 44100, a = Math.round(seam.start * SR44), b = Math.round(endS * SR44), loopS = Math.round(((b - a) / SR44) * 1e4) / 1e4;
   console.log(`${id}_c${k.n}: seam ${stamp(Math.round(seam.start))} → ${stamp(Math.round(endS))} (${seam.start.toFixed(2)} → ${endS.toFixed(2)} s), loop ${loopS} s + ${tail} s tail · alike ${seam.sim.toFixed(3)}, ${seam.dDb.toFixed(1)} dB apart · searched start ${ranges.startRange.map((v) => v.toFixed(0)).join('-')} s, end ${ranges.endRange.map((v) => v.toFixed(0)).join('-')} s`);
   if (dry) return null;
-  const tracksText = readFileSync(AUDIO, 'utf8'), audio = JSON.parse(tracksText), old = audio.music.tracks[id];
   let v = 3;
   while (existsSync(join(ROOT, 'assets', 'audio', `music-${id}-v${v}.mp3`))) v++;
   const file = `assets/audio/music-${id}-v${v}.mp3`;
   const r = spawnSync('ffmpeg', ['-hide_banner', '-v', 'error', '-i', src, '-af', `atrim=start_sample=${a}:end_sample=${b + Math.round((tail + 0.25) * SR44)},asetpts=PTS-STARTPTS`, '-ac', '2', '-ar', String(SR44), '-c:a', 'libmp3lame', '-b:a', DEFAULTS.gameBitrate, join(ROOT, file)], { encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`ffmpeg cut: ${r.stderr.slice(-300)}`); // (+0.25 s past the tail: a decoder may trim the last frames, and the loop plays [0, loopS + tailS) only)
   const m = measure(join(ROOT, file));
-  const oldLufs = e.current?.file === old?.file ? e.current.lufs : measure(join(ROOT, old.file)).lufs;
+  const oldLufs = e.current?.file === old.file ? e.current.lufs : measure(join(ROOT, old.file)).lufs;
   const track = { file, loopS, tailS: tail, crossfade: 'power', gainDb: gainFor(old.gainDb, oldLufs, m.lufs) }; // (power: the tail is the music's continuation, not a copy of the start)
   writeFileSync(AUDIO, setTrack(tracksText, id, track));
   const refs = JSON.stringify(JSON.parse(readFileSync(AUDIO, 'utf8')));
-  if (old?.file && old.file !== file && !refs.includes(`"${old.file}"`)) { unlinkSync(join(ROOT, old.file)); console.log(`removed ${old.file} (nothing names it now)`); }
+  if (old.file && old.file !== file && !refs.includes(`"${old.file}"`)) { unlinkSync(join(ROOT, old.file)); console.log(`removed ${old.file} (nothing names it now)`); }
   for (const other of e.candidates) if (other !== k && other.imported) { other.replaced = { ...other.imported, by: `${id}_c${k.n}` }; delete other.imported; } // (0.00289: one take is the bed; the one it replaced keeps its record)
   k.imported = { file, start: Math.round(seam.start * 1000) / 1000, end: Math.round(endS * 1000) / 1000, loopS, tailS: tail, gainDb: track.gainDb, lufs: m.lufs, at: new Date().toISOString() };
   console.log(`→ ${file}: ${m.seconds} s, ${m.lufs} LUFS (the old bed ${oldLufs} at ${old.gainDb} dB) → gainDb ${track.gainDb}`);
@@ -251,9 +239,7 @@ function measureCurrent(reg, doc) {
 }
 
 async function main() {
-  const argv = process.argv.slice(2);
-  const has = (f) => argv.includes(f);
-  const val = (f) => (argv.includes(f) ? argv[argv.indexOf(f) + 1] : undefined);
+  const { flag: has, opt: val } = cli(); // (tools/util.mjs, 0.00299)
   const doc = parseScore(readFileSync(DOC, 'utf8'));
   const bedOf = (id) => doc.beds.find((b) => b.id === id) ?? (() => { throw new Error(`no bed "${id}" in docs/music-prompts.md`); })();
   const reg = loadRegistry();

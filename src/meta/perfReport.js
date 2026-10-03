@@ -57,3 +57,7 @@ export function runReport(profile) {
 let latest = null;
 export function keepReport(r) { if (r) latest = r; }
 export function takeReport() { const r = latest; latest = null; return r; }
+// A report whose upload failed goes back to wait for the next one (0.00299:
+// telemetry.js took it before the fetch and a rejected POST lost it for
+// good) — unless a newer report has been kept meanwhile, which then stands.
+export function restoreReport(r) { if (r && !latest) latest = r; }

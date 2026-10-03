@@ -172,6 +172,18 @@ export function initSfx() {
     ctx = ensureCtx();
     mixer();
     ctx.resume?.().catch?.(() => {});
-    for (const c of Object.values(DATA.audio.clips)) if (c.file) fetchBytes(c.file).catch(() => {});
+    // 0.00299: the pulled get-hit recordings (audio.json cries, 0.00287) cannot
+    // play while their flag is off — hurt_<class> under cries.hero (combatQueue.js
+    // sfxFor), ehurt_<foe> under cries.foe (combatSfx.js) — so they are not
+    // warmed either: 19 files, ~244 KB, that went through the two-lane pool
+    // ahead of the narrator's takes and the Descend essentials. A flag flipped
+    // on, they warm with the rest.
+    const cries = DATA.audio.cries;
+    for (const [name, c] of Object.entries(DATA.audio.clips)) {
+      if (!c.file) continue;
+      if (name.startsWith('hurt_') && !cries.hero) continue;
+      if (name.startsWith('ehurt_') && !cries.foe) continue;
+      fetchBytes(c.file).catch(() => {});
+    }
   });
 }

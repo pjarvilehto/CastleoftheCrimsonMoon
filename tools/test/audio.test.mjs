@@ -12,8 +12,8 @@ fresh();
   ok('default: music on', music.isMuted() === false);
   ok('toggle mutes and persists', music.toggleMuted() === true && localStorage.getItem('castle-music-muted') === '1');
   ok('toggle restores', music.toggleMuted() === false && localStorage.getItem('castle-music-muted') === '0');
-  music.play('boss'); music.play('nope'); music.initMusic();
-  ok('play/init no-op safely without AudioContext', true);
+  let quiet = true; try { music.play('boss'); music.play('nope'); music.initMusic(); } catch { quiet = false; } // (0.00299: the check used to pass `true` whatever the calls did)
+  ok('play/init no-op safely without AudioContext', quiet);
 }
 
 // T33: 0.068 — five 60s music tracks wired to the right scenes; the Forge
@@ -73,8 +73,8 @@ fresh();
   ok('sfx default: sound on', sfxMod.isMuted() === false);
   ok('sfx toggle mutes and persists', sfxMod.toggleMuted() === true && localStorage.getItem('castle-sfx-muted') === '1');
   ok('sfx toggle restores', sfxMod.toggleMuted() === false && localStorage.getItem('castle-sfx-muted') === '0');
-  sfxMod.sfx('attack'); sfxMod.sfx('nope'); sfxMod.initSfx();
-  ok('sfx play/init no-op safely without AudioContext', true);
+  let quiet = true; try { sfxMod.sfx('attack'); sfxMod.sfx('nope'); sfxMod.initSfx(); } catch { quiet = false; }
+  ok('sfx play/init no-op safely without AudioContext', quiet);
 
   const C = DATA.audio.clips; // the sound registry (0.118)
   for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
@@ -125,7 +125,7 @@ fresh();
   const read = (f) => readFileSync(f, 'utf8');
   const am = await import('../../src/audio/audioMath.js');
   const fin = am.fadeCurve(32), fout = am.fadeCurve(32, true);
-  ok('music crossfade is equal-gain (same audio in phase: sums to 1, no +3 dB bump)', fin.every((v, i) => Math.abs(v + fout[i] - 1) < 1e-6) && fin[0] === 0 && Math.abs(fin[31] - 1) < 1e-6);
+  ok('the procedural beds\' equal-gain curve, kept for a bed without `crossfade` (same audio in phase: sums to 1, no +3 dB bump; every shipped bed crossfades by power since 0.00282 — checked with the loop below)', fin.every((v, i) => Math.abs(v + fout[i] - 1) < 1e-6) && fin[0] === 0 && Math.abs(fin[31] - 1) < 1e-6);
   ok('stereo: left card left, right card right, capped by width', am.panForX(0, 1000, 0.6) === -0.6 && am.panForX(500, 1000, 0.6) === 0
     && Math.abs(am.panForX(1000, 1000, 0.5) - 0.5) < 1e-9 && am.panForX(NaN, 1000) === 0);
   ok('slider curve: half way = quarter gain', am.sliderGain(0.5) === 0.25 && am.sliderGain(2) === 1 && am.sliderGain(-1) === 0);
@@ -358,6 +358,18 @@ fresh();
   ctx.state = 'suspended'; fa.gesture('pointerup'); await sleep(0);
   ok('a suspended context resumes on a later gesture — a touch\'s end too (0.00209)', ctx.state === 'running');
   ok('MUSIC: OFF at the first gesture downloads no bed (0.00223)', bedsFetched() === 0 && fetched.some((u) => u.includes('assets/audio/')));
+  // 0.00299: the pulled get-hit recordings (audio.json cries, 0.00287) are not warmed while their flag is off
+  const cryFiles = (prefix) => Object.entries(A.clips).filter(([k, c]) => k.startsWith(prefix) && c.file).map(([, c]) => c.file);
+  const hurtFiles = cryFiles('hurt_'), ehurtFiles = cryFiles('ehurt_');
+  const warmed = (files) => files.filter((f) => fetched.includes(f)).length;
+  ok('the warm-up skips the hurt_<class> and ehurt_<foe> recordings while cries.hero / cries.foe are off, the other clips warm (0.00299)',
+    A.cries.hero === false && A.cries.foe === false && hurtFiles.length === 7 && ehurtFiles.length === 12 && warmed(hurtFiles) === 0 && warmed(ehurtFiles) === 0
+    && fetched.includes(A.clips.hurt.file) && fetched.includes(A.clips.atk_wizard.file), `${warmed(hurtFiles)} hurt_, ${warmed(ehurtFiles)} ehurt_ warmed`);
+  A.cries.hero = true; sfxMod.initSfx(); fa.gesture(); await sleep(10); // (fresh() restores DATA; put back below all the same)
+  ok('...cries.hero flipped on: the heroes\' cries warm, the foes\' still not', warmed(hurtFiles) === hurtFiles.length && warmed(ehurtFiles) === 0);
+  A.cries.foe = true; sfxMod.initSfx(); fa.gesture(); await sleep(10);
+  ok('...cries.foe too: every recording warms', warmed(ehurtFiles) === ehurtFiles.length);
+  A.cries.hero = false; A.cries.foe = false;
   music.toggleMuted(); // ON: the title bed starts and the score warms
   await sleep(10);
   ok('...ON warms the whole score and starts the title bed', bedsFetched() === bedFiles.length && ctx.started.some((s) => s.buffer?.tag === sizes[A.music.tracks.title.file]));
@@ -552,8 +564,7 @@ fresh();
 // throws the status.
 {
   const { readPrompts, nextFile } = await import('../gen-sfx.mjs');
-  const { post, hasKey, measureDb } = await import('../elevenlabs.mjs');
-  const { measureDb: viaVo } = await import('../gen-vo.mjs');
+  const { post, hasKey, RETRY_WAITS_S } = await import('../elevenlabs.mjs');
   const rows = readPrompts();
   const recorded = Object.entries(DATA.audio.clips).filter(([k, c]) => /^(atk|heavy|hurt|eatk|ehurt)_/.test(k) && c.file?.startsWith('assets/audio/sfx/')).map(([k]) => k);
   ok('sfx-prompts.md: a row per recorded clip (seconds and a prompt), and a recording for every row',
@@ -569,7 +580,21 @@ fresh();
   let err = null;
   try { await post('x', {}, { fetchFn: async () => ({ ok: false, status: 401, text: async () => 'missing_permissions and more' }), key: 'k' }); } catch (e) { err = e; }
   ok('a refused call throws the status and the start of the body', err?.message.startsWith('HTTP 401: missing_permissions'));
-  ok('the key is read from the environment, never baked in', typeof hasKey() === 'boolean' && !readFileSync('tools/elevenlabs.mjs', 'utf8').match(/xi-api-key': '[a-z0-9]/) && viaVo === measureDb);
+  ok('the key is read from the environment, never baked in', typeof hasKey() === 'boolean' && !readFileSync('tools/elevenlabs.mjs', 'utf8').match(/xi-api-key': '[a-z0-9]/));
+  // 0.00299: the format fallback and the 429 retry live in post (gen-score.mjs carried its own copy)
+  const asked = [];
+  const refuse192 = async (url) => { asked.push(url); return url.includes('mp3_44100_192') ? { ok: false, status: 400, text: async () => '{"detail":{"status":"output_format_not_allowed","message":"needs a higher subscription tier"}}' } : { ok: true, arrayBuffer: async () => new Uint8Array([9]).buffer }; };
+  const got = await post('music', { x: 1 }, { fetchFn: refuse192, key: 'k', formats: ['mp3_44100_192', 'mp3_44100_128'] });
+  ok('post: a refused output format falls back to the next one asked for (192 -> 128 kbps)', got.length === 1 && asked.length === 2 && asked[0].endsWith('/music?output_format=mp3_44100_192') && asked[1].endsWith('/music?output_format=mp3_44100_128'));
+  const slept = [], logged = []; let busy = 2;
+  const fetch429 = async () => (busy-- > 0 ? { ok: false, status: 429, text: async () => '{"detail":{"status":"too_many_concurrent_requests"}}' } : { ok: true, arrayBuffer: async () => new Uint8Array([1]).buffer });
+  const ret = await post('sound-generation', {}, { fetchFn: fetch429, key: 'k', retries: 5, sleepFn: async (s) => { slept.push(s); }, log: (m) => logged.push(m) });
+  ok('post: a 429 waits 10 s, then 20, and tries again; the wait is logged with the API\'s code', ret.length === 1 && slept.join() === RETRY_WAITS_S.slice(0, 2).join() && logged.length === 2 && logged[0].includes('too_many_concurrent_requests'));
+  let e429 = null; busy = 1;
+  try { await post('x', {}, { fetchFn: fetch429, key: 'k', sleepFn: async () => {}, log: () => {} }); } catch (e) { e429 = e; }
+  ok('...and without retries (the default) a 429 throws like any refusal', e429?.message.startsWith('HTTP 429:'));
+  const inPath = []; await post('tts/v?output_format=mp3_44100_128', {}, { fetchFn: async (url) => { inPath.push(url); return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) }; }, key: 'k' });
+  ok('...a path with its own query string is sent as it is (gen-vo)', inPath[0] === 'https://api.elevenlabs.io/v1/tts/v?output_format=mp3_44100_128');
 }
 
 // 0.00280: a take into the game (gen-score.mjs --import). The seam finder

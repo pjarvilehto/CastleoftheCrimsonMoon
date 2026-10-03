@@ -3,27 +3,20 @@
 import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
-import { statBox, itemPic, describeItem, gearLabel, statText } from '../hud.js';
-import { gainLine } from '../../shared/itemArt.js';
+import { statBox, itemPic, findBody, tierOf } from '../hud.js';
 import { play } from '../../audio/music.js';
 import { narrate } from '../../audio/narrator.js';
 
 // The run's finds (0.00260): a card per slot they changed — the picture
 // fading down into the slot, the name in its rarity, its stats and what it
 // beat; a relic tagged. What was salvaged (the gear they replaced, a find a
-// later one beat) is a row of small grey chips with the coins.
+// later one beat) is a row of small grey chips with the coins. The body is
+// hud.js findBody (0.00299), shared with combat's find card (findFx.js).
 function findCard({ slot, index, from, to }) {
   const it = DATA.items[to];
   if (!it) return null;
-  const gain = gainLine(from, to);
-  return el('div', { class: `find-card tier-${Math.min(4, it.tier)}` },
-    el('div', { class: 'fc-art' }, itemPic(to)),
-    it.tier >= 4 ? el('div', { class: 'fc-tag' }, 'Relic') : null,
-    el('div', { class: 'fc-text' },
-      el('div', { class: 'fc-slot' }, gearLabel({ slot, index })),
-      el('div', { class: 'fc-name' }, it.name),
-      el('div', { class: 'fc-desc' }, ...statText(describeItem(it))),
-      el('div', { class: 'fc-cmp' }, from && DATA.items[from] ? `over ${DATA.items[from].name}` : 'into an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
+  const [art, text] = findBody(to, { slot, index, from }, 'fc');
+  return el('div', { class: `find-card tier-${tierOf(it)}` }, art, it.tier >= 4 ? el('div', { class: 'fc-tag' }, 'Relic') : null, text);
 }
 // 0.00274 (the developer's call): another class's gear found on the run has its own row — "Can't use · salvaged".
 function salvageRows(sum) {

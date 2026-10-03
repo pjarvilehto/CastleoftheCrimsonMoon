@@ -52,7 +52,7 @@ export async function openChangelog(load = loadChangelog) {
         ...(builds.length ? builds : [el('div', { class: 'changelog-empty' }, 'No release notes found.')])),
       el('div', { class: 'btn-row' }, el('button', { class: 'primary', key: 'c', onclick: closeChangelog }, 'Close')),
     ],
-    onKey: (k, close) => { if (k === 'c' || k === 'escape' || k === 'enter') close(); },
+    closeKeys: ['c'],
   });
 }
 

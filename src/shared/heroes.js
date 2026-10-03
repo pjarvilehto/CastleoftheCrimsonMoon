@@ -36,8 +36,6 @@ export function heroSnapshot(p = getProfile()) {
   const h = heroOf(p), { look } = cleanHero(p?.hero);
   return { id: h.id, name: h.name, heavyName: h.heavyName, heavyKey: h.heavyKey, theme: h.theme, look };
 }
-/** A hero's colour theme (0.00254): { plate, light, tint } — the card plates' colour, the card light's look and tint. */
-export const heroTheme = (hero) => hero.theme;
 /** A hero's look, whole: { art, fh } (an index past the list is clamped). */
 export const lookOf = (hero, look = 0) => hero.looks[Math.min(Math.max(0, look), hero.looks.length - 1)];
 /** A look drawn in combat as the knight's wide sprite (0.00264): `sprite: true` in heroes.json — the knight's

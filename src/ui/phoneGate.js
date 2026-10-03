@@ -26,7 +26,7 @@ globalThis.addEventListener?.('appinstalled', () => { installed = true; installP
 
 // The full screen and the landscape lock (only possible once fullscreen);
 // never throws — a browser without the orientation API just stays as it is.
-export async function goFullscreen(d = globalThis.document, scr = globalThis.screen) {
+async function goFullscreen(d = globalThis.document, scr = globalThis.screen) {
   await enterFullscreen(d);
   try { await scr?.orientation?.lock?.('landscape'); } catch { /* not lockable here */ }
 }

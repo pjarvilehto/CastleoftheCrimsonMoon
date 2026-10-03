@@ -1,11 +1,17 @@
-// audio/musicLoop.js — seamless music (0.107; exact loops only since
-// 0.118). Each bed (tools/gen-music.py) is an exact loop of loopS seconds
-// with its own first tailS seconds appended. Copy n plays [0, loopS+tailS)
-// starting at when + n*loopS: the next copy starts as this one reaches its
-// tail, and the two crossfade (equal gain) over identical audio — no dip,
-// no +3 dB bump, and the beat keeps its place. Every copy is scheduled
-// ahead on the audio clock (no timers: a busy or hidden tab can't open a
-// gap); any MP3 decoder delay is hidden inside the crossfade.
+// audio/musicLoop.js — seamless music (0.107). Each bed is a loop of loopS
+// seconds with tailS more past it; copy n plays [0, loopS+tailS) starting
+// at when + n*loopS: the next copy starts as this one reaches its tail,
+// and the two crossfade over the tail so the beat keeps its place. Every
+// shipped bed (0.00282) is a generated score cut at a found seam
+// (tools/gen-score.mjs --import): its tail is the music's own continuation,
+// a different passage from its start, so the two sum by POWER (crossfade
+// 'power', audioMath.fadeCurve — equal gain dipped up to 3 dB mid-seam).
+// Equal gain is kept for a bed without `crossfade`: the procedural beds of
+// 0.118-0.00279 were exact loops whose tail was a copy of their start, and
+// identical audio in phase sums to 1 at equal gain with no +3 dB bump.
+// Every copy is scheduled ahead on the audio clock (no timers: a busy or
+// hidden tab can't open a gap); any MP3 decoder delay is hidden inside the
+// crossfade.
 
 import { fadeCurve } from './audioMath.js';
 

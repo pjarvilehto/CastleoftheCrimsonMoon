@@ -15,6 +15,7 @@
 
 import { openLootDialog } from '../lootDialog.js';
 import { fitGearToClass, canUse } from '../../shared/classGear.js';
+import { previewProfile } from '../../run/loot.js';
 import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runState.js';
@@ -43,7 +44,7 @@ import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
-const LOOT_SHOWN = 6; // (the look: the row's length under XP / COINS; a phone has none, styles.css — the hero card's inventory page lists them)
+const LOOT_SHOWN = 6; // (the look: the row's length under XP / COINS; a phone has none, styles.css — its way to the finds is the hero card's inventory page's FINDS line, 0.00299)
 
 export function dungeonScene() {
   const run = createRun();
@@ -56,7 +57,8 @@ export function dungeonScene() {
   let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
-  let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures
+  let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures — a button since 0.00299 (I opens the pop-up)
+  let lootTray = null;  // its tray of chips
   let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
   let lootFlying = 0;   // finds whose card is still on its way to the row (0.00262)
 
@@ -99,10 +101,11 @@ export function dungeonScene() {
     // room rendered again — the battle line is rebuilt in place, dealt in.
     switchClass(root) {
       run.heroId = getProfile().hero?.id ?? null; // (0.00274: the run's loot and preview follow the class)
-      fitGearToClass({ hero: getProfile().hero, equipment: run.gearPreview });
+      fitGearToClass(previewProfile(run)); // (0.00299: the one preview profile, loot.js's)
       const stats = derivedStats();
       const share = run.maxHp > 0 ? run.hp / run.maxHp : 1;
       run.stats = stats;
+      run.buffs = []; run.coinMult = 1; // (0.00299: the boons' bar and Greed went on after the stats they rode had been rebuilt without them — the record listed boons the run no longer had)
       run.hero = heroSnapshot(); // (0.00283: the UI reads the class from the run)
       run.maxHp = stats.maxHp;
       run.hp = Math.max(1, Math.min(run.maxHp, Math.round(run.maxHp * share)));
@@ -206,7 +209,7 @@ export function dungeonScene() {
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
-        lootEl = el('div', { class: 'res-row res-loot none', title: 'Show the loot', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js)
+        lootEl = el('button', { class: 'res-row res-loot none', key: 'i', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), lootTray = el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js; 0.00299: a button — I opens them too, the one action on the screen that had no key)
       layer,
       logEl,
       proceed);
@@ -245,7 +248,7 @@ export function dungeonScene() {
     if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
     const grew = n > lootShown;
     lootShown = n;
-    const tray = lootEl.children[1];
+    const tray = lootTray;
     tray.textContent = '';
     tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, `loot-chip${canUse(run.heroId, id) ? '' : ' off-class'}`)).filter(Boolean)); // (0.00274: another class's gear greyed — salvaged at the end)
     lootEl.classList.toggle('none', n === 0 && !lootFlying);

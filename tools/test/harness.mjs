@@ -135,6 +135,7 @@ function match(el, sel) {
   if (sel === 'button[data-key2=" "]:not([disabled])')
     return el.tagName === 'button' && el.attrs['data-key2'] === ' ' && el.attrs.disabled === undefined;
   if (sel === '.death-accept') return el.className.split(' ').includes('death-accept');
+  if (sel === '.corner-bar') return el.className.split(' ').includes('corner-bar'); // (0.00299: debugToggles.js debugMenu().apply finds the bar to gate the .dbg tools)
   return false;
 }
 
@@ -174,7 +175,7 @@ export const { createRun } = await import('../../src/run/runState.js');
 const { closeAllDialogs } = await import('../../src/ui/dialog.js');
 export const { generateRoom } = await import('../../src/run/roomGen.js');
 export const { scaleEnemy } = await import('../../src/shared/balance.js');
-export const { createCombat, playerAttack } = await import('../../src/run/combat.js');
+export const { createCombat, playerAttack, useHeavy } = await import('../../src/run/combat.js');
 export const { shrineOffers, canAffordOffer, acceptOffer } = await import('../../src/run/shrine.js');
 export const { dungeonScene, hubScene, titleScene, heroScene } = await import('../../src/ui/scenes/index.js');
 export const { resetProfile, getProfile } = await import('../../src/meta/profile.js');
@@ -210,6 +211,19 @@ export const buttons = (root, label) => root.all((e) => e.tagName === 'button' &
 export const button = (root, label) => buttons(root, label)[0] ?? null;
 /** Click as the game would: the element's click listeners, in order. */
 export const click = (e) => { for (const fn of e?.listeners?.click ?? []) fn({}); return !!e; };
+
+// ---------- constructed fights (0.00299, hoisted from classes.test.mjs) ----------
+// A foe for a fight built by hand: `enemy(hp, dmg, name, extra)` — a rat by
+// id, with the rewards the loot path reads; `extra` lays more on (an
+// `immune` block, a summoner's meter, another id). `fight(run, enemies)` is
+// the combat of a plain room of them; `heavy(cb, i)` spends the heavy and
+// swings it at foe i; `types(evs)` the events' types. `heroProfile(id, look)`
+// puts the class on the save (createRun snapshots it) and returns the profile.
+export const enemy = (hp, dmg = 0, name = 'Rat', extra = {}) => ({ id: 'rat', name, maxHp: hp, hp, dmg, xp: 1, coins: [1, 1], ...extra });
+export const fight = (run, enemies) => createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x', name: 'T', enemies });
+export const heavy = (cb, i = 0) => { useHeavy(cb); return playerAttack(cb, i, true); };
+export const types = (evs) => evs.map((e) => e.type);
+export function heroProfile(id, look = 0) { getProfile().hero = { id, look }; return getProfile(); }
 
 // A test under a seeded Math.random (0.00223: the fights that walked on the
 // real one could die or not; a seed makes one outcome — the order of the

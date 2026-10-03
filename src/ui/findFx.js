@@ -13,8 +13,7 @@
 
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
-import { gainLine } from '../shared/itemArt.js';
-import { itemPic, potionPic, describeItem, gearLabel, statText } from './hud.js';
+import { potionPic, statText, findBody, tierOf } from './hud.js';
 import { potionHealFor } from '../meta/leveling.js';
 import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
@@ -22,30 +21,23 @@ import { unionRect } from './combatFx.js';
 const IN_MS = 260, HOLD_MS = 1500, FLY_MS = 520; // (the look: in, read, away)
 const MAX_UNITS = 12; // (a row never holds more: the boss and its summons, or six foes)
 
-/** The card, built (exported for the tests: the shim has no animate). */
+/** The card, built (exported for the tests: the shim has no animate). Its body is hud.js findBody (0.00299), shared with the run end's card. */
 export function findCard(fx) {
   const it = DATA.items[fx.id];
   if (!it) return null;
-  const from = fx.from && DATA.items[fx.from] ? DATA.items[fx.from] : null;
-  const gain = gainLine(fx.from, fx.id);
-  return el('div', { class: `find-pop tier-${Math.min(4, it.tier)}${fx.offClass ? ' off-class' : ''}` },
-    el('div', { class: 'fp-art' }, itemPic(fx.id)),
-    el('div', { class: 'fp-text' },
-      el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, gearLabel({ slot: fx.slot === 'ring' ? 'rings' : fx.slot, index: fx.index ?? 0 }) ?? it.slot)),
-      el('div', { class: 'fp-name' }, it.name),
-      el('div', { class: 'fp-desc' }, ...statText(describeItem(it))),
-      fx.offClass // (0.00274: another class's gear — carried to the run's end and salvaged there)
-        ? el('div', { class: 'fp-cmp fp-off' }, `${fx.offClass} · salvaged at the end`)
-        : el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
+  return el('div', { class: `find-pop tier-${tierOf(it)}${fx.offClass ? ' off-class' : ''}` },
+    ...findBody(fx.id, fx, 'fp', { kind: (label) => ['Found · ', el('b', {}, label)], over: 'replaces', empty: 'an empty slot' }));
 }
 
 // The LOOT row's next free place (its tray's end) and a chip's size; on a
 // phone, where the row is hidden, the counters' end; null with neither.
 // `ahead`: finds still flying to it, each a chip further along.
+// the row's tray (0.00299: the row is a button since — el() wraps its children in a label span, so the tray is found by its class, at any depth)
+const trayOf = (n) => (n?.classList?.contains?.('loot-tray') ? n : Array.from(n?.children ?? []).map(trayOf).find(Boolean) ?? null);
 export function lootSpot(row, ahead = 0) {
   const r = row?.getBoundingClientRect?.();
   if (r && r.width > 0) {
-    const tray = row.children?.[1], t = tray?.getBoundingClientRect?.() ?? r, size = r.height;
+    const tray = trayOf(row), t = tray?.getBoundingClientRect?.() ?? r, size = r.height;
     return { x: (tray?.children?.length ? t.right : t.left) + size / 2 + ahead * size * 1.1, y: r.top + r.height / 2, size };
   }
   const p = row?.parentElement?.getBoundingClientRect?.();

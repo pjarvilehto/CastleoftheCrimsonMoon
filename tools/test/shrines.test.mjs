@@ -1,7 +1,7 @@
 // tools/test/shrines.test.mjs — shrine placement, the shrine room, boon tuning text, the buff bar.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync, withSeedAsync, byClass } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, readdirSync, statSync, withSeedAsync, byClass } from './harness.mjs';
 
 fresh();
 
@@ -61,6 +61,21 @@ fresh();
   ok('secondwind boon (0.091): a flat coin price, +2 potions, full heal', run.coins === 100 - secondwind.coinCost && run.potions === pw0 + 2 && run.hp === run.maxHp);
   const poor = createRun(); poor.coins = 10; poor.potions = 0;
   ok('affordability gates', !canAffordOffer(poor, crit) && !canAffordOffer(poor, armor) && canAffordOffer(poor, dmg) && !canAffordOffer(poor, secondwind) && canAffordOffer(poor, leech));
+  // the registry (0.00299): every offer in the data has an entry, every entry its needs / afford / apply; dataCheck reads the needs from it
+  const { BOONS } = await import('../../src/run/shrine.js');
+  const { checkData } = await import('../../src/shared/dataCheck.js');
+  ok('every shrines.json offer is a boon in BOONS, and every BOONS entry has needs, afford and apply', DATA.shrines.offers.length > 0 && DATA.shrines.offers.every((o) => BOONS[o.id])
+    && Object.values(BOONS).every((b) => Array.isArray(b.needs) && b.needs.length > 0 && typeof b.afford === 'function' && typeof b.apply === 'function'));
+  const unknownId = { ...DATA, shrines: { ...DATA.shrines, offers: [...DATA.shrines.offers, { id: 'wishes', img: 'x.webp' }] } };
+  const noNeed = { ...DATA, shrines: { ...DATA.shrines, offers: DATA.shrines.offers.map((o) => (o.id === 'greed' ? { ...o, coinMultAdd: 'lots' } : o)) } };
+  ok('dataCheck names an offer the code has no boon for, and a boon\'s missing number (from the entry\'s needs)', checkData(unknownId).some((m) => m.includes('wishes is not a boon the code knows')) && checkData(noNeed).some((m) => m === 'shrines.json: greed.coinMultAdd')
+    && !canAffordOffer(createRun(), { id: 'wishes' }));
+  ok('dataCheck.js carries no boon keys of its own: the needs are imported', (() => { const src = readFileSync('src/shared/dataCheck.js', 'utf8'); return src.includes("import { BOONS } from '../run/shrine.js'") && !src.includes("'coinMultAdd'") && !src.includes("'lifestealCap'"); })());
+  // the fallback grep (content.test.mjs) keys on dataCheck.js's quoted leaves, which the boon keys left: the same check for them here
+  const needKeys = new Set(Object.values(BOONS).flatMap((b) => b.needs));
+  const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
+  const copies = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\.(\w+) \?\? -?[\d.]+/g)].filter((m) => needKeys.has(m[1])).map((m) => `${f}: ${m[0]}`));
+  ok('no fallback copies of a boon key\'s number in src', files.length > 0 && copies.length === 0, copies.join('; '));
 }
 
 // T6: full shrine integration — walk to it, accept via hotkey, buff bar shows

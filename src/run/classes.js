@@ -41,7 +41,12 @@ export const immuneEvent = (combat, idx, element) => ({ type: 'immune', text: im
 /** A charge class (the Wizard): its heavy spends charges, refilled a fight, not a cooldown — combat.js canHeavy / useHeavy, shrine.js Quicken, the button's pips. */
 export const usesCharges = (klass) => klass.charges > 0;
 
-const living = (combat) => combat.enemies.filter((e) => e.hp > 0);
+/** The foes still standing (0.00299: here for combat.js too — it had a copy). */
+export const living = (combat) => combat.enemies.filter((e) => e.hp > 0);
+/** The MULTI-KILL line a blow that felled two or more earns (0.00299: the strike chain's and the sweep's one copy). */
+export function multiKill(kills, push) {
+  if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+}
 
 // A heavy's reach past its target (the Barbarian's cleave, the Wizard's
 // fireball): `dmg` on every other living foe, each its own line (`via` the
@@ -56,13 +61,17 @@ function sweep(combat, targetIndex, dmg, kind, line, turn, element = null) {
     turn.hurt(i, dmg, (applied) => ({ type: 'spill', text: line(e.name, applied), target: i, dmg: applied, via: kind }));
     if (e.hp === 0) kills += 1;
   }
-  if (kills >= 2) turn.push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+  multiKill(kills, turn.push);
 }
 
 /** The heavies by kind. `spills`: the blow itself strikes through (combat.js strike, at spillThreshold)
- *  and OVERKILLs a room it covers (smash) — the knight's alone; `element` (0.00293): the heavy is that
- *  element, and a foe immune to it shrugs it off — the target its blow (combat.js playerAttack: no damage,
- *  no lifesteal, the charge or cooldown spent all the same), the others the reach or the stacks here;
+ *  and OVERKILLs a room it covers (smash) — the knight's alone; `element` (0.00293): what the heavy's
+ *  magic is, and a foe immune to it shrugs that magic off — the reach or the stacks here roll every foe
+ *  they touch; `elementalBlow` (0.00299): the blow itself IS the element (the fireball), so combat.js
+ *  playerAttack rolls the target too — no damage, no lifesteal, the charge or cooldown spent all the
+ *  same. Without it the blow is a plain weapon stroke (the censer: a mace swing, only its smoke is
+ *  blight — 0.00299: the swing used to be rolled against the blight immunity, and the target rolled
+ *  again for the stacks, two "Immune!" lines for one foe);
  *  `onHeavy(combat, targetIndex, hit, turn)`: what the heavy does once its blow has landed (after the lifesteal). */
 export const HEAVIES = {
   // the knight's: the blow is the whole heavy
@@ -72,10 +81,11 @@ export const HEAVIES = {
     spills: false,
     onHeavy: (combat, i, { dmg }, turn) => sweep(combat, i, Math.round(dmg * combat.run.stats.klass.cleaveShare), 'cleave', (name, applied) => `...the cleave catches ${name} for ${applied}!`, turn),
   },
-  // the Wizard's: the whole blow on every other foe (a charge a cast, canHeavy); the fire-born shrug it off (0.00293)
+  // the Wizard's: the whole blow on every other foe (a charge a cast, canHeavy); the fire-born shrug it off (0.00293) — the blow is the fire itself
   fireball: {
     spills: false,
     element: 'fire',
+    elementalBlow: true,
     onHeavy: (combat, i, { dmg }, turn) => sweep(combat, i, dmg, 'fireball', (name, applied) => `...the fire takes ${name} for ${applied}!`, turn, 'fire'),
   },
   // the Necromancer's: drainShare of the blow healed (drain: the soul wisps from the foe to his card, 0.00268)
@@ -97,7 +107,8 @@ export const HEAVIES = {
   },
   // the Plague Sister's: a blight stack on every living foe (blightTick gnaws them a turn); the undead and
   // the vermin roll their immunity and shrug it off (0.00293) — the stacks land first, so the smoke's
-  // line shows them, then an Immune! line per foe that shrugged
+  // line shows them, then an Immune! line per foe that shrugged. The swing itself is a mace blow and
+  // always lands (no elementalBlow, 0.00299): the target rolls once, here, like every other foe
   censer: {
     spills: false,
     element: 'blight',
@@ -152,10 +163,14 @@ function mend(combat, deadBefore, { push }) {
   run.hp += healed;
   push({ type: 'heal', text: `Your wounds knit for ${healed} HP.`, healed });
 }
-// the Necromancer's thrall: this turn's (newest) fallen foe rises with thrallShare of its max HP, one at a time
+// the Necromancer's thrall: one at a time — while none stands, the newest
+// corpse not yet raised (any turn's: a foe that fell while a thrall stood
+// rises once that thrall crumbles) comes up with thrallShare of its max HP.
+// Never in a cleared room (0.00299: "X rises again at your side." used to
+// print right before "The room is cleared." when his blow took the last foe)
 function thrallRaise(combat, deadBefore, { push }) {
   const k = combat.run.stats.klass;
-  if (!(k.thrallShare > 0) || combat.thrall?.hp > 0) return;
+  if (!(k.thrallShare > 0) || combat.thrall?.hp > 0 || living(combat).length === 0) return;
   const fallen = [...combat.enemies].reverse().find((e) => e.hp <= 0 && !e.raised);
   if (!fallen) return;
   fallen.raised = true;

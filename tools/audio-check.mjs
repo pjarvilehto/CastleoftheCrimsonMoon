@@ -7,18 +7,21 @@
 //   1. every sound clip's loudest 50 ms (dBFS) vs its audio.json
 //      clips.<name>.measuredDb — the number its gainDb trim was set from;
 //   2. every music bed played through the game's own loop
-//      (src/audio/musicLoop.js) for 2.5 loops: does each restart match
-//      plain continuation (restart error), does the level jump at the
-//      restart, and its level as played (median / 90th percentile of 0.5 s
-//      windows, after its gainDb trim).
+//      (src/audio/musicLoop.js) for 2.5 loops: its seam (every shipped bed
+//      is a generated score with crossfade 'power', 0.00282 — judged by the
+//      seam's dip, below), and its level as played (median / 90th
+//      percentile of 0.5 s windows, after its gainDb trim). A bed without
+//      `crossfade` (an exact loop, none shipped since 0.00282) is judged
+//      instead by its restart error and level jump against plain continuation.
 //
 // Usage:  node tools/audio-check.mjs
 // Needs Playwright + a Chromium:  npm install --no-save playwright
 // (PLAYWRIGHT_PATH / CHROMIUM name them, as for tools/layout-check.mjs; the
 // cloud container's /opt paths are the defaults, 0.00223). Exit code 1 if a clip drifted
 // more than 2 dB (the 0.107 trims used slightly different windows; death
-// and swoosh re-measure +1.5) from its measuredDb, a restart is worse than -20 dB or
-// a restart jumps more than 1 dB.
+// and swoosh re-measure +1.5) from its measuredDb, a seam dips more than
+// 3 dB under both passages alone (CHECK in the table), or — an exact loop
+// only — a restart is worse than -20 dB or jumps more than 1 dB.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -87,11 +90,15 @@ const result = await page.evaluate(async () => {
     const out = await ctx.startRendering();
     const L = out.getChannelData(0), Rr = out.getChannelData(1);
     const loop = Math.round(t.loopS * SR), gain = 10 ** (t.gainDb / 20);
-    // The reference: the bed as recorded, no restart. Before loopS + tailS
-    // that is the file itself (its appended tail is the loop's start played
-    // straight on); after it, the start again. Not the file's first frame:
-    // MP3 decoders fade the first ~26 ms in — the tail is the faithful copy,
-    // and hiding that transient is part of what the crossfade is for.
+    // The exact-loop measures (restart error, level jump), meaningful only
+    // for a bed whose tail is a copy of its start — none shipped since
+    // 0.00282, kept for a track without `crossfade`; the table shows them
+    // for such a bed alone. The reference: the bed as recorded, no restart.
+    // Before loopS + tailS that is the file itself (its appended tail is the
+    // loop's start played straight on); after it, the start again. Not the
+    // file's first frame: MP3 decoders fade the first ~26 ms in — the tail
+    // is the faithful copy, and hiding that transient is part of what the
+    // crossfade is for.
     const tailEnd = loop + Math.round(t.tailS * SR);
     const ref = (k) => ch[k < tailEnd ? k : k - loop] * gain;
     let err = 0, sig = 0;
@@ -104,9 +111,9 @@ const result = await page.evaluate(async () => {
     const rms = (a, s) => { let x = 0; for (let k = s; k < s + w; k++) x += a[k] * a[k]; return Math.sqrt(x / w); };
     const plain = (s) => { let x = 0; for (let k = s; k < s + w; k++) { const v = ref(k); x += v * v; } return Math.sqrt(x / w); };
     for (let s = loop - Math.round(0.5 * SR); s < loop + Math.round((t.tailS + 0.5) * SR); s += w) jump = Math.max(jump, Math.abs(db(rms(L, s)) - db(plain(s))));
-    // A generated bed (0.00280, crossfade 'power') crossfades its own
-    // continuation into its start: different music, so "restart = plain
-    // continuation" does not apply. Its seam is judged by level: the
+    // A generated bed (0.00280, crossfade 'power' — every shipped bed since
+    // 0.00282) crossfades its own continuation into its start: different
+    // music, so "restart = plain continuation" does not apply. Its seam is judged by level: the
     // quietest 0.5 s inside the crossfade, as rendered, against the quietest
     // 0.5 s of the same span in EITHER passage played on its own (the take
     // carrying on past the loop point, or its start) — a seam you hear is
@@ -136,7 +143,7 @@ for (const [n, c] of Object.entries(result.clips)) {
   if (Math.abs(d) > 2) bad++;
   console.log(`| ${n} | ${f(c.measured)} | ${f(c.now)} | ${f(d)}${Math.abs(d) > 2 ? ' DRIFT' : ''} |`);
 }
-console.log('\n| bed | restart error dB | level jump dB | median dB | p90 dB |\n|---|---|---|---|---|');
+console.log('\n| bed | seam (generated: its dip; an exact loop: restart error dB) | level jump dB (exact loop) | median dB | p90 dB |\n|---|---|---|---|---|');
 for (const [n, m] of Object.entries(result.music)) {
   if (m.seamDipDb !== null) { // (a generated bed: its seam's dip, not the exact-loop measures)
     const flag = !(m.seamDipDb > -3); // (quieter than both passages alone by 3 dB: the crossfade is heard)

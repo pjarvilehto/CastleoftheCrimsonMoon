@@ -135,8 +135,8 @@ before structural changes. This file is the rules and the per-system notes.
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
 node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
-node tools/smoke-test.mjs                    # the suite: ~1100 checks, a second or two on the virtual clock
-node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at five screens (rule 8; needs Playwright)
+node tools/smoke-test.mjs                    # the suite: ~1200 checks, a second or two on the virtual clock
+node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at seven screens (rule 8; needs Playwright)
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
 node tools/simulate.mjs --seeds 1-12 [--retreat]   # 12 campaigns, mean ± sd
@@ -156,8 +156,11 @@ node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pict
 node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
 node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a take into the game: the loop seam found, cut, levelled, audio.json pointed at it
 # libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
-# cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), simCore.mjs (the bot simulate.mjs and
-# the two studies share); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes a depth map, tools/gen-music.py the beds
+# cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), elevenlabs.mjs (every ElevenLabs call:
+# the key, one POST with the 192->128 kbps fallback and the 429 retry, measureDb), music-seam.mjs (the loop seam gen-score --import
+# cuts at), util.mjs (fnv1a / seedFor / cli, the generating tools' shared helpers, 0.00299), simCore.mjs (the bot simulate.mjs and
+# the two studies share; fresh(hero) puts the class on since 0.00299); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes
+# a depth map, tools/gen-music.py the old procedural beds (history since 0.00282)
 ```
 
 ## The rules that matter
@@ -169,7 +172,10 @@ node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a ta
    (`victorySeen` and `bench` are UI records, saved at once by design.)
 2. **All tuning lives in `assets/data/*.json`** — enemies, items,
    difficulty (incl. `player` base stats, `combat` multipliers), shrines
-   (every boon's numbers; a smoke check keeps the card text in sync),
+   (every boon's numbers; a smoke check keeps the card text in sync; the
+   boons' code is `run/shrine.js BOONS` — needs / afford / apply per id,
+   like `classes.js HEAVIES`, and dataCheck reads each boon's `needs` from
+   it, 0.00299),
    backgrounds, audio, telemetry. Never a number in `src/`, and no `?? N`
    fallback copies (they drifted, 0.116; the renderer's and the audio's
    whole-block copies went in 0.157): every number the code reads is
@@ -256,9 +262,12 @@ node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a ta
    suite fails a rule without the prefix, a class nothing produces, and a
    desktop rule removed without its twin), a new hub row gets its long and
    short line, a new section is a row in the hall's table — then
-   `node tools/layout-check.mjs`: the real game headless at five screens
+   `node tools/layout-check.mjs`: the real game headless at seven screens
    (desktop, a 960x720 narrow desktop window, tablet, phone, the smallest
-   phone), what each layout promises asserted (0.00223: the save dialogs
+   phone; 0.00299: a 1920x1080 and a 2560x1440 desktop too, the title, the
+   hero, the hall and the run's end only — the 0.00281 up-steps asserted,
+   1.15 and 1.5; every profile turns the hero card to INVENTORY and
+   checks the LOOT button), what each layout promises asserted (0.00223: the save dialogs
    up top, the room title clear of the counters, the boons clear of a
    panel room's log, Descend reachable in the narrow window's one-column
    hall), screenshots to look at. The labs never set `html.phone`, so the
@@ -314,7 +323,9 @@ sound effects; `analytics/` is the separate static stats page.
 
 ## Systems
 
-**Combat and pacing.** A turn (`run/combat.js playerAttack`) runs in phases:
+### Combat and pacing
+
+A turn (`run/combat.js playerAttack`) runs in phases:
 rollHit → OVERKILL (a heavy blow covering every living enemy's HP; the
 event, the fx kind, the sound key and the benchmark act are all
 `overkill` since 0.00223 — the narration id `smash` is the multi-kill,
@@ -335,7 +346,9 @@ the boss. The win (0.121): beating the boss of `finalBossRoom` (24) shows
 `ui/victoryModal.js` once per save; move the knob when deeper content lands.
 `node tools/simulate.mjs --tactic suggested|boss|summons` compares targeting.
 
-**Progression.** The opening and the ramp (0.00230, the developer's call:
+### Progression
+
+The opening and the ramp (0.00230, the developer's call:
 an easier first run that reaches about room 3, the overpowered phase in
 the early rooms a little later, the march to room 24 unchanged): the
 tier-1 enemies hit ~25% softer (rat 30, Cave Shrieker 22, skeleton 45,
@@ -344,8 +357,11 @@ gives +2 damage / +72 HP / +8 armor (was 3 / 90 / 10) for a base cost of
 13 XP (was 15). The simulator, 12 campaigns: the first run reaches room
 3-4 (was 2), rooms 1-5 cost under 10% of max HP from about run 12-13
 (was about run 11), room 24 first reached at run ~33 (was ~31), its boss
-beaten at ~41 (was ~39). **Lifesteal by tier (0.00245, the developer's call — the game felt very
-hard until lifesteal, then easy until the end wall):** it heals a share of
+beaten at ~41 (was ~39).
+
+#### Lifesteal by tier (0.00245, the developer's call — the game felt very hard until lifesteal, then easy until the end wall)
+
+It heals a share of
 the whole rolled blow and stacks across slots, and two TIER-2 items carried
 most of it (Vampiric Ring 100%, Amulet of the Leech 80% — 200% by run 10,
 each stretch of rooms flipping from ~55% of max HP a fight to free in ~8
@@ -354,8 +370,11 @@ tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
 24, free rooms a run or two later. Measured and set aside: lifesteal
 halved everywhere (gentler, room 24 four runs later), healing only off
 damage dealt (no change), a per-fight heal cap (the deep game stalls),
-slower enemy damage growth (undoes the smoothing). **The weapon and the armor carry the stats (0.00259, the developer's
-call — the card shows only those two):** damage comes from the weapon,
+slower enemy damage growth (undoes the smoothing).
+
+#### The weapon and the armor carry the stats (0.00259, the developer's call — the card shows only those two)
+
+Damage comes from the weapon,
 armor and HP from the body armor; boots, rings, trinkets and amulets are
 accessories — about a fifth of a weapon's damage (+1-3), a tenth of an
 armor's armor (+6-15) and a small HP top-up (+20/30/40/50 by tier),
@@ -364,8 +383,11 @@ moved into the two: weapons x1.5 damage, body armor x1.4 armor and HP
 on every piece (80-420). The simulator, 12 campaigns: run depth, the
 first room-8 kill, the late runs and coins all within noise of before
 (40 and 70 runs); the shrine study moves within its spread (Bulwark a
-little stronger late, Glass Cannon a little weaker). **Shrines from the players' own picks (0.00252, the developer's call):**
-the play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
+little stronger late, Glass Cannon a little weaker).
+
+#### Shrines from the players' own picks (0.00252, the developer's call)
+
+The play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
 random) had Crit 23%, Armor 19%, Quicken 16% and Bulwark / Glass Cannon
 3% each (the bot rates Glass Cannon the best — real players fear its
 armor cost); so Bulwark became the big-armor boon (+40%, at least +80,
@@ -399,12 +421,16 @@ faintly in red (`styles.css attack-glow`, a glow layer's opacity, off
 while a turn prints), so the recharged heavy's strong pulse no longer
 sits beside buttons with no glow.
 
-**Effects.** One-shots (lunge, hit, numbers, entrance, shake) live in
+### Effects
+
+One-shots (lunge, hit, numbers, entrance, shake) live in
 `ui/combatFx.js` + `fxParts.js`, driven by `fx` descriptors on playback
 items, and use `element.animate` so they never restart the CSS idle loops
 (per enemy FAMILY: `battleLine.js IDLE_FAMILY` + `.idle-<family>`; loops
-animate only translate/rotate/scale, never filter). **Card effects
-(0.183, the developer's picks from the Card Lab; tuning `cards.json`):**
+animate only translate/rotate/scale, never filter).
+
+#### Card effects (0.183, the developer's picks from the Card Lab; tuning `cards.json`)
+
 `ui/cardFx.js` lights every card from behind — a slow fog, blood, flames,
 embers or ether by the enemy's particle material (`cardStyle`: bone fog,
 embers flames, the wraith ether, flesh blood; the boss flames, the knight
@@ -477,8 +503,11 @@ pattern: a layer whose opacity breathes — the low-HP bar, the summon
 bar, the record tag); a phone shows the figures without the
 drop-shadow filter (an iOS re-render per frame on a looping layer) and
 the rarity / low-HP text without its breathing (`styles.css` section 16). The benchmark draws all of it from 0.183 on (its numbers moved
-with it). **The classes' particles (0.00268, the developer's ask: each class's
-attacks unique):** a blow by the hero lays the class's own trace over the
+with it).
+
+#### The classes' particles (0.00268, the developer's ask: each class's attacks unique)
+
+A blow by the hero lays the class's own trace over the
 foe's material burst — `particleLooks.js spawnClassBurst(look, x, y, {
 size, dir, kind, to })`, pure like `spawnParticles`, palettes `CLASS_PAL`
 (steel, rust, fire, arcane, grave, moss, violet, ochre), the looks
@@ -505,7 +534,11 @@ the blow, `via` on a
 heavy's reach and the blight tick, `drain` + `target` on the heal). Three
 kinds joined the renderer: `puff` (soft smoke, source-over under the
 glow pass, growing; thinned with the rest), `sigil`, `arc`. The tests
-are in `classes.test.mjs`. **Particles** (looks
+are in `classes.test.mjs`.
+
+#### Particles
+
+Particles (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
 blood = Ink & Gore (ink slash, stretched blobs, floor splats); bone,
@@ -523,11 +556,16 @@ experiments — no heal material, none of the class looks, no status tints;
 a look changed in the game does not change there (rewire it to
 `particleLooks` or retire it, see the Backlog).
 
-**3D backgrounds** (`core/bg3d.js` + `bg3d*.js`; tuning in
+### 3D backgrounds
+
+3D backgrounds (`core/bg3d.js` + `bg3d*.js`; tuning in
 `backgrounds.json parallax`, per-file `overrides`, `enabled: false` = kill
 switch): the art on a depth-displaced mesh with a slowly swaying camera;
 flat CSS fallback with no WebGL, software GL, context loss or reduced
-motion. **The phone power profile (0.00222, the developer's iPhone ran hot):**
+motion.
+
+#### The phone power profile (0.00222, the developer's iPhone ran hot)
+
 `parallax.phone` = the knobs that differ on a phone — `maxDpr` 1.5 (1278
 px wide on an 852-px phone, 44% fewer fragments than DPR 2), `maxFps` 24
 at rest, `motionMaxFps` 30, `puffDiv` 3 (the mist buffer at a third of
@@ -548,8 +586,11 @@ the shaders' under the live canvas (`bg3dGL.js VIGNETTE_GLSL`, both the
 mesh and the mist composite multiply the CSS ellipse's falloff; the CSS
 `#vignette` hides under `#bg-stack.gl` and keeps the flat fallback —
 pixel-identical on the hub, measured; it was a full-screen layer composited
-over the canvas every frame, 3 MP a frame on a phone). **BATTERY SAVER**
-(the corner column, 0.00222, remembered per browser): the ladder's last
+over the canvas every frame, 3 MP a frame on a phone).
+
+#### BATTERY SAVER
+
+BATTERY SAVER (the corner column, 0.00222, remembered per browser): the ladder's last
 3D rung as the player's own choice — the smallest canvas, no mist, the
 card light at `fx.saverFps`; OFF returns to where the ladder had got;
 never automatic. Records and benchmarks carry `power`: 'saver' / 'phone'
@@ -575,8 +616,11 @@ slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
 revive): `bgLight(kind, rect)`, settings in `parallax.lights`. Big-hit sway:
-`swayDeg` / `swayHitShare`. **The mist's own motion and light (0.164,
-tuned in the Fog Lab):** `parallax.puffs` carries what used to be
+`swayDeg` / `swayHitShare`.
+
+#### The mist's own motion and light (0.164, tuned in the Fog Lab)
+
+`parallax.puffs` carries what used to be
 constants — `drift` (per-puff wind speed spread), `rock`, `period`,
 `bob`, `breathe`, `shadeVar`, `alphaVar` — and the new `turbulence` /
 `turbulencePeriod` (each puff wanders on its own loop), `pulse` /
@@ -594,7 +638,10 @@ spread 0.7–1.0, turbulence 0.015 / 12 s, breathe 0.04, bob 0.006, pulse
 the box wrap, so a wrap never pops); `setLiveTuning` re-rolls a layer's
 puffs when its block changes (same seed: no jump). The lab never writes
 the game's saved tuning (`castle-bg-tuning`): it keeps its own key.
-**The room push (0.171, `parallax.push`):** a room change moves the
+
+#### The room push (0.171, `parallax.push`)
+
+A room change moves the
 camera through the picture — `scene.js transitionTo` tells the renderer
 (`onTransition` → `bg3d.bgPush`) as the windows start to fade, the old
 painting dollies in (`dist` world units over `inMs`, accelerating; `mvp`
@@ -610,7 +657,9 @@ New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
-**Portraits (0.184).** The file is data: `enemies.json art` per enemy and
+### Portraits (0.184)
+
+The file is data: `enemies.json art` per enemy and
 `cards.json player.art` (0.00291: drawn nowhere in the game any more —
 every look of every class, the knight's crouch marked `sprite: true`
 included, is its `heroes.json` figure; the file stays for the Art Lab),
@@ -618,7 +667,10 @@ read through
 `shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
-away. **Redrawing them (0.00201, after three directions):**
+away.
+
+#### Redrawing them (0.00201, after three directions)
+
 `docs/portrait-prompts.md` holds the style block and a line per
 character (`[FACING]` = left for enemies, right for the knight; an
 ACCENT per character; a boss gets its own wide, waist-up COMPOSITION,
@@ -631,14 +683,22 @@ is the current portrait, image 2 the character's OWN portrait (`--refs
 own`; `family` = the colour family's best original, `sheets` = the inked
 sheets); a character whose art is no reference (the gargoyle) is drawn
 onto another's original with `--from-sheet skeleton` (the picture's
-figure replaced). **Models** (`--model`, one adapter each in `MODELS`):
+figure replaced).
+
+#### Models
+
+The models (`--model`, one adapter each in `MODELS`):
 Kontext Pro / Max (two input pictures), Nano Banana (`banana`, the
 developer's pick: faithful, cheap, ~$0.04) and Nano Banana Pro (`bananapro`,
 2K, ~$0.15), Seedream 4 (`seedream`, the most dramatic — the only boss
 that read as one), GPT Image 1.5 (`gpt`, slow, shades its backgrounds),
 FLUX 2 Pro (`flux2`); prices from memory, the API has none. Inputs go
 inline as data URIs (`--inputs files` uploads; the models' own fetch of
-an uploaded file timed out a third of the time). **The cut-out:** a
+an uploaded file timed out a third of the time).
+
+#### The cut-out
+
+A
 matting model, `851-labs/background-remover` (~1 s, a fraction of a
 cent) — the colour key in `tools/cutout.mjs` (`--matte key`, offline:
 flood fill from the border, paper tones, gradients, a shadow pass, hole
@@ -649,7 +709,10 @@ canvas, `WIDE`), feet on its baseline. Per candidate: the model's picture
 (`assets/chars/candidates/<id>_c<n>_raw.jpg`), the cut-out
 (`<id>_c<n>.webp`), and in `assets/data/art.json` the model, seed,
 prompt, style, cut and verdict (numbering goes on, nothing overwritten).
-**The loop:** generate → the Art Lab (`labs/art/`: Approve / Reject with
+
+#### The loop
+
+Generate → the Art Lab (`labs/art/`: Approve / Reject with
 a note, Flip, Clean = a Kontext pass painting out a shadow or panel,
 Regenerate with notes = this candidate as the design, the note as the
 direction, the panel's model) → COPY JSON → `--rerender
@@ -662,8 +725,11 @@ model }`) → `--prune` (an approved character keeps only its approval;
 is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
 draws a character the game does not have (a default canvas; the lab
 shows it on a stand-in card) once the LoRA exists. `sharp` is the one
-npm dependency (`package.json`; the suite runs without it). **The
-character LoRA** (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer`
+npm dependency (`package.json`; the suite runs without it).
+
+#### The character LoRA
+
+The character LoRA (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer`
 into the private model `pjarvilehto/crimson-moon-style`, trigger
 `CRMSNMOON`, captions written from the data — the same preamble
 `gen-art.mjs CHAR_CAPTION` the LoRA prompt uses; `assets/data/lora.json`
@@ -680,7 +746,9 @@ run. **Every Replicate call goes through `tools/replicate.mjs`** (the
 token, the Files API, `predict` by model name, `predictVersion` by
 version, `latestVersion`).
 
-**Room paintings (0.00236–0.00244).** The interiors in `assets/bg/`
+### Room paintings (0.00236–0.00244)
+
+The interiors in `assets/bg/`
 (48 of the developer's, all approved as they are; 50 with the two the
 generator made, 0.00244) are the style. **They were made with a
 prompt, not references:** `docs/image-prompting-guide.md` (the developer's,
@@ -713,7 +781,11 @@ candidate, or `<id_cN>`; `--list rooms|treasure|bosses|entrance|antechambers`)
 `backgrounds.json`, the candidate marked `imported`, and the reminder
 for the depth map (`python3 tools/gen-depth.py <model.onnx>
 assets/bg/<id>.jpg`; the suite fails without one) → ship. `--sheet` a
-contact sheet. **The bake-off** (three rooms the game lacks — The Clock Tower,
+contact sheet.
+
+#### The bake-off
+
+The bake-off (three rooms the game lacks — The Clock Tower,
 The Blood Baths, The Rookery — `--bakeoff`, nine models in all): with my
 first, descriptive prompt and references every model drifted
 (0.00236); with the guide's recipe as text alone, **Nano Banana Pro**
@@ -727,26 +799,39 @@ closest ink; the room LoRA (below) has the set's colour mood with less
 of its ink; Seedream 4 a brighter modern comic (with references it went
 to white paper); GPT Image 1.5 an etching, 3:2 and slow; FLUX 2 Pro
 and FLUX 1.1 Pro grittier, and both refused "The Blood Baths" as
-sensitive. **The room LoRA** (`train-lora.mjs --set rooms`: the 48 named
+sensitive.
+
+#### The room LoRA
+
+The room LoRA (`train-lora.mjs --set rooms`: the 48 named
 interiors — the title's and the death's exteriors stay out — into
 `pjarvilehto/crimson-moon-rooms`, trigger `CRMSNROOM`, caption
 `ROOM_CAPTION` + the room's name; trained in 0.00237, 16 min; the
 destination model is made on first use) draws a room from its line
 alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
 
-**Item art (0.00260, the developer's direction and picks from the
-mockups).** Every item has a picture: `items.json art` per item, a 256 px
+### Item art (0.00260, the developer's direction and picks from the mockups)
+
+Every item has a picture: `items.json art` per item, a 256 px
 WebP in `assets/items/` (~8 KB; about 420 KB for the 48 items and the
 potion), read through
 `shared/itemArt.js` (`itemArtUrl`, `itemArtUrls`, and `gainLine(from,
 to)` — what a find raises over what it replaced) and drawn by `hud.js
 itemPic(id)` (an `<img class="item-pic tier-N">`; the tier sets `--rim` /
 `--rim-glow` for the small ones' rarity rim); `dataCheck` fails an item
-without one, the orphan check covers the folder. **The look:** dramatic
+without one, the orphan check covers the folder.
+
+#### The look
+
+Dramatic
 low-key light, an Unreal Engine 5 render, a touch of Mike Mignola
 (`docs/item-prompts.md`: the style block and a line per item ending in its
 rarity's glow — common none, uncommon cold blue, epic violet, legendary
-red / orange). **Painting them:** `tools/gen-items.mjs` sends the block +
+red / orange).
+
+#### Painting them
+
+`tools/gen-items.mjs` sends the block +
 the line as text alone (a reference picture made Nano Banana copy instead
 of restyle) to **Nano Banana Pro** (picked over Seedream 4 — dramatic but
 it added things and cropped — and Nano Banana — small objects); every
@@ -756,7 +841,11 @@ direction (the axe's first roll had a hand on it); `--import [id|id_cN]`
 writes `assets/items/<id>_v<k>.webp` (a new name each time, rule 7) and
 edits the item's `art` line in place (`setArt`: items.json keeps its own
 layout); `--sheet` a contact sheet. A new item = its line in the doc, a
-roll, an import. **Where they show** (the developer's pick "B": the
+roll, an import.
+
+### Items in play
+
+Where they show (the developer's pick "B": the
 picture fading into the dark, the text over it): the hall's worn slots
 (`hubSections.js` — the desktop's `.gear-slot .slot-art` on the slot's
 outer side fading toward the card, the phone's twin at the Equipment
@@ -780,14 +869,23 @@ the log says it); the Found line and the room's loot summary lead with
 the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
 showLoot`: the newest six; shown as the run's first find takes off;
 none on a phone, whose top strip is the room title's — since 0.00290
-nothing lists them there mid-run (the finds' own list is to come); a find's chip joins as its card lands, with
+nothing lists them there mid-run — the LOOT pop-up does (0.00292, below); a find's chip joins as its card lands, with
 a flash, an OVERKILL's silent finds when the room's lines are out); **a click on the
-row opens the LOOT pop-up** (0.00292, `ui/lootDialog.js`: every find of
-the run, newest first, as the hero card's inventory strips — `hud.js
-itemStrip`, the strip styles under `.inv-strips` — four in view and the
-rest a scroll / arrow key away, each with the slot it will upgrade or
-Salvage for another class's gear); the hero
-card's inventory page (`battleLine.js invPage`); **the run's end**
+row, or `I`, opens the LOOT pop-up** (0.00292, `ui/lootDialog.js`; 0.00299:
+the row is a keyed button — it was the one action on the combat screen
+with no key — and the hero card's INVENTORY page ends in a "Finds · n ›"
+line that opens it too, a phone's one way to it (a div with the button's
+role and no key of its own: the unit's first `<button>` stays the
+heavy's): every find of the run, newest first, as the hero card's
+inventory strips — `hud.js itemStrip`, the strip styles under
+`.inv-strips` — four in view (two on a phone, section 16) and the rest a
+scroll / arrow key away, each with what becomes of it when the run ends,
+judged against `run.gearPreview`, what `settleRun`'s `equipItems` will
+wear: `Weapon ↑` / `Ring I ↑` for a worn find, `Beaten · salvaged` for
+one a later find beat — it stays in `run.itemsFound`, so the pop-up used
+to promise it a slot — `Salvage` for another class's gear; C / Esc /
+Enter close); the hero card's INVENTORY page (`battleLine.js invPage`:
+the worn gear, and the Finds line); **the run's end**
 (`runEndScene.js findCard`; 0.00294, the developer's layout: the panel
 940 px wide (`.panel.run-end`), the five numbers on one line, the cards
 200 px — from five finds two rows, 175 px on a window 900 px tall or
@@ -798,8 +896,11 @@ changed — the picture fading down into the slot, the name, its stats,
 `equipItems`' `equipped` / `salvaged` entries carry the `id` since).
 Preload: after the Descend essentials and before the rooms, decoded, the
 save's worn gear first, the potion's last (`preload.js itemUrls`;
-Descend waits for none of it). **The healing potion (0.00263, the
-developer's ask)** has a picture too (`difficulty.json potions.art`,
+Descend waits for none of it).
+
+#### The healing potion (0.00263, the developer's ask)
+
+The healing potion has a picture too (`difficulty.json potions.art`,
 `itemArt.js potionArtUrl`, `hud.js potionPic`; painted by the same tool,
 `gen-items.mjs EXTRAS` writes it into difficulty.json on `--import`): the
 hero card's count is the picture + `3/4` (`battleLine.js`), the log's
@@ -810,7 +911,10 @@ FOUND · Potion, what it heals, the satchel) and flies into that count —
 (`holdPotion`: the run's count is already up when the loot is rolled, a
 line before it prints), and the landing counts it with a glow
 (`landPotion`; under reduced motion at once). A full satchel's sale has no card.
-**The classes' starting kits (0.00265, the developer's approval):** a
+
+### The classes' starting kits (0.00265, the developer's approval)
+
+A
 weapon and an armor per class in its look (`heroes.json kit`, `heroes.js
 heroKit`; dataCheck names a kit item of the wrong slot) — Barbarian:
 Notched Hand Axe + Wolfhide Jerkin; Wizard: Apprentice's Staff +
@@ -828,7 +932,8 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
-**The item matrix (0.00274, the developer's calls; `docs/item-matrix.md`).**
+### The item matrix (0.00274, the developer's calls; `docs/item-matrix.md`)
+
 Who can use what, readable from an item's name: a weapon has a `kind`
 (sword, axe, mace, staff, dagger, scythe, crossbow, censer) and a class
 wields two (`heroes.json wields`: Knight sword + mace, Barbarian axe +
@@ -845,7 +950,11 @@ items); everything else is everyone's. `shared/classGear.js` (`canUse`,
 `fitGearToClass`); dataCheck checks the kinds, the hero blocks and the
 mastery. 94 items (46 new in 0.00274, painted by `gen-items.mjs` from
 their lines in `docs/item-prompts.md`; every class has two weapons and a
-body armor to find at tiers 2, 3 and 4 — a smoke check). **Mastery:** a
+body armor to find at tiers 2, 3 and 4 — a smoke check).
+
+#### Mastery
+
+A
 class's two signature accessories (`class` + `mastery`: 1 on its tier-3,
 2 on its tier-4) add `heroes.json mastery.per` per point to a key of its
 class block (`stats.js derivedStats` → `run.stats.klass`, through
@@ -853,7 +962,11 @@ class block (`stats.js derivedStats` → `run.stats.klass`, through
 Barbarian +15% Cleave reach, the Wizard +1 Fireball charge, the
 Necromancer +20% thrall strength, the Druid +1 Entangle turn, the
 Hexhunter +15% Hex crit damage, the Plague Sister +10% blight; the item's
-line says it (`hud.js describeItem`). **Drops:** `classDropShare` (0.8)
+line says it (`hud.js describeItem`).
+
+#### Drops
+
+`classDropShare` (0.8)
 of the item rolls come from what the class can use (`loot.js rollLoot`,
 the run's `run.heroId`), the rest from everything — another class's gear
 still drops: `takeItem` carries it into `run.itemsFound` with its line
@@ -862,13 +975,20 @@ with the same words, `fx.offClass`; its LOOT chip greyed), and at the
 run's end `equipItems` salvages it (`salvaged[].offClass`; the run-end's
 "Can't use · salvaged" row, its coins with the rest — the death toll
 applies). The gilded chest and the reliquary make their item for the
-class. **A save's gear:** `migrateProfile` fits it on every load
+class.
+
+#### A save's gear
+
+`migrateProfile` fits it on every load
 (`fitGearToClass`: a weapon or armor the class can't use becomes its kit,
 an accessory comes off — the developer's call: no payout), so do the
 debug SWITCH CLASS and the dungeon's `switchClass` (the run's preview
 too); the simulator puts on the class's kit and plays the knight with his
-class set. **Balance (4 campaigns x 40 runs per class, mean depth / the
-last 10 runs' depth, before → after):** Knight 15.5 / 23.7 → 15.8 / 23.6,
+class set.
+
+#### Balance (4 campaigns x 40 runs per class, mean depth / the last 10 runs' depth, before → after)
+
+Knight 15.5 / 23.7 → 15.8 / 23.6,
 Barbarian 16.6 / 23.8 → 16.3 / 23.3, Wizard 17.3 / 23.8 → 16.4 / 23.4,
 Druid 15.9 / 24.1 → 15.9 / 23.8, Hexhunter 16.0 / 24.1 → 15.2 / 23.5;
 the two cloth classes that leaned on armor lost the most, so (the class
@@ -879,8 +999,9 @@ Sister's armor x1.2 → x1.35 (16.3 / 23.6 → 15.5 / 23.0); the room-24
 boss column swings ±15-25 between seeds at this size — read it with
 more campaigns.
 
-**Stat colours (0.00266, the developer's call; the "moody" set after a
-brighter first try).** One colour per stat, the same on the Train row that
+### Stat colours (0.00266, the developer's call; the "moody" set after a brighter first try)
+
+One colour per stat, the same on the Train row that
 raises it and everywhere the stat shows, so training reads as the stat it
 moves: damage rust (Power), HP sage (Vitality), armor slate (Endurance),
 crit verdigris (Precision), loot ochre (Fortune), lifesteal dusty rose,
@@ -897,8 +1018,19 @@ strip: Attack / HP / Armor / Crit / Lifesteal); the hero card's DMG /
 ARMOR, the HP word on every HP line, and the STATS page's rows (the
 potion's heal as HP). Item names keep their rarity colours; the find
 cards' "+gain" stays green (an improvement, not a stat).
+**The rarity tiers' colours (0.00299):** `styles.css :root --t1..--t4` and
+`--tN-rgb` beside `--st-*` — the rarity lines, the pictures' rims, the
+hall's slot borders and the two find cards (one `.find-pop.tier-N,
+.find-card.tier-N` block) read them; the five hand copies were one
+colour each. `hud.js` holds the shared builders: `tierOf`, `itemTitle`
+(name + forge, the four sites), `findBody` (combat's find card and the
+run end's, `fp-` / `fc-`; `.fc-slot` became `.fc-kind`), `wornId` and
+`gearLabel` (the hall's two builders and the inventory page loop
+`GEAR_SLOTS`; a slot's name was written in five places).
 
-**Heroes (0.00248, the developer's call and layout).** Character classes:
+### Heroes (0.00248, the developer's call and layout)
+
+Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
 name, epithet, lore, traits — placeholders of mine for the lines — and
 `looks`, one per sheet: `art` the figure in `assets/heroes/`, `fh` its
@@ -908,7 +1040,11 @@ read through `shared/heroes.js` (`heroList`, `heroById`, `cleanHero`,
 Curious Knight (5 since 0.00264: the developer's four standing sheets
 first, then the chat's crouching sheet — the one look marked `sprite`)
 and the developer's Barbarian (5), Wizard (8), Necromancer (8), Druid
-(5), Hexhunter (4) and Plague Sister (4), 39 figures. **The art:** the developer uploads 1024x1536 sheets
+(5), Hexhunter (4) and Plague Sister (4), 39 figures.
+
+#### The art
+
+The developer uploads 1024x1536 sheets
 on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
 tools/cut-heroes.mjs --import .` converts them to
 `assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
@@ -922,8 +1058,13 @@ the paper's share of each edge pixel's colour removed by its alpha) into
 overwriting (rule 7: a redo of a deployed figure takes `--suffix`, the
 0.00253 recut is `_k2`), and prints the `looks` lines (`--json` the map)
 for heroes.json; then `git rm` the PNGs (they stay in history).
-**The screen** (`ui/scenes/heroScene.js`, `styles.css` section 6b, the
-phone's twins in 16): the title's Enter the Castle leads here ONCE per
+
+#### The screen
+
+The screen (`ui/scenes/heroScene.js`, `styles.css` section 6b, the
+phone's twins in 16; 0.00299: `render` clears the root first — a
+`relayout` or SWITCH CLASS used to stack a stale screen under the live
+one, and the hotkeys drove the stale one): the title's Enter the Castle leads here ONCE per
 save (0.00253, the developer's call: `profile.hero` is null until PROCEED;
 a save that has chosen enters the hall straight away; the class changes
 only with a new game — a wipe starts at null; the v6 step took back the
@@ -937,21 +1078,34 @@ gold rim (opacity), the look switcher under it (‹ › = the arrow keys,
 which reach keyed buttons since 0.00248, `hotkeys.js`; a hero with one
 look hides it, `.single`; each hero remembers its look while the player
 compares), a bar with the hero's lines and PROCEED (Space, `P`); 1-7 and
-a click choose (the number badge is the card's keyed button). **The
-pick** lands on the profile on PROCEED only — `hero: { id, look }`, save
+a click choose (the number badge is the card's keyed button).
+
+#### The pick
+
+The pick lands on the profile on PROCEED only — `hero: { id, look }`, save
 version 6 (`cleanHero` makes an imported code whole: an unknown class or
-look is the knight's first; null stays null). **The look** can change
+look is the knight's first; null stays null).
+
+#### The look
+
+The look can change
 later: a click on the hall's portrait (`.knight-card.pickable`, its
 `.look-tag` says which look; the phone's Equipment sheet has a Look row,
 `L`) opens `ui/lookPicker.js` — the hero large between ‹ › (the arrow
 keys, A / D), saved as it turns, shared with the stats on close; a hero
-with one look is not pickable (none since the knight's sheets, 0.00264). **The stats (0.00253):**
-every run record carries `hero` and `look` (`history.js runRecord`), the
+with one look is not pickable (none since the knight's sheets, 0.00264).
+
+#### The stats (0.00253)
+
+Every run record carries `hero` and `look` (`history.js runRecord`), the
 upload carries `profile.hero`, the collector keeps both (Worker 0.00253
 — paste it; the old one drops them), the dashboard shows a Hero column
 and a By hero table (`stats.js byHero`: runs, depth, deaths, looks worn;
-a run before the classes counts as the knight's). **The colour themes
-(0.00254, the developer's ask):** `heroes.json theme` per class — `plate`
+a run before the classes counts as the knight's).
+
+#### The colour themes (0.00254, the developer's ask)
+
+`heroes.json theme` per class — `plate`
 (the card plate's colour: a `.tone` layer with `mix-blend-mode: color`
 over the plate art, so the art keeps its light and shade and the hue is
 the class's — on every card of CHOOSE YOUR HERO (`--theme` on the card,
@@ -965,15 +1119,17 @@ developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Entangle
 what each heavy does is `class.heavy`, below). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
-with fog — my picks, tuned in the data. **The classes' gameplay (drafted
-0.00258 under the simulator, LIVE since 0.00267 — the developer's call: play
-it, then tune; the knight's path is the game as it was):**
+with fog — my picks, tuned in the data.
+
+#### The classes' gameplay (drafted 0.00258 under the simulator, LIVE since 0.00267 — the developer's call: play it, then tune; the knight's path is the game as it was)
+
 `heroes.json class` per hero (every key on every hero, `_class` says
 what each does) — multipliers on the derived HP / damage / armor, a
 potion's heal, dodge, the heavy's cooldown and factor, and `heavy`: the
 knight's `blow` (spill, OVERKILL), the Barbarian's `cleave` (+ rage), the
 Wizard's `fireball` (charges a fight), the Necromancer's `drain` (+ a
-thrall raised from a kill that takes the foes' blows), the Druid's
+thrall raised from a fallen foe that takes the foes' blows — never in a
+cleared room, 0.00299), the Druid's
 `entangle` (0.00271, the developer's call, in place of Go Feral's wild
 shape: roots bind every living foe for `entangleTurns` (2) of their turns —
 `e.entangled`, loosened one a turn at the end of the enemy phase — and a
@@ -987,8 +1143,11 @@ multipliers and snapshots the block as `run.stats.klass`, `combat.js
 classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
 `canHeavy` do the rest, each heavy's code in `run/classes.js` (0.00283:
 `HEAVIES` by kind, the `AFTER_BLOW` / `FOE_TURN` hooks; combat.js calls
-them, never switches on the kind). **Immunities (0.00293, the developer's
-ask):** `enemies.json immune` per enemy, a chance 0-1 per element
+them, never switches on the kind).
+
+#### Immunities (0.00293, the developer's ask)
+
+`enemies.json immune` per enemy, a chance 0-1 per element
 (`blight`, the censer's; `fire`, the fireball's — `classes.js ELEMENTS`,
 each HEAVY's `element`; dataCheck wants every element on every enemy):
 the undead and the vermin shrug the blight off (skeleton and wraith 0.9,
@@ -1023,14 +1182,20 @@ against bosses (`chargeOnKill`: a kill gives a charge back, up to
 `charges`, now 3; damage 1.1; Quicken at a shrine gives a charge class a
 charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
 78% from 68%). No difficulty label on the cards (the developer's call:
-the variance stays quiet). **The combat UI's minimum (0.00267, shipped
-with it so the classes can be played; the mock-ups in the chat are the
-design to grow into):** the heavy button carries the class's name (above)
+the variance stays quiet).
+
+#### The combat UI's minimum (0.00267, shipped with it so the classes can be played; the mock-ups in the chat are the design to grow into)
+
+The heavy button carries the class's name (above)
 and, for a charge class, its charges as pips (◆◆◇) in place of the
 cooldown (`battleRoom.js update` hands `charges` to the unit); a foe's
 card tags HEXED / BLIGHT ×n / ROOTED n above its HP line (`.foe-tag`, the
 hexed card rimmed violet; `hexed` / `blight` / `entangled` in its
-snapshot); **the status in the figure (0.00272, the developer's ask):** a
+snapshot);
+
+#### The status in the figure (0.00272, the developer's ask)
+
+A
 blighted foe's portrait turns sickly (a static sepia + green hue-rotate,
 drained) and a rooted one earth-brown (`.char-card.blighted` /
 `.rooted`, the two together darker), and either slows its idle loop
@@ -1042,8 +1207,11 @@ none` — a filter on a looping figure is a per-frame software filter on
 iOS); every new log line has a colour (mark, blight, entangle,
 entangled, charge, thrall, thrallhit, thrallfall; `styles.css`). Not yet: a
 thrall card (the log alone says it rose, took a blow, crumbled), a rage
-chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
-the knight's card in combat and the hall's knight card draw the chosen
+chip. `tools/test/classes.test.mjs` is the behaviour, class by class.
+
+#### What the class changes
+
+The knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
 the knight's standing looks too; 0.00291: his crouch as well — a look
 marked `sprite: true` (`heroes.js lookIsSprite`) draws its own figure
@@ -1065,8 +1233,9 @@ figure clear of it, the switcher clear of the bar, Proceed on screen) and
 runs the hall and the dungeon as the Necromancer, so a standing figure
 on the cards is looked at; the knight's wide sprite is the easy case.
 
-**The classes' sounds (0.00270, the developer's ask: each class its own
-attack and get-hit sounds).** `audio.json clips` has `atk_<id>`,
+### The classes' sounds (0.00270, the developer's ask: each class its own attack and get-hit sounds)
+
+`audio.json clips` has `atk_<id>`,
 `heavy_<id>` and `hurt_<id>` per hero — since 0.00271 a rendered
 recording per clip and per foe (`assets/audio/sfx/<clip>_v1.mp3`, below;
 0.00270 shipped the developer's two recordings `sfx-attack.mp3` /
@@ -1081,8 +1250,11 @@ vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
 ~1.25 the Hexhunter and the Plague Sister — the hurt recordings carry
 each class's own cry too, so a struck hero may sound twice, the
 recording's cry under the synth grunt: a listen decides whether the
-grunt layer goes). **The get-hit cries are pulled (0.00287, the
-developer's call: the content wants more thought):** `audio.json cries`
+grunt layer goes).
+
+#### The get-hit cries are pulled (0.00287, the developer's call: the content wants more thought)
+
+`audio.json cries`
 — `hero` false plays the plain hurt for a blow on the hero instead of
 `hurt_<class>`, `foe` false silences the struck foe's `ehurt_<id>` (its
 `eatk_` attack stays); the clips and files stay registered, flip to true
@@ -1091,7 +1263,11 @@ picks them by the save's class (a class without the clip falls back to
 the plain one); the class events have sounds too (`EV_SFX`: the hex a
 chime, the blight a hiss, Entangle a thud and a bound foe's strain a
 swoosh, a charge a zap, the thrall a wail, its blows a thud); `dataCheck`
-wants the three clips per hero. **The recordings (0.00271):** the
+wants the three clips per hero.
+
+#### The recordings (0.00271)
+
+The
 developer gave the key the `sound_generation` permission, and
 `tools/gen-sfx.mjs` rendered `docs/sfx-prompts.md` (a line per clip: id,
 seconds, prompt) through ElevenLabs' sound generation into
@@ -1107,13 +1283,25 @@ ones, a zap or a smoke hiss, by up to 4 dB) and the `gainDb` trims set so
 every clip lands at its level (a hero's blow and hurt
 -12 dB like the hits, a heavy -10, a foe's own sound -14, under the
 hero's). The synth layers stay as the class's colour over the
-recordings. **The foes' sounds (0.00271, "every character"):** `eatk_<id>`
+recordings.
+
+#### The foes' sounds (0.00271, "every character")
+
+`eatk_<id>`
 / `ehurt_<id>` per enemy (the same doc and tool): `combatSfx.js` plays
 the struck foe's cry with the hero's blow and the striking foe's attack
 with the hero's hurt, by the unit's id on the strike's pan and timing; a
-foe without a clip is as before. **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
+foe without a clip is as before.
+
+### Audio
+
+One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
-and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
+and ducking in `audio.json`.
+
+#### Sound registry
+
+`audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim
 (`measuredDb` = its loudest 50 ms), `stinger`, `rate`, `jitterDb`; a new
 sound is one entry. The first gesture (`audioCore.onFirstGesture`, the
@@ -1126,7 +1314,10 @@ against the Descend essentials; 0.00223: a file already queued is moved
 to the front when it is asked to play — the title's welcome take used to
 wait behind the whole score — and a MUSIC: OFF / NARRATOR: OFF player no
 longer downloads the beds or the takes, turning either on warms them
-then). **The title bed from the title screen on (0.00285, the developer's ask):**
+then).
+
+#### The title bed from the title screen on (0.00285, the developer's ask)
+
 `music.js startEarly` fetches and decodes the title bed at boot (MUSIC ON
 only) — on a desktop the first gesture is usually Enter the Castle, and
 the download and decode after it put the music's start in the Great Hall
@@ -1175,8 +1366,11 @@ sounds:** the SFX Lab (`labs/sfx/`, "Where things live") plays every clip
 where it belongs with the bed under it and hands the edits to
 `tools/render-sfx.mjs`; `sfx()` takes `plain` (no variation, no jitter)
 and `sfxFrom(name, buffer, opts)` plays a buffer of the caller's through
-the same path (both 0.00301, the lab's). Music: five
-beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
+the same path (both 0.00301, the lab's).
+
+#### Music beds
+
+Five beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
 (title and combat 0.00280 — "Generated scores" below), each a loop of
 `loopS` with `tailS` more past it, restarted every `loopS` by
 `musicLoop.js` and crossfaded over the tail (`crossfade: 'power'`); the
@@ -1185,8 +1379,10 @@ exact loop with its own first `tailS` seconds appended, equal gain) are
 in git history. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
-**Generated scores (0.00273, the music thread; every bed the game plays
-since 0.00282):** `docs/music-prompts.md` is a brief per bed —
+
+#### Generated scores (0.00273, the music thread; every bed the game plays since 0.00282)
+
+`docs/music-prompts.md` is a brief per bed —
 a style block, a common avoid list, the bed's line, global styles and
 timed sections ending where they began (the beds loop) — and
 `tools/gen-score.mjs` sends it to three models: **ElevenLabs Music** by
@@ -1206,14 +1402,20 @@ Music Lab in 0.00273; **the developer picked ElevenLabs for both**
 (`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
 two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). New takes change `assets/data/music-art.json`, which the bump check
 counts as loaded by players (everything under `assets/data`): ship them
-with `tools/ship.mjs`, never a bare push (0.00288). **The boss's second
-brief (0.00288, the developer's note: `boss_c2` too in-your-face):** 60 s,
+with `tools/ship.mjs`, never a bare push (0.00288).
+
+#### The boss's second brief (0.00288, the developer's note: `boss_c2` too in-your-face)
+
+60 s,
 the menace held back — no organ opening, no full-ensemble climax, the
 choir distant; four takes, `boss_c3`–`c6`; the developer took
 `boss_c4` "for now" (0.00289): 0:13.0 → 0:46.3, a 33 s loop (the take
 opens on its pulse and fades after 0:53; a 43 s loop from 0:02 put the
-seam in a quiet bar). **The import (0.00280, `--import
-<bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
+seam in a quiet bar).
+
+#### The import (0.00280, `--import <bed>_c<n>`)
+
+`tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
 difference, plus a little per second of loop; END then nudged ±140 ms so
@@ -1243,14 +1445,22 @@ either passage alone (the take carrying on past the loop point, or its
 start) — a seam you hear is quieter than both; flagged under -3 dB
 (0.00289: it was the quieter of the seconds either side, which the boss
 take's drum gaps and sparser start fooled). As of 0.00289: title +0.5,
-combat +9.6, boss +3.7, shrine +3.7, end +4.7. **ElevenLabs limits:** two requests at a time per
+combat +9.6, boss +3.7, shrine +3.7, end +4.7.
+
+#### ElevenLabs limits
+
+Two requests at a time per
 subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
 limit — waits and retries), and the API key carries its own credit cap
 (ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
-a 90 s bed ~1,125) — the developer raised it in 0.00280. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+a 90 s bed ~1,125) — the developer raised it in 0.00280.
+
+#### Voice-over (0.161, `audio/narrator.js`)
+
+The voice-over: the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (33 lines,
 four takes each; OVERKILL nine since 0.188, a plain crit five and the mega
-crit eight since 0.00283), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
+crit eight since 0.00278 (re-recorded steadier in 0.00279)), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
 sends "!" as "." and drops a leading "…", never overwrites a take — delete
 the file to re-render it, `--stability/--style/--speed` for a steadier
@@ -1274,7 +1484,10 @@ take twice in a row; NARRATOR: ON/OFF in the corner column — OFF stops
 the line playing and drops the ones waiting (0.00223). Once-per-save lines (victory, first death) are gated by their
 callers. New line: the script table, `node tools/gen-vo.mjs`, a rule in
 audio.json, a `narrate()` call — the suite checks the three agree.
-**Reviewing takes** (0.163): the VO Lab (`labs/vo/`) plays each take as the
+
+#### Reviewing takes (0.163)
+
+Reviewing takes: the VO Lab (`labs/vo/`) plays each take as the
 game levels it; the developer approves or disapproves (volatility less/more =
 stability, shouty less/more = style and speed; `gen-vo.mjs NUDGE`), and
 RE-RENDER downloads `vo-rerender.json` (also to the clipboard). Then
@@ -1290,8 +1503,12 @@ urlOf` fetches it as `<file>?r=<stamp>`, so no cache serves the old take
 deleting its file and running plain `gen-vo.mjs` gets no stamp and may
 be served stale for ~4 hours.
 
-**UI conventions.**
-- Every dialog: `ui/dialog.js openDialog({ label, children, onKey, proceed })`
+### UI conventions
+
+- Every dialog: `ui/dialog.js openDialog({ label, children, onKey, closeKeys, proceed })`
+  (`closeKeys`, 0.00299: the letters that close it, Escape and Enter
+  implied — the changelist, the benchmark's results, the victory modal,
+  the LOOT pop-up)
   — it owns the keyboard (key-trap stack) and is tracked (`anyDialogOpen`,
   `closeAllDialogs`). Dialogs live above the scenes, so a scene switch does
   not close them; the YOU DIED dialog is one too (0.157: it used to sit in
@@ -1378,7 +1595,9 @@ be served stale for ~4 hours.
   the next class, first look, kit as worn, and re-renders the screen — the
   hall and CHOOSE YOUR HERO through `relayout()`, a run through the dungeon
   scene's `switchClass()`: the run's stats rebuilt for the class, this run's
-  shrine boons dropped, health kept as a share of the new maximum, the
+  shrine boons dropped (0.00299: `run.buffs` and `run.coinMult` reset with
+  the stats — the bar and the run record used to keep them, Greed
+  survived), health kept as a share of the new maximum, the
   fight's charges / hex / thrall / the roots (entangled) reset, the battle line
   rebuilt in place and dealt in, a DEBUG line in the log; `debugToggles.js
   switchClassButton`), LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
@@ -1500,8 +1719,8 @@ be served stale for ~4 hours.
   worn per `GEAR_SLOTS` as strips like the hall's slots (0.00290, the
   developer's layout: the item's picture on the right fading under its
   name, forge level and stats on the left, the rarity's rim; an empty slot
-  dashed) — the run's finds are no longer listed there (a list of their
-  own is to come). The shown page refreshes on the update tick; the
+  dashed) — the run's finds are no longer listed there — the LOOT pop-up lists
+  them (0.00292; `I`, or the FINDS line at the page's foot since 0.00299). The shown page refreshes on the update tick; the
   turn is two `rotateY` halves with the face swapped edge-on (`flipCard`,
   `composite: 'add'` like the kick; instant under reduced motion). A
   still gold ⓘ under the gear names says the card turns; the phone's
@@ -1516,7 +1735,7 @@ be served stale for ~4 hours.
   its immunities as chips (`enemies.json immune`) and a line of lore
   (`enemies.json lore`, dataCheck wants one per enemy) — no armor (foes have
   none); a tap on the back turns it face up, the card's click does not
-  attack while turned, and a fallen foe collapses face up. A fallen enemy's figure
+  attack while turned, and a fallen foe collapses face up. No tooltips on the cards (0.00300, the developer's call: the hero card's, the name's, the elite star's, the summon bar's, the LOOT row's went — the stats card says it); the ⓘ glows while the name or the ⓘ is hovered (a mouse only). A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards
@@ -1549,7 +1768,9 @@ be served stale for ~4 hours.
 - Shared helpers: `shared/version.js` (never compare build numbers as
   strings), `shared/level.js`, `shared/prefs.js` (per-browser settings).
 
-**Play stats and performance.** Every finished run appends a record to
+### Play stats and performance
+
+Every finished run appends a record to
 `profile.history` (`meta/history.js`, newest 250), including its frame-rate
 summary (`core/perfMonitor.js`: fps, slowest 5% frame ms, refresh rate,
 dropped frames, worst frame and whether it fell in a room change
@@ -1582,7 +1803,10 @@ collected), deduped by playerId; its By build table shows the newest ten
 builds and the three most played older ones (`stats.js condenseBuilds`);
 the developer can give each player a
 **tester name** (kept in that browser, shown as "tester · player name").
-**The device report (0.00225, `meta/perfReport.js`):** what a later speed
+
+#### The device report (0.00225, `meta/perfReport.js`)
+
+What a later speed
 optimization needs that the run summary does not say, sent with the
 stats after every run and benchmark (one per upload, `telemetry.js
 statsPayload`; never in the save): per phase the frame summary, the
@@ -1602,8 +1826,11 @@ collector keeps the newest three per player, bounded rather than typed
 (`cleanReport`: strings cut, lists and depth capped, 24 KB at most); the
 dashboard's Device reports card shows each with a Copy button and a Copy
 all — the JSON goes to the clipboard (or into a box to copy by hand) for
-pasting into the chat. Raising it: `REPORT_VERSION`. **BENCHMARK**
-(`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
+pasting into the chat. Raising it: `REPORT_VERSION`.
+
+#### BENCHMARK
+
+BENCHMARK (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's
 quality ladder held; result → `profile.bench` (newest 10, never the run
 history) → the dashboard's Benchmarks card. **The ask** (`telemetry.json
@@ -1645,9 +1872,10 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
 
 - `tools/smoke-test.mjs` runs `tools/test/*.test.mjs` (17 files, by area:
   scenes, combat, shrines, progression, content, backgrounds, audio, sim,
-  history, narration, art, cards, layout, classes, fx, heroes, items — layout
-  last checks the phone layer's `html.phone` twins against the code and
-  the desktop rules, rule 8; ~1100 checks),
+  history, narration, art, cards, classes, fx, heroes, items, layout — the
+  order is `smoke-test.mjs ORDER` (0.00299: the last four used to sort after
+  layout by accident); layout last checks the phone layer's `html.phone` twins against the code and
+  the desktop rules, rule 8; ~1200 checks),
   each starting from `fresh()`; a test file imports only the harness
   names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
@@ -1665,7 +1893,11 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
   random-dependent check should be seeded (0.136).
 - Balance-sensitive tests use constructed fixtures; per-level stat changes
   need them retuned. Refactors of combat or rooms: compare `simulate.mjs`,
-  `--seeds 1-4` and `shrine-study.mjs` output before and after
+  `--seeds 1-4` and `shrine-study.mjs` output before and after (all three
+  tools start a campaign through `simCore.fresh(hero)`, the class on and
+  its kit fitted — until 0.00299 the two studies played a classless knight
+  who could wear anything, so every shrine-study row before it is on
+  another footing)
   (byte-identical — the order of `Math.random()` calls is part of it: a
   room rolls its enemies before its painting).
 - Browser checks: Playwright with Chromium at `/opt/pw-browsers/chromium`
@@ -1744,7 +1976,7 @@ sometimes — fetch all branches to find it.
   each taken twice): never pick a build number by hand, and read the
   suite's exit code, never its last line through a pipe.
 
-## State at handover (0.00245)
+## History by thread (the state at each handover)
 
 - Live: the card effects from the Card Lab (0.183–0.195: a glow behind
   every portrait by material, the cards in 3D, the glint, see-through
@@ -1887,13 +2119,42 @@ sometimes — fetch all branches to find it.
   flying into it (0.00262), the potion's picture and card (0.00263).
   The simulator, 4 campaigns x 40 runs per class: the knight median 15.8
   / room-24 boss 6%, the others 16.5–18.3 (the Heroes notes).
-- 0.00276–0.00283 (the review after the classes; 0.00278–0.00282 were the other threads' music and hall builds): the documentation sweep
+- 0.00276–0.00283 (the review after the classes; 0.00278–0.00279 were the narrator's crit lines, 0.00280–0.00282 the music and the hall's large-screen zoom, other threads'): the documentation sweep
   (0.00276: CLAUDE.md, ARCHITECTURE.md, the collector's README, the labs'
   headers, the prompt docs), the seven display mismatches (0.00277, the
   Backlog's list) and the refactors (0.00283: the class registry
   `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
   `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
   simulator and the shrine study; the Backlog's "Refactors done" entry).
+- 0.00293 and 0.00299 (this thread; 0.00285–0.00292 and 0.00294 were the
+  other threads' — the title bed from the title, the special-attack keys,
+  the cries pulled, the calmer boss take, the inventory strips, the
+  knight's crouch as a figure, the LOOT pop-up, the run end's layout):
+  the immunities (0.00293) and the second review (0.00299: four read-only
+  audits — engine and data, UI and stylesheet, audio and tools, docs and
+  tests — then three fixers by file ownership). Fixed: the Plague
+  Sister's swing rolled against blight immunity (and her target rolled
+  twice), a thrall rising in a cleared room, the knight's kit dropping as
+  the other classes' off-class junk, the two studies playing a classless
+  knight, CHOOSE YOUR HERO stacking a stale screen on a relayout, the
+  LOOT pop-up promising a slot to a beaten find and having no key or
+  phone path, SWITCH CLASS keeping the boons' bar and Greed, ship.mjs's
+  renumbering skipping a file after a shared mention, a take starting
+  through a silenced bus and ducking the music, the pulled cries warmed
+  every session, a device report lost on a failed upload, gen-score's
+  import on a bed not in audio.json, a dead `player.baseHeavyCd`.
+  Refactors: `shrine.js BOONS` (the boons as a registry, dataCheck reading
+  their needs), `simCore.fresh(hero)`, `previewProfile`, `living` /
+  `multiKill` shared, the tier colour tokens and `hud.js` builders
+  (`tierOf`, `itemTitle`, `findBody`, `wornId`), `openDialog closeKeys`,
+  `elevenlabs.mjs post` with the 429 retry and the format fallback,
+  `tools/util.mjs` (`seedFor`, `cli`), the harness fixtures (`enemy`,
+  `fight`, `heavy`, `types`, `heroProfile`), the suite's ORDER naming
+  every file, seven dead selectors and four dead exports gone, two
+  1920x1080 / 2560x1440 layout profiles. The simulator byte-identical for
+  the six classes the fixes did not touch; CLAUDE.md's Systems got
+  headings (the audio and the items in play out of the paragraphs that
+  buried them).
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
@@ -1915,7 +2176,7 @@ sometimes — fetch all branches to find it.
   folders (they stay public: GitHub Pages serves the whole repo). The
   `.pyc` cache file under `tools/__pycache__` is no longer tracked (0.00223).
 
-## Backlog (as of 0.00272)
+## Backlog
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the developer's (quota per key) · the reliquary's revive is not
@@ -1942,17 +2203,8 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Display mismatches found by the 0.00272 review — fixed in 0.00280: the
-  STATS page's heavy row shows the class's own factor and a charge class's
-  charges; "Potion heals" is `leveling.js potionHealFor(klass)` in the
-  drink, the STATS page, the potion card and the Alchemy row; the Quicken
-  card reads HEAVY CHARGE +1 for a charge class (`shrine.js buffText`); the
-  foes' statuses ride the replay's snapshot (`combat.js statusOf`,
-  `combatPlayback.statusOf`); SWITCH CLASS resets the blight; the orphan
-  check reads `assets/audio/sfx`; the hurt clips lost the synth grunt layer
-  (the recordings carry each class's cry).
 - Engineering: `go()` is silently dropped
-  during a transition (queue it) · about 160 of the ~1100 checks still
+  during a transition (queue it) · about 160 of the ~1200 checks still
   assert on source text rather than behaviour (inject recording stubs
   instead; 0.00283 gave the harness `byClass` / `button` and a `DATA`
   restore in `fresh()` for it) · the Actions deploy job (off until the developer opts in)
@@ -1960,8 +2212,7 @@ sometimes — fetch all branches to find it.
   `assets/items/candidates` (1.3MB) — those two are unused by every
   page; `assets/bg/candidates` (22MB), `assets/chars/candidates` (12MB)
   and `assets/world` are read by the public labs, so excluding them
-  breaks the Background, Art and World labs · the collector's README
-  stops at 0.00229 (nothing on the shrine deals or the hero fields) ·
+  breaks the Background, Art and World labs ·
   the manifest has no 192 px icon (180 and 512 only; Android wants 192)
   · ship.mjs is
   still two commits per ship (the work commit carries the previous
@@ -2006,6 +2257,25 @@ sometimes — fetch all branches to find it.
   open: `combatFx.js` could hand kick / enter / deal to a
   `cardMotion.js` (contested: the kick is part of the hit's
   choreography).
+- Open from the 0.00299 review (none urgent): `run.heroId` and `run.hero.id`
+  are two fields for one class — derive the first from the second once the
+  null-hero meaning is settled (today `heroId` null = "can use anything",
+  `run.hero` falls back to the knight; only tests and a null save reach it)
+  · the generating tools repeat their candidate registries (load / save /
+  entry / nextN / applyVerdicts, with a hidden fork: gen-bg's approve
+  drops the note, gen-score's keeps it), their contact sheets and the
+  Playwright launch — a `tools/registry.mjs` and `browser.mjs`; `cli()`
+  reached six tools, the rest parse their own way · shrine-study.mjs and
+  stat-study.mjs repeat the baseline-and-paired-runs loops (`simCore`
+  could hold `baselineSnapshots` / `pairedRuns`) · the collector's and the
+  dashboard's sanitizers are kept in step by one test on the run fields;
+  a fixture run through both and diffed would catch the next drift ·
+  `heroScene.js` and `lookPicker.js` build the look switcher twice ·
+  `battleLine.js createPlayerUnit` (~95 lines) and the LOOT row's state
+  spread over `dungeonScene.js` want their own modules · the hotkey alt's
+  "served after every own key" has no two-button test · ~180 of the 1224
+  checks still read source text (the GLSL, the labs' HTML and the tool
+  CLIs stay that way by design).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget

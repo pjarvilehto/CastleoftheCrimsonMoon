@@ -5,11 +5,16 @@
 // fades in then. MUSIC: OFF persists in this browser (shared/prefs.js
 // mutePref). Without a Web Audio implementation, everything is a safe no-op.
 //
-// The beds are the dark ambient score (0.114; tools/gen-music.py — the
-// classic beds and their section-chaining went in 0.118). Each is an
-// exact loop (audio.json music.tracks: file, loopS, tailS, gainDb level
-// trim) played seamlessly by musicLoop.js into the mixer's music bus
-// (volume slider, MUSIC toggle, ducking under stingers).
+// The beds are generated scores (ElevenLabs Music, docs/music-prompts.md,
+// every bed since 0.00282; tools/gen-score.mjs --import cuts a take at the
+// loop seam it finds). Each is a loop of loopS seconds with tailS more of
+// the music's own continuation past it (audio.json music.tracks: file,
+// loopS, tailS, crossfade 'power', gainDb level trim), restarted every
+// loopS by musicLoop.js and crossfaded over the tail into the mixer's
+// music bus (volume slider, MUSIC toggle, ducking under stingers). The
+// procedural beds before them (tools/gen-music.py, 0.114-0.00279: exact
+// loops whose tail was a copy of their start, crossfaded at equal gain)
+// are in git history.
 //
 // Memory (0.078): a decoded bed is tens of MB of float samples, so only
 // the compressed mp3 bytes are warmed; a bed is decoded when it starts

@@ -28,8 +28,9 @@ Optional: a nicer URL via a Workers route such as
 
 One KV entry per player, keyed by the save's anonymous random id: run
 records, disciplines, gear, purse, first/last seen, the build, and the
-country Cloudflare derives from the request. **No IP addresses, names or
-other personal data.** Runs are merged by timestamp, so a progress wipe
+country Cloudflare derives from the request. **No IP addresses; the only
+name is the one the player typed in the game (0.109), nothing else
+personal.** Runs are merged by timestamp, so a progress wipe
 doesn't erase collected history. Delete a player with
 `npx wrangler kv key delete --binding STATS player:<id>`.
 

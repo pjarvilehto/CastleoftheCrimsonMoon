@@ -381,7 +381,7 @@ fresh();
   // tier (equipped gear must resolve) plus only that one tier-1 item
   const only = (id) => {
     const keep = DATA.items;
-    DATA.items = Object.fromEntries(Object.entries(keep).filter(([k, v]) => v.tier > 1 || k === id));
+    DATA.items = Object.fromEntries(Object.entries(keep).filter(([k, v]) => v.tier > 1 || k === id).map(([k, v]) => [k, k === id ? { ...v, starter: false } : v])); // (0.00299: the tier-1 weapons are all starters now, never dropped — the fixture lifts the flag)
     return () => { DATA.items = keep; };
   };
   Math.random = () => 0.001;

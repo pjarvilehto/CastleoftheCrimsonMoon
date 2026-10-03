@@ -26,7 +26,6 @@
 //              it has 2x the price, then alchemy round-robin, then forge
 //            equipped T2+ gear (keeps a 2x reserve so one buy never bankrupts)
 
-import { fitGearToClass } from '../src/shared/classGear.js';
 import { fileURLToPath } from 'node:url';
 import { loadSim, withSeed, newAgg, STAT_PRIORITY } from './simCore.mjs';
 
@@ -38,9 +37,7 @@ export async function simulate({ runs = 40, seed = 1, verbose = false, retreat =
   const t4MinRoom = sim.DATA.difficulty.t4MinRoom;
   agg.potionDropChance = sim.DATA.difficulty.potionDropChance;
   return withSeed(seed, () => {
-    sim.fresh();
-    sim.getProfile().hero = { id: hero ?? 'knight', look: 0 }; // the class under study (0.00258; the knight when unset — 0.00274: set, so the item matrix applies to him too)
-    fitGearToClass(sim.getProfile()); // (0.00274: the class's kit, as a new save puts it on at PROCEED)
+    sim.fresh(hero ?? 'knight'); // the class under study (0.00258; the knight when unset): the pick and its kit on the profile — simCore.fresh since 0.00299, shared with the studies
     for (let r = 0; r < runs; r++) {
       const rec = sim.playRun({ agg, retreat, tactic });
       if (rec.bossesBeaten >= 1 && agg.firstBossClearRun == null) agg.firstBossClearRun = r + 1;

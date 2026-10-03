@@ -9,6 +9,7 @@
 
 import { compareVersions } from './version.js';
 import { HEAVY_KINDS, CLASS_KEYS, ELEMENTS, HEAVIES } from '../run/classes.js';
+import { BOONS } from '../run/shrine.js'; // (0.00299: each boon's `needs` — the registry's, not a copy here)
 
 const NUM = {
   difficulty: [
@@ -26,7 +27,7 @@ const NUM = {
     'boss.depthBonus', 'boss.hpMult', 'boss.dmgMult',
     ...['every', 'maxAlive', 'hpScale', 'dmgScale', 'depthBonus'].map((k) => `boss.summon.${k}`),
     ...['baseHp', 'hpPerVitality', 'baseDmg', 'dmgPerPower', 'armorPerEndurance', 'baseCrit', 'critCap',
-      'critOverflowDamage', 'critDamagePerPrecision', 'dodgeCap', 'baseHeavyCd', 'reviveHpPct'].map((k) => `player.${k}`),
+      'critOverflowDamage', 'critDamagePerPrecision', 'dodgeCap', 'reviveHpPct'].map((k) => `player.${k}`), // (baseHeavyCd went in 0.00299: the cooldown is heroes.json class.heavyCd, the knight's 3 among them)
     'player.precisionTaper.perLevel', 'player.precisionTaper.linear', 'player.precisionTaper.max',
     ...['heavyMult', 'critMult', 'critJitter', 'megaCritChance', 'megaCritMult', 'armorMinTakenPct', 'enemyDmgJitter'].map((k) => `combat.${k}`),
     ...['tier', 'dmg', 'armor', 'hp', 'lifesteal', 'crit'].map((k) => `itemValue.${k}`),
@@ -76,7 +77,7 @@ export function checkData(data) {
     for (const p of paths) if (!isNum(at(data[file], p))) out.push(`${file}.json: ${p} missing or not a number`);
   }
   // per-entry numbers: every item has a tier, every clip a trim, every
-  // shrine boon the numbers its case in run/shrine.js reads
+  // shrine boon the numbers its entry in run/shrine.js BOONS reads (below)
   const SLOTS = new Set(['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet']);
   for (const [id, it] of Object.entries(data.items ?? {})) {
     if (!isNum(it?.tier)) out.push(`items.json: ${id}.tier`);
@@ -201,13 +202,11 @@ export function checkData(data) {
     for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb) || !isNum(t?.take)) out.push(`narration.json: ${id} take ${t?.take} needs take + file + measuredDb`);
   }
   for (const k of ['hero', 'foe']) if (typeof data.audio?.cries?.[k] !== 'boolean') out.push(`audio.json: cries.${k} (true / false: the get-hit recordings on or off, 0.00287)`);
-  const NEEDS = {
-    dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],
-    leech: ['hpCostPct', 'lifestealAdd', 'lifestealCap'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], secondwind: ['coinCost', 'potionsAdd'],
-    quicken: ['hpCostPct', 'cdReduce'], greed: ['dmgCostPct', 'coinMultAdd'], glasscannon: ['minArmor', 'dmgMult', 'armorCostPct'],
-  };
+  // every shrine boon is one the registry knows (run/shrine.js BOONS, 0.00299) and carries the numbers its entry reads
   for (const o of data.shrines?.offers ?? []) {
-    for (const k of NEEDS[o.id] ?? []) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
+    const boon = BOONS[o?.id];
+    if (!boon) { out.push(`shrines.json: ${o?.id} is not a boon the code knows (run/shrine.js BOONS: ${Object.keys(BOONS).join(', ')})`); continue; }
+    for (const k of boon.needs) if (!isNum(o[k])) out.push(`shrines.json: ${o.id}.${k}`);
     if (typeof o.img !== 'string') out.push(`shrines.json: ${o.id}.img (its icon picture, 0.177)`);
   }
   return out;

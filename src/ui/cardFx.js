@@ -354,6 +354,5 @@ export function warmCardFx() {
   return pool.length > 0;
 }
 
-// Tests and the lab: what is lit right now, and the pool's canvases.
+// Tests and the lab: what is lit right now.
 export const litCards = () => entries.length;
-export const pooledCanvases = () => pool.length;

@@ -26,6 +26,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { token, predict } from './replicate.mjs';
+import { cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'item-prompts.md');
@@ -49,9 +50,7 @@ export function readDoc(text = readFileSync(DOC, 'utf8')) {
 }
 export const promptOf = (style, line, hint) => `${style}\n\nThe object: ${line}${hint ? `\nDirection: ${hint}` : ''}`;
 
-const args = process.argv.slice(2);
-const flag = (k) => args.includes(k);
-const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
+const { argv: args, flag, opt: arg } = cli(); // (tools/util.mjs, 0.00299)
 const loadReg = () => (existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : { items: {} });
 const saveReg = (r) => writeFileSync(REGISTRY, `${JSON.stringify(r, null, 2)}\n`);
 const sharp = () => createRequire(import.meta.url)('sharp');

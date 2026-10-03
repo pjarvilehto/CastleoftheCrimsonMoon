@@ -26,6 +26,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { post, hasKey, measureDb } from './elevenlabs.mjs';
+import { fnv1a, cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = join(ROOT, 'docs', 'narration-script.md');
@@ -77,10 +78,8 @@ export function cleanTake(raw) {
 
 export function fileFor(id, take) { return `vo_${id}_${take}.mp3`; }
 
-export { measureDb }; // tools/elevenlabs.mjs (0.00283; it lived here, and gen-sfx.mjs imported it from here)
-
 export async function render(text, seed, settings = VOICE.settings) {
-  return post(`text-to-speech/${VOICE.voiceId}?output_format=${VOICE.outputFormat}`, { text, model_id: VOICE.modelId, voice_settings: settings, seed });
+  return post(`text-to-speech/${VOICE.voiceId}?output_format=${VOICE.outputFormat}`, { text, model_id: VOICE.modelId, voice_settings: settings, seed }, { retries: 5 }); // (a 429 waits and tries again, 0.00299)
 }
 
 // The VO Lab's nudges: volatility is the voice swinging (stability),
@@ -96,18 +95,14 @@ export function nudged(base, { volatility = 0, shouty = 0 } = {}) {
   };
 }
 
-/** A stable seed per take so a re-render of one file comes out alike. */
-function seedFor(id, take) {
-  let h = 2166136261;
-  for (const c of `${id}/${take}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-  return h % 4294967295;
-}
+/** A stable seed per take so a re-render of one file comes out alike (the hash is tools/util.mjs's since 0.00299; the modulus stays this tool's own — 2^32-1, not util's seedFor 2^31-1 — so every take's seed is the one it was rendered with). */
+const seedFor = (id, take) => fnv1a(`${id}/${take}`) % 4294967295;
 
 async function main() {
-  const args = process.argv.slice(2);
-  const dry = args.includes('--dry-run');
-  const manifestOnly = args.includes('--manifest');
-  const num = (flag) => { const i = args.indexOf(flag); return i >= 0 ? Number(args[i + 1]) : undefined; };
+  const { argv: args, flag, opt } = cli(); // (tools/util.mjs, 0.00299)
+  const dry = flag('--dry-run');
+  const manifestOnly = flag('--manifest');
+  const num = (k) => (opt(k) !== undefined ? Number(opt(k)) : undefined);
   const settings = { ...VOICE.settings };
   for (const k of ['stability', 'style', 'speed']) if (num(`--${k}`) !== undefined) settings[k] = num(`--${k}`);
   const onlyArg = args.find((a) => a.startsWith('--only'));
@@ -117,7 +112,7 @@ async function main() {
   const old = existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : {};
   const prev = Object.fromEntries(Object.values(old.lines ?? {}).flat().map((t) => [t.file, t]));
   // --rerender: the lab's verdicts — approvals to record, takes to redo
-  const reqArg = args.indexOf('--rerender');
+  const reqArg = args.indexOf('--rerender'); // (kept as it is: tools/test/content.test.mjs greps for this line)
   const req = reqArg >= 0 ? JSON.parse(readFileSync(args[reqArg + 1], 'utf8')) : null;
   const redo = Object.fromEntries((req?.rerender ?? []).map((r) => [r.file, r]));
   const approved = new Set(req?.approved ?? []);

@@ -109,7 +109,7 @@ export function unionRect(rects) {
   return { left, top, width: right - left, height: bottom - top };
 }
 // The victims' cards, read once (the sprays take these rects too).
-export const overkillRects = (fx, ctx) => (fx.victims ?? []).map((i) => ctx.unit(i)?.card?.getBoundingClientRect?.() ?? null);
+const overkillRects = (fx, ctx) => (fx.victims ?? []).map((i) => ctx.unit(i)?.card?.getBoundingClientRect?.() ?? null);
 export const overkillArea = (fx, ctx) => unionRect(overkillRects(fx, ctx));
 // OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
 // the whole enemy line: a huge number + caption, a hard shake, the widest
