@@ -100,7 +100,7 @@ function rollHit(combat, heavy, targetIndex = -1) {
   const wild = run.wild > 0 ? k.wildMult : 1;
   let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage * wild);
   if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus + (marked ? k.markCrit : 0) }, megaCrit)); // (the hex's own crit damage, 0.00258)
-  return { dmg: Math.max(1, dmg), crit, megaCrit, heavy };
+  return { dmg: Math.max(1, dmg), crit, megaCrit, heavy, marked, wild: run.wild > 0 }; // (marked / wild: the class's own trace on the blow, ui/combatFx.js — 0.00268)
 }
 
 // SMASH / OVERKILL: a heavy hit whose damage covers EVERY living enemy's
@@ -121,7 +121,7 @@ function smash(combat, { dmg, heavy }, push) {
 // The blow on its target; a heavy blow of at least spillThreshold x the
 // target's HP strikes through into every other living enemy (no cap — a
 // strong enough blow sweeps the room). Basic attacks never spill.
-function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy }, push) {
+function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked, wild }, push) {
   const target = combat.enemies[targetIndex];
   const chain = [targetIndex];
   if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258: the knight's blow spills; the other classes' heavies have their own reach)
@@ -139,7 +139,7 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy }, push) {
       push({
         type: 'atk',
         text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : '.'}`,
-        target: idx, dmg, crit, megaCrit, heavy,
+        target: idx, dmg, crit, megaCrit, heavy, marked, wild,
       });
     } else {
       push({ type: 'spill', text: `...the blow strikes through into ${t.name} for ${applied} dmg!`, target: idx, dmg: applied });
@@ -163,7 +163,7 @@ function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
   if (k.heavy === 'blow') return;
   if (heavy) {
     if (k.heavy === 'cleave' || k.heavy === 'fireball') sweep(combat, targetIndex, Math.round(dmg * (k.heavy === 'fireball' ? 1 : k.cleaveShare)), k.heavy, push);
-    else if (k.heavy === 'drain') { const healed = Math.min(run.maxHp - run.hp, Math.round(dmg * k.drainShare)); if (healed > 0) { run.hp += healed; push({ type: 'heal', text: `You drain ${healed} HP from the blow.`, healed }); } }
+    else if (k.heavy === 'drain') { const healed = Math.min(run.maxHp - run.hp, Math.round(dmg * k.drainShare)); if (healed > 0) { run.hp += healed; push({ type: 'heal', text: `You drain ${healed} HP from the blow.`, healed, drain: true, target: targetIndex }); } } // (drain: the soul wisps from the foe to the Necromancer, 0.00268)
     else if (k.heavy === 'mark') { if (combat.enemies[targetIndex].hp > 0) { combat.marked = targetIndex; push({ type: 'mark', text: `You hex ${combat.enemies[targetIndex].name}: every blow on it will strike true.`, target: targetIndex }); } }
     else if (k.heavy === 'censer') { for (const e of living(combat)) e.blight = (e.blight ?? 0) + 1; push({ type: 'blight', text: 'Your censer\'s smoke settles on every foe.' }); }
     else if (k.heavy === 'wildshape') { run.wild = k.wildTurns + 1; push({ type: 'wild', text: `You take the beast's shape for ${k.wildTurns} turns.` }); }
@@ -178,7 +178,7 @@ function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
       if (e.hp <= 0 || !(e.blight > 0)) continue;
       const dealt = Math.min(e.hp, Math.max(1, Math.round(run.stats.dmg * k.blightShare * e.blight)));
       e.hp -= dealt;
-      push({ type: 'spill', text: `The blight gnaws ${e.name} for ${dealt}.`, target: i, dmg: dealt });
+      push({ type: 'spill', text: `The blight gnaws ${e.name} for ${dealt}.`, target: i, dmg: dealt, via: 'blight' });
       if (e.hp === 0) push({ type: 'kill', text: `${e.name} died!`, enemy: e });
     }
   }
@@ -195,7 +195,7 @@ function sweep(combat, targetIndex, dmg, kind, push) {
     if (i === targetIndex || e.hp <= 0 || dmg <= 0) continue;
     const applied = Math.min(dmg, e.hp);
     e.hp -= applied;
-    push({ type: 'spill', text: kind === 'fireball' ? `...the fire takes ${e.name} for ${applied}!` : `...the cleave catches ${e.name} for ${applied}!`, target: i, dmg: applied });
+    push({ type: 'spill', text: kind === 'fireball' ? `...the fire takes ${e.name} for ${applied}!` : `...the cleave catches ${e.name} for ${applied}!`, target: i, dmg: applied, via: kind }); // (via: the fire's or the cleave's own particles, 0.00268)
     if (e.hp === 0) { kills += 1; push({ type: 'kill', text: `${e.name} died!`, enemy: e }); }
   }
   if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });

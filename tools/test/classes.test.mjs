@@ -156,3 +156,50 @@ const types = (evs) => evs.map((e) => e.type);
   const css = readFileSync('styles.css', 'utf8');
   ok('every class event has a log colour (mark, blight, wild, charge, thrall, thrallhit, thrallfall)', ['mark', 'blight', 'wild', 'charge', 'thrall', 'thrallhit', 'thrallfall'].every((c) => css.includes(`#combat-log .${c} `)));
 }
+
+// the classes' particles (0.00268): a trace per class and blow over the
+// foe's own burst, a burst per class event; pure looks, checked here
+{
+  fresh();
+  const { spawnClassBurst, CLASS_LOOKS, CLASS_PAL } = await import('../../src/ui/particles.js');
+  const { fxFor, traceFor } = await import('../../src/ui/combatFx.js');
+  const kinds = (list) => new Set(list.map((p) => p.kind));
+  ok('every class look spawns something, sized by the card', CLASS_LOOKS.every((l) => spawnClassBurst(l, 0, 0, { size: 290 }).length > 0) && spawnClassBurst('nothing', 0, 0, { size: 290 }).length === 0
+    && spawnClassBurst('fireball', 0, 0, { size: 580 }).find((p) => p.kind === 'flash').size === spawnClassBurst('fireball', 0, 0, { size: 290 }).find((p) => p.kind === 'flash').size * 2);
+  ok('the Barbarian\'s Cleave is a crescent swung the way of the blow, with embers', kinds(spawnClassBurst('cleave', 0, 0, { size: 290, dir: 1 })).has('arc') && spawnClassBurst('cleave', 0, 0, { size: 290, dir: 1 }).find((p) => p.kind === 'arc').sweep > 0
+    && spawnClassBurst('cleave', 0, 0, { size: 290, dir: -1 }).find((p) => p.kind === 'arc').sweep < 0 && spawnClassBurst('cleave', 0, 0, { size: 290 }).every((p) => p.kind !== 'streak' || p.mid === CLASS_PAL.rust.mid));
+  ok('the Wizard\'s Fireball blooms (an amber flash, fire streaks rising, cinders, smoke — no ring over the foe\'s own); his blows crackle arcane blue', ['flash', 'streak', 'dot', 'puff'].every((k) => kinds(spawnClassBurst('fireball', 0, 0, { size: 290 })).has(k))
+    && !kinds(spawnClassBurst('fireball', 0, 0, { size: 290 })).has('ring') && spawnClassBurst('fireball', 0, 0, { size: 290 }).filter((p) => p.kind === 'streak').every((p) => p.g < 0) && spawnClassBurst('arcane', 0, 0, { size: 290 }).every((p) => p.kind !== 'streak' || p.mid === CLASS_PAL.arcane.mid)
+    && spawnClassBurst('fireball', 0, 0, { size: 290, kind: 'crit' }).length > spawnClassBurst('fireball', 0, 0, { size: 290 }).length);
+  const wisps = spawnClassBurst('drain', 100, 100, { size: 290, to: { x: 500, y: 300 } }).filter((p) => p.kind === 'dot');
+  ok('the Necromancer\'s drain: wisps that seek the point given (the hero\'s card), none without one', wisps.length >= 18 && wisps.every((p) => p.tx === 500 && p.ty === 300 && p.pull > 0)
+    && spawnClassBurst('drain', 100, 100, { size: 290 }).filter((p) => p.kind === 'dot').every((p) => !p.pull));
+  ok('the Druid\'s feral blow is three parallel rakes and leaves; Go Feral bursts leaves all round', spawnClassBurst('claw', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 3 && kinds(spawnClassBurst('claw', 0, 0, { size: 290 })).has('blob')
+    && spawnClassBurst('thorn', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 1 && spawnClassBurst('wild', 0, 0, { size: 290 }).filter((p) => p.kind === 'blob').length >= 20);
+  ok('the Hexhunter\'s Hex is a sigil in a ring; a blow on the hexed foe flares a quicker one', kinds(spawnClassBurst('hex', 0, 0, { size: 290 })).has('sigil') && kinds(spawnClassBurst('hex', 0, 0, { size: 290 })).has('ring')
+    && spawnClassBurst('hexhit', 0, 0, { size: 290 }).find((p) => p.kind === 'sigil').life < spawnClassBurst('hex', 0, 0, { size: 290 }).find((p) => p.kind === 'sigil').life && !kinds(spawnClassBurst('hexspark', 0, 0, { size: 290 })).has('sigil'));
+  ok('the Plague Sister\'s censer is smoke (puffs that grow) in ochre; the blight\'s gnawing a smaller wisp of it', spawnClassBurst('censer', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').every((p) => p.grow > 1 && [CLASS_PAL.ochre.dark, CLASS_PAL.ochre.mid].includes(p.color))
+    && spawnClassBurst('blight', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').length < spawnClassBurst('censer', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').length);
+  // the trace a blow leaves, by the class and the blow
+  const blow = (o) => ({ kind: 'attack', from: 'player', ...o });
+  ok('the trace table: the knight\'s heavy a steel clash and his blows none; each class its own, the hexed foe and the feral blows theirs', traceFor(blow({ heavy: true }), 'blow') === 'steel' && traceFor(blow({}), 'blow') === null
+    && traceFor(blow({ heavy: true }), 'cleave') === 'cleave' && traceFor(blow({}), 'cleave') === 'rage' && traceFor(blow({ heavy: true }), 'fireball') === 'fireball' && traceFor(blow({}), 'fireball') === 'arcane'
+    && traceFor(blow({}), 'drain') === 'grave' && traceFor(blow({ heavy: true }), 'drain') === 'drain' && traceFor(blow({ wild: true }), 'wildshape') === 'claw' && traceFor(blow({}), 'wildshape') === 'thorn'
+    && traceFor(blow({ marked: true }), 'mark') === 'hexhit' && traceFor(blow({}), 'mark') === 'hexspark' && traceFor(blow({ heavy: true }), 'censer') === 'incense');
+  ok('the reach of a heavy (via) traces as the fire, the cleave or the blight whatever the class; an enemy\'s blow on the hero leaves none', traceFor({ kind: 'hit', via: 'fireball' }, 'blow') === 'fireball' && traceFor({ kind: 'hit', via: 'cleave' }, 'cleave') === 'cleavespill'
+    && traceFor({ kind: 'hit', via: 'blight' }, 'censer') === 'blight' && traceFor({ kind: 'hit' }, 'blow') === null && traceFor({ kind: 'attack', from: 0, to: 'player' }, 'cleave') === null);
+  // the events carry what the trace needs
+  ok('the class events become effects (mark, blight, wild, charge, thrall, thrallhit, thrallfall), the blow its marked / wild flags, the reach its via, the drain its foe', fxFor({ type: 'mark', target: 2 }).kind === 'mark' && fxFor({ type: 'mark', target: 2 }).to === 2
+    && fxFor({ type: 'blight' }).kind === 'blight' && fxFor({ type: 'wild' }).to === 'player' && fxFor({ type: 'charge' }).kind === 'charge' && fxFor({ type: 'thrall' }).kind === 'thrall'
+    && fxFor({ type: 'thrallhit', source: 1, taken: 18 }).taken === 18 && fxFor({ type: 'thrallfall' }).kind === 'thrallfall'
+    && fxFor({ type: 'atk', target: 0, dmg: 5, marked: true, wild: true }).marked === true && fxFor({ type: 'atk', target: 0, dmg: 5 }).wild === false
+    && fxFor({ type: 'spill', target: 1, dmg: 3, via: 'cleave' }).via === 'cleave' && fxFor({ type: 'heal', healed: 9, drain: true, target: 2 }).from === 2 && fxFor({ type: 'heal', healed: 9 }).drain === false);
+  getProfile().hero = { id: 'hexhunter', look: 0 };
+  const hx = room(as('hexhunter'), [foe(100000), foe(100000)]);
+  heavy(hx, 1);
+  const onMark = playerAttack(hx, 1, false).find((e) => e.type === 'atk');
+  ok('a blow on the hexed foe carries marked (the sigil flares); the Druid\'s feral blow carries wild', onMark.marked === true && (() => { const d = room(as('druid'), [foe(100000)]); heavy(d, 0); return playerAttack(d, 0, false).find((e) => e.type === 'atk').wild === true; })());
+  const nc = room(as('necromancer'), [foe(100000)]);
+  ok('the drain\'s heal names its foe', (() => { const r = nc.run; r.hp = 1; const ev = heavy(nc, 0).find((e) => e.type === 'heal'); return ev?.drain === true && ev.target === 0; })());
+  getProfile().hero = null;
+}

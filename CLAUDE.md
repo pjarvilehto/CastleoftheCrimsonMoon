@@ -436,7 +436,31 @@ pattern: a layer whose opacity breathes — the low-HP bar, the summon
 bar, the record tag); a phone shows the figures without the
 drop-shadow filter (an iOS re-render per frame on a looping layer) and
 the rarity / low-HP text without its breathing (`styles.css` section 16). The benchmark draws all of it from 0.183 on (its numbers moved
-with it). **Particles** (looks
+with it). **The classes' particles (0.00268, the developer's ask: each class's
+attacks unique):** a blow by the hero lays the class's own trace over the
+foe's material burst — `particleLooks.js spawnClassBurst(look, x, y, {
+size, dir, kind, to })`, pure like `spawnParticles`, palettes `CLASS_PAL`
+(steel, rust, fire, arcane, grave, moss, violet, ochre), the looks
+`CLASS_LOOKS`; `combatFx.js traceFor(fx, heavy)` picks the look from the
+class and the blow (the Knight's heavy a steel clash, his blows none;
+Cleave a crescent arc swung through the foe with embers, its reach a
+smaller one, the Barbarian's blows embers; Fireball an amber bloom with
+cinders and smoke on every foe it takes, the Wizard's blows an arcane
+flash; Soul Drain wisps torn out of the foe that seek the Necromancer's
+card — `to`, a dot with `tx` / `ty` / `pull`, gone on arrival — his blows
+grave motes; the Druid's feral blows three rakes and leaves, before the
+shape one; a blow on the hexed foe flares the sigil, the Hexhunter's
+others violet sparks; the Plague Sister's blows a swing of the censer,
+the blight's gnawing a wisp of it) and the class events burst on their
+own (`playFx`: the Hex a turning pentagram in a ring, Last Rites the
+censer's smoke on every foe, Go Feral leaves from the Druid with a green
+light, a charge back, the thrall's rise, a blow it took — the attacker
+lunges, a green THRALL number — and its crumbling). The events say what
+the blow was (`combat.js`: `marked` / `wild` on the blow, `via` on a
+heavy's reach and the blight tick, `drain` + `target` on the heal). Three
+kinds joined the renderer: `puff` (soft smoke, source-over under the
+glow pass, growing; thinned with the rest), `sigil`, `arc`. The tests
+are in `classes.test.mjs`. **Particles** (looks
 0.128, picked in the Particle Lab): `ui/particleLooks.js` says what a burst
 is — `MATERIAL` per enemy id (default blood), `STYLE_OF` per material:
 blood = Ink & Gore (ink slash, stretched blobs, floor splats); bone,
