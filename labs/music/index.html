@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Crimson Moon Music Lab</title>
+<!-- labs/music/ (0.00273): the generated scores tools/gen-score.mjs made
+     (assets/data/music-art.json, the briefs in docs/music-prompts.md) beside
+     the procedural bed the game plays today, bed by bed, over the bed's own
+     painting. Every take plays LEVEL-MATCHED (its measured LUFS brought to
+     one level through a gain node), SYNC keeps the playing position when you
+     switch takes (an A/B at the same bar), BLIND shuffles the takes — the
+     game's own among them — and hides the models until you reveal them.
+     Approve / Reject with a note; the panel queues re-rolls (model, count,
+     hint, the painting for Lyria). COPY JSON packs the verdicts and re-rolls
+     for node tools/gen-score.mjs --rerender. The base href keeps the game's
+     relative paths. -->
+<base href="../../">
+<link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+@font-face { font-family: "D-DIN Condensed"; src: url("assets/fonts/D-DINCondensed-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+:root { --panel: rgba(16, 11, 8, 0.9); --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a; --blood: #a01818; --ok: #4f9a5c; --no: #b23a3a;
+  --display: "D-DIN Condensed", "Oswald", "Arial Narrow", sans-serif; --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif; --panel-w: 360px; }
+html, body { margin: 0; height: 100%; background: #0d0808; color: var(--parchment); font-family: var(--body); }
+body { overflow: hidden; }
+#room { position: fixed; inset: 0; background: #0d0808 center / cover no-repeat; transition: background-image 0.6s; }
+#room::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0.35), rgba(0,0,0,0.78)); }
+/* ---- the top bar ---- */
+#main { position: fixed; left: 16px; top: 14px; right: calc(var(--panel-w) + 16px); bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 12px; }
+body.nopanel #main { right: 16px; }
+.top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.top h1 { font-family: var(--display); font-weight: 700; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 6px #000; }
+.top .labs-link { color: var(--gold); font-family: var(--display); letter-spacing: 0.1em; text-decoration: none; text-shadow: 0 2px 6px #000; }
+.top .hint { color: var(--muted); font-size: 0.85rem; text-shadow: 0 1px 4px #000; flex-basis: 100%; }
+button, select { font-family: var(--display); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--parchment); background: linear-gradient(180deg, #2a2416, #1a160d); border: 1px solid #6b5520; border-radius: 4px; padding: 6px 12px 4px; cursor: pointer; min-width: 0; }
+button:hover, select:hover { border-color: var(--gold); color: #fff; }
+button.on { background: var(--gold); color: #1a1208; border-color: var(--gold); }
+select { text-transform: none; letter-spacing: 0.04em; }
+#beds, #toggles { display: flex; gap: 4px; flex-wrap: wrap; }
+/* ---- the brief and the takes ---- */
+#brief { color: var(--parchment); text-shadow: 0 1px 4px #000; font-size: 0.95rem; max-width: 90ch; }
+#brief b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); font-size: 1.15rem; margin-right: 8px; }
+#takes { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; align-content: start; }
+.take { background: rgba(10, 7, 5, 0.84); border: 1px solid var(--line); border-radius: 5px; padding: 10px; display: grid; gap: 6px; }
+.take.playing { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.take.ok { border-left: 4px solid var(--ok); } .take.no { border-left: 4px solid var(--no); }
+.take .head { display: flex; gap: 10px; align-items: center; }
+.take .play { width: 44px; height: 44px; padding: 0; font-size: 1.2rem; flex: none; border-radius: 50%; }
+.take .name { display: grid; line-height: 1.2; min-width: 0; }
+.take .name b { font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); font-size: 1.15rem; }
+.take .name .meta { color: var(--muted); font-size: 0.85rem; }
+.take.current .name b::after { content: " · in the game"; color: var(--ok); }
+.take .key { margin-left: auto; color: var(--muted); font-family: var(--display); font-size: 1.1rem; }
+.wave { position: relative; height: 54px; cursor: pointer; background: rgba(0,0,0,0.35); border-radius: 3px; overflow: hidden; }
+.wave canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wave .head-line { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--gold); left: 0; pointer-events: none; }
+.wave .loopmark { position: absolute; top: 0; bottom: 0; border-left: 1px dashed rgba(201,162,39,0.6); pointer-events: none; }
+.wave .time { position: absolute; right: 4px; bottom: 2px; font-size: 0.75rem; color: var(--muted); text-shadow: 0 1px 2px #000; pointer-events: none; }
+.take .verdict { display: flex; gap: 4px; flex-wrap: wrap; }
+.take .verdict button { font-size: 0.9rem; padding: 3px 8px 2px; }
+.take .verdict button.on-ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.take .verdict button.on-no { background: var(--no); border-color: var(--no); color: #fff; }
+.take input[type=text] { font: 14px var(--body); width: 100%; box-sizing: border-box; background: rgba(10, 7, 5, 0.85); color: var(--parchment); border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px; }
+.take details { font-size: 0.8rem; color: var(--muted); }
+.take details pre { white-space: pre-wrap; max-height: 12em; overflow-y: auto; font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace; }
+/* ---- the panel ---- */
+#panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(var(--panel-w), 92vw); z-index: 60; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); backdrop-filter: blur(6px); padding: 14px 16px 40px; box-sizing: border-box; font-size: 15px; }
+body.nopanel #panel { display: none; }
+#panel h2 { font-family: var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-size: 1.05rem; margin: 14px 0 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+#panel h2:first-child { border-top: 0; margin-top: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 2px 0 8px; }
+label.c { display: grid; grid-template-columns: 6em 1fr; gap: 8px; align-items: center; font-size: 0.9rem; margin: 4px 0; }
+#panel input[type=text], #panel input[type=number], textarea { width: 100%; box-sizing: border-box; background: #0a0705; color: var(--parchment); border: 1px solid var(--line); border-radius: 4px; font: 14px/1.35 var(--body); padding: 6px; }
+textarea { font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; }
+#volume { width: 100%; }
+#status { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+@media (max-width: 760px) { :root { --panel-w: 0px; } #panel { width: 100vw; } }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="main">
+<div class="top">
+  <a class="labs-link" href="labs/">‹ Labs</a>
+  <h1>Music Lab</h1>
+  <span id="beds"></span>
+  <span id="toggles"></span>
+  <span class="hint">←/→ bed · 1-9 play a take · Space pause / resume · click the waveform to seek · S sync · B blind · L level-match · P panel</span>
+</div>
+<div id="brief"></div>
+<div id="takes"></div>
+</div>
+<aside id="panel"></aside>
+<!-- the versioned boot (labs/boot.js): this lab's script under ?v=<build> -->
+<script src="labs/boot.js" data-lab="labs/music/lab.js"></script>
+</body>
+</html>

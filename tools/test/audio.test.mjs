@@ -443,3 +443,38 @@ fresh();
   ok('a touch\'s end is the first gesture, and the callback runs once whatever follows', GESTURE_EVENTS.includes('touchend') && GESTURE_EVENTS.includes('pointerup') && fired === 1);
   fa.restore();
 }
+
+// 0.00273: generated scores (the music thread's bake-off). The briefs in
+// docs/music-prompts.md -> tools/gen-score.mjs (ElevenLabs Music as a
+// composition plan, Lyria 3 Pro with timestamps and optionally the bed's
+// painting, Stable Audio 2.5) -> assets/audio/candidates + music-art.json ->
+// the Music Lab (labs/music/), level-matched beside the bed the game plays.
+{
+  const { parseScore, planFor, lyriaPrompt, stablePrompt, requestFor, applyVerdicts, MODELS, BAKEOFF } = await import('../gen-score.mjs');
+  const doc = parseScore(readFileSync('docs/music-prompts.md', 'utf8'));
+  const tracks = Object.keys(DATA.audio.music.tracks);
+  ok('music-prompts.md: a brief per music bed, its sections back to back from 0:00 to its length, its painting in the game',
+    doc.style.length > 100 && doc.avoid.includes('vocals') && tracks.every((id) => doc.beds.some((b) => b.id === id))
+    && doc.beds.every((b) => b.line && b.global.length >= 4 && b.sections.length >= 3 && b.sections[0].from === 0 && b.sections.at(-1).to === b.seconds
+      && b.sections.every((s, i) => i === 0 || s.from === b.sections[i - 1].to) && statSync(`assets/bg/${b.painting}`).isFile()), doc.beds.map((b) => b.id).join());
+  const bed = doc.beds.find((b) => b.id === 'combat');
+  const plan = planFor(doc, bed, 'more brass');
+  ok('the requests: ElevenLabs a composition plan (sections in ms, the avoid list negative), Lyria the timestamps and the painting lead, Stable Audio no structure and the asked length',
+    plan.sections.reduce((s, x) => s + x.duration_ms, 0) === bed.seconds * 1000 && plan.negative_global_styles.includes('vocals') && plan.positive_global_styles.includes('more brass')
+    && lyriaPrompt(doc, bed).includes('[0:00 - 0:16]') && lyriaPrompt(doc, bed, '', true).startsWith('The attached painting') && !stablePrompt(doc, bed).includes('[0:00')
+    && requestFor(doc, bed, { model: 'stable', n: 1 }).input.duration === bed.seconds && requestFor(doc, bed, { model: 'eleven', n: 1 }).body.model_id === 'music_v1'
+    && BAKEOFF.models.every((m) => MODELS[m]));
+  const reg = JSON.parse(readFileSync('assets/data/music-art.json', 'utf8'));
+  const all = Object.values(reg.beds).flatMap((e) => e.candidates);
+  ok('music-art.json: every take is on disk with its model, length and loudness, numbered once per bed; the shipped beds are measured',
+    all.length >= 12 && all.every((k) => statSync(k.file).isFile() && k.file.startsWith('assets/audio/candidates/') && Number.isFinite(k.lufs) && k.seconds > 30 && k.label && (k.plan || k.prompt))
+    && Object.values(reg.beds).every((e) => new Set(e.candidates.map((k) => k.n)).size === e.candidates.length)
+    && tracks.every((id) => reg.beds[id]?.current?.file === DATA.audio.music.tracks[id].file && Number.isFinite(reg.beds[id].current.lufs)), `${all.length} takes`);
+  const copy = structuredClone(reg), [a, b2] = Object.values(copy.beds).flatMap((e) => e.candidates);
+  applyVerdicts(copy, { approved: [{ id: 'x', file: a.file, note: 'the one' }], rejected: [{ id: 'x', file: b2.file, note: 'too busy' }, { id: 'title', file: 'assets/audio/music-title-v2.mp3', current: true }] });
+  ok('--rerender records the lab\'s verdicts and notes (a verdict on the game\'s own bed changes nothing)', a.verdict === 'ok' && a.note === 'the one' && b2.verdict === 'no' && b2.note === 'too busy');
+  const lab = readFileSync('labs/music/index.html', 'utf8'), js = readFileSync('labs/music/lab.js', 'utf8');
+  ok('the Music Lab: booted versioned over the site root, linked from the menu, level-matched by the measured LUFS, verdicts copied for --rerender',
+    lab.includes('<base href="../../">') && lab.includes('name="robots" content="noindex"') && lab.includes('<script src="labs/boot.js" data-lab="labs/music/lab.js"') && lab.includes('class="labs-link" href="labs/"')
+    && readFileSync('labs/index.html', 'utf8').includes('href="music/" data-lab="music"') && js.includes('createMediaElementSource') && js.includes('TARGET_LUFS - t.lufs') && js.includes("download: 'music-rerender.json'"));
+}

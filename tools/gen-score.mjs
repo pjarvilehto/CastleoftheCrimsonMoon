@@ -1,0 +1,245 @@
+#!/usr/bin/env node
+// Generated scores for the five music beds (0.00273, the music thread's
+// bake-off). The briefs live in docs/music-prompts.md (a style block, a
+// common avoid list, per bed a line, global styles and timed sections);
+// every candidate is kept (assets/audio/candidates/<bed>_c<n>.mp3, 192 kbps,
+// never overwritten) and recorded in assets/data/music-art.json with its
+// model, seed, prompt or plan, length and integrated loudness (LUFS, so the
+// Music Lab plays every take at one level). Lab-only until a bed is
+// imported: nothing here touches what the game plays.
+//
+//   node tools/gen-score.mjs --dry-run                  # what would be sent, to which model
+//   node tools/gen-score.mjs --bakeoff                  # title + combat on every model (BAKEOFF), two takes each
+//   node tools/gen-score.mjs --only shrine --model eleven --n 3   # one bed, one model, three takes
+//   node tools/gen-score.mjs --only boss --model lyria --image   # Lyria with the bed's painting as its picture
+//   node tools/gen-score.mjs --hint "more organ"        # a direction added to the bed's line
+//   node tools/gen-score.mjs --rerender music-rerender.json   # the Music Lab's verdicts (labs/music/): records the
+//                                                       # approvals and rejections (+ notes), generates the re-rolls
+//                                                       # ({ id, model, n, hint, image })
+//   node tools/gen-score.mjs --measure                  # (re)measure the shipped beds' loudness for the lab
+//
+// The models: ElevenLabs Music by its own API (a composition plan: global
+// styles, an avoid list, a section per timestamp; ELEVENLABS_API_KEY), Lyria
+// 3 Pro and Stable Audio 2.5 on Replicate (REPLICATE_API_TOKEN or
+// REPLICATE_KEY). Needs ffmpeg (transcode + EBU R128 loudness). Run with
+// NODE_USE_ENV_PROXY=1 behind a proxy.
+
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { token, predict } from './replicate.mjs';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const DOC = join(ROOT, 'docs', 'music-prompts.md');
+const OUT = join(ROOT, 'assets', 'audio', 'candidates');
+const REGISTRY = join(ROOT, 'assets', 'data', 'music-art.json');
+const AUDIO = join(ROOT, 'assets', 'data', 'audio.json');
+const WEB = 'assets/audio/candidates';
+
+export const DEFAULTS = { n: 2, concurrency: 3, bitrate: '192k' };
+/** The bake-off: two beds, every model; Lyria's second take scores the bed's painting. */
+export const BAKEOFF = { beds: ['title', 'combat'], models: ['eleven', 'lyria', 'stable'] };
+
+/** The doc: { style, avoid: [], beds: [{ id, name, seconds, painting, line, global: [], avoid: [], sections: [{ from, to, name, styles }] }] }. */
+export function parseScore(md) {
+  const block = md.match(/## Style block[\s\S]*?```\n([\s\S]*?)```/);
+  if (!block) throw new Error('music-prompts.md: no style block');
+  const list = (s = '') => s.split(',').map((x) => x.trim()).filter(Boolean);
+  const avoid = list(md.match(/^Avoid \(every bed\): `([^`]+)`/m)?.[1]);
+  const secs = (t) => { const [m, s] = t.split(':').map(Number); return m * 60 + s; };
+  const beds = [];
+  for (const part of md.split(/^### /m).slice(1)) {
+    const head = part.match(/^(\w+) — (.+)$/m);
+    if (!head) continue;
+    const field = (k) => part.match(new RegExp(`^${k}: (.+)$`, 'm'))?.[1].trim();
+    const sections = [...part.matchAll(/^- (\d+:\d\d)-(\d+:\d\d) ([^:]+): (.+)$/gm)].map((m) => ({ from: secs(m[1]), to: secs(m[2]), name: m[3].trim(), styles: list(m[4]) }));
+    beds.push({ id: head[1], name: head[2].trim(), seconds: Number(field('Seconds')), painting: field('Painting'), line: field('Line'), global: list(field('Global')), avoid: list(field('Avoid')), sections });
+  }
+  if (!beds.length) throw new Error('music-prompts.md: no beds');
+  return { style: block[1].trim(), avoid, beds };
+}
+const stamp = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const avoidOf = (doc, bed) => [...new Set([...doc.avoid, ...bed.avoid])];
+
+/** ElevenLabs' composition plan: the bed's styles global, a section per timestamp (the hint joins the global styles). */
+export function planFor(doc, bed, hint = '') {
+  return {
+    positive_global_styles: ['dark cinematic orchestral', 'gothic fantasy game score', 'instrumental', 'D minor', 'long stone-hall reverb', ...bed.global, ...(hint ? [hint] : [])],
+    negative_global_styles: avoidOf(doc, bed),
+    sections: bed.sections.map((s) => ({ section_name: s.name, positive_local_styles: s.styles, negative_local_styles: [], duration_ms: (s.to - s.from) * 1000, lines: [] })),
+  };
+}
+/** Lyria's prompt: the style block, the line, the styles, the sections as timestamps; with a picture, a lead naming it. */
+export function lyriaPrompt(doc, bed, hint = '', image = false) {
+  const lead = image ? 'The attached painting is the scene this music plays under: score it. ' : '';
+  return `${lead}${doc.style} ${bed.line}${hint ? ` ${hint}.` : ''} Instrumentation and mood: ${bed.global.join(', ')}. Avoid: ${avoidOf(doc, bed).join(', ')}. Length ${stamp(bed.seconds)}. Structure: ${bed.sections.map((s) => `[${stamp(s.from)} - ${stamp(s.to)}] ${s.name}: ${s.styles.join(', ')}.`).join(' ')}`;
+}
+/** Stable Audio's prompt: no structure (it ignores it), the style, the line, the styles. */
+export function stablePrompt(doc, bed, hint = '') {
+  return `${doc.style} ${bed.line}${hint ? ` ${hint}.` : ''} ${bed.global.join(', ')}.`;
+}
+
+export const MODELS = {
+  eleven: { label: 'ElevenLabs Music', model: 'elevenlabs/music_v1' },
+  lyria: { label: 'Lyria 3 Pro', model: 'google/lyria-3-pro' },
+  stable: { label: 'Stable Audio 2.5', model: 'stability-ai/stable-audio-2.5' },
+};
+export function seedFor(id, n) {
+  let h = 2166136261;
+  for (const ch of `score/${id}/${n}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  return h % 2147483647;
+}
+/** What a job sends: { model, request } — pure, for --dry-run and the tests. */
+export function requestFor(doc, bed, job) {
+  const seed = seedFor(bed.id, job.n);
+  if (job.model === 'eleven') return { seed: null, plan: planFor(doc, bed, job.hint), body: { composition_plan: planFor(doc, bed, job.hint), model_id: 'music_v1' } };
+  if (job.model === 'lyria') return { seed, prompt: lyriaPrompt(doc, bed, job.hint, job.image), input: { prompt: lyriaPrompt(doc, bed, job.hint, job.image), seed } };
+  if (job.model === 'stable') return { seed, prompt: stablePrompt(doc, bed, job.hint), input: { prompt: stablePrompt(doc, bed, job.hint), duration: Math.min(190, bed.seconds), seed, steps: 8 } };
+  throw new Error(`unknown model ${job.model} (${Object.keys(MODELS)})`);
+}
+
+const loadRegistry = () => (existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : { beds: {} });
+function saveRegistry(reg) {
+  writeFileSync(REGISTRY, JSON.stringify({ _doc: 'Generated by tools/gen-score.mjs: per music bed the candidates generated (assets/audio/candidates/<bed>_c<n>.mp3), their model, seed, prompt or composition plan, length and integrated loudness (lufs), the shipped bed\'s loudness (current), and the Music Lab\'s verdicts.', beds: reg.beds }, null, 2) + '\n');
+}
+const entryFor = (reg, bed) => { const e = (reg.beds[bed.id] ??= { name: bed.name, candidates: [] }); e.name = bed.name; e.painting = bed.painting; e.line = bed.line; return e; };
+const nextN = (entry) => entry.candidates.reduce((m, k) => Math.max(m, k.n), 0) + 1;
+/** The lab's verdicts into the registry (pure): { approved: [{ id, file }], rejected: [{ id, file, note }] }. */
+export function applyVerdicts(reg, req) {
+  const all = Object.values(reg.beds).flatMap((e) => e.candidates);
+  for (const a of req.approved ?? []) { const k = all.find((x) => x.file === a.file); if (k) { k.verdict = 'ok'; if (a.note) k.note = a.note; else delete k.note; } }
+  for (const r of req.rejected ?? []) { const k = all.find((x) => x.file === r.file); if (k) { k.verdict = 'no'; if (r.note) k.note = r.note; else delete k.note; } }
+  return { approved: (req.approved ?? []).length, rejected: (req.rejected ?? []).length };
+}
+
+// ---- audio: transcode and measure (ffmpeg) ----
+/** Integrated loudness (EBU R128, LUFS) and length of a file. */
+export function measure(path) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', path, '-af', 'ebur128=framelog=quiet', '-f', 'null', '-'], { encoding: 'utf8' });
+  const lufs = Number(r.stderr?.match(/I:\s+(-?[\d.]+) LUFS/)?.[1]);
+  const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path], { encoding: 'utf8' }).trim());
+  if (!Number.isFinite(lufs) || !Number.isFinite(seconds)) throw new Error(`could not measure ${path}`);
+  return { lufs: Math.round(lufs * 10) / 10, seconds: Math.round(seconds * 10) / 10 };
+}
+function toMp3(src, dest) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-y', '-i', src, '-vn', '-ac', '2', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', DEFAULTS.bitrate, dest], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`ffmpeg: ${r.stderr.slice(-300)}`);
+}
+
+// ---- the providers ----
+async function eleven(body) {
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) throw new Error('ELEVENLABS_API_KEY is not set');
+  for (const fmt of ['mp3_44100_192', 'mp3_44100_128']) { // (192 kbps needs a Creator plan; 128 is every plan's)
+    const res = await fetch(`https://api.elevenlabs.io/v1/music?output_format=${fmt}`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) return Buffer.from(await res.arrayBuffer());
+    const text = (await res.text()).slice(0, 400);
+    if (fmt === 'mp3_44100_192' && /output_format|subscription|tier/i.test(text)) continue;
+    throw new Error(`ElevenLabs: HTTP ${res.status} ${text}`);
+  }
+}
+/** The painting as a data URI (the game's 2048x1152 JPEG, ~370 KB: sent as it is, no resize — no sharp needed). */
+function inlinePainting(file) {
+  return `data:image/jpeg;base64,${readFileSync(join(ROOT, 'assets', 'bg', file)).toString('base64')}`;
+}
+async function generate(doc, bed, job) {
+  const req = requestFor(doc, bed, job);
+  if (job.model === 'eleven') return { bytes: await eleven(req.body), req };
+  const input = { ...req.input };
+  if (job.image) input.images = [inlinePainting(bed.painting)];
+  const out = await predict(MODELS[job.model].model, input);
+  return { bytes: out.bytes, req, version: out.version, predictTime: out.metrics?.predict_time };
+}
+
+// ---- the run ----
+async function pool(jobs, n, fn) {
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, jobs.length) }, async () => { while (i < jobs.length) await fn(jobs[i++]); }));
+}
+function measureCurrent(reg, doc) {
+  const tracks = JSON.parse(readFileSync(AUDIO, 'utf8')).music.tracks;
+  for (const bed of doc.beds) {
+    const t = tracks[bed.id];
+    if (!t) continue;
+    const e = entryFor(reg, bed);
+    if (e.current?.file === t.file && Number.isFinite(e.current.lufs)) continue;
+    e.current = { file: t.file, loopS: t.loopS, ...measure(join(ROOT, t.file)) };
+    console.log(`current ${bed.id}: ${e.current.lufs} LUFS, ${e.current.seconds} s`);
+  }
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const has = (f) => argv.includes(f);
+  const val = (f) => (argv.includes(f) ? argv[argv.indexOf(f) + 1] : undefined);
+  const doc = parseScore(readFileSync(DOC, 'utf8'));
+  const bedOf = (id) => doc.beds.find((b) => b.id === id) ?? (() => { throw new Error(`no bed "${id}" in docs/music-prompts.md`); })();
+  const reg = loadRegistry();
+
+  let wanted = []; // [{ id, model, n (count), hint, image }]
+  if (has('--rerender')) {
+    const req = JSON.parse(readFileSync(val('--rerender'), 'utf8'));
+    const v = applyVerdicts(reg, req);
+    console.log(`verdicts: ${v.approved} approved, ${v.rejected} rejected`);
+    wanted = (req.reroll ?? []).map((r) => ({ id: r.id, model: r.model, count: r.n ?? 1, hint: r.hint ?? '', image: !!r.image }));
+  } else if (has('--bakeoff') || has('--only') || has('--model')) {
+    const beds = val('--only')?.split(',') ?? (has('--bakeoff') ? BAKEOFF.beds : doc.beds.map((b) => b.id));
+    const models = val('--model')?.split(',') ?? BAKEOFF.models;
+    const count = Number(val('--n') ?? DEFAULTS.n);
+    for (const id of beds) for (const model of models) {
+      if (model === 'lyria' && has('--bakeoff') && !has('--image')) { // the bake-off's Lyria: one take on text alone, one scoring the painting
+        wanted.push({ id, model, count: Math.ceil(count / 2), hint: val('--hint') ?? '', image: false }, { id, model, count: Math.floor(count / 2), hint: val('--hint') ?? '', image: true });
+      } else wanted.push({ id, model, count, hint: val('--hint') ?? '', image: has('--image') });
+    }
+  }
+  // number the takes now, in order (the runs finish in any order)
+  const jobs = [];
+  const taken = {};
+  for (const w of wanted) {
+    const bed = bedOf(w.id), e = entryFor(reg, bed);
+    if (!MODELS[w.model]) throw new Error(`unknown model ${w.model} (${Object.keys(MODELS)})`);
+    for (let i = 0; i < w.count; i++) {
+      taken[w.id] = Math.max(taken[w.id] ?? 0, nextN(e) - 1) + 1;
+      jobs.push({ bed, model: w.model, n: taken[w.id], hint: w.hint, image: w.image && w.model === 'lyria' });
+    }
+  }
+
+  if (has('--dry-run')) {
+    for (const j of jobs) { const r = requestFor(doc, j.bed, j); console.log(`\n${j.bed.id}_c${j.n} · ${MODELS[j.model].label}${j.image ? ` + ${j.bed.painting}` : ''}`); console.log(r.plan ? JSON.stringify(r.plan, null, 1) : r.prompt); }
+    console.log(`\n${jobs.length} takes`);
+    return;
+  }
+  if (jobs.some((j) => j.model !== 'eleven') && !token()) throw new Error('REPLICATE_API_TOKEN (or REPLICATE_KEY) is not set');
+  mkdirSync(OUT, { recursive: true });
+  measureCurrent(reg, doc);
+  saveRegistry(reg);
+  if (!jobs.length && !has('--rerender') && !has('--measure')) { console.log('nothing to do: --bakeoff, --only <bed>, --model <m>, --rerender <json> or --measure'); return; }
+  let done = 0, failed = 0;
+  await pool(jobs, Number(val('--concurrency') ?? DEFAULTS.concurrency), async (j) => {
+    const name = `${j.bed.id}_c${j.n}`, t0 = Date.now();
+    try {
+      const out = await generate(doc, j.bed, j);
+      const raw = join(tmpdir(), `${name}.raw`), dest = join(OUT, `${name}.mp3`);
+      if (existsSync(dest)) throw new Error(`${dest} exists (never overwritten)`);
+      writeFileSync(raw, out.bytes);
+      toMp3(raw, dest);
+      unlinkSync(raw);
+      const m = measure(dest);
+      const e = entryFor(reg, j.bed);
+      e.candidates.push({ n: j.n, file: `${WEB}/${name}.mp3`, model: MODELS[j.model].model, label: MODELS[j.model].label, ...(j.image ? { image: j.bed.painting } : {}), ...(j.hint ? { hint: j.hint } : {}), seed: out.req.seed, ...(out.req.plan ? { plan: out.req.plan } : { prompt: out.req.prompt }), ...(out.version ? { version: out.version } : {}), asked: j.bed.seconds, ...m, at: new Date().toISOString() });
+      e.candidates.sort((a, b) => a.n - b.n);
+      saveRegistry(reg);
+      done++;
+      console.log(`✓ ${name} · ${MODELS[j.model].label}${j.image ? ' + painting' : ''} · ${m.seconds} s · ${m.lufs} LUFS · ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+    } catch (err) {
+      failed++;
+      console.error(`✗ ${name} · ${MODELS[j.model].label}: ${err.message}`);
+    }
+  });
+  console.log(`${done} takes made${failed ? `, ${failed} failed` : ''} → ${WEB}/, assets/data/music-art.json; listen in labs/music/`);
+  if (failed) process.exitCode = 1;
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main().catch((e) => { console.error(e.message); process.exit(1); });
