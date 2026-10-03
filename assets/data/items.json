@@ -4,64 +4,67 @@
     "slot": "weapon",
     "tier": 1,
     "art": "rusty_sword_v1.webp",
-    "dmg": 4
+    "dmg": 6
   },
   "knights_blade": {
     "name": "Knight's Blade",
     "slot": "weapon",
     "tier": 2,
     "art": "knights_blade_v1.webp",
-    "dmg": 9
+    "dmg": 14
   },
   "executioner_axe": {
     "name": "Executioner's Axe",
     "slot": "weapon",
     "tier": 3,
     "art": "executioner_axe_v1.webp",
-    "dmg": 16
+    "dmg": 24
   },
   "oak_shield": {
     "name": "Oak Shield",
     "slot": "armor",
     "tier": 1,
     "art": "oak_shield_v1.webp",
-    "armor": 30
+    "armor": 40,
+    "hp": 80
   },
   "plate_armor": {
     "name": "Plate Armor",
     "slot": "armor",
     "tier": 2,
     "art": "plate_armor_v1.webp",
-    "armor": 80
+    "armor": 110,
+    "hp": 130
   },
   "dragonscale_mail": {
     "name": "Dragonscale Mail",
     "slot": "armor",
     "tier": 3,
     "art": "dragonscale_mail_v1.webp",
-    "armor": 140
+    "armor": 195,
+    "hp": 180
   },
   "traveler_boots": {
     "name": "Traveler's Boots",
     "slot": "boots",
     "tier": 1,
     "art": "traveler_boots_v1.webp",
-    "hp": 80
+    "hp": 20
   },
   "knights_greaves": {
     "name": "Knight's Greaves",
     "slot": "boots",
     "tier": 2,
     "art": "knights_greaves_v1.webp",
-    "armor": 30,
-    "hp": 100
+    "armor": 6,
+    "hp": 30
   },
   "ring_of_might": {
     "name": "Ring of Might",
     "slot": "ring",
     "tier": 1,
     "art": "ring_of_might_v1.webp",
-    "dmg": 3
+    "dmg": 1
   },
   "vampiric_ring": {
     "name": "Vampiric Ring",
@@ -75,7 +78,7 @@
     "slot": "ring",
     "tier": 2,
     "art": "ring_of_protection_v1.webp",
-    "armor": 40
+    "armor": 8
   },
   "lucky_charm": {
     "name": "Lucky Charm",
@@ -90,15 +93,15 @@
     "tier": 2,
     "art": "hunters_talisman_v1.webp",
     "crit": 0.08,
-    "dmg": 3
+    "dmg": 1
   },
   "moonstriders": {
     "name": "Moonstriders",
     "slot": "boots",
     "tier": 3,
     "art": "moonstriders_v1.webp",
-    "armor": 40,
-    "hp": 140
+    "armor": 12,
+    "hp": 40
   },
   "fang_of_the_crimson_moon": {
     "name": "Fang of the Crimson Moon",
@@ -113,14 +116,14 @@
     "slot": "amulet",
     "tier": 1,
     "art": "amulet_of_vigor_v1.webp",
-    "hp": 150
+    "hp": 20
   },
   "amulet_of_the_crimson_moon": {
     "name": "Amulet of the Crimson Moon",
     "slot": "amulet",
     "tier": 3,
     "art": "amulet_of_the_crimson_moon_v1.webp",
-    "dmg": 6,
+    "dmg": 2,
     "lifesteal": 0.3
   },
   "ritual_dagger": {
@@ -128,7 +131,7 @@
     "slot": "weapon",
     "tier": 2,
     "art": "ritual_dagger_v1.webp",
-    "dmg": 6,
+    "dmg": 9,
     "crit": 0.1
   },
   "crimson_reaver": {
@@ -136,7 +139,7 @@
     "slot": "weapon",
     "tier": 3,
     "art": "crimson_reaver_v1.webp",
-    "dmg": 12,
+    "dmg": 18,
     "lifesteal": 0.5
   },
   "boneplate": {
@@ -144,15 +147,15 @@
     "slot": "armor",
     "tier": 2,
     "art": "boneplate_v1.webp",
-    "armor": 60,
-    "hp": 100
+    "armor": 85,
+    "hp": 230
   },
   "ring_of_the_blood_moon": {
     "name": "Ring of the Blood Moon",
     "slot": "ring",
     "tier": 3,
     "art": "ring_of_the_blood_moon_v1.webp",
-    "dmg": 5,
+    "dmg": 2,
     "crit": 0.08
   },
   "amulet_of_the_leech": {
@@ -161,14 +164,14 @@
     "tier": 2,
     "art": "amulet_of_the_leech_v1.webp",
     "lifesteal": 0.25,
-    "hp": 80
+    "hp": 30
   },
   "moonbrand": {
     "name": "Moonbrand",
     "slot": "weapon",
     "tier": 3,
     "art": "moonbrand_v1.webp",
-    "dmg": 14,
+    "dmg": 21,
     "crit": 0.1
   },
   "crimson_plate": {
@@ -176,16 +179,16 @@
     "slot": "armor",
     "tier": 3,
     "art": "crimson_plate_v1.webp",
-    "armor": 110,
-    "hp": 200
+    "armor": 155,
+    "hp": 360
   },
   "wraithwalkers": {
     "name": "Wraithwalkers",
     "slot": "boots",
     "tier": 3,
     "art": "wraithwalkers_v1.webp",
-    "armor": 20,
-    "hp": 220
+    "armor": 6,
+    "hp": 40
   },
   "ring_of_the_eclipse": {
     "name": "Ring of the Eclipse",
@@ -200,17 +203,17 @@
     "slot": "ring",
     "tier": 3,
     "art": "bloodstone_band_v1.webp",
-    "dmg": 7,
-    "hp": 100
+    "dmg": 3,
+    "hp": 40
   },
   "relic_of_the_first_knight": {
     "name": "Relic of the First Knight",
     "slot": "trinket",
     "tier": 3,
     "art": "relic_of_the_first_knight_v1.webp",
-    "dmg": 4,
-    "armor": 40,
-    "hp": 100
+    "dmg": 2,
+    "armor": 10,
+    "hp": 40
   },
   "amulet_of_the_blood_moon": {
     "name": "Amulet of the Blood Moon",
@@ -218,14 +221,14 @@
     "tier": 3,
     "art": "amulet_of_the_blood_moon_v1.webp",
     "lifesteal": 0.7,
-    "hp": 100
+    "hp": 40
   },
   "fang_of_the_eclipse": {
     "name": "Fang of the Eclipse",
     "slot": "weapon",
     "tier": 4,
     "art": "fang_of_the_eclipse_v1.webp",
-    "dmg": 16,
+    "dmg": 24,
     "crit": 0.1,
     "heavyCd": 1
   },
@@ -234,8 +237,8 @@
     "slot": "armor",
     "tier": 4,
     "art": "bloodmoon_aegis_v1.webp",
-    "armor": 160,
-    "hp": 200,
+    "armor": 225,
+    "hp": 420,
     "thorns": 4
   },
   "umbral_treads": {
@@ -243,8 +246,8 @@
     "slot": "boots",
     "tier": 4,
     "art": "umbral_treads_v1.webp",
-    "armor": 60,
-    "hp": 160,
+    "armor": 15,
+    "hp": 50,
     "dodge": 0.08
   },
   "ring_of_the_red_veil": {
@@ -252,7 +255,7 @@
     "slot": "ring",
     "tier": 4,
     "art": "ring_of_the_red_veil_v1.webp",
-    "dmg": 8,
+    "dmg": 3,
     "dodge": 0.06
   },
   "signet_of_the_blood_pact": {
@@ -260,8 +263,8 @@
     "slot": "ring",
     "tier": 4,
     "art": "signet_of_the_blood_pact_v1.webp",
-    "dmg": 6,
-    "hp": 80,
+    "dmg": 2,
+    "hp": 50,
     "lifesteal": 0.8
   },
   "heart_of_the_dying_moon": {
@@ -269,8 +272,8 @@
     "slot": "trinket",
     "tier": 4,
     "art": "heart_of_the_dying_moon_v1.webp",
-    "hp": 100,
-    "armor": 50,
+    "hp": 50,
+    "armor": 15,
     "revive": 1
   },
   "amulet_of_the_blood_eclipse": {
@@ -278,8 +281,8 @@
     "slot": "amulet",
     "tier": 4,
     "art": "amulet_of_the_blood_eclipse_v1.webp",
-    "hp": 120,
-    "armor": 40,
+    "hp": 50,
+    "armor": 15,
     "lifesteal": 1
   }
 }

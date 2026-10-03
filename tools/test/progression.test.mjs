@@ -177,8 +177,8 @@ fresh();
   ok('forge cost T3 lvl0 = 150c', forgeCost('moonbrand') === 150);
   ok('forge item to +1', forgeItem('moonbrand') && p.forged.moonbrand === 1 && p.coins === 9850);
   const boosted = itemWithForge('moonbrand');
-  ok('forge boosts stats 20%', boosted.dmg === Math.round(14 * 1.2) && boosted.forgeLvl === 1);
-  ok('derived dmg includes forge boost', derivedStats(p).dmg === 6 + Math.round(14 * 1.2));
+  ok('forge boosts stats 20%', boosted.dmg === Math.round(DATA.items.moonbrand.dmg * 1.2) && boosted.forgeLvl === 1);
+  ok('derived dmg includes forge boost', derivedStats(p).dmg === 6 + Math.round(DATA.items.moonbrand.dmg * 1.2));
   forgeItem('moonbrand'); forgeItem('moonbrand'); // +2 (300c), +3 (450c)
   ok('forge maxes at +3', forgeMaxed('moonbrand') && !forgeItem('moonbrand') && p.coins === 9100);
 }
@@ -530,6 +530,6 @@ fresh();
   const p = getProfile(), pc = DATA.difficulty.potions;
   ok('fresh profile: current version, data potions, starting gear, same id + name', p.saveVersion === SAVE_VERSION && p.potions === pc.startCount
     && p.potionCap === pc.startCap && p.equipment.weapon === 'rusty_sword' && p.equipment.armor === 'oak_shield' && p.playerId === 'keepme12' && p.name === 'Kept');
-  ok('fresh profile stats from the data', derivedStats(p).maxHp === DATA.difficulty.player.baseHp && derivedStats(p).dmg === DATA.difficulty.player.baseDmg + 4);
+  ok('fresh profile stats from the data', derivedStats(p).maxHp === DATA.difficulty.player.baseHp + (DATA.items.oak_shield.hp ?? 0) && derivedStats(p).dmg === DATA.difficulty.player.baseDmg + DATA.items.rusty_sword.dmg);
   resetProfile();
 }
