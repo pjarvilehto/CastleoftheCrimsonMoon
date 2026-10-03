@@ -1,5 +1,5 @@
 {
-  "version": "0.00226",
+  "version": "0.00227",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00227": [
+      "Card light: every card now draws its glow on a canvas of its own, handed from room to room, instead of copying each card's picture out of one hidden canvas every frame (the iPhone spent 13 ms a tick on that at rest).",
+      "A new benchmark round (0.00226): please run the benchmark again on each device — the Great Hall asks once past room 6, the ?debug BENCHMARK button any time."
+    ],
     "0.00226": [
       "A new typeface: D-DIN Condensed Bold, free to use (Open Font License), replaces the old DIN Condensed — the look is the same, the font is a third of the download"
     ],
@@ -151,9 +155,6 @@
     ],
     "0.00213": [
       "World Lab: the owner's cloud picks — sparser, darker and faster clouds with the world dim beneath them, tighter windows around what is cleared, the sky view a touch lower and steeper"
-    ],
-    "0.00212": [
-      "Housekeeping: the build-number check also runs in the one-commit checkout the test job uses"
     ]
   }
 }
