@@ -1,5 +1,5 @@
 {
-  "version": "0.00260",
+  "version": "0.00261",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00261": [
+      "Housekeeping: the item pictures' notes name the build they came in; nothing changes in the game."
+    ],
     "0.00260": [
       "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
       "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
@@ -142,9 +145,6 @@
     ],
     "0.00247": [
       "Hero Lab: the CHOOSE YOUR HERO screen as a draft — the Curious Knight and four new classes (Barbarian, Wizard, Necromancer, Druid) over any painting, in two layouts (labs/heroes/)."
-    ],
-    "0.00246": [
-      "Docs: a light sweep — the notes say developer where they said owner; the quick start lists the art tools; the handover and the backlog read as of this build (the redrawn portraits and the LoRAs, the Background Lab's stages, the two new rooms); the painting counts"
     ]
   }
 }
