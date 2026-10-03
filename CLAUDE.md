@@ -1710,7 +1710,7 @@ be served stale for ~4 hours.
   its immunities as chips (`enemies.json immune`) and a line of lore
   (`enemies.json lore`, dataCheck wants one per enemy) — no armor (foes have
   none); a tap on the back turns it face up, the card's click does not
-  attack while turned, and a fallen foe collapses face up. A fallen enemy's figure
+  attack while turned, and a fallen foe collapses face up. No tooltips on the cards (0.00300, the developer's call: the hero card's, the name's, the elite star's, the summon bar's, the LOOT row's went — the stats card says it); the ⓘ glows while the name or the ⓘ is hovered (a mouse only). A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards

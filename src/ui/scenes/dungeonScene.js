@@ -209,7 +209,7 @@ export function dungeonScene() {
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
-        lootEl = el('button', { class: 'res-row res-loot none', key: 'i', title: 'Show the loot', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), lootTray = el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js; 0.00299: a button — I opens them too, the one action on the screen that had no key)
+        lootEl = el('button', { class: 'res-row res-loot none', key: 'i', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), lootTray = el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js; 0.00299: a button — I opens them too, the one action on the screen that had no key)
       layer,
       logEl,
       proceed);

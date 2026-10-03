@@ -190,7 +190,7 @@ function invPage(run) {
   });
   const found = () => run.itemsFound?.length ?? 0; // (the tests' bare runs carry no list)
   const count = el('b', {}, String(found()));
-  const finds = el('div', { class: 'inv-finds', role: 'button', tabindex: '0', title: 'Show the loot', onclick: (e) => { e?.stopPropagation?.(); if (found()) openLootDialog(run); } }, 'Finds · ', count, ' ›');
+  const finds = el('div', { class: 'inv-finds', role: 'button', tabindex: '0', onclick: (e) => { e?.stopPropagation?.(); if (found()) openLootDialog(run); } }, 'Finds · ', count, ' ›');
   const page = el('div', { class: 'back-page back-inv' },
     el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list inv-strips' }, ...worn),
     finds, dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
@@ -228,7 +228,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const shownPotions = () => `${Math.max(0, run.potions - held)}/${run.potionCap}`;
   const potionCount = el('span', { class: 'potion-count' }, shownPotions());
   const potionIcon = potionPic('potion-ic');
-  const potions = el('div', { class: 'card-sub potions', title: 'Potions' }, potionIcon ?? 'POTIONS ', potionCount);
+  const potions = el('div', { class: 'card-sub potions' }, potionIcon ?? 'POTIONS ', potionCount);
   const art = heroArt(hero);
   const img = portrait(art, 'player', 'player');
   // Total armor (like the weapon line's total damage), plus the Infusion
@@ -255,7 +255,6 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     plate, gear, img, chip, potions);
   const back = cardBack(run);
   card.append(back.el);
-  card.setAttribute('title', 'Stats and inventory');
   let page = 0, flipping = false;
   card.addEventListener('click', async () => { // front → stats → inventory → front
     if (flipping) return;
@@ -354,7 +353,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
-    ? el('div', { class: 'summon-line', title: `Summons a ${DATA.enemies[DATA.difficulty.boss.summon.enemy].name.toLowerCase()} every ${e.summonEvery} turns` },
+    ? el('div', { class: 'summon-line' },
       el('span', { class: 'summon-text' }, 'SUMMON'), el('div', { class: 'summon-bar' }, meterFill))
     : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
@@ -381,8 +380,8 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' },
-        el('span', { class: 'nm-tap', title: 'Stats', onclick: turn }, name),
-        elite ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null,
+        el('span', { class: 'nm-tap', onclick: turn }, name),
+        elite ? el('span', { class: 'elite-star' }, ' ★') : null,
         el('span', { class: 'info-i nm-i', 'aria-hidden': 'true', onclick: turn }, 'i')),
       el('span', { class: 'lv-badge' }, lv)),
     aura,

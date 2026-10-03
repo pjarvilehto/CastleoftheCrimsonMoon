@@ -886,11 +886,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* A foe's stats card (0.00295, battleLine.js foeBack): a tap on its name (dotted, an ⓘ after it) turns the
    card over — the same back as the hero's, its name, LV, health, attack, its special, its immunities, a line
    of lore; a tap on the back turns it face up. The ⓘ may wrap a long name to a second line. */
-.enemy-char .card-name .nm-tap { cursor: help; text-decoration: underline dotted rgba(201, 162, 39, 0.7); text-underline-offset: 0.18em; }
+.enemy-char .card-name .nm-tap { cursor: pointer; text-decoration: underline dotted rgba(201, 162, 39, 0.7); text-underline-offset: 0.18em; }
 .enemy-char .card-name .nm-i {
-  display: inline-flex; align-items: center; justify-content: center; width: 1.05em; height: 1.05em; margin-left: 0.3em; vertical-align: 0.12em; cursor: help;
+  display: inline-flex; align-items: center; justify-content: center; width: 1.05em; height: 1.05em; margin-left: 0.3em; vertical-align: 0.12em; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s, color 0.2s;
   border: 1px solid rgba(201, 162, 39, 0.75); border-radius: 50%; color: var(--gold); background: rgba(8, 5, 4, 0.55);
   font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: bold; font-size: 0.62em; line-height: 1;
+}
+/* the ⓘ glows while the name or the ⓘ is hovered (0.00300, the developer's call: in place of a tooltip; a mouse only) */
+@media (hover: hover) {
+  .enemy-char .card-name:has(.nm-tap:hover, .nm-i:hover) .nm-i { border-color: var(--gold); color: #ffe9a8; box-shadow: 0 0 6px rgba(232, 197, 71, 0.85), 0 0 14px rgba(201, 162, 39, 0.5); }
 }
 .enemy-char .foe-back { display: none; }
 .enemy-char.flipped > :not(.card-frame):not(.foe-back) { visibility: hidden; }
