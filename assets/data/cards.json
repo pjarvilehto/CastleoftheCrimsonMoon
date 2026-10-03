@@ -4,7 +4,7 @@
     "amt": 0.4,
     "speed": 0.4,
     "scale": 0.34,
-    "fps": 30,
+    "fps": 60,
     "panelAmt": 0.35, "phone": { "fps": 20 }, "saverFps": 15 },
   "motion": {
     "kickDeg": 21,
