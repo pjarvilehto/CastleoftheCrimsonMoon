@@ -636,7 +636,7 @@ be served stale for ~4 hours.
   name + level or count — over a small muted line, one line on a phone,
   0.00232); `hubScene.js` keeps the hall's table,
   the stat boxes a purchase moved rolling up with the glow (`settleStats`,
-  0.00233: Attack after Power or a forge, Coins / XP never),
+  0.00235: Attack after Power or a forge, Coins / XP never),
   the two assemblies, Descend and the flash. A new player is asked their
   name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —
@@ -1113,7 +1113,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: hubScene.js settleStats' comment says 0.00233 for 0.00235 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)
