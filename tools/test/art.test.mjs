@@ -22,7 +22,9 @@ fresh();
     MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
     && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
     && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && readFileSync('tools/gen-art.mjs', 'utf8').includes("lora_weights: MODELS.lora.weights") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
-  ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('bat') === DEFAULTS.style && styleFor('nobody') === DEFAULTS.style
+  ok('the style reference: the original of the colour family (fire: the Blood Knight, cold: the skeleton), the character\'s own otherwise; --refs sheets = the owner\'s inked sheets',
+    styleFor('ghoul') === 'assets/chars/blood_knight.webp' && styleFor('gargoyle') === 'assets/chars/skeleton.webp' && styleFor('vampire_lord') === null && styleFor('player') === null
+    && styleFor('rat', undefined, 'sheets') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord', undefined, 'sheets') === 'assets/style/wraith.png' && styleFor('bat', undefined, 'sheets') === DEFAULTS.style
     && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));
   const ids = ['player', ...Object.keys(DATA.enemies)].sort();
@@ -94,11 +96,9 @@ fresh();
     ['compare', 'lineup', 'fight'].every((v) => js.includes(`function ${v}()`)) && js.includes("verdict(k, 'ok')") && js.includes("verdict(k, 'no')") && js.includes("'flipped'")
     && js.includes('out.approved.push({ id, file: k.file, flip: !!v.flip })') && js.includes('out.rejected.push({ id, file: k.file, note:') && js.includes('out.reroll.push({ id, n:') && js.includes('out.reroll.push({ id: q.id, clean: q.n })')
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--rerender')"));
-  // 0.194: --prune keeps only the approved candidate of a character that has one; a character without one keeps all
-  const reg = existsSync('assets/data/art.json') ? JSON.parse(readFileSync('assets/data/art.json', 'utf8')) : { chars: {} };
-  const approvedChars = Object.values(reg.chars).filter((e) => e.candidates.some((k) => k.verdict === 'ok'));
-  ok('art.json: a character with an approved candidate carries no other (pruned)', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
-    && approvedChars.every((e) => e.candidates.every((k) => k.verdict === 'ok')), approvedChars.map((e) => `${e.file}: ${e.candidates.length}`).join(', '));
+  // 0.194: --prune keeps only the approved candidate of a character that has one (a later round may add candidates again: an approval can be superseded)
+  ok('gen-art --prune: the approved candidate stays, the others go, files and records', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("e.candidates = e.candidates.filter((k) => k.verdict === 'ok')"));
   if (existsSync('assets/data/art.json')) {
     const reg = JSON.parse(readFileSync('assets/data/art.json', 'utf8'));
     const all = Object.values(reg.chars).flatMap((e) => e.candidates);

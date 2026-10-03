@@ -8,9 +8,9 @@
 //
 //   node tools/gen-art.mjs --dry-run                      # what would be sent, and to which model
 //   node tools/gen-art.mjs --only player,rat,vampire_lord # the pilot: 4 candidates each (--n 3)
-//   node tools/gen-art.mjs --style castle_courtyard.jpg   # a painting as the style reference instead of the
-//                                                         # character's own sheet (assets/style/<id>.png, when
-//                                                         # there is one; else the ossuary); any picture by path
+//   node tools/gen-art.mjs --refs sheets                  # the owner's inked sheets (assets/style/<id>.png) as the
+//                                                         # style reference instead of the originals (STYLE_REF)
+//   node tools/gen-art.mjs --style castle_courtyard.jpg   # any picture by path or painting as the reference
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
 //   node tools/gen-art.mjs --only gargoyle --from-sheet skeleton   # drawn from its line on a style sheet, its old
@@ -90,10 +90,25 @@ export function fromSheetPrompt(doc, c, hint = '') {
 // Kontext far better than a room painting: flat grey, no shadow), else the
 // painting in DEFAULTS.style.
 export const STYLE_DIR = 'assets/style';
+// The style reference (image 2) since the painterly direction (0.00201): the
+// best ORIGINAL portrait of the character's colour family — the originals'
+// rendering is the destination; the inked sheets (--refs sheets) were a
+// detour that cost the glows. A character not listed is its own reference.
+export const STYLE_REF = {
+  fire: { ref: 'blood_knight.webp', ids: ['ghoul', 'hollow_hound', 'crypt_spider', 'blood_knight', 'golem', 'cultist'] },
+  cold: { ref: 'skeleton.webp', ids: ['skeleton', 'wraith', 'bat', 'gargoyle'] },
+};
+export function originalRef(id) {
+  for (const f of Object.values(STYLE_REF)) if (f.ids.includes(id)) return f.ref;
+  return null; // the character's own current portrait
+}
+// The boss's canvas is wide (0.196: its card is twice as wide): the figure is not capped by the old canvas width.
+export const WIDE = { vampire_lord: 1100 };
 // A character without a sheet borrows the nearest one (a hooded skull for the
 // Vampire Lord, a beast for the beasts, armour for the brutes, bone for the stone).
 export const STYLE_NEAREST = { vampire_lord: 'wraith', crypt_spider: 'rat', hollow_hound: 'rat', golem: 'blood_knight', gargoyle: 'skeleton' }; // (not the Shrieker: the rat's sheet made it a rodent, 0.192; the painting keeps its identity)
-export const styleFor = (id, root = ROOT) => {
+export const styleFor = (id, root = ROOT, refs = 'originals') => {
+  if (refs === 'originals') { const r = originalRef(id); return r ? `assets/chars/${r}` : null; } // null: the character's own portrait
   for (const s of [id, STYLE_NEAREST[id]]) if (s && existsSync(join(root, STYLE_DIR, `${s}.png`))) return `${STYLE_DIR}/${s}.png`;
   return DEFAULTS.style;
 };
@@ -151,7 +166,9 @@ const headers = () => ({ Authorization: `Bearer ${token()}` });
 async function inline(path) {
   const S = await sharp();
   const img = S(path), meta = await img.metadata();
+  // a portrait with alpha goes flattened onto the mid-grey the prompt asks for (the model then sees the flat background it is to paint)
   const buf = path.endsWith('.jpg') ? await img.resize({ width: 1024, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
+    : meta.hasAlpha ? await img.flatten({ background: '#8a8a8a' }).resize({ height: 1024, withoutEnlargement: true }).webp({ quality: 90 }).toBuffer()
     : meta.height > 1024 || !path.endsWith('.webp') ? await img.resize({ height: 1024, withoutEnlargement: true }).webp({ quality: 90, alphaQuality: 100 }).toBuffer() : readFileSync(path);
   return `data:${path.endsWith('.jpg') ? 'image/jpeg' : 'image/webp'};base64,${buf.toString('base64')}`;
 }
@@ -191,7 +208,7 @@ export async function portraitFrame(file) {
   return { w: info.width, h: info.height, box: bbox(alpha, info.width, info.height) };
 }
 /** rawPath -> cutPath: keyed out, trimmed, scaled onto the reference portrait's canvas. Returns the cut record. */
-export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, paper = true, holes = true, flip = false } = {}) {
+export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULTS.tolerance, shadow = SHADOW.tolerance, paper = true, holes = true, flip = false, wide = 0 } = {}) {
   const S = await sharp();
   const { data, info } = await S(rawPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { alpha, bg } = keyOut(data, info.width, info.height, { tolerance, paper: paper ? PAPER : null, shadow: shadow > 0 ? { ...SHADOW, tolerance: shadow } : null });
@@ -200,6 +217,7 @@ export async function cutAndFit(rawPath, refPath, cutPath, { tolerance = DEFAULT
   const box = applyAlpha(data, alpha, info.width, info.height);
   if (!box) throw new Error(`${rawPath}: nothing left after the key (tolerance ${tolerance})`);
   const old = refPath ? await portraitFrame(refPath) : NEW_CANVAS;
+  if (wide > old.w) { old.w = wide; old.box = { ...(old.box ?? { y0: 0, y1: old.h }), x0: 0, x1: wide }; } // the boss: a wide canvas, the figure centred on it
   const at = placeOn(box, old);
   let fig = S(Buffer.from(data.buffer, data.byteOffset, data.length), { raw: { width: info.width, height: info.height, channels: 4 } })
     .extract({ left: box.x0, top: box.y0, width: box.x1 - box.x0, height: box.y1 - box.y0 }).resize(at.w, at.h);
@@ -239,6 +257,8 @@ async function main() {
   const chars = doc.chars.filter((c) => !only || only.includes(c.id));
   if (only && chars.length !== only.length) throw new Error(`unknown character in --only (known: ${doc.chars.map((c) => c.id).join(', ')})`);
   const model = MODELS[val('--model', DEFAULTS.model)];
+  const refs = val('--refs', 'originals');
+  if (!['originals', 'sheets'].includes(refs)) throw new Error('--refs originals | sheets');
   if (!model) throw new Error('--model pro | max');
   const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance)), paper = val('--paper', '1') !== '0', holes = val('--holes', '1') !== '0';
   const cutOpts = { tolerance, shadow, paper, holes };
@@ -278,7 +298,7 @@ async function main() {
     const c = doc.chars.find((x) => x.id === id), one = c && charEntry(reg, c).candidates.find((x) => x.n === Number(n));
     if (!one && val('--recut') !== 'all') throw new Error(`--recut: no candidate ${val('--recut')} (or "all")`);
     const list = one ? [[c, one]] : chars.flatMap((ch) => charEntry(reg, ch).candidates.map((k) => [ch, k]));
-    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), ch.file ? join(CHARS, ch.file) : null, join(ROOT, k.file), { ...cutOpts, flip: has('--flip') }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
+    for (const [ch, k] of list) { k.cut = await cutAndFit(join(ROOT, k.raw), ch.file ? join(CHARS, ch.file) : null, join(ROOT, k.file), { ...cutOpts, flip: has('--flip'), wide: WIDE[ch.id] ?? 0 }); console.log(`  recut ${k.file}: figure ${k.cut.figure.join('x')}, ${k.cut.filled} holes, ${k.cut.stray} stray`); }
     saveRegistry(reg); return;
   }
 
@@ -322,7 +342,7 @@ async function main() {
       if (!c) throw new Error(`reroll: unknown character ${r.id}`);
       const e = charEntry(reg, c), n0 = nextN(e);
       if (r.clean) { jobs.push({ c, n: n0, from: e.candidates.find((k) => k.n === r.clean) ?? (() => { throw new Error(`clean: no candidate ${r.id}_c${r.clean}`); })(), seed: Date.now() % 2147483647 }); continue; }
-      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', styleFor(c.id)), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
+      for (let i = 0; i < (r.n ?? DEFAULTS.n); i++) jobs.push({ c, n: n0 + i, style: r.style || val('--style', styleFor(c.id, ROOT, refs) ?? (c.file ? `assets/chars/${c.file}` : DEFAULTS.style)), hint: r.hint ?? '', seed: (Date.now() + i * 7919) % 2147483647 });
     }
     saveRegistry(reg);
     console.log(`verdicts: ${(req.approved ?? []).length} approved, ${(req.rejected ?? []).length} rejected`);
@@ -333,12 +353,18 @@ async function main() {
     jobs.push({ c, n: nextN(charEntry(reg, c)), from, seed: seedFor(c.id, 1000 + from.n) });
   } else {
     const n = Number(val('--n', DEFAULTS.n));
-    for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', styleFor(c.id)), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
+    for (const c of chars) { const n0 = nextN(charEntry(reg, c)); for (let i = 0; i < n; i++) jobs.push({ c, n: n0 + i, style: val('--style', styleFor(c.id, ROOT, refs) ?? (c.file ? `assets/chars/${c.file}` : DEFAULTS.style)), hint: val('--hint', ''), seed: seedFor(c.id, n0 + i) }); }
   }
   for (const j of jobs) {
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
     if (model === MODELS.lora) { j.style = MODELS.lora.weights; j.prompt = loraPrompt(j.c, j.hint); continue; } // text to image: no pictures go in
-    if (val('--from-sheet')) { j.sheet = join(ROOT, STYLE_DIR, `${val('--from-sheet')}.png`); if (!existsSync(j.sheet)) throw new Error(`--from-sheet: no ${j.sheet}`); j.style = `${STYLE_DIR}/${val('--from-sheet')}.png`; j.prompt = fromSheetPrompt(doc, j.c, j.hint); continue; }
+    if (val('--from-sheet')) {
+      const base = doc.chars.find((x) => x.id === val('--from-sheet'));
+      j.style = refs === 'sheets' || !base?.file ? `${STYLE_DIR}/${val('--from-sheet')}.png` : `assets/chars/${base.file}`;
+      j.sheet = join(ROOT, j.style);
+      if (!existsSync(j.sheet)) throw new Error(`--from-sheet: no ${j.style}`);
+      j.prompt = fromSheetPrompt(doc, j.c, j.hint); continue;
+    }
     if (j.c.isNew) throw new Error(`--new ${j.c.id} has no portrait to redraw: use --model lora`);
     j.stylePath = existsSync(join(ROOT, 'assets/bg', j.style)) ? join(ROOT, 'assets/bg', j.style) : existsSync(join(ROOT, j.style)) ? join(ROOT, j.style) : null;
     if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
@@ -368,12 +394,12 @@ async function main() {
             ? { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
-            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: WIDE[j.c.id] ? '1:1' : DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
         await (await sharp())(out.bytes).jpeg({ quality: 92 }).toFile(rawPath);
-        const cut = await cutAndFit(rawPath, j.c.file ? join(CHARS, j.c.file) : null, cutPath, cutOpts);
+        const cut = await cutAndFit(rawPath, j.c.file ? join(CHARS, j.c.file) : null, cutPath, { ...cutOpts, wide: WIDE[j.c.id] ?? 0 });
         const entry = charEntry(reg, j.c);
         entry.candidates.push({ n: j.n, file: `${WEB}/${name}.webp`, raw: `${WEB}/${name}_raw.jpg`, model: use, version: out.version, seed: j.seed, style: j.style, hint: j.hint || undefined, from: j.from?.n, prompt: j.prompt, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), cut });
         entry.candidates.sort((a, b) => a.n - b.n);

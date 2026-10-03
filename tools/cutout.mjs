@@ -39,7 +39,7 @@ const lum = (data, i) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i 
 const sat = (data, i) => { const mx = Math.max(data[i], data[i + 1], data[i + 2]); return mx ? (mx - Math.min(data[i], data[i + 1], data[i + 2])) / mx : 0; };
 
 /** Paper-like: light and unsaturated, whatever the exact tone (a lighter paper, a grey panel, a vignette). */
-export const PAPER = { minLum: 135, maxSat: 0.3 };
+export const PAPER = { minLum: 120, maxSat: 0.3, tolerance: 70 }; // (0.00201: within `tolerance` of the border's tone too — a painterly figure has no outline, so its own greys must not count)
 /** The ground shadow the model paints under the figure despite the prompt: a mid-light, unsaturated wash in the picture's lower part (y from `fromY` of the height). Measured on the pilot: shadow pixels at luminance 105-135, distance 130-180 from the background; the inked figure under 80. */
 export const SHADOW = { tolerance: 200, minLum: 90, maxSat: 0.45, fromY: 0.6 };
 
@@ -61,7 +61,7 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
     const i = p * 4, d = dist(data, i, bg);
     if (d <= tolerance) return true;
     const L = lum(data, i), S = sat(data, i);
-    if (paper && L >= paper.minLum && S <= paper.maxSat) return true;
+    if (paper && L >= paper.minLum && S <= paper.maxSat && d <= (paper.tolerance ?? Infinity)) return true;
     return !!shadow && y >= yShadow && d <= shadow.tolerance && L >= shadow.minLum && S <= shadow.maxSat;
   };
   const push = (p) => { if (!reached[p] && passable(p)) { reached[p] = 1; stack.push(p); } };
