@@ -1,5 +1,5 @@
 {
-  "version": "0.00255",
+  "version": "0.00256",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -93,6 +93,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00256": [
+      "Combat: tap or click your hero's card to turn it over — its back lists your stats for this run (health, attack, armor, crit, lifesteal, the heavy blow, potions); tap again to turn it back.",
+      "Debug menu: BENCHMARK works in a run too — it ends the run as a retreat (everything found kept), then runs the benchmark."
+    ],
     "0.00255": [
       "Debug menu: BENCHMARK starts the benchmark again (the open Settings menu swallowed the click on Start)."
     ],
@@ -140,9 +144,6 @@
     "0.00242": [
       "Background Lab (labs/backgrounds/): the new room paintings through their stages — drafts, approved, in the game — each room's candidates as tiles to approve, reject with a note or regenerate with notes, a fight at the game's size over the shown one, a compare beside a game painting; COPY JSON for the generator",
       "gen-bg.mjs: Seedream 4 is the default; --rerender takes the lab's verdicts and paints the re-rolls (fresh, or from a candidate with a direction), --prune, --import by room; four of the guide's own rooms painted (The Collapsed Gallery, The Spiral Stair, The Crimson Veil, The Drowned Throne)"
-    ],
-    "0.00241": [
-      "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
     ]
   }
 }
