@@ -572,7 +572,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const m = readFileSync('src/main.js', 'utf8');
   // 0.00208: phones play — the gate before the title instead of the old notice (0.00209: the narrator armed and the audio resumed on its tap)
   ok('boot mounts the rotate notice for a handheld held upright, and the play / install gate on a phone', !m.includes('Phones are not supported yet')
-    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{[\s\S]*armOnGesture\('title_welcome'\)[\s\S]*await phoneGate\(\{ onPlay[\s\S]*regateOnExit\(\);\s*\}\s*go\('title'\)/.test(m));
+    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{[\s\S]*armOnGesture\('title_welcome'\)[\s\S]*await phoneGate\(\{ onPlay[\s\S]*regateOnExit\(\);\s*\}\s*await introReady\(\);[^\n]*\n\s*go\('title'\)/.test(m)); // (0.00311: the fly-in's wait sits between the gate and the title, after the PLAY tap)
   const css = readFileSync('styles.css', 'utf8');
   ok('touch: no double-tap zoom, no image callout, 44px targets and no hotkey hints on a coarse pointer, hover styles only where hover exists, a rotate notice in portrait',
     css.includes('html { touch-action: manipulation; }') && css.includes('img { -webkit-touch-callout: none; }') && css.includes('@media (pointer: coarse) {') && css.includes('min-height: 44px;')

@@ -160,6 +160,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
 node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the foes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
+node tools/intro-check.mjs [--only phone]    # the title's fly-in headless on a desktop and a phone: the hold, the fade, the skip, the hand-over's SSIM (Playwright + ffmpeg)
 node tools/render-sfx.mjs --apply sfx-review.json [--dry-run]   # the SFX Lab's verdicts and edits into the registry (a pitch / speed edit re-rendered into a new file)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
@@ -674,14 +675,13 @@ New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
-#### The title's fly-in (0.00307, a prototype — the developer's idea, the video thread)
+#### The title's fly-in (0.00307 the prototype, 0.00311 shipping — the developer's idea, the video thread)
 
 The title painting is the END of a short flight: as the title scene
 enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
 everything (`#intro`, z-index above the corner column), the camera
 arrives at the castle, the film's last frame — the painting itself,
-baked in as a 0.4 s crossfade at the file's end, the game's vignette
-ellipse baked over the whole film (0.00310) — fades `intro.fadeMs`
+baked in as a 0.4 s crossfade at the file's end — fades `intro.fadeMs`
 onto the 3D renderer's rest pose, the fade beginning `intro.leadMs`
 before the film's end with the film playing on under it (0.00308, the
 developer's ask after seeing it; `holdMs` = a hold after the end instead,
@@ -708,16 +708,35 @@ against the encode 0.93 — so what the fade reveals IS the frame the
 film ends on; 0.00310, after the developer saw the first hand-over),
 and the title's panel, held under it (`.intro-hold`), fades
 in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,
-`file` in `assets/video/`, `waitMs`); the data check and the orphan
-check know the folder. Boot fetches the film beside the art
-(`preloadIntro`, after the data) and the loader waits at 100% up to
-`waitMs` for it (`introReady`) — not ready, no H.264 (the codec is
-asked for by name: headless Chromium plays no MP4, so the layout check
-never meets it), reduced motion, or already played this session: the
-title shows as it always has (`playIntro` answers null, nothing is
-mounted). A click, a tap or any key but the browser's own skips it (the
-key is stopped before the title's hotkeys; the fade starts from where
-the film is). Made by plan B of two: a far, wide view of the castle
+`file` in `assets/video/` — 1080p, 2.4 MB — and `phone.file`, the 720p
+file a phone fetches, 0.8 MB, through `platform.js deviceBlock`;
+`waitMs`); the data check and the orphan check know the folder. **The
+vignette over the film is the layer's own** (`#intro::after`, the one
+gradient `#vignette` draws, 0.00311): baked into the 16:9 file it was
+the frame's ellipse, not the screen's, and a phone or an ultrawide
+cropped it — the film and the painting are both cover-fit from the
+centre, so the hand-over holds on every aspect ratio, a 19.5:9 phone
+cropping 18% off the top and bottom of both alike. Boot fetches the film
+beside the art (`preloadIntro`, after the data) and waits up to `waitMs`
+for it right before the title (`introReady`; on a phone after the PLAY
+tap — the wait used to run before the gate) — not ready, no H.264 (the
+codec is asked for by name: headless Chromium plays no MP4, so the
+layout check never meets it), reduced motion, or already played this
+session: the title shows as it always has (`playIntro` answers null,
+nothing is mounted). The fade begins `leadMs` before the end BY THE
+FILM'S OWN CLOCK (a rAF poll of `currentTime`; a wall-clock timer faded
+mid-flight when the download stalled), `ended` + `holdMs` the backstop;
+the film is released after (its `src` dropped, `load()`). A click, a tap
+or any key but the browser's own skips it (the key is stopped before the
+title's hotkeys; the fade starts from where the film is). **`node
+tools/intro-check.mjs`** drives it headless on a desktop window and a
+phone (the films transcoded to VP9 once, cached under `/tmp/intro-check`,
+the page served with the data pointing at them): the layer up and the
+panel held, the fade before the end by the film's clock, the layer gone
+and the panel back, a key skipping and going no further, and the
+hand-over — the held last frame under the layer's vignette against the
+renderer frozen at rest (that page alone served a 60 s fade), SSIM 0.95
+on the desktop, 0.92 on the phone's 720p film, a sway left running ~0.6. Made by plan B of two: a far, wide view of the castle
 outpainted by Nano Banana Pro from the painting, then Kling 2.5 flying
 from it INTO the painting with the painting as the take's last frame —
 the motion forwards, the landing exact (plan A, pull back and reverse,
@@ -2320,10 +2339,12 @@ sometimes — fetch all branches to find it.
   narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
   pulled behind `audio.json cries` (0.00287) until their content is
   rethought — new recordings would be new files (rule 7).
-- Video (0.00307, the title's fly-in is the prototype): `tools/gen-video.mjs`
-  with candidates, verdicts and `--import` (the cut, the bake, the encode)
-  like the other generators, and a lab to compare takes · a 720p file for
-  phones · a take with the painting's own crows and smoke (the models add
+- Video (0.00307, the title's fly-in; shipping since 0.00311): `tools/gen-video.mjs`
+  with candidates, verdicts and `--import` (the cut, the bake, the encode,
+  the 720p file) like the other generators, and a lab to compare takes · a
+  dialog opened during the film (the update prompt fires as the title's
+  windows return) sits over it at z 70 and the first key skips the film
+  before the dialog hears it · a take with the painting's own crows and smoke (the models add
   their own) · the other cinematics (the descent, the boss's entrance, YOU
   DIED, the victory) once the title's sticks.
 - Game: a foe's immunities show nowhere before the cast (0.00293: a tag or
