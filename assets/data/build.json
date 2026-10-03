@@ -1,5 +1,5 @@
 {
-  "version": "0.00258",
+  "version": "0.00259",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -93,6 +93,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00259": [
+      "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
+    ],
     "0.00258": [
       "Combat: your hero's card shows a small (i) under the gear — tap the card for your stats, again for your inventory (the gear you wear and what this run has found), and once more to turn it back."
     ],
@@ -138,10 +141,6 @@
     ],
     "0.00245": [
       "Lifesteal rebalanced: it now grows with the gear tiers instead of arriving all at once — tier-2 lifesteal gear heals about a third of what it did, tier-3 about 60%, the relics are unchanged, and Life Drain grants +50% (was +100%)"
-    ],
-    "0.00244": [
-      "Two new rooms in the castle: The Clock Tower and The Blood Baths (the owner's approvals in the Background Lab; the first paintings from the new generator, with their depth maps and fog)",
-      "gen-bg.mjs --import gives a new painting its fog override; the three approvals recorded and the rooms' other candidates pruned"
     ]
   }
 }
