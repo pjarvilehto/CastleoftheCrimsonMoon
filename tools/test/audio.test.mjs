@@ -238,6 +238,16 @@ fresh();
   ok('...and closes', bar.children.length === 4 && !p.classList.contains('on'));
   menu.listeners.click[0]();
   ok('SETTINGS opens the menu (lit while open), a second click closes it', bar.classList.contains('open') && menu.classList.contains('on') && (menu.listeners.click[0](), !bar.classList.contains('open') && !menu.classList.contains('on')));
+  { // 0.00255: a click in a dialog an item opened (BENCHMARK's Start) closes the menu and goes through; any other click outside is swallowed
+    const { openDialog } = await import('../../src/ui/dialog.js');
+    const outside = document.listeners.click[document.listeners.click.length - 1];
+    const ev = () => { const e = { target: {}, stopped: false, stopPropagation() { this.stopped = true; }, preventDefault() {} }; return e; };
+    menu.listeners.click[0](); const e1 = ev(); outside(e1);
+    const swallowed = e1.stopped && !bar.classList.contains('open');
+    menu.listeners.click[0](); const d = openDialog({ label: 'Benchmark', children: [] }); const e2 = ev(); outside(e2);
+    ok('the menu: a click outside closes it and is swallowed; one inside a dialog closes it and goes through', swallowed && !e2.stopped && !bar.classList.contains('open'));
+    d.close?.();
+  }
   const m = readFileSync('src/main.js', 'utf8'), css = readFileSync('styles.css', 'utf8');
   ok('main builds the menu: AUDIO (MUSIC SOUND NARRATOR VOLUME) DISPLAY (BATTERY SAVER) GAME (CHANGELIST) DEBUG MODE (the tools)',
     /menuHead\('Audio'\),\s*onOffToggle\('MUSIC'[\s\S]*onOffToggle\('SOUND'[\s\S]*onOffToggle\('NARRATOR'[\s\S]*volumeToggle\(\),\s*menuHead\('Display'\),\s*onOffToggle\('BATTERY SAVER'[\s\S]*menuHead\('Game'\),\s*changelogToggle\(\),\s*dbg\.toggle,\s*\.\.\.dbg\.items,/.test(m)

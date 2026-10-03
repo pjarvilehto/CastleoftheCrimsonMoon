@@ -331,7 +331,9 @@ fresh();
   ok('dashboard: a benchmark from before the current round is marked "older round"', (roundHtml.match(/bench-old/g) ?? []).length === 1 && roundHtml.includes('older round') && roundHtml.includes('current round is build 0.00220')
     && roundHtml.indexOf('0.00221') < roundHtml.indexOf('0.00218'));
   ok('BENCHMARK sits in the ?debug column and asks first', readFileSync('src/ui/debugToggles.js', 'utf8').includes('benchmarkButton()')
-    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark', { returnTo: currentScene()?.name === 'hub' ? 'hub' : 'title' })"));
+    && readFileSync('src/ui/benchmark.js', 'utf8').includes("const returnTo = midRun || currentScene()?.name === 'hub' ? 'hub' : 'title';")
+    && readFileSync('src/ui/benchmark.js', 'utf8').includes('if (midRun) currentScene()?.leaveRun?.(start); else start();')
+    && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes("leaveRun: (next) => endRun(null, run.hp > 0 ? 'retreat' : 'death', next),")); // (0.00256: mid-run it settles the run first, then starts)
   getProfile().bench = [];
 }
 

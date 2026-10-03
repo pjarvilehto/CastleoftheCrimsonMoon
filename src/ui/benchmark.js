@@ -80,13 +80,22 @@ export function maybeAskBenchmark() {
 }
 
 function askBenchmark() {
-  if (currentScene()?.inRun) return; // never out of a run (it would be lost, unsettled)
+  const scene = currentScene();
+  if (scene?.inRun && !scene.leaveRun) return; // (the benchmark itself)
+  // mid-run (0.00256: it used to do nothing there): the run settles first —
+  // never lost unsettled — and the benchmark returns to the Great Hall
+  const midRun = !!scene?.inRun;
   confirmPrompt({
     title: 'Benchmark',
     lines: [`About ${benchmarkSeconds()} seconds of scripted combat: the room at rest, a long fight, then OVERKILL after OVERKILL.`,
-      'Keep the game in front and leave it alone: no taps, keys or clicks. Your save and run history are not touched.'],
+      'Keep the game in front and leave it alone: no taps, keys or clicks. Your save and run history are not touched.',
+      ...(midRun ? ['Your run ends here as a retreat: everything found so far is kept.'] : [])],
     yes: ['Start', 's'], no: ['Cancel', 'c'],
-    onYes: () => go('benchmark', { returnTo: currentScene()?.name === 'hub' ? 'hub' : 'title' }), // (0.00223: back to where it was pressed)
+    onYes: () => {
+      const returnTo = midRun || currentScene()?.name === 'hub' ? 'hub' : 'title'; // (0.00223: back to where it was pressed)
+      const start = () => go('benchmark', { returnTo });
+      if (midRun) currentScene()?.leaveRun?.(start); else start();
+    },
   });
 }
 

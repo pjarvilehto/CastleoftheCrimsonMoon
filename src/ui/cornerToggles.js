@@ -9,6 +9,7 @@
 // Dimmed when off so they never distract players; lit gold when on.
 
 import { el } from '../core/dom.js';
+import { anyDialogOpen } from './dialog.js';
 
 // An ON/OFF button: get() -> current state, flip() -> new state.
 export function onOffToggle(label, { get, flip, cls = '' }) {
@@ -44,7 +45,9 @@ export const menuHead = (label) => el('div', { class: 'menu-head' }, label);
 // buttons): one ☰ SETTINGS button whose menu drops down under it, closed by
 // a click anywhere else (the click that closes it does nothing else, so it
 // never strikes a card underneath). `lead` buttons sit beside SETTINGS and
-// stay out of the menu (FULLSCREEN, an icon). A phone shows the same menu
+// stay out of the menu (FULLSCREEN, an icon). A click inside a dialog an
+// item opened (BENCHMARK's Start, the CHANGELIST) closes the menu and goes
+// through — 0.00255: it was swallowed, so BENCHMARK never started. A phone shows the same menu
 // as ☰ alone (styles.css section 16; 0.00208 folded it there first).
 export function cornerBar(items, lead = []) {
   const bar = el('div', { class: 'corner-bar' });
@@ -53,7 +56,9 @@ export function cornerBar(items, lead = []) {
     el('span', { class: 'menu-icon' }, '☰'), el('span', { class: 'menu-label' }, 'Settings'));
   bar.append(el('div', { class: 'corner-top' }, ...lead.filter(Boolean), menu), ...items.filter(Boolean));
   document.addEventListener?.('click', (e) => { // (capture: the click that closes the menu must not also strike a card underneath)
-    if (bar.classList.contains('open') && !bar.contains?.(e.target)) { setOpen(false); e.stopPropagation?.(); e.preventDefault?.(); }
+    if (!bar.classList.contains('open') || bar.contains?.(e.target)) return;
+    setOpen(false);
+    if (!anyDialogOpen()) { e.stopPropagation?.(); e.preventDefault?.(); }
   }, true);
   return bar;
 }

@@ -16,6 +16,7 @@ import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
 import { heroOf, defaultHero } from '../shared/heroes.js';
+import { potionHealAmount } from '../meta/leveling.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
 // .idle-<family>), keyed by enemy ID — display names differ (golem is
@@ -129,6 +130,42 @@ const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) ret
 // (HP, dead state, buttons). Rebuilding it every 100ms used to restart any
 // animation — this is what lets cards move.
 
+// The knight card's back (0.00256, the developer's call): a tap turns the
+// card around to STATS — the run's own numbers (run.stats: base, training,
+// gear and the shrine boons), the totals only — and a tap turns it back.
+// set() refreshes the values; the update tick calls it while it shows.
+const FLIP_MS = 420;
+function statsBack(run) {
+  const tune = DATA.difficulty.combat;
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const rows = [
+    ['Health', () => `${run.hp} / ${run.maxHp}`, 'gold'],
+    ['Attack', () => `${run.stats.dmg}`, 'gold'],
+    ['Armor', () => `${run.stats.armor}${run.tempArmor > 0 ? ` +${run.tempArmor}` : ''}`, 'gold'],
+    ['Crit chance', () => pct(run.stats.crit)],
+    ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`],
+    ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—')],
+    ['Heavy blow', () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`],
+    ['Potions', () => `${run.potions} / ${run.potionCap}`],
+    ['Potion heals', () => `${potionHealAmount()} HP`],
+  ].map(([label, val, cls]) => ({ val, b: el('b', { class: cls ?? '' }, val()), label }));
+  const back = el('div', { class: 'card-back' },
+    el('h2', {}, 'Stats'), el('div', { class: 'back-rule' }),
+    ...rows.map((r) => el('div', { class: 'back-row' }, el('span', {}, r.label), r.b)),
+    el('div', { class: 'back-hint' }, 'tap to turn back'));
+  return { el: back, set: () => rows.forEach((r) => setText(r.b, r.val())) };
+}
+
+// Turns a card around its vertical axis in two halves, swapping its face at
+// the edge-on moment (no backface: the plate and the light are isolated 3D
+// groups); `composite: 'add'` over the idle loop and a kick in flight.
+function flipCard(card, swap) {
+  const half = (from, to, easing) => card.animate([{ transform: `rotateY(${from}deg)` }, { transform: `rotateY(${to}deg)` }], { duration: FLIP_MS / 2, easing, composite: 'add' });
+  if (reducedMotion() || typeof card.animate !== 'function') { swap(); return null; }
+  const a = half(0, 90, 'ease-in');
+  return new Promise((res) => { a.onfinish = () => { swap(); half(-90, 0, 'ease-out').onfinish = res; }; });
+}
+
 // Player unit. update({ hp, printing, heavyReady, heavyCd, dead })
 export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const p = getProfile();
@@ -159,6 +196,16 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
       armorVal));
   const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite)
     plate, gear, img, chip, potions);
+  const back = statsBack(run);
+  card.append(back.el);
+  card.setAttribute('title', 'Stats');
+  let flipping = false;
+  card.addEventListener('click', async () => {
+    if (flipping) return;
+    flipping = true;
+    await flipCard(card, () => { back.set(); setClass(card, 'flipped', !card.classList.contains('flipped')); });
+    flipping = false;
+  });
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
@@ -171,6 +218,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
     setText(potions, `POTIONS ${run.potions}/${run.potionCap}`);
     setText(armorVal, armorText());
+    if (card.classList.contains('flipped')) back.set();
     setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);

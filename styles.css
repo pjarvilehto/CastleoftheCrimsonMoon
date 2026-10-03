@@ -779,6 +779,24 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
 .player-card .hud-chip, .player-card .potions { position: relative; z-index: 2; } /* (0.00251: over the figure's feet) */
+/* The card's back (0.00256, battleLine.js statsBack): a tap turns the
+   knight's card to STATS — the frame stays, the face's pieces hide, the
+   run's totals in rows. The card is a button for it (cursor), not a target. */
+.player-card { cursor: pointer; }
+.player-card .card-back { display: none; }
+.player-card.flipped > :not(.card-frame):not(.card-back) { visibility: hidden; }
+.player-card.flipped .card-back {
+  display: flex; flex-direction: column; position: absolute; inset: 4.5% 6.5%; z-index: 3;
+  border-radius: 0.5em; padding-top: 1.2em; text-transform: uppercase;
+  background: radial-gradient(ellipse at 50% 35%, rgba(60, 20, 20, 0.55), rgba(8, 5, 4, 0.92) 75%);
+}
+.card-back h2 { margin: 0; text-align: center; color: var(--gold); letter-spacing: 0.3em; padding-left: 0.3em; font-size: 2em; font-weight: normal; }
+.card-back .back-rule { height: 1px; margin: 0.4em 10% 0.6em; background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.7), transparent); }
+.card-back .back-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5em; margin: 0 7%; padding: 0.28em 0; border-bottom: 1px solid rgba(201, 162, 39, 0.12); }
+.card-back .back-row span { color: #9a8b6a; letter-spacing: 0.12em; font-size: 0.75em; white-space: nowrap; }
+.card-back .back-row b { color: #e8d9b0; font-weight: normal; font-size: 1.15em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card-back .back-row b.gold { color: var(--gold); }
+.card-back .back-hint { margin-top: auto; text-align: center; color: #6a5d44; letter-spacing: 0.14em; font-size: 0.6em; padding-bottom: 6%; }
 
 /* persistent cards (0.086): the card is never rebuilt mid-fight — HP and
    state are patched in place; a fallen enemy's card leaves the row (0.00216) */
@@ -1245,6 +1263,9 @@ html.phone .player-unit .unit-actions { position: absolute; top: 100%; left: 0; 
 html.phone .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }
 html.phone .hero-title { position: absolute; bottom: 100%; left: 2px; margin: 0 0 3px; font-size: 0.8rem; white-space: nowrap; } /* (0.00251: above the card, outside the row's height) */
 html.phone .hud-chip .hpbar { width: 64px; }
+html.phone .player-card.flipped .card-back { font-size: 0.74em; padding-top: 0.5em; inset: 4% 5%; } /* the stats back (0.00256): nine rows in a card at the phone's larger type */
+html.phone .card-back .back-row { padding: 0.12em 0; }
+html.phone .card-back h2 { font-size: 1.6em; }
 html.phone .room-title { top: 6px; font-size: 1.05rem; letter-spacing: 0.08em; left: calc(12px + env(safe-area-inset-left, 0px) + var(--tag-w) + 8px + var(--res-w)); right: calc(12px + env(safe-area-inset-right, 0px) + 60px); transform: none; text-align: center; overflow: hidden; text-overflow: ellipsis; padding-bottom: 6px; } /* between XP / COINS and ☰, an ellipsis past that (0.00223: a long name with the record tag ran into the counters on the smallest phones) */
 html.phone #combat-log.docked {                                     /* one line: the latest, flashed in; the strip beside the knight's buttons */
   left: calc(1vw + env(safe-area-inset-left, 0px) + var(--knight-w) + 10px); right: calc(1vw + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px));
