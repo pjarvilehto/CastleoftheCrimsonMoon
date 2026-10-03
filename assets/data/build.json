@@ -1,5 +1,5 @@
 {
-  "version": "0.00259",
+  "version": "0.00260",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -45,6 +45,7 @@
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
     "src/shared/heroes.js",
+    "src/shared/itemArt.js",
     "src/shared/level.js",
     "src/shared/motion.js",
     "src/shared/platform.js",
@@ -69,6 +70,7 @@
     "src/ui/deathModal.js",
     "src/ui/debugToggles.js",
     "src/ui/dialog.js",
+    "src/ui/findFx.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
     "src/ui/hubSections.js",
@@ -93,6 +95,11 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00260": [
+      "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
+      "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
+      "The run's end shows your finds as cards, each with what it replaced and gained, and what was salvaged as small grey pictures; back in the Great Hall each find's picture flashes into its slot."
+    ],
     "0.00259": [
       "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
     ],
@@ -138,9 +145,6 @@
     ],
     "0.00246": [
       "Docs: a light sweep — the notes say developer where they said owner; the quick start lists the art tools; the handover and the backlog read as of this build (the redrawn portraits and the LoRAs, the Background Lab's stages, the two new rooms); the painting counts"
-    ],
-    "0.00245": [
-      "Lifesteal rebalanced: it now grows with the gear tiers instead of arriving all at once — tier-2 lifesteal gear heals about a third of what it did, tier-3 about 60%, the relics are unchanged, and Life Drain grants +50% (was +100%)"
     ]
   }
 }

@@ -1,4 +1,9 @@
 {
+  "0.00260": [
+    "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
+    "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
+    "The run's end shows your finds as cards, each with what it replaced and gained, and what was salvaged as small grey pictures; back in the Great Hall each find's picture flashes into its slot."
+  ],
   "0.00259": [
     "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
   ],
