@@ -153,9 +153,9 @@ export function sfxPeakAt(name, atMs, opts = {}) {
 // of the one pitched-down swoosh), scheduled so the clip's loudest moment
 // lands peakAtMs into the transition — the middle of windows out,
 // crossfade, windows in. jitterDb varies each play's level a little.
-export function transitionSfx(atMs = DATA.audio.transition.peakAtMs) { // (0.00309: the title's fly-in asks for its own moment)
+export function transitionSfx(atMs = DATA.audio.transition.peakAtMs, opts = {}) { // (0.00309: the title's fly-in asks for its own moment, 0.00310 its own trim)
   const T = DATA.audio.transition;
-  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], atMs);
+  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], atMs, opts);
 }
 
 // Before the first gesture the module has no context: a sound asked for

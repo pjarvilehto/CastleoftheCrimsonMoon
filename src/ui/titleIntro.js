@@ -15,6 +15,7 @@
 import { DATA } from '../shared/data.js';
 import { reducedMotion } from '../shared/motion.js';
 import { transitionSfx } from '../audio/sfx.js';
+import { bgArrive } from '../core/bg3d.js';
 
 let video = null;   // the preloaded <video>; null where there is nothing to play
 let ready = null;   // resolves true once it can play through, false on an error
@@ -42,6 +43,9 @@ export function preloadIntro() {
   v.load();
   video = v;
 }
+
+/** The fly-in is about to play (ready, not yet played): the boot's own transition keeps its whoosh for it (0.00310). */
+export const introPending = () => !!video && !played && video.readyState >= 3;
 
 /** The loader at 100%: true when the clip can play through, false after intro.waitMs (the title shows without it). */
 export function introReady() {
@@ -75,6 +79,7 @@ export function playIntro() {
       v.removeEventListener('ended', onEnd);
       clearTimeout(lead);
       globalThis.removeEventListener('keydown', skip, true);
+      bgArrive(); // (0.00310: the renderer back to its rest pose and its mist rising, under the still-opaque film — what the fade reveals is the frame the film ends on)
       layer.classList.add('fading'); // styles.css: opacity to 0 over --fade
       setTimeout(() => { v.pause(); layer.remove(); resolve(true); }, c.fadeMs);
     };
@@ -92,6 +97,6 @@ export function playIntro() {
     layer.addEventListener('pointerdown', skip);
     globalThis.addEventListener('keydown', skip, true);
     v.currentTime = 0;
-    v.play().then(() => transitionSfx(c.whooshAtMs)).catch(finish); // refused (no autoplay): nothing to see, fade at once; playing: a room change's whoosh, its peak intro.whooshAtMs into the flight (0.00309)
+    v.play().then(() => transitionSfx(c.whooshAtMs, { gainDb: c.whooshDb })).catch(finish); // refused (no autoplay): nothing to see, fade at once; playing: a room change's whoosh, its peak intro.whooshAtMs into the flight, intro.whooshDb under the game's level (0.00309 / 0.00310)
   });
 }

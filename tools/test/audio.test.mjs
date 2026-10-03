@@ -102,7 +102,7 @@ fresh();
   const q = read('src/ui/combatQueue.js'); // event -> queue mapping (0.098)
   ok('dungeon maps combat events to sfx', q.includes("atk: 'attack'") && q.includes("dmg: 'hurt'") && q.includes("kill: 'kill'"));
   ok('dungeon: rare vs common loot sounds', q.includes("cls === 'relic' ? 'rare' : 'loot'"));
-  ok('dungeon: death/potion wired; the room swoosh moved to every transition (main.js, 0.173)', !d.includes("sfx('whoosh')") && d.includes("sfxPeakAt('death', DEATH_PEAK_MS)") && d.includes("combatSfx({ sfx: 'heal'") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })'));
+  ok('dungeon: death/potion wired; the room swoosh moved to every transition (main.js, 0.173)', !d.includes("sfx('whoosh')") && d.includes("sfxPeakAt('death', DEATH_PEAK_MS)") && d.includes("combatSfx({ sfx: 'heal'") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { if (!introPending()) transitionSfx(); bgPush(); })')); // (0.00310: the boot's transition leaves its whoosh to the fly-in about to play)
   {
     const { sfxFor } = await import('../../src/ui/combatQueue.js');
     const { DEATH_PEAK_MS } = await import('../../src/ui/fx.js');
