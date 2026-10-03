@@ -1,5 +1,5 @@
 {
-  "version": "0.00264",
+  "version": "0.00265",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00265": [
+      "Every class starts with its own kit: the Barbarian a notched hand axe and a wolfhide jerkin, the Wizard an apprentice's staff and a threadbare robe, the Necromancer a grave knife and a gravedigger's shroud, the Druid a budding branch and a bark vest, the Hexhunter a worn hand crossbow and a witchfinder's coat, the Plague Sister a tin censer and a sister's habit; the knight keeps his rusty sword and oak shield. Same strength as before; a new game puts it on when you choose your hero."
+    ],
     "0.00264": [
       "The Curious Knight now stands like the other classes, in four new looks to choose from; his old crouching pose is still there as the fifth."
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00251": [
       "Combat: the knight's card draws your hero large — the class name sits above the card, the gear as two columns at its top, the figure standing to the frame's edge."
-    ],
-    "0.00250": [
-      "Choose your hero: the chosen card's gold rim sits on the card's own edge and its red plate pulses slowly; a standing hero fills the knight's card in the fights (the wizard read small beside the enemies)."
     ]
   }
 }
