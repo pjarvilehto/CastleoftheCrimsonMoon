@@ -1,5 +1,5 @@
 {
-  "version": "0.00235",
+  "version": "0.00236",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00236": [
+      "Room paintings: a bake-off of six models on three new rooms (The Clock Tower, The Blood Baths, The Rookery) painted from the game's own paintings; Nano Banana Pro is the pick, now the default of the new tools/gen-bg.mjs (docs/room-prompts.md, candidates in assets/bg/candidates, --import makes the game's JPEG)",
+      "The character style LoRA trained on the 31 approved portraits (it draws a character the game has no art for, the mimic chest first); the rooms' LoRA set and model; one Replicate client for the art tools"
+    ],
     "0.00235": [
       "The Great Hall: whatever a purchase raises — Attack after Power or a forged blade, HP, Armor, your level, potions — now glows as it counts up"
     ],
@@ -150,9 +154,6 @@
       "The vignette is drawn by the background's shaders, the glint by transforms, the glow loops as breathing layers, the particle layer is hidden between bursts: less work for every screen every frame",
       "Play stats: the refresh rate is read from the busiest frame interval (120 Hz Macs read 144, iPhones 90 or 75 before, with every ordinary frame 'dropped'); stalls and the worst frame's moment are recorded; old rows are graded by their fps",
       "The benchmark measures each room at rest — a new round, so everyone is asked again; about 50 seconds now"
-    ],
-    "0.00221": [
-      "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
     ]
   }
 }

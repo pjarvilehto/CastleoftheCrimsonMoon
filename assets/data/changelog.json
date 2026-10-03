@@ -1,4 +1,8 @@
 {
+  "0.00236": [
+    "Room paintings: a bake-off of six models on three new rooms (The Clock Tower, The Blood Baths, The Rookery) painted from the game's own paintings; Nano Banana Pro is the pick, now the default of the new tools/gen-bg.mjs (docs/room-prompts.md, candidates in assets/bg/candidates, --import makes the game's JPEG)",
+    "The character style LoRA trained on the 31 approved portraits (it draws a character the game has no art for, the mimic chest first); the rooms' LoRA set and model; one Replicate client for the art tools"
+  ],
   "0.00235": [
     "The Great Hall: whatever a purchase raises — Attack after Power or a forged blade, HP, Armor, your level, potions — now glows as it counts up"
   ],
