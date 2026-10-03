@@ -9,7 +9,7 @@
 // in this browser, so testers need no ?debug in the address (?debug still
 // turns it on for the visit; the headless checks use it).
 
-import { setBackground } from '../core/scene.js';
+import { setBackground, currentScene } from '../core/scene.js';
 import { el } from '../core/dom.js';
 import { isBg3dActive, bgView, setBgView } from '../core/bg3d.js';
 import { DATA } from '../shared/data.js';
@@ -18,6 +18,8 @@ import { onOffToggle, menuHead } from './cornerToggles.js';
 import { getPref, setPref } from '../shared/prefs.js';
 import { bgTunerToggle } from './bgTuner.js';
 import { benchmarkButton } from './benchmark.js';
+import { heroList, heroOf, cleanHero } from '../shared/heroes.js';
+import { getProfile, persist } from '../meta/profile.js';
 
 const flag = (key, label, cls) => onOffToggle(label, { cls, get: () => DEBUG[key], flip: () => (DEBUG[key] = !DEBUG[key]) });
 
@@ -53,7 +55,29 @@ export function debugToggles() {
   // A new tab, so the game (and a run in progress) stays as it is.
   const labs = el('button', { class: 'debug-toggle labs-link', onclick: () => globalThis.open?.('labs/', '_blank', 'noopener') }, 'LABS');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), labs, benchmarkButton()];
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), switchClassButton(), labs, benchmarkButton()];
+}
+
+// SWITCH CLASS (0.00269, the developer's ask: flip between the classes to
+// test them, mid-combat too): each click moves the save to the next class
+// (its first look; the kit stays as worn) and re-renders the screen —
+// the Great Hall and CHOOSE YOUR HERO through relayout(), the dungeon
+// through its switchClass(): the run's stats rebuilt for the class (this
+// run's shrine boons are dropped — a debug tool), the fight's class state
+// reset (charges, the hex, the thrall, the wild shape) and the battle line
+// rebuilt in place, the log saying so.
+export function switchClassButton() {
+  const btn = el('button', { class: 'debug-toggle class-toggle', onclick: () => {
+    const list = heroList(), cur = heroOf(getProfile()), next = list[(list.findIndex((h) => h.id === cur.id) + 1) % list.length];
+    getProfile().hero = cleanHero({ id: next.id, look: 0 });
+    persist();
+    const scene = currentScene(), root = document.getElementById?.('app');
+    if (root) (scene?.switchClass ?? scene?.relayout)?.call(scene, root);
+    btn.sync();
+  } }, 'SWITCH CLASS');
+  btn.sync = () => { btn.textContent = `SWITCH CLASS: ${heroOf(getProfile()).name.replace(/^The /, '').toUpperCase()}`; };
+  btn.sync();
+  return btn;
 }
 
 // DEBUG MODE (0.00243): ?debug in the address, else this browser's last choice.

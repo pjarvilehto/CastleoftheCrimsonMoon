@@ -1057,7 +1057,14 @@ be served stale for ~4 hours.
   dungeon scene's `leaveRun(next)`), then runs and returns to the hall.
   **DEBUG MODE** (`ui/debugToggles.js debugMenu`): ON shows the testing
   tools under it (INVULNERABLE, background views and tuning, FORCE CRITS,
-  LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
+  SWITCH CLASS (0.00269, the developer's ask: each click moves the save to
+  the next class, first look, kit as worn, and re-renders the screen — the
+  hall and CHOOSE YOUR HERO through `relayout()`, a run through the dungeon
+  scene's `switchClass()`: the run's stats rebuilt for the class, this run's
+  shrine boons dropped, health kept as a share of the new maximum, the
+  fight's charges / hex / thrall / wild shape reset, the battle line
+  rebuilt in place and dealt in, a DEBUG line in the log; `debugToggles.js
+  switchClassButton`), LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
   carries `.debug-on`); remembered in this browser (`castle-debug-mode`),
   so testers need no `?debug` — `?debug` still turns it on for the visit,
   and only `?debug` in the address lets software GL draw the 3D background

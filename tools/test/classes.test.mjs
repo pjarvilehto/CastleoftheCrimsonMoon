@@ -6,7 +6,7 @@
 // block in runState.js, and the combat UI's minimum: the charges and the
 // feral turns on the hero's button, the HEXED / BLIGHT tag on a foe's card,
 // a colour per new log line.
-import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync } from './harness.mjs';
+import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync } from './harness.mjs';
 
 const { useHeavy, canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
@@ -201,5 +201,40 @@ const types = (evs) => evs.map((e) => e.type);
   ok('a blow on the hexed foe carries marked (the sigil flares); the Druid\'s feral blow carries wild', onMark.marked === true && (() => { const d = room(as('druid'), [foe(100000)]); heavy(d, 0); return playerAttack(d, 0, false).find((e) => e.type === 'atk').wild === true; })());
   const nc = room(as('necromancer'), [foe(100000)]);
   ok('the drain\'s heal names its foe', (() => { const r = nc.run; r.hp = 1; const ev = heavy(nc, 0).find((e) => e.type === 'heal'); return ev?.drain === true && ev.target === 0; })());
+  getProfile().hero = null;
+}
+
+
+// SWITCH CLASS in the debug menu (0.00269): the next class on the save, the
+// screen re-rendered — mid-fight the run's stats and the battle line too
+{
+  fresh();
+  const { switchClassButton } = await import('../../src/ui/debugToggles.js');
+  const btn = switchClassButton();
+  ok('the button names the class on the save (an unchosen save: the knight)', btn.textContent === 'SWITCH CLASS: CURIOUS KNIGHT');
+  btn.listeners.click[0]();
+  ok('a click moves the save to the next class, first look, and says so', getProfile().hero?.id === 'barbarian' && getProfile().hero.look === 0 && btn.textContent === 'SWITCH CLASS: BARBARIAN');
+  for (let i = 0; i < 6; i++) btn.listeners.click[0]();
+  ok('…around the ring and back to the knight', getProfile().hero?.id === 'knight');
+  // in the Great Hall: the knight card re-renders as the class
+  show(hubScene()); await sleep(1300);
+  btn.listeners.click[0]();
+  const hallCard = () => registry.app.all((n) => (n.className ?? '').includes('knight-card'))[0];
+  ok('in the Great Hall the knight card re-renders in the new class\'s colour', (hallCard()?.attrs.style ?? '').includes(DATA.heroes.heroes.find((h) => h.id === 'barbarian').theme.plate));
+  // mid-fight: the run's stats, the heavy button and the title follow
+  await withSeedAsync(7, async () => {
+    show(dungeonScene()); await sleep(1300);
+    const title = () => registry.app.all((n) => n.className === 'hero-title card-name')[0]?.textContent;
+    const heavyLabel = () => registry.app.all((n) => n.className === 'btn-label')[0]?.textContent.replace(/[\s(◆◇].*$/, '').trim();
+    ok('the fight opens as the Barbarian with Cleave', title() === 'THE BARBARIAN' && heavyLabel() === 'Cleave');
+    btn.listeners.click[0](); // -> the wizard
+    await sleep(100);
+    ok('SWITCH CLASS mid-fight: the title and the heavy button are the Wizard\'s, the charges on it, the log says so', title() === 'THE WIZARD' && heavyLabel() === 'Fireball' && registry.app.all((n) => n.className === 'btn-label')[0].textContent.includes('◆◆◆') && t().includes('DEBUG: you fight on as The Wizard'));
+    btn.listeners.click[0](); // -> the necromancer: a blow still lands (the run's stats are whole)
+    await sleep(100);
+    const before = t().length;
+    for (let i = 0; i < 3; i++) { registry.app.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'a' && n.attrs.disabled === undefined)[0]?.listeners.click[0](); await sleep(400); }
+    ok('…and the fight goes on as the new class (a blow lands after the switch)', title() === 'THE NECROMANCER' && t().length > before && /You attack/.test(t()));
+  });
   getProfile().hero = null;
 }
