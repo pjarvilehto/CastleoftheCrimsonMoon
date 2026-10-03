@@ -1,4 +1,8 @@
 {
+  "0.00230": [
+    "An easier start: the weakest enemies (rats, Cave Shriekers, skeletons, Crypt Spiders) hit a quarter softer and a new game starts with 3 potions",
+    "Training gives a little less per level (+2 damage, +72 HP, +8 armor) and costs a little less XP, so the knight outgrows the early rooms a few runs later"
+  ],
   "0.00229": [
     "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
   ],

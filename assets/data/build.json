@@ -1,5 +1,5 @@
 {
-  "version": "0.00229",
+  "version": "0.00230",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00230": [
+      "An easier start: the weakest enemies (rats, Cave Shriekers, skeletons, Crypt Spiders) hit a quarter softer and a new game starts with 3 potions",
+      "Training gives a little less per level (+2 damage, +72 HP, +8 armor) and costs a little less XP, so the knight outgrows the early rooms a few runs later"
+    ],
     "0.00229": [
       "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
     ],
@@ -152,9 +156,6 @@
       "Numbers that change glow and grow for a moment — XP and coins in combat, and the row you just bought in the Great Hall (Precision LV2 flashes to LV3, 3/4 potions to 4/4)",
       "Buy Potion pulses whenever a potion can be bought, not only when the stock runs low",
       "Phone: the run's end fits the screen (Return to the Great Hall used to clip), and the PLAY card's iPhone line reads simply: Share, then Add to Home Screen"
-    ],
-    "0.00215": [
-      "World Lab: the clouds are drawn in screen space each frame, never scaled with the map — the flickering hairlines were the browser seaming the raster tiles of a scaled canvas"
     ]
   }
 }
