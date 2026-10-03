@@ -354,6 +354,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .item-pic.tier-2 { --rim: rgba(111, 168, 220, 0.75); --rim-glow: rgba(111, 168, 220, 0.35); }
 .item-pic.tier-3 { --rim: rgba(192, 122, 232, 0.8); --rim-glow: rgba(192, 122, 232, 0.4); }
 .item-pic.tier-4 { --rim: rgba(255, 107, 74, 0.85); --rim-glow: rgba(255, 107, 74, 0.45); }
+.item-pic.potion-pic { --rim: rgba(224, 70, 60, 0.8); --rim-glow: rgba(224, 50, 40, 0.4); } /* the healing potion's (0.00263) */
 @keyframes rarity-pulse-2 { 0%, 100% { opacity: 0.78; } 50% { opacity: 1; } }
 @keyframes rarity-pulse-3 { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 @keyframes rarity-pulse-4 { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
@@ -763,6 +764,9 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .gear-vals .weapon-dmg { color: #a89468; }
 .gear-names .no-item { color: #4a4234; } /* empty gear slot */
 .potions { margin-top: 0.2em; letter-spacing: 0.08em; } /* (after .card-sub) */
+.potions { display: flex; align-items: center; justify-content: center; gap: 0.25em; } /* (0.00263: the potion's picture, then the count) */
+.potions .potion-ic { width: 1.7em; height: 1.7em; margin: -0.3em 0; filter: drop-shadow(0 1px 2px #000); }
+.potions .potion-count { display: inline-block; }
 
 /* 0.075: portraits break out of the card frame — absolutely positioned,
    taller than the card (top edge) and wider (side bleed), bottom-anchored
@@ -1003,6 +1007,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .find-pop.tier-2 { --rim: #6fa8dc; --rim-glow: rgba(111, 168, 220, 0.45); --name: #6fa8dc; }
 .find-pop.tier-3 { --rim: #c07ae8; --rim-glow: rgba(192, 122, 232, 0.5); --name: #c07ae8; }
 .find-pop.tier-4 { --rim: #ff6b4a; --rim-glow: rgba(255, 107, 74, 0.6); --name: #ff6b4a; }
+.find-pop.potion-pop { --rim: rgba(224, 70, 60, 0.85); --rim-glow: rgba(224, 50, 40, 0.45); --name: #ff8a78; } /* a found potion (0.00263): flies into the hero card's count */
 .find-pop::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 18% 50%, var(--rim-glow), transparent 55%); }
 .find-pop .fp-art { position: absolute; left: -4%; top: -25%; height: 150%; aspect-ratio: 1; -webkit-mask-image: linear-gradient(to right, #000 50%, transparent 95%); mask-image: linear-gradient(to right, #000 50%, transparent 95%); }
 .find-pop .fp-art img { width: 100%; height: 100%; filter: brightness(1.35) contrast(1.05); }

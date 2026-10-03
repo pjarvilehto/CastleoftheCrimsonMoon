@@ -24,7 +24,7 @@ import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
 import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
 import { markActivity } from '../core/perfSpans.js';
-import { findPop } from './findFx.js';
+import { findPop, potionPop } from './findFx.js';
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
@@ -78,7 +78,8 @@ export function playFx(fx, ctx) {
     case 'overkill': return overkill(fx, ctx);
     case 'multi': shake(ctx, 1.1); return bgSway(1.2, 1);
     case 'summon': return summon(fx, ctx);
-    case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies to the hero (0.00260)
+    case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies into the LOOT row (0.00260)
+    case 'potion': return potionPop(ctx); // a found potion: its card flies into the hero card's count (0.00263)
     default: return undefined;
   }
 }

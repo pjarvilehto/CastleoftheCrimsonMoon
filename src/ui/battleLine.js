@@ -7,7 +7,7 @@
 
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp, describeItem, itemPic } from './hud.js';
+import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -214,7 +214,13 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const armor = p.equipment.armor ? itemWithForge(p.equipment.armor, p) : null;
   const hp = hpLine(run.hp, run.maxHp);
   const chip = el('div', { class: 'hud-chip' }, hp.line);
-  const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
+  // the potions (0.00263): the potion's picture and the count — a found potion's card flies into it, so the count holds
+  // that potion back until it lands (holdPotion, from the queue) and then glows and counts it (landPotion)
+  let held = 0;
+  const shownPotions = () => `${Math.max(0, run.potions - held)}/${run.potionCap}`;
+  const potionCount = el('span', { class: 'potion-count' }, shownPotions());
+  const potionIcon = potionPic('potion-ic');
+  const potions = el('div', { class: 'card-sub potions', title: 'Potions' }, potionIcon ?? 'POTIONS ', potionCount);
   const img = portrait('player', 'player', 'player');
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
@@ -263,7 +269,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     hp.set(s.hp, run.maxHp);
     const low = isLowHp(s.hp, run.maxHp);
     setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
-    setText(potions, `POTIONS ${run.potions}/${run.potionCap}`);
+    setText(potionCount, shownPotions());
     setText(armorVal, armorText());
     if (page > 0) back.set(PAGES[page]);
     setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
@@ -278,7 +284,17 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(potionBtn, 'active-red', remind);
     setClass(potionBtn, 'potion-remind', remind);
   };
-  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update });
+  const holdPotion = () => { held++; setText(potionCount, shownPotions()); };
+  const landPotion = () => {
+    held = Math.max(0, held - 1);
+    setText(potionCount, shownPotions());
+    for (const [node, peak] of [[potionCount, 1.7], [potionIcon, 1.5]]) node?.animate?.([ // (one-shot: the count glows and counts the potion in)
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+      { transform: `scale(${peak})`, filter: 'brightness(2.4) drop-shadow(0 0 6px rgba(255, 90, 60, 0.95))', offset: 0.25 },
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+    ], { duration: 700, easing: 'ease-out' });
+  };
+  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update, potionsEl: potions, holdPotion, landPotion });
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })

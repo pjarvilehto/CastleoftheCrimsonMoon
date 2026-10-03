@@ -9,10 +9,12 @@ import { DATA } from './data.js';
 export const ITEM_ART_DIR = 'assets/items';
 export const itemArtFile = (id) => DATA.items[id]?.art ?? null;
 export const itemArtUrl = (id) => { const f = itemArtFile(id); return f ? `${ITEM_ART_DIR}/${f}` : null; };
-/** Every item's picture, the gear the save wears first (the hall shows those on its first paint). */
+/** The healing potion's picture (0.00263, difficulty.json potions.art): the hero card's count and the potion's card in combat. */
+export const potionArtUrl = () => (DATA.difficulty.potions.art ? `${ITEM_ART_DIR}/${DATA.difficulty.potions.art}` : null);
+/** Every item's picture, the gear the save wears first (the hall shows those on its first paint), then the potion's. */
 export function itemArtUrls(worn = []) {
   const ids = [...new Set([...worn.filter((id) => DATA.items[id]), ...Object.keys(DATA.items)])];
-  return ids.map(itemArtUrl).filter(Boolean);
+  return [...ids.map(itemArtUrl), potionArtUrl()].filter(Boolean);
 }
 
 // The stats a find can raise, in describeItem's order and wording.

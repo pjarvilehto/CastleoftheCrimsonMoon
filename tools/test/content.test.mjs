@@ -377,7 +377,7 @@ fresh();
     'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
     'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)
-    'assets/items': new Set(Object.values(DATA.items).map((it) => it.art)), // (0.00260: the gear's pictures; assets/items/candidates is gen-items.mjs's, outside)
+    'assets/items': new Set([...Object.values(DATA.items).map((it) => it.art), DATA.difficulty.potions.art]), // (0.00260: the gear's pictures, 0.00263 the potion's; assets/items/candidates is gen-items.mjs's, outside)
   };
   const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
   ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame, icon and item picture on disk is one the game names', orphans.length === 0, orphans.join(', '));

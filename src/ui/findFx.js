@@ -14,7 +14,8 @@
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
 import { gainLine } from '../shared/itemArt.js';
-import { itemPic, describeItem, gearLabel } from './hud.js';
+import { itemPic, potionPic, describeItem, gearLabel } from './hud.js';
+import { potionHealAmount } from '../meta/leveling.js';
 import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
 
@@ -51,11 +52,42 @@ export function lootSpot(row, ahead = 0) {
 
 /** Plays the card; returns the ms until it lands (undefined when nothing plays). */
 export function findPop(fx, ctx) {
-  const layer = ctx.layer;
-  if (!layer || !can(layer) || reduced()) return;
+  if (!ctx.layer || !can(ctx.layer) || reduced()) return;
   const card = findCard(fx);
   if (!card) return;
-  // over the foes still standing (the fallen card has left the row); the room's middle when none is
+  // where it flies: the LOOT row's next free place
+  return riseAndFly(card, ctx, () => lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0)); // (ms until it lands: the scene's LOOT row takes it then)
+}
+
+// A found potion (0.00263, the developer's ask): the same card, the potion's
+// picture and what it does, flying into the hero card's potion count — which
+// holds the new potion back until it lands, then glows and counts it
+// (battleLine.js holdPotion / landPotion; the scene holds it as the line is
+// queued, combatQueue.js potionQueued).
+export function potionCard(run) {
+  const heal = potionHealAmount();
+  return el('div', { class: 'find-pop potion-pop' },
+    el('div', { class: 'fp-art' }, potionPic()),
+    el('div', { class: 'fp-text' },
+      el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, 'Potion')),
+      el('div', { class: 'fp-name' }, 'Healing Potion'),
+      el('div', { class: 'fp-desc' }, `heals ${heal} HP`),
+      run ? el('div', { class: 'fp-cmp' }, 'into the satchel · ', el('span', { class: 'up' }, `${run.potions} / ${run.potionCap}`)) : null));
+}
+/** Plays it; the hero card's count takes it as it lands (at once without the animation). */
+export function potionPop(ctx) {
+  const hero = ctx.unit('player');
+  if (!ctx.layer || !can(ctx.layer) || reduced()) { hero?.landPotion?.(); return; }
+  const target = () => { const r = hero?.potionsEl?.getBoundingClientRect?.(); return r && r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2, size: r.height * 1.4 } : null; };
+  const ms = riseAndFly(potionCard(ctx.run?.()), ctx, target);
+  setTimeout(() => hero?.landPotion?.(), ms);
+  return ms;
+}
+
+// The card rises over the foes still standing (the fallen card has left the row; the room's middle when none is),
+// holds, then flies to spot() = { x, y, size }, shrinking to that size — or fades upward with no spot. Returns its ms.
+function riseAndFly(card, ctx, spotOf) {
+  const layer = ctx.layer;
   const foes = [];
   for (let i = 0; i < MAX_UNITS; i++) { const u = ctx.unit(i); if (u) foes.push(u.card?.getBoundingClientRect?.() ?? null); }
   const W = globalThis.innerWidth ?? 1280, H = globalThis.innerHeight ?? 720;
@@ -68,8 +100,7 @@ export function findPop(fx, ctx) {
   const top = Math.max(8, area.top + area.height * 0.22 + stack * (h + 10));
   card.style.left = `${left}px`;
   card.style.top = `${top}px`;
-  // where it flies: the LOOT row's next free place, shrinking to a chip's size
-  const spot = lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0);
+  const spot = spotOf();
   const dx = spot ? spot.x - (left + w / 2) : 0, dy = spot ? spot.y - (top + h / 2) : 0;
   const shrink = spot && w ? Math.min(0.3, Math.max(0.04, spot.size / w)) : 0.1;
   const total = IN_MS + HOLD_MS + FLY_MS, a = IN_MS / total, b = (IN_MS + HOLD_MS) / total;
@@ -79,5 +110,5 @@ export function findPop(fx, ctx) {
     { opacity: 1, transform: 'none', offset: b, easing: 'cubic-bezier(0.5, 0, 0.75, 0.4)' },
     { opacity: spot ? 0.35 : 0, transform: spot ? `translate(${dx}px, ${dy}px) scale(${shrink.toFixed(3)})` : 'translateY(-20px)' },
   ], { duration: total, fill: 'forwards' }).finished.then(() => card.remove(), () => card.remove());
-  return total; // (ms until it lands: the scene's LOOT row takes it then)
+  return total;
 }

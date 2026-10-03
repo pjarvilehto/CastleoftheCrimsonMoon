@@ -2,7 +2,7 @@
 
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
-import { itemArtUrl } from '../shared/itemArt.js';
+import { itemArtUrl, potionArtUrl } from '../shared/itemArt.js';
 
 // Low health (0.126): at or under difficulty.json lowHpShare of max HP the
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
@@ -59,7 +59,7 @@ const LOG_MAX_LINES = 200;
 // small picture, rimmed in its rarity.
 export function logLine(logEl, content, cls = 'sys') {
   const parts = (Array.isArray(content) ? content : [content])
-    .map((p) => (p && typeof p === 'object' && p.item ? [p.id ? itemPic(p.id, 'log-art') : null, itemName(p.item)] : p));
+    .map((p) => (p && typeof p === 'object' && p.item ? [p.id ? itemPic(p.id, 'log-art') : null, itemName(p.item)] : p?.potion ? potionPic('log-art') : p)); // (0.00263: { potion } = the potion's picture)
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
   logEl.insertBefore(line, logEl.children[0] ?? null);
   while (logEl.children.length > LOG_MAX_LINES) logEl.children[logEl.children.length - 1].remove();
@@ -83,6 +83,12 @@ export function itemName(item) {
 export function itemPic(id, cls = '') {
   const src = itemArtUrl(id), item = DATA.items[id];
   return src ? el('img', { class: `item-pic tier-${Math.min(4, Math.max(1, item.tier || 1))}${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
+}
+
+// The healing potion's picture (0.00263): the hero card's count, the potion's card in combat.
+export function potionPic(cls = '') {
+  const src = potionArtUrl();
+  return src ? el('img', { class: `item-pic potion-pic${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
 }
 
 // A worn slot's name (0.00248, from hubSections.js; 0.00260 here, so combat's

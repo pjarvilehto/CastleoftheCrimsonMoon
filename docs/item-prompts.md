@@ -61,3 +61,29 @@ No text, no frame, no border, no card, no background panel. The near-black backg
 | amulet_of_the_crimson_moon | Amulet of the Crimson Moon, a gold crescent-moon pendant cradling a round glowing crimson gem, on a gold chain. Epic item, a violet and red glow. |
 | amulet_of_the_blood_moon | Amulet of the Blood Moon, a round silver locket set with a large full blood-red moonstone with craters, a single drop of blood falling from it, on a black chain. Epic item, a violet and red glow. |
 | amulet_of_the_blood_eclipse | Amulet of the Blood Eclipse, an ornate gold sun-disc pendant on a gold chain, its center a black eclipse disc ringed by a blazing blood-red corona of fire, small gold rays around the rim. Legendary item, radiating intense red light — the brightest thing in the image. |
+
+The classes' starting kits (proposed, 0.00263): a weapon and an armor per
+class in its own look — the knight keeps the Rusty Sword and the Oak
+Shield. Humble, common, no glow; a dull touch of the class's colour.
+
+| id | line |
+|---|---|
+| notched_hand_axe | Notched Hand Axe, a crude one-handed bearded axe, a chipped iron head bound to an ash haft with rawhide, rust-brown stains. Humble, common item. Shown diagonally, head to the upper right. |
+| wolfhide_jerkin | Wolfhide Jerkin, a sleeveless jerkin of stitched grey wolf pelts over boiled leather, crude bone toggles, a fur collar. Humble, common item. |
+| apprentices_staff | Apprentice's Staff, a plain crooked wooden walking staff, its head wrapped in worn copper wire around a dull, unlit blue stone. Humble, common item. Shown diagonally, head to the upper right. |
+| threadbare_robe | Threadbare Robe, a faded deep-blue wizard's robe with a hood, frayed hems and patched elbows, a simple rope belt, laid out flat. Humble, common item. |
+| grave_knife | Grave Knife, a short single-edged knife of dull iron, a handle wrapped in black cloth, a small bone pommel, a faint sickly green tarnish on the blade. Humble, common item. Shown diagonally, tip to the upper right. |
+| gravediggers_shroud | Gravedigger's Shroud, a hooded black burial shroud, its hem crusted with dried grave earth, a tarnished pewter clasp, laid out flat. Humble, common item. |
+| budding_branch | Budding Branch, a gnarled length of living oak used as a staff, a few small green leaves and a tuft of moss still growing on it. Humble, common item. Shown diagonally, head to the upper right. |
+| bark_vest | Bark Vest, a vest of overlapping plates of oak bark laced together with green vines over a moss-green tunic. Humble, common item. |
+| worn_hand_crossbow | Worn Hand Crossbow, a small one-handed crossbow of dark wood and iron, a frayed string, a scratched stock, a single bolt loaded. Humble, common item. |
+| witchfinders_coat | Witchfinder's Coat, a long dark leather coat with a high collar, buckled straps and a few small tin charms sewn on, worn and scuffed, laid out flat. Humble, common item. |
+| tin_censer | Tin Censer, a simple dented tin censer hanging from a short chain, a thin wisp of grey smoke curling from its vents. Humble, common item. |
+| sisters_habit | Sister's Habit, a nursing sister's habit of coarse ochre-grey wool with a white wimple and a stained linen apron, laid out flat. Humble, common item. |
+
+The healing potion (0.00263): not an item — `difficulty.json potions.art`,
+on the hero card's potion count and the potion's card in combat.
+
+| id | line |
+|---|---|
+| healing_potion | Healing Potion, a round-bellied glass flask stoppered with cork and red wax, filled with a glowing blood-red elixir, a frayed leather cord tied around its neck, a few drops of red on the glass. Its own warm red glow lighting the glass from inside. |

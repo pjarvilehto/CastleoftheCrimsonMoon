@@ -15,6 +15,7 @@
 //                                                          # 256 px WebP the game loads (assets/items/<id>_v<k>.webp,
 //                                                          # a new name each time — rule 7) and items.json `art`;
 //                                                          # no names = every item whose art is not its latest candidate
+//   node tools/gen-items.mjs --import healing_potion       # a picture that is no item (EXTRAS: the potion's, difficulty.json potions.art)
 //   node tools/gen-items.mjs --sheet out.png [--only ids]  # a contact sheet of the latest candidates (needs Playwright)
 //
 // Nano Banana Pro is the default (docs/item-prompts.md says why). Prices
@@ -56,13 +57,18 @@ const saveReg = (r) => writeFileSync(REGISTRY, `${JSON.stringify(r, null, 2)}\n`
 const sharp = () => createRequire(import.meta.url)('sharp');
 const latest = (reg, id) => (reg.items[id] ?? []).at(-1);
 
+// (the registry is read again right before each write: two runs side by side each saved their own copy and lost the other's)
 async function keep(reg, id, bytes, rec) {
   mkdirSync(OUT, { recursive: true });
-  const n = (reg.items[id] ?? []).reduce((m, c) => Math.max(m, c.n), 0) + 1;
+  const used = (r) => (r.items[id] ?? []).reduce((m, c) => Math.max(m, c.n), 0);
+  let n = Math.max(used(loadReg()), used(reg)) + 1;
+  while (existsSync(join(OUT, `${id}_c${n}.webp`))) n++; // (never overwrite a candidate on disk)
   const file = `${id}_c${n}.webp`;
   await sharp()(bytes).resize(CANDIDATE_PX, CANDIDATE_PX).webp({ quality: 86 }).toFile(join(OUT, file));
-  (reg.items[id] ??= []).push({ n, file, ...rec, at: new Date().toISOString().slice(0, 19) + 'Z' });
-  saveReg(reg);
+  const now = loadReg();
+  (now.items[id] ??= []).push({ n, file, ...rec, at: new Date().toISOString().slice(0, 19) + 'Z' });
+  saveReg(now);
+  reg.items = now.items;
   return file;
 }
 
@@ -75,6 +81,21 @@ export function setArt(text, id, file) {
   const next = /\n {4}"art": "[^"]*"/.test(block)
     ? block.replace(/\n {4}"art": "[^"]*"/, `\n    "art": "${file}"`)
     : block.replace(/(\n {4}"tier": \d+)(,?)/, (m, a, comma) => `${a},\n    "art": "${file}"${comma}`);
+  return text.slice(0, start) + next + text.slice(end);
+}
+
+// Pictures that are not items (0.00263): where --import writes their name instead of items.json.
+export const EXTRAS = {
+  healing_potion: { file: 'difficulty.json', set: (text, file) => setBlockArt(text, 'potions', file) },
+};
+/** A `"art"` line at the top of a top-level block of a data file (added, or changed) — the file's layout stays. */
+export function setBlockArt(text, block, file) {
+  const start = text.indexOf(`\n  "${block}": {`);
+  if (start < 0) throw new Error(`no ${block} block`);
+  const end = text.indexOf('\n  }', start), body = text.slice(start, end);
+  const next = /\n {4}"art": "[^"]*"/.test(body)
+    ? body.replace(/\n {4}"art": "[^"]*"/, `\n    "art": "${file}"`)
+    : body.replace(`"${block}": {`, `"${block}": {\n    "art": "${file}",`);
   return text.slice(0, start) + next + text.slice(end);
 }
 
@@ -130,12 +151,14 @@ async function importArt() {
   for (const pick of picks) {
     const m = pick.match(/^(\w+?)(?:_c(\d+))?$/);
     const id = m[1], cand = m[2] ? reg.items[id]?.find((c) => c.n === Number(m[2])) : latest(reg, id);
-    if (!items[id] || !cand) throw new Error(`no candidate for ${pick}`);
+    const extra = EXTRAS[id];
+    if ((!items[id] && !extra) || !cand) throw new Error(`no candidate for ${pick}`);
     let k = 1;
     while (existsSync(join(ROOT, 'assets', 'items', `${id}_v${k}.webp`))) k++; // (rule 7: never replace a file players may have cached)
     const file = `${id}_v${k}.webp`;
     await sharp()(join(OUT, cand.file)).resize(GAME_PX, GAME_PX).webp({ quality: 84 }).toFile(join(ROOT, 'assets', 'items', file));
-    text = setArt(text, id, file);
+    if (extra) { const path = join(ROOT, 'assets', 'data', extra.file); writeFileSync(path, extra.set(readFileSync(path, 'utf8'), file)); }
+    else text = setArt(text, id, file);
     cand.imported = file;
     console.log(id, '<-', cand.file, '=', `assets/items/${file}`);
   }

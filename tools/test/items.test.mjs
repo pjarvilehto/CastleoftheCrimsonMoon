@@ -5,17 +5,17 @@
 // Run via tools/smoke-test.mjs.
 
 import { existsSync, readFileSync } from 'node:fs';
-import { ok, fresh, El, DATA, createRun, getProfile, withAnimations } from './harness.mjs';
+import { ok, fresh, El, DATA, createRun, getProfile, withAnimations, sleep } from './harness.mjs';
 
 fresh();
-const { itemArtUrl, itemArtUrls, gainLine } = await import('../../src/shared/itemArt.js');
+const { itemArtUrl, itemArtUrls, potionArtUrl, gainLine } = await import('../../src/shared/itemArt.js');
 
 // the files: every item names a WebP in assets/items/ that is on disk (dataCheck fails a missing name at load)
 {
   const bad = Object.keys(DATA.items).filter((id) => { const u = itemArtUrl(id); return !u || !existsSync(u) || readFileSync(u).subarray(8, 12).toString() !== 'WEBP'; });
   ok('every item has its picture: a WebP in assets/items/ named by items.json art', bad.length === 0, bad.join(', '));
   const urls = itemArtUrls(['moonbrand']);
-  ok('the preload list: every item\'s picture once, the worn gear first', urls[0] === itemArtUrl('moonbrand') && urls.length === Object.keys(DATA.items).length && new Set(urls).size === urls.length);
+  ok('the preload list: every item\'s picture once, the worn gear first, the potion\'s last', urls[0] === itemArtUrl('moonbrand') && urls.length === Object.keys(DATA.items).length + 1 && urls.at(-1) === potionArtUrl() && new Set(urls).size === urls.length);
   const { checkData } = await import('../../src/shared/dataCheck.js').then((m) => ({ checkData: m.checkData ?? m.default ?? Object.values(m).find((f) => typeof f === 'function') }));
   const broken = structuredClone(DATA);
   delete broken.items.moonbrand.art;
@@ -27,8 +27,8 @@ const { itemArtUrl, itemArtUrls, gainLine } = await import('../../src/shared/ite
 {
   const { readDoc, promptOf, setArt } = await import('../gen-items.mjs');
   const { style, lines } = readDoc();
-  ok('docs/item-prompts.md: the style block and a line for every item, nothing else', /Unreal Engine 5/.test(style) && /Mignola/.test(style)
-    && Object.keys(lines).sort().join() === Object.keys(DATA.items).sort().join(), Object.keys(lines).length);
+  ok('docs/item-prompts.md: the style block and a line for every item and the potion', /Unreal Engine 5/.test(style) && /Mignola/.test(style)
+    && Object.keys(DATA.items).every((id) => lines[id]) && !!lines.healing_potion, Object.keys(lines).length);
   ok('...a prompt is the style, then "The object:" and the line (+ a direction)', promptOf('S', 'L', 'H') === 'S\n\nThe object: L\nDirection: H');
   const text = '{\n  "a": {\n    "name": "A",\n    "tier": 1,\n    "dmg": 4\n  },\n  "b": {\n    "name": "B",\n    "tier": 2,\n    "art": "b_v1.webp",\n    "armor": 3\n  }\n}\n';
   const once = setArt(text, 'a', 'a_v1.webp'), twice = setArt(once, 'b', 'b_v2.webp');
@@ -179,4 +179,55 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   await sleep(1500);
   const row = registry.app.all((n) => n.className?.includes?.('res-loot'))[0];
   ok('the LOOT row: labelled LOOT, hidden while the run has found nothing', !!row && row.textContent === 'LOOT' && row.classList.contains('none') && t().includes('COINS'));
+}
+
+// the healing potion (0.00263): its picture on the hero card's count; a found potion's card flies into that count,
+// which holds the potion back until it lands, then counts it
+{
+  const { potionPic } = await import('../../src/ui/hud.js');
+  const { potionCard, potionPop } = await import('../../src/ui/findFx.js');
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { checkData } = await import('../../src/shared/dataCheck.js');
+  const u = potionArtUrl();
+  ok('the potion\'s picture: difficulty.json potions.art, a WebP on disk; dataCheck names a missing one', !!u && existsSync(u) && potionPic().attrs.src === u
+    && (() => { const b = structuredClone(DATA); delete b.difficulty.potions.art; return checkData(b).some((m) => /potions\.art/.test(m)); })());
+  const run = createRun();
+  run.potions = 2; run.potionCap = 4;
+  const hero = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+  const count = () => hero.potionsEl.all((n) => n.className === 'potion-count')[0].textContent;
+  ok('the hero card: the potion\'s picture and the count', hero.potionsEl.all((n) => n.className?.includes?.('potion-ic'))[0]?.attrs.src === u && count() === '2/4');
+  run.potions = 3; hero.holdPotion();
+  hero.update({ hp: run.hp, heavyCd: 0, heavyReady: false, dead: false, printing: true });
+  ok('...a potion on its way is held back, through the card\'s updates', count() === '2/4');
+  hero.landPotion();
+  ok('...and counted as it lands', count() === '3/4');
+  const card = potionCard(run);
+  { const { logLine } = await import('../../src/ui/hud.js'); const b = new El('div'); logLine(b, ['Found a ', { potion: true }, 'healing potion!'], 'loot');
+    ok('the log\'s potion line carries the potion\'s picture', b.all((n) => n.className?.includes?.('potion-pic'))[0]?.attrs.src === u && b.textContent.includes('healing potion')); }
+  ok('the potion\'s card: FOUND · Potion, what it heals, the satchel', card.className === 'find-pop potion-pop' && /Found · Potion/.test(card.textContent) && card.textContent.includes('Healing Potion') && card.textContent.includes('3 / 4'));
+  // the flight: from the queue's hold to the landing
+  const { queueEvents } = await import('../../src/ui/combatQueue.js');
+  const runQ = createRun(), queued = [];
+  let held = 0;
+  const origR = Math.random, origDrop = DATA.difficulty.dropChance;
+  Math.random = () => 0.001; DATA.difficulty.dropChance = 0; // (a potion drops; no item)
+  try {
+    runQ.potions = 0;
+    const enemy = { ...DATA.enemies.rat, id: 'rat', hp: 0, maxHp: 10 };
+    queueEvents([{ type: 'kill', enemy, text: 'The rat falls.' }], { run: runQ, combat: { enemies: [enemy] }, playback: { enqueue: (it) => queued.push(it) }, potionQueued: () => held++ });
+  } finally { Math.random = origR; DATA.difficulty.dropChance = origDrop; }
+  ok('a found potion prints with a potion effect and asks the card to hold it', queued.some((it) => it.fx?.kind === 'potion' && it.text[0] === 'Found a ' && it.text[1]?.potion && it.text[2] === 'healing potion!') && held === 1 && runQ.potions === 1);
+  await withAnimations(async () => {
+    const box = (left, top, width, height) => () => ({ left, top, width, height, right: left + width, bottom: top + height });
+    const layer = new El('div');
+    const unitAt = (left) => ({ card: Object.assign(new El('div'), { getBoundingClientRect: box(left, 200, 100, 300) }), portrait: null });
+    const landed = [];
+    const heroU = { potionsEl: Object.assign(new El('div'), { getBoundingClientRect: box(60, 560, 80, 20) }), landPotion: () => landed.push(1) };
+    const ms = potionPop({ layer, unit: (i) => (i === 'player' ? heroU : [unitAt(600)][i] ?? null), run: () => run });
+    const end = layer.children[0]?.animations?.[0]?.kf[3].transform ?? '';
+    const [dx, dy] = (end.match(/translate\((-?[\d.]+)px, (-?[\d.]+)px\)/) ?? []).slice(1).map(Number);
+    ok('...its card rises over the foes and flies down-left into the hero card\'s count', ms > 1500 && dx < -400 && dy > 200 && landed.length === 0, end);
+    await sleep(ms + 10);
+    ok('...where it is counted as it lands', landed.length === 1);
+  });
 }

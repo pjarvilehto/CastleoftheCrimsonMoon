@@ -709,8 +709,30 @@ changed — the picture fading down into the slot, the name, its stats,
 "over X · +gain", RELIC on a tier 4 — and the salvage as grey chips;
 `equipItems`' `equipped` / `salvaged` entries carry the `id` since).
 Preload: after the Descend essentials and before the rooms, decoded, the
-save's worn gear first (`preload.js itemUrls`; Descend waits for none of
-it).
+save's worn gear first, the potion's last (`preload.js itemUrls`;
+Descend waits for none of it). **The healing potion (0.00263, the
+developer's ask)** has a picture too (`difficulty.json potions.art`,
+`itemArt.js potionArtUrl`, `hud.js potionPic`; painted by the same tool,
+`gen-items.mjs EXTRAS` writes it into difficulty.json on `--import`): the
+hero card's count is the picture + `3/4` (`battleLine.js`), the log's
+"Found a healing potion!" carries it (a `{ potion: true }` part), and a
+potion found in combat rises as the same card (`findFx.js potionPop`:
+FOUND · Potion, what it heals, the satchel) and flies into that count —
+`queueEvents`' `potionQueued` hook has the card hold the potion back
+(`holdPotion`: the run's count is already up when the loot is rolled, a
+line before it prints), and the landing counts it with a glow
+(`landPotion`; under reduced motion at once). A full satchel's sale has no card.
+**The classes' starting kits (proposed 0.00263, awaiting the
+developer's verdict):** twelve tier-1 pictures in
+`assets/items/candidates` from the lines at the end of
+`docs/item-prompts.md` (Barbarian: Notched Hand Axe + Wolfhide Jerkin;
+Wizard: Apprentice's Staff + Threadbare Robe; Necromancer: Grave Knife +
+Gravedigger's Shroud; Druid: Budding Branch + Bark Vest; Hexhunter: Worn
+Hand Crossbow + Witchfinder's Coat; Plague Sister: Tin Censer + Sister's
+Habit; the knight keeps the Rusty Sword and the Oak Shield) — the plan:
+the Rusty Sword's and the Oak Shield's numbers each (the classes play the
+same so far), never in the drop pool, the class's kit worn on PROCEED
+for a new save. Not in items.json yet, so a bare `--import` skips them.
 
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,

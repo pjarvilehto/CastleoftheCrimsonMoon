@@ -82,6 +82,7 @@ export function dungeonScene() {
   const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
   fxCtx.loot = () => lootEl; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
   fxCtx.lootAhead = () => lootFlying; // — past the ones still on their way
+  fxCtx.run = () => run; // (a found potion's card says the satchel's count, 0.00263)
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
@@ -250,7 +251,7 @@ export function dungeonScene() {
   function act(fn) {
     if (!canAct()) return;
     const pre = snapshot(combat); // the replay starts from the state BEFORE the action resolves (0.086)
-    queueEvents(fn(), { run, combat, playback });
+    queueEvents(fn(), { run, combat, playback, potionQueued: () => ui?.battle.player.holdPotion?.() }); // (0.00263: the card's count waits for the found potion's card to fly in)
     if (combat.over && combat.victory) {
       playback.enqueue({ text: roomSummaryText(), cls: 'move' });
     }
