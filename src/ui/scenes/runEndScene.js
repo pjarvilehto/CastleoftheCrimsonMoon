@@ -43,7 +43,7 @@ export function runEndScene(run, outcome) {
       if (outcome !== 'death') narrate('retreat'); // the narrator alone (0.162: the escape fanfare is gone; the win dialog keeps its chime)
       setBackground(DATA.backgrounds.death);
       root.append(
-        el('div', { class: 'panel run-end' }, // (0.00293: its own width, the stats on one line, larger find cards)
+        el('div', { class: 'panel run-end' }, // (0.00294: its own width, the stats on one line, larger find cards)
           el('h1', {}, outcome === 'death' ? 'YOU DIED' : 'YOU ESCAPED'),
           el('div', { class: 'subtitle' },
             outcome === 'death'

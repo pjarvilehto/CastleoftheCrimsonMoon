@@ -768,7 +768,7 @@ itemStrip`, the strip styles under `.inv-strips` — four in view and the
 rest a scroll / arrow key away, each with the slot it will upgrade or
 Salvage for another class's gear); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
-(`runEndScene.js findCard`; 0.00293, the developer's layout: the panel
+(`runEndScene.js findCard`; 0.00294, the developer's layout: the panel
 940 px wide (`.panel.run-end`), the five numbers on one line, the cards
 200 px — from five finds two rows, 175 px on a window 900 px tall or
 more, 150 px from 801 px (a MacBook's 813) — and one shrinking row as

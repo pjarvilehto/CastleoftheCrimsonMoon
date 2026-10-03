@@ -1153,7 +1153,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* The run's finds (0.00260, runEndScene.js findCard): a card per slot they changed, the picture fading down into the name; what was salvaged as grey chips */
 .loot-summary { text-align: center; }
 .finds-row { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
-/* The run's end (0.00293, the developer's call): a wider panel, the five numbers on one line, the find
+/* The run's end (0.00294, the developer's call): a wider panel, the five numbers on one line, the find
    cards a third larger to read; the phone keeps its own (section 16 outranks these) */
 #app > .panel.run-end { max-width: 940px; }
 .run-end .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
