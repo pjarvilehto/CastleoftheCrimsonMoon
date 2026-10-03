@@ -14,7 +14,7 @@
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
 import { gainLine } from '../shared/itemArt.js';
-import { itemPic, potionPic, describeItem, gearLabel } from './hud.js';
+import { itemPic, potionPic, describeItem, gearLabel, statText } from './hud.js';
 import { potionHealAmount } from '../meta/leveling.js';
 import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
@@ -33,7 +33,7 @@ export function findCard(fx) {
     el('div', { class: 'fp-text' },
       el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, gearLabel({ slot: fx.slot === 'ring' ? 'rings' : fx.slot, index: fx.index ?? 0 }) ?? it.slot)),
       el('div', { class: 'fp-name' }, it.name),
-      el('div', { class: 'fp-desc' }, describeItem(it)),
+      el('div', { class: 'fp-desc' }, ...statText(describeItem(it))),
       el('div', { class: 'fp-cmp' }, from ? `replaces ${from.name}` : 'an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
 }
 
@@ -71,7 +71,7 @@ export function potionCard(run) {
     el('div', { class: 'fp-text' },
       el('div', { class: 'fp-kind' }, 'Found · ', el('b', {}, 'Potion')),
       el('div', { class: 'fp-name' }, 'Healing Potion'),
-      el('div', { class: 'fp-desc' }, `heals ${heal} HP`),
+      el('div', { class: 'fp-desc' }, ...statText(`heals ${heal} HP`)),
       run ? el('div', { class: 'fp-cmp' }, 'into the satchel · ', el('span', { class: 'up' }, `${run.potions} / ${run.potionCap}`)) : null));
 }
 /** Plays it; the hero card's count takes it as it lands (at once without the animation). */

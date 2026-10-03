@@ -739,6 +739,25 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
+**Stat colours (0.00266, the developer's call; the "moody" set after a
+brighter first try).** One colour per stat, the same on the Train row that
+raises it and everywhere the stat shows, so training reads as the stat it
+moves: damage rust (Power), HP sage (Vitality), armor slate (Endurance),
+crit verdigris (Precision), loot ochre (Fortune), lifesteal dusty rose,
+dodge dusk violet — `styles.css :root --st-*` (the look, not tuning). The
+code: `hud.js statText(str)` wraps each stat word with its number ("+6
+dmg", "+40 armor", "+3% crit chance", "better loot", "300 HP") in a `.st
+st-<kind>` span (`statKind`), used on every item line (`describeItem`'s
+sites: the hall's slots and Equipment rows, the hero card's inventory, the
+find card, the run's end) and the Train / Alchemy rows' small line;
+`ST_TRAIN` maps a discipline to its stat (the row gets `.st-row st-<k>`:
+its name in the colour, a bar on its left); `statBox(label, value, cls,
+st)` colours a stat box (the hall's under the knight and the phone's
+strip: Attack / HP / Armor / Crit / Lifesteal); the hero card's DMG /
+ARMOR, the HP word on every HP line, and the STATS page's rows (the
+potion's heal as HP). Item names keep their rarity colours; the find
+cards' "+gain" stays green (an improvement, not a stat).
+
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
 name, epithet, lore, traits — placeholders of mine for the lines — and

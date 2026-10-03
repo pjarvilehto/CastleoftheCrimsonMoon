@@ -34,10 +34,39 @@ export function hpBar(current, max, color) {
   return el('div', { class: 'hpbar' }, el('div', { style: fill }));
 }
 
-export function statBox(label, value, cls = '') {
-  return el('div', { class: `stat-box${cls ? ` ${cls}` : ''}` },
+// st: the stat it shows (0.00266: 'dmg', 'hp', ...) — its colour (styles.css .st-box).
+export function statBox(label, value, cls = '', st = null) {
+  return el('div', { class: `stat-box${cls ? ` ${cls}` : ''}${st ? ` st-box st-${st}` : ''}` },
     el('div', { class: 'label' }, label),
     el('div', { class: 'value' }, String(value)));
+}
+
+// The stat colours (0.00266, the developer's call): a stat word with its number ("+6 dmg", "40 armor", "+3% crit chance",
+// "better loot") in the stat's colour, the same one as the Train row that raises it (ST_TRAIN) — so training an attribute
+// reads as the stat it moves. statText(str) is str as text and coloured spans, for el()'s children.
+export const ST_TRAIN = { power: 'dmg', vitality: 'hp', endurance: 'armor', precision: 'crit', fortune: 'loot' };
+const ST_RX = /([+×−-]?\d[\d.,]*%?\s*)?\b(max hp|hp|crit chance|crit damage|crit dmg|crit|damage|dmg|armor|lifesteal|dodge|healing|heal|better loot drops|better loot)\b/gi;
+export function statKind(word) {
+  const w = word.toLowerCase();
+  if (/crit/.test(w)) return 'crit';
+  if (/dmg|damage/.test(w)) return 'dmg';
+  if (/hp|heal/.test(w)) return 'hp';
+  if (/armor/.test(w)) return 'armor';
+  if (/lifesteal/.test(w)) return 'ls';
+  if (/dodge/.test(w)) return 'dodge';
+  return /loot/.test(w) ? 'loot' : null;
+}
+export function statText(str) {
+  const s = String(str ?? ''), out = [];
+  let last = 0, m;
+  ST_RX.lastIndex = 0;
+  while ((m = ST_RX.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index));
+    out.push(el('span', { class: `st st-${statKind(m[2])}` }, m[0]));
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out;
 }
 
 // Small glyph per line type, for faster log scanning.
