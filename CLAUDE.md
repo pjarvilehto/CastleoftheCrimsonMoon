@@ -653,7 +653,7 @@ eases back. The flat fallback scales the CSS layers the same way
 arrows play the game's sequence (push, a second, the painting) with the
 three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
 1 s in) are the developer's and unchanged.
-**A painting's own camera (0.00304):** `parallax.overrides.<file>` may
+**A painting's own camera (0.00311):** `parallax.overrides.<file>` may
 carry any of the BG TUNING sliders' knobs (`bgTuner.js`: depthScale,
 pivot, yawDeg, pitchDeg, speed, fogScale, fogSpeed) — each layer keeps its
 own sway and fog clocks (`L.tau` / `L.fogT`, a new layer carrying the

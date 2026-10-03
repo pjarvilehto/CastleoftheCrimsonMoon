@@ -179,11 +179,11 @@ async function show3d(file) {
   try { layer = await loadLayer(file); } catch { return; } // flat CSS keeps showing
   if (!gl || wanted !== file) { if (layer) dropLayer(layer); return; }
   layer.born = layers.length ? performance.now() : -Infinity; // first: no fade
-  const top = layers.at(-1); // (0.00304: each painting keeps its own clocks — its speed and fog drift its own — and a new one carries the last one's on, so nothing jumps)
+  const top = layers.at(-1); // (0.00311: each painting keeps its own clocks — its speed and fog drift its own — and a new one carries the last one's on, so nothing jumps)
   layer.tau = top?.tau ?? 0; layer.fogT = top?.fogT ?? 0;
   layers.push(layer);
   while (layers.length > 2) dropLayer(layers.shift());
-  if (refit()) layers.forEach(fillDepth); // (0.00304: a painting with more depth or sway of its own wants a wider skirt)
+  if (refit()) layers.forEach(fillDepth); // (0.00311: a painting with more depth or sway of its own wants a wider skirt)
   if (layer.born !== -Infinity) await new Promise((resolve) => setTimeout(resolve, cfg.fadeMs));
 }
 
@@ -263,7 +263,7 @@ function frame(now) {
   lastDraw = now;
   const endSpan = span('bg'); // the draw's main-thread time, for the device report (0.00225)
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
-  else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); for (const L of layers) { L.tau += dt * L.tune.speed; L.fogT += dt * L.tune.fogSpeed; } } // (0.00304: per painting — the sway clock, seconds x speed, accumulated so a speed change never jumps the camera; the fog clock likewise)
+  else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); for (const L of layers) { L.tau += dt * L.tune.speed; L.fogT += dt * L.tune.fogSpeed; } } // (0.00311: per painting — the sway clock, seconds x speed, accumulated so a speed change never jumps the camera; the fog clock likewise)
   t0 = now;
   if (monitor && !held) {
     fpsW = fpsWindow(fpsW, now, slowRate, cfg.quality);
@@ -276,7 +276,7 @@ function frame(now) {
     if (r >= 1) arrived = null;
   }
   const j = joltOffset(jolts, now), sw = swayOffset(sways, now);
-  // each painting sways by its own amplitudes (0.00304: per-file overrides of yawDeg / pitchDeg — the title's own)
+  // each painting sways by its own amplitudes (0.00311: per-file overrides of yawDeg / pitchDeg — the title's own)
   const orbitOf = (L) => {
     const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(L.tau, L.tune);
     return { yaw: o.yaw * arrive + j.yaw + sw, pitch: o.pitch * arrive + j.pitch };
@@ -420,7 +420,7 @@ function resize() {
 // (Re)build the screen grid when the needed skirt changes: the shipped
 // overscan, or more when the sliders ask for more sway/depth.
 function refit() {
-  const aspect = canvas.width / canvas.height || 16 / 9; // the skirt the most demanding painting shown needs (0.00304: a painting's own depth and sway)
+  const aspect = canvas.width / canvas.height || 16 / 9; // the skirt the most demanding painting shown needs (0.00311: a painting's own depth and sway)
   const m = Math.max(cfg.overscan, ...[cfg, ...layers.map((L) => L.tune)].map((c) => requiredOverscan(withJoltReserve(c), aspect)));
   if (Math.abs(m - gridM) < 0.005) return false;
   gridM = m;
@@ -432,7 +432,7 @@ function refit() {
 
 // ---- live tuning (?debug sliders) ----
 export function liveTuning() {
-  const c = layers.at(-1)?.tune ?? cfg; // the painting on screen (0.00304: its own overrides)
+  const c = layers.at(-1)?.tune ?? cfg; // the painting on screen (0.00311: its own overrides)
   return Object.fromEntries(TUNABLE.map((k) => [k, c[k]]));
 }
 
