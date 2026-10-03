@@ -238,3 +238,28 @@ const types = (evs) => evs.map((e) => e.type);
   });
   getProfile().hero = null;
 }
+
+// the classes' sounds (0.00270): a clip per class for the blow, the heavy
+// and a blow taken, the class's layers under it; the class events' sounds
+{
+  fresh();
+  const { sfxFor } = await import('../../src/ui/combatQueue.js');
+  const { heroList } = await import('../../src/shared/heroes.js');
+  const C = DATA.audio.clips, V = DATA.audio.variation;
+  const ids = heroList().map((h) => h.id);
+  ok('every class has atk_, heavy_ and hurt_ clips, file clips on the two recordings, pitched per class', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => C[`${k}_${id}`]?.file && Number.isFinite(C[`${k}_${id}`].measuredDb) && C[`${k}_${id}`].rate?.length === 2))
+    && C.atk_barbarian.rate[1] < C.atk_wizard.rate[0] && C.hurt_hexhunter.rate[0] > C.hurt_barbarian.rate[1] && C.atk_knight.file === C.attack.file && C.hurt_knight.file === C.hurt.file);
+  ok('each has its own variation with the class\'s synth layers (every layer a synth clip)', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => V[`${k}_${id}`]?.layers?.length && V[`${k}_${id}`].layers.every((l) => C[l.name]?.synth)))
+    && V.heavy_barbarian.layers.some((l) => l.name === 'swing' && l.p === 1) && V.heavy_wizard.layers.some((l) => l.name === 'crackle') && V.heavy_hexhunter.layers.some((l) => l.name === 'chime')
+    && V.heavy_necromancer.layers.some((l) => l.name === 'wail') && V.atk_druid.layers.some((l) => l.name === 'rake') && V.heavy_plaguesister.layers.some((l) => l.name === 'hiss'));
+  ok('a blow taken grunts in the class\'s voice: the Barbarian low, the women high; the knight keeps the plain hurt', V.hurt_barbarian.layers[0].name === 'grunt' && V.hurt_barbarian.layerRate[1] < 0.9 && V.hurt_plaguesister.layerRate[0] > 1.1 && V.hurt_hexhunter.layerRate[0] > 1.1
+    && !V.hurt_knight.layers.some((l) => l.name === 'grunt') && JSON.stringify(V.hurt_knight.layers) === JSON.stringify(V.hurt.layers));
+  const wiz = { id: 'wizard' };
+  ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
+    && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
+  getProfile().hero = { id: 'druid', look: 0 };
+  ok('…by the save\'s class when none is given', sfxFor({ type: 'atk', heavy: true }) === 'heavy_druid');
+  getProfile().hero = null;
+  ok('the class events have sounds (the hex a chime, the blight a hiss, the thrall a wail, a charge a zap)', sfxFor({ type: 'mark' }) === 'chime' && sfxFor({ type: 'blight' }) === 'hiss' && sfxFor({ type: 'thrall' }) === 'wail' && sfxFor({ type: 'charge' }) === 'zap' && sfxFor({ type: 'wild' }) === 'wail');
+  ok('the new instruments are synth clips and in the synth', ['swing', 'crackle', 'zap', 'wail', 'rake', 'chime', 'hiss', 'grunt'].every((n) => C[n]?.synth && readFileSync('src/audio/synth.js', 'utf8').includes(`function ${n}(`)));
+}

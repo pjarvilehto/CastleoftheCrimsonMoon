@@ -116,6 +116,7 @@ node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-pr
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
+node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 ```
 
@@ -909,7 +910,30 @@ figure clear of it, the switcher clear of the bar, Proceed on screen) and
 runs the hall and the dungeon as the Necromancer, so a standing figure
 on the cards is looked at; the knight's wide sprite is the easy case.
 
-**Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
+**The classes' sounds (0.00270, the developer's ask: each class its own
+attack and get-hit sounds).** `audio.json clips` has `atk_<id>`,
+`heavy_<id>` and `hurt_<id>` per hero — the developer's two recordings
+(`sfx-attack.mp3`, `sfx-hurt.mp3`) pitched per class (`rate`: the
+Barbarian low and slow, the Wizard and the women higher) with their own
+`variation` layers from `audio/synth.js`: `swing` (a heavy swing),
+`crackle` (fire: a roar bed and pops), `zap` (an arcane buzz falling),
+`wail` (a grave voice with vibrato, breath under it; low, a growl),
+`rake` (three claws), `chime` (an inharmonic bell), `hiss` (censer smoke
+with the chain's rattle) and `grunt` (the hero struck: a buzz through two
+vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
+~1.25 the Hexhunter and the Plague Sister). `combatQueue.js sfxFor(ev)`
+picks them by the save's class (a class without the clip falls back to
+the plain one); the class events have sounds too (`EV_SFX`: the hex a
+chime, the blight a hiss, Go Feral a wail, a charge a zap, the thrall a
+wail, its blows a thud); `dataCheck` wants the three clips per hero. The
+knight's are the plain attack / hurt with the heavy's own layers. **Real
+recordings:** `tools/gen-sfx.mjs` renders `docs/sfx-prompts.md` (a line
+per clip: id, seconds, prompt) through ElevenLabs' sound generation into
+`assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7), measures each
+with ffmpeg and points the clip's `file` / `measuredDb` at it — the
+layers stay as the class's colour. The session's key is scoped to
+text-to-speech: the developer adds the `sound_generation` permission to it
+(ElevenLabs → API keys) before the tool can run. **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
 and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim

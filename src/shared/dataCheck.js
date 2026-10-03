@@ -101,6 +101,7 @@ export function checkData(data) {
     for (const slot of ['weapon', 'armor']) { const id = h?.kit?.[slot]; if (data.items?.[id]?.slot !== slot) out.push(`heroes.json: ${h?.id}.kit.${slot} (the class's starting ${slot}, an item of that slot; 0.00265)`); }
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00267)`);
+    for (const k of ['atk', 'heavy', 'hurt']) if (!data.audio?.clips?.[`${k}_${h?.id}`]) out.push(`audio.json: clips.${k}_${h?.id} (the class's own ${k === 'hurt' ? 'get-hit' : k === 'heavy' ? 'heavy' : 'attack'} sound, 0.00270)`);
     // the class (0.00258): every number present, the heavy one the engine knows
     const c = h?.class;
     const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
