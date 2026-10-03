@@ -33,8 +33,8 @@ function setLook(id, n) { const m = heroById(id).looks.length; S.look = { ...S.l
 
 // ---- the screen (the game's markup and classes) ----
 function card(h, i) {
-  return el('div', { class: 'hero', 'data-hero': h.id, onclick: () => choose(h.id) },
-    el('div', { class: 'plate' }), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
+  return el('div', { class: 'hero', 'data-hero': h.id, style: `--theme:${h.theme.plate}`, onclick: () => choose(h.id) },
+    el('div', { class: 'plate' }, el('div', { class: 'tone' })), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
     el('img', { class: 'figure', src: lookUrl(h, lookAt(h.id)), style: `--fh:${lookOf(h, lookAt(h.id)).fh}`, alt: h.name, draggable: 'false' }),
     el('button', { class: 'num' }, String(i + 1)),
     el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)),

@@ -25,6 +25,8 @@
 // The Card Lab (labs/cards/cardFx.js) imports this shader: one copy.
 
 import { DATA } from '../shared/data.js';
+import { getProfile } from '../meta/profile.js';
+import { heroOf } from '../shared/heroes.js';
 import { isBg3dActive } from '../core/bg3d.js';
 import { MATERIAL } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
@@ -116,7 +118,7 @@ export const styleNamed = (name) => STYLE[name] ?? STYLE.fog;
 // embers flames, wisps ether; the boss flames, the knight ether.
 const BY_MATERIAL = { embers: 'flames', wisps: 'ether', dust: 'fog' };
 export function cardStyle(id, boss = false) {
-  if (id === 'player') return STYLE.knight;
+  if (id === 'player') { const t = heroOf(getProfile()).theme; return { look: t.light, tint: t.tint }; } // (0.00254: the class's theme, heroes.json)
   if (boss) return STYLE.boss;
   return STYLE[BY_MATERIAL[MATERIAL[id]] ?? 'blood'];
 }

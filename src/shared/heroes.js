@@ -22,6 +22,8 @@ export function cleanHero(h) {
 }
 /** The hero a profile plays, whole. */
 export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
+/** A hero's colour theme (0.00254): { plate, light, tint } — the card plates' colour, the card light's look and tint. */
+export const heroTheme = (hero) => hero.theme;
 /** A hero's look, whole: { art, fh } (an index past the list is clamped). */
 export const lookOf = (hero, look = 0) => hero.looks[Math.min(Math.max(0, look), hero.looks.length - 1)];
 /** Where a hero's look is drawn from. */

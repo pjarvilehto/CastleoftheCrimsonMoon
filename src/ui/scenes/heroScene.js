@@ -42,8 +42,8 @@ export function heroScene() {
     const row = el('div', { class: 'hero-row', style: `--n:${heroes.length}` }, ...heroes.map((h, i) => {
       const figure = el('img', { class: 'figure', src: lookUrl(h, looks[h.id]), style: `--fh:${lookOf(h, looks[h.id]).fh}`, alt: h.name, draggable: 'false' });
       figures[h.id] = figure;
-      const card = el('div', { class: 'hero', 'data-hero': h.id, onclick: () => choose(h.id) },
-        el('div', { class: 'plate' }), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
+      const card = el('div', { class: 'hero', 'data-hero': h.id, style: `--theme:${h.theme.plate}`, onclick: () => choose(h.id) }, // (0.00254: the class's colour on the plate and in the pulse)
+        el('div', { class: 'plate' }, el('div', { class: 'tone' })), el('div', { class: 'pulse' }), el('div', { class: 'rim' }),
         figure,
         el('button', { class: 'num', key: String(i + 1), onclick: (e) => { e?.stopPropagation?.(); choose(h.id); } }, String(i + 1)),
         el('div', { class: 'name' }, h.name.replace(/^The /, ''), el('small', {}, h.epithet)));

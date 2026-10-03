@@ -171,3 +171,27 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   ok('By hero: runs grouped by class (a run before the classes is the knight\'s), the looks worn counted', rows.length === 2 && rows[0].hero === 'wizard' && rows[0].runs === 2 && rows[0].looks === 2 && rows[1].hero === 'knight' && rows[1].runs === 1);
   ok('the collector to paste carries the hero fields', readFileSync('collector/worker.js', 'utf8').includes("export const VERSION = '0.00253'") && DATA.telemetry.collectorVersion === '0.00253');
 }
+
+// 0.00254: a colour theme per class — the plate's colour on the hero screen, in combat and in the hall, the card light's look and tint behind the player
+{
+  fresh();
+  const { cardStyle, LOOKS } = await import('../../src/ui/cardFx.js');
+  ok('every hero has a theme: a plate colour, a light the shader knows, a tint', heroList().every((h) => /^#[0-9a-f]{6}$/i.test(h.theme.plate) && LOOKS.includes(h.theme.light) && h.theme.tint.length === 3)
+    && new Set(heroList().map((h) => h.theme.plate)).size === 7);
+  const broken = structuredClone(DATA); broken.heroes.heroes[1].theme = { plate: 'red', light: 'sparks', tint: [1] };
+  ok('data check: a theme must be whole', checkData(broken).some((p) => p.includes('barbarian.theme')));
+  getProfile().hero = { id: 'knight', look: 0 };
+  const k = cardStyle('player');
+  getProfile().hero = { id: 'barbarian', look: 0 };
+  const b = cardStyle('player');
+  ok('the card light behind the player follows the class: the knight\'s ether, the barbarian\'s embers', k.look === 'ether' && b.look === 'embers' && b.tint[0] === 0.95);
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createRun } = await import('../../src/run/runState.js');
+  const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
+  const frame = u.card.all((n) => n.className === 'card-frame')[0];
+  ok('the knight\'s card plate carries the class colour as a blend layer', frame.attrs.style === '--theme:#9e3e1a' && frame.children.some((c) => c.className === 'tone'));
+  show(heroScene()); await sleep(1100);
+  const cards = registry.app.all((n) => n.className.split(' ').includes('hero'));
+  ok('every card on CHOOSE YOUR HERO wears its class colour', cards.length === 7 && cards.every((c) => c.attrs.style === `--theme:${heroById(c.attrs['data-hero']).theme.plate}` && c.all((n) => n.className === 'tone').length === 1));
+  getProfile().hero = null;
+}

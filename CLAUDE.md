@@ -693,7 +693,18 @@ every run record carries `hero` and `look` (`history.js runRecord`), the
 upload carries `profile.hero`, the collector keeps both (Worker 0.00253
 — paste it; the old one drops them), the dashboard shows a Hero column
 and a By hero table (`stats.js byHero`: runs, depth, deaths, looks worn;
-a run before the classes counts as the knight's). **What it changes:**
+a run before the classes counts as the knight's). **The colour themes
+(0.00254, the developer's ask):** `heroes.json theme` per class — `plate`
+(the card plate's colour: a `.tone` layer with `mix-blend-mode: color`
+over the plate art, so the art keeps its light and shade and the hue is
+the class's — on every card of CHOOSE YOUR HERO (`--theme` on the card,
+the chosen one's pulse in it too), on the knight's card in combat
+(`battleLine.js frame(theme)`) and on the hall's portrait), `light` and
+`tint` (the card light behind the player: `cardFx.js cardStyle('player')`
+reads them, the knight's ether as before). The knight crimson, the
+Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
+the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
+with fog — my picks, tuned in the data. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import

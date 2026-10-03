@@ -67,7 +67,8 @@ const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 // The card's frame art (0.195: a layer instead of a ::before, so the shader
 // light can live inside it — styles.css .card-frame carries the art and
 // the card's see-through opacity; the light screens over the art within it).
-const frame = () => el('div', { class: 'card-frame' });
+// the plate's layer; with a theme (the player's class, 0.00254) a colour-blend `.tone` sits on the art under the shader light
+const frame = (theme = null) => el('div', { class: 'card-frame', style: theme ? `--theme:${theme.plate}` : null }, theme ? el('div', { class: 'tone' }) : null);
 
 // Death collapse (0.087): sink, flash red, fade — then the card turns
 // and away. Without the Web Animations API (tests) it's instant.
@@ -141,7 +142,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
   const armorVal = el('span', { class: 'weapon-dmg' }, armorText());
-  const plate = frame();
+  const plate = frame(heroOf(p).theme);
   // The card's top (0.00251, the developer's layout): the class name sits
   // ABOVE the card (hero-title, in the unit), and the gear takes the top
   // of the card as two columns — the weapon and armor names (rarity

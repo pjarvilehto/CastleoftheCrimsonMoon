@@ -190,7 +190,8 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     el('div', { class: 'knight-doll' },
       el('div', { class: 'gear-col gear-left' }, slot('Weapon', eq.weapon), slot('Armor', eq.armor), slot('Boots', eq.boots)),
       // the portrait opens the look picker (0.00253): the same class, another of its looks
-      el('div', { class: `knight-card${looks > 1 ? ' pickable' : ''}`, 'data-row': 'look', title: looks > 1 ? 'Change your look' : null, onclick: looks > 1 ? () => openLookPicker((changed) => { if (changed) done('look'); }) : null },
+      el('div', { class: `knight-card${looks > 1 ? ' pickable' : ''}`, 'data-row': 'look', style: `--theme:${hero.theme.plate}`, title: looks > 1 ? 'Change your look' : null, onclick: looks > 1 ? () => openLookPicker((changed) => { if (changed) done('look'); }) : null },
+        el('div', { class: 'tone' }), // (0.00254: the class's colour on the plate)
         el('img', { src: portraitUrl('player'), alt: '' }),
         el('div', { class: 'look-tag' }, looks > 1 ? `Look ${cleanHero(p.hero).look + 1} of ${looks} · click to change` : hero.name)),
       el('div', { class: 'gear-col gear-right' }, slot('Ring I', eq.rings[0]), slot('Ring II', eq.rings[1]), slot('Trinket', eq.trinket), slot('Amulet', eq.amulet))),

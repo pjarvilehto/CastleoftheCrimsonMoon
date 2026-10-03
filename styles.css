@@ -405,13 +405,17 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @media (hover: hover) { .hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%); } }
 .hero.chosen, .hero.chosen:hover { filter: none; transform: translateY(-3%) scale(1.05); z-index: 2; }
 .hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
+/* the class's colour (0.00254, heroes.json theme.plate, --theme on the card): a colour-blend layer over the plate's art — the
+   art keeps its light and shade, the hue is the class's; the same layer sits on the knight's card in combat and the hall */
+.hero .plate .tone, .card-frame .tone, .knight-card .tone { position: absolute; inset: 0.3% 1.5% 0.4% 1.5%; border-radius: 16% / 5.9%; background: var(--theme, #8a1c1c); mix-blend-mode: color; opacity: 0.8; pointer-events: none; }
+.card-frame .tone, .knight-card .tone { inset: 0.3% 1% 0.4% 1%; border-radius: 10% / 5.9%; } /* (card_player.png: 669 wide, its corners ~10% of the width) */
 /* the rim and the pulse sit on the plate's own edge: card_enemy.png keeps a soft shadow outside its grey border (1.5% of the width at the sides) and corners of ~16% of the width (0.00250: the rim used to ring the element, a dark band between it and the card) */
 .hero .rim, .hero .pulse { position: absolute; inset: 0.3% 1.5% 0.4% 1.5%; border-radius: 16% / 5.9%; opacity: 0; pointer-events: none; }
 .hero .rim { box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); }
 .hero.chosen .rim { animation: hero-rim 1.6s ease-in-out infinite; }
 @keyframes hero-rim { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 /* the chosen card's red plate breathes: a warm wash over the art whose opacity pulses slowly */
-.hero .pulse { background: radial-gradient(ellipse at 50% 42%, rgba(190, 40, 40, 0.75), rgba(120, 15, 15, 0.3) 55%, rgba(60, 5, 5, 0) 82%); }
+.hero .pulse { background: radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--theme, #c02828) 80%, transparent), color-mix(in srgb, var(--theme, #c02828) 45%, transparent) 55%, transparent 82%); mix-blend-mode: screen; }
 .hero.chosen .pulse { animation: hero-pulse 3.4s ease-in-out infinite; }
 @keyframes hero-pulse { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.6; } }
 @media (prefers-reduced-motion: reduce) { .hero.chosen .rim { animation: none; opacity: 0.8; } .hero.chosen .pulse { animation: none; opacity: 0.4; } .hero { transition: none; } }

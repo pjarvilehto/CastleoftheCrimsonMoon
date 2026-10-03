@@ -11,6 +11,7 @@
         "Heavy blows",
         "Armor"
       ],
+      "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
         { "art": "knight_v1_k2.webp", "fh": 0.739 }
       ]
@@ -25,6 +26,7 @@
         "Rage",
         "No armor"
       ],
+      "theme": { "plate": "#9e3e1a", "light": "embers", "tint": [0.95, 0.45, 0.15] },
       "looks": [
         { "art": "barbarian_v1_k2.webp", "fh": 0.883 },
         { "art": "barbarian_v2_k2.webp", "fh": 0.95 },
@@ -43,6 +45,7 @@
         "Spells",
         "Frail"
       ],
+      "theme": { "plate": "#24479a", "light": "ether", "tint": [0.4, 0.6, 1.0] },
       "looks": [
         { "art": "wizard_v1_k2.webp", "fh": 0.921 },
         { "art": "wizard_v2_k2.webp", "fh": 0.851 },
@@ -64,6 +67,7 @@
         "Thralls",
         "Lifesteal"
       ],
+      "theme": { "plate": "#246b38", "light": "ether", "tint": [0.35, 0.9, 0.45] },
       "looks": [
         { "art": "necromancer_v1_k2.webp", "fh": 0.939 },
         { "art": "necromancer_v2_k2.webp", "fh": 0.934 },
@@ -85,6 +89,7 @@
         "Mending",
         "Wild shape"
       ],
+      "theme": { "plate": "#4a7a24", "light": "fog", "tint": [0.55, 0.8, 0.4] },
       "looks": [
         { "art": "druid_v1_k2.webp", "fh": 0.938 },
         { "art": "druid_v4_k2.webp", "fh": 0.935 },
@@ -103,6 +108,7 @@
         "Hexes",
         "Quick"
       ],
+      "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
         { "art": "hexhunter_v1_k2.webp", "fh": 0.961 },
         { "art": "hexhunter_v2_k2.webp", "fh": 0.962 },
@@ -120,6 +126,7 @@
         "Blight",
         "Endurance"
       ],
+      "theme": { "plate": "#8a7420", "light": "fog", "tint": [0.8, 0.75, 0.35] },
       "looks": [
         { "art": "plaguesister_v1_k2.webp", "fh": 0.921 },
         { "art": "plaguesister_v2_k2.webp", "fh": 0.959 },
