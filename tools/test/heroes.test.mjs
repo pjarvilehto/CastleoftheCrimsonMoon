@@ -48,7 +48,8 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const { createRun } = await import('../../src/run/runState.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
-  ok('the knight\'s card is named after the class', u.card.all((n) => n.className === 'card-name')[0].textContent === 'THE NECROMANCER');
+  ok('the knight\'s card is named after the class, above the card (0.00251)', u.el.all((n) => n.className === 'hero-title card-name')[0].textContent === 'THE NECROMANCER' && !u.card.all((n) => n.className.includes('card-name')).length
+    && u.card.all((n) => n.className === 'gear-vals')[0].textContent.includes('LV1'));
   getProfile().hero = { id: 'knight', look: 0 };
 }
 

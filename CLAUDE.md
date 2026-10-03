@@ -664,7 +664,11 @@ first); a progress wipe starts fresh (the knight). **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import
-writes) and the card is named after the class; the numbers are the same
+writes) and the card is named after the class — the name ABOVE the
+card (`.hero-title`, 0.00251, the developer's layout), the gear as two
+columns at the card's top (`.gear-block`: names left, LV / damage /
+armor right) and a standing hero a full card tall behind them
+(`.hero-standing`), the knight's wide sprite as it was; the numbers are the same
 for every class — the gameplay side is the developer's next call. The
 preloader fetches the figures the screen opens on (every hero's first
 look and the profile's own) first among the Descend essentials, the

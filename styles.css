@@ -405,7 +405,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 @media (hover: hover) { .hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%); } }
 .hero.chosen, .hero.chosen:hover { filter: none; transform: translateY(-3%) scale(1.05); z-index: 2; }
 .hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
-/* the rim and the pulse sit on the plate's own edge: card_enemy.png keeps a soft shadow outside its grey border (1.5% of the width at the sides) and corners of ~16% of the width (0.00249: the rim used to ring the element, a dark band between it and the card) */
+/* the rim and the pulse sit on the plate's own edge: card_enemy.png keeps a soft shadow outside its grey border (1.5% of the width at the sides) and corners of ~16% of the width (0.00250: the rim used to ring the element, a dark band between it and the card) */
 .hero .rim, .hero .pulse { position: absolute; inset: 0.3% 1.5% 0.4% 1.5%; border-radius: 16% / 5.9%; opacity: 0; pointer-events: none; }
 .hero .rim { box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); }
 .hero.chosen .rim { animation: hero-rim 1.6s ease-in-out infinite; }
@@ -717,9 +717,15 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* Player card gear lines: name left, total damage/armor right — mirrors
    the card-head row. width:100% required: .char-card is a flex column
    with align-items:center, so children shrink to content. */
-.card-sub.weapon-line { width: 100%; display: flex; justify-content: space-between; text-align: left; }
-.weapon-line .weapon-dmg { color: #a89468; }
-.weapon-line .no-item { color: #4a4234; } /* empty gear slot */
+/* the knight's card top (0.00251, the developer's layout): the class name above the card, the gear as two columns at the
+   top — names left, LV / damage / armor right — the figure standing tall behind them (text rows stay above it, z-index 2) */
+.hero-title { font-weight: bold; font-size: calc(var(--card-font) * 1.1); letter-spacing: 0.08em; color: var(--parchment); text-shadow: 0 2px 6px #000; margin: 0 0 0.35em 0.15em; }
+.gear-block { position: relative; z-index: 2; width: 100%; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.3em; font-size: 0.85em; color: #a89468; text-align: left; }
+.gear-names, .gear-vals { display: flex; flex-direction: column; gap: 0.12em; }
+.gear-vals { align-items: flex-end; text-align: right; white-space: nowrap; }
+.gear-vals .lv-badge { font-size: 1.18em; }
+.gear-vals .weapon-dmg { color: #a89468; }
+.gear-names .no-item { color: #4a4234; } /* empty gear slot */
 .potions { margin-top: 0.2em; letter-spacing: 0.08em; } /* (after .card-sub) */
 
 /* 0.075: portraits break out of the card frame — absolutely positioned,
@@ -749,10 +755,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* player.png is WIDE (aspect 1.11): bleed past the sides, not the top —
    the card carries 4 text rows (name/weapon/armor) that must stay clear */
 .player-card .portrait { bottom: 13%; width: 135%; height: auto; max-width: none; max-height: 67%; }
-.player-card.hero-standing .portrait { max-height: 100%; } /* a standing hero (0.00249, the developer's call): a full card tall, the staff past the frame like the enemies' heads — the wizard read small beside them at 67% */
+.player-card.hero-standing .portrait { bottom: 6%; max-height: 96%; } /* a standing hero (0.00250, the developer's call): feet on the HP line, the head at the frame's top, past it like the enemies' heads — the wizard read small beside them at 67% */
 /* the in-flow portrait used to flex-push the player's HP row to the bottom;
    with the portrait out of flow the wrapper must pin itself */
 .player-card .hud-chip { margin-top: auto; }
+.player-card .hud-chip, .player-card .potions { position: relative; z-index: 2; } /* (0.00251: over the figure's feet) */
 
 /* persistent cards (0.086): the card is never rebuilt mid-fight — HP and
    state are patched in place; a fallen enemy's card leaves the row (0.00216) */
@@ -1217,6 +1224,7 @@ html.phone .portrait:not(.glint) { filter: none; }
 html.phone .player-unit { position: relative; }
 html.phone .player-unit .unit-actions { position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; } /* under the card, outside the row: every card bottom on one line */
 html.phone .player-unit .unit-actions button { min-height: 40px; padding: 0.3em 0.2em; font-size: 0.95em; }
+html.phone .hero-title { position: absolute; bottom: 100%; left: 2px; margin: 0 0 3px; font-size: 0.8rem; white-space: nowrap; } /* (0.00251: above the card, outside the row's height) */
 html.phone .hud-chip .hpbar { width: 64px; }
 html.phone .room-title { top: 6px; font-size: 1.05rem; letter-spacing: 0.08em; left: calc(12px + env(safe-area-inset-left, 0px) + var(--tag-w) + 8px + var(--res-w)); right: calc(12px + env(safe-area-inset-right, 0px) + 60px); transform: none; text-align: center; overflow: hidden; text-overflow: ellipsis; padding-bottom: 6px; } /* between XP / COINS and ☰, an ellipsis past that (0.00223: a long name with the record tag ran into the counters on the smallest phones) */
 html.phone #combat-log.docked {                                     /* one line: the latest, flashed in; the strip beside the knight's buttons */
