@@ -1,5 +1,5 @@
 {
-  "version": "0.00308",
+  "version": "0.00309",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00309": [
+      "The title's fly-in has sound: a whoosh mid-flight and the Descend strike as the title appears (where the browser lets the music start on its own, and on a phone after PLAY)."
+    ],
     "0.00308": [
       "The title's fly-in fades into the living painting a little earlier, while the film is still arriving."
     ],
@@ -146,9 +149,6 @@
     ],
     "0.00295": [
       "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
-    ],
-    "0.00294": [
-      "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
     ]
   }
 }
