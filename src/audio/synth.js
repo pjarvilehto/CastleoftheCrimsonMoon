@@ -231,7 +231,7 @@ function wail(ctx, out, t, rate) {
   sources.push(n);
   return { dur, sources };
 }
-// rake — three quick claws across, each a touch lower (the Druid's feral blows)
+// rake — three quick claws across, each a touch lower (the Druid's living staff)
 function rake(ctx, out, t, rate) {
   const gap = rand(0.038, 0.05), f0 = rand(2600, 3600) * rate;
   const sources = [0, 1, 2].map((i) => noiseHit(ctx, out, t + i * gap, 'bandpass', f0 * (1 - i * 0.12), 2.4, rand(0.035, 0.05)));

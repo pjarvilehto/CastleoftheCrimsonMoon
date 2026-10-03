@@ -274,16 +274,15 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setText(armorVal, armorText());
     if (page > 0) back.set(PAGES[page]);
     // 0.00267, the classes: a charge class (the wizard) shows its charges
-    // left as pips in place of the cooldown; the druid's feral turns show
-    // while they last (no potion then — runState.drinkPotion refuses)
+    // left as pips in place of the cooldown
     const k = run.stats.klass;
     const charges = Math.max(0, Math.min(k.charges, Number(s.charges) || 0));
     setText(cd, k.charges > 0 ? ` ${'◆'.repeat(charges)}${'◇'.repeat(k.charges - charges)}`
-      : s.wild > 0 ? ` (feral ${s.wild})` : s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
+      : s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
-    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp || s.wild > 0);
+    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
     // Low on health with potions left: Drink Potion pulses red (0.126) —
     // kept on while a turn prints, so the glow doesn't restart every blow.
     const remind = low && !s.dead && run.potions > 0;
@@ -359,7 +358,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       setClass(card, 'dying', true);
       collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
-    const tag = [s.hexed ? 'HEXED' : '', s.blight > 0 ? `BLIGHT ×${s.blight}` : ''].filter(Boolean).join(' · ');
+    const tag = [s.hexed ? 'HEXED' : '', s.blight > 0 ? `BLIGHT ×${s.blight}` : '', s.entangled > 0 ? `ROOTED ${s.entangled}` : ''].filter(Boolean).join(' · '); // (0.00271: the Druid's roots, turns left)
     setText(foeTag, tag);
     setClass(foeTag, 'on', !!tag);
     setClass(card, 'hexed', !!s.hexed);

@@ -57,7 +57,6 @@ export function createRun() {
     turns: 0, potionsDrunk: 0, bossesBeaten: 0, killedBy: null,
     perf: null, // 0.130: frame-rate summary, filled in as the run ends (core/perfMonitor.js)
     tempArmor: 0,                // Infusion potions: armor until the room ends
-    wild: 0,                     // the druid's wild shape (0.00258): turns left, potions blocked meanwhile
     coinMult: 1,                 // Greed boon: x kill coins
     over: false,
     room: null,
@@ -74,7 +73,6 @@ export function enterNextRoom(run) {
   const stretch = Math.floor((next - 1) / DATA.difficulty.bossEvery);
   run.shrineRooms[stretch] ??= randomShrineRoom(stretch, run.treasureRoom);
   run.tempArmor = 0; // Infusion armor dies with the room
-  run.wild = 0; // (0.00258: the wild shape ends with the room)
   const interlude = run.interludeShown === next ? null
     : run.shrineRooms.includes(next) ? 'shrine' : run.treasureRoom === next ? 'treasure' : null;
   if (interlude) {
@@ -127,7 +125,7 @@ export function addPotion(run) {
 // between rooms (inCombat false), where enterNextRoom would discard it
 // (0.00223: a potion drunk after the win announced armor the next room threw away).
 export function drinkPotion(run, inCombat = true) {
-  if (run.potions <= 0 || run.hp >= run.maxHp || run.wild > 0) return false; // (no potions in wild shape, 0.00258)
+  if (run.potions <= 0 || run.hp >= run.maxHp) return false;
   const healed = Math.round(potionHealAmount() * run.stats.klass.potionHealMult); // potency-trained (x the class's share, 0.00258)
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;

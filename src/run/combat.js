@@ -80,7 +80,6 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   // to count too, so a cooldown of 3 was back after two blows and two
   // Quicken boons (floor 1) made it every turn
   if (!heavy && combat.heavyCd > 0) combat.heavyCd -= 1;
-  if (combat.run.wild > 0) combat.run.wild -= 1; // (the wild shape's turns, 0.00258)
   return events;
 }
 
@@ -95,12 +94,11 @@ function rollHit(combat, heavy, targetIndex = -1) {
   const crit = marked || DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
   // whole numbers always (0.00199): a heavy at heavyMult 2.3 printed 358.79999 on an OVERKILL
-  // the class (0.00258): its heavy's factor, the barbarian's rage (more damage the lower the HP), the druid's wild shape
+  // the class (0.00258): its heavy's factor, the barbarian's rage (more damage the lower the HP)
   const rage = k.rage > 0 ? 1 + k.rage * (1 - run.hp / run.maxHp) : 1;
-  const wild = run.wild > 0 ? k.wildMult : 1;
-  let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage * wild);
+  let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage);
   if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus + (marked ? k.markCrit : 0) }, megaCrit)); // (the hex's own crit damage, 0.00258)
-  return { dmg: Math.max(1, dmg), crit, megaCrit, heavy, marked, wild: run.wild > 0 }; // (marked / wild: the class's own trace on the blow, ui/combatFx.js — 0.00268)
+  return { dmg: Math.max(1, dmg), crit, megaCrit, heavy, marked }; // (marked: the class's own trace on the blow, ui/combatFx.js — 0.00268)
 }
 
 // SMASH / OVERKILL: a heavy hit whose damage covers EVERY living enemy's
@@ -121,7 +119,7 @@ function smash(combat, { dmg, heavy }, push) {
 // The blow on its target; a heavy blow of at least spillThreshold x the
 // target's HP strikes through into every other living enemy (no cap — a
 // strong enough blow sweeps the room). Basic attacks never spill.
-function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked, wild }, push) {
+function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked }, push) {
   const target = combat.enemies[targetIndex];
   const chain = [targetIndex];
   if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258: the knight's blow spills; the other classes' heavies have their own reach)
@@ -139,7 +137,7 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked, wild 
       push({
         type: 'atk',
         text: `You attack ${t.name} for ${dmg} dmg${heavy ? ' (heavy attack)' : ''}${megaCrit ? ' — MEGA CRIT!' : crit ? ' — CRITICAL!' : '.'}`,
-        target: idx, dmg, crit, megaCrit, heavy, marked, wild,
+        target: idx, dmg, crit, megaCrit, heavy, marked,
       });
     } else {
       push({ type: 'spill', text: `...the blow strikes through into ${t.name} for ${applied} dmg!`, target: idx, dmg: applied });
@@ -155,7 +153,7 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy, marked, wild 
 // The class's own turn (0.00258, a draft under the simulator's study —
 // the UI knows none of these events yet, the knight makes none): after
 // the blow, its heavy's effect (cleave / fireball sweep the other foes,
-// drain heals, mark marks, censer blights, wild shape begins), then the
+// drain heals, mark marks, censer blights, entangle binds), then the
 // blight's tick, the druid's mending, and the necromancer's thrall rising
 // from this turn's kill.
 function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
@@ -166,7 +164,7 @@ function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
     else if (k.heavy === 'drain') { const healed = Math.min(run.maxHp - run.hp, Math.round(dmg * k.drainShare)); if (healed > 0) { run.hp += healed; push({ type: 'heal', text: `You drain ${healed} HP from the blow.`, healed, drain: true, target: targetIndex }); } } // (drain: the soul wisps from the foe to the Necromancer, 0.00268)
     else if (k.heavy === 'mark') { if (combat.enemies[targetIndex].hp > 0) { combat.marked = targetIndex; push({ type: 'mark', text: `You hex ${combat.enemies[targetIndex].name}: every blow on it will strike true.`, target: targetIndex }); } }
     else if (k.heavy === 'censer') { for (const e of living(combat)) e.blight = (e.blight ?? 0) + 1; push({ type: 'blight', text: 'Your censer\'s smoke settles on every foe.' }); }
-    else if (k.heavy === 'wildshape') { run.wild = k.wildTurns + 1; push({ type: 'wild', text: `You take the beast's shape for ${k.wildTurns} turns.` }); }
+    else if (k.heavy === 'entangle') { for (const e of living(combat)) e.entangled = k.entangleTurns; push({ type: 'entangle', text: `Roots burst from the ground and bind every foe for ${k.entangleTurns} turns.` }); } // (the Druid, 0.00271: a bound foe's attack fails with entangleChance — enemyStrike)
   }
   // the wizard's charges come back with the kills (a fireball through a room refills it; a boss's summons feed it)
   if (k.chargeOnKill > 0) {
@@ -220,12 +218,18 @@ function enemyPhase(combat, push) {
     const source = combat.enemies.indexOf(enemy); // who acts, for the UI
     if (enemyStrike(combat, enemy, source, push)) return true;
   }
+  for (const e of combat.enemies) if (e.entangled > 0) e.entangled -= 1; // the Druid's roots loosen a turn (0.00271)
   return false;
 }
 
 function enemyStrike(combat, enemy, source, push) {
   const run = combat.run;
   const tune = DATA.difficulty.combat;
+  // the Druid's roots (0.00271): a bound foe rolls to attack at all
+  if (enemy.entangled > 0 && Math.random() < run.stats.klass.entangleChance) {
+    push({ type: 'entangled', text: `${enemy.name} strains against the roots — Entangled!`, source });
+    return false;
+  }
   const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
   // the necromancer's thrall (0.00258) takes the blow instead, unarmored
   if (combat.thrall?.hp > 0) {

@@ -170,9 +170,9 @@
       "gainDb": 0
     },
     "atk_knight": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_knight_v1.mp3",
+      "gainDb": -2.0,
+      "measuredDb": -10.0,
       "rate": [
         0.88,
         1.12
@@ -180,9 +180,9 @@
       "jitterDb": 1
     },
     "heavy_knight": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_knight_v1.mp3",
+      "gainDb": -0.4,
+      "measuredDb": -9.6,
       "rate": [
         0.8,
         0.95
@@ -190,9 +190,9 @@
       "jitterDb": 1
     },
     "hurt_knight": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_knight_v1.mp3",
+      "gainDb": -6.1,
+      "measuredDb": -5.9,
       "rate": [
         0.88,
         1.12
@@ -200,9 +200,9 @@
       "jitterDb": 1
     },
     "atk_barbarian": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_barbarian_v1.mp3",
+      "gainDb": 5.8,
+      "measuredDb": -17.8,
       "rate": [
         0.78,
         0.95
@@ -210,9 +210,9 @@
       "jitterDb": 1
     },
     "heavy_barbarian": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_barbarian_v1.mp3",
+      "gainDb": -5.8,
+      "measuredDb": -4.2,
       "rate": [
         0.68,
         0.82
@@ -220,9 +220,9 @@
       "jitterDb": 1
     },
     "hurt_barbarian": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_barbarian_v1.mp3",
+      "gainDb": -5.0,
+      "measuredDb": -7.0,
       "rate": [
         0.8,
         0.95
@@ -230,9 +230,9 @@
       "jitterDb": 1
     },
     "atk_wizard": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_wizard_v1.mp3",
+      "gainDb": 19.6,
+      "measuredDb": -31.6,
       "rate": [
         1.05,
         1.2
@@ -240,29 +240,29 @@
       "jitterDb": 1
     },
     "heavy_wizard": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_wizard_v1.mp3",
+      "gainDb": -4.4,
+      "measuredDb": -5.6,
       "rate": [
         0.85,
-        1.0
+        1
       ],
       "jitterDb": 1
     },
     "hurt_wizard": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_wizard_v1.mp3",
+      "gainDb": -1.6,
+      "measuredDb": -10.4,
       "rate": [
-        1.0,
+        1,
         1.15
       ],
       "jitterDb": 1
     },
     "atk_necromancer": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_necromancer_v1.mp3",
+      "gainDb": 4.1,
+      "measuredDb": -16.1,
       "rate": [
         0.9,
         1.05
@@ -270,9 +270,9 @@
       "jitterDb": 1
     },
     "heavy_necromancer": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_necromancer_v1.mp3",
+      "gainDb": 5.2,
+      "measuredDb": -15.2,
       "rate": [
         0.85,
         0.95
@@ -280,9 +280,9 @@
       "jitterDb": 1
     },
     "hurt_necromancer": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_necromancer_v1.mp3",
+      "gainDb": 0.9,
+      "measuredDb": -12.9,
       "rate": [
         0.95,
         1.1
@@ -290,9 +290,9 @@
       "jitterDb": 1
     },
     "atk_druid": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_druid_v1.mp3",
+      "gainDb": 6.1,
+      "measuredDb": -18.1,
       "rate": [
         0.95,
         1.1
@@ -300,9 +300,9 @@
       "jitterDb": 1
     },
     "heavy_druid": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_druid_v1.mp3",
+      "gainDb": 23.1,
+      "measuredDb": -33.1,
       "rate": [
         0.8,
         0.9
@@ -310,9 +310,9 @@
       "jitterDb": 1
     },
     "hurt_druid": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_druid_v1.mp3",
+      "gainDb": -4.0,
+      "measuredDb": -8.0,
       "rate": [
         0.9,
         1.05
@@ -320,19 +320,19 @@
       "jitterDb": 1
     },
     "atk_hexhunter": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_hexhunter_v1.mp3",
+      "gainDb": 3.0,
+      "measuredDb": -15.0,
       "rate": [
-        1.0,
+        1,
         1.15
       ],
       "jitterDb": 1
     },
     "heavy_hexhunter": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_hexhunter_v1.mp3",
+      "gainDb": 10.0,
+      "measuredDb": -20.0,
       "rate": [
         0.95,
         1.05
@@ -340,9 +340,9 @@
       "jitterDb": 1
     },
     "hurt_hexhunter": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_hexhunter_v1.mp3",
+      "gainDb": 4.2,
+      "measuredDb": -16.2,
       "rate": [
         1.05,
         1.2
@@ -350,19 +350,19 @@
       "jitterDb": 1
     },
     "atk_plaguesister": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -6.6,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/atk_plaguesister_v1.mp3",
+      "gainDb": -3.4,
+      "measuredDb": -8.6,
       "rate": [
         0.85,
-        1.0
+        1
       ],
       "jitterDb": 1
     },
     "heavy_plaguesister": {
-      "file": "assets/audio/sfx-attack.mp3",
-      "gainDb": -5.1,
-      "measuredDb": -5.4,
+      "file": "assets/audio/sfx/heavy_plaguesister_v1.mp3",
+      "gainDb": 7.1,
+      "measuredDb": -17.1,
       "rate": [
         0.8,
         0.9
@@ -370,12 +370,252 @@
       "jitterDb": 1
     },
     "hurt_plaguesister": {
-      "file": "assets/audio/sfx-hurt.mp3",
-      "gainDb": -7.8,
-      "measuredDb": -5.2,
+      "file": "assets/audio/sfx/hurt_plaguesister_v1.mp3",
+      "gainDb": -4.8,
+      "measuredDb": -7.2,
       "rate": [
         1.05,
         1.2
+      ],
+      "jitterDb": 1
+    },
+    "eatk_rat": {
+      "gainDb": -3.5,
+      "file": "assets/audio/sfx/eatk_rat_v1.mp3",
+      "measuredDb": -10.5,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_rat": {
+      "gainDb": -3.1,
+      "file": "assets/audio/sfx/ehurt_rat_v1.mp3",
+      "measuredDb": -10.9,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_bat": {
+      "gainDb": -5.5,
+      "file": "assets/audio/sfx/eatk_bat_v1.mp3",
+      "measuredDb": -8.5,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_bat": {
+      "gainDb": 10.2,
+      "file": "assets/audio/sfx/ehurt_bat_v1.mp3",
+      "measuredDb": -24.2,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_skeleton": {
+      "gainDb": -6.4,
+      "file": "assets/audio/sfx/eatk_skeleton_v1.mp3",
+      "measuredDb": -7.6,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_skeleton": {
+      "gainDb": 3.2,
+      "file": "assets/audio/sfx/ehurt_skeleton_v1.mp3",
+      "measuredDb": -17.2,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_ghoul": {
+      "gainDb": -7.9,
+      "file": "assets/audio/sfx/eatk_ghoul_v1.mp3",
+      "measuredDb": -6.1,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_ghoul": {
+      "gainDb": -5.9,
+      "file": "assets/audio/sfx/ehurt_ghoul_v1.mp3",
+      "measuredDb": -8.1,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_cultist": {
+      "gainDb": -2.0,
+      "file": "assets/audio/sfx/eatk_cultist_v1.mp3",
+      "measuredDb": -12.0,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_cultist": {
+      "gainDb": -5.4,
+      "file": "assets/audio/sfx/ehurt_cultist_v1.mp3",
+      "measuredDb": -8.6,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_golem": {
+      "gainDb": -8.7,
+      "file": "assets/audio/sfx/eatk_golem_v1.mp3",
+      "measuredDb": -5.3,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_golem": {
+      "gainDb": 13.7,
+      "file": "assets/audio/sfx/ehurt_golem_v1.mp3",
+      "measuredDb": -27.7,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_wraith": {
+      "gainDb": -1.1,
+      "file": "assets/audio/sfx/eatk_wraith_v1.mp3",
+      "measuredDb": -12.9,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_wraith": {
+      "gainDb": 1.3,
+      "file": "assets/audio/sfx/ehurt_wraith_v1.mp3",
+      "measuredDb": -15.3,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_gargoyle": {
+      "gainDb": -2.2,
+      "file": "assets/audio/sfx/eatk_gargoyle_v1.mp3",
+      "measuredDb": -11.8,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_gargoyle": {
+      "gainDb": 3.7,
+      "file": "assets/audio/sfx/ehurt_gargoyle_v1.mp3",
+      "measuredDb": -17.7,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_vampire_lord": {
+      "gainDb": -1.9,
+      "file": "assets/audio/sfx/eatk_vampire_lord_v1.mp3",
+      "measuredDb": -12.1,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_vampire_lord": {
+      "gainDb": -5.5,
+      "file": "assets/audio/sfx/ehurt_vampire_lord_v1.mp3",
+      "measuredDb": -8.5,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_crypt_spider": {
+      "gainDb": 1.2,
+      "file": "assets/audio/sfx/eatk_crypt_spider_v1.mp3",
+      "measuredDb": -15.2,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_crypt_spider": {
+      "gainDb": -4.0,
+      "file": "assets/audio/sfx/ehurt_crypt_spider_v1.mp3",
+      "measuredDb": -10.0,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_hollow_hound": {
+      "gainDb": 7.5,
+      "file": "assets/audio/sfx/eatk_hollow_hound_v1.mp3",
+      "measuredDb": -21.5,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_hollow_hound": {
+      "gainDb": -0.3,
+      "file": "assets/audio/sfx/ehurt_hollow_hound_v1.mp3",
+      "measuredDb": -13.7,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "eatk_blood_knight": {
+      "gainDb": -4.4,
+      "file": "assets/audio/sfx/eatk_blood_knight_v1.mp3",
+      "measuredDb": -9.6,
+      "rate": [
+        0.94,
+        1.06
+      ],
+      "jitterDb": 1
+    },
+    "ehurt_blood_knight": {
+      "gainDb": 7.6,
+      "file": "assets/audio/sfx/ehurt_blood_knight_v1.mp3",
+      "measuredDb": -21.6,
+      "rate": [
+        0.94,
+        1.06
       ],
       "jitterDb": 1
     }
@@ -752,7 +992,7 @@
     "heavy_wizard": {
       "rate": [
         0.85,
-        1.0
+        1
       ],
       "eq": {
         "lo": 500,
@@ -785,7 +1025,7 @@
     },
     "hurt_wizard": {
       "rate": [
-        1.0,
+        1,
         1.15
       ],
       "eq": {
@@ -795,7 +1035,7 @@
         "q": 1.2
       },
       "layerRate": [
-        1.0,
+        1,
         1.15
       ],
       "layerDb": 2,
@@ -965,7 +1205,7 @@
       },
       "layerRate": [
         0.85,
-        1.0
+        1
       ],
       "layerDb": 2,
       "layers": [
@@ -983,7 +1223,7 @@
     },
     "atk_hexhunter": {
       "rate": [
-        1.0,
+        1,
         1.15
       ],
       "eq": {
@@ -1071,7 +1311,7 @@
     "atk_plaguesister": {
       "rate": [
         0.85,
-        1.0
+        1
       ],
       "eq": {
         "lo": 500,

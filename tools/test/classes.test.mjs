@@ -2,11 +2,11 @@
 // the developer's call: "we can edit and finetune once I get to play"):
 // heroes.json class per hero through stats.js derivedStats into
 // run.stats.klass, the seven heavies and the passives in combat.js
-// (classPhase, sweep, the thrall, the charges), the wild shape's potion
-// block in runState.js, and the combat UI's minimum: the charges and the
-// feral turns on the hero's button, the HEXED / BLIGHT tag on a foe's card,
+// (classPhase, sweep, the thrall, the charges, the Druid's roots in
+// enemyStrike), and the combat UI's minimum: the charges on the hero's
+// button, the HEXED / BLIGHT / ROOTED tag on a foe's card,
 // a colour per new log line.
-import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync } from './harness.mjs';
+import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync } from './harness.mjs';
 
 const { useHeavy, canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
@@ -79,22 +79,31 @@ const types = (evs) => evs.map((e) => e.type);
   ok('the foes\' blows land on the thrall, not the Necromancer (thrallhit, then thrallfall)', types(evs).includes('thrallhit') && !types(evs).includes('dmg') && (cb.thrall.hp === 0 ? types(evs).includes('thrallfall') : true));
 }
 
-// the Druid: Go Feral — wildMult damage for wildTurns, no potion meanwhile; mend a turn
+// the Druid: Entangle (0.00271, the developer's call) — roots bind every foe for entangleTurns of their turns; a bound foe's attack fails with entangleChance; mend a turn
 {
   fresh();
   const run = as('druid');
   const k = run.stats.klass;
   run.potions = 3; run.hp = Math.round(run.maxHp / 2);
-  const cb = room(run, [foe(100000)]);
+  const cb = room(run, [foe(100000, 50), foe(100000, 50)]);
   const hpBefore = run.hp;
   const evs = heavy(cb, 0);
-  ok('Go Feral sets the wild shape for wildTurns (the turn after the shape is taken counts down from wildTurns)', types(evs).includes('wild') && run.wild === k.wildTurns);
-  ok('no potion in the beast\'s shape', drinkPotion(run) === false && run.potions === 3);
-  const wildDmg = playerAttack(cb, 0, false).find((e) => e.type === 'atk').dmg;
-  ok('a feral blow is wildMult of the Druid\'s damage', wildDmg === Math.round(run.stats.dmg * k.wildMult));
+  ok('Entangle binds every living foe for entangleTurns and says so', types(evs).includes('entangle') && k.entangleTurns === 2 && k.entangleChance > 0 && k.heavy === 'entangle');
+  ok('…the roots loosen a turn: after the heavy\'s enemy phase one turn is left on each foe', cb.enemies.every((e) => e.entangled === k.entangleTurns - 1));
+  ok('a potion goes down as ever (no wild shape any more)', drinkPotion(run) !== false);
   ok('mend: the Druid\'s wounds knit a share of max HP a turn', evs.some((e) => e.type === 'heal' && e.healed === Math.max(1, Math.round(run.maxHp * k.mend))) && run.hp > hpBefore);
-  run.wild = 0;
-  ok('the shape gone, a potion goes down again', drinkPotion(run) !== false);
+  // the roll: with the chance at 1 every bound foe fails ('Entangled!'), at 0 none; the blow is skipped entirely
+  const cert = as('druid'); cert.stats.klass.entangleChance = 1;
+  const c1 = room(cert, [foe(100000, 50), foe(100000, 50)]);
+  const e1 = heavy(c1, 0);
+  ok('a bound foe that fails its roll does not attack at all: an entangled line, no dmg line', e1.filter((e) => e.type === 'entangled').length === 2 && !e1.some((e) => e.type === 'dmg') && e1.find((e) => e.type === 'entangled').text.includes('Entangled!') && e1.find((e) => e.type === 'entangled').source === 0);
+  const t2 = playerAttack(c1, 0, false);
+  ok('…the second turn too, then the roots are gone and the foes strike again', t2.filter((e) => e.type === 'entangled').length === 2 && c1.enemies.every((e) => e.entangled === 0) && playerAttack(c1, 0, false).filter((e) => e.type === 'dmg').length === 2);
+  const never = as('druid'); never.stats.klass.entangleChance = 0;
+  const c0 = room(never, [foe(100000, 50)]);
+  ok('at chance 0 a bound foe always strikes', !heavy(c0, 0).some((e) => e.type === 'entangled') && heavy(c0, 0).some((e) => e.type === 'dmg'));
+  const kn = as('knight');
+  ok('the knight\'s foes are never bound (no roll spent)', !heavy(room(kn, [foe(100000, 50)]), 0).some((e) => e.type === 'entangled'));
 }
 
 // the Hexhunter: every blow on the hexed foe crits, with the hex's own crit damage
@@ -135,26 +144,24 @@ const types = (evs) => evs.map((e) => e.type);
   const run = createRun();
   const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
   const label = () => u.el.all((n) => n.className === 'btn-label')[0].textContent;
-  u.update({ hp: run.hp, printing: false, dead: false, heavyReady: true, heavyCd: 0, charges: 2, wild: 0 });
+  u.update({ hp: run.hp, printing: false, dead: false, heavyReady: true, heavyCd: 0, charges: 2 });
   ok('the Wizard\'s button shows its charges as pips (two of three)', label().includes('◆◆◇') && label().startsWith('Fireball'));
   getProfile().hero = { id: 'druid', look: 0 };
   const dr = createRun(); dr.potions = 2; dr.hp = 1;
   const du = createPlayerUnit(dr, { onHeavy() {}, onPotion() {} });
-  const dl = () => du.el.all((n) => n.className === 'btn-label')[0].textContent;
-  du.update({ hp: 1, printing: false, dead: false, heavyReady: false, heavyCd: 3, charges: 0, wild: 2 });
+  const dl = () => du.el.all((n) => n.className === 'btn-label')[0]?.textContent;
+  du.update({ hp: 1, printing: false, dead: false, heavyReady: false, heavyCd: 3, charges: 0 });
   const potionBtn = du.el.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'p')[0];
-  ok('the Druid\'s button shows the feral turns and Drink Potion is dead meanwhile', dl().includes('feral 2') && potionBtn.attrs.disabled !== undefined);
-  du.update({ hp: 1, printing: false, dead: false, heavyReady: false, heavyCd: 3, charges: 0, wild: 0 });
-  ok('…and the cooldown and the potion return with the shape gone', dl().includes('(3)') && potionBtn.attrs.disabled === undefined);
+  ok('the Druid\'s button is Entangle with a plain cooldown, the potion live', dl().startsWith('Entangle') && dl().includes('(3)') && potionBtn.attrs.disabled === undefined);
   getProfile().hero = null;
   const e = createEnemyUnit(foe(100), 0, { onAttack() {}, onGone() {} });
   const tag = e.card.all((n) => n.className.includes('foe-tag'))[0];
-  e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: true, blight: 2 });
-  ok('a foe\'s card tags HEXED and the blight stacks, the hexed card marked', tag.textContent === 'HEXED · BLIGHT ×2' && tag.classList.contains('on') && e.card.classList.contains('hexed'));
-  e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: false, blight: 0 });
+  e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: true, blight: 2, entangled: 1 });
+  ok('a foe\'s card tags HEXED, the blight stacks and the roots\' turns, the hexed card marked', tag.textContent === 'HEXED · BLIGHT ×2 · ROOTED 1' && tag.classList.contains('on') && e.card.classList.contains('hexed'));
+  e.update({ hp: 100, dead: false, printing: false, combatOver: false, hexed: false, blight: 0, entangled: 0 });
   ok('…and clears them', tag.textContent === '' && !tag.classList.contains('on') && !e.card.classList.contains('hexed'));
   const css = readFileSync('styles.css', 'utf8');
-  ok('every class event has a log colour (mark, blight, wild, charge, thrall, thrallhit, thrallfall)', ['mark', 'blight', 'wild', 'charge', 'thrall', 'thrallhit', 'thrallfall'].every((c) => css.includes(`#combat-log .${c} `)));
+  ok('every class event has a log colour (mark, blight, entangle, entangled, charge, thrall, thrallhit, thrallfall)', ['mark', 'blight', 'entangle', 'entangled', 'charge', 'thrall', 'thrallhit', 'thrallfall'].every((c) => css.includes(`#combat-log .${c} `)));
 }
 
 // the classes' particles (0.00268): a trace per class and blow over the
@@ -174,31 +181,33 @@ const types = (evs) => evs.map((e) => e.type);
   const wisps = spawnClassBurst('drain', 100, 100, { size: 290, to: { x: 500, y: 300 } }).filter((p) => p.kind === 'dot');
   ok('the Necromancer\'s drain: wisps that seek the point given (the hero\'s card), none without one', wisps.length >= 18 && wisps.every((p) => p.tx === 500 && p.ty === 300 && p.pull > 0)
     && spawnClassBurst('drain', 100, 100, { size: 290 }).filter((p) => p.kind === 'dot').every((p) => !p.pull));
-  ok('the Druid\'s feral blow is three parallel rakes and leaves; Go Feral bursts leaves all round', spawnClassBurst('claw', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 3 && kinds(spawnClassBurst('claw', 0, 0, { size: 290 })).has('blob')
-    && spawnClassBurst('thorn', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 1 && spawnClassBurst('wild', 0, 0, { size: 290 }).filter((p) => p.kind === 'blob').length >= 20);
+  ok('the Druid\'s heavy blow is three parallel rakes and leaves, his blows one; Entangle\'s roots shoot up from the ground (streaks rising, earth-coloured, pulled back down), a bound foe\'s strain a smaller tug', spawnClassBurst('claw', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 3 && kinds(spawnClassBurst('claw', 0, 0, { size: 290 })).has('blob')
+    && spawnClassBurst('thorn', 0, 0, { size: 290 }).filter((p) => p.kind === 'slash').length === 1
+    && spawnClassBurst('roots', 0, 0, { size: 290 }).filter((p) => p.kind === 'streak').every((p) => p.vy < 0 && p.g > 0 && p.mid === CLASS_PAL.root.mid) && spawnClassBurst('roots', 0, 0, { size: 290 }).filter((p) => p.kind === 'streak').length === 12
+    && spawnClassBurst('rooted', 0, 0, { size: 290 }).filter((p) => p.kind === 'streak').length === 4 && kinds(spawnClassBurst('roots', 0, 0, { size: 290 })).has('puff'));
   ok('the Hexhunter\'s Hex is a sigil in a ring; a blow on the hexed foe flares a quicker one', kinds(spawnClassBurst('hex', 0, 0, { size: 290 })).has('sigil') && kinds(spawnClassBurst('hex', 0, 0, { size: 290 })).has('ring')
     && spawnClassBurst('hexhit', 0, 0, { size: 290 }).find((p) => p.kind === 'sigil').life < spawnClassBurst('hex', 0, 0, { size: 290 }).find((p) => p.kind === 'sigil').life && !kinds(spawnClassBurst('hexspark', 0, 0, { size: 290 })).has('sigil'));
   ok('the Plague Sister\'s censer is smoke (puffs that grow) in ochre; the blight\'s gnawing a smaller wisp of it', spawnClassBurst('censer', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').every((p) => p.grow > 1 && [CLASS_PAL.ochre.dark, CLASS_PAL.ochre.mid].includes(p.color))
     && spawnClassBurst('blight', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').length < spawnClassBurst('censer', 0, 0, { size: 290 }).filter((p) => p.kind === 'puff').length);
   // the trace a blow leaves, by the class and the blow
   const blow = (o) => ({ kind: 'attack', from: 'player', ...o });
-  ok('the trace table: the knight\'s heavy a steel clash and his blows none; each class its own, the hexed foe and the feral blows theirs', traceFor(blow({ heavy: true }), 'blow') === 'steel' && traceFor(blow({}), 'blow') === null
+  ok('the trace table: the knight\'s heavy a steel clash and his blows none; each class its own, the hexed foe\'s theirs', traceFor(blow({ heavy: true }), 'blow') === 'steel' && traceFor(blow({}), 'blow') === null
     && traceFor(blow({ heavy: true }), 'cleave') === 'cleave' && traceFor(blow({}), 'cleave') === 'rage' && traceFor(blow({ heavy: true }), 'fireball') === 'fireball' && traceFor(blow({}), 'fireball') === 'arcane'
-    && traceFor(blow({}), 'drain') === 'grave' && traceFor(blow({ heavy: true }), 'drain') === 'drain' && traceFor(blow({ wild: true }), 'wildshape') === 'claw' && traceFor(blow({}), 'wildshape') === 'thorn'
+    && traceFor(blow({}), 'drain') === 'grave' && traceFor(blow({ heavy: true }), 'drain') === 'drain' && traceFor(blow({ heavy: true }), 'entangle') === 'claw' && traceFor(blow({}), 'entangle') === 'thorn'
     && traceFor(blow({ marked: true }), 'mark') === 'hexhit' && traceFor(blow({}), 'mark') === 'hexspark' && traceFor(blow({ heavy: true }), 'censer') === 'incense');
   ok('the reach of a heavy (via) traces as the fire, the cleave or the blight whatever the class; an enemy\'s blow on the hero leaves none', traceFor({ kind: 'hit', via: 'fireball' }, 'blow') === 'fireball' && traceFor({ kind: 'hit', via: 'cleave' }, 'cleave') === 'cleavespill'
     && traceFor({ kind: 'hit', via: 'blight' }, 'censer') === 'blight' && traceFor({ kind: 'hit' }, 'blow') === null && traceFor({ kind: 'attack', from: 0, to: 'player' }, 'cleave') === null);
   // the events carry what the trace needs
-  ok('the class events become effects (mark, blight, wild, charge, thrall, thrallhit, thrallfall), the blow its marked / wild flags, the reach its via, the drain its foe', fxFor({ type: 'mark', target: 2 }).kind === 'mark' && fxFor({ type: 'mark', target: 2 }).to === 2
-    && fxFor({ type: 'blight' }).kind === 'blight' && fxFor({ type: 'wild' }).to === 'player' && fxFor({ type: 'charge' }).kind === 'charge' && fxFor({ type: 'thrall' }).kind === 'thrall'
+  ok('the class events become effects (mark, blight, entangle, entangled, charge, thrall, thrallhit, thrallfall), the blow its marked flag, the reach its via, the drain its foe', fxFor({ type: 'mark', target: 2 }).kind === 'mark' && fxFor({ type: 'mark', target: 2 }).to === 2
+    && fxFor({ type: 'blight' }).kind === 'blight' && fxFor({ type: 'entangle' }).kind === 'entangle' && fxFor({ type: 'entangled', source: 2 }).from === 2 && fxFor({ type: 'charge' }).kind === 'charge' && fxFor({ type: 'thrall' }).kind === 'thrall'
     && fxFor({ type: 'thrallhit', source: 1, taken: 18 }).taken === 18 && fxFor({ type: 'thrallfall' }).kind === 'thrallfall'
-    && fxFor({ type: 'atk', target: 0, dmg: 5, marked: true, wild: true }).marked === true && fxFor({ type: 'atk', target: 0, dmg: 5 }).wild === false
+    && fxFor({ type: 'atk', target: 0, dmg: 5, marked: true }).marked === true && fxFor({ type: 'atk', target: 0, dmg: 5 }).marked === false
     && fxFor({ type: 'spill', target: 1, dmg: 3, via: 'cleave' }).via === 'cleave' && fxFor({ type: 'heal', healed: 9, drain: true, target: 2 }).from === 2 && fxFor({ type: 'heal', healed: 9 }).drain === false);
   getProfile().hero = { id: 'hexhunter', look: 0 };
   const hx = room(as('hexhunter'), [foe(100000), foe(100000)]);
   heavy(hx, 1);
   const onMark = playerAttack(hx, 1, false).find((e) => e.type === 'atk');
-  ok('a blow on the hexed foe carries marked (the sigil flares); the Druid\'s feral blow carries wild', onMark.marked === true && (() => { const d = room(as('druid'), [foe(100000)]); heavy(d, 0); return playerAttack(d, 0, false).find((e) => e.type === 'atk').wild === true; })());
+  ok('a blow on the hexed foe carries marked (the sigil flares)', onMark.marked === true && playerAttack(hx, 0, false).find((e) => e.type === 'atk').marked === false);
   const nc = room(as('necromancer'), [foe(100000)]);
   ok('the drain\'s heal names its foe', (() => { const r = nc.run; r.hp = 1; const ev = heavy(nc, 0).find((e) => e.type === 'heal'); return ev?.drain === true && ev.target === 0; })());
   getProfile().hero = null;
@@ -247,8 +256,9 @@ const types = (evs) => evs.map((e) => e.type);
   const { heroList } = await import('../../src/shared/heroes.js');
   const C = DATA.audio.clips, V = DATA.audio.variation;
   const ids = heroList().map((h) => h.id);
-  ok('every class has atk_, heavy_ and hurt_ clips, file clips on the two recordings, pitched per class', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => C[`${k}_${id}`]?.file && Number.isFinite(C[`${k}_${id}`].measuredDb) && C[`${k}_${id}`].rate?.length === 2))
-    && C.atk_barbarian.rate[1] < C.atk_wizard.rate[0] && C.hurt_hexhunter.rate[0] > C.hurt_barbarian.rate[1] && C.atk_knight.file === C.attack.file && C.hurt_knight.file === C.hurt.file);
+  ok('every class has atk_, heavy_ and hurt_ clips: rendered files on disk (0.00272), measured, pitched per class', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb) && C[`${k}_${id}`].rate?.length === 2))
+    && C.atk_barbarian.rate[1] < C.atk_wizard.rate[0] && C.hurt_hexhunter.rate[0] > C.hurt_barbarian.rate[1]);
+  ok('every foe has eatk_ and ehurt_ clips on disk, measured and trimmed (0.00272)', Object.keys(DATA.enemies).every((id) => ['eatk', 'ehurt'].every((k) => C[`${k}_${id}`]?.file?.startsWith('assets/audio/sfx/') && statSync(C[`${k}_${id}`].file).size > 2 * 1024 && Number.isFinite(C[`${k}_${id}`].measuredDb) && Number.isFinite(C[`${k}_${id}`].gainDb))));
   ok('each has its own variation with the class\'s synth layers (every layer a synth clip)', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => V[`${k}_${id}`]?.layers?.length && V[`${k}_${id}`].layers.every((l) => C[l.name]?.synth)))
     && V.heavy_barbarian.layers.some((l) => l.name === 'swing' && l.p === 1) && V.heavy_wizard.layers.some((l) => l.name === 'crackle') && V.heavy_hexhunter.layers.some((l) => l.name === 'chime')
     && V.heavy_necromancer.layers.some((l) => l.name === 'wail') && V.atk_druid.layers.some((l) => l.name === 'rake') && V.heavy_plaguesister.layers.some((l) => l.name === 'hiss'));
@@ -260,6 +270,25 @@ const types = (evs) => evs.map((e) => e.type);
   getProfile().hero = { id: 'druid', look: 0 };
   ok('…by the save\'s class when none is given', sfxFor({ type: 'atk', heavy: true }) === 'heavy_druid');
   getProfile().hero = null;
-  ok('the class events have sounds (the hex a chime, the blight a hiss, the thrall a wail, a charge a zap)', sfxFor({ type: 'mark' }) === 'chime' && sfxFor({ type: 'blight' }) === 'hiss' && sfxFor({ type: 'thrall' }) === 'wail' && sfxFor({ type: 'charge' }) === 'zap' && sfxFor({ type: 'wild' }) === 'wail');
+  ok('the class events have sounds (the hex a chime, the blight a hiss, the thrall a wail, a charge a zap)', sfxFor({ type: 'mark' }) === 'chime' && sfxFor({ type: 'blight' }) === 'hiss' && sfxFor({ type: 'thrall' }) === 'wail' && sfxFor({ type: 'charge' }) === 'zap' && sfxFor({ type: 'entangle' }) === 'thud' && sfxFor({ type: 'entangled' }) === 'swoosh');
   ok('the new instruments are synth clips and in the synth', ['swing', 'crackle', 'zap', 'wail', 'rake', 'chime', 'hiss', 'grunt'].every((n) => C[n]?.synth && readFileSync('src/audio/synth.js', 'utf8').includes(`function ${n}(`)));
+}
+
+
+// the foes' sounds (0.00272): layered on the blow by the struck or striking foe's id
+{
+  fresh();
+  const { combatSfx } = await import('../../src/ui/combatSfx.js');
+  const played = [];
+  const play = (name, opts) => played.push([name, opts?.delayMs]);
+  const unitOf = (who) => (who === 'player' ? { id: 'player', card: null } : { id: ['rat', 'skeleton'][who], card: null });
+  const ctx = { unit: unitOf };
+  combatSfx({ sfx: 'atk_knight', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, ctx, play);
+  ok('the hero\'s blow plays his attack and the struck foe\'s cry (ehurt_rat), both on the strike', played.map((p) => p[0]).join('|') === 'atk_knight|ehurt_rat' && played.every((p) => p[1] > 0));
+  played.length = 0;
+  combatSfx({ sfx: 'hurt_knight', fx: { kind: 'attack', from: 1, to: 'player', dmg: 5 } }, ctx, play);
+  ok('a foe\'s blow plays the hero\'s hurt and the foe\'s attack (eatk_skeleton)', played.map((p) => p[0]).join('|') === 'hurt_knight|eatk_skeleton');
+  played.length = 0;
+  combatSfx({ sfx: 'attack', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, { unit: (w) => (w === 'player' ? { id: 'player' } : { id: 'nobody' }) }, play);
+  ok('a foe without a clip is as before: the blow alone', played.map((p) => p[0]).join('|') === 'attack');
 }

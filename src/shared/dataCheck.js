@@ -104,8 +104,8 @@ export function checkData(data) {
     for (const k of ['atk', 'heavy', 'hurt']) if (!data.audio?.clips?.[`${k}_${h?.id}`]) out.push(`audio.json: clips.${k}_${h?.id} (the class's own ${k === 'hurt' ? 'get-hit' : k === 'heavy' ? 'heavy' : 'attack'} sound, 0.00270)`);
     // the class (0.00258): every number present, the heavy one the engine knows
     const c = h?.class;
-    const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
-    if (!c || !NUMS.every((k) => isNum(c[k])) || !['blow', 'cleave', 'fireball', 'drain', 'mark', 'censer', 'wildshape'].includes(c.heavy)) out.push(`heroes.json: ${h?.id}.class (every number of the block, and heavy one of blow | cleave | fireball | drain | mark | censer | wildshape)`);
+    const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'entangleTurns', 'entangleChance', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
+    if (!c || !NUMS.every((k) => isNum(c[k])) || !['blow', 'cleave', 'fireball', 'drain', 'mark', 'censer', 'entangle'].includes(c.heavy)) out.push(`heroes.json: ${h?.id}.class (every number of the block, and heavy one of blow | cleave | fireball | drain | mark | censer | entangle)`);
     // the class colour theme (0.00254): the plate's colour, the card light's look and tint
     const th = h?.theme;
     if (!/^#[0-9a-f]{6}$/i.test(th?.plate ?? '') || !['fog', 'blood', 'flames', 'embers', 'ether'].includes(th?.light) || !(Array.isArray(th?.tint) && th.tint.length === 3 && th.tint.every((v) => isNum(v) && v >= 0 && v <= 2))) out.push(`heroes.json: ${h?.id}.theme (plate #rrggbb, light fog | blood | flames | embers | ether, tint [r, g, b] 0-2)`);

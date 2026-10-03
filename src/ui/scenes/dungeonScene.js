@@ -102,8 +102,7 @@ export function dungeonScene() {
       run.stats = stats;
       run.maxHp = stats.maxHp;
       run.hp = Math.max(1, Math.min(run.maxHp, Math.round(run.maxHp * share)));
-      run.wild = 0;
-      if (combat) { combat.charges = stats.klass.charges; combat.marked = -1; combat.thrall = null; combat.heavyCd = Math.min(combat.heavyCd, run.stats.heavyCdMax); }
+      if (combat) { combat.charges = stats.klass.charges; combat.marked = -1; combat.thrall = null; for (const e of combat.enemies) e.entangled = 0; combat.heavyCd = Math.min(combat.heavyCd, run.stats.heavyCdMax); }
       playback.reset();
       ui = null;
       logLine(logEl, `DEBUG: you fight on as ${heroOf(getProfile()).name} (the run's boons reset).`, 'sys');

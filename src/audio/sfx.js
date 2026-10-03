@@ -21,7 +21,7 @@
 //   - stingers duck the music (audio.json duck.clips).
 
 import { DATA } from '../shared/data.js';
-import { hasAudio, ensureCtx, decode, onFirstGesture, cached } from './audioCore.js';
+import { hasAudio, ensureCtx, decode, fetchBytes, onFirstGesture, cached } from './audioCore.js';
 import { mixer, sfxInput, setBusMuted, duckMusic } from './mixer.js';
 import { dbToGain, planVoice, planVariation } from './audioMath.js';
 import { playSynth } from './synth.js';
@@ -133,12 +133,17 @@ export function toggleMuted() {
 
 // Called once from main.js: the first gesture anywhere unlocks the context
 // and warms the whole clip set so first fires don't wait on a fetch.
+// 0.00272: the bytes alone, in the pool's own order — warming through
+// decode() put every clip at the FRONT of the download line (its "about
+// to play" flag), and with the classes' and the foes' recordings (59 file
+// clips) the narrator's takes waited behind them all; a clip decodes from
+// its cached bytes on its first play, a moment's work.
 export function initSfx() {
   if (!hasAudio()) return;
   onFirstGesture(() => {
     ctx = ensureCtx();
     mixer();
     ctx.resume?.().catch?.(() => {});
-    for (const [name, c] of Object.entries(DATA.audio.clips)) if (c.file) bufferFor(name).catch(() => {});
+    for (const c of Object.values(DATA.audio.clips)) if (c.file) fetchBytes(c.file).catch(() => {});
   });
 }

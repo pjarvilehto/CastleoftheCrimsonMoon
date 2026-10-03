@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Render the classes' sounds (docs/sfx-prompts.md) with ElevenLabs' sound
+// Render the classes' and the foes' sounds (docs/sfx-prompts.md) with ElevenLabs' sound
 // generation. Needs ELEVENLABS_API_KEY with the sound_generation
 // permission (the voice-over's key is text-to-speech only: the developer
 // adds the permission under API keys).
@@ -14,7 +14,9 @@
 // 7: edge caches) — measured with ffmpeg (the loudest 50 ms, as
 // gen-vo.mjs measures a take) and written into assets/data/audio.json
 // clips.<clip>.file / measuredDb (its gainDb trim stays — set it from the
-// audio-check table after a listen; its rate and variation layers stay:
+// audio-check table after a listen: that table's `now` column is the
+// browser's reading, and 0.00272 took it over ffmpeg's for every rendered
+// clip (the 16 kHz measure under-reads a hissy clip by up to 4 dB); its rate and variation layers stay:
 // the layers are the class's colour over any recording). Behind the
 // proxy: NODE_USE_ENV_PROXY=1.
 
@@ -39,7 +41,7 @@ const influence = Number(opt('--influence', '0.3'));
 
 // the doc's table: | clip | seconds | prompt |
 export function readPrompts(md = readFileSync(DOC, 'utf8')) {
-  return md.split('\n').map((l) => l.split('|').map((c) => c.trim())).filter((c) => c.length >= 5 && /^(atk|heavy|hurt)_/.test(c[1]))
+  return md.split('\n').map((l) => l.split('|').map((c) => c.trim())).filter((c) => c.length >= 5 && /^(atk|heavy|hurt|eatk|ehurt)_/.test(c[1]))
     .map((c) => ({ clip: c[1], seconds: Number(c[2]), prompt: c[3] }));
 }
 // the next free file name for a clip (never overwrite, rule 7)

@@ -101,7 +101,7 @@ function heal(h, u) {
 // attacks unique) ----
 // A class's blow lays its own trace over the foe's material burst (the
 // steel, rust, fire, grave-green, moss, violet or ochre of its theme), and
-// its events (the hex, the blight, the wild shape, a charge back, the
+// its events (the hex, the blight, the roots, a charge back, the
 // thrall) burst on their own. spawnClassBurst(look, x, y, opts) is pure like
 // spawnParticles; combatFx.js classTrace() picks the look from the class
 // and the blow. New kinds: puff (soft smoke, source-over, growing), sigil
@@ -116,8 +116,9 @@ export const CLASS_PAL = {
   moss: { dark: '30,70,20', mid: '140,210,70', hot: '220,255,180' },          // the Druid
   violet: { dark: '60,20,110', mid: '180,110,255', hot: '240,220,255' },      // the Hexhunter
   ochre: { dark: '70,60,20', mid: '200,180,80', hot: '245,235,180' },         // the Plague Sister
+  root: { dark: '46,30,14', mid: '104,78,38', hot: '140,200,70' },             // the Druid's roots (earth, a green tip)
 };
-export const CLASS_LOOKS = ['steel', 'cleave', 'cleavespill', 'rage', 'fireball', 'arcane', 'charge', 'drain', 'grave', 'thrall', 'thrallhit', 'thrallfall', 'claw', 'thorn', 'wild', 'hex', 'hexhit', 'hexspark', 'censer', 'blight', 'incense'];
+export const CLASS_LOOKS = ['steel', 'cleave', 'cleavespill', 'rage', 'fireball', 'arcane', 'charge', 'drain', 'grave', 'thrall', 'thrallhit', 'thrallfall', 'claw', 'thorn', 'roots', 'rooted', 'hex', 'hexhit', 'hexspark', 'censer', 'blight', 'incense'];
 
 // the primitives, each sized by u (the card's height / 290, as the looks above)
 const sparks = (h, P, n, lo, hi, fall = 1, life = [0.2, 0.4]) => { // additive streaks all round, white-hot cooling to the colour
@@ -164,6 +165,14 @@ const rakes = (h, P, n, len, w) => { // n parallel cuts across the figure, the c
   }
   return out;
 };
+const tendrils = (h, P, n, k) => { // roots: thick dark streaks shooting up from the ground and curling over as they slow, a green tip (the hot colour) cooling to earth
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + rr(-0.5, 0.5), s = rr(320, 600) * h.u * k;
+    out.push({ kind: 'streak', x: h.x + rr(-38, 38) * h.u, y: h.y + rr(-4, 8) * h.u, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 900 * h.u, drag: 2.0, age: i * 0.02, life: rr(0.5, 0.8), size: rr(5, 8.5) * h.u, hot: P.hot, mid: P.mid });
+  }
+  return out;
+};
 const arc = (h, P, r, w, life = 0.42) => ({ kind: 'arc', x: h.x, y: h.y + r * 0.9 * h.u, age: 0, life, r: r * h.u, a0: h.dir < 0 ? -Math.PI * 0.25 : -Math.PI * 0.75, sweep: (h.dir < 0 ? -1 : 1) * Math.PI * 0.5, w: w * h.u, color: P.mid, edge: P.hot }); // a crescent swung across the figure
 const sigil = (h, P, r, life, spin) => ({ kind: 'sigil', x: h.x, y: h.y, age: 0, life, r: r * h.u, spin, color: P.mid, edge: P.hot });
 
@@ -185,9 +194,10 @@ export function spawnClassBurst(look, x, y, { size, dir = 1, kind = 'hit', to = 
     case 'thrall': return [ring(h, C.grave, 110, 0.4, 0, C.grave.mid), flash(h, C.grave, 60, 0.3), ...motes(h, C.grave, 18, { spread: 50, rise: [60, 160], life: [0.8, 1.4], size: [1.6, 3.2] })]; // a foe rises again at his side
     case 'thrallhit': return motes(h, C.grave, 6, { spread: 40, rise: [20, 70], life: [0.4, 0.8] });
     case 'thrallfall': return [...motes(h, C.grave, 12, { spread: 50, rise: [-80, -20], life: [0.6, 1.1], fall: 1 }), ...puffs(h, C.grave, 3, { size: [14, 22], alpha: 0.25 })]; // the thrall crumbles: motes and dust fall
-    case 'claw': return [...rakes(h, C.moss, 3, 170, 9), ...leaves(h, C.moss, 8), ...sparks(h, C.moss, 6, 260, 560, 1, [0.16, 0.3])]; // the Druid's feral blow: three rakes and leaves
-    case 'thorn': return [...rakes(h, C.moss, 1, 130, 6), ...leaves(h, C.moss, 4)]; // his blow before the shape
-    case 'wild': return [ring(h, C.moss, 150, 0.4), flash(h, C.moss, 70, 0.3), ...leaves(h, C.moss, 26, true), ...motes(h, C.moss, 10, { spread: 60, rise: [60, 150], life: [0.8, 1.4] })]; // Go Feral: leaves burst from the Druid
+    case 'claw': return [...rakes(h, C.moss, 3, 170, 9), ...leaves(h, C.moss, 8), ...sparks(h, C.moss, 6, 260, 560, 1, [0.16, 0.3])]; // the Druid's heavy blow: three rakes of the living staff and leaves
+    case 'thorn': return [...rakes(h, C.moss, 1, 130, 6), ...leaves(h, C.moss, 4)]; // his blows
+    case 'roots': return [...tendrils(h, C.root, 12, 1), ...leaves(h, C.moss, 6, true), ...puffs(h, { dark: '40,30,18', mid: '80,60,36' }, 3, { spread: 30, size: [10, 18], rise: [10, 30], life: [0.6, 1], alpha: 0.35 })]; // Entangle (0.00271): roots burst up from the ground at a foe's feet, earth and leaves with them
+    case 'rooted': return [...tendrils(h, C.root, 4, 0.6), ...leaves(h, C.moss, 2, true)]; // a bound foe strains: the roots tug
     case 'hex': return [sigil(h, C.violet, 82, 0.95, 2.2), ring(h, C.violet, 120, 0.36, 0, C.violet.mid), ...sparks(h, C.violet, 16, 240, 640, -1, [0.3, 0.5])]; // the Hexhunter's Hex: a sigil turns on the foe
     case 'hexhit': return [sigil(h, C.violet, 60, 0.5, 4), flash(h, C.violet, 50, 0.14), ...sparks(h, C.violet, Math.round(12 * m), 360, 820, -1, [0.2, 0.4])]; // a blow on the hexed foe: the sigil flares
     case 'hexspark': return [...sparks(h, C.violet, 6, 280, 600, -1, [0.16, 0.3]), ...motes(h, C.violet, 3, { spread: 20, life: [0.4, 0.8] })]; // her other blows

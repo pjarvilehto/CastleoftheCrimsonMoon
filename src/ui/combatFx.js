@@ -33,7 +33,7 @@ import { findPop, potionPop } from './findFx.js';
 // who: { maxHp } of the knight — sizes hits on him (big-hit sway).
 export function fxFor(ev, who = {}) {
   switch (ev.type) {
-    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy, marked: !!ev.marked, wild: !!ev.wild }; // (marked / wild: the class's trace, 0.00268)
+    case 'atk': return { kind: 'attack', from: 'player', to: ev.target, dmg: ev.dmg, crit: !!ev.crit, mega: !!ev.megaCrit, heavy: !!ev.heavy, marked: !!ev.marked }; // (marked: the class's trace, 0.00268)
     case 'spill': return { kind: 'hit', to: ev.target, dmg: ev.dmg, via: ev.via }; // (via: the fire's, the cleave's or the blight's own trace)
     case 'thorns': return { kind: 'hit', to: ev.target, dmg: ev.dmg, thorns: true };
     case 'dmg': return { kind: 'attack', from: ev.source, to: 'player', dmg: ev.taken, share: who.maxHp ? ev.taken / who.maxHp : 0 };
@@ -46,7 +46,8 @@ export function fxFor(ev, who = {}) {
     // the classes' events (0.00268): each bursts in its class's colour
     case 'mark': return { kind: 'mark', to: ev.target };
     case 'blight': return { kind: 'blight' };
-    case 'wild': return { kind: 'wild', to: 'player' };
+    case 'entangle': return { kind: 'entangle' };
+    case 'entangled': return { kind: 'entangled', from: ev.source };
     case 'charge': return { kind: 'charge', to: 'player' };
     case 'thrall': return { kind: 'thrall', to: 'player' };
     case 'thrallhit': return { kind: 'thrallhit', from: ev.source, to: 'player', taken: ev.taken };
@@ -92,7 +93,8 @@ export function playFx(fx, ctx) {
     case 'potion': return potionPop(ctx); // a found potion: its card flies into the hero card's count (0.00263)
     case 'mark': return mark(fx, ctx);
     case 'blight': return blight(ctx);
-    case 'wild': return wild(ctx);
+    case 'entangle': return entangle(ctx);
+    case 'entangled': return entangled(fx, ctx);
     case 'charge': return classSpray(ctx.unit('player'), 'charge');
     case 'thrall': return thrall(ctx);
     case 'thrallhit': return thrallHit(fx, ctx);
@@ -239,8 +241,8 @@ const heavyKind = () => heroOf(getProfile()).class.heavy;
 // knight's heavy a steel clash; the Barbarian's Cleave a crescent (its
 // reach a smaller one), his blows embers; the Wizard's Fireball a bloom on
 // every foe it takes, his blows arcane; the Necromancer's blows grave
-// motes, his Soul Drain the wisps torn out of the foe flying to him; the Druid's feral blows
-// three rakes, before the shape one; the Hexhunter's blows on the hexed
+// motes, his Soul Drain the wisps torn out of the foe flying to him; the Druid's heavy
+// three rakes of the living staff, his blows one; the Hexhunter's blows on the hexed
 // foe flare its sigil, the others violet sparks (the Hex itself on the
 // mark line); the Plague Sister's blows a swing of the censer, the blight's
 // gnawing a wisp of it. null = the foe's own burst alone.
@@ -254,7 +256,7 @@ export function traceFor(fx, heavy) {
     case 'cleave': return fx.heavy ? 'cleave' : 'rage';
     case 'fireball': return fx.heavy ? 'fireball' : 'arcane';
     case 'drain': return fx.heavy ? 'drain' : 'grave';
-    case 'wildshape': return fx.wild || fx.heavy ? 'claw' : 'thorn';
+    case 'entangle': return fx.heavy ? 'claw' : 'thorn';
     case 'mark': return fx.marked ? 'hexhit' : 'hexspark';
     case 'censer': return 'incense';
     default: return null;
@@ -275,13 +277,19 @@ function mark(fx, ctx) {
 function blight(ctx) {
   for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'censer'), i * 60);
 }
-// Go Feral: leaves burst from the Druid, a green light in the scene.
-function wild(ctx) {
-  const p = ctx.unit('player');
-  classSpray(p, 'wild');
-  glow(p, 'sepia(1) saturate(4) hue-rotate(50deg) brightness(1.4)', 900);
+// Entangle (0.00271): roots burst from the ground at every foe's feet, a green light in the scene, the line trembles.
+function entangle(ctx) {
+  for (let i = 0; ctx.unit(i); i++) setTimeout(() => classSpray(ctx.unit(i), 'roots', { at: 'feet' }), i * 70);
   shake(ctx, 0.5);
-  bgLight('potion', p?.card?.getBoundingClientRect?.());
+  bgLight('potion', ctx.unit('player')?.card?.getBoundingClientRect?.());
+}
+// A bound foe strains and fails: the roots tug, the card shivers in place, the word floats up.
+function entangled(fx, ctx) {
+  const u = ctx.unit(fx.from);
+  if (!u) return;
+  classSpray(u, 'rooted', { at: 'feet' });
+  if (can(u.el) && !reduced()) u.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'translateX(0)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
+  floatNumber(ctx, u, 'ENTANGLED', 'fx-miss');
 }
 // A foe rises again at the Necromancer's side.
 function thrall(ctx) {

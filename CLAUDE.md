@@ -449,15 +449,19 @@ smaller one, the Barbarian's blows embers; Fireball an amber bloom with
 cinders and smoke on every foe it takes, the Wizard's blows an arcane
 flash; Soul Drain wisps torn out of the foe that seek the Necromancer's
 card — `to`, a dot with `tx` / `ty` / `pull`, gone on arrival — his blows
-grave motes; the Druid's feral blows three rakes and leaves, before the
-shape one; a blow on the hexed foe flares the sigil, the Hexhunter's
+grave motes; the Druid's heavy three rakes of the living staff and
+leaves, his blows one; a blow on the hexed foe flares the sigil, the Hexhunter's
 others violet sparks; the Plague Sister's blows a swing of the censer,
 the blight's gnawing a wisp of it) and the class events burst on their
 own (`playFx`: the Hex a turning pentagram in a ring, Last Rites the
-censer's smoke on every foe, Go Feral leaves from the Druid with a green
-light, a charge back, the thrall's rise, a blow it took — the attacker
-lunges, a green THRALL number — and its crumbling). The events say what
-the blow was (`combat.js`: `marked` / `wild` on the blow, `via` on a
+censer's smoke on every foe, Entangle roots shooting up from the ground at
+every foe's feet — `classSpray(..., { at: 'feet' })`, the `roots` look's
+`tendrils`: thick earth-coloured streaks rising and pulled back down, a
+green tip — with a green light, a bound foe's strain a tug (`rooted`), a
+shiver and ENTANGLED floating up; a charge back, the thrall's rise, a
+blow it took — the attacker lunges, a green THRALL number — and its
+crumbling). The events say what the blow was (`combat.js`: `marked` on
+the blow, `via` on a
 heavy's reach and the blight tick, `drain` + `target` on the heal). Three
 kinds joined the renderer: `puff` (soft smoke, source-over under the
 glow pass, growing; thinned with the rest), `sigil`, `arc`. The tests
@@ -859,12 +863,18 @@ potion's heal, dodge, the heavy's cooldown and factor, and `heavy`: the
 knight's `blow` (spill, OVERKILL), the Barbarian's `cleave` (+ rage), the
 Wizard's `fireball` (charges a fight), the Necromancer's `drain` (+ a
 thrall raised from a kill that takes the foes' blows), the Druid's
-`wildshape` (+ mending a turn), the Hexhunter's `mark` (every hit on it
+`entangle` (0.00271, the developer's call, in place of Go Feral's wild
+shape: roots bind every living foe for `entangleTurns` (2) of their turns —
+`e.entangled`, loosened one a turn at the end of the enemy phase — and a
+bound foe's attack fails with `entangleChance` (0.4): "Entangled!", no
+blow, `enemyStrike`; the simulator at 0.4 puts him beside the knight,
+16.5 / room-24 boss 18%; 0.5 was 17.8 / 18%, 0.6 and three turns ran to
+20 / 33%; + mending a turn), the Hexhunter's `mark` (every hit on it
 crits; + dodge), the Plague Sister's `censer` (blight stacks ticking a
 turn; + armor per potion) — `stats.js derivedStats` applies the
 multipliers and snapshots the block as `run.stats.klass`, `combat.js
 classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
-`canHeavy` do the rest, `runState.js` the wild shape's potion block. `node
+`canHeavy` do the rest. `node
 tools/simulate.mjs --hero <id>` plays a class; the second tuning round
 (4 campaigns x 40 runs, the knight at median 15.8 / room-24 boss 6%):
 Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
@@ -881,14 +891,13 @@ the variance stays quiet). **The combat UI's minimum (0.00267, shipped
 with it so the classes can be played; the mock-ups in the chat are the
 design to grow into):** the heavy button carries the class's name (above)
 and, for a charge class, its charges as pips (◆◆◇) in place of the
-cooldown, for the Druid `(feral n)` while the shape lasts (Drink Potion
-dead meanwhile — `battleRoom.js update` hands `charges` / `wild` to the
-unit); a foe's card tags HEXED / BLIGHT ×n above its HP line
-(`.foe-tag`, the hexed card rimmed violet; `hexed` / `blight` in its
-snapshot); every new log line has a colour (mark, blight, wild, charge,
-thrall, thrallhit, thrallfall; `styles.css`). Not yet: a thrall card (the
-log alone says it rose, took a blow, crumbled), a rage chip, a feral
-glow. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
+cooldown (`battleRoom.js update` hands `charges` to the unit); a foe's
+card tags HEXED / BLIGHT ×n / ROOTED n above its HP line (`.foe-tag`, the
+hexed card rimmed violet; `hexed` / `blight` / `entangled` in its
+snapshot); every new log line has a colour (mark, blight, entangle,
+entangled, charge, thrall, thrallhit, thrallfall; `styles.css`). Not yet: a
+thrall card (the log alone says it rose, took a blow, crumbled), a rage
+chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
 the knight's standing looks too — only a look marked `sprite: true`
@@ -924,16 +933,26 @@ vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
 ~1.25 the Hexhunter and the Plague Sister). `combatQueue.js sfxFor(ev)`
 picks them by the save's class (a class without the clip falls back to
 the plain one); the class events have sounds too (`EV_SFX`: the hex a
-chime, the blight a hiss, Go Feral a wail, a charge a zap, the thrall a
-wail, its blows a thud); `dataCheck` wants the three clips per hero. The
-knight's are the plain attack / hurt with the heavy's own layers. **Real
-recordings:** `tools/gen-sfx.mjs` renders `docs/sfx-prompts.md` (a line
-per clip: id, seconds, prompt) through ElevenLabs' sound generation into
-`assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7), measures each
-with ffmpeg and points the clip's `file` / `measuredDb` at it — the
-layers stay as the class's colour. The session's key is scoped to
-text-to-speech: the developer adds the `sound_generation` permission to it
-(ElevenLabs → API keys) before the tool can run. **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
+chime, the blight a hiss, Entangle a thud and a bound foe's strain a
+swoosh, a charge a zap, the thrall a wail, its blows a thud); `dataCheck`
+wants the three clips per hero. **The recordings (0.00272):** the
+developer gave the key the `sound_generation` permission, and
+`tools/gen-sfx.mjs` rendered `docs/sfx-prompts.md` (a line per clip: id,
+seconds, prompt) through ElevenLabs' sound generation into
+`assets/audio/sfx/<clip>_v<k>.mp3` (new names, rule 7; `--redo <clip>` a
+fresh take as `_v<k+1>`), measured each with ffmpeg (the loudest 50 ms)
+and pointed the clip's `file` / `measuredDb` at it — then every
+rendered clip's `measuredDb` was replaced by the browser's own reading
+(`tools/audio-check.mjs`: ffmpeg's 16 kHz downsample under-read the hissy
+ones, a zap or a smoke hiss, by up to 4 dB) and the `gainDb` trims set so
+every clip lands at its level (a hero's blow and hurt
+-12 dB like the hits, a heavy -10, a foe's own sound -14, under the
+hero's). The synth layers stay as the class's colour over the
+recordings. **The foes' sounds (0.00272, "every character"):** `eatk_<id>`
+/ `ehurt_<id>` per enemy (the same doc and tool): `combatSfx.js` plays
+the struck foe's cry with the hero's blow and the striking foe's attack
+with the hero's hurt, by the unit's id on the strike's pan and timing; a
+foe without a clip is as before. **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels
 and ducking in `audio.json`. **Sound registry:** `audio.json clips` — per
 name a `file` or `synth: true` (`audio/synth.js`), `gainDb` trim

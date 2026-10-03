@@ -948,10 +948,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 #combat-log .dodge { color: #8fd3e8; }
 #combat-log .thorns { color: #ff6b4a; }
 #combat-log .revive { color: var(--gold); font-weight: bold; }
-/* the classes' lines (0.00267): the hex, the blight, the wild shape, a charge back, the thrall */
+/* the classes' lines (0.00267): the hex, the blight, the roots (0.00271), a charge back, the thrall */
 #combat-log .mark { color: #c99bff; }
 #combat-log .blight { color: #c9d26a; }
-#combat-log .wild { color: #9ee06a; font-weight: bold; }
+#combat-log .entangle { color: #9ee06a; font-weight: bold; }
+#combat-log .entangled { color: #9ee06a; }
 #combat-log .charge { color: #9ab4ff; }
 #combat-log .thrall { color: #8fe0a0; font-weight: bold; }
 #combat-log .thrallhit { color: #9a8b6a; }
