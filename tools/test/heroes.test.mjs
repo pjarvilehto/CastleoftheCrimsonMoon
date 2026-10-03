@@ -169,9 +169,17 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   ok('a new game: Enter the Castle opens CHOOSE YOUR HERO', t().includes('CHOOSE YOUR HERO'));
   handleKey('4'); handleKey(' '); await sleep(1300);
   ok('Proceed lands the pick and enters the hall', getProfile().hero?.id === 'necromancer' && t().includes('GREAT HALL'));
+  // 0.00296: Enter the Castle takes a desktop full screen (the click is the browser's gesture)
+  const doc = globalThis.document;
+  const saved = { en: doc.fullscreenEnabled, el: doc.fullscreenElement, de: doc.documentElement };
+  let asked = 0;
+  doc.fullscreenEnabled = true; doc.fullscreenElement = null;
+  doc.documentElement = { requestFullscreen: () => { asked++; return Promise.resolve(); } };
   show(titleScene()); await sleep(1100);
   handleKey('e'); await sleep(1300);
   ok('a save that has chosen: Enter the Castle goes straight to the Great Hall', t().includes('GREAT HALL') && !t().includes('CHOOSE YOUR HERO'));
+  ok('…and asks for full screen on a desktop (0.00296)', asked === 1);
+  Object.assign(doc, { fullscreenEnabled: saved.en, fullscreenElement: saved.el, documentElement: saved.de });
   // the hall's portrait: the look picker
   const realBody = globalThis.document.body;
   const body = new El('body');
