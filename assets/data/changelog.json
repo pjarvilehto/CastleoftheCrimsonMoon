@@ -1,4 +1,7 @@
 {
+  "0.00229": [
+    "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
+  ],
   "0.00228": [
     "Benchmark round: 0.00228 — 0.00227's note named 0.00226, another build that landed first; a benchmark from 0.00227 does not count, please run it once more on this build."
   ],
