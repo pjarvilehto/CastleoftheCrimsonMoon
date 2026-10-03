@@ -947,7 +947,13 @@
           "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Sunken Vault"
         }
       ],
-      "status": "starting"
+      "status": "succeeded",
+      "version": "pjarvilehto/crimson-moon-rooms:7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+      "metrics": {
+        "predict_time": 941.826652423,
+        "total_time": 974.239316728
+      },
+      "finished": "2026-10-03T05:21:50Z"
     }
   ]
 }

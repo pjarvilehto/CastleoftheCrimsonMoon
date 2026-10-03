@@ -88,7 +88,7 @@ export const MODELS = {
   flux2: { model: 'black-forest-labs/flux-2-pro', priceUsd: 0.05, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, resolution: '2 MP', output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
   // the style LoRA (tools/train-lora.mjs): text to image, no source portrait — a NEW character (--new) or a fresh take on one
   // the trained model itself is run (its version from assets/data/lora.json): the generic flux-dev-lora runner fetches
-  // a model's weights from replicate.com/<model>/_weights, which a PRIVATE model refuses (0.00235)
+  // a model's weights from replicate.com/<model>/_weights, which a PRIVATE model refuses (0.00236)
   lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON', set: 'chars' },
 };
 /** The LoRA's prompt: the trigger, the sheet framing (as the training captions had it), the facing, the character line. */
@@ -102,7 +102,7 @@ export function loraVersion(set = 'chars', root = ROOT) {
   return t ? t.version.split(':').pop() : null;
 }
 export function loraPrompt(c, hint = '') {
-  // the same words the training captions carry (tools/train-lora.mjs CHAR_CAPTION): a LoRA answers best to the caption it learned under (0.00235)
+  // the same words the training captions carry (tools/train-lora.mjs CHAR_CAPTION): a LoRA answers best to the caption it learned under (0.00236)
   return `${MODELS.lora.trigger} style, ${CHAR_CAPTION}, ${facing(c.id)}: ${c.line.replace(/^CHARACTER:\s*/, '')}${hint ? ` ${hint.trim()}` : ''}`;
 }
 /** A character not in the doc (--new mimic --line "CHARACTER: ..."): no current portrait, so its cut-out goes on a default canvas. */

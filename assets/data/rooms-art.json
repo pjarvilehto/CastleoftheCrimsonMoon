@@ -4,7 +4,7 @@
     "clock_tower": {
       "name": "The Clock Tower",
       "hue": "amber",
-      "line": "ROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.",
+      "line": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber",
       "candidates": [
         {
           "n": 1,
@@ -12,14 +12,11 @@
           "model": "google/nano-banana",
           "version": "hidden",
           "seed": 1025493702,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1344,
           "h": 768,
-          "created": "2026-10-03T04:59:45Z"
+          "created": "2026-10-03T05:23:07Z"
         },
         {
           "n": 3,
@@ -27,29 +24,11 @@
           "model": "bytedance/seedream-4",
           "version": "hidden",
           "seed": 991938464,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 2560,
           "h": 1440,
-          "created": "2026-10-03T04:59:51Z"
-        },
-        {
-          "n": 2,
-          "file": "assets/bg/candidates/clock_tower_c2.jpg",
-          "model": "google/nano-banana-pro",
-          "version": "hidden",
-          "seed": 975160845,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
-          "w": 2752,
-          "h": 1536,
-          "created": "2026-10-03T05:00:00Z"
+          "created": "2026-10-03T05:23:07Z"
         },
         {
           "n": 5,
@@ -57,29 +36,47 @@
           "model": "black-forest-labs/flux-2-pro",
           "version": "hidden",
           "seed": 958383226,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1888,
           "h": 1072,
-          "created": "2026-10-03T05:00:08Z"
+          "created": "2026-10-03T05:23:17Z"
         },
         {
           "n": 6,
           "file": "assets/bg/candidates/clock_tower_c6.jpg",
-          "model": "flux-kontext-apps/multi-image-kontext-max",
+          "model": "black-forest-labs/flux-1.1-pro",
           "version": "hidden",
           "seed": 908050369,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The two input images are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
-          "w": 1392,
-          "h": 752,
-          "created": "2026-10-03T05:00:10Z"
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:23:23Z"
+        },
+        {
+          "n": 2,
+          "file": "assets/bg/candidates/clock_tower_c2.jpg",
+          "model": "google/nano-banana-pro",
+          "version": "hidden",
+          "seed": 975160845,
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2752,
+          "h": 1536,
+          "created": "2026-10-03T05:23:25Z"
+        },
+        {
+          "n": 7,
+          "file": "assets/bg/candidates/clock_tower_c7.jpg",
+          "model": "google/imagen-4",
+          "version": "hidden",
+          "seed": 924827988,
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1376,
+          "h": 768,
+          "created": "2026-10-03T05:23:32Z"
         },
         {
           "n": 4,
@@ -87,21 +84,75 @@
           "model": "openai/gpt-image-1.5",
           "version": "hidden",
           "seed": 941605607,
-          "refs": [
-            "castle_great_hall.jpg",
-            "dungeon_kitchen.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: the inside of a castle clock tower, enormous brass gears and escapements filling the walls, a great bell hanging above, chains and counterweights, a wooden gallery, the works lit amber by a lantern on the floor. HUE: brass amber and warm bronze on black.\nThe room is called \"The Clock Tower\".",
+          "refs": [],
+          "prompt": "clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1536,
           "h": 1024,
-          "created": "2026-10-03T05:00:37Z"
+          "created": "2026-10-03T05:23:50Z"
+        },
+        {
+          "n": 8,
+          "file": "assets/bg/candidates/clock_tower_c8.jpg",
+          "model": "google/nano-banana-pro",
+          "version": "hidden",
+          "seed": 1142937035,
+          "refs": [
+            "castle_great_hall.jpg",
+            "dungeon_torch_corridor.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2752,
+          "h": 1536,
+          "created": "2026-10-03T05:25:26Z"
+        },
+        {
+          "n": 9,
+          "file": "assets/bg/candidates/clock_tower_c9.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1159714654,
+          "refs": [
+            "castle_great_hall.jpg",
+            "dungeon_torch_corridor.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T05:25:42Z"
+        },
+        {
+          "n": 10,
+          "file": "assets/bg/candidates/clock_tower_c10.jpg",
+          "model": "google/nano-banana",
+          "version": "hidden",
+          "seed": 772571056,
+          "refs": [
+            "castle_great_hall.jpg",
+            "dungeon_torch_corridor.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:25:54Z"
+        },
+        {
+          "n": 11,
+          "file": "assets/bg/candidates/clock_tower_c11.jpg",
+          "model": "pjarvilehto/crimson-moon-rooms:7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "version": "7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "seed": 755793437,
+          "refs": [],
+          "prompt": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Clock Tower. clock tower interior, enormous brass gears and escapements, a great bell in the dark above, chains and counterweights, a lantern on the floor, brass and amber",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:26:11Z"
         }
       ]
     },
     "blood_baths": {
       "name": "The Blood Baths",
       "hue": "red",
-      "line": "ROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.",
+      "line": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black",
       "candidates": [
         {
           "n": 1,
@@ -109,14 +160,11 @@
           "model": "google/nano-banana",
           "version": "hidden",
           "seed": 1537761740,
-          "refs": [
-            "dungeon_cathedral_nave.jpg",
-            "throne_ember_warlord.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.\nThe room is called \"The Blood Baths\".",
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1344,
           "h": 768,
-          "created": "2026-10-03T05:00:19Z"
+          "created": "2026-10-03T05:23:31Z"
         },
         {
           "n": 3,
@@ -124,14 +172,11 @@
           "model": "bytedance/seedream-4",
           "version": "hidden",
           "seed": 1571316978,
-          "refs": [
-            "dungeon_cathedral_nave.jpg",
-            "throne_ember_warlord.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.\nThe room is called \"The Blood Baths\".",
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 2560,
           "h": 1440,
-          "created": "2026-10-03T05:00:36Z"
+          "created": "2026-10-03T05:23:38Z"
         },
         {
           "n": 2,
@@ -139,29 +184,35 @@
           "model": "google/nano-banana-pro",
           "version": "hidden",
           "seed": 1588094597,
-          "refs": [
-            "dungeon_cathedral_nave.jpg",
-            "throne_ember_warlord.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.\nThe room is called \"The Blood Baths\".",
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 2752,
           "h": 1536,
-          "created": "2026-10-03T05:00:38Z"
+          "created": "2026-10-03T05:23:55Z"
         },
         {
-          "n": 6,
-          "file": "assets/bg/candidates/blood_baths_c6.jpg",
-          "model": "flux-kontext-apps/multi-image-kontext-max",
+          "n": 5,
+          "file": "assets/bg/candidates/blood_baths_c5.jpg",
+          "model": "black-forest-labs/flux-2-pro",
           "version": "hidden",
-          "seed": 1520984121,
-          "refs": [
-            "dungeon_cathedral_nave.jpg",
-            "throne_ember_warlord.jpg"
-          ],
-          "prompt": "The two input images are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.\nThe room is called \"The Blood Baths\".",
-          "w": 1392,
-          "h": 752,
-          "created": "2026-10-03T05:00:49Z"
+          "seed": 1470651264,
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1888,
+          "h": 1072,
+          "created": "2026-10-03T05:24:01Z"
+        },
+        {
+          "n": 7,
+          "file": "assets/bg/candidates/blood_baths_c7.jpg",
+          "model": "google/imagen-4",
+          "version": "hidden",
+          "seed": 1504206502,
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1376,
+          "h": 768,
+          "created": "2026-10-03T05:24:09Z"
         },
         {
           "n": 4,
@@ -169,21 +220,75 @@
           "model": "openai/gpt-image-1.5",
           "version": "hidden",
           "seed": 1487428883,
+          "refs": [],
+          "prompt": "ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1536,
+          "h": 1024,
+          "created": "2026-10-03T05:24:22Z"
+        },
+        {
+          "n": 8,
+          "file": "assets/bg/candidates/blood_baths_c8.jpg",
+          "model": "google/nano-banana-pro",
+          "version": "hidden",
+          "seed": 1688760311,
           "refs": [
             "dungeon_cathedral_nave.jpg",
             "throne_ember_warlord.jpg"
           ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a ruined Roman-style bathhouse under the castle, a long sunken pool of dark red water down the centre, cracked marble pillars, steam, candles on the rim, a statue at the far end. HUE: blood red and crimson on black.\nThe room is called \"The Blood Baths\".",
-          "w": 1536,
-          "h": 1024,
-          "created": "2026-10-03T05:01:24Z"
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2752,
+          "h": 1536,
+          "created": "2026-10-03T05:25:26Z"
+        },
+        {
+          "n": 9,
+          "file": "assets/bg/candidates/blood_baths_c9.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1671982692,
+          "refs": [
+            "dungeon_cathedral_nave.jpg",
+            "throne_ember_warlord.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T05:25:43Z"
+        },
+        {
+          "n": 10,
+          "file": "assets/bg/candidates/blood_baths_c10.jpg",
+          "model": "google/nano-banana",
+          "version": "hidden",
+          "seed": 1175601076,
+          "refs": [
+            "dungeon_cathedral_nave.jpg",
+            "throne_ember_warlord.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:25:56Z"
+        },
+        {
+          "n": 11,
+          "file": "assets/bg/candidates/blood_baths_c11.jpg",
+          "model": "pjarvilehto/crimson-moon-rooms:7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "version": "7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "seed": 1192378695,
+          "refs": [],
+          "prompt": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Blood Baths. ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:26:10Z"
         }
       ]
     },
     "rookery": {
       "name": "The Rookery",
       "hue": "cold",
-      "line": "ROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.",
+      "line": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue",
       "candidates": [
         {
           "n": 1,
@@ -191,14 +296,11 @@
           "model": "google/nano-banana",
           "version": "hidden",
           "seed": 818316205,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1344,
           "h": 768,
-          "created": "2026-10-03T05:00:54Z"
+          "created": "2026-10-03T05:24:08Z"
         },
         {
           "n": 3,
@@ -206,14 +308,11 @@
           "model": "bytedance/seedream-4",
           "version": "hidden",
           "seed": 851871443,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 2560,
           "h": 1440,
-          "created": "2026-10-03T05:01:09Z"
+          "created": "2026-10-03T05:24:16Z"
         },
         {
           "n": 2,
@@ -221,14 +320,11 @@
           "model": "google/nano-banana-pro",
           "version": "hidden",
           "seed": 868649062,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 2752,
           "h": 1536,
-          "created": "2026-10-03T05:01:13Z"
+          "created": "2026-10-03T05:24:31Z"
         },
         {
           "n": 5,
@@ -236,29 +332,35 @@
           "model": "black-forest-labs/flux-2-pro",
           "version": "hidden",
           "seed": 751205729,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1888,
           "h": 1072,
-          "created": "2026-10-03T05:01:32Z"
+          "created": "2026-10-03T05:24:32Z"
         },
         {
           "n": 6,
           "file": "assets/bg/candidates/rookery_c6.jpg",
-          "model": "flux-kontext-apps/multi-image-kontext-max",
+          "model": "black-forest-labs/flux-1.1-pro",
           "version": "hidden",
           "seed": 801538586,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The two input images are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
-          "w": 1392,
-          "h": 752,
-          "created": "2026-10-03T05:01:36Z"
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:24:34Z"
+        },
+        {
+          "n": 7,
+          "file": "assets/bg/candidates/rookery_c7.jpg",
+          "model": "google/imagen-4",
+          "version": "hidden",
+          "seed": 784760967,
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1376,
+          "h": 768,
+          "created": "2026-10-03T05:24:43Z"
         },
         {
           "n": 4,
@@ -266,14 +368,68 @@
           "model": "openai/gpt-image-1.5",
           "version": "hidden",
           "seed": 767983348,
-          "refs": [
-            "corridor_flooded_hall.jpg",
-            "corridor_cavern_chasm.jpg"
-          ],
-          "prompt": "The first image and the second image are two of the reference paintings. Paint a NEW room, not either of them, in exactly their style.\nSTYLE: a dark-fantasy castle interior painted exactly in the style of the reference paintings: heavy black ink line work with bold brush edges and cross-hatched shadows over flat, painterly colour, like a tinted woodcut. One dominant hue family for the whole room with everything else near black; one strong light source and deep shadow elsewhere; no soft gradients, no photoreal rendering, no 3D render look. A wide, symmetric vista at eye height, the floor running from the bottom edge to the far wall at the centre, rich repeated architectural detail, clutter in the foreground corners. No people, no creatures, no text, no watermark, no border. 16:9.\nROOM: a crumbling tower loft open to the night sky, hundreds of crows perched on rafters and ledges, moonlight through a broken roof, bones and straw on the floor, the cold moon low at the centre. HUE: cold blue-grey moonlight on black.\nThe room is called \"The Rookery\".",
+          "refs": [],
+          "prompt": "crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
           "w": 1536,
           "h": 1024,
-          "created": "2026-10-03T05:02:06Z"
+          "created": "2026-10-03T05:25:00Z"
+        },
+        {
+          "n": 8,
+          "file": "assets/bg/candidates/rookery_c8.jpg",
+          "model": "google/nano-banana-pro",
+          "version": "hidden",
+          "seed": 969314776,
+          "refs": [
+            "castle_ramparts.jpg",
+            "dungeon_royal_bedroom.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2752,
+          "h": 1536,
+          "created": "2026-10-03T05:25:26Z"
+        },
+        {
+          "n": 9,
+          "file": "assets/bg/candidates/rookery_c9.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 952537157,
+          "refs": [
+            "castle_ramparts.jpg",
+            "dungeon_royal_bedroom.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T05:25:42Z"
+        },
+        {
+          "n": 10,
+          "file": "assets/bg/candidates/rookery_c10.jpg",
+          "model": "google/nano-banana",
+          "version": "hidden",
+          "seed": 1686187669,
+          "refs": [
+            "castle_ramparts.jpg",
+            "dungeon_royal_bedroom.jpg"
+          ],
+          "prompt": "In exactly the style of the first image and the second image (two paintings of the same set), a new room: crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:25:51Z"
+        },
+        {
+          "n": 11,
+          "file": "assets/bg/candidates/rookery_c11.jpg",
+          "model": "pjarvilehto/crimson-moon-rooms:7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "version": "7a4c55b569debd44a57688e930d1d0665380e2cc324915a4e6d05a3e4c1bbc42",
+          "seed": 1702965288,
+          "refs": [],
+          "prompt": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Rookery. crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue",
+          "w": 1344,
+          "h": 768,
+          "created": "2026-10-03T05:26:11Z"
         }
       ]
     }

@@ -531,7 +531,7 @@ character LoRA** (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer`
 into the private model `pjarvilehto/crimson-moon-style`, trigger
 `CRMSNMOON`, captions written from the data — the same preamble
 `gen-art.mjs CHAR_CAPTION` the LoRA prompt uses; `assets/data/lora.json`
-records every training) was trained in 0.00235 on the 31 approved
+records every training) was trained in 0.00236 on the 31 approved
 pictures (12 min on an H100): the trained VERSION is run (`replicate.mjs
 predictVersion`, `gen-art.mjs loraVersion`) — the generic flux-dev-lora
 runner fetches a model's weights from replicate.com, which a private
@@ -544,30 +544,44 @@ run. **Every Replicate call goes through `tools/replicate.mjs`** (the
 token, the Files API, `predict` by model name, `predictVersion` by
 version, `latestVersion`).
 
-**Room paintings (0.00235).** The 48 interiors in `assets/bg/` are the
-style, all approved as they are. New rooms: `docs/room-prompts.md` (the
-style as the paintings have it, the style block, a table of rooms: id,
-name, hue family, line) → `node tools/gen-bg.mjs` paints one with two of
-the game's paintings as references (`REFS` per hue family: amber, red,
-cold, bone, gold) into `assets/bg/candidates/<id>_c<n>.jpg` at the
-model's own size, recorded in `assets/data/rooms-art.json`; `--sheet`
-makes a contact sheet; `--import <id_cN> [--list rooms|treasure|...]`
-makes the 2048x1152 q86 JPEG (a new filename, rule 7), names it in
-`backgrounds.json` and reminds you of the depth map (`gen-depth.py`; the
-suite fails without one). **The bake-off** (three rooms the game lacks —
-The Clock Tower, The Blood Baths, The Rookery — on six models, `--bakeoff`):
-**Nano Banana Pro** is the default (`DEFAULTS.model`): the closest ink,
-palette and composition, 2752x1536 native (no upscale), ~$0.15; Nano
-Banana the cheap draft (the same look at 1344x768, upscaled 1.5x at
-import); Seedream 4 the punchiest but a modern comic, and it wrote the
-room's name into the picture; GPT Image 1.5 a fine etching, 3:2 only
-(cropped) and slow; FLUX 2 Pro less inked and it refused "The Blood
-Baths" as sensitive, twice; Kontext Max soft at 1392x752. **The room LoRA**
-(`train-lora.mjs --set rooms`: the 48 named interiors — the title's and
-the death's exteriors stay out — into `pjarvilehto/crimson-moon-rooms`,
-trigger `CRMSNROOM`, caption `ROOM_CAPTION` + the room's name; the
-destination model is made on first use) draws a room from its line alone
-(`gen-bg.mjs --model lora`, 1 MP, upscaled at import).
+**Room paintings (0.00236–0.00237).** The 48 interiors in `assets/bg/`
+are the style, all approved as they are. **They were made with a
+prompt, not references:** `docs/image-prompting-guide.md` (the owner's,
+from Kimi: every background, icon and portrait prompt used) — a short
+subject sentence with the palette cue last, a mood ("gloomy and moody,
+deep shadows, oppressive atmosphere"; a boss arena gets "video game boss
+arena background art, wide symmetrical battle stage composition with
+open floor space in the center"), then the style block word for word:
+"in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy
+black ink silhouettes, bold flat angular shapes, rough hand-drawn ink
+texture and hatching, dramatic chiaroscuro lighting, video game
+background art, wide shot, no characters". New rooms:
+`docs/room-prompts.md` (the recipe, the style block, a table of rooms:
+id, name, hue family, kind room / arena, line) → `node tools/gen-bg.mjs`
+sends the line + the mood + the block as text alone (`--refs` attaches
+two of the game's paintings of the hue family, `REFS`; it adds little)
+into `assets/bg/candidates/<id>_c<n>.jpg` at the model's own size,
+recorded in `assets/data/rooms-art.json`; `--sheet` a contact sheet;
+`--import <id_cN> [--list rooms|treasure|...]` the 2048x1152 q86 JPEG
+(a new filename, rule 7), its name in `backgrounds.json`, and the
+reminder for the depth map (`gen-depth.py`; the suite fails without
+one). **The bake-off** (three rooms the game lacks — The Clock Tower,
+The Blood Baths, The Rookery — `--bakeoff`, nine models in all): with my
+first, descriptive prompt and references every model drifted
+(0.00236); with the guide's recipe as text alone, **Nano Banana Pro**
+(the default, `DEFAULTS.model`; 2752x1536 native, ~$0.15) and **Nano
+Banana** (1344x768, ~$0.04, upscaled 1.5x at import) land closest to
+the paintings' ink and palette; Imagen 4 (`imagen`, 1376x768) is a
+close third; the room LoRA (below) has the set's colour mood with less
+of its ink; Seedream 4 a brighter modern comic (with references it went
+to white paper); GPT Image 1.5 an etching, 3:2 and slow; FLUX 2 Pro
+and FLUX 1.1 Pro grittier, and both refused "The Blood Baths" as
+sensitive. **The room LoRA** (`train-lora.mjs --set rooms`: the 48 named
+interiors — the title's and the death's exteriors stay out — into
+`pjarvilehto/crimson-moon-rooms`, trigger `CRMSNROOM`, caption
+`ROOM_CAPTION` + the room's name; trained in 0.00237, 16 min; the
+destination model is made on first use) draws a room from its line
+alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels

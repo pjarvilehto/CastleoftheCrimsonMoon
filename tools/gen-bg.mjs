@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // Paint new room backgrounds in the paintings' own style on Replicate
-// (0.00235). Follows tools/gen-art.mjs: the prompts live in
+// (0.00236). Follows tools/gen-art.mjs: the prompts live in
 // docs/room-prompts.md (the style block + one line per room), every
 // candidate is kept (assets/bg/candidates/<id>_c<n>.jpg at the model's own
 // size, never overwritten) and recorded in assets/data/rooms-art.json with
 // its model, version, seed, references and prompt.
 //
 //   node tools/gen-bg.mjs --dry-run                       # what would be sent, and to which models
-//   node tools/gen-bg.mjs --bakeoff                       # every room in the doc on every model (MODELS), one each
+//   node tools/gen-bg.mjs --bakeoff                       # every room in the doc on every model (BAKEOFF), text alone
 //   node tools/gen-bg.mjs --only clock_tower --model bananapro --n 3   # one room, one model, three seeds
-//   node tools/gen-bg.mjs --refs castle_great_hall.jpg,dungeon_kitchen.jpg   # the two reference paintings
+//   node tools/gen-bg.mjs --refs                          # two of the game's paintings attached as references (REFS by
+//   node tools/gen-bg.mjs --refs castle_great_hall.jpg,dungeon_kitchen.jpg   # the room's hue family, or these two)
 //   node tools/gen-bg.mjs --hint "more chains"            # a direction appended to the room's line
 //   node tools/gen-bg.mjs --import clock_tower_c2 [--list rooms|treasure|bosses|entrance|antechambers]
 //                                                         # the 2048x1152 JPEG the game loads (assets/bg/<id>.jpg),
@@ -19,8 +20,11 @@
 //   node tools/gen-bg.mjs --only clock_tower --model lora # the rooms' LoRA (tools/train-lora.mjs --set rooms): from the
 //                                                         # room's line alone, no reference paintings, 1 MP (upscaled at import)
 //
-// The model adapters are gen-art.mjs's MODELS (the two pictures become the
-// two reference paintings; the prompt says so). GPT Image paints 3:2 and
+// The prompt is the recipe the paintings were made with (docs/room-prompts.md
+// and the owner's docs/image-prompting-guide.md, 0.00237): the room's line,
+// the guide's mood (a boss arena's composition for an arena), the style
+// block word for word, as text alone; --refs attaches two of the game's paintings through gen-art's
+// MODELS adapters (the prompt then names them). GPT Image paints 3:2 and
 // is cropped to 16:9 at import. Prices from memory, the API has none.
 // Run with NODE_USE_ENV_PROXY=1 behind a proxy.
 
@@ -40,15 +44,27 @@ const BACKGROUNDS = join(ROOT, 'assets', 'data', 'backgrounds.json');
 const WEB = 'assets/bg/candidates';
 
 export const DEFAULTS = { n: 1, model: 'bananapro', aspect: '16:9', concurrency: 3 };
-/** The bake-off's models: every editor that takes two pictures and a prompt (not the LoRA, not a one-picture pass). */
-export const BAKEOFF = ['banana', 'bananapro', 'seedream', 'gpt', 'flux2', 'max'];
+/** The guide's mood / composition modifiers: a room, or a boss arena (the Kind column). */
+export const MOOD = 'gloomy and moody, deep shadows, oppressive atmosphere';
+export const ARENA = 'video game boss arena background art, wide symmetrical battle stage composition with open floor space in the center';
+/** Text-to-image models of their own (no pictures in): FLUX 1.1 Pro and Imagen 4 join the editors for a text-only run. */
+export const TEXT_MODELS = {
+  flux11: { model: 'black-forest-labs/flux-1.1-pro', priceUsd: 0.04, build: (x) => ({ prompt: x.prompt, aspect_ratio: x.aspect, output_format: 'png', safety_tolerance: 2, prompt_upsampling: false, seed: x.seed }) },
+  imagen: { model: 'google/imagen-4', priceUsd: 0.04, build: (x) => ({ prompt: x.prompt, aspect_ratio: x.aspect, output_format: 'png', safety_filter_level: 'block_only_high' }) },
+};
+/** The bake-off's models: the editors that paint from text alone when no picture goes in, plus the text-only models (Kontext needs a picture). */
+export const BAKEOFF = ['banana', 'bananapro', 'seedream', 'gpt', 'flux2', 'flux11', 'imagen'];
+export const modelDef = (m) => MODELS[m] ?? TEXT_MODELS[m];
 /** Two reference paintings per hue family: the closest in colour among the game's own. */
 export const REFS = {
-  amber: ['castle_great_hall.jpg', 'dungeon_kitchen.jpg'],
+  amber: ['castle_great_hall.jpg', 'dungeon_torch_corridor.jpg'],
   red: ['dungeon_cathedral_nave.jpg', 'throne_ember_warlord.jpg'],
-  cold: ['corridor_flooded_hall.jpg', 'corridor_cavern_chasm.jpg'],
+  cold: ['castle_ramparts.jpg', 'dungeon_royal_bedroom.jpg'],
+  teal: ['dungeon_cistern.jpg', 'corridor_flooded_hall.jpg'],
+  violet: ['dungeon_arcane_library.jpg', 'treasure_cursed_reliquary.jpg'],
   bone: ['dungeon_ossuary.jpg', 'corridor_bone_passage.jpg'],
-  gold: ['treasure_dragon_hoard.jpg', 'dungeon_treasury.jpg'],
+  green: ['dungeon_sewer_passage.jpg', 'treasure_smugglers_cache.jpg'],
+  ice: ['treasure_frozen_tribute.jpg', 'dungeon_observatory.jpg'],
 };
 export const GAME = { w: 2048, h: 1152, quality: 86 };
 
@@ -57,9 +73,9 @@ export function parseRooms(md) {
   const block = md.match(/## Style block[\s\S]*?```\n([\s\S]*?)```/);
   if (!block) throw new Error('room-prompts.md: no style block');
   const rooms = [];
-  for (const m of md.matchAll(/^\| (\w+) \| ([^|]+) \| (\w+) \| (.+?) \|$/gm)) {
+  for (const m of md.matchAll(/^\| (\w+) \| ([^|]+) \| (\w+) \| (room|arena) \| (.+?) \|$/gm)) {
     if (m[1] === 'Id') continue;
-    rooms.push({ id: m[1], name: m[2].trim(), hue: m[3], line: m[4].trim() });
+    rooms.push({ id: m[1], name: m[2].trim(), hue: m[3], kind: m[4], line: m[5].trim() });
   }
   if (!rooms.length) throw new Error('room-prompts.md: no rooms');
   return { style: block[1].trim(), rooms };
@@ -69,11 +85,13 @@ export function loraPrompt(room, hint = '') {
   return `${LORAS.rooms.trigger} style, ${ROOM_CAPTION}: ${room.name}. ${room.line}${hint ? ` ${hint}` : ''}`;
 }
 export const ROOM_LORA = { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, trigger: LORAS.rooms.trigger };
-export function promptFor(doc, room, hint = '', list = true) {
-  const refs = list ? 'The first image and the second image are two of the reference paintings.' : 'The two input images are two of the reference paintings.';
-  return `${refs} Paint a NEW room, not either of them, in exactly their style.\n${doc.style}\n${room.line}${hint ? ` ${hint}` : ''}\nThe room is called "${room.name}".`;
+/** The recipe: the line (+ a hint), the mood, the style block last and verbatim; with references, a lead naming them. */
+export function promptFor(doc, room, hint = '', refs = null, list = true) {
+  const lead = !refs ? '' : list ? 'In exactly the style of the first image and the second image (two paintings of the same set), a new room: ' : 'In exactly the style of the two input images (two paintings of the same set), a new room: ';
+  return `${lead}${room.line}${hint ? `, ${hint}` : ''}, ${room.kind === 'arena' ? ARENA : MOOD}, ${doc.style}`;
 }
-export const refsFor = (room, over) => (over ? over.split(',') : REFS[room.hue] ?? REFS.cold);
+/** --refs alone = the hue family's two paintings; --refs a.jpg,b.jpg = those; no --refs = none (text alone). */
+export const refsFor = (room, over) => (over === true || over === '' ? REFS[room.hue] ?? REFS.cold : over ? over.split(',') : null);
 function seedFor(id, n) {
   let h = 2166136261;
   for (const ch of `bg/${id}/${n}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
@@ -112,7 +130,7 @@ async function sheet(reg, out, only) {
     e.candidates.forEach((c, k) => {
       const x = PAD + k * (TW + PAD), y = PAD + r * (TH + CAP + PAD);
       comp.push({ input: join(ROOT, c.file), left: x, top: y + CAP, resize: true });
-      texts.push(`<text x="${x + 3}" y="${y + 18}" font-family="sans-serif" font-size="15" fill="#eee">${id} c${c.n} · ${c.model} · ${c.w}x${c.h}${c.verdict ? ` · ${c.verdict}` : ''}</text>`);
+      texts.push(`<text x="${x + 3}" y="${y + 18}" font-family="sans-serif" font-size="15" fill="#eee">${id} c${c.n} · ${c.model.replace(/^.*\//, '').replace(/:.*$/, '')}${c.refs?.length ? ' +refs' : ''} · ${c.w}x${c.h}${c.verdict ? ` · ${c.verdict}` : ''}</text>`);
     });
   });
   for (const c of comp) c.input = await S(c.input).resize(TW, TH, { fit: 'cover' }).png().toBuffer();
@@ -155,12 +173,16 @@ async function main() {
   const jobs = [];
   for (const room of rooms) for (const model of models) for (let k = 0; k < n; k++) {
     if (model === 'lora') { jobs.push({ room, model, refs: [], prompt: loraPrompt(room, hint) }); continue; }
-    if (!MODELS[model]) throw new Error(`no model ${model} (lora, ${Object.keys(MODELS).join(', ')})`);
-    jobs.push({ room, model, refs: refsFor(room, val('--refs')), prompt: promptFor(doc, room, hint, !!MODELS[model].list) });
+    if (!modelDef(model)) throw new Error(`no model ${model} (lora, ${[...Object.keys(MODELS), ...Object.keys(TEXT_MODELS)].join(', ')})`);
+    const refsArg = has('--refs') ? (args[args.indexOf('--refs') + 1] ?? '').includes('.jpg') ? val('--refs') : true : null;
+    const refs = refsFor(room, refsArg);
+    if (refs && TEXT_MODELS[model]) throw new Error(`${model} takes no pictures`);
+    if (!refs && ['pro', 'max'].includes(model)) throw new Error(`${model} needs pictures: --refs`);
+    jobs.push({ room, model, refs: refs ?? [], prompt: promptFor(doc, room, hint, refs, !!modelDef(model).list) });
   }
-  const defOf = (m) => (m === 'lora' ? ROOM_LORA : MODELS[m]);
+  const defOf = (m) => (m === 'lora' ? ROOM_LORA : modelDef(m));
   const cost = jobs.reduce((s, j) => s + defOf(j.model).priceUsd, 0);
-  console.log(`${jobs.length} pictures (${rooms.map((r) => r.id).join(', ')} x ${models.join(', ')} x ${n}; about $${cost.toFixed(2)}, from memory)`);
+  console.log(`${jobs.length} pictures (${rooms.map((r) => r.id).join(', ')} x ${models.join(', ')} x ${n}${jobs[0]?.refs.length ? ', with references' : ', text alone'}; about $${cost.toFixed(2)}, from memory)`);
   if (has('--dry-run')) { for (const j of jobs) console.log(`  ${j.room.id} on ${defOf(j.model).model} with ${j.refs.join(' + ') || 'no pictures'}\n    ${j.prompt.replace(/\n/g, '\n    ')}`); return; }
   if (!token()) throw new Error('REPLICATE_API_TOKEN is not set');
   mkdirSync(OUT, { recursive: true });
@@ -168,7 +190,7 @@ async function main() {
   const pictures = {};
   const picture = (f) => (pictures[f] ??= inline(join(BG, f)));
   let next = 0;
-  const reserved = {}; // the number is claimed as the job is taken: three workers used to read the same next number (0.00235)
+  const reserved = {}; // the number is claimed as the job is taken: three workers used to read the same next number (0.00236)
   const worker = async () => {
     while (next < jobs.length) {
       const j = jobs[next++];
@@ -180,7 +202,7 @@ async function main() {
       const def = defOf(j.model);
       const input = j.model === 'lora'
         ? { prompt: j.prompt, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed }
-        : def.build({ prompt: j.prompt, portrait: await picture(j.refs[0]), style: await picture(j.refs[1]), aspect: DEFAULTS.aspect, seed });
+        : def.build({ prompt: j.prompt, portrait: j.refs[0] ? await picture(j.refs[0]) : null, style: j.refs[1] ? await picture(j.refs[1]) : null, aspect: DEFAULTS.aspect, seed });
       // the rooms' LoRA runs as the trained model's own version (a private model's weights are not fetchable by the generic runner)
       const run = () => (j.model === 'lora' ? predictVersion(loraVersion('rooms') ?? (() => { throw new Error('no trained rooms LoRA in lora.json: node tools/train-lora.mjs --set rooms'); })(), input) : predict(def.model, input));
       try {

@@ -1,4 +1,4 @@
-// The Replicate client the art tools share (0.00235): the token, the
+// The Replicate client the art tools share (0.00236): the token, the
 // Files API upload, a prediction on an official model (`predict`) or on a
 // community model by version (`predictVersion`), and `latestVersion`.
 // Needs REPLICATE_API_TOKEN (REPLICATE_KEY is read too) in the environment;
