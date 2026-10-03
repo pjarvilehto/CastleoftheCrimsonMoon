@@ -1,5 +1,5 @@
 {
-  "version": "0.00312",
+  "version": "0.00313",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00313": [
+      "The descent's drum strikes the moment you press Descend or Enter the Castle (its recording's silent start trimmed, the sound decoded ahead), as well as on Push Deeper."
+    ],
     "0.00312": [
       "Combat's background flashes (crits, potions, revives, OVERKILL) are stronger and reach further, so they show past the cards.",
       "Fog Lab: flash-light sliders with card stand-ins, and the mist's tints now start from the game's own."
@@ -144,10 +147,6 @@
     "0.00299": [
       "Fixes from the review: the Plague Sister's censer swing always lands (only its smoke can be shrugged off, and never twice), no thrall rises in a cleared room, the knight's starting gear no longer drops as junk for the other classes, the LOOT pop-up tells a beaten find from a worn one and opens with I or from the hero card's inventory page (phones too), SWITCH CLASS drops the boons for real, and the hero screen no longer stacks a stale copy on a resize",
       "Sound and stats housekeeping: a take asked for just before SOUND went off stays silent, the pulled get-hit cries are not downloaded, a failed stats upload keeps the device report for the next"
-    ],
-    "0.00298": [
-      "A huge tom strikes as you Push Deeper and as the descent from the Great Hall begins.",
-      "The room-change whooshes play much louder (they sat where the old quiet swoosh did)."
     ]
   }
 }

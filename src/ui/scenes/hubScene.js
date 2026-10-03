@@ -113,6 +113,7 @@ export function hubScene(opts = {}) {
   // Forge never asks (0.00285, the developer's call: its use is very
   // optional): coins count only where Alchemy could spend them.
   function descend(btn) {
+    sfx('deeper'); // the strike on the press itself (0.00307, the developer's ask: it used to wait for the prompt and the art's gathering)
     const p = getProfile();
     const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendAlchemy(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
     if (!left.length) return enterDungeon(btn);
@@ -136,7 +137,6 @@ export function hubScene(opts = {}) {
       clearInterval(timer);
       if (currentScene() !== scene) return; // left the hall meanwhile
     }
-    sfx('deeper'); // the descent begins: the developer's huge tom (0.00298), the same strike as Push Deeper
     go('dungeon');
   }
 
