@@ -89,6 +89,8 @@ export function checkData(data) {
     if (!(e?.coins?.length === 2 && e.coins.every(isNum))) out.push(`enemies.json: ${id}.coins ([lo, hi])`);
     // its immunities (0.00293): a chance 0-1 per element, every element on every enemy (0 = none)
     for (const el of ELEMENTS) if (!(isNum(e?.immune?.[el]) && e.immune[el] >= 0 && e.immune[el] <= 1)) out.push(`enemies.json: ${id}.immune.${el} (a chance 0-1)`);
+    // its lore line (0.00295): the stats card's last line
+    if (!(typeof e?.lore === 'string' && e.lore.trim())) out.push(`enemies.json: ${id}.lore (a line of text)`);
   }
   for (const [kind, h] of Object.entries(HEAVIES)) if (h.element && !ELEMENTS.includes(h.element)) out.push(`classes.js: the ${kind} heavy's element (${h.element}) is not one of ${ELEMENTS.join(', ')}`);
   // the boss and the knight's first gear (0.00197: data, were names in src)
@@ -154,9 +156,12 @@ export function checkData(data) {
     if (!data.audio.clips?.[name]) out.push(`audio.json: duck.clips.${name} is not a clip`);
     if (!isNum(secs)) out.push(`audio.json: duck.clips.${name} must be seconds`); // (mixer.js: a NaN there dropped the sound, 0.00197)
   }
-  // the room change's swoosh (0.173): a file clip with its loudest moment measured
-  const tr = data.audio?.transition?.clip;
-  if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clip (${tr}) must be a file clip with peakMs`);
+  // the room change's whooshes (0.173; a list since 0.00297): file clips with their loudest moment measured, one picked per change
+  const trs = data.audio?.transition?.clips;
+  if (!Array.isArray(trs) || !trs.length) out.push('audio.json: transition.clips must list at least one clip');
+  for (const tr of trs ?? []) if (!data.audio?.clips?.[tr]?.file || !isNum(data.audio.clips[tr].peakMs)) out.push(`audio.json: transition.clips ${tr} must be a file clip with peakMs`);
+  // the death hit is timed to the YOU DIED dialog by its loudest moment (dungeonScene.js, 0.00297)
+  if (!isNum(data.audio?.clips?.death?.peakMs)) out.push('audio.json: clips.death needs peakMs');
   // the summoned enemy and every painting's name (run/roomGen.js reads them without fallbacks)
   const summon = data.difficulty?.boss?.summon?.enemy;
   if (!data.enemies?.[summon]) out.push(`difficulty.json: boss.summon.enemy (${summon}) is not in enemies.json`);

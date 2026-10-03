@@ -119,6 +119,40 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   p0.equipment = JSON.parse(eq0);
 }
 
+// A foe's stats card (0.00295): a tap on its name turns the card over — LV,
+// health (kept current), attack, its special, its immunities, a line of
+// lore, no armor; a tap on the back turns it face up; the card's own click
+// does not attack while it is turned.
+{
+  const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
+  const all = (n, f, out = []) => { if (f(n)) out.push(n); (n.children ?? []).forEach((c) => all(c, f, out)); return out; };
+  const has = (cls) => (n) => n.classList?.contains(cls);
+  let attacks = 0;
+  const e = scaleEnemy('skeleton', 1);
+  const u = createEnemyUnit(e, 0, { onAttack() { attacks++; }, onGone() {} });
+  u.update({ hp: e.maxHp, dead: false, printing: false, combatOver: false });
+  const back = all(u.card, has('foe-back'))[0];
+  const tap = all(u.card, has('nm-tap'))[0];
+  const row = (label) => back.children.find((r) => r.children?.[0]?.textContent === label)?.children[1].textContent;
+  ok('a foe\'s name is a tap target with an ⓘ after it', tap?.textContent === 'Skeleton' && all(u.card, has('nm-i'))[0]?.textContent === 'i');
+  await tap.listeners.click[0]({ stopPropagation() {} }); await sleep(0);
+  u.update({ hp: e.maxHp - 3, dead: false, printing: false, combatOver: false });
+  u.card.listeners.click[0]();
+  const text = back.textContent;
+  ok('a tap on the name turns it to its stats: LV, health (kept current), attack, no armor, its immunities, its lore',
+    u.card.classList.contains('flipped') && back.children[0].textContent === 'Skeleton' && text.includes('LV1')
+    && row('Health') === `${e.maxHp - 3} / ${e.maxHp}` && row('Attack') === `${e.dmg}` && row('Armor') === undefined
+    && all(back, has('foe-chip')).some((c) => c.textContent === 'blight 90%') && text.includes(DATA.enemies.skeleton.lore) && text.includes('None'), text);
+  ok('…and the card\'s click does not attack while it is turned', attacks === 0);
+  await back.listeners.click[0]({ stopPropagation() {} }); await sleep(0);
+  ok('…and a tap on the back turns it face up', !u.card.classList.contains('flipped'));
+  const sm = DATA.difficulty.boss.summon;
+  const b = Object.assign(scaleEnemy('vampire_lord', 8), { boss: true, summonEvery: sm.every });
+  const bt = all(createEnemyUnit(b, 0, { onAttack() {}, onGone() {} }).card, has('foe-back'))[0].textContent;
+  ok('the boss\'s card names its summons, every N turns and how many at most', bt.includes('Boss') && bt.includes(`every ${sm.every} turns — ${sm.maxAlive} at most`) && bt.includes(DATA.enemies.vampire_lord.lore), bt);
+  ok('every enemy has a line of lore', Object.values(DATA.enemies).every((x) => typeof x.lore === 'string' && x.lore.length > 10 && x.lore.length < 70));
+}
+
 // The cards in 3D, played (0.00223: the harness lends Web Animations for a
 // block — these used to be checks on the source text)
 {

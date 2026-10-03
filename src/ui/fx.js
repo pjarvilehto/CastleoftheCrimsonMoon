@@ -3,6 +3,9 @@
 // Death sequence (0.079): a slow build to 75% red; at the peak, onPeak()
 // (the YOU DIED dialog flashes in); then a slow 2s fade back to normal.
 // Timings pair with #flash.death-in / .death-out in styles.css.
+// DEATH_PEAK_MS is the look (the flash's build), exported so the death
+// hit's loudest moment lands with the dialog (dungeonScene, 0.00297).
+export const DEATH_PEAK_MS = 900;
 export function deathFlash(onPeak) {
   const f = document.getElementById('flash');
   if (!f) { onPeak(); return; }
@@ -14,7 +17,7 @@ export function deathFlash(onPeak) {
     f.classList.remove('death-in');
     f.classList.add('death-out');
     setTimeout(() => f.classList.remove('death-out'), 2100);
-  }, 900);
+  }, DEATH_PEAK_MS);
 }
 
 // A number that just changed glows and grows for a moment (0.00216, the

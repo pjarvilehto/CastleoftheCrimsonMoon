@@ -1,4 +1,19 @@
 {
+  "0.00298": [
+    "A huge tom strikes as you Push Deeper and as the descent from the Great Hall begins.",
+    "The room-change whooshes play much louder (they sat where the old quiet swoosh did)."
+  ],
+  "0.00297": [
+    "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
+    "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
+    "The coin jingle plays an octave lower."
+  ],
+  "0.00296": [
+    "On a computer, Enter the Castle now switches the game to full screen (Esc or the corner icon leaves it)."
+  ],
+  "0.00295": [
+    "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
+  ],
   "0.00294": [
     "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
   ],

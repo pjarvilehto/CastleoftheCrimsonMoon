@@ -1,5 +1,5 @@
 {
-  "version": "0.00294",
+  "version": "0.00298",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -99,6 +99,21 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00298": [
+      "A huge tom strikes as you Push Deeper and as the descent from the Great Hall begins.",
+      "The room-change whooshes play much louder (they sat where the old quiet swoosh did)."
+    ],
+    "0.00297": [
+      "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
+      "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
+      "The coin jingle plays an octave lower."
+    ],
+    "0.00296": [
+      "On a computer, Enter the Castle now switches the game to full screen (Esc or the corner icon leaves it)."
+    ],
+    "0.00295": [
+      "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
+    ],
     "0.00294": [
       "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
     ],
@@ -132,20 +147,6 @@
     ],
     "0.00284": [
       "Housekeeping: the notes in the code name the build the refactors shipped in"
-    ],
-    "0.00283": [
-      "Under the hood: the classes' heavies, passives and effects in registries of their own; the fight reads its class from the run",
-      "The sound tools share one ElevenLabs module; the test harness restores the data between files"
-    ],
-    "0.00282": [
-      "New music for the boss fights, the shrine and the run's end: the last three scores picked in the Music Lab, so the whole game now plays the new orchestral score."
-    ],
-    "0.00281": [
-      "The Great Hall grows with large screens: on a big desktop monitor the title, the three panels and the buttons are drawn larger instead of sitting small in the middle."
-    ],
-    "0.00280": [
-      "New music: the title and the Great Hall, and every fight, play new orchestral scores (picked in the Music Lab), looped where the music meets itself and crossfaded so the loop is hard to hear.",
-      "The Music Lab has two takes each for the boss, the shrine and the run's end to choose from."
     ]
   }
 }

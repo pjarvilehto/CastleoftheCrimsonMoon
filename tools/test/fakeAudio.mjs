@@ -70,8 +70,14 @@ export class FakeAudioContext {
     const data = Array.from({ length: channels }, () => new Float32Array(length));
     return { numberOfChannels: channels, length, sampleRate, duration: length / sampleRate, getChannelData: (c) => data[c] };
   }
-  // every decoded file: 62.05 s of silence (a 60 s loop + 2 s tail + padding)
-  async decodeAudioData() { return this.createBuffer(2, Math.round(62.05 * 48000), 48000); }
+  // every decoded file: 62.05 s of silence (a 60 s loop + 2 s tail + padding);
+  // `bytes` = the compressed size it was decoded from, so a test that gives
+  // each file its own size can tell the buffers apart (0.00297: which whoosh a transition picked)
+  async decodeAudioData(bytes) {
+    const b = this.createBuffer(2, Math.round(62.05 * 48000), 48000);
+    b.bytes = bytes?.byteLength ?? 0;
+    return b;
+  }
   async resume() { this.state = 'running'; }
   async suspend() { this.state = 'suspended'; }
 }

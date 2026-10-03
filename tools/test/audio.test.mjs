@@ -77,9 +77,15 @@ fresh();
   ok('sfx play/init no-op safely without AudioContext', quiet);
 
   const C = DATA.audio.clips; // the sound registry (0.118)
-  for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'death', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
+  for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
     ok(`sfx clip registered + on disk: ${c}`, C[c]?.file === `assets/audio/sfx-${c}.mp3` && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
   }
+  // 0.00297: the developer's recordings — the death hit (a huge wooden tube, timed to the dialog) and the Heart's revive (a spooky metal hit), both stingers that duck the music
+  ok('the death hit: a new file with its loudest moment measured, a stinger', C.death.file === 'assets/audio/sfx/death_v2.mp3' && statSync(C.death.file).size > 100 * 1024
+    && Number.isFinite(C.death.peakMs) && C.death.peakMs > 0 && C.death.stinger === true && DATA.audio.duck.clips.death > 0 && !readdirSync('assets/audio').includes('sfx-death.mp3'));
+  ok('the revive hit: a file clip, a stinger ducking the music like the shrine', C.revive.file === 'assets/audio/sfx/revive_v1.mp3' && statSync(C.revive.file).size > 100 * 1024
+    && C.revive.stinger === true && DATA.audio.duck.clips.revive === DATA.audio.duck.clips.shrine);
+  ok('the death and the revive sit at the stingers\' level (death -8, revive -10)', Math.abs(C.death.measuredDb + C.death.gainDb + 8) < 0.11 && Math.abs(C.revive.measuredDb + C.revive.gainDb + 10) < 0.11);
   ok('generated sounds registered as synth', ['ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
   ok('combat sounds jittered', ['attack', 'kill', 'hurt', 'loot'].every((n) => C[n].rate?.length === 2 && C[n].jitterDb > 0));
 
@@ -90,7 +96,19 @@ fresh();
   const q = read('src/ui/combatQueue.js'); // event -> queue mapping (0.098)
   ok('dungeon maps combat events to sfx', q.includes("atk: 'attack'") && q.includes("dmg: 'hurt'") && q.includes("kill: 'kill'"));
   ok('dungeon: rare vs common loot sounds', q.includes("cls === 'relic' ? 'rare' : 'loot'"));
-  ok('dungeon: death/potion wired; the room swoosh moved to every transition (main.js, 0.173)', !d.includes("sfx('whoosh')") && d.includes("sfx('death')") && d.includes("combatSfx({ sfx: 'heal'") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })'));
+  ok('dungeon: death/potion wired; the room swoosh moved to every transition (main.js, 0.173)', !d.includes("sfx('whoosh')") && d.includes("sfxPeakAt('death', DEATH_PEAK_MS)") && d.includes("combatSfx({ sfx: 'heal'") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })'));
+  {
+    const { sfxFor } = await import('../../src/ui/combatQueue.js');
+    const { DEATH_PEAK_MS } = await import('../../src/ui/fx.js');
+    ok('the Heart\'s revive plays its own hit, the summon keeps the shrine chime (0.00297)', sfxFor({ type: 'revive' }) === 'revive' && sfxFor({ type: 'summon' }) === 'shrine');
+    ok('the death hit lands as the dialog flashes in: the flash\'s peak is exported and the clip\'s own peak comes before it', DEATH_PEAK_MS === 900 && C.death.peakMs < DEATH_PEAK_MS
+      && read('src/ui/fx.js').includes('}, DEATH_PEAK_MS);'));
+    ok('the reliquary\'s revive plays the hit too (treasureUI: the Heart unspent before, spent after, the knight alive)', read('src/ui/treasureUI.js').includes("if (!got.died && heart && !run.revive) sfx('revive');"));
+    // 0.00298: the huge tom on Push Deeper (every chosen room change, not the first room's entry) and as the hall's Descend begins
+    ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', C.deeper.file === 'assets/audio/sfx/deeper_v1.mp3' && statSync(C.deeper.file).size > 100 * 1024
+      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 12) < 0.11 && !C.deeper.stinger
+      && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("sfx('deeper'); // the descent begins"));
+  }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/hubSections.js'); // (0.00223: the hall's rows live there)
   ok('hub: levelup + forge wired', h.includes("sfx('levelup')") && h.includes("sfx('forge')"));
@@ -174,17 +192,21 @@ fresh();
     && read('src/main.js').includes('volumeToggle(),'));
 }
 
-// T70: 0.173 — the room change's swoosh: the developer's SFX pitched down half
-// an octave, then a quarter more and 30% quieter (0.175, a new file), played so its loudest moment lands in the middle
-// of the transition (1 s out + 2 s crossfade + 1 s in = 2 s), with a little
-// random pitch, tone and level each time; the generated whoosh is gone.
+// T70: 0.173 — the room change's whoosh, played so its loudest moment lands in
+// the middle of the transition (1 s out + 2 s crossfade + 1 s in = 2 s).
+// 0.00297: ten of the developer's whoosh recordings in place of the one
+// pitched-down swoosh (gone with its variation entry), one picked at random
+// each change, every one measured (peakMs) and levelled where the old one sat;
+// the generated whoosh is long gone.
 {
-  const A = DATA.audio, T = A.transition, c = A.clips[T.clip];
-  ok('room swoosh: a measured file clip with its loudest moment, no generated whoosh', T.clip === 'room_swoosh' && /sfx-room-swoosh-v2\.mp3$/.test(c.file)
-    && statSync(c.file).size > 20 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0 && !A.clips.whoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
-  ok('room swoosh: its peak lands mid-transition (2 s), a little varied each play', T.peakAtMs === 2000 && T.peakAtMs - c.peakMs > 0
-    && A.variation.room_swoosh.rate[0] < 1 && A.variation.room_swoosh.rate[1] > 1 && A.variation.room_swoosh.eq.lo < A.variation.room_swoosh.eq.hi && c.jitterDb > 0);
-  ok('room swoosh sits well under the hits in the mix (0.175 and 0.177: 30% quieter twice)', c.measuredDb + c.gainDb <= -18 && c.measuredDb + c.gainDb > -22);
+  const A = DATA.audio, T = A.transition, cs = T.clips.map((n) => A.clips[n]);
+  ok('the transition lists ten whoosh recordings, each a measured file clip with its loudest moment', T.clips.length === 10 && new Set(T.clips).size === 10 && !T.clip
+    && cs.every((c) => /^assets\/audio\/sfx\/whoosh_\w+_v1\.mp3$/.test(c.file) && statSync(c.file).size > 100 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0)
+    && !A.clips.whoosh && !A.clips.room_swoosh && !A.variation.room_swoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
+  ok('every whoosh\'s peak comes before mid-transition (2 s), so each can be timed to the crossfade; the level varied a little each play', T.peakAtMs === 2000
+    && cs.every((c) => T.peakAtMs - c.peakMs > 0 && c.jitterDb > 0));
+  ok('the whooshes all sit at one level, the hits\' -12 (0.00298, the developer: at the old swoosh\'s -19.3 they were way too quiet)', cs.every((c) => Math.abs(c.measuredDb + c.gainDb + 12) < 0.11));
+  ok('the old swoosh and death files are gone from the folder players download (rule 7: new names)', !readdirSync('assets/audio').some((f) => /room-swoosh|sfx-death/.test(f)));
 }
 
 // T73: 0.110 — strikes vary every hit (pitch, a random tone colour,
@@ -398,13 +420,31 @@ fresh();
   sfxMod.sfx('loot'); sfxMod.sfx('loot');
   await sleep(10);
   ok('a repeat inside the retrigger window is dropped', ctx.started.length === n1 + 1);
-  // the room swoosh (0.173): scheduled so its loudest moment lands peakAtMs into the transition (0.00223: the start time, not the source)
+  // the room whoosh (0.173): scheduled so its loudest moment lands peakAtMs into the transition (0.00223: the start time, not the source);
+  // 0.00297: one of the ten recordings at random — each start is timed by ITS OWN peak, and a dozen changes play more than one of them
+  const TR = A.transition, bySize = new Map(TR.clips.map((n) => [sizes[A.clips[n].file], A.clips[n]])); // (every file fetched above got its own size)
+  const seen = new Set();
+  await withSeedAsync(11, async () => {
+    for (let i = 0; i < 12; i++) {
+      ctx.currentTime += 5;
+      const nT = ctx.started.length;
+      sfxMod.transitionSfx();
+      await sleep(10);
+      const sw = ctx.started.slice(nT).find((s) => s.kind === 'buffer');
+      const c = sw && bySize.get(sw.buffer?.bytes);
+      if (!c) { seen.add('?'); break; }
+      seen.add(c.file);
+      if (Math.abs(sw.started[0] - (ctx.currentTime + (TR.peakAtMs - c.peakMs) / 1000)) > 1e-9) { seen.add('late'); break; }
+    }
+  });
+  ok('each room whoosh starts peakAtMs - its own peakMs after the transition begins, and the pick varies', !seen.has('?') && !seen.has('late') && seen.size >= 3, [...seen].join(' '));
+  // a clip timed by its peak (sfxPeakAt): the death hit lands with the dialog
   ctx.currentTime += 5;
-  const nT = ctx.started.length, TR = A.transition, cTR = A.clips[TR.clip];
-  sfxMod.transitionSfx();
+  const nD = ctx.started.length;
+  sfxMod.sfxPeakAt('death', 900);
   await sleep(10);
-  const sw = ctx.started.slice(nT).find((s) => s.kind === 'buffer');
-  ok('the room swoosh starts peakAtMs - peakMs after the transition begins', !!sw && Math.abs(sw.started[0] - (ctx.currentTime + (TR.peakAtMs - cTR.peakMs) / 1000)) < 1e-9, sw && `${sw.started[0]} vs ${ctx.currentTime + (TR.peakAtMs - cTR.peakMs) / 1000}`);
+  const dh = ctx.started.slice(nD).find((s) => s.kind === 'buffer');
+  ok('sfxPeakAt starts the death hit 900 ms - its peakMs ahead of the dialog', !!dh && Math.abs(dh.started[0] - (ctx.currentTime + (900 - A.clips.death.peakMs) / 1000)) < 1e-9, dh && `${dh.started[0]}`);
   // variation (0.110) heard: a peaking EQ, a pitch off 1 and a synthesized layer on the strikes
   const nN = ctx.nodes.length, nS = ctx.started.length;
   await withSeedAsync(5, async () => { for (let i = 0; i < 10; i++) { ctx.currentTime += 1; sfxMod.sfx('attack'); await sleep(5); } });

@@ -39,8 +39,10 @@ export function renderTreasureRoom(root, run, room, h) {
             key: String(i + 1),
             class: kind === 'reliquary' ? 'danger' : '',
             onclick: () => {
+              const heart = run.revive; // the Heart still unspent before the seal drinks
               const got = openChest(run, room, kind, log);
               room.taken = true;
+              if (!got.died && heart && !run.revive) sfx('revive'); // (0.00297: the reliquary's blood price took the knight and the Heart gave him back)
               if (!got.died) sfx(DATA.items[got.itemId]?.tier === 4 ? 'rare' : got.itemId ? 'loot' : 'ring');
               h.refresh(); // the chests close (and a dead knight gets no way on) before the death dialog
               if (got.died) { h.onDeath(); return; } // the death dialog narrates the reliquary's price

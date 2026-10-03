@@ -1313,12 +1313,35 @@ the first-death line, a chest and its relic). The three on/off toggles
 share `shared/prefs.js mutePref` (0.00223). A second duck under a
 longer one keeps the longer release (0.00223: a short stinger under a
 narrator line used to bring the music back early). Combat lines go through `ui/combatSfx.js` (panned to the
-card, timed to the blow, crit/mega/overkill sweeteners). The room change's
-swoosh (0.173, `audio.json transition`): the developer's SFX pitched down three
-quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, and 30% again in 0.178), played by `sfx.js transitionSfx()`
-from `main.js onTransition` so its measured loudest moment (`peakMs`)
-lands `peakAtMs` (2 s, the middle) into every transition, varied a little
-each play (its `variation` entry + `jitterDb`).
+card, timed to the blow, crit/mega/overkill sweeteners). **The room
+change's whoosh** (0.173, `audio.json transition`; **0.00297: one of the
+developer's ten whoosh recordings** — `transition.clips`, three long swishes,
+four short grainy ones, three "fly away"s in `assets/audio/sfx/whoosh_*_v1.mp3`,
+in place of the one pitched-down swoosh and its `variation` entry): `sfx.js
+transitionSfx()` from `main.js onTransition` picks one at random and plays
+it through `sfxPeakAt(name, atMs)` so ITS measured loudest moment (`peakMs`,
+every recording's is under 2 s) lands `peakAtMs` (2 s, the middle of the
+crossfade) into every transition; `jitterDb` varies the level, all ten
+levelled at the hits' -12 dB (0.00298; at the old swoosh's -19.3 they were
+way too quiet, the developer found). **The developer's two hits
+(0.00297, `assets/audio/sfx/`):** the `death` clip is the huge wooden tube
+(`death_v2.mp3`), a stinger timed by `sfxPeakAt('death', DEATH_PEAK_MS)`
+(`fx.js`, the flash's 900 ms build) so its hit lands as the YOU DIED dialog
+flashes in; the `revive` clip is the spooky metal hit (`revive_v1.mp3`), a
+stinger ducking the music like the shrine's chime, played when the Heart
+gives the knight back (`combatQueue.js EV_SFX.revive`; the reliquary's
+revive in `treasureUI.js` too). A developer's SFX batch lands as WAVs at
+the repo root (GitHub's upload): convert each to a 128 kbps MP3 under a new
+name, measure its loudest 50 ms and where it sits (the measure is the
+`measureDb` one in `tools/elevenlabs.mjs`; a peak's time is the window's
+centre), register it, `git rm` the WAVs (they stay in history). The coin
+jingle (`loot`) plays an octave down since 0.00297 (`rate` 0.44-0.56; the
+developer found it too high). **The descent's strike (0.00298):** the
+`deeper` clip, the developer's huge tom (`deeper_v1.mp3`, the hits' -12 dB,
+no duck — it plays every room), struck as the player chooses Push Deeper
+(`dungeonScene.js nextRoom`, not the first room's entry) and as the hall's
+Descend actually begins (`hubScene.js enterDungeon`, after the prompt and
+the art's gathering), a moment before the whoosh.
 
 #### Music beds
 
@@ -1584,7 +1607,11 @@ be served stale for ~4 hours.
   clear of the corner column under 1400. `manifest.webmanifest` + the
   Apple metas make a home-screen app (fullscreen, landscape — iPhone
   Safari has no page fullscreen and ignores the orientation; the
-  FULLSCREEN toggle also speaks Safari's prefixed API). `?desktop` skips
+  FULLSCREEN toggle also speaks Safari's prefixed API). **A desktop's Enter the Castle
+  takes full screen** (0.00296, the developer's ask: `titleScene.js
+  enterFull`, the click being the browser's gesture; not on a handheld —
+  the phone's PLAY gate does it there; denied, the game plays windowed;
+  Esc and the corner's icon leave it). `?desktop` skips
   the device check (testers, the headless checks).
   **The phone layer (0.00208; rule 8 says how it is kept):** `styles.css`
   section 16 says what it does, screen by screen (combat as one line of
@@ -1674,7 +1701,16 @@ be served stale for ~4 hours.
   still gold ⓘ under the gear names says the card turns; the phone's
   twins compact the pages.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
-  would and only while it could (`.targetable`). A fallen enemy's figure
+  would and only while it could (`.targetable`). **A foe's stats card
+  (0.00295, the developer's call):** a tap on its NAME (dotted, an ⓘ after
+  it — a long name wraps it to a second line, accepted) turns the card over
+  (`battleLine.js foeBack`, `flipCard`, `.enemy-char.flipped .foe-back`):
+  the name, LV and Boss / Elite, health (kept current by the tick), attack,
+  its special (the boss's summons, an elite's relic, a summon's no reward),
+  its immunities as chips (`enemies.json immune`) and a line of lore
+  (`enemies.json lore`, dataCheck wants one per enemy) — no armor (foes have
+  none); a tap on the back turns it face up, the card's click does not
+  attack while turned, and a fallen foe collapses face up. A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards

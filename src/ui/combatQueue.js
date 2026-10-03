@@ -13,7 +13,7 @@ import { DATA } from '../shared/data.js';
 const EV_SFX = {
   atk: 'attack', spill: 'attack', thorns: 'attack',
   dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
-  kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'shrine', summon: 'shrine',
+  kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'revive', summon: 'shrine', // (0.00297: the revive's own spooky metal hit, the developer's recording)
   // the classes' events (0.00270; the roots and the strain 0.00271): the hex a chime, the blight a hiss, the roots a thud and a bound foe's strain a swoosh, a charge back a zap, the thrall's rise a wail, its blows and fall a thud (audio/synth.js)
   mark: 'chime', blight: 'hiss', entangle: 'thud', entangled: 'swoosh', immune: 'swoosh', charge: 'zap', thrall: 'wail', thrallhit: 'thud', thrallfall: 'thud',
 };
