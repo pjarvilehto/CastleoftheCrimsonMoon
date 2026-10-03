@@ -1,4 +1,7 @@
 {
+  "0.00277": [
+    "Fixes from the review: the STATS page shows each class's own heavy strength (and the Wizard's charges), a potion's heal is shown as the class really gets it, the Quicken boon reads as a charge for the Wizard, a foe's HEXED / BLIGHT / ROOTED tag and look now change on the line that causes them, and SWITCH CLASS clears the blight too. A struck hero no longer grunts twice: the recordings carry each class's cry."
+  ],
   "0.00276": [
     "Housekeeping: the project notes, code map and comments caught up with the classes (seven heroes, their own gameplay since 0.00267, Entangle, the recordings); the Druid's Entangle sound lost its old claws-and-growl layers for roots bursting from the earth; a robots.txt keeps crawlers out of the tools and docs. Nothing else changes in the game."
   ],
