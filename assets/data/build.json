@@ -1,5 +1,5 @@
 {
-  "version": "0.00292",
+  "version": "0.00293",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -99,6 +99,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00293": [
+      "Immunities: the undead and the vermin can shrug off Last Rites' blight and the fire-born the Wizard's Fireball — 'Immune!' instead; the Wizard and the Plague Sister hit a little harder to make up for it"
+    ],
     "0.00292": [
       "Combat: click the LOOT row (bottom left) to see everything you've found this run, with pictures and stats, four at a time with a scroll for more."
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00279": [
       "The Old Wizard's crit lines, second pass: six re-recorded steadier after the owner's review"
-    ],
-    "0.00278": [
-      "The Old Wizard remarks on a critical hit now and then (five lines, 12% of them with a pause between), and has four more things to say about a mega crit"
     ]
   }
 }

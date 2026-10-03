@@ -19,6 +19,7 @@ export function scaleEnemy(enemyId, roomNumber) {
     dmg: Math.round(base.dmg * Math.pow(diff.dmgGrowth, depth)),
     xp: Math.round(base.xp * Math.pow(diff.xpGrowth, depth)),
     coins: base.coins,
+    immune: base.immune, // (0.00293: a chance per element to shrug a class's heavy off — run/classes.js rollImmune)
   };
 }
 

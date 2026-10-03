@@ -77,6 +77,13 @@ export function entangled(fx, ctx) {
   if (can(u.el) && !reduced()) u.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'translateX(0)' }], { duration: 320, easing: 'ease-out', composite: 'add' });
   floatNumber(ctx, u, 'ENTANGLED', 'fx-miss');
 }
+// A foe shrugs an elemental heavy off (0.00293): IMMUNE floats over its card, which pales for a moment.
+export function immune(fx, ctx) {
+  const u = ctx.unit(fx.to);
+  if (!u) return;
+  glow(u, 'saturate(0.3) brightness(1.25)', 500);
+  floatNumber(ctx, u, 'IMMUNE', 'fx-miss');
+}
 // A foe rises again at the Necromancer's side.
 export function thrall(ctx) {
   const p = ctx.unit('player');
@@ -98,6 +105,7 @@ export const CLASS_FX = {
   blight: (fx, ctx) => blight(ctx),
   entangle: (fx, ctx) => entangle(ctx),
   entangled,
+  immune,
   charge: (fx, ctx) => classSpray(ctx.unit('player'), 'charge'),
   thrall: (fx, ctx) => thrall(ctx),
   thrallhit: thrallHit,

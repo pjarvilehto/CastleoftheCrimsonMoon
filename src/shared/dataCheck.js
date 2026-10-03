@@ -8,7 +8,7 @@
 // New knob in the data? Add its path here.
 
 import { compareVersions } from './version.js';
-import { HEAVY_KINDS, CLASS_KEYS } from '../run/classes.js';
+import { HEAVY_KINDS, CLASS_KEYS, ELEMENTS, HEAVIES } from '../run/classes.js';
 
 const NUM = {
   difficulty: [
@@ -86,7 +86,10 @@ export function checkData(data) {
   for (const [id, e] of Object.entries(data.enemies ?? {})) {
     if (!['hp', 'dmg', 'xp'].every((k) => isNum(e?.[k]))) out.push(`enemies.json: ${id} hp / dmg / xp`);
     if (!(e?.coins?.length === 2 && e.coins.every(isNum))) out.push(`enemies.json: ${id}.coins ([lo, hi])`);
+    // its immunities (0.00293): a chance 0-1 per element, every element on every enemy (0 = none)
+    for (const el of ELEMENTS) if (!(isNum(e?.immune?.[el]) && e.immune[el] >= 0 && e.immune[el] <= 1)) out.push(`enemies.json: ${id}.immune.${el} (a chance 0-1)`);
   }
+  for (const [kind, h] of Object.entries(HEAVIES)) if (h.element && !ELEMENTS.includes(h.element)) out.push(`classes.js: the ${kind} heavy's element (${h.element}) is not one of ${ELEMENTS.join(', ')}`);
   // the boss and the knight's first gear (0.00197: data, were names in src)
   if (!data.enemies?.[data.difficulty?.boss?.enemy]) out.push(`difficulty.json: boss.enemy (${data.difficulty?.boss?.enemy}) is not in enemies.json`);
   for (const slot of ['weapon', 'armor']) if (!data.items?.[data.difficulty?.player?.startingGear?.[slot]]) out.push(`difficulty.json: player.startingGear.${slot} is not an item`);
