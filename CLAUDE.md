@@ -482,42 +482,57 @@ tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 `shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
-away. **Redrawing them:** `docs/portrait-prompts.md` holds the style
-block ("Mike Mignola meets Darkest Dungeon 2", `[FACING]` = left for
-enemies, right for the knight) and a line per character;
-`tools/gen-art.mjs` sends the current portrait + a style reference (the
-character's own finished sheet from the owner, `assets/style/<id>.png`,
-seven of them in 0.191 — flat grey, no shadow, the destination exactly;
-else `dungeon_ossuary.jpg`; `--style` any picture) + the prompt to FLUX Kontext
-on Replicate (`flux-kontext-apps/multi-image-kontext-pro`, two input
-pictures; `--model max`; ~$0.04 a picture from memory, the API has no
-prices; `REPLICATE_API_TOKEN`, `--dry-run` first; in a proxied container
-`NODE_USE_ENV_PROXY=1`). Per candidate it keeps the model's picture
-(`assets/chars/candidates/<id>_c<n>_raw.jpg`) and a cut-out
-(`<id>_c<n>.webp`: `tools/cutout.mjs` keys the flat grey out from the
-border by flood fill, so greys inside the figure stay; a second pass eats
-the ground shadow the model paints anyway — mid-light, unsaturated, in
-the lower 40%; the figure is trimmed and scaled onto the current
-portrait's canvas at the current figure's height, feet on its baseline,
-so it reads the same size on the card), and records seed, prompt, style
-and cut in `assets/data/art.json` (never overwritten; numbering goes on).
-Kontext mirrors figures readily: the prompt says the facing twice and
-the lab's Flip mirrors on import; `--recut <id>_c<n> --tolerance /
---shadow` re-keys one. The loop: generate → the Art Lab → `--rerender
-art-rerender.json` (verdicts in, re-rolls out, a hint per character) →
+away. **Redrawing them (0.00201, after three directions):**
+`docs/portrait-prompts.md` holds the style block and a line per
+character (`[FACING]` = left for enemies, right for the knight; an
+ACCENT per character; a boss gets its own wide, waist-up COMPOSITION,
+`gen-art.mjs BOSS_COMPOSITION`). The direction that stuck is the
+originals' own rendering — photoreal dark-fantasy, the character's glow
+lighting it, one hue family each — NOT the inked room style: the inked
+sheets in `assets/style/` (the owner's, 0.191) and a Mignola / Darkest
+Dungeon block cost the glows and the presence, and were dropped. Image 1
+is the current portrait, image 2 the character's OWN portrait (`--refs
+own`; `family` = the colour family's best original, `sheets` = the inked
+sheets); a character whose art is no reference (the gargoyle) is drawn
+onto another's original with `--from-sheet skeleton` (the picture's
+figure replaced). **Models** (`--model`, one adapter each in `MODELS`):
+Kontext Pro / Max (two input pictures), Nano Banana (`banana`, the
+owner's pick: faithful, cheap, ~$0.04) and Nano Banana Pro (`bananapro`,
+2K, ~$0.15), Seedream 4 (`seedream`, the most dramatic — the only boss
+that read as one), GPT Image 1.5 (`gpt`, slow, shades its backgrounds),
+FLUX 2 Pro (`flux2`); prices from memory, the API has none. Inputs go
+inline as data URIs (`--inputs files` uploads; the models' own fetch of
+an uploaded file timed out a third of the time). **The cut-out:** a
+matting model, `851-labs/background-remover` (~1 s, a fraction of a
+cent) — the colour key in `tools/cutout.mjs` (`--matte key`, offline:
+flood fill from the border, paper tones, gradients, a shadow pass, hole
+filling, stray marks) ate stone legs and blade edges once the figures
+turned photoreal; the figure is then trimmed and scaled onto the current
+portrait's canvas at the current figure's height (the boss onto a wide
+canvas, `WIDE`), feet on its baseline. Per candidate: the model's picture
+(`assets/chars/candidates/<id>_c<n>_raw.jpg`), the cut-out
+(`<id>_c<n>.webp`), and in `assets/data/art.json` the model, seed,
+prompt, style, cut and verdict (numbering goes on, nothing overwritten).
+**The loop:** generate → the Art Lab (`labs/art/`: Approve / Reject with
+a note, Flip, Clean = a Kontext pass painting out a shadow or panel,
+Regenerate with notes = this candidate as the design, the note as the
+direction, the panel's model) → COPY JSON → `--rerender
+art-rerender.json` (verdicts recorded, re-rolls generated: `{ id, n,
+hint, style, model }`, `{ id, clean: n }`, `{ id, basedOn: n, hint, n,
+model }`) → `--prune` (an approved character keeps only its approval;
+`--keep-models a,b [--clear-verdicts]` for a change of direction) →
 `--import` (the approved candidate, or `--pick rat=3`, to
-`assets/chars/<id>_v<k>.webp` and the data) → bump, ship. `sharp` is the
-one npm dependency (`package.json`, `npm install`; the suite runs
-without it). State (0.00223): every character has candidates from the
-owner's style sheets (0.191–0.194): nine approved and pruned to the pick
-(verdict `ok` in art.json — the knight, the rat, the skeleton, the
-Cinderborn, the Cult Acolyte, the wraith, the Crypt Spider, the Hollow
-Hound, the Blood Knight), four undecided keep every candidate (the Cave
-Shrieker `bat`, the Fellblade `golem`, the gargoyle, the Vampire Lord);
-nothing is imported — the data still names the original files until
-`--import` writes `assets/chars/<id>_v<k>.webp`. Later: a style LoRA
-trained on the ~50 room paintings (`ostris/flux-dev-lora-trainer`) for
-the plain FLUX text-to-image path.
+`assets/chars/<id>_v<k>.webp` and the data; a Clean first if a shadow
+is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
+draws a character the game does not have (a default canvas; the lab
+shows it on a stand-in card) once the LoRA exists. `sharp` is the one
+npm dependency (`package.json`; the suite runs without it). **The style
+LoRA** (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer` into
+`pjarvilehto/crimson-moon-style`, captions written from the data,
+trigger `CRMSNMOON`; `assets/data/lora.json`) is built but NOT trained:
+the first run was cancelled — train it on the approved set, never on
+candidates the owner has not approved, and not on the room paintings
+for characters (a different style).
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels

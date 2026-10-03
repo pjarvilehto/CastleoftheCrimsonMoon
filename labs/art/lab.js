@@ -2,10 +2,12 @@
 // card units with the current portraits and the candidates tools/gen-art.mjs
 // made (assets/data/art.json), over a room painting. Verdicts live in
 // localStorage: { [file]: { v: 'ok' | 'no', note, flip, at } }, re-rolls
-// under reroll[id] and clean passes under reroll['clean:' + file]; COPY
-// JSON = { approved: [{ id, file, flip }], rejected: [{ id, file, note }],
-// reroll: [{ id, n, hint, style } | { id, clean: n }] } for
-// node tools/gen-art.mjs --rerender. Nothing here touches the game.
+// under reroll[id], clean passes under reroll['clean:' + file] and
+// "Regenerate with notes" under reroll['regen:' + file] (that candidate as the
+// design, the note as the direction, a model of your choice); COPY JSON =
+// { approved: [{ id, file, flip }], rejected: [{ id, file, note }],
+// reroll: [{ id, n, hint, style, model } | { id, clean: n } | { id, basedOn: n, hint, n, model }] }
+// for node tools/gen-art.mjs --rerender. Nothing here touches the game.
 
 import { loadData, DATA, buildQuery } from '../../src/shared/data.js';
 import { createEnemyUnit, createPlayerUnit } from '../../src/ui/battleLine.js';
@@ -19,18 +21,22 @@ const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag)
 
 await loadData();
 const art = await fetch(`assets/data/art.json${buildQuery()}`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { chars: {} })).catch(() => ({ chars: {} }));
-const IDS = ['player', ...Object.keys(DATA.enemies)];
-const nameOf = (id) => (id === 'player' ? 'The Curious Knight' : DATA.enemies[id].name);
+const NEW = Object.keys(art.chars ?? {}).filter((id) => id !== 'player' && !DATA.enemies[id]); // drawn by the LoRA for a character the game does not have yet (gen-art --new)
+const IDS = ['player', ...Object.keys(DATA.enemies), ...NEW];
+const nameOf = (id) => (id === 'player' ? 'The Curious Knight' : DATA.enemies[id]?.name ?? art.chars[id]?.name ?? id);
 const candidates = (id) => art.chars?.[id]?.candidates ?? [];
 const B = DATA.backgrounds;
 const PAINTINGS = [...new Set([...B.entrance, ...B.rooms, ...B.bosses, ...B.treasure])];
 
 // ---- state (this browser) ----
-let S = { verdicts: {}, reroll: {}, painting: 'dungeon_ossuary.jpg', view: 'compare', char: 'player', fight: ['rat', 'skeleton', 'cultist', 'vampire_lord'], fresh: true };
+let S = { verdicts: {}, reroll: {}, painting: 'dungeon_ossuary.jpg', view: 'compare', char: 'player', fight: ['rat', 'skeleton', 'cultist', 'vampire_lord'], fresh: true, model: 'banana' };
+// the editors tools/gen-art.mjs knows (--model); the lab's pick goes into every re-roll it queues
+const MODELS = [['banana', 'Nano Banana'], ['bananapro', 'Nano Banana Pro (2K)'], ['seedream', 'Seedream 4'], ['gpt', 'GPT Image 1.5'], ['flux2', 'FLUX 2 Pro'], ['pro', 'Kontext Pro'], ['max', 'Kontext Max']];
+const MODEL_NAME = Object.fromEntries([...MODELS, ['google/nano-banana', 'Nano Banana'], ['google/nano-banana-pro', 'Nano Banana Pro'], ['bytedance/seedream-4', 'Seedream 4'], ['openai/gpt-image-1.5', 'GPT Image 1.5'], ['black-forest-labs/flux-2-pro', 'FLUX 2 Pro'], ['flux-kontext-apps/multi-image-kontext-pro', 'Kontext Pro'], ['flux-kontext-apps/multi-image-kontext-max', 'Kontext Max'], ['black-forest-labs/flux-kontext-pro', 'Kontext (one picture)'], ['black-forest-labs/flux-dev-lora', 'the style LoRA']]);
 try { S = { ...S, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { /* fresh */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode */ } };
 // the registry's verdicts are the starting point; this browser's override
-const verdictOf = (k) => S.verdicts[k.file] ?? (k.verdict ? { v: k.verdict, note: k.note ?? '', flip: !!k.flip } : null);
+const verdictOf = (k) => (S.verdicts[k.file] ? { ...(k.verdict ? { v: k.verdict } : {}), ...S.verdicts[k.file] } : k.verdict ? { v: k.verdict, note: k.note ?? '', flip: !!k.flip } : null);
 // the character's new picture: the approved candidate (the latest), else the latest candidate
 const chosen = (id) => { const c = candidates(id); return [...c].reverse().find((k) => verdictOf(k)?.v === 'ok') ?? c[c.length - 1] ?? null; };
 
@@ -39,9 +45,9 @@ const run = createRun();
 function unitFor(id, i, k = null) {
   const u = id === 'player'
     ? createPlayerUnit(run, { onHeavy() {}, onPotion() {} })
-    : createEnemyUnit({ ...scaleEnemy(id, 9), hp: 0 }, i, { onAttack() {}, onGone() {} });
+    : createEnemyUnit({ ...scaleEnemy(DATA.enemies[id] ? id : 'rat', 9), id, name: `${nameOf(id)} LV9`, hp: 0 }, i, { onAttack() {}, onGone() {} }); // (a new character: the rat's numbers, its own name)
   if (id === 'player') u.update({ hp: run.hp, printing: false, heavyReady: true, heavyCd: 0, dead: false });
-  else u.update({ hp: scaleEnemy(id, 9).maxHp, dead: false, printing: false, combatOver: false });
+  else u.update({ hp: scaleEnemy(DATA.enemies[id] ? id : 'rat', 9).maxHp, dead: false, printing: false, combatOver: false });
   u.card.style.position = 'relative';
   if (id !== 'player' && DATA.enemies[id].boss) u.el.classList.add('boss-unit'); // twice as wide (0.196)
   if (k) { u.portrait.src = k.file; u.glint.src = k.file; }
@@ -55,14 +61,17 @@ const stage = $('stage');
 const width = (u) => (u.el.classList.contains('player-unit') ? 0.605 / 0.3734 : u.el.classList.contains('boss-unit') ? 2 : 1);
 const sizing = (rowUnits, allUnits = rowUnits) => `--n:${rowUnits.length};--slots:${Math.max(1, Math.ceil(allUnits.reduce((s, u) => s + width(u), 0) - 0.605 / 0.3734))}`;
 function line(units) {
-  stage.replaceChildren(el('div', { class: 'battle-line', style: sizing(units) }, el('div', { class: 'enemy-row' }, ...units.map((u) => u.el))));
+  // over seven cards: two lines, each sized for half the row
+  const wrap = units.length > 7, perLine = wrap ? units.slice(0, Math.ceil(units.length / 2)) : units;
+  stage.replaceChildren(el('div', { class: `battle-line${wrap ? ' wrap' : ''}`, style: sizing(perLine, perLine) }, el('div', { class: 'enemy-row' }, ...units.map((u) => u.el))));
 }
 
 // ---- views ----
 function compare() {
   const id = S.char, cs = candidates(id);
   const units = [unitFor(id, 0), ...cs.map((k, i) => unitFor(id, i + 1, k))];
-  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, 'Current'), el('span', { class: 'meta' }, portraitUrl(id).split('/').pop())));
+  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, NEW.includes(id) ? 'New character' : 'Current'), el('span', { class: 'meta' }, NEW.includes(id) ? 'not in the game yet (a stand-in card)' : portraitUrl(id).split('/').pop())));
+  if (NEW.includes(id)) { units[0].portrait.style.display = 'none'; units[0].glint.style.display = 'none'; }
   cs.forEach((k, i) => {
     const u = units[i + 1], v = verdictOf(k);
     const bOk = el('button', { onclick: () => verdict(k, 'ok') }, 'Approve'), bNo = el('button', { onclick: () => verdict(k, 'no') }, 'Reject');
@@ -70,11 +79,15 @@ function compare() {
     const queued = S.reroll[`clean:${k.file}`];
     const bClean = el('button', { title: 'Queue a clean pass: the same picture with the ground shadow, panel and signature painted out by Kontext (a new candidate, ~$0.04)', onclick: () => { if (queued) delete S.reroll[`clean:${k.file}`]; else S.reroll[`clean:${k.file}`] = { id, n: k.n }; save(); compare(); } }, queued ? '✓ Clean' : 'Clean');
     bClean.classList.toggle('on', !!queued);
-    const note = el('input', { type: 'text', placeholder: 'note (what was wrong)', value: v?.note ?? '', oninput: (e) => { S.verdicts[k.file] = { ...(verdictOf(k) ?? { v: 'no' }), note: e.target.value, at: Date.now() }; save(); } });
+    // Regenerate with notes: this candidate becomes the design to keep, the note the direction, drawn by the model picked in the panel
+    const regen = S.reroll[`regen:${k.file}`];
+    const bRegen = el('button', { title: 'Queue a redraw FROM this candidate: it is the design to keep, your note below the direction, the model the one picked in the panel (3 new candidates)', onclick: () => { if (regen) delete S.reroll[`regen:${k.file}`]; else S.reroll[`regen:${k.file}`] = { id, basedOn: k.n, n: 3 }; save(); compare(); } }, regen ? '✓ Regenerate' : 'Regenerate');
+    bRegen.classList.toggle('on', !!regen);
+    const note = el('input', { type: 'text', placeholder: regen ? 'direction for the redraw' : 'note (what was wrong, or the direction for a redraw)', value: v?.note ?? '', oninput: (e) => { S.verdicts[k.file] = { ...(verdictOf(k) ?? {}), note: e.target.value, at: Date.now() }; if (!S.verdicts[k.file].v) S.verdicts[k.file].v = null; save(); } });
     bOk.classList.toggle('on-ok', v?.v === 'ok'); bNo.classList.toggle('on-no', v?.v === 'no'); bFlip.classList.toggle('on', !!v?.flip);
     u.el.classList.toggle('ok', v?.v === 'ok'); u.el.classList.toggle('no', v?.v === 'no');
-    u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, `Candidate ${k.n}`), el('span', { class: 'meta' }, `${k.from ? `clean of c${k.from} · ` : ''}${(k.model ?? '').split('/').pop()} · seed ${k.seed ?? '?'} · ${(k.style ?? '').replace('.jpg', '')}${k.hint ? ` · "${k.hint}"` : ''}`),
-      el('div', { class: 'verdict' }, bOk, bNo, bFlip, k.from ? null : bClean), note));
+    u.el.append(el('div', { class: 'lab-cap' }, el('b', {}, `Candidate ${k.n}`), el('span', { class: 'meta' }, `${k.from ? `clean of c${k.from} · ` : k.basedOn ? `from c${k.basedOn} · ` : ''}${MODEL_NAME[k.model] ?? (k.model ?? '').split('/').pop()} · ${(k.style ?? '').split('/').pop().replace(/\.(jpg|png|webp)$/, '')}${k.hint ? ` · "${k.hint}"` : ''}`),
+      el('div', { class: 'verdict' }, bOk, bNo, bFlip, k.from ? null : bClean, bRegen), note));
   });
   line(units);
   if (!cs.length) stage.firstChild.append(el('p', { class: 'hint', style: 'position:absolute; left:50%; top:30%; transform:translateX(-50%); color:#9a8b6a; font-family:var(--body); text-shadow:0 1px 4px #000;' }, `No candidates for ${nameOf(id)} yet: node tools/gen-art.mjs --only ${id}`));
@@ -88,7 +101,7 @@ function fight() {
   const units = ['player', ...S.fight].map((id, i) => unitFor(id, i, S.fresh ? chosen(id) : null));
   stage.replaceChildren(el('div', { class: 'battle-line', style: sizing(units.slice(1), units) }, units[0].el, el('div', { class: 'enemy-row' }, ...units.slice(1).map((u) => u.el))));
 }
-function verdict(k, v) { const cur = verdictOf(k) ?? {}; S.verdicts[k.file] = { ...cur, v: cur.v === v ? null : v, at: Date.now() }; if (!S.verdicts[k.file].v) delete S.verdicts[k.file]; save(); render(); }
+function verdict(k, v) { const cur = verdictOf(k) ?? {}; S.verdicts[k.file] = { ...cur, v: cur.v === v ? null : v, at: Date.now() }; save(); render(); }
 function render() {
   document.body.classList.toggle('fight', S.view === 'fight');
   $('room').style.backgroundImage = `url("assets/bg/${S.painting}")`;
@@ -117,6 +130,9 @@ function panel() {
   const total = IDS.reduce((s, cid) => s + candidates(cid).length, 0), approved = IDS.filter((cid) => counts(cid).ok).length;
   pan.replaceChildren(
     el('h2', {}, 'Characters'), el('p', { class: 'note' }, `${total} candidates · ${approved} / ${IDS.length} characters with an approved one`), chars,
+    el('h2', {}, 'Model for re-rolls'),
+    el('div', { class: 'row' }, el('select', { onchange: (e) => { S.model = e.target.value; save(); } }, ...MODELS.map(([k, n]) => { const o = el('option', { value: k }, n); if (k === S.model) o.selected = true; return o; })),
+      el('span', { class: 'note' }, 'goes with every re-roll and Regenerate in the JSON')),
     el('h2', {}, 'Showing'),
     el('div', { class: 'row' }, el('button', { class: S.fresh ? 'on' : '', onclick: () => { S.fresh = true; save(); render(); } }, 'New'), el('button', { class: S.fresh ? '' : 'on', onclick: () => { S.fresh = false; save(); render(); } }, 'Current'),
       el('span', { class: 'note' }, 'in the line-up and the fight: the approved candidate (else the latest), or the game\'s current art')),
@@ -135,9 +151,12 @@ async function copy() {
   const out = { approved: [], rejected: [], reroll: [] };
   for (const id of IDS) {
     for (const k of candidates(id)) { const v = verdictOf(k); if (v?.v === 'ok') out.approved.push({ id, file: k.file, flip: !!v.flip }); if (v?.v === 'no') out.rejected.push({ id, file: k.file, note: v.note ?? '' }); }
-    const rr = S.reroll[id]; if (rr?.on) out.reroll.push({ id, n: rr.n || 3, hint: rr.hint ?? '', style: rr.style || undefined });
+    const rr = S.reroll[id]; if (rr?.on) out.reroll.push({ id, n: rr.n || 3, hint: rr.hint ?? '', style: rr.style || undefined, model: S.model });
   }
-  for (const [key, q] of Object.entries(S.reroll)) if (key.startsWith('clean:')) out.reroll.push({ id: q.id, clean: q.n });
+  for (const [key, q] of Object.entries(S.reroll)) {
+    if (key.startsWith('clean:')) out.reroll.push({ id: q.id, clean: q.n });
+    if (key.startsWith('regen:')) { const file = key.slice(6); const k = candidates(q.id).find((x) => x.file === file); out.reroll.push({ id: q.id, basedOn: q.basedOn, n: q.n ?? 3, hint: (k && verdictOf(k)?.note) || '', model: S.model }); }
+  }
   const json = JSON.stringify(out, null, 2);
   code.value = json;
   try { await navigator.clipboard.writeText(json); status('Copied.'); } catch { status('Copy the JSON from the box.'); }

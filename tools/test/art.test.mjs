@@ -5,29 +5,47 @@
 // Run via tools/smoke-test.mjs.
 
 import { ok, fresh, DATA, readFileSync } from './harness.mjs';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
 fresh();
 
 // The doc and the generator: 13 characters, every one a portrait on disk, the facing rule
 {
-  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor } = await import('../gen-art.mjs');
-  ok('the style reference: the character\'s own sheet in assets/style/, else the nearest character\'s, else the ossuary', styleFor('rat') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord') === 'assets/style/wraith.png' && styleFor('gargoyle') === 'assets/style/skeleton.png' && styleFor('bat') === DEFAULTS.style && styleFor('nobody') === DEFAULTS.style
+  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor, loraPrompt, NEW_CANVAS } = await import('../gen-art.mjs');
+  // the style LoRA (0.00201): tools/train-lora.mjs trains it on the rooms and the sheets with written captions; gen-art --model lora draws from the line alone
+  const { MATTE } = await import('../gen-art.mjs');
+  ok('the cut-out: a matting model by default (851-labs/background-remover), the colour key as the offline fallback', MATTE.model === '851-labs/background-remover'
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("if (matte === 'api') {") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--matte', 'api')"));
+  const { trainingSet, LORA } = await import('../train-lora.mjs');
+  const set = trainingSet();
+  ok('the LoRA training set: every room painting and character sheet, each captioned with the trigger word and the data\'s words',
+    set.filter((s) => s.kind === 'room').length === readdirSync('assets/bg').filter((f) => f.endsWith('.jpg')).length && set.filter((s) => s.kind === 'character').length >= 7
+    && set.every((s) => s.caption.startsWith(`${LORA.trigger} style, `) && existsSync(s.src)) && set.some((s) => s.caption.includes('a painting of The Ossuary')) && set.some((s) => s.caption.includes('a huge hunched black sewer rat')));
+  ok('gen-art --model lora: the trained weights, the trigger in the prompt, the facing, no pictures in; a new character gets a default canvas',
+    MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
+    && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
+    && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && readFileSync('tools/gen-art.mjs', 'utf8').includes("lora_weights: MODELS.lora.weights") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
+  ok('the style reference: the character\'s own portrait; --refs family = the colour family\'s original (fire: the Blood Knight, cold: the skeleton); --refs sheets = the owner\'s inked sheets',
+    styleFor('ghoul') === null && styleFor('ghoul', undefined, 'family') === 'assets/chars/blood_knight.webp' && styleFor('gargoyle', undefined, 'family') === 'assets/chars/skeleton.webp' && styleFor('vampire_lord', undefined, 'family') === null
+    && styleFor('rat', undefined, 'sheets') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord', undefined, 'sheets') === 'assets/style/wraith.png' && styleFor('bat', undefined, 'sheets') === DEFAULTS.style
     && ['player', 'rat', 'cultist', 'ghoul', 'wraith', 'skeleton', 'blood_knight'].every((id) => existsSync(`assets/style/${id}.png`)));
   const doc = parsePrompts(readFileSync('docs/portrait-prompts.md', 'utf8'));
   const ids = ['player', ...Object.keys(DATA.enemies)].sort();
   ok('the prompts doc has a line for the knight and every enemy, each with its portrait on disk, the id from the data (the Shrieker\'s file is cave_shrieker.webp)',
     doc.chars.map((c) => c.id).sort().join() === ids.join() && doc.chars.every((c) => existsSync(`assets/chars/${c.file}`) && c.line.startsWith('CHARACTER:')) && doc.chars.find((c) => c.id === 'bat').file === 'cave_shrieker.webp', doc.chars.map((c) => c.id).join());
   ok('the style block fills in the facing: enemies face left, the knight right', doc.style.includes('[FACING]')
-    && promptFor(doc, doc.chars.find((c) => c.id === 'rat')).includes('Three-quarter view, facing left.') && promptFor(doc, doc.chars.find((c) => c.id === 'player')).includes('Three-quarter view, facing right.')
+    && /Three-quarter view,\s+facing left\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'rat'))) && /Three-quarter view,\s+facing right\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'player')))
     && facing('vampire_lord') === 'facing left');
+  const boss = promptFor(doc, doc.chars.find((c) => c.id === 'vampire_lord'));
+  ok('a boss gets its own composition (waist up, wide, the weapon out of the frame) and no call for feet', boss.includes('from the waist up fills the height') && !boss.includes('full body from head to toe') && boss.includes('facing left') && !boss.includes('[FACING]'));
   const p = promptFor(doc, doc.chars.find((c) => c.id === 'rat'), 'simple big shapes');
   ok('a prompt = the style block, the character line, the facing once more, then a re-roll hint', p.startsWith('Redraw the character from image 1') && p.includes('\n\nCHARACTER: a huge hunched black sewer rat') && p.includes('\nFACING: the figure faces left,') && p.endsWith('\n\nsimple big shapes') && !p.includes('[FACING]'));
   ok('the clean pass: the one-picture Kontext paints the ground shadow, panel and signature out and keeps the figure', CLEAN.model === 'black-forest-labs/flux-kontext-pro' && /ground shadow/.test(CLEAN.prompt) && /Keep the character exactly as it is/.test(CLEAN.prompt)
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image'"));
   ok('the models take two pictures (the portrait and the painting); candidates are numbered, never overwritten',
     MODELS.pro.model === 'flux-kontext-apps/multi-image-kontext-pro' && MODELS.max.model.endsWith('-max') && DEFAULTS.n === 4 && DEFAULTS.aspect === '2:3' && candidateFile('rat', 3) === 'rat_c3'
-    && readFileSync('tools/gen-art.mjs', 'utf8').includes("input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath)") && readFileSync('tools/gen-art.mjs', 'utf8').includes('while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++'));
+    && MODELS.pro.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '2:3', seed: 1 }).input_image_2 === 'b' && MODELS.gpt.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '4:3' }).aspect_ratio === '3:2'
+    && ['banana', 'bananapro', 'seedream', 'gpt', 'flux2'].every((k) => MODELS[k].list && MODELS[k].model.includes('/')) && readFileSync('tools/gen-art.mjs', 'utf8').includes('while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++'));
 }
 
 // The cut-out: the background keyed from the border, grey INSIDE the figure kept (off the paper's tone), a lighter paper panel gone (the hole between the legs is of that tone), a dark shadow bar
@@ -84,11 +102,11 @@ fresh();
     ['compare', 'lineup', 'fight'].every((v) => js.includes(`function ${v}()`)) && js.includes("verdict(k, 'ok')") && js.includes("verdict(k, 'no')") && js.includes("'flipped'")
     && js.includes('out.approved.push({ id, file: k.file, flip: !!v.flip })') && js.includes('out.rejected.push({ id, file: k.file, note:') && js.includes('out.reroll.push({ id, n:') && js.includes('out.reroll.push({ id: q.id, clean: q.n })')
     && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--rerender')"));
-  // 0.194: --prune keeps only the approved candidate of a character that has one; a character without one keeps all
-  const reg = existsSync('assets/data/art.json') ? JSON.parse(readFileSync('assets/data/art.json', 'utf8')) : { chars: {} };
-  const approvedChars = Object.values(reg.chars).filter((e) => e.candidates.some((k) => k.verdict === 'ok'));
-  ok('art.json: a character with an approved candidate carries no other (pruned)', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
-    && approvedChars.every((e) => e.candidates.every((k) => k.verdict === 'ok')), approvedChars.map((e) => `${e.file}: ${e.candidates.length}`).join(', '));
+  // 0.194: --prune keeps only the approved candidate of a character that has one (a later round may add candidates again: an approval can be superseded)
+  ok('gen-art --prune: the approved candidate stays, the others go, files and records; --keep-models keeps those models\' candidates only, --clear-verdicts forgets the verdicts', readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--prune')")
+    && readFileSync('tools/gen-art.mjs', 'utf8').includes("e.candidates = e.candidates.filter(stays)") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--keep-models')") && readFileSync('tools/gen-art.mjs', 'utf8').includes("has('--clear-verdicts')"));
+  ok('gen-art --rerender: a re-roll based on a candidate (the lab\'s Regenerate with notes) takes it as image 1, the current portrait as image 2, the note as the direction, and its own model',
+    readFileSync('tools/gen-art.mjs', 'utf8').includes('j.portraitPath = join(ROOT, j.basedOn.raw)') && readFileSync('tools/gen-art.mjs', 'utf8').includes("`DIRECTION for this redraw: ${j.hint}`") && readFileSync('tools/gen-art.mjs', 'utf8').includes('const useModel = r.model ? MODELS[r.model]'));
   if (existsSync('assets/data/art.json')) {
     const reg = JSON.parse(readFileSync('assets/data/art.json', 'utf8'));
     const all = Object.values(reg.chars).flatMap((e) => e.candidates);
