@@ -657,6 +657,36 @@ New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
+#### The title's fly-in (0.00307, a prototype — the developer's idea, the video thread)
+
+The title painting is the END of a short flight: as the title scene
+enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
+everything (`#intro`, z-index above the corner column), the camera
+arrives at the castle, the film's last frame — the painting itself,
+baked in as a 0.4 s crossfade at the file's end — is held `intro.holdMs`
+and fades `intro.fadeMs` onto the 3D renderer's rest pose (the same
+painting cover-fit; what the fade covers is the renderer's haze and
+vignette), and the title's panel, held under it (`.intro-hold`), fades
+in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,
+`file` in `assets/video/`, `waitMs`); the data check and the orphan
+check know the folder. Boot fetches the film beside the art
+(`preloadIntro`, after the data) and the loader waits at 100% up to
+`waitMs` for it (`introReady`) — not ready, no H.264 (the codec is
+asked for by name: headless Chromium plays no MP4, so the layout check
+never meets it), reduced motion, or already played this session: the
+title shows as it always has (`playIntro` answers null, nothing is
+mounted). A click, a tap or any key but the browser's own skips it (the
+key is stopped before the title's hotkeys; the fade starts from where
+the film is). Made by plan B of two: a far, wide view of the castle
+outpainted by Nano Banana Pro from the painting, then Kling 2.5 flying
+from it INTO the painting with the painting as the take's last frame —
+the motion forwards, the landing exact (plan A, pull back and reverse,
+would fly the crows backwards); Hailuo 02, Seedance 1 Pro and Veo 3.1
+rolled beside it; the take eased to 3.2 s by ffmpeg. The prompts, the
+models' results and the cut are `docs/video-prompts.md`; the video
+models run on Replicate through `tools/replicate.mjs`; no
+`gen-video.mjs` yet (the Backlog).
+
 ### Portraits (0.184)
 
 The file is data: `enemies.json art` per enemy and
@@ -2245,6 +2275,12 @@ sometimes — fetch all branches to find it.
   narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
   pulled behind `audio.json cries` (0.00287) until their content is
   rethought — new recordings would be new files (rule 7).
+- Video (0.00307, the title's fly-in is the prototype): `tools/gen-video.mjs`
+  with candidates, verdicts and `--import` (the cut, the bake, the encode)
+  like the other generators, and a lab to compare takes · a 720p file for
+  phones · a take with the painting's own crows and smoke (the models add
+  their own) · the other cinematics (the descent, the boss's entrance, YOU
+  DIED, the victory) once the title's sticks.
 - Game: a foe's immunities show nowhere before the cast (0.00293: a tag or
   a hover line on the card would let the Wizard and the Plague Sister aim)
   · the classes' next round — the thrall card and the rage chip (the

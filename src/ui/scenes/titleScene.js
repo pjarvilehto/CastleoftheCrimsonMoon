@@ -11,6 +11,7 @@ import { confirmPrompt } from '../confirmPrompt.js';
 import { armOnGesture } from '../../audio/narrator.js';
 import { recordsLine } from '../hubText.js';
 import { isMobile, fullscreenOn, canFullscreen, enterFullscreen } from '../../shared/platform.js';
+import { playIntro } from '../titleIntro.js';
 
 // Enter the Castle takes a desktop full screen (0.00296, the developer's ask):
 // the click is the gesture the browser wants; denied or unavailable, the game
@@ -25,7 +26,12 @@ export function titleScene() {
     enter(root) {
       play('title');
       armOnGesture('title_welcome'); // the narrator greets on the session's first click or key (0.161)
-      render(root);
+      const panel = render(root);
+      // the fly-in (0.00307): over the painting just set, once per session; the
+      // panel waits under the clip and fades in once its held last frame has
+      // faded onto the painting (null: nothing to play, the title as before)
+      const intro = playIntro();
+      if (intro) { panel.classList.add('intro-hold'); intro.then(() => panel.classList.remove('intro-hold')); }
     },
   };
 
@@ -36,7 +42,7 @@ export function titleScene() {
     const p = getProfile();
 
     root.innerHTML = '';
-    root.append(
+    const panel = (
       el('div', { class: 'panel title-panel' },
         el('h1', {}, 'CASTLE OF THE CRIMSON MOON'),
         el('div', { class: 'subtitle' }, 'A roguelite descent into the haunted keep'),
@@ -66,5 +72,7 @@ export function titleScene() {
               el('button', { class: 'link-btn', onclick: () => namePrompt(() => render(root)) }, 'change'))
           : null)
     ); // (0.00301: Export / Import Save moved to the SETTINGS menu's GAME group, ui/saveTransfer.js)
+    root.append(panel);
+    return panel;
   }
 }
