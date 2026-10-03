@@ -161,7 +161,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('...what was salvaged as small pictures with the coins', chips.length === 1 && chips[0].all((n) => n.className?.includes?.('item-pic')).length === 1 && root.textContent.includes('+8 coins'));
 }
 
-// the hero card's inventory page: the worn gear, each slot a strip with its item's picture (0.00289; the run's finds no longer listed there)
+// the hero card's inventory page: the worn gear, each slot a strip with its item's picture (0.00290; the run's finds no longer listed there)
 {
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const run = createRun();

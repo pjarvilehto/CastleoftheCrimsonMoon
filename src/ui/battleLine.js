@@ -175,7 +175,7 @@ function statsPage(run) {
   return { el: page, set: () => rows.forEach((r) => setText(r.b, r.val())) };
 }
 // The gear as worn (forge levels in), a strip per slot like the Great Hall's
-// slots (0.00289, the developer's layout): the item's picture on the right,
+// slots (0.00290, the developer's layout): the item's picture on the right,
 // fading into the dark under its name and stats on the left. The run's finds
 // are not listed here (a list of their own is to come) — the page is the
 // save's gear and does not change mid-run.

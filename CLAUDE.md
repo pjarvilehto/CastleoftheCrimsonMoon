@@ -758,7 +758,7 @@ no row, the XP / COINS counters; reduced motion and the shim: nothing,
 the log says it); the Found line and the room's loot summary lead with
 the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
 showLoot`: the newest six; shown as the run's first find takes off;
-none on a phone, whose top strip is the room title's — since 0.00289
+none on a phone, whose top strip is the room title's — since 0.00290
 nothing lists them there mid-run (the finds' own list is to come); a find's chip joins as its card lands, with
 a flash, an OVERKILL's silent finds when the room's lines are out); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
@@ -1410,7 +1410,7 @@ be served stale for ~4 hours.
   cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
   is the run's totals only (health, attack, armor, crit chance / damage,
   lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
-  worn per `GEAR_SLOTS` as strips like the hall's slots (0.00289, the
+  worn per `GEAR_SLOTS` as strips like the hall's slots (0.00290, the
   developer's layout: the item's picture on the right fading under its
   name, forge level and stats on the left, the rarity's rim; an empty slot
   dashed) — the run's finds are no longer listed there (a list of their
