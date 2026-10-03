@@ -1,5 +1,5 @@
 {
-  "version": "0.00274",
+  "version": "0.00275",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -96,6 +96,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00275": [
+      "Housekeeping: the class gear's notes name the build they came in; nothing changes in the game."
+    ],
     "0.00274": [
       "Classes have their own gear: the Knight in plate and mail with swords and maces, the Barbarian in hides with axes and maces, the Wizard in robes with staves and daggers, the Necromancer in robes with daggers and scythes, the Druid in hides with staves and sickles, the Hexhunter in leathers with crossbows and swords, the Plague Sister in robes with censers and maces.",
       "46 new items, each with its own picture — among them two signature pieces per class that feed its power (+1 and +2: a Fireball charge, an Entangle turn, Cleave reach and the like).",
@@ -145,11 +148,6 @@
     ],
     "0.00261": [
       "Housekeeping: the item pictures' notes name the build they came in; nothing changes in the game."
-    ],
-    "0.00260": [
-      "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
-      "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
-      "The run's end shows your finds as cards, each with what it replaced and gained, and what was salvaged as small grey pictures; back in the Great Hall each find's picture flashes into its slot."
     ]
   }
 }
