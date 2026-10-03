@@ -12,6 +12,8 @@
 //   node tools/gen-bg.mjs --refs                          # two of the game's paintings attached as references (REFS by
 //   node tools/gen-bg.mjs --refs castle_great_hall.jpg,dungeon_kitchen.jpg   # the room's hue family, or these two)
 //   node tools/gen-bg.mjs --hint "more chains"            # a direction appended to the room's line
+//   node tools/gen-bg.mjs --id torch_corridor --name "The Torchlit Passage" --prompt "..." --bakeoff
+//                                                         # a prompt sent exactly as written (the guide's own, 0.00238)
 //   node tools/gen-bg.mjs --import clock_tower_c2 [--list rooms|treasure|bosses|entrance|antechambers]
 //                                                         # the 2048x1152 JPEG the game loads (assets/bg/<id>.jpg),
 //                                                         # its name in backgrounds.json roomNames and the list;
@@ -88,6 +90,7 @@ export const ROOM_LORA = { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0
 /** The recipe: the line (+ a hint), the mood, the style block last and verbatim; with references, a lead naming them. */
 export function promptFor(doc, room, hint = '', refs = null, list = true) {
   const lead = !refs ? '' : list ? 'In exactly the style of the first image and the second image (two paintings of the same set), a new room: ' : 'In exactly the style of the two input images (two paintings of the same set), a new room: ';
+  if (room.verbatim) return `${lead}${room.line}`; // --prompt: the text as written, nothing added
   return `${lead}${room.line}${hint ? `, ${hint}` : ''}, ${room.kind === 'arena' ? ARENA : MOOD}, ${doc.style}`;
 }
 /** --refs alone = the hue family's two paintings; --refs a.jpg,b.jpg = those; no --refs = none (text alone). */
@@ -166,7 +169,8 @@ async function main() {
     console.log(`imported ${id}_c${n} (${c.model}, ${r.from}${r.upscaled ? ', upscaled' : ''}) -> assets/bg/${id}.jpg, "${e.name}" in ${list}\nnow: python3 tools/gen-depth.py /tmp/da2_vits.onnx assets/bg/${id}.jpg (the suite fails without the depth map)`);
     return;
   }
-  const rooms = doc.rooms.filter((r) => !only?.length || only.includes(r.id));
+  const rooms = has('--prompt') ? [{ id: val('--id', 'prompt'), name: val('--name', val('--id', 'prompt')), hue: 'verbatim', kind: 'room', line: val('--prompt'), verbatim: true }]
+    : doc.rooms.filter((r) => !only?.length || only.includes(r.id));
   const models = has('--bakeoff') ? BAKEOFF : [val('--model', DEFAULTS.model)];
   const n = Number(val('--n', DEFAULTS.n));
   const hint = val('--hint', '');
