@@ -211,8 +211,9 @@ src/
                         ↑ ↓ scroll, C / Esc / Enter close; opened from the LOOT row (I) or the hero card's
                         INVENTORY page (0.00299)
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
-    titleIntro.js     the title's fly-in (0.00307): the film over everything as the title enters, its held
-                        last frame (the painting) fading onto the renderer; preloaded at boot, skipped by a key
+    titleIntro.js     the title's fly-in (0.00307 / 0.00311): the film over everything as the title enters, the
+                        fade by its own clock onto the renderer put back at rest (bg3d.js bgArrive); preloaded at
+                        boot, a phone's own 720p file, skipped by a key
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near); candidates/ = the new
                         rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json; lab-only)
@@ -226,7 +227,8 @@ assets/
   world/                the World Lab's painting (the prototype's, 0.00210)
   items/                the gear's pictures (256 px WebP, the file named in items.json art); candidates/ =
                         what tools/gen-items.mjs painted from docs/item-prompts.md (items-art.json; 0.00260)
-  video/                the title's fly-in (H.264 MP4, backgrounds.json intro.file; docs/video-prompts.md; 0.00307)
+  video/                the title's fly-in (H.264 MP4: intro.file 1080p, intro.phone.file 720p; docs/video-prompts.md;
+                        0.00307 / 0.00311; tools/intro-check.mjs drives it headless)
   audio/  fonts/        (audio/: the five beds, music-<bed>-v<k>.mp3; audio/vo/: the narrator's 136
                         takes, tools/gen-vo.mjs; audio/sfx/: the 45 class and foe recordings,
                         tools/gen-sfx.mjs, 0.00271; audio/candidates/: the generated scores' takes,
