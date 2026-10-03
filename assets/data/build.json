@@ -1,5 +1,5 @@
 {
-  "version": "0.00321",
+  "version": "0.00322",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00322": [
+      "Play stats: Recent runs now show the hero played (and its look), the turns, the XP, the coins banked of the coins won, and the finds with a star for a relic",
+      "Under the hood: the balance studies and the art tools share their loops and registries"
+    ],
     "0.00321": [
       "The Great Hall and The War Room have a gentler 3D depth."
     ],
@@ -143,9 +147,6 @@
     ],
     "0.00308": [
       "The title's fly-in fades into the living painting a little earlier, while the film is still arriving."
-    ],
-    "0.00307": [
-      "A prototype of the title's fly-in: the castle approached from across the valley before the title shows, once a visit; a click or a key skips it."
     ]
   }
 }

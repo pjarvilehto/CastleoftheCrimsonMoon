@@ -1,4 +1,8 @@
 {
+  "0.00322": [
+    "Play stats: Recent runs now show the hero played (and its look), the turns, the XP, the coins banked of the coins won, and the finds with a star for a relic",
+    "Under the hood: the balance studies and the art tools share their loops and registries"
+  ],
   "0.00321": [
     "The Great Hall and The War Room have a gentler 3D depth."
   ],
