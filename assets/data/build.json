@@ -1,5 +1,5 @@
 {
-  "version": "0.00268",
+  "version": "0.00269",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00269": [
+      "Debug menu: SWITCH CLASS flips your save to the next class on each click, mid-fight too (the fight carries on as the new class, this run's shrine boons reset), to try the classes quickly."
+    ],
     "0.00268": [
       "Every class's attacks have their own particles: the Knight's heavy a steel clash; the Barbarian's Cleave a crescent swung through the foes with embers, his blows shedding sparks; the Wizard's Fireball an amber bloom with cinders and smoke on every foe it takes, his blows an arcane flash; the Necromancer's Soul Drain wisps torn out of the foe that fly into him; the Druid's feral blows three rakes and leaves, Go Feral a burst of leaves and a green light; the Hexhunter's Hex a turning pentagram on the foe that flares with every blow on it; the Plague Sister's Last Rites the censer's smoke settling on every foe, the blight a wisp of it as it gnaws. A blow the Necromancer's thrall takes shows as a lunge and a green THRALL number."
     ],
@@ -142,9 +145,6 @@
     ],
     "0.00255": [
       "Debug menu: BENCHMARK starts the benchmark again (the open Settings menu swallowed the click on Start)."
-    ],
-    "0.00254": [
-      "Every class has its colour: the card plates on Choose your Hero, the knight's card in combat and the hall's portrait wear it, and the light behind your hero in the fights follows the class — ember for the Barbarian, mist for the Druid and the Plague Sister, ether for the rest."
     ]
   }
 }
