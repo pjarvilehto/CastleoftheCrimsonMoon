@@ -1077,7 +1077,7 @@ quarters of an octave (`sfx-room-swoosh-v2.mp3`, 0.175; 30% quieter than 0.173, 
 from `main.js onTransition` so its measured loudest moment (`peakMs`)
 lands `peakAtMs` (2 s, the middle) into every transition, varied a little
 each play (its `variation` entry + `jitterDb`). Music: five
-beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00281
+beds (`audio.json music.tracks`), all ElevenLabs scores since 0.00282
 (title and combat 0.00280 — "Generated scores" below), each a loop of
 `loopS` with `tailS` more past it, restarted every `loopS` by
 `musicLoop.js` and crossfaded over the tail (`crossfade: 'power'`); the
@@ -1087,7 +1087,7 @@ in git history. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
 **Generated scores (0.00273, the music thread; every bed the game plays
-since 0.00281):** `docs/music-prompts.md` is a brief per bed —
+since 0.00282):** `docs/music-prompts.md` is a brief per bed —
 a style block, a common avoid list, the bed's line, global styles and
 timed sections ending where they began (the beds loop) — and
 `tools/gen-score.mjs` sends it to three models: **ElevenLabs Music** by
@@ -1105,7 +1105,7 @@ loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
 Music Lab in 0.00273; **the developer picked ElevenLabs for both**
 (`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
-two takes each, and picked in 0.00281: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
+two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
@@ -1124,7 +1124,7 @@ procedural beds keep equal gain, their tail IS their start), the old
 file removed, the take marked `imported`. Title: 0:25.7 → 1:49.9 (an
 84 s loop, the start pinned to the first 30 s; unpinned it found a
 closer but 64 s loop); combat: 0:23.2 → 1:24.5 (61 s; the take falls
-away after 1:26); 0.00281, each from the developer's note: boss 0:28.2 →
+away after 1:26); 0.00282, each from the developer's note: boss 0:28.2 →
 1:08.2 (40 s, `--min-loop` — the take has ~55 s between its organ opening
 and its fade; a 47 s loop to 1:14 matched less well), shrine 0:02.4 →
 0:38.8 (36 s, "the first about 37 secs", through the phrase's breath at
