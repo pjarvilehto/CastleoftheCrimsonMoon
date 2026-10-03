@@ -163,7 +163,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
 
 // the hero card's inventory page: the worn gear, each slot a strip with its item's picture (0.00290; the run's finds no longer listed there)
 {
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const run = createRun();
   run.itemsFound.push('fang_of_the_eclipse');
   const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
@@ -204,7 +204,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
 // to it — its top strip has no LOOT row); gone while nothing is found; not a <button> (the unit's first button is the heavy's)
 {
   fresh();
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
   const run = createRun();
   const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
@@ -225,7 +225,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
 {
   const { potionPic } = await import('../../src/ui/hud.js');
   const { potionCard, potionPop } = await import('../../src/ui/findFx.js');
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = potionArtUrl();
   ok('the potion\'s picture: difficulty.json potions.art, a WebP on disk; dataCheck names a missing one', !!u && existsSync(u) && potionPic().attrs.src === u
@@ -317,7 +317,7 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const boxes = knightSection(p, () => {}).boxes;
   ok('...and the stat boxes the same: Attack with Power, HP with Vitality, Crit with Precision', boxes.Attack.classList.contains('st-dmg') && boxes.HP.classList.contains('st-hp') && boxes.Crit.classList.contains('st-crit') && boxes.Armor.classList.contains('st-armor')
     && !statBox('Coins', 1).classList.contains('st-box'));
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const hero = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const backRow = (label) => hero.card.all((n) => n.className?.startsWith?.('back-row') && n.children[0]?.textContent === label)[0];
   ok('the hero card: DMG and ARMOR in their colours; its STATS page by stat, the potion\'s heal as HP', hero.card.all((n) => n.className === 'weapon-dmg st st-dmg').length === 1

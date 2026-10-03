@@ -56,7 +56,21 @@ export function debugToggles() {
   // A new tab, so the game (and a run in progress) stays as it is.
   const labs = el('button', { class: 'debug-toggle labs-link', onclick: () => globalThis.open?.('labs/', '_blank', 'noopener') }, 'LABS');
   return [fg, viewBtn, next, bgTunerToggle(),
-    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), switchClassButton(), labs, benchmarkButton()];
+    flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), switchClassButton(), labs, analyticsButton(), benchmarkButton()];
+}
+
+// ANALYTICS (0.00325, the developer's ask): the play stats page
+// (analytics/) in THIS tab — its "‹ Back to game" link returns to the
+// title. Mid-run the run settles first as a retreat (the dungeon scene's
+// leaveRun, like BENCHMARK's), so it is never lost unsettled; the page is
+// opened once the run's end has been shown.
+export const ANALYTICS_URL = 'analytics/';
+export function analyticsButton() {
+  const go = () => { if (globalThis.location) globalThis.location.href = ANALYTICS_URL; };
+  return el('button', { class: 'debug-toggle analytics-link', onclick: () => {
+    const scene = currentScene();
+    if (scene?.inRun && scene.leaveRun) scene.leaveRun(go); else go();
+  } }, 'ANALYTICS');
 }
 
 // SWITCH CLASS (0.00269, the developer's ask: flip between the classes to

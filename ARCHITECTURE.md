@@ -161,9 +161,13 @@ src/
                         the effects' context and the pre-action snapshot
                         (dungeon + benchmark); onGone -> fit() recounts --n when a
                         fallen card leaves, whenGone(i) = that card's leaving
-    battleLine.js       the units: knight card + enemy cards, built once,
-                        update() patches in place (only what changed, 0.00223);
+    battleLine.js       the enemy units and the card parts every unit is made of (the portrait
+                        and its glint, the frame, the HP line, the flip, the idempotent writes),
+                        built once, update() patches in place (only what changed, 0.00223);
                         a fallen card collapses and vanish()es from the row (0.00216)
+    heroCard.js         the hero's card (0.00325, out of battleLine.js): createPlayerUnit, its
+                        STATS / INVENTORY back (cardBack, the FINDS line), the potion count's
+                        hold and land, heroArt
     combatPlayback.js   log drip + replay view (each event's snapshot); a death
                         is a step of its own — waits onDeath(i), then
                         combatPacing.restackMs, deathMaxMs caps it (0.00220);

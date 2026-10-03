@@ -11,7 +11,8 @@
 
 import { statusOf } from '../run/combat.js';
 import { el } from '../core/dom.js';
-import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
+import { createEnemyUnit } from './battleLine.js';
+import { createPlayerUnit } from './heroCard.js'; // (0.00325: the hero's card in its own module)
 import { dealPortrait } from '../shared/portraits.js';
 
 // What effects can touch — the live units of the current battle line.

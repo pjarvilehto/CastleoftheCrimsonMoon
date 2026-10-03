@@ -59,7 +59,8 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 // (0.00222), right after the portrait inside its band, on the same idle
 // loop and phase; the unit carries the band width
 {
-  const { createEnemyUnit, createPlayerUnit, unmountGlint } = await import('../../src/ui/battleLine.js');
+  const { createEnemyUnit, unmountGlint } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const run = createRun();
   const e = { id: 'skeleton', name: 'Skeleton LV2', maxHp: 30, hp: 30, dmg: 3, xp: 1, coins: [1, 1] };
   const u = createEnemyUnit(e, 0, { onAttack() {}, onGone() {} });
@@ -85,7 +86,7 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 // INVENTORY, then the hero again; STATS shows the run's own numbers and
 // follows the tick, INVENTORY the worn gear as picture strips (0.00290). The ⓘ under the gear says it turns.
 {
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { getProfile } = await import('../../src/meta/profile.js');
   const p0 = getProfile();
   const eq0 = JSON.stringify(p0.equipment);
@@ -157,7 +158,8 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
 // block — these used to be checks on the source text)
 {
   const { playFx } = await import('../../src/ui/combatFx.js');
-  const { createEnemyUnit, createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const M = DATA.cards.motion, G = DATA.cards.glint;
   await withAnimations(async () => {
     const run = createRun();

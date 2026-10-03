@@ -95,6 +95,8 @@ fresh();
   const html = readFileSync('analytics/index.html', 'utf8');
   ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));
   const dashSrc = readFileSync('analytics/dashboard.js', 'utf8');
+  ok('the dashboard\'s header carries "‹ Back to game" to the game\'s root, the error panel too (0.00325)', dashSrc.includes('<a class="back-link" href="../">‹ Back to game</a>') && dashSrc.includes('${BACK}\n    <h1>Play Stats</h1>') && dashSrc.includes('`${BACK}<p class="help warn">')
+    && readFileSync('analytics/dashboard.css', 'utf8').includes('.back-link'));
   ok('the dashboard reads the build index.html fetched and every data file under ?v=<build> (0.00223: a bare URL served the CDN\'s old copy)', html.includes('window.__castleBuild = b') && dashSrc.includes('globalThis.__castleBuild') && dashSrc.includes('.json${q}') && !dashSrc.includes("'build', 'telemetry'"));
   ok('a record the page cannot draw shows why instead of "Loading play stats…"', /function render\(\) \{\n  try \{ renderInner\(\); \} catch/.test(dashSrc));
   resetProfile();

@@ -13,7 +13,8 @@ import { ok, fresh, sleep, El, createRun, scaleEnemy, getProfile, withAnimations
   fresh();
   const { playFx, strikeMs } = await import('../../src/ui/combatFx.js');
   const { LUNGE_MS, STRIKE_AT, HITSTOP_MS } = await import('../../src/ui/fxParts.js');
-  const { createEnemyUnit, createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   ok('the clock: 280 ms, the blow at 45%, strikeMs for the sound (a heavy 1.3x)', LUNGE_MS === 280 && STRIKE_AT === 0.45 && HITSTOP_MS === 70 && strikeMs({}) === LUNGE_MS * STRIKE_AT && strikeMs({ heavy: true }) === LUNGE_MS * 1.3 * STRIKE_AT);
   El.prototype.prepend = function (...nodes) { for (const n of nodes.reverse()) this.insertBefore(n, this.children[0]); }; // (the shim has none; a captioned number — THRALL — prepends its tag)
   await withAnimations(async () => {

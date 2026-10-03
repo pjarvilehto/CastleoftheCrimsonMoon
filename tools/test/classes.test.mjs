@@ -12,7 +12,8 @@ import { readdirSync } from 'node:fs';
 
 const { canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
-const { createPlayerUnit, createEnemyUnit } = await import('../../src/ui/battleLine.js');
+const { createEnemyUnit } = await import('../../src/ui/battleLine.js');
+const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
 const { derivedStats } = await import('../../src/meta/stats.js');
 const { HEAVY_KINDS, CLASS_KEYS, HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, ELEMENTS, rollImmune } = await import('../../src/run/classes.js');
 const { heroSnapshot, heroById, lookUrl } = await import('../../src/shared/heroes.js');
@@ -325,7 +326,7 @@ const as = (id) => { heroProfile(id); const run = createRun(); run.stats.crit = 
 // the UI reads the class from the run (0.00283): run.hero, not the profile
 {
   fresh();
-  const { heroArt } = await import('../../src/ui/battleLine.js');
+  const { heroArt } = await import('../../src/ui/heroCard.js');
   const { cardStyle } = await import('../../src/ui/cardFx.js');
   const run = as('knight');
   ok('createRun snapshots the class: id, name, heavyName, theme, look', run.hero.id === 'knight' && run.hero.name === 'The Curious Knight' && run.hero.heavyName === 'Heavy Attack' && run.hero.theme === heroById('knight').theme && run.hero.look === 0);
@@ -341,7 +342,7 @@ const as = (id) => { heroProfile(id); const run = createRun(); run.stats.crit = 
   const sprite = createPlayerUnit({ ...run, hero: heroSnapshot({ hero: { id: 'knight', look: 4 } }) }, { onHeavy() {}, onPotion() {} });
   ok('…and the card keeps the crouch\'s wide placement (no hero-standing), drawing the look\'s figure', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === lookUrl(heroById('knight'), 4));
   ok('cardStyle(\'player\') takes the run\'s theme; without one the profile\'s class (the hall, the labs)', cardStyle('player', false, heroById('barbarian').theme).look === 'embers' && cardStyle('player').look === 'ether' && cardStyle('rat', false, heroById('barbarian').theme).look === 'blood');
-  ok('battleLine reads no class from the profile any more', !/heroOf\(|heavyName\(|cleanHero\(/.test(readFileSync('src/ui/battleLine.js', 'utf8')) && !readFileSync('src/ui/combatQueue.js', 'utf8').includes('getProfile'));
+  ok('battleLine and heroCard read no class from the profile any more', !/heroOf\(|heavyName\(|cleanHero\(/.test(readFileSync('src/ui/battleLine.js', 'utf8') + readFileSync('src/ui/heroCard.js', 'utf8')) && !readFileSync('src/ui/combatQueue.js', 'utf8').includes('getProfile'));
   getProfile().hero = null;
 }
 
@@ -452,7 +453,7 @@ const as = (id) => { heroProfile(id); const run = createRun(); run.stats.crit = 
   const wiz = as('wizard'), kn = as('knight');
   ok('a potion heals the class\'s share, one function for the drink and the UI (the Wizard 0.9 of the trained amount)', potionHealFor(wiz.stats.klass) === Math.round(potionHealAmount() * wiz.stats.klass.potionHealMult) && potionHealFor(kn.stats.klass) === potionHealAmount()
     && (wiz.hp = 1, wiz.potions = 1, drinkPotion(wiz).healed === potionHealFor(wiz.stats.klass)));
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   getProfile().hero = { id: 'wizard', look: 0 };
   const wu = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const rows = () => wu.card.all((n) => (n.className ?? '').startsWith('back-row')).map((r) => r.textContent);

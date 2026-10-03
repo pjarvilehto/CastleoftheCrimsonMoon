@@ -1006,7 +1006,7 @@ judged against `run.gearPreview`, what `settleRun`'s `equipItems` will
 wear: `Weapon ↑` / `Ring I ↑` for a worn find, `Beaten · salvaged` for
 one a later find beat — it stays in `run.itemsFound`, so the pop-up used
 to promise it a slot — `Salvage` for another class's gear; C / Esc /
-Enter close); the hero card's INVENTORY page (`battleLine.js invPage`:
+Enter close); the hero card's INVENTORY page (`heroCard.js invPage`:
 the worn gear, and the Finds line); **the run's end**
 (`runEndScene.js findCard`; 0.00294, the developer's layout: the panel
 940 px wide (`.panel.run-end`), the five numbers on one line, the cards
@@ -1025,7 +1025,7 @@ Descend waits for none of it).
 The healing potion has a picture too (`difficulty.json potions.art`,
 `itemArt.js potionArtUrl`, `hud.js potionPic`; painted by the same tool,
 `gen-items.mjs EXTRAS` writes it into difficulty.json on `--import`): the
-hero card's count is the picture + `3/4` (`battleLine.js`), the log's
+hero card's count is the picture + `3/4` (`heroCard.js`), the log's
 "Found a healing potion!" carries it (a `{ potion: true }` part), and a
 potion found in combat rises as the same card (`findFx.js potionPop`:
 FOUND · Potion, what it heals, the satchel) and flies into that count —
@@ -1755,7 +1755,12 @@ be served stale for ~4 hours.
   survived), health kept as a share of the new maximum, the
   fight's charges / hex / thrall / the roots (entangled) reset, the battle line
   rebuilt in place and dealt in, a DEBUG line in the log; `debugToggles.js
-  switchClassButton`), LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
+  switchClassButton`), LABS (the menu page, a new tab), ANALYTICS (0.00325,
+  the developer's ask: the play stats page in THIS tab, its "‹ Back to
+  game" eyebrow link returning to the title — `analytics/dashboard.js
+  BACK`, on the error panel too; mid-run the dungeon scene's `leaveRun`
+  settles the run as a retreat first, like BENCHMARK's;
+  `debugToggles.js analyticsButton`), BENCHMARK; each `.dbg`, hidden until the corner
   carries `.debug-on`); remembered in this browser (`castle-debug-mode`),
   so testers need no `?debug` — `?debug` still turns it on for the visit,
   and only `?debug` in the address lets software GL draw the 3D background
@@ -1867,8 +1872,8 @@ be served stale for ~4 hours.
   budget), so the boss and its three summons (`maxAlive`) still fit
   without shrinking at 16:9. New boss art should suit a wide card.
 - The knight's card turns over on a click (0.00256 / 0.00258, the
-  developer's call): front → STATS → INVENTORY → front (`battleLine.js
-  cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
+  developer's call): front → STATS → INVENTORY → front (`heroCard.js
+  cardBack`, the hero's card's own module since 0.00325, the card's `.flipped` / `.page-inv`, three page dots). STATS
   is the run's totals only (health, attack, armor, crit chance / damage,
   lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
   worn per `GEAR_SLOTS` as strips like the hall's slots (0.00290, the
@@ -2333,7 +2338,7 @@ sometimes — fetch all branches to find it.
   the six classes the fixes did not touch; CLAUDE.md's Systems got
   headings (the audio and the items in play out of the paragraphs that
   buried them).
-- 0.00300–0.00324 (0.00300–0.00313 and 0.00315–0.00321 were the other
+- 0.00300–0.00325 (0.00300–0.00313 and 0.00315–0.00321 were the other
   threads': the cards' tooltips gone (0.00300), the SFX Lab (0.00301), the
   save dialogs into the SETTINGS menu (0.00302), the 30 approved portraits
   dealt per fight (0.00303), the SFX review's two pastes (0.00304–0.00306),
@@ -2355,7 +2360,9 @@ sometimes — fetch all branches to find it.
   `closeKeys`; two tests the 0.00299 review asked for (0.00324: the
   hotkey alt behind every own key with two buttons on the screen, one
   full record through the collector's and the dashboard's sanitizers
-  and diffed); the code map and these notes brought up to date. Found
+  and diffed); the ANALYTICS debug item and the stats page's "‹ Back to
+  game", and the hero's card in `ui/heroCard.js` (0.00325, the developer's
+  asks); the code map and these notes brought up to date. Found
   clean: no unused import, no dead CSS selector, no `?? N` copy, no
   leftover of the retired tooltips.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
@@ -2452,7 +2459,7 @@ sometimes — fetch all branches to find it.
   reached six tools, the rest parse their own way · the collector's and the
   dashboard's sanitizers are kept in step by one test on the run fields;
   a fixture run through both and diffed since 0.00324 (`history.test.mjs`)
-  · `battleLine.js createPlayerUnit` (~95 lines) wants its own module ·
+  · `battleLine.js createPlayerUnit` is `ui/heroCard.js` since 0.00325 ·
   the hotkey alt's two-button test is in `scenes.test.mjs` (0.00324) · ~180
   of the ~1280 checks still read source text (the GLSL, the labs' HTML and
   the tool CLIs stay that way by design).

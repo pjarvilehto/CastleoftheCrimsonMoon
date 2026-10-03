@@ -6,7 +6,8 @@
 // profile for the knight's card and keeps its picks under its own key.
 
 import { loadData, DATA } from '../../src/shared/data.js';
-import { createEnemyUnit, createPlayerUnit, IDLE_FAMILY } from '../../src/ui/battleLine.js';
+import { createEnemyUnit, IDLE_FAMILY } from '../../src/ui/battleLine.js';
+import { createPlayerUnit } from '../../src/ui/heroCard.js';
 import { createRun } from '../../src/run/runState.js';
 import { scaleEnemy } from '../../src/shared/balance.js';
 import { MATERIAL } from '../../src/ui/particleLooks.js';

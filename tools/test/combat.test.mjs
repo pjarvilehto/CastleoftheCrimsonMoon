@@ -179,7 +179,7 @@ await withSeedAsync(4, async () => {
   const dbg = debugMenu();
   const bar = cornerBar([menuHead('Game'), dbg.toggle, ...dbg.items]);
   registry.app.append(bar);
-  const tools = ['INVULNERABLE', 'HIDE FOREGROUND', 'BG VIEW', 'NEXT BG', 'BG TUNING', 'FORCE CRITS', 'FORCE MEGA CRITS', 'SWITCH CLASS', 'LABS', 'BENCHMARK'];
+  const tools = ['INVULNERABLE', 'HIDE FOREGROUND', 'BG VIEW', 'NEXT BG', 'BG TUNING', 'FORCE CRITS', 'FORCE MEGA CRITS', 'SWITCH CLASS', 'LABS', 'ANALYTICS', 'BENCHMARK'];
   const found = tools.map((l) => button(bar, l));
   const gated = bar.children.filter((c) => c.classList?.contains('dbg')); // (.dbg goes on through classList: the shim's className does not follow it)
   ok('INVULNERABLE, FORCE CRITS, BG TUNING, HIDE FOREGROUND and the rest sit in the corner bar after the DEBUG MODE toggle, each .dbg; the toggle itself is not',
@@ -353,7 +353,7 @@ await withSeedAsync(4, async () => {
 // T51: 0.089 — the player card shows TOTAL armor, plus the Infusion
 // potion bonus while it lasts ("14 ARMOR" / "14+2 ARMOR").
 {
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   resetProfile();
   const r = createRun(); r.stats.armor = 14; r.tempArmor = 0;
   const u = createPlayerUnit(r, { onHeavy() {}, onPotion() {} });
@@ -527,7 +527,27 @@ await withSeedAsync(4, async () => {
   ok('FORCE MEGA CRITS: every attack mega crits', b.every((e) => e.crit && e.megaCrit && e.text.includes('MEGA CRIT!')));
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
-  ok('the debug tools, in their order (the crit toggles among them; their place under DEBUG MODE is asserted above)', labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|SWITCH CLASS: CURIOUS KNIGHT|LABS|BENCHMARK', labels.join('|'));
+  ok('the debug tools, in their order (the crit toggles among them; their place under DEBUG MODE is asserted above)', labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|SWITCH CLASS: CURIOUS KNIGHT|LABS|ANALYTICS|BENCHMARK', labels.join('|'));
+  // ANALYTICS (0.00325): the play stats page in this tab; mid-run the dungeon scene's leaveRun settles the run first and is handed the jump
+  {
+    const { analyticsButton, ANALYTICS_URL } = await import('../../src/ui/debugToggles.js');
+    const sc = await import('../../src/core/scene.js');
+    const realLoc = globalThis.location, hops = [];
+    globalThis.location = { href: 'index.html' };
+    const was = sc.currentScene();
+    let handed = null;
+    sc.show({ enter() {}, inRun: true, leaveRun: (next) => { handed = next; } }); await sleep(2500); // (show() swaps once the windows have faded)
+    try {
+      click(analyticsButton());
+      ok('ANALYTICS mid-run hands the jump to the scene\'s leaveRun and waits for it', typeof handed === 'function' && globalThis.location.href === 'index.html' && ANALYTICS_URL === 'analytics/');
+      handed();
+      ok('…which opens analytics/ once the run has settled', globalThis.location.href === 'analytics/');
+      sc.show({ enter() {} }); await sleep(2500);
+      globalThis.location.href = 'index.html';
+      click(analyticsButton());
+      ok('ANALYTICS outside a run opens analytics/ at once', globalThis.location.href === 'analytics/');
+    } finally { globalThis.location = realLoc; if (was) { sc.show(was); await sleep(2500); } }
+  }
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
   ok('INVULNERABLE toggle flips the debug flag', DEBUG.invulnerable === true && inv.textContent === 'INVULNERABLE: ON');
@@ -595,7 +615,7 @@ await withSeedAsync(4, async () => {
 // T87: 0.126 — low health (difficulty.json lowHpShare): the knight's HP
 // bar glows, and Drink Potion pulses red while potions are left.
 {
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   fresh();
   const run = createRun();
   const u = createPlayerUnit(run, { onHeavy: () => {}, onPotion: () => {} });

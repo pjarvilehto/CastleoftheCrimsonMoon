@@ -9,7 +9,8 @@
 // for node tools/gen-bg.mjs --rerender. Nothing here touches the game.
 
 import { loadData, DATA, buildQuery } from '../../src/shared/data.js';
-import { createEnemyUnit, createPlayerUnit } from '../../src/ui/battleLine.js';
+import { createEnemyUnit } from '../../src/ui/battleLine.js';
+import { createPlayerUnit } from '../../src/ui/heroCard.js';
 import { createRun } from '../../src/run/runState.js';
 import { scaleEnemy } from '../../src/shared/balance.js';
 

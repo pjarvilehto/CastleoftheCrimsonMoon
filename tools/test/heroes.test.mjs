@@ -49,7 +49,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
     && (getProfile().hero = { id: 'knight', look: 2 }, portraitUrl('player') === lookUrl(knight, 2))
     && crouch === 4 && (getProfile().hero = { id: 'knight', look: crouch }, portraitUrl('player') === lookUrl(knight, crouch)));
   {
-    const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+    const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
     const { createRun } = await import('../../src/run/runState.js');
     heroProfile('knight', 1); // (the harness's, 0.00299)
     const standing = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} }).card.classList.contains('hero-standing');
@@ -59,7 +59,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   }
   heroProfile('necromancer', 2);
   ok('another hero\'s card draws that hero\'s look', portraitUrl('player') === lookUrl(heroById('necromancer'), 2) && portraitUrl('player').startsWith('assets/heroes/'));
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { createRun } = await import('../../src/run/runState.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   ok('the knight\'s card is named after the class, above the card (0.00251)', u.el.all((n) => n.className === 'hero-title card-name')[0].textContent === 'THE NECROMANCER' && !u.card.all((n) => n.className.includes('card-name')).length
@@ -81,7 +81,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
 }
 // H, or the special's own letter, fires it in a fight (0.00286)
 {
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { createRun } = await import('../../src/run/runState.js');
   for (const [id, own] of [['wizard', 'f'], ['knight', 'h']]) {
     heroProfile(id);
@@ -239,7 +239,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   getProfile().hero = { id: 'barbarian', look: 0 };
   const b = cardStyle('player');
   ok('the card light behind the player follows the class: the knight\'s ether, the barbarian\'s embers', k.look === 'ether' && b.look === 'embers' && b.tint[0] === 0.95);
-  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { createPlayerUnit } = await import('../../src/ui/heroCard.js');
   const { createRun } = await import('../../src/run/runState.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   const frame = u.card.all((n) => n.className === 'card-frame')[0];

@@ -76,6 +76,7 @@
     "src/ui/findFx.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
+    "src/ui/heroCard.js",
     "src/ui/hubSections.js",
     "src/ui/hubText.js",
     "src/ui/hud.js",

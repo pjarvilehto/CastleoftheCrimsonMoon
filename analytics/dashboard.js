@@ -152,8 +152,10 @@ const heroName = (id) => data.heroes?.find((h) => h.id === id)?.name ?? (id ? St
 const names = { enemyName, itemName, boonName, labelOf, heroName, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
 
 // a bad field in one record must not leave the page at "Loading play stats…" (0.00223)
+// "‹ Back to game" (0.00325, the developer's ask): the page is reached from the game's DEBUG MODE menu (ANALYTICS, in the same tab) and this returns — the game's root is one folder up.
+const BACK = '<p class="eyebrow"><a class="back-link" href="../">‹ Back to game</a></p>';
 function render() {
-  try { renderInner(); } catch (e) { document.getElementById('dash').innerHTML = `<p class="help warn">Could not draw the stats: ${esc(String(e?.message ?? e))}</p>`; console.error(e); }
+  try { renderInner(); } catch (e) { document.getElementById('dash').innerHTML = `${BACK}<p class="help warn">Could not draw the stats: ${esc(String(e?.message ?? e))}</p>`; console.error(e); }
 }
 function renderInner() {
   const runsAll = allRuns(players);
@@ -167,6 +169,7 @@ function renderInner() {
 
   document.getElementById('dash').innerHTML = `
   <header>
+    ${BACK}
     <h1>Play Stats</h1>
     <p class="sub">Castle of the Crimson Moon · live build ${esc(data.build)} · ${players.length} player${players.length === 1 ? '' : 's'}</p>
   </header>
