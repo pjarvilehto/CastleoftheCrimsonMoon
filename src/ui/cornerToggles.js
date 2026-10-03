@@ -1,5 +1,5 @@
 // ui/cornerToggles.js — the upper-right corner (0.115; a SETTINGS menu since
-// 0.00242): FULLSCREEN beside it, and in the menu AUDIO (MUSIC, SOUND,
+// 0.00243): FULLSCREEN beside it, and in the menu AUDIO (MUSIC, SOUND,
 // NARRATOR, VOLUME), DISPLAY (BATTERY SAVER), GAME (CHANGELIST) and DEBUG
 // MODE, which shows the testing tools under it (ui/debugToggles.js). One
 // flex column (.corner-bar), so adding a button is one line in main.js — no
@@ -37,10 +37,10 @@ export function panelToggle(label, cls, build) {
   return btn;
 }
 
-// A group's small heading inside the menu (0.00242).
+// A group's small heading inside the menu (0.00243).
 export const menuHead = (label) => el('div', { class: 'menu-head' }, label);
 
-// The corner (0.00242, the developer's call — the column had grown to seven
+// The corner (0.00243, the developer's call — the column had grown to seven
 // buttons): one ☰ SETTINGS button whose menu drops down under it, closed by
 // a click anywhere else (the click that closes it does nothing else, so it
 // never strikes a card underneath). `lead` buttons sit beside SETTINGS and

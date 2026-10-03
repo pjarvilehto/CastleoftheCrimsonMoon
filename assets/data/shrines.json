@@ -39,12 +39,12 @@
     {
       "id": "leech",
       "img": "assets/icons/shrine_leech.webp",
-      "buff": "+100% LIFESTEAL",
-      "short": "+100% LIFESTEAL",
+      "buff": "+50% LIFESTEAL",
+      "short": "+50% LIFESTEAL",
       "costDesc": "-15% MAX HP",
       "icon": "🩸",
       "hpCostPct": 0.15,
-      "lifestealAdd": 1,
+      "lifestealAdd": 0.5,
       "lifestealCap": 6
     },
     {

@@ -50,7 +50,7 @@ fresh();
   const leech = shrineOffers().find((o) => o.id === 'leech');
   const ls0 = run.stats.lifesteal || 0; const lh0 = run.maxHp;
   acceptOffer(run, leech);
-  ok('leech boon: -15% HP, +100% lifesteal (0.093: x10 with HP)', leech.lifestealAdd === 1 && run.stats.lifesteal === Math.min(leech.lifestealCap, ls0 + 1) && run.maxHp < lh0);
+  ok('leech boon: -15% HP, +50% lifesteal (0.00245: +100% before — lifesteal moved to the higher tiers)', leech.lifestealAdd === 0.5 && run.stats.lifesteal === Math.min(leech.lifestealCap, ls0 + 0.5) && run.maxHp < lh0);
   const bulwark = shrineOffers().find((o) => o.id === 'bulwark');
   const bd0 = run.stats.dmg; const ba0 = run.stats.armor;
   acceptOffer(run, bulwark);

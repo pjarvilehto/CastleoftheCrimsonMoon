@@ -67,7 +67,7 @@ async function boot() {
   tag.className = 'build-tag';
   tag.textContent = `build v${DATA.build.version}`;
   // The upper-right corner (ui/cornerToggles.js, 0.115): the SETTINGS menu
-  // in groups since 0.00242, FULLSCREEN beside it as an icon, DEBUG MODE
+  // in groups since 0.00243, FULLSCREEN beside it as an icon, DEBUG MODE
   // last — ON shows the testing tools (ui/debugToggles.js; ?debug turns it
   // on for the visit, else this browser remembers the choice).
   const dbg = debugMenu();
@@ -116,7 +116,7 @@ async function boot() {
 
 // FULLSCREEN: the label tracks the real state — Esc/F11 also exit
 // fullscreen without this button.
-// FULLSCREEN (0.069; an icon beside SETTINGS since 0.00242): four corners
+// FULLSCREEN (0.069; an icon beside SETTINGS since 0.00243): four corners
 // pointing out, or in while the page is full screen.
 const FS_ICON = { off: 'M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4', on: 'M5 1v4H1M15 5h-4V1M11 15v-4h4M1 11h4v4' };
 function fullscreenToggle() {

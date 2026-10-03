@@ -178,7 +178,7 @@ function enemyStrike(combat, enemy, source, push) {
   const taken = DEBUG.invulnerable ? 0 : Math.max(Math.ceil(raw * tune.armorMinTakenPct), raw - armor);
   run.hp = Math.max(0, run.hp - taken);
   push({ type: 'dmg', text: `${enemy.name} hits you for ${taken} dmg.`, taken, source });
-  // T4 relic: thorns wound the attacker, and can finish it (0.00242: they
+  // T4 relic: thorns wound the attacker, and can finish it (0.00243: they
   // used to stop at 1 HP — a tester's foes stood at 1 HP, which read as a
   // bug); a thorns kill is a kill like any other, its rewards and its fall.
   const thorns = run.stats.thorns;

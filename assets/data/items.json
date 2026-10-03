@@ -58,7 +58,7 @@
     "name": "Vampiric Ring",
     "slot": "ring",
     "tier": 2,
-    "lifesteal": 1
+    "lifesteal": 0.3
   },
   "ring_of_protection": {
     "name": "Ring of Protection",
@@ -91,7 +91,7 @@
     "slot": "trinket",
     "tier": 3,
     "crit": 0.1,
-    "lifesteal": 0.6
+    "lifesteal": 0.35
   },
   "amulet_of_vigor": {
     "name": "Amulet of Vigor",
@@ -104,7 +104,7 @@
     "slot": "amulet",
     "tier": 3,
     "dmg": 6,
-    "lifesteal": 0.5
+    "lifesteal": 0.3
   },
   "ritual_dagger": {
     "name": "Ritual Dagger",
@@ -118,7 +118,7 @@
     "slot": "weapon",
     "tier": 3,
     "dmg": 12,
-    "lifesteal": 0.8
+    "lifesteal": 0.5
   },
   "boneplate": {
     "name": "Boneplate",
@@ -138,7 +138,7 @@
     "name": "Amulet of the Leech",
     "slot": "amulet",
     "tier": 2,
-    "lifesteal": 0.8,
+    "lifesteal": 0.25,
     "hp": 80
   },
   "moonbrand": {
@@ -166,7 +166,7 @@
     "name": "Ring of the Eclipse",
     "slot": "ring",
     "tier": 3,
-    "lifesteal": 1.2,
+    "lifesteal": 0.7,
     "crit": 0.05
   },
   "bloodstone_band": {
@@ -188,7 +188,7 @@
     "name": "Amulet of the Blood Moon",
     "slot": "amulet",
     "tier": 3,
-    "lifesteal": 1.2,
+    "lifesteal": 0.7,
     "hp": 100
   },
   "fang_of_the_eclipse": {

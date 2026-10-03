@@ -4,7 +4,7 @@
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), LABS (0.168: the menu of the
 // testing pages, labs/index.html — a card per labs/<name>/ folder, kept in
 // step by the suite — in a new tab) and
-// BENCHMARK (0.131, ui/benchmark.js). 0.00242 (the developer's call): DEBUG
+// BENCHMARK (0.131, ui/benchmark.js). 0.00243 (the developer's call): DEBUG
 // MODE ON/OFF, the last item of the SETTINGS menu, shows them — remembered
 // in this browser, so testers need no ?debug in the address (?debug still
 // turns it on for the visit; the headless checks use it).
@@ -56,7 +56,7 @@ export function debugToggles() {
     flag('forceCrit', 'FORCE CRITS', 'crit-toggle'), flag('forceMegaCrit', 'FORCE MEGA CRITS', 'megacrit-toggle'), labs, benchmarkButton()];
 }
 
-// DEBUG MODE (0.00242): ?debug in the address, else this browser's last choice.
+// DEBUG MODE (0.00243): ?debug in the address, else this browser's last choice.
 const MODE_KEY = 'castle-debug-mode';
 export const debugFromUrl = () => new URLSearchParams(globalThis.location?.search ?? '').has('debug');
 let modeOn = null;
