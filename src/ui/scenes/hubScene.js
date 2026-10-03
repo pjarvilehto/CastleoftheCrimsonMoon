@@ -109,10 +109,12 @@ export function hubScene(opts = {}) {
   // title; if the player is quicker, the button waits for it (showing the
   // progress) rather than letting the first room paint half-drawn.
   // Unspent XP / coins (0.102): something could still be trained or
-  // bought — ask once before leaving, the default answer is to stay.
+  // bought — ask once before leaving, the default answer is to stay. The
+  // Forge never asks (0.00283, the developer's call: its use is very
+  // optional): coins count only where Alchemy could spend them.
   function descend(btn) {
     const p = getProfile();
-    const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendCoins(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
+    const left = [canSpendXp(p) && `${p.xp.toLocaleString('en-US')} XP`, canSpendAlchemy(p) && `${p.coins.toLocaleString('en-US')} Coins`].filter(Boolean);
     if (!left.length) return enterDungeon(btn);
     confirmPrompt({
       title: 'Descend Now?',
@@ -161,7 +163,8 @@ export function hubScene(opts = {}) {
     const [trainBody, alchemyBody, equipBody] = [trainSection(p, phone, done, canSpendXp(p)), alchemySection(p, phone, done, canSpendAlchemy(p)), phone ? equipSection(p, done, found, waiting()) : null];
 
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
-    const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
+    // (Descend pulses when nothing but the Forge could take the coins, as its prompt stays quiet then — 0.00283)
+    const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendAlchemy(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     // The hall's sections as the phone's sheets (0.00209: one table; phoneHall
     // stacks them under tabs). 0.00238: the desktop and the tablet draw the
     // knight panel, TRAIN and ALCHEMY instead (below) — the phone's own pass

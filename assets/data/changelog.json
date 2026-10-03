@@ -1,4 +1,8 @@
 {
+  "0.00285": [
+    "The Great Hall's music starts on the title screen: it loads with the title and begins at your first click (or at once, where the browser allows), then plays on through the hero choice and the hall.",
+    "The Forge no longer stops a descent: coins only the Forge could spend don't bring up the Descend Now? prompt."
+  ],
   "0.00284": [
     "Housekeeping: the notes in the code name the build the refactors shipped in"
   ],
