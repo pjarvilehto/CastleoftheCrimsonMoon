@@ -1,5 +1,5 @@
 {
-  "version": "0.00225",
+  "version": "0.00226",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00226": [
+      "A new typeface: D-DIN Condensed Bold, free to use (Open Font License), replaces the old DIN Condensed — the look is the same, the font is a third of the download"
+    ],
     "0.00225": [
       "Device reports: every run and benchmark now sends a small performance report with the play stats (frame-time histogram, time per subsystem, stalls with what was happening, the renderer's settings) — anonymous, never stored in your save.",
       "Play stats: a Device reports card with Copy / Copy all; the benchmark round is 0.00225, so the Great Hall asks once more."
@@ -151,9 +154,6 @@
     ],
     "0.00212": [
       "Housekeeping: the build-number check also runs in the one-commit checkout the test job uses"
-    ],
-    "0.00211": [
-      "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
     ]
   }
 }
