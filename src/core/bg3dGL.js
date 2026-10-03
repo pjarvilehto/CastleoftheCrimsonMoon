@@ -127,7 +127,7 @@ export function loadImage(url) {
 export function loadPicture(url) {
   if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return loadImage(url);
   return fetch(url).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`image ${url}`))))
-    .then((blob) => createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+    .then((blob) => createImageBitmap(blob, { imageOrientation: 'from-image', premultiplyAlpha: 'none', colorSpaceConversion: 'none' })) // (0.00313: 'from-image' — Chrome deprecated 'none'; the paintings carry no EXIF orientation, and the <img> fallback honours one anyway)
     .catch(() => loadImage(url));
 }
 

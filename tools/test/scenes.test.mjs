@@ -281,7 +281,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   const nc = nextChangelog({ '0.093': ['x'] }, '0.094', ['a']);
   ok('bump.mjs keeps the whole history', JSON.stringify(Object.keys(nc)) === '["0.094","0.093"]' && nextChangelog(nc, '0.095', []).hasOwnProperty('0.095') === false);
   ok('bump.mjs writes changelog.json', readFileSync('tools/bump.mjs', 'utf8').includes('writeFileSync(FULL, JSON.stringify(nextChangelog(full, version, notes)'));
-  ok('CHANGELIST sits in the SETTINGS menu, under GAME (after the save items, 0.00301)', /menuHead\('Game'\),\s*exportSaveToggle\(\),\s*importSaveToggle\([^\n]*\n\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
+  ok('CHANGELIST sits in the SETTINGS menu, under GAME (after the save items, 0.00302)', /menuHead\('Game'\),\s*exportSaveToggle\(\),\s*importSaveToggle\([^\n]*\n\s*changelogToggle\(\),/.test(readFileSync('src/main.js', 'utf8')));
 
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -701,7 +701,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
 // T91: 0.00209 — Export / Import Save are dialogs (the title used to expand a
 // textarea at its foot, under a phone's keyboard): Export shows the code
 // and closes on Done; Import loads a pasted code or says it is not one.
-// 0.00301: they are SETTINGS menu items (ui/saveTransfer.js), not the title's.
+// 0.00302: they are SETTINGS menu items (ui/saveTransfer.js), not the title's.
 {
   const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
   const { exportSave } = await import('../../src/meta/profile.js');
@@ -709,7 +709,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   fresh();
   getProfile().coins = 4242; getProfile().name = 'Tester';
   titleScene().enter(registry.app);
-  ok('the title no longer carries the save buttons (0.00301: the menu does)', !registry.app.all((n) => n.tagName === 'button' && /Export Save|Import Save/i.test(n.textContent)).length);
+  ok('the title no longer carries the save buttons (0.00302: the menu does)', !registry.app.all((n) => n.tagName === 'button' && /Export Save|Import Save/i.test(n.textContent)).length);
   let loaded = 0;
   const exp = exportSaveToggle(), imp = importSaveToggle(() => loaded++);
   const btn = (re) => (re.test('EXPORT SAVE') ? exp : imp);

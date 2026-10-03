@@ -111,9 +111,11 @@ fresh();
       && read('src/ui/fx.js').includes('}, DEATH_PEAK_MS);'));
     ok('the reliquary\'s revive plays the hit too (treasureUI: the Heart unspent before, spent after, the knight alive)', read('src/ui/treasureUI.js').includes("if (!got.died && heart && !run.revive) sfx('revive');"));
     // 0.00298: the huge tom on Push Deeper (every chosen room change, not the first room's entry) and as the hall's Descend begins
-    ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', C.deeper.file === 'assets/audio/sfx/deeper_v1.mp3' && statSync(C.deeper.file).size > 100 * 1024
+    ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', /^assets\/audio\/sfx\/deeper_v\d+\.mp3$/.test(C.deeper.file) && statSync(C.deeper.file).size > 100 * 1024
       && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 7) < 0.11 && !C.deeper.stinger // (-12 until the developer's 0.00302 review: +5)
-      && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("sfx('deeper'); // the descent begins"));
+      && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("function descend(btn) {\n    sfx('deeper');") && read('src/ui/scenes/titleScene.js').includes("onclick: () => { sfx('deeper'); enterFull();")
+      && C.deeper.prime === true && read('src/audio/sfx.js').includes('if (c.prime && c.file) bufferFor(name)'));
+    ok('the tom\'s file starts on the hit (0.00307: 70 ms of silence trimmed off the recording — it felt late on the press)', C.deeper.peakMs < 80);
   }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/hubSections.js'); // (0.00223: the hall's rows live there)
@@ -682,9 +684,9 @@ fresh();
   ok('render-sfx: every clip touched carries the review\'s stamp (the lab drops older stored edits, 0.00306)', out.clips.click.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.deeper.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.loot.reviewed === '2026-10-03T12:00:00.000Z' && !out.clips.swoosh?.reviewed
     && readFileSync('labs/sfx/lab.js', 'utf8').includes('if (!CLIPS[clip] || stale(clip, state[clip])) delete state[clip];'));
   ok('render-sfx: an approval marks the clip; a pitch edit renders a new file, measures it, keeps the level plus the offset, moves the peak and removes the old file',
-    out.clips.click.approved === true && rendered.length === 1 && rendered[0][0] === 'assets/audio/sfx/deeper_v1.mp3' && rendered[0][1] === 'assets/audio/sfx/deeper_v2.mp3'
-    && out.clips.deeper.file === 'assets/audio/sfx/deeper_v2.mp3' && out.clips.deeper.measuredDb === -5 && out.clips.deeper.peakMs === 200 && out.clips.deeper.approved === true
-    && Math.abs(out.clips.deeper.gainDb - (J0.clips.deeper.measuredDb + J0.clips.deeper.gainDb + 1 + 5)) < 1e-9 && removed.join() === 'assets/audio/sfx/deeper_v1.mp3');
+    out.clips.click.approved === true && rendered.length === 1 && rendered[0][0] === J0.clips.deeper.file && rendered[0][1] === nextFile(J0.clips.deeper.file, () => false)
+    && out.clips.deeper.file === nextFile(J0.clips.deeper.file, () => false) && out.clips.deeper.measuredDb === -5 && out.clips.deeper.peakMs === 200 && out.clips.deeper.approved === true
+    && Math.abs(out.clips.deeper.gainDb - (J0.clips.deeper.measuredDb + J0.clips.deeper.gainDb + 1 + 5)) < 1e-9 && removed.join() === J0.clips.deeper.file);
   ok('render-sfx: a synth clip takes the offset alone and its pitch is a note for the hand; a volume-only edit is the trim; an unknown clip is skipped',
     out.clips.boom.gainDb === J0.clips.boom.gainDb - 1 && logs.some((l) => /boom: a generated sound/.test(l)) && Math.abs(out.clips.loot.gainDb - (J0.clips.loot.gainDb + 1.5)) < 1e-9 && out.clips.loot.file === J0.clips.loot.file
     && logs.some((l) => /nope: not a clip/.test(l)));

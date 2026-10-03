@@ -1,4 +1,17 @@
 {
+  "0.00314": [
+    "Housekeeping: the paintings are decoded with the option Chrome now asks for (a deprecation warning in the console is gone)"
+  ],
+  "0.00313": [
+    "The descent's drum strikes the moment you press Descend or Enter the Castle (its recording's silent start trimmed, the sound decoded ahead), as well as on Push Deeper."
+  ],
+  "0.00312": [
+    "Combat's background flashes (crits, potions, revives, OVERKILL) are stronger and reach further, so they show past the cards.",
+    "Fog Lab: flash-light sliders with card stand-ins, and the mist's tints now start from the game's own."
+  ],
+  "0.00311": [
+    "The title screen's castle has its own deeper, wider-swaying 3D depth."
+  ],
   "0.00310": [
     "The title's fly-in lands on the living painting exactly: the camera returns to rest as the film fades, the mist and the sway rising after; the film carries the game's vignette; its whoosh a fifth quieter."
   ],

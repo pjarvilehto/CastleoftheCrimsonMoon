@@ -34,6 +34,15 @@ before structural changes. This file is the rules and the per-system notes.
   - **Fog Lab (0.164):** `labs/fog/` — the game's real 3D renderer on every
     painting with every fog knob as a live slider, presets, the flash lights
     on demand, and COPY JSON for a `parallax` patch (see "3D backgrounds").
+    0.00312: FLASH LIGHTS — a button per flash (crit, mega, OVERKILL,
+    potion, revive) fired where the game puts it (`lab.js STANDINS`: the
+    struck foe's card, the hero's, the row), dark card stand-ins over the
+    painting (the cards hide the light's middle in the game; a checkbox),
+    the shared Reach / Distance / Rise and each kind's strength, fade and
+    life as sliders, `lights` in COPY JSON; and the mist's four tint
+    sliders now start from the shipped tints (`untint`; they started at
+    neutral, so the lab drew untinted mist and COPY JSON undid them —
+    Reset to shipped clears a browser's old saved neutral ones).
   - **VO Lab:** `labs/vo/` — (booted through `labs/boot.js` like the
     others since 0.00197) every narrator take with its text, when it
     plays and how often; Play / Approve / Disapprove (+ volatility and shouty
@@ -616,7 +625,7 @@ later `initBg3d` starts clean. Keep per-pixel shader work minimal;
 slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
-revive): `bgLight(kind, rect)`, settings in `parallax.lights`. Big-hit sway:
+revive): `bgLight(kind, rect)`, settings in `parallax.lights`. 0.00312 (the developer found them faint in combat — the cards, grown since 0.100, cover the light's middle): every kind's strength x1.5 and the reach 0.45 → 0.6; tuned in the Fog Lab. Big-hit sway:
 `swayDeg` / `swayHitShare`.
 
 #### The mist's own motion and light (0.164, tuned in the Fog Lab)
@@ -654,6 +663,14 @@ eases back. The flat fallback scales the CSS layers the same way
 arrows play the game's sequence (push, a second, the painting) with the
 three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
 1 s in) are the developer's and unchanged.
+**A painting's own camera (0.00311):** `parallax.overrides.<file>` may
+carry any of the BG TUNING sliders' knobs (`bgTuner.js`: depthScale,
+pivot, yawDeg, pitchDeg, speed, fogScale, fogSpeed) — each layer keeps its
+own sway and fog clocks (`L.tau` / `L.fogT`, a new layer carrying the
+last one's on), its own orbit, and the skirt fits the most demanding
+painting shown (`refit`); the title's (`medieval_castle.jpg`) are the
+developer's slider picks (depth 1.2, focus 0.45, sway 3.6° / 1°, speed
+2.15, fog x1.15). BG TUNING's live sliders still win over every painting.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
@@ -1462,8 +1479,13 @@ developer found it too high). **The descent's strike (0.00298):** the
 `deeper` clip, the developer's huge tom (`deeper_v1.mp3`, the hits' -12 dB,
 no duck — it plays every room), struck as the player chooses Push Deeper
 (`dungeonScene.js nextRoom`, not the first room's entry) and as the hall's
-Descend actually begins (`hubScene.js enterDungeon`, after the prompt and
-the art's gathering), a moment before the whoosh. **Reviewing the
+Descend is pressed (`hubScene.js descend`, 0.00307: on the press itself,
+before the "Descend Now?" prompt and the art's gathering — it used to wait
+for both, and felt late) and on the title's Enter the Castle; the
+recording's 70 ms of leading silence went in 0.00307 (`deeper_v2.mp3`, the
+hit 55 ms in) and the clip is `prime: true` (`initSfx` decodes a primed
+clip ahead: Enter the Castle is the first gesture, and a decode after it
+put the strike late). **Reviewing the
 sounds:** the SFX Lab (`labs/sfx/`, "Where things live") plays every clip
 where it belongs with the bed under it and hands the edits to
 `tools/render-sfx.mjs`; `sfx()` takes `plain` (no variation, no jitter)
@@ -1711,7 +1733,7 @@ be served stale for ~4 hours.
   0.00243, the developer's call): the top row is FULLSCREEN (an icon, not on a
   phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
-  SAVER), GAME (EXPORT SAVE, IMPORT SAVE — 0.00301, the developer's call:
+  SAVER), GAME (EXPORT SAVE, IMPORT SAVE — 0.00302, the developer's call:
   they were buttons at the title's foot; `ui/saveTransfer.js`, a loaded
   save returns to the title — and CHANGELIST) — and DEBUG MODE last. Add items in main.js's
   `cornerBar([...], lead)` with `menuHead` / `onOffToggle` / `panelToggle`.

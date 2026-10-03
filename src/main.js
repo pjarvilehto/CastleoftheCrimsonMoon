@@ -84,7 +84,7 @@ async function boot() {
     onOffToggle('BATTERY SAVER', { cls: 'saver-toggle', get: powerSaver, flip: () => { const on = !powerSaver(); setPowerSaver(on); setCardFxSaver(on); setPref(SAVER_KEY, on ? '1' : '0'); return on; } }), // (0.00222: the smallest canvas, no mist, the card light at saverFps — the player's choice, never automatic)
     menuHead('Game'),
     exportSaveToggle(),
-    importSaveToggle(() => go('title')), // (0.00301: from the title's foot; a loaded save starts again at the title)
+    importSaveToggle(() => go('title')), // (0.00302: from the title's foot; a loaded save starts again at the title)
     changelogToggle(),
     dbg.toggle,
     ...dbg.items,

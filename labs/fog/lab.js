@@ -22,13 +22,26 @@ const sceneFog = (f) => ({ fog: base.overrides?.[f]?.fog ?? base.fog, fogWind: [
 
 // ---- the state: one object of everything the sliders drive ----
 const shipped = () => ({ fogScale: base.fogScale, fogSpeed: base.fogSpeed, puffs: clone(base.puffs), mist: clone(base.mist), haze: clone(base.haze), push: clone(base.push), scene: {}, ownFog: true,
-  light: { warm: 0, lit: 1, cool: 0, shade: 1 } });
+  light: untint(base.mist), lights: clone(base.lights), standins: true });
+// the four tint sliders read back from the shipped tints (0.00312: they started at neutral — the lab drew untinted
+// mist, and COPY JSON undid the shipped warm / cool tints); tints() below is the way there
+function untint({ litTint: [r, , b], shadeTint: [sr, , sb] }) {
+  const q = r / b, warm = (q - 1) / (0.3 + 0.2 * q), lit = b / (1 - 0.2 * warm);
+  const p = sb / sr, cool = (p - 1) / (0.25 + 0.18 * p), shade = sr / (1 - 0.18 * cool);
+  const r2 = (x) => Math.round(x * 100) / 100;
+  return { warm: r2(warm), lit: r2(lit), cool: r2(cool), shade: r2(shade) };
+}
 let S = shipped();
 let file = scenes[0];
 // the saved state knob by knob over the shipped values (0.00223: spread whole, a knob added or removed since broke the sliders and COPY JSON)
 const mergeState = (base, saved) => {
   const s = { ...base };
-  for (const k of ['fogScale', 'fogSpeed', 'ownFog']) if (saved[k] !== undefined) s[k] = saved[k];
+  for (const k of ['fogScale', 'fogSpeed', 'ownFog', 'standins']) if (saved[k] !== undefined) s[k] = saved[k];
+  // the flash lights (0.00312): the shared knobs and each kind's own, knob by knob too
+  for (const [kk, v] of Object.entries(base.lights)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) { for (const f of Object.keys(v)) if (saved.lights?.[kk]?.[f] !== undefined) s.lights[kk][f] = saved.lights[kk][f]; }
+    else if (saved.lights?.[kk] !== undefined) s.lights[kk] = saved.lights[kk];
+  }
   for (const k of ['puffs', 'mist', 'haze', 'push', 'light']) for (const kk of Object.keys(base[k])) if (saved[k]?.[kk] !== undefined) s[k][kk] = saved[k][kk];
   s.scene = saved.scene ?? {};
   return s;
@@ -42,7 +55,7 @@ const tints = ({ warm, lit, cool, shade }) => ({
 });
 function apply() {
   const own = S.ownFog ? sceneFog(file) : (S.scene[file] ?? sceneFog(file));
-  setLiveTuning({ fogScale: S.fogScale, fogSpeed: S.fogSpeed, puffs: clone(S.puffs), haze: clone(S.haze), push: clone(S.push),
+  setLiveTuning({ fogScale: S.fogScale, fogSpeed: S.fogSpeed, puffs: clone(S.puffs), haze: clone(S.haze), push: clone(S.push), lights: clone(S.lights),
     mist: { ...S.mist, ...tints(S.light) }, fog: own.fog, fogWind: own.fogWind });
   try { localStorage.setItem(KEY, JSON.stringify({ ...S, file })); } catch { /* private mode */ }
 }
@@ -89,6 +102,19 @@ const note = (t) => { const p = document.createElement('p'); p.className = 'note
 const button = (label, onclick, cls = '') => { const b = document.createElement('button'); b.textContent = label; b.onclick = onclick; if (cls) b.className = cls; return b; };
 const row = (...kids) => { const r = document.createElement('div'); r.className = 'row'; r.append(...kids); return r; };
 
+// The flashes and where the game puts them (0.00312): a blow at the struck
+// enemy's card, a potion and a revive at the hero's, OVERKILL over the row.
+const FLASHES = [['crit', 'Crit'], ['megacrit', 'Mega'], ['overkill', 'Overkill'], ['potion', 'Potion'], ['revive', 'Revive']];
+const STANDINS = { hero: [0.05, 0.3, 0.17, 0.56], foe: [0.42, 0.3, 0.13, 0.5], foe2: [0.57, 0.3, 0.13, 0.5] }; // [left, top, width, height] shares of the window: a desktop fight's cards
+const rectOf = ([l, t, w, h]) => ({ left: innerWidth * l, top: innerHeight * t, width: innerWidth * w, height: innerHeight * h });
+// dark card-sized boxes where a fight's cards stand, so the glow is judged as the game shows it (most of it is behind a card)
+const standins = Object.entries(STANDINS).map(([k, box]) => {
+  const d = document.createElement('div'); d.className = 'standin';
+  Object.assign(d.style, { left: `${box[0] * 100}%`, top: `${box[1] * 100}%`, width: `${box[2] * 100}%`, height: `${box[3] * 100}%` });
+  d.textContent = k === 'hero' ? 'hero' : 'foe';
+  document.body.append(d);
+  return d;
+});
 const PRESETS = {
   Shipped: () => ({}),
   'Gentle breeze': () => ({ fogSpeed: 2, puffs: { turbulence: 0.04, turbulencePeriod: 40, breathe: 0.1, bob: 0.02, period: [16, 32], flow: 0.01, flowScale: 1.2, flowAmount: 0.35 } }),
@@ -111,8 +137,15 @@ function patch() {
   for (const k of ['fogScale', 'fogSpeed']) if (S[k] !== base[k]) out[k] = S[k];
   for (const k of ['puffs', 'haze', 'push']) { const d = {}; for (const [kk, v] of Object.entries(S[k])) if (JSON.stringify(v) !== JSON.stringify(base[k][kk])) d[kk] = v; if (Object.keys(d).length) out[k] = d; }
   const m = { ...S.mist, ...tints(S.light) }, dm = {};
-  for (const [kk, v] of Object.entries(m)) if (JSON.stringify(v) !== JSON.stringify(base.mist[kk])) dm[kk] = Array.isArray(v) ? v.map((x) => Math.round(x * 1000) / 1000) : v;
+  const near = (v, w) => (Array.isArray(v) ? v.every((x, i) => Math.abs(x - w[i]) < 0.006) : v === w); // (the tints round-trip through the sliders)
+  for (const [kk, v] of Object.entries(m)) if (!near(v, base.mist[kk])) dm[kk] = Array.isArray(v) ? v.map((x) => Math.round(x * 1000) / 1000) : v;
   if (Object.keys(dm).length) out.mist = dm;
+  const dl = {}; // the flash lights (0.00312): what differs, kind by kind
+  for (const [kk, v] of Object.entries(S.lights)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) { const d = {}; for (const [f, x] of Object.entries(v)) if (JSON.stringify(x) !== JSON.stringify(base.lights[kk][f])) d[f] = x; if (Object.keys(d).length) dl[kk] = d; }
+    else if (v !== base.lights[kk]) dl[kk] = v;
+  }
+  if (Object.keys(dl).length) out.lights = dl;
   if (!S.ownFog) { const ov = {}; for (const [f, v] of Object.entries(S.scene)) ov[f] = v; if (Object.keys(ov).length) out.overrides = ov; }
   return JSON.stringify(out, null, 2);
 }
@@ -120,7 +153,7 @@ function patch() {
 const code = document.createElement('textarea'); code.rows = 8; code.readOnly = true;
 panel.append(
   row(...Object.keys(PRESETS).map((n) => button(n, () => preset(n)))),
-  row(button('Flash', () => flash('crit'), 'fire'), button('Mega', () => flash('megacrit'), 'fire'), button('Potion', () => flash('potion')), button('Jolt', () => bgJolt(1)), button('Sway', () => bgSway(1.5, 1))),
+  row(...FLASHES.map(([k, label]) => button(label, () => flash(k), k === 'potion' || k === 'revive' ? '' : 'fire')), button('Jolt', () => bgJolt(1)), button('Sway', () => bgSway(1.5, 1))),
   group('Room change', 'the push through the picture (← → play it as the game does)', true,
     slider('push.dist', 'Push distance', 0, 0.3, 0.01, 'how far the camera dollies into the painting (the focal plane is 1 away)'),
     slider('push.inMs', 'Push in ms', 500, 6000, 100, 'from the windows starting to fade until the next painting is fully in'),
@@ -159,6 +192,18 @@ panel.append(
     slider('puffs.soft', 'Soft occlusion', 0.02, 0.5, 0.01, 'how gently a puff fades into the scene in front of it'),
     slider('puffs.shadeVar.0', 'Brightness lo', 0.4, 1.4, 0.02), slider('puffs.shadeVar.1', 'Brightness hi', 0.4, 1.6, 0.02),
     slider('puffs.alphaVar.0', 'Opacity lo', 0.1, 1, 0.02), slider('puffs.alphaVar.1', 'Opacity hi', 0.1, 1, 0.02)),
+  group('Flash lights', 'a crit, a potion, a revive lighting the scene (0.00312)', true,
+    note('The buttons above fire each flash where the game would: at the chest of the card involved — an enemy\'s for the blows, the hero\'s for a potion and a revive (OVERKILL over every foe). The stand-ins hide what the cards hide.'),
+    standinToggle(),
+    slider('lights.radius', 'Reach', 0.1, 1.5, 0.01, 'how far the light carries (world units; the painting spans ~0.6-1.4 deep)'),
+    slider('lights.dist', 'Distance', 0.3, 1.5, 0.01, 'how far in front of the camera the light sits (the focal plane is 1): nearer lights the mist more, farther the walls'),
+    slider('lights.rise', 'Rise s', 0, 0.5, 0.01, 'how fast every flash comes up'),
+    ...FLASHES.flatMap(([k, label]) => [
+      note(label),
+      slider(`lights.${k}.strength`, `${label} strength`, 0, 6, 0.05),
+      slider(`lights.${k}.fade`, `${label} fade s`, 0.05, 2, 0.01, 'how fast it dies away after its peak'),
+      slider(`lights.${k}.life`, `${label} life s`, 0.2, 5, 0.1, 'when it is gone for good'),
+    ])),
   group('Light', 'how the mist is lit', true,
     slider('mist.shade', 'Self-shadow', 0, 2, 0.05, 'how strongly a puff\'s own lumps shade it (0 = flat)'),
     slider('light.warm', 'Lit side warmth', 0, 1, 0.02, 'a warm tint on the lit (upper) side'), slider('light.lit', 'Lit side level', 0.5, 2, 0.02),
@@ -184,8 +229,18 @@ async function copy() {
   try { await navigator.clipboard.writeText(json); status.textContent = 'Copied.'; } catch { status.textContent = 'Copy the values from the box.'; }
 }
 function flash(kind) {
-  const w = innerWidth, h = innerHeight; // a card-sized rect right of centre, like a crit on an enemy
-  bgLight(kind, { left: w * 0.55, top: h * 0.25, width: w * 0.14, height: h * 0.5 });
+  const r = kind === 'potion' || kind === 'revive' ? rectOf(STANDINS.hero)
+    : kind === 'overkill' ? rectOf([STANDINS.foe[0], STANDINS.foe[1], STANDINS.foe2[0] + STANDINS.foe2[2] - STANDINS.foe[0], STANDINS.foe[3]])
+      : rectOf(STANDINS.foe);
+  bgLight(kind, r);
+}
+const showStandins = () => standins.forEach((d) => { d.hidden = !S.standins; });
+function standinToggle() {
+  const l = document.createElement('label'); l.className = 'note';
+  const c = document.createElement('input'); c.type = 'checkbox'; c.checked = S.standins;
+  c.onchange = () => { S.standins = c.checked; showStandins(); apply(); };
+  l.append(c, ' card stand-ins (the cards cover the light\'s middle in the game)');
+  return l;
 }
 function ideas() {
   const d = document.createElement('div'); d.className = 'ideas';
@@ -240,5 +295,6 @@ addEventListener('keydown', (e) => {
 // the game's renderer, software GL allowed (a lab), never stepping its quality down
 if (initBg3d({ allowSoftware: true })) onBackgroundChange(showBackground3d);
 else status.textContent = 'No WebGL here: the flat paintings only — the mist needs the 3D renderer.';
+showStandins();
 show(file);
 $('sceneName').textContent = nameOf(file) + (isBg3dActive() ? '' : ' (no WebGL)');
