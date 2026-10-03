@@ -1,5 +1,5 @@
 {
-  "version": "0.00320",
+  "version": "0.00321",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00321": [
+      "The Great Hall and The War Room have a gentler 3D depth."
+    ],
     "0.00320": [
       "A found item's light now flares up as it appears, then fades and shrinks as it flies into your loot."
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00307": [
       "A prototype of the title's fly-in: the castle approached from across the valley before the title shows, once a visit; a click or a key skips it."
-    ],
-    "0.00306": [
-      "The shrine chime deeper, the hollow hound's cries and the new potion and critical-hit sounds pitched down as reviewed; the SFX Lab's sliders reset after a review is applied."
     ]
   }
 }
