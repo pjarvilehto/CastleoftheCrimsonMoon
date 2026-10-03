@@ -15,7 +15,9 @@
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb, plain (0.00301: no random variation,
 //     layers or level jitter — the SFX Lab's dry listen) };
-//   - 'ring' / 'boom' / strike layers are synthesized (synth.js);
+//   - 'boom' and the classes' colour layers are synthesized (synth.js); the
+//     strikes' tick / thud / slice / clank and the crit's ring are recordings
+//     since 0.00305 (the developer's SFX Lab review);
 //   - 0.118: every sound is an entry in audio.json clips (the registry);
 //   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
 //     peaking EQ, random tick/thud/slice/clank layers from synth.js);
@@ -97,7 +99,11 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0, plain = fal
   voices.push(voice);
   const duck = A.duck?.clips?.[name];
   if (duck) duckMusic(duck, t);
-  for (const l of vary?.layers ?? []) start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
+  for (const l of vary?.layers ?? []) { // (0.00305: a layer may be a recording — the strikes' tick / thud / slice / clank — decoded once, started at the same moment)
+    const lc = clip(l.name);
+    if (lc?.file) bufferFor(l.name).then((b) => start(l.name, b, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb })).catch(() => {});
+    else start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
+  }
 }
 
 // Fire a one-shot by its audio.json clips name. Before the first gesture
@@ -185,5 +191,7 @@ export function initSfx() {
       if (name.startsWith('ehurt_') && !cries.foe) continue;
       fetchBytes(c.file).catch(() => {});
     }
+    // the strikes' recorded layers decoded ahead (0.00305): a layer that waited on its first decode would land late under the first blow
+    for (const v of Object.values(DATA.audio.variation ?? {})) for (const l of v.layers ?? []) if (clip(l.name)?.file) bufferFor(l.name).catch(() => {});
   });
 }

@@ -40,12 +40,17 @@ const influence = Number(opt('--influence', '0.3'));
 
 // the doc's table: | clip | seconds | prompt |
 export function readPrompts(md = readFileSync(DOC, 'utf8')) {
-  return md.split('\n').map((l) => l.split('|').map((c) => c.trim())).filter((c) => c.length >= 5 && /^(atk|heavy|hurt|eatk|ehurt)_/.test(c[1]))
+  return md.split('\n').map((l) => l.split('|').map((c) => c.trim())).filter((c) => c.length >= 5 && /^[a-z][a-z0-9_]*$/.test(c[1]) && c[1] !== 'clip' && Number.isFinite(Number(c[2])) && c[2] !== '') // (0.00305: any clip, not only the classes' and the foes')
     .map((c) => ({ clip: c[1], seconds: Number(c[2]), prompt: c[3] }));
 }
 // the next free file name for a clip (never overwrite, rule 7)
-export function nextFile(clip, exists = (f) => existsSync(join(OUT, f))) {
-  for (let k = 1; ; k++) { const f = `${clip}_v${k}.mp3`; if (!exists(f)) return f; }
+// `from` = the clip's current file (the registry's): the name goes ABOVE its
+// version, never back to a lower free one (0.00305: after render-sfx.mjs had
+// moved a clip to _v2 and removed _v1, a --redo wrote _v1 again — a name an
+// edge cache may still hold, rule 7).
+export function nextFile(clip, exists = (f) => existsSync(join(OUT, f)), from = '') {
+  const cur = Number(from.match(new RegExp(`${clip}_v(\\d+)\\.mp3$`))?.[1] ?? 0);
+  for (let k = cur + 1; ; k++) { const f = `${clip}_v${k}.mp3`; if (!exists(f)) return f; }
 }
 
 const render = (prompt, seconds) => post('sound-generation', { text: prompt, duration_seconds: seconds, prompt_influence: influence }, { retries: 5 }); // (a 429 waits and tries again, 0.00299)
@@ -59,7 +64,7 @@ const main = async () => {
   mkdirSync(OUT, { recursive: true });
   let failed = 0;
   for (const p of todo) {
-    const file = nextFile(p.clip);
+    const file = nextFile(p.clip, undefined, reg.clips[p.clip]?.file ?? '');
     try {
       const bytes = await render(p.prompt, p.seconds);
       writeFileSync(join(OUT, file), bytes);

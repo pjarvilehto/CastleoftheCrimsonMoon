@@ -1396,7 +1396,25 @@ sounds:** the SFX Lab (`labs/sfx/`, "Where things live") plays every clip
 where it belongs with the bed under it and hands the edits to
 `tools/render-sfx.mjs`; `sfx()` takes `plain` (no variation, no jitter)
 and `sfxFrom(name, buffer, opts)` plays a buffer of the caller's through
-the same path (both 0.00301, the lab's).
+the same path (both 0.00301, the lab's). **The first review (0.00304,
+`render-sfx.mjs --apply`):** 7 approvals, 31 re-renders (every foe's cry
+and attack pitched down 5-10 semitones, some slowed; the death, shrine,
+rare and kill lower; the whooshes lifted another 3-7.5 dB to -4.5..-9),
+9 trims. **Its notes (0.00305):** the strikes' layers `tick` / `thud` /
+`slice` / `clank` and the crit's `ring` are RECORDINGS now (ElevenLabs,
+their lines in `docs/sfx-prompts.md`'s third table; `gen-sfx.mjs
+readPrompts` takes any clip id since) — a `variation` layer may be a
+file clip (`sfx.js start`: decoded once, started at the blow's moment;
+`initSfx` decodes them ahead; dataCheck allows either), their trims
+keep the synths' raw levels (tick -17.1, slice -23.5; the thud -8 and
+the clank -10, "stronger, with reverb") so the mix under the hits is as
+it was; the ring lands at -10 with `sweeteners.crit.ringDb` 0 and
+`mega.ringDb` +2 (they offset the synth's raw level before), and the
+Iron Coffer's coins play the loot jingle; `heal` is a new recording (a
+cork, a gulp, a shimmer — the old read as coins) and the hollow hound's
+attack a gnarl. `gen-sfx.mjs nextFile` never goes below the registry's
+current version (a `--redo` after a render-sfx move wrote `_v1` again).
+`audio/synth.js` keeps the five old instruments unused.
 
 #### Music beds
 

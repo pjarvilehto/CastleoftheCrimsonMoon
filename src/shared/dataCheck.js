@@ -152,7 +152,7 @@ export function checkData(data) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
     if (v.layers) {
       if (!(v.layerRate?.length === 2 && v.layerRate.every(isNum) && isNum(v.layerDb))) out.push(`audio.json: variation.${id} layerRate / layerDb`);
-      for (const l of v.layers) if (!data.audio.clips?.[l.name]?.synth || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a synth clip, p, db)`);
+      for (const l of v.layers) if (!data.audio.clips?.[l.name] || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a clip — synth or a recording since 0.00305 — p, db)`);
     }
   }
   for (const [name, secs] of Object.entries(data.audio?.duck?.clips ?? {})) {
