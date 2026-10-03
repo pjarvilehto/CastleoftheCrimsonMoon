@@ -7,7 +7,7 @@
 
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText } from './hud.js';
+import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText, itemStrip } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -181,14 +181,10 @@ function invPage() {
     const id = i === undefined ? p.equipment[key] : p.equipment[key]?.[i];
     const item = id ? itemWithForge(id, p) : null;
     if (!item) return el('div', { class: 'inv-row empty' }, el('span', { class: 'inv-name inv-empty' }, `${SLOT_NAME[key]} — empty`));
-    const pic = itemPic(id);
-    return el('div', { class: `inv-row gear-${rarityClass(item)}` },
-      pic ? el('div', { class: 'slot-art' }, pic) : null,
-      el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase(), ...(item.forgeLvl ? [el('span', { class: 'inv-forge' }, ` +${item.forgeLvl}`)] : [])),
-      el('span', { class: 'inv-desc' }, ...statText(describeItem(item))));
+    return itemStrip(id, item);
   });
   const page = el('div', { class: 'back-page back-inv' },
-    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list' }, ...worn),
+    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list inv-strips' }, ...worn),
     dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
   return { el: page, set: () => {} };
 }

@@ -761,7 +761,12 @@ the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
 showLoot`: the newest six; shown as the run's first find takes off;
 none on a phone, whose top strip is the room title's — since 0.00290
 nothing lists them there mid-run (the finds' own list is to come); a find's chip joins as its card lands, with
-a flash, an OVERKILL's silent finds when the room's lines are out); the hero
+a flash, an OVERKILL's silent finds when the room's lines are out); **a click on the
+row opens the LOOT pop-up** (0.00292, `ui/lootDialog.js`: every find of
+the run, newest first, as the hero card's inventory strips — `hud.js
+itemStrip`, the strip styles under `.inv-strips` — four in view and the
+rest a scroll / arrow key away, each with the slot it will upgrade or
+Salvage for another class's gear); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
 (`runEndScene.js findCard`: a card per slot `equipSummary.changes`
 changed — the picture fading down into the slot, the name, its stats,

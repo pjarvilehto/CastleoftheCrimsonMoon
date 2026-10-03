@@ -128,6 +128,18 @@ const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 
 export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);
 
 // One-line description of an item's stat bonuses, e.g. "+9 dmg".
+// An item as a strip (the hero card's inventory, 0.00290; the LOOT pop-up, 0.00292): its picture on
+// the right fading under its name, forge level and stats on the left, the rarity's rim (styles.css
+// .inv-strips). `tag` (optional) sits in the strip's top right corner.
+export function itemStrip(id, item, tag = null) {
+  const pic = itemPic(id);
+  return el('div', { class: `inv-row gear-${rarityClass(item)}` },
+    pic ? el('div', { class: 'slot-art' }, pic) : null,
+    el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase(), ...(item.forgeLvl ? [el('span', { class: 'inv-forge' }, ` +${item.forgeLvl}`)] : [])),
+    el('span', { class: 'inv-desc' }, ...statText(describeItem(item))),
+    tag);
+}
+
 export function describeItem(item) {
   const parts = [];
   if (item.dmg) parts.push(`+${item.dmg} dmg`);

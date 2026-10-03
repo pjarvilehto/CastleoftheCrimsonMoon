@@ -366,3 +366,26 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const card = findCard({ id: 'bearhide_mantle', slot: 'armor', from: null, offClass: 'Barbarian, Druid and Hexhunter armor' });
   ok('the find card: another class\'s gear greyed, whose it is, salvaged at the end', card.className.includes('off-class') && card.textContent.includes('salvaged at the end') && !card.textContent.includes('replaces'));
 }
+
+// The LOOT pop-up (0.00292): the run's finds as strips, newest first, each with the slot it will
+// upgrade (another class's gear marked Salvage); the dialog closes on C / Escape.
+{
+  fresh();
+  const { openLootDialog } = await import('../../src/ui/lootDialog.js');
+  const { anyDialogOpen } = await import('../../src/ui/dialog.js');
+  const run = createRun();
+  run.heroId = 'knight';
+  const other = Object.keys(DATA.items).find((id) => DATA.items[id].slot === 'weapon' && DATA.items[id].class && DATA.items[id].class !== 'knight');
+  run.itemsFound.push('vampiric_ring', 'moonbrand', other, 'no_such_item');
+  const dlg = openLootDialog(run);
+  const strips = byClass(document.body, 'loot-list')[0]?.children ?? [];
+  const tags = strips.map((r) => byClass(r, 'inv-tag')[0]);
+  ok('the LOOT pop-up: every find of the run as a strip, newest first, with its slot or Salvage (an unknown id skipped)', anyDialogOpen() && strips.length === 3
+    && strips[0].textContent.includes(DATA.items[other].name.toUpperCase()) && tags[0].textContent === 'Salvage' && String(tags[0].className).includes('inv-off')
+    && strips[1].textContent.includes('MOONBRAND') && tags[1].textContent === 'Weapon ↑' && tags[2].textContent === 'Ring ↑'
+    && byClass(strips[1], 'slot-art')[0]?.children[0]?.attrs?.src === itemArtUrl('moonbrand'));
+  dlg.close();
+  ok('…and it closes', !anyDialogOpen());
+  const css = readFileSync('styles.css', 'utf8');
+  ok('…four strips in view, the rest scrolled to', css.includes('.loot-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(4 * 64px + 3 * 8px); overflow-y: auto;') && css.includes('.loot-list .inv-row { flex: none; height: 64px;'));
+}
