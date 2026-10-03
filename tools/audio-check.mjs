@@ -104,8 +104,21 @@ const result = await page.evaluate(async () => {
     const rms = (a, s) => { let x = 0; for (let k = s; k < s + w; k++) x += a[k] * a[k]; return Math.sqrt(x / w); };
     const plain = (s) => { let x = 0; for (let k = s; k < s + w; k++) { const v = ref(k); x += v * v; } return Math.sqrt(x / w); };
     for (let s = loop - Math.round(0.5 * SR); s < loop + Math.round((t.tailS + 0.5) * SR); s += w) jump = Math.max(jump, Math.abs(db(rms(L, s)) - db(plain(s))));
+    // A generated bed (0.00277, crossfade 'power') crossfades its own
+    // continuation into its start: different music, so "restart = plain
+    // continuation" does not apply. Its seam is judged by level instead:
+    // the quietest 0.5 s inside the crossfade against the quieter of the
+    // second before it and the second after it (a dip = a seam you hear).
+    let seamDipDb = null;
+    if (t.crossfade === 'power') {
+      const lv = (a, s, n) => { let x = 0; for (let k = s; k < s + n; k++) x += a[k] * a[k]; return db(Math.sqrt(x / n)); };
+      const half = Math.round(0.5 * SR), sec = SR, tl = Math.round(t.tailS * SR);
+      let low = Infinity;
+      for (let s = loop; s + half <= loop + tl; s += Math.round(0.1 * SR)) low = Math.min(low, lv(L, s, half));
+      seamDipDb = low - Math.min(lv(L, loop - sec, sec), lv(L, loop + tl, sec));
+    }
     const v = windows(L, Rr, SR / 2).sort((a, b) => a - b);
-    music[name] = { restartErrDb: 10 * Math.log10(err / sig), jumpDb: jump, medianDb: v[v.length >> 1], p90Db: v[Math.floor(v.length * 0.9)] };
+    music[name] = { restartErrDb: 10 * Math.log10(err / sig), jumpDb: jump, seamDipDb, medianDb: v[v.length >> 1], p90Db: v[Math.floor(v.length * 0.9)] };
   }
   return { clips, music };
 });
@@ -122,6 +135,12 @@ for (const [n, c] of Object.entries(result.clips)) {
 }
 console.log('\n| bed | restart error dB | level jump dB | median dB | p90 dB |\n|---|---|---|---|---|');
 for (const [n, m] of Object.entries(result.music)) {
+  if (m.seamDipDb !== null) { // (a generated bed: its seam's dip, not the exact-loop measures)
+    const flag = !(m.seamDipDb > -4);
+    if (flag) bad++;
+    console.log(`| ${n} | generated: seam dip ${f(m.seamDipDb)} dB | — | ${m.medianDb.toFixed(1)} | ${m.p90Db.toFixed(1)} |${flag ? ' CHECK' : ''}`);
+    continue;
+  }
   const flag = m.restartErrDb > -20 || m.jumpDb > 1;
   if (flag) bad++;
   console.log(`| ${n} | ${m.restartErrDb.toFixed(1)} | ${m.jumpDb.toFixed(2)} | ${m.medianDb.toFixed(1)} | ${m.p90Db.toFixed(1)} |${flag ? ' CHECK' : ''}`);

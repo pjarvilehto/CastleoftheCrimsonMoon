@@ -12,8 +12,9 @@ import { fadeCurve } from './audioMath.js';
 // Plays from context time `when` into `dest` until stop().
 // ahead: copies kept scheduled beyond the playing one (1 live; more for
 // offline rendering).
-export function createLoop(ctx, buffer, dest, { loopS, tailS }, when, { ahead = 1 } = {}) {
-  const fadeIn = fadeCurve(32), fadeOut = fadeCurve(32, true);
+export function createLoop(ctx, buffer, dest, { loopS, tailS, crossfade }, when, { ahead = 1 } = {}) {
+  const power = crossfade === 'power'; // (a generated bed's tail is its own continuation, not a copy of its start: audioMath.fadeCurve)
+  const fadeIn = fadeCurve(32, false, power), fadeOut = fadeCurve(32, true, power);
   const seg = loopS + tailS;
   const live = new Set();
   let next = when, n = 0, stopped = false;

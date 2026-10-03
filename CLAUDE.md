@@ -134,6 +134,7 @@ node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' and the fo
 node tools/audio-check.mjs                   # every clip and bed measured as the game plays them (Playwright; the measuredDb the registry trusts)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
+node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a take into the game: the loop seam found, cut, levelled, audio.json pointed at it
 # libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
 # cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), simCore.mjs (the bot simulate.mjs and
 # the two studies share); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes a depth map, tools/gen-music.py the beds
@@ -1077,7 +1078,8 @@ from `main.js onTransition` so its measured loudest moment (`peakMs`)
 lands `peakAtMs` (2 s, the middle) into every transition, varied a little
 each play (its `variation` entry + `jitterDb`). Music: five
 generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
---suffix vN`, new suffix = new files), each an exact loop with its first
+--suffix vN`, new suffix = new files; title and combat are ElevenLabs
+scores since 0.00277 — "Generated scores" below), each an exact loop with its first
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
@@ -1098,10 +1100,32 @@ folder) and recorded in `assets/data/music-art.json` with its plan or
 prompt, seed, length and EBU R128 loudness (ffmpeg), the shipped beds'
 loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
-Music Lab in 0.00273; the next steps are the developer's verdicts, then
-an import that finds a loop seam (the end meeting the start), cuts the
-loop + `tailS`, measures it and points `audio.json music.tracks` at a
-new file (rule 7). **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+Music Lab in 0.00273; **the developer picked ElevenLabs for both**
+(`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00277,
+two takes each, awaiting verdicts). **The import (0.00277, `--import
+<bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
+a chroma + log-band vector, a seam's score the mean likeness of the 4 s
+after START against the 4 s after END, less 0.015 per dB of level
+difference, plus a little per second of loop; END then nudged ±140 ms so
+the onsets line up — START searched in the first 40%, END from the middle
+to where the compared window would reach the piece's fade (`autoRanges`;
+`--start a-b` / `--end c-d` pin them: the developer's note put combat's
+start at 0:23); the file is cut from START to END + `tailS` (3 s: the
+music's own continuation, not a copy of the start) at 128 kbps as
+`assets/audio/music-<bed>-v<k>.mp3`, levelled to the bed it replaces
+(`gainFor`: the old gainDb moved by the loudness difference), written
+into `audio.json` in place (`setTrack`) with **`crossfade: 'power'`**
+(`audioMath.fadeCurve(n, out, power)`, `musicLoop.js`: two different
+passages sum by power — equal gain dipped up to 3 dB mid-seam; the
+procedural beds keep equal gain, their tail IS their start), the old
+file removed, the take marked `imported`. Title: 0:25.7 → 1:49.9 (an
+84 s loop, the start pinned to the first 30 s; unpinned it found a
+closer but 64 s loop); combat: 0:23.2 → 1:24.5 (61 s; the take falls
+away after 1:26). **ElevenLabs limits:** two requests at a time per
+subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
+limit — waits and retries), and the API key carries its own credit cap
+(ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
+a 90 s bed ~1,125) — the developer raised it in 0.00277. **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (32 lines,
 four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,

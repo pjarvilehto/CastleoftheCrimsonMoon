@@ -132,6 +132,7 @@ export function checkData(data) {
   }
   for (const [id, t] of Object.entries(data.audio?.music?.tracks ?? {})) {
     if (typeof t?.file !== 'string' || !['loopS', 'tailS', 'gainDb'].every((k) => isNum(t[k]))) out.push(`audio.json: music.tracks.${id} (file, loopS, tailS, gainDb)`);
+    if (t?.crossfade !== undefined && !['gain', 'power'].includes(t.crossfade)) out.push(`audio.json: music.tracks.${id}.crossfade ('gain' for an exact loop, 'power' for a generated bed's own continuation)`);
   }
   for (const [id, v] of Object.entries(data.audio?.variation ?? {})) {
     if (v.rate && !(v.rate.length === 2 && v.rate.every(isNum) && v.rate[0] > 0)) out.push(`audio.json: variation.${id}.rate`);

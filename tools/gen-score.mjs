@@ -17,6 +17,14 @@
 //                                                       # approvals and rejections (+ notes), generates the re-rolls
 //                                                       # ({ id, model, n, hint, image })
 //   node tools/gen-score.mjs --measure                  # (re)measure the shipped beds' loudness for the lab
+//   node tools/gen-score.mjs --import combat_c2 [--start 21-25] [--end 70-86] [--tail 3] [--dry-run]
+//                                                       # a take into the game (0.00277): the loop seam found
+//                                                       # (tools/music-seam.mjs: the START and END that sound most
+//                                                       # alike, before the piece's fade; --start / --end pin the
+//                                                       # ranges in seconds), cut from START to END + the tail at
+//                                                       # 128 kbps as assets/audio/music-<bed>-v<k>.mp3 (a new name,
+//                                                       # rule 7), levelled to the bed it replaces (gainDb), written
+//                                                       # into audio.json music.tracks; the old bed's file removed
 //
 // The models: ElevenLabs Music by its own API (a composition plan: global
 // styles, an avoid list, a section per timestamp; ELEVENLABS_API_KEY), Lyria
@@ -30,6 +38,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { token, predict } from './replicate.mjs';
+import { decode, features, findSeam, alignEnd } from './music-seam.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'music-prompts.md');
@@ -38,7 +47,7 @@ const REGISTRY = join(ROOT, 'assets', 'data', 'music-art.json');
 const AUDIO = join(ROOT, 'assets', 'data', 'audio.json');
 const WEB = 'assets/audio/candidates';
 
-export const DEFAULTS = { n: 2, concurrency: 3, bitrate: '192k' };
+export const DEFAULTS = { n: 2, concurrency: 3, bitrate: '192k', elevenConcurrency: 2, tailS: 3, gameBitrate: '128k', minLoop: 60 }; // (ElevenLabs: two requests at a time per subscription)
 /** The bake-off: two beds, every model; Lyria's second take scores the bed's painting. */
 export const BAKEOFF = { beds: ['title', 'combat'], models: ['eleven', 'lyria', 'stable'] };
 
@@ -129,7 +138,23 @@ function toMp3(src, dest) {
 }
 
 // ---- the providers ----
+let elevenBusy = 0;
+const elevenWait = [];
 async function eleven(body) {
+  while (elevenBusy >= DEFAULTS.elevenConcurrency) await new Promise((r) => elevenWait.push(r));
+  elevenBusy++;
+  try {
+    for (let i = 0; ; i++) { // (a 429 for heavy traffic or the concurrency limit waits and tries again: 10, 20, 40, 60, 60 s; a quota error does not)
+      try { return await elevenOnce(body); } catch (err) {
+        if (i >= 5 || !/HTTP 429/.test(err.message)) throw err;
+        const s = [10, 20, 40, 60, 60][i];
+        console.log(`  ElevenLabs busy (${err.message.match(/"code":"(\w+)"/)?.[1] ?? '429'}): again in ${s} s`);
+        await new Promise((r) => setTimeout(r, s * 1000));
+      }
+    }
+  } finally { elevenBusy--; elevenWait.shift()?.(); }
+}
+async function elevenOnce(body) {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new Error('ELEVENLABS_API_KEY is not set');
   for (const fmt of ['mp3_44100_192', 'mp3_44100_128']) { // (192 kbps needs a Creator plan; 128 is every plan's)
@@ -151,6 +176,60 @@ async function generate(doc, bed, job) {
   if (job.image) input.images = [inlinePainting(bed.painting)];
   const out = await predict(MODELS[job.model].model, input);
   return { bytes: out.bytes, req, version: out.version, predictTime: out.metrics?.predict_time };
+}
+
+// ---- the import: a take into the game ----
+/** Where to look for the seam: START in the first 40%, END from the middle to just before the piece's fade (its level 6 dB under the median, smoothed over 2 s). */
+export function autoRanges({ db, hopS }, tailS = DEFAULTS.tailS, window = 4) {
+  const n = db.length, dur = n * hopS, k = Math.max(1, Math.round(2 / hopS));
+  const smooth = Array.from({ length: n }, (_, i) => { let s = 0, c = 0; for (let j = Math.max(0, i - k); j <= Math.min(n - 1, i + k); j++) { s += 10 ** (db[j] / 10); c++; } return 10 * Math.log10(s / c); });
+  const median = [...smooth].sort((a, b) => a - b)[Math.floor(n / 2)];
+  let fade = n - 1;
+  while (fade > n / 2 && smooth[fade] < median - 6) fade--;
+  const endMax = Math.min(fade * hopS - window, dur - tailS - window); // (the window compared after END must not reach the fade: inside it, a loud end's level read like a quiet start's)
+  return { startRange: [0, dur * 0.4], endRange: [dur * 0.5, endMax] };
+}
+/** The level the new bed plays at: the old bed's gainDb, moved by the loudness difference, so the mix stays as it was. */
+export const gainFor = (oldGain, oldLufs, newLufs) => Math.round((oldGain + oldLufs - newLufs) * 10) / 10;
+/** audio.json with one music track's block replaced in place (the file keeps its own layout; pure). */
+export function setTrack(text, id, t) {
+  const at = text.indexOf('"tracks": {');
+  const open = text.indexOf(`"${id}": {`, at), close = text.indexOf('}', open);
+  if (at < 0 || open < 0 || close < 0) throw new Error(`audio.json: no music.tracks.${id}`);
+  const indent = text.slice(text.lastIndexOf('\n', open) + 1, open);
+  const body = ['file', 'loopS', 'tailS', 'crossfade', 'gainDb'].filter((k) => t[k] !== undefined).map((k) => `${indent}  "${k}": ${JSON.stringify(t[k])}`).join(',\n');
+  return `${text.slice(0, open)}"${id}": {\n${body}\n${indent}}${text.slice(close + 1)}`;
+}
+const parseRange = (v) => (v ? v.split('-').map(Number) : null);
+function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, dry = false } = {}) {
+  const [id, cn] = ref.split('_c');
+  const bed = doc.beds.find((b) => b.id === id), e = reg.beds[id];
+  const k = cn ? e?.candidates.find((c) => c.n === Number(cn)) : [...(e?.candidates ?? [])].reverse().find((c) => c.verdict === 'ok');
+  if (!bed || !k) throw new Error(`--import ${ref}: no such take${cn ? '' : ' (and no approved take for the bed)'}`);
+  const src = join(ROOT, k.file);
+  const x = decode(src), f = features(x);
+  const auto = autoRanges(f, tail);
+  const ranges = { startRange: start ?? auto.startRange, endRange: end ?? auto.endRange };
+  const seam = findSeam(f, { ...ranges, minLoop: DEFAULTS.minLoop, tailS: tail });
+  const endS = alignEnd(x, seam.start, seam.end);
+  const SR44 = 44100, a = Math.round(seam.start * SR44), b = Math.round(endS * SR44), loopS = Math.round(((b - a) / SR44) * 1e4) / 1e4;
+  console.log(`${id}_c${k.n}: seam ${stamp(Math.round(seam.start))} → ${stamp(Math.round(endS))} (${seam.start.toFixed(2)} → ${endS.toFixed(2)} s), loop ${loopS} s + ${tail} s tail · alike ${seam.sim.toFixed(3)}, ${seam.dDb.toFixed(1)} dB apart · searched start ${ranges.startRange.map((v) => v.toFixed(0)).join('-')} s, end ${ranges.endRange.map((v) => v.toFixed(0)).join('-')} s`);
+  if (dry) return null;
+  const tracksText = readFileSync(AUDIO, 'utf8'), audio = JSON.parse(tracksText), old = audio.music.tracks[id];
+  let v = 3;
+  while (existsSync(join(ROOT, 'assets', 'audio', `music-${id}-v${v}.mp3`))) v++;
+  const file = `assets/audio/music-${id}-v${v}.mp3`;
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-v', 'error', '-i', src, '-af', `atrim=start_sample=${a}:end_sample=${b + Math.round((tail + 0.25) * SR44)},asetpts=PTS-STARTPTS`, '-ac', '2', '-ar', String(SR44), '-c:a', 'libmp3lame', '-b:a', DEFAULTS.gameBitrate, join(ROOT, file)], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`ffmpeg cut: ${r.stderr.slice(-300)}`); // (+0.25 s past the tail: a decoder may trim the last frames, and the loop plays [0, loopS + tailS) only)
+  const m = measure(join(ROOT, file));
+  const oldLufs = e.current?.file === old?.file ? e.current.lufs : measure(join(ROOT, old.file)).lufs;
+  const track = { file, loopS, tailS: tail, crossfade: 'power', gainDb: gainFor(old.gainDb, oldLufs, m.lufs) }; // (power: the tail is the music's continuation, not a copy of the start)
+  writeFileSync(AUDIO, setTrack(tracksText, id, track));
+  const refs = JSON.stringify(JSON.parse(readFileSync(AUDIO, 'utf8')));
+  if (old?.file && old.file !== file && !refs.includes(`"${old.file}"`)) { unlinkSync(join(ROOT, old.file)); console.log(`removed ${old.file} (nothing names it now)`); }
+  k.imported = { file, start: Math.round(seam.start * 1000) / 1000, end: Math.round(endS * 1000) / 1000, loopS, tailS: tail, gainDb: track.gainDb, lufs: m.lufs, at: new Date().toISOString() };
+  console.log(`→ ${file}: ${m.seconds} s, ${m.lufs} LUFS (the old bed ${oldLufs} at ${old.gainDb} dB) → gainDb ${track.gainDb}`);
+  return track;
 }
 
 // ---- the run ----
@@ -178,6 +257,12 @@ async function main() {
   const bedOf = (id) => doc.beds.find((b) => b.id === id) ?? (() => { throw new Error(`no bed "${id}" in docs/music-prompts.md`); })();
   const reg = loadRegistry();
 
+  if (has('--import')) {
+    if (has('--rerender')) { const v = applyVerdicts(reg, JSON.parse(readFileSync(val('--rerender'), 'utf8'))); console.log(`verdicts: ${v.approved} approved, ${v.rejected} rejected`); }
+    for (const ref of val('--import').split(',')) importBed(reg, doc, ref, { start: parseRange(val('--start')), end: parseRange(val('--end')), tail: Number(val('--tail') ?? DEFAULTS.tailS), dry: has('--dry-run') });
+    if (!has('--dry-run')) { measureCurrent(reg, doc); saveRegistry(reg); }
+    return;
+  }
   let wanted = []; // [{ id, model, n (count), hint, image }]
   if (has('--rerender')) {
     const req = JSON.parse(readFileSync(val('--rerender'), 'utf8'));

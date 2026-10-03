@@ -645,16 +645,18 @@
     "fadeS": 1.6,
     "tracks": {
       "title": {
-        "file": "assets/audio/music-title-v2.mp3",
-        "loopS": 96,
-        "tailS": 2,
-        "gainDb": 1.9
+        "file": "assets/audio/music-title-v3.mp3",
+        "loopS": 84.1956,
+        "tailS": 3,
+        "crossfade": "power",
+        "gainDb": 0.1
       },
       "combat": {
-        "file": "assets/audio/music-combat-v2.mp3",
-        "loopS": 60,
-        "tailS": 2,
-        "gainDb": 2.2
+        "file": "assets/audio/music-combat-v3.mp3",
+        "loopS": 61.3471,
+        "tailS": 3,
+        "crossfade": "power",
+        "gainDb": 0.2
       },
       "boss": {
         "file": "assets/audio/music-boss-v2.mp3",
