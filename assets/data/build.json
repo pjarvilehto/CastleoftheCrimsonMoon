@@ -1,5 +1,5 @@
 {
-  "version": "0.00265",
+  "version": "0.00266",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00266": [
+      "Stats have colours: damage rust, HP sage, armor slate, crit verdigris, loot ochre — the same on the Train row that raises a stat and wherever it shows (your gear, the stat boxes, your hero's card), so you can see what training moves."
+    ],
     "0.00265": [
       "Every class starts with its own kit: the Barbarian a notched hand axe and a wolfhide jerkin, the Wizard an apprentice's staff and a threadbare robe, the Necromancer a grave knife and a gravedigger's shroud, the Druid a budding branch and a bark vest, the Hexhunter a worn hand crossbow and a witchfinder's coat, the Plague Sister a tin censer and a sister's habit; the knight keeps his rusty sword and oak shield. Same strength as before; a new game puts it on when you choose your hero."
     ],
@@ -143,9 +146,6 @@
     "0.00252": [
       "Shrines: Bulwark is now the big-armor boon (+40% armor, at least +80) and Glass Cannon costs less armor (+50% damage for -30% armor); every shrine's price is about a third lighter",
       "Play stats: each shrine's three offers and your pick are recorded, so the stats page can show what players really choose"
-    ],
-    "0.00251": [
-      "Combat: the knight's card draws your hero large — the class name sits above the card, the gear as two columns at its top, the figure standing to the frame's edge."
     ]
   }
 }
