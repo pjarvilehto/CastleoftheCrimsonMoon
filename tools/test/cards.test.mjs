@@ -33,6 +33,14 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
     && readFileSync('labs/boot.js', 'utf8').includes('link[rel="stylesheet"][data-versioned]'));
 }
 
+// 0.00226: the light is MOVED to the card where the browser can (an OffscreenCanvas's transferToImageBitmap: no readback —
+// the first device report put Safari's createImageBitmap(canvas) at 13.5 ms a tick on the owner's iPhone); the copy stays as the fallback
+{
+  const src = readFileSync('src/ui/cardFx.js', 'utf8');
+  ok('the card light draws on an OffscreenCanvas and moves each card its bitmap; the hidden canvas and the 2D copy stay as fallbacks',
+    src.includes("typeof OffscreenCanvas === 'function'") && src.includes('e.bmp.transferFromImageBitmap(src.transferToImageBitmap())') && src.includes('else if (e.bmp) createImageBitmap(src, 0, 0, w, h)') && src.includes('else e.ctx.drawImage(src'));
+}
+
 // Without WebGL (the shim: no canvas contexts) a card is left as it is
 {
   const card = new El('div');

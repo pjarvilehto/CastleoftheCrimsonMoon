@@ -1,4 +1,7 @@
 {
+  "0.00226": [
+    "Card light (notes to come)"
+  ],
   "0.00225": [
     "Device reports: every run and benchmark now sends a small performance report with the play stats (frame-time histogram, time per subsystem, stalls with what was happening, the renderer's settings) — anonymous, never stored in your save.",
     "Play stats: a Device reports card with Copy / Copy all; the benchmark round is 0.00225, so the Great Hall asks once more."

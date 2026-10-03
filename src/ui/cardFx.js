@@ -137,11 +137,19 @@ const sizes = typeof ResizeObserver === 'function' ? new ResizeObserver((recs) =
 const enabled = () => isBg3dActive() && !reducedMotion();
 
 // The one GL context, made on first use; null when the browser has none.
+// 0.00226: an OffscreenCanvas where the browser has one with WebGL — its
+// transferToImageBitmap() MOVES the drawn picture to the card's canvas, no
+// copy, no readback. The first device report (the owner's iPhone) put the
+// card light at 13.5 ms of main thread per tick in the benchmark's Idle
+// phase, 6-8 ms in the fights, twenty times a second: Safari served
+// createImageBitmap(canvas) from a WebGL canvas as a GPU readback, one per
+// lit card per tick. The hidden <canvas> stays as the fallback.
 function sharedGl() {
   if (shared || failed) return shared;
   try {
-    const canvas = document.createElement('canvas');
-    canvas.width = GRAIN; canvas.height = GRAIN; // grown to the largest lit card as cards attach (fitShared)
+    const offscreen = typeof OffscreenCanvas === 'function';
+    const canvas = offscreen ? new OffscreenCanvas(GRAIN, GRAIN) : document.createElement('canvas');
+    if (!offscreen) { canvas.width = GRAIN; canvas.height = GRAIN; } // grown to the largest lit card as cards attach (fitShared)
     const gl = canvas.getContext?.('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
     if (!gl) { failed = true; return null; }
     const prog = program(gl, VS, FS); // (bg3dGL.js: the renderer's own helper, 0.00197)
@@ -151,8 +159,8 @@ function sharedGl() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const a = gl.getAttribLocation(prog, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
     const loc = Object.fromEntries(['uT', 'uAmt', 'uLook', 'uAspect', 'uWin', 'uTint'].map((n) => [n, gl.getUniformLocation(prog, n)]));
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); shared = null; failed = true; stop(); });
-    shared = { canvas, gl, loc };
+    canvas.addEventListener?.('webglcontextlost', (e) => { e.preventDefault(); shared = null; failed = true; stop(); });
+    shared = { canvas, gl, loc, offscreen };
   } catch { failed = true; shared = null; }
   return shared;
 }
@@ -186,7 +194,7 @@ export function attachCardFx(card, style, { window = 'frame', amt, into } = {}) 
 }
 
 function stop() {
-  for (const e of entries) { if (e.bmp) e.bmp.transferFromImageBitmap(null); else e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height); }
+  for (const e of entries) { try { if (e.bmp) e.bmp.transferFromImageBitmap(null); else e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height); } catch { /* gone */ } }
   sizes?.disconnect(); // (tidying: the browsers hold observed elements weakly)
   entries = []; running = false;
 }
@@ -201,21 +209,29 @@ function tick(now) {
   if (now - last < 1000 / (saver ? F.saverFps : F.fps) - 2) return;
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   const endSpan = span('cards'); // (the device report, 0.00225)
-  const { gl, loc, canvas: src } = shared;
+  const { gl, loc, canvas: src, offscreen } = shared;
+  const move = offscreen && typeof src.transferToImageBitmap === 'function';
   for (const e of entries) {
     if (sizes && e.w === undefined) continue; // not measured yet (0.00222: a clientWidth read here forced a layout on the room's first tick); the observer's first report is a tick away
     const w = Math.min(SIZE, Math.max(8, Math.round((e.w ?? e.card.clientWidth) * F.scale) || 8));
     const h = Math.min(SIZE, Math.max(8, Math.round((e.h ?? e.card.clientHeight) * F.scale) || 8));
-    if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; if (e.ctx) e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets a 2D context)
-    fitShared(w, h);
     e.t += dt * F.speed;
-    gl.viewport(0, src.height - h, w, h); // the top-left corner of the hidden canvas, as an image
+    if (move && e.bmp) {
+      // the offscreen canvas at this card's size (a transfer detaches its backing anyway, so the resize costs nothing extra), the whole of it moved to the card
+      if (src.width !== w || src.height !== h) { src.width = w; src.height = h; }
+      gl.viewport(0, 0, w, h);
+    } else {
+      if (e.canvas.width !== w || e.canvas.height !== h) { e.canvas.width = w; e.canvas.height = h; if (e.ctx) e.ctx.globalCompositeOperation = 'copy'; } // (a resize resets a 2D context)
+      fitShared(w, h);
+      gl.viewport(0, src.height - h, w, h); // the top-left corner of the hidden canvas, as an image
+    }
     gl.uniform1f(loc.uT, e.t); gl.uniform1f(loc.uAmt, e.amt);
     gl.uniform1f(loc.uLook, LOOKS.indexOf(e.look)); gl.uniform1f(loc.uAspect, w / h);
     gl.uniform2f(loc.uWin, e.win[0], e.win[1]); gl.uniform3fv(loc.uTint, e.tint);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    // the bitmap is taken now, in this task, before the next card draws over the region
-    if (e.bmp) createImageBitmap(src, 0, 0, w, h).then((b) => e.bmp.transferFromImageBitmap(b), () => {});
+    if (move && e.bmp) { try { e.bmp.transferFromImageBitmap(src.transferToImageBitmap()); } catch { /* a lost context: the next tick's check stops the loop */ } } // (the card's canvas takes the bitmap's size)
+    // else the bitmap is taken now, in this task, before the next card draws over the region
+    else if (e.bmp) createImageBitmap(src, 0, 0, w, h).then((b) => e.bmp.transferFromImageBitmap(b), () => {});
     else e.ctx.drawImage(src, 0, 0, w, h, 0, 0, w, h);
   }
   endSpan();
@@ -224,7 +240,7 @@ function tick(now) {
 // The card light as it runs, for the device report (0.00225).
 export function cardFxState() {
   const F = fxKnobs();
-  return { lit: entries.length, fps: saver ? F.saverFps : F.fps, scale: F.scale, saver, shared: shared ? [shared.canvas.width, shared.canvas.height] : null, bitmap: entries.some((e) => !!e.bmp) };
+  return { lit: entries.length, fps: saver ? F.saverFps : F.fps, scale: F.scale, saver, shared: shared ? [shared.canvas.width, shared.canvas.height] : null, bitmap: entries.some((e) => !!e.bmp), offscreen: !!shared?.offscreen };
 }
 
 // The hidden canvas grows to the largest lit card, in GRAIN steps (0.00222:

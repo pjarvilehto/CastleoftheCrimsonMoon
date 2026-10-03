@@ -290,7 +290,13 @@ ether), the shrine's boons and the treasure chests each their own
 WebGL context for the session draws every card in turn into a hidden
 canvas and each card's own canvas takes its picture as an ImageBitmap
 (a `bitmaprenderer` context; a `drawImage` into a small 2D canvas was a
-GPU readback per card per frame, 0.00197; 2D stays as the fallback)
+GPU readback per card per frame, 0.00197; 2D stays as the fallback —
+and since 0.00226 the hidden canvas is an `OffscreenCanvas` whose
+`transferToImageBitmap()` MOVES the picture to the card, no copy: the
+first device report put Safari's `createImageBitmap(canvas)` at 13.5 ms
+of main thread per tick on the owner's iPhone, the whole of its Idle
+drops; the `<canvas>` + `createImageBitmap` path stays where there is
+no OffscreenCanvas with WebGL)
 (`.card-fx`,
 screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
@@ -1016,9 +1022,13 @@ sometimes — fetch all branches to find it.
   gone (every tester is collected); the device report with every run and
   benchmark, the collector keeping the newest three, the dashboard's
   Device reports card with Copy / Copy all (the phone's heat is gone
-  since 0.00222, the owner reports; the iPhone's Idle phase still drops
-  12% of its frames at a 28 ms tail with the display rate held — the
-  report's `bg` span is what says whether it is the mist or the mesh).
+  since 0.00222, the owner reports). The first report (0.00225, the
+  iPhone): the renderer's draw 0.1-0.3 ms of main thread, the card light
+  13.5 ms a tick in Idle and 6-8 ms in the fights — Safari's
+  `createImageBitmap` from a WebGL canvas is a readback — hence the Idle
+  phase's 29% dropped frames at the display rate; 0.00226 moves the
+  picture instead (OffscreenCanvas). The next report says how much it
+  bought.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
