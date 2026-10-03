@@ -29,7 +29,7 @@ const rowText = (title, level, desc) => el('div', { class: 'row-text' },
   el('div', { class: 'row-desc' }, desc));
 const keyed = (name) => [el('u', {}, name[0]), name.slice(1)]; // (the hotkey's letter underlined)
 
-// A section's head (0.00237): its name, the purse it spends from (green
+// A section's head (0.00238): its name, the purse it spends from (green
 // while something in it can be bought) and a one-line hint. The phone's
 // sheets hide it (their tabs carry the name and the dot, styles.css 16).
 const secHead = (title, purse, amount, spend, hint) => [
@@ -136,7 +136,7 @@ export function equipSection(p, done) {
     slotRow('Amulet', eq.amulet));
 }
 
-// ---- THE KNIGHT (0.00237, the desktop's left panel; the owner's layout): his
+// ---- THE KNIGHT (0.00238, the desktop's left panel; the owner's layout): his
 // name and level, the card with his gear around it — weapon, armor, boots
 // on the left, the rings, trinket and amulet on the right, each slot as tall
 // as the card allows and its Forge button in the outer top corner — and his

@@ -65,7 +65,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     onEmpty: () => { botTimer = setTimeout(bot, BEAT_MS); },
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx),
-    onDeath: (i) => ui?.battle.whenGone(i), // (0.00220, as the dungeon: the fight pauses for each death)
+    onDeath: (i) => ui?.battle.deathStep(i), // (as the dungeon: a death waits only while a card is off screen)
   });
   const fxCtx = fxContext(() => ui);
 

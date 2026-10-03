@@ -18,7 +18,7 @@ import {
   forgeCost, forgeMaxed, forgeable } from '../../meta/leveling.js';
 import { statBox, potionLevel } from '../hud.js';
 import { recordsLine } from '../hubText.js';
-import { trainSection, alchemySection, equipSection, knightSection } from '../hubSections.js'; // the sections (0.00223; the knight 0.00237)
+import { trainSection, alchemySection, equipSection, knightSection } from '../hubSections.js'; // the sections (0.00223; the knight 0.00238)
 import { phoneLayout } from '../../shared/platform.js';
 import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
@@ -125,7 +125,7 @@ export function hubScene(opts = {}) {
     // the way forward pulses when nothing here can be bought (the first visit: 0 XP, 0 coins, three panels of upgrades — 0.00200)
     const descendBtn = el('button', { class: `primary${!canSpendXp(p) && !canSpendCoins(p) ? ' active' : ''}`, key: 'd', proceed: true, onclick: () => descend(descendBtn) }, 'Descend into the Dungeon');
     // The hall's sections as the phone's sheets (0.00209: one table; phoneHall
-    // stacks them under tabs). 0.00237: the desktop and the tablet draw the
+    // stacks them under tabs). 0.00238: the desktop and the tablet draw the
     // knight panel, TRAIN and ALCHEMY instead (below) — the phone's own pass
     // is still to come. spend: something in it can be bought now (the tab's dot).
     const hall = [
@@ -137,7 +137,7 @@ export function hubScene(opts = {}) {
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
     if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); settleStats(boxes, vals, purchase); return; }
-    // The desktop and the tablet (0.00237, the owner's layout): the hall's
+    // The desktop and the tablet (0.00238, the owner's layout): the hall's
     // name and the records up top; the knight with his gear and numbers,
     // TRAIN and ALCHEMY as three panels of one height; the way on at the
     // foot. Each purse sits in the head of the section that spends it.

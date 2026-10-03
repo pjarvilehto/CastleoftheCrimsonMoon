@@ -1,5 +1,5 @@
 {
-  "version": "0.00240",
+  "version": "0.00241",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00241": [
+      "Heavy blows are quick again: the strike runs from one enemy to the next without waiting for each fallen card to leave (the pause stays only where a card is off the screen)"
+    ],
     "0.00240": [
       "Room paintings: four more Seedream 4 versions of each of the guide's two prompts (the owner's pick from the verbatim round)"
     ],
@@ -137,9 +140,6 @@
     "0.00227": [
       "Card light: every card now draws its glow on a canvas of its own, handed from room to room, instead of copying each card's picture out of one hidden canvas every frame (the iPhone spent 13 ms a tick on that at rest).",
       "A new benchmark round (0.00226): please run the benchmark again on each device — the Great Hall asks once past room 6, the ?debug BENCHMARK button any time."
-    ],
-    "0.00226": [
-      "A new typeface: D-DIN Condensed Bold, free to use (Open Font License), replaces the old DIN Condensed — the look is the same, the font is a third of the download"
     ]
   }
 }
