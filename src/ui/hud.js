@@ -2,6 +2,7 @@
 
 import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
+import { itemArtUrl, potionArtUrl } from '../shared/itemArt.js';
 
 // Low health (0.126): at or under difficulty.json lowHpShare of max HP the
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
@@ -54,9 +55,11 @@ const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '
 // of every hit's frame.
 const LOG_MAX_LINES = 200;
 
+// 0.00260: an { item, id } part (run/loot.js takeItem) leads with the item's
+// small picture, rimmed in its rarity.
 export function logLine(logEl, content, cls = 'sys') {
   const parts = (Array.isArray(content) ? content : [content])
-    .map((p) => (p && typeof p === 'object' && p.item ? itemName(p.item) : p));
+    .map((p) => (p && typeof p === 'object' && p.item ? [p.id ? itemPic(p.id, 'log-art') : null, itemName(p.item)] : p?.potion ? potionPic('log-art') : p)); // (0.00263: { potion } = the potion's picture)
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
   logEl.insertBefore(line, logEl.children[0] ?? null);
   while (logEl.children.length > LOG_MAX_LINES) logEl.children[logEl.children.length - 1].remove();
@@ -74,6 +77,24 @@ export function rarityClass(item) {
 export function itemName(item) {
   return el('span', { class: rarityClass(item) }, item.name);
 }
+
+// An item's picture (0.00260, items.json art): an <img> classed `item-pic
+// tier-N` (+ cls) for the rarity rim, or null for an item with none.
+export function itemPic(id, cls = '') {
+  const src = itemArtUrl(id), item = DATA.items[id];
+  return src ? el('img', { class: `item-pic tier-${Math.min(4, Math.max(1, item.tier || 1))}${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
+}
+
+// The healing potion's picture (0.00263): the hero card's count, the potion's card in combat.
+export function potionPic(cls = '') {
+  const src = potionArtUrl();
+  return src ? el('img', { class: `item-pic potion-pic${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
+}
+
+// A worn slot's name (0.00248, from hubSections.js; 0.00260 here, so combat's
+// find card names it too): the settle record's { slot, index }.
+const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', amulet: 'Amulet' };
+export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);
 
 // One-line description of an item's stat bonuses, e.g. "+9 dmg".
 export function describeItem(item) {

@@ -36,7 +36,13 @@ fresh();
   ok('background stage completes and reports progress (over the essentials)', rp.ready && rp.done === rp.total && rp.total === need.length);
   ok('the stage waits for no room painting; the rooms load after the essentials',
     DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
-    && later.join() === [...need, ...pre.heroLaterUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between)
+    && later.join() === [...need, ...pre.heroLaterUrls(), ...pre.itemUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between; 0.00260: the gear's pictures)
+  {
+    const { getProfile } = await import('../../src/meta/profile.js');
+    const items = pre.itemUrls(), weapon = `assets/items/${DATA.items[getProfile().equipment.weapon].art}`;
+    ok('the gear\'s pictures load after the essentials, before the rooms: every item\'s, once, the worn gear first (0.00260)',
+      items.length === Object.keys(DATA.items).length + 1 && items.includes(`assets/items/${DATA.difficulty.potions.art}`) && new Set(items).size === items.length && items.indexOf(weapon) < 7 && !need.some((u) => items.includes(u)));
+  }
 
   const cs = (w, h) => bm.coverScale(w, h, 2048, 1152).map((x) => Math.round(x * 1000) / 1000).join(',');
   ok('cover mapping matches CSS cover', cs(1920, 1080) === '1,1' && cs(1024, 768) === '0.75,1' && cs(2560, 1080) === '1,0.75');

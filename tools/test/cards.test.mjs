@@ -81,23 +81,43 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('the band carries the mask and is three cards wide; the copy keeps its brightness', css.includes('.glint-band {\n  position: absolute; top: 0; bottom: 0; left: -100%; width: 300%;') && css.includes('.portrait.glint { filter: brightness(1.9) saturate(0.5); max-width: calc(128% / 3); }') && !/\.portrait\.glint \{[^}]*mask/.test(css));
 }
 
-// The knight's card turns to its STATS back on a click and back again
-// (0.00256); the back shows the run's own totals and follows the tick.
+// The knight's card turns over on a click (0.00256 / 0.00258): STATS, then
+// INVENTORY, then the hero again; the pages show the run's own numbers and
+// gear and follow the tick. The ⓘ under the gear says it turns.
 {
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const { getProfile } = await import('../../src/meta/profile.js');
+  const p0 = getProfile();
+  const eq0 = JSON.stringify(p0.equipment);
+  p0.equipment.weapon = 'moonbrand'; p0.equipment.amulet = null;
   const run = createRun();
   const p = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
-  const back = p.card.children.find((n) => n.classList.contains('card-back'));
-  const val = (label) => back.children.find((r) => r.children?.[0]?.textContent === label)?.children[1].textContent;
-  await p.card.listeners.click[0](); await sleep(0);
-  const flipped = p.card.classList.contains('flipped');
+  const all = (n, f, out = []) => { if (f(n)) out.push(n); (n.children ?? []).forEach((c) => all(c, f, out)); return out; };
+  const has = (cls) => (n) => n.classList?.contains(cls);
+  const back = all(p.card, has('card-back'))[0];
+  const [stats, inv] = [all(back, has('back-stats'))[0], all(back, has('back-inv'))[0]];
+  const val = (label) => stats.children.find((r) => r.children?.[0]?.textContent === label)?.children[1].textContent;
+  const click = async () => { await p.card.listeners.click[0](); await sleep(0); };
+  ok('the ⓘ sits under the gear names', all(p.card, has('gear-names'))[0].children.some((c) => c.classList?.contains('info-i') && c.textContent === 'i'));
+  await click();
+  const onStats = p.card.classList.contains('flipped') && !p.card.classList.contains('page-inv');
   run.hp = run.maxHp - 7; run.stats.lifesteal = 0.25;
   p.update({ hp: run.hp, heavyCd: 0, heavyReady: true });
-  ok('a click turns the knight\'s card to STATS: health, attack, armor, crit, lifesteal from the run, kept current by the tick', flipped && back.children[0].textContent === 'Stats'
+  ok('a first click turns the card to STATS: the run\'s health, attack, crit, lifesteal, potions, kept current by the tick', onStats && stats.children[0].textContent === 'Stats'
     && val('Health') === `${run.maxHp - 7} / ${run.maxHp}` && val('Attack') === `${run.stats.dmg}` && val('Lifesteal') === '25%'
     && val('Crit damage') === `×${(DATA.difficulty.combat.critMult + run.stats.critBonus).toFixed(2)}` && val('Potions') === `${run.potions} / ${run.potionCap}`);
-  await p.card.listeners.click[0](); await sleep(0);
-  ok('…and a second click turns it back', !p.card.classList.contains('flipped'));
+  run.itemsFound.push('vampiric_ring');
+  await click();
+  const rows = all(inv, has('inv-row'));
+  ok('a second click turns it to INVENTORY: every gear slot with the worn item (or Empty), and this run\'s finds', p.card.classList.contains('flipped') && p.card.classList.contains('page-inv')
+    && inv.children[0].textContent === 'Inventory' && rows.length === 7 && rows[0].textContent.includes('MOONBRAND') && rows[6].textContent.includes('Empty')
+    && inv.textContent.includes('Found this run') && inv.textContent.includes('VAMPIRIC RING') && inv.textContent.includes('Ring ↑'));
+  run.itemsFound.push('ring_of_might', 'lucky_charm', 'traveler_boots');
+  p.update({ hp: run.hp, heavyCd: 0, heavyReady: true });
+  ok('…the finds follow the tick, the newest three shown and the rest counted', inv.textContent.includes("TRAVELER'S BOOTS") && !inv.textContent.includes('VAMPIRIC RING') && inv.textContent.includes('+1 more'));
+  await click();
+  ok('…and a third click turns it back to the hero', !p.card.classList.contains('flipped') && !p.card.classList.contains('page-inv'));
+  p0.equipment = JSON.parse(eq0);
 }
 
 // The cards in 3D, played (0.00223: the harness lends Web Animations for a

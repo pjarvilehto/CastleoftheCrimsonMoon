@@ -89,14 +89,18 @@ export function checkData(data) {
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
   for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
+  // every item names its picture (0.00260): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
+  for (const [id, it] of Object.entries(data.items ?? {})) if (typeof it?.art !== 'string' || !/\.webp$/.test(it.art)) out.push(`items.json: ${id}.art (the item's picture, a .webp in assets/items/)`);
+  if (typeof data.difficulty?.potions?.art !== 'string' || !/\.webp$/.test(data.difficulty.potions.art)) out.push('difficulty.json: potions.art (the healing potion\'s picture, a .webp in assets/items/; 0.00263)');
   // the character classes (0.00248): every hero whole, the default one of them
   const heroes = Array.isArray(data.heroes?.heroes) ? data.heroes.heroes : [];
   if (!heroes.length) out.push('heroes.json: heroes (a list)');
   for (const h of heroes) {
     if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
     if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((l) => typeof l?.art === 'string' && l.art && isNum(l.fh) && l.fh > 0 && l.fh <= 1)) out.push(`heroes.json: ${h?.id}.looks (one per look: art, the figure file in assets/heroes/, and fh, its share of the sheet's height, 0-1)`);
+    for (const slot of ['weapon', 'armor']) { const id = h?.kit?.[slot]; if (data.items?.[id]?.slot !== slot) out.push(`heroes.json: ${h?.id}.kit.${slot} (the class's starting ${slot}, an item of that slot; 0.00265)`); }
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
-    if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00259)`);
+    if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00266)`);
     // the class (0.00258): every number present, the heavy one the engine knows
     const c = h?.class;
     const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];

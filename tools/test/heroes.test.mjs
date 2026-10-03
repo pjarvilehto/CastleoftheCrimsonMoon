@@ -16,8 +16,8 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   fresh();
   const ids = heroList().map((h) => h.id);
   ok('seven heroes, the knight the default', ids.join() === 'knight,barbarian,wizard,necromancer,druid,hexhunter,plaguesister' && defaultHero().id === 'knight');
-  ok('every look of every hero is a file on disk: the knight one, the others their sheets (35 figures)', heroList().every((h) => h.looks.length >= 1 && h.looks.every((l) => statSync(`${HERO_DIR}/${l.art}`).isFile() && l.fh > 0.7 && l.fh < 1))
-    && heroArtUrls().length === 35 && heroById('knight').looks.length === 1 && heroById('wizard').looks.length === 8);
+  ok('every look of every hero is a file on disk: the knight\'s five (0.00264: four standing + the old crouch), the others their sheets (39 figures)', heroList().every((h) => h.looks.length >= 1 && h.looks.every((l) => statSync(`${HERO_DIR}/${l.art}`).isFile() && l.fh > 0.7 && l.fh < 1))
+    && heroArtUrls().length === 39 && heroById('knight').looks.length === 5 && heroById('wizard').looks.length === 8);
   const { essentialUrls, restUrls, roomUrls } = await import('../../src/shared/preload.js');
   getProfile().hero = { id: 'wizard', look: 3 };
   ok('the preloader fetches the figures the screen opens on first among the essentials (every first look and the profile\'s own), the other looks behind', essentialUrls().slice(0, 7).join() === heroFirstUrls(getProfile()).join()
@@ -42,7 +42,19 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
 // the portrait follows the pick: the knight keeps cards.json player.art (the Art Lab's import path), the others their look
 {
   fresh();
-  ok('the knight\'s card draws cards.json player.art (an unchosen save is the knight\'s too)', portraitUrl('player') === `assets/chars/${DATA.cards.player.art}` && (getProfile().hero = { id: 'knight', look: 0 }, portraitUrl('player') === `assets/chars/${DATA.cards.player.art}`));
+  const knight = heroById('knight'), crouch = knight.looks.findIndex((l) => l.sprite);
+  ok('the knight\'s card draws his standing look (an unchosen save is the knight\'s too); only his crouching look keeps cards.json player.art (0.00264)', portraitUrl('player') === lookUrl(knight, 0)
+    && (getProfile().hero = { id: 'knight', look: 2 }, portraitUrl('player') === lookUrl(knight, 2))
+    && crouch === 4 && (getProfile().hero = { id: 'knight', look: crouch }, portraitUrl('player') === `assets/chars/${DATA.cards.player.art}`));
+  {
+    const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+    const { createRun } = await import('../../src/run/runState.js');
+    getProfile().hero = { id: 'knight', look: 1 };
+    const standing = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} }).card.classList.contains('hero-standing');
+    getProfile().hero = { id: 'knight', look: crouch };
+    const wide = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} }).card.classList.contains('hero-standing');
+    ok('...his card stands like the other classes\', but for the crouch (the wide sprite)', standing && !wide);
+  }
   getProfile().hero = { id: 'necromancer', look: 2 };
   ok('another hero\'s card draws that hero\'s look', portraitUrl('player') === lookUrl(heroById('necromancer'), 2) && portraitUrl('player').startsWith('assets/heroes/'));
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
@@ -50,7 +62,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const u = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
   ok('the knight\'s card is named after the class, above the card (0.00251)', u.el.all((n) => n.className === 'hero-title card-name')[0].textContent === 'THE NECROMANCER' && !u.card.all((n) => n.className.includes('card-name')).length
     && u.card.all((n) => n.className === 'gear-vals')[0].textContent.includes('LV1'));
-  // the heavy's name per class (0.00259, the developer's picks)
+  // the heavy's name per class (0.00266, the developer's picks)
   const heavyLabel = (unit) => unit.el.all((n) => n.className === 'btn-label')[0].textContent.replace(/\s*\(\d+\)$/, '');
   ok('the heavy button carries the class\'s own name (the Necromancer: Soul Drain), on the H key still', heavyLabel(u) === 'Soul Drain' && u.el.all((n) => n.tagName === 'button')[0].attrs['data-key'] === 'h'
     && u.card.all((n) => n.className === 'back-row').some((r) => r.textContent.startsWith('Soul Drain')));
@@ -84,12 +96,13 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   const figure = cards().find((c) => c.attrs['data-hero'] === 'druid').all((n) => n.className === 'figure')[0];
   ok('the figure draws that look, at its own sheet share', figure.attrs.src === lookUrl(heroById('druid'), 4) && figure.attrs.style === `--fh:${lookOf(heroById('druid'), 4).fh}`);
   handleKey('1');
-  ok('back to the knight, one look only: the switcher hides; the druid\'s own look is kept (each hero remembers its look while the player compares)', chosen() === 'knight' && switcher().classList.contains('single') && switcher().textContent.includes('Look 1 of 1') && (handleKey('5'), switcher().textContent.includes('Look 5 of 5') && !switcher().classList.contains('single')));
+  ok('back to the knight, his five looks (0.00264); the druid\'s own look is kept (each hero remembers its look while the player compares)', chosen() === 'knight' && !switcher().classList.contains('single') && switcher().textContent.includes('Look 1 of 5') && (handleKey('5'), switcher().textContent.includes('Look 5 of 5') && !switcher().classList.contains('single')));
   ok('nothing is saved until Proceed', getProfile().hero === null);
   handleKey(' ');
   await sleep(1300);
   ok('Proceed lands the pick on the profile and leads to the Great Hall', getProfile().hero.id === 'druid' && getProfile().hero.look === 4 && t().includes('GREAT HALL')
     && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).hero.look === 4);
+  ok('...and a new save puts on the class\'s starting kit (0.00265): the druid\'s branch and bark vest', getProfile().equipment.weapon === 'budding_branch' && getProfile().equipment.armor === 'bark_vest');
   ok('the hall names the class where the player has no name', (getProfile().name = '', show((await import('../../src/ui/scenes/index.js')).hubScene()), await sleep(1100), t().includes('The Druid')));
   getProfile().name = 'Tester';
 }
@@ -155,10 +168,13 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   await sleep(50);
   ok('Space (Done) closes it and the hall shows the new look', !dialog() && card().textContent.includes('Look 8 of 8'));
   ok('the hall\'s hotkeys were held while it was open', t().includes('GREAT HALL'));
-  // the knight: one look, nothing to pick
+  // a hero with one look (none since the knight's standing sheets, 0.00264 — the data trimmed for the check): nothing to pick
+  const knightLooks = heroById('knight').looks;
+  heroById('knight').looks = [knightLooks[0]];
   getProfile().hero = { id: 'knight', look: 0 };
   show((await import('../../src/ui/scenes/index.js')).hubScene()); await sleep(1100);
   ok('a hero with one look: the portrait is not pickable and names the class', !card().classList.contains('pickable') && !card().listeners.click && card().textContent.includes('The Curious Knight'));
+  heroById('knight').looks = knightLooks;
   globalThis.document.body = realBody;
   // the stats
   const { runRecord } = await import('../../src/meta/history.js');

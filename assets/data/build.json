@@ -1,5 +1,5 @@
 {
-  "version": "0.00257",
+  "version": "0.00265",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -45,6 +45,7 @@
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
     "src/shared/heroes.js",
+    "src/shared/itemArt.js",
     "src/shared/level.js",
     "src/shared/motion.js",
     "src/shared/platform.js",
@@ -69,6 +70,7 @@
     "src/ui/deathModal.js",
     "src/ui/debugToggles.js",
     "src/ui/dialog.js",
+    "src/ui/findFx.js",
     "src/ui/fx.js",
     "src/ui/fxParts.js",
     "src/ui/hubSections.js",
@@ -93,6 +95,33 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00265": [
+      "Every class starts with its own kit: the Barbarian a notched hand axe and a wolfhide jerkin, the Wizard an apprentice's staff and a threadbare robe, the Necromancer a grave knife and a gravedigger's shroud, the Druid a budding branch and a bark vest, the Hexhunter a worn hand crossbow and a witchfinder's coat, the Plague Sister a tin censer and a sister's habit; the knight keeps his rusty sword and oak shield. Same strength as before; a new game puts it on when you choose your hero."
+    ],
+    "0.00264": [
+      "The Curious Knight now stands like the other classes, in four new looks to choose from; his old crouching pose is still there as the fifth."
+    ],
+    "0.00263": [
+      "Potions have a picture: on your hero's card beside the count, and in the log.",
+      "A potion found in combat rises as a card like a find, then flies into your hero's potion count, which glows as it counts it."
+    ],
+    "0.00262": [
+      "A find in combat now flies into your LOOT at the bottom left (it's yours once you leave the castle), and lands there with a flash; on a phone it flies to your coins."
+    ],
+    "0.00261": [
+      "Housekeeping: the item pictures' notes name the build they came in; nothing changes in the game."
+    ],
+    "0.00260": [
+      "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
+      "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
+      "The run's end shows your finds as cards, each with what it replaced and gained, and what was salvaged as small grey pictures; back in the Great Hall each find's picture flashes into its slot."
+    ],
+    "0.00259": [
+      "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
+    ],
+    "0.00258": [
+      "Combat: your hero's card shows a small (i) under the gear — tap the card for your stats, again for your inventory (the gear you wear and what this run has found), and once more to turn it back."
+    ],
     "0.00257": [
       "The light behind the cards in combat is drawn at 60 frames a second on desktops (it was 30, a cap from before each card had its own canvas); phones keep 20."
     ],
@@ -117,32 +146,6 @@
     ],
     "0.00251": [
       "Combat: the knight's card draws your hero large — the class name sits above the card, the gear as two columns at its top, the figure standing to the frame's edge."
-    ],
-    "0.00250": [
-      "Choose your hero: the chosen card's gold rim sits on the card's own edge and its red plate pulses slowly; a standing hero fills the knight's card in the fights (the wizard read small beside the enemies)."
-    ],
-    "0.00249": [
-      "Back in the Great Hall after a run, every item you found takes its place one by one — your old gear first, then the new piece glowing in with a NEW tag as your stats climb"
-    ],
-    "0.00248": [
-      "Choose your hero: after Enter the Castle you pick your character — the Curious Knight or the new Barbarian, Wizard, Necromancer, Druid, Hexhunter and Plague Sister — and, under the chosen one, a look from their sheets (35 figures from the developer's art); the knight's card in the hall and the fights draws your hero. The choice is cosmetic for now."
-    ],
-    "0.00247": [
-      "Hero Lab: the CHOOSE YOUR HERO screen as a draft — the Curious Knight and four new classes (Barbarian, Wizard, Necromancer, Druid) over any painting, in two layouts (labs/heroes/)."
-    ],
-    "0.00246": [
-      "Docs: a light sweep — the notes say developer where they said owner; the quick start lists the art tools; the handover and the backlog read as of this build (the redrawn portraits and the LoRAs, the Background Lab's stages, the two new rooms); the painting counts"
-    ],
-    "0.00245": [
-      "Lifesteal rebalanced: it now grows with the gear tiers instead of arriving all at once — tier-2 lifesteal gear heals about a third of what it did, tier-3 about 60%, the relics are unchanged, and Life Drain grants +50% (was +100%)"
-    ],
-    "0.00244": [
-      "Two new rooms in the castle: The Clock Tower and The Blood Baths (the owner's approvals in the Background Lab; the first paintings from the new generator, with their depth maps and fog)",
-      "gen-bg.mjs --import gives a new painting its fog override; the three approvals recorded and the rooms' other candidates pruned"
-    ],
-    "0.00243": [
-      "Settings: the corner buttons are one SETTINGS menu (Audio, Display, Game), with Fullscreen as an icon beside it; DEBUG MODE at the bottom shows the testing tools — no ?debug needed",
-      "Thorns can now finish a foe: no more enemies left standing at 1 HP"
     ]
   }
 }

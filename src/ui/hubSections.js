@@ -20,7 +20,7 @@ import {
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
   ALCHEMY_DEFS, alchemyCost, alchemyMaxed, trainAlchemy,
   forgeCost, forgeMaxed, forgeItem, forgeable } from '../meta/leveling.js';
-import { describeItem, itemName, rarityClass, statBox, potionLevel } from './hud.js';
+import { describeItem, itemName, itemPic, rarityClass, statBox, potionLevel, gearLabel } from './hud.js';
 import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
 
 // A row's text (0.00232, the developer's ask): the title — the name and its
@@ -101,9 +101,8 @@ export function alchemySection(p, phone, done, spend = false) {
     }));
 }
 
-// A worn slot's label in the hall, from the settle record's slot (0.00248).
-const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', amulet: 'Amulet' };
-export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);
+// A worn slot's label in the hall (0.00248; it lives in hud.js since 0.00260, combat's find card names slots too).
+export { gearLabel };
 // The NEW tag on a slot this run's finds filled (0.00248; the hall's reveal).
 const newTag = (found, label) => (found.has(label) ? el('span', { class: 'slot-new' }, 'New') : null);
 
@@ -116,7 +115,9 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
     // The Forge only enhances tier 2+ gear — tier 1 starter junk is not
     // worth the coins, so it gets no enhance button at all (0.068).
     const canForge = !!item && forgeable(id) && !waiting.has(label);
-    return el('div', { class: 'item-row', 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
+    const pic = id ? itemPic(id) : null;
+    return el('div', { class: `item-row${pic ? ' has-art' : ''}`, 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
+      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00260: the item's picture behind the row's left end, fading toward the name)
       el('span', { class: 'equip-slot' }, label, newTag(found, label)),
       item
         ? el('div', { class: 'equip-right' },
@@ -165,7 +166,9 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     const item = id ? itemWithForge(id, p) : null;
     if (!item) return el('div', { class: 'gear-slot empty', 'data-row': `slot-${label}` }, el('div', { class: 'slot-kind' }, label), el('div', { class: 'slot-name' }, '— empty —'));
     const forgeLvl = p.forged[id] ?? 0;
-    return el('div', { class: `gear-slot gear-${rarityClass(item)}${found.has(label) ? ' found' : ''}`, 'data-row': `slot-${label}` },
+    const pic = itemPic(id);
+    return el('div', { class: `gear-slot gear-${rarityClass(item)}${found.has(label) ? ' found' : ''}${pic ? ' has-art' : ''}`, 'data-row': `slot-${label}` },
+      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00260: the item's picture on the slot's outer side, fading toward the card; the text over it)
       el('div', { class: 'slot-kind' }, label, newTag(found, label)),
       waiting.has(label) ? null
       : forgeable(id) && !forgeMaxed(id)

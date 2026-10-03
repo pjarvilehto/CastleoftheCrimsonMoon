@@ -18,8 +18,14 @@ import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile, persist } from '../../meta/profile.js';
-import { heroList, heroById, cleanHero, lookUrl, lookOf } from '../../shared/heroes.js';
+import { heroList, heroById, cleanHero, lookUrl, lookOf, heroKit } from '../../shared/heroes.js';
 import { play } from '../../audio/music.js';
+
+// The class's kit replaces the default starting gear slot by slot (the knight's kit is that gear: no change).
+export function wearKit(p, hero) {
+  const g = DATA.difficulty.player.startingGear, kit = heroKit(hero);
+  for (const slot of ['weapon', 'armor']) if (p.equipment?.[slot] === g[slot] && kit?.[slot]) p.equipment[slot] = kit[slot];
+}
 
 export function heroScene() {
   return {
@@ -75,6 +81,8 @@ export function heroScene() {
     }
     function proceed() {
       const p = getProfile();
+      // a new save puts on the class's starting kit (0.00265, heroes.json kit): only over the default starting gear, never over a find
+      if (!p.hero) wearKit(p, heroById(chosen));
       p.hero = cleanHero({ id: chosen, look: looks[chosen] });
       persist();
       go('hub');

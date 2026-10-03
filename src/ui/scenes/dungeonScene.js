@@ -19,7 +19,7 @@ import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runS
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
-import { logLine, itemName, markWayOn } from '../hud.js';
+import { logLine, itemName, itemPic, markWayOn } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
@@ -39,6 +39,8 @@ import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
+const LOOT_SHOWN = 6; // (the look: the row's length under XP / COINS; a phone has none, styles.css — the hero card's inventory page lists them)
+
 export function dungeonScene() {
   const run = createRun();
   let combat = null;
@@ -50,22 +52,37 @@ export function dungeonScene() {
   let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
+  let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures
+  let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
+  let lootFlying = 0;   // finds whose card is still on its way to the row (0.00262)
 
   const playback = createPlayback({
     logEl: () => logEl,
     onTick: () => { if (ui) updateCombat(); },
     onEmpty: () => {
       tickUpChips();
+      showLoot(run.itemsFound.length - lootFlying); // (an OVERKILL's silent finds too, once the room's lines are out; a card still flying lands on its own)
       if (combat.over && !combat.victory) openDeathModal();
       // a boss falls: the win dialog the first time, else the narrator's word (0.161)
       if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
-    onFx: (fx) => fx && playFx(fx, fxCtx),
+    onFx: (fx) => {
+      if (!fx) return;
+      if (fx.kind === 'find') lootEl?.classList.remove('none'); // (0.00262: the row shows before the first find takes off — the card flies into it)
+      const landsIn = playFx(fx, fxCtx);
+      if (fx.kind !== 'find') return;
+      if (typeof landsIn !== 'number') { showLoot(lootShown + 1); return; } // (no flight — reduced motion: at once)
+      lootFlying++;
+      setTimeout(() => { lootFlying--; showLoot(lootShown + 1, false, true); }, landsIn); // (the row takes it as the card lands)
+    },
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
     onDeath: (i) => ui?.battle.deathStep(i), // the fallen card's leaving and the restack are a step of their own (0.00220) — only while a card is off screen (battleRoom.js)
   });
   const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
+  fxCtx.loot = () => lootEl; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
+  fxCtx.lootAhead = () => lootFlying; // — past the ones still on their way
+  fxCtx.run = () => run; // (a found potion's card says the satchel's count, 0.00263)
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
@@ -164,11 +181,13 @@ export function dungeonScene() {
       battle.line, // ui/battleRoom.js
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
-        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins)))),
+        el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
+        lootEl = el('div', { class: 'res-row res-loot none' }, el('span', { class: 'res-label' }, 'LOOT'), el('span', { class: 'loot-tray' }))),
       layer,
       logEl,
       proceed);
     logEl.className = 'docked';
+    showLoot(run.itemsFound.length, true); // (a new room: every find so far is out — a chest's too)
     battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
@@ -195,6 +214,24 @@ export function dungeonScene() {
     if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
   }
 
+  // The LOOT row (0.00260): the newest LOOT_SHOWN of the run's finds, oldest first.
+  // landed: a card has just flown in — the new chip pops (0.00262).
+  function showLoot(n, rebuild = false, landed = false) {
+    n = Math.min(n, run.itemsFound.length);
+    if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
+    const grew = n > lootShown;
+    lootShown = n;
+    const tray = lootEl.children[1];
+    tray.textContent = '';
+    tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, 'loot-chip')).filter(Boolean));
+    lootEl.classList.toggle('none', n === 0 && !lootFlying);
+    const chip = tray.children[tray.children.length - 1];
+    if (landed && grew) chip?.animate?.([ // (one-shot: the chip lands with a flash)
+      { transform: 'scale(1.7)', filter: 'brightness(2.2)' },
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+    ], { duration: 420, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
+  }
+
   // ---- shrine: panel layout (shrineUI.js) ----
   // ---- treasure (0.155): the shrine's panel, three chests ----
   // what a panel room (the shrine, the chests) gets from the scene (0.171: titled by name alone — "An Ominous Shrine")
@@ -214,7 +251,7 @@ export function dungeonScene() {
   function act(fn) {
     if (!canAct()) return;
     const pre = snapshot(combat); // the replay starts from the state BEFORE the action resolves (0.086)
-    queueEvents(fn(), { run, combat, playback });
+    queueEvents(fn(), { run, combat, playback, potionQueued: () => ui?.battle.player.holdPotion?.() }); // (0.00263: the card's count waits for the found potion's card to fly in)
     if (combat.over && combat.victory) {
       playback.enqueue({ text: roomSummaryText(), cls: 'move' });
     }
@@ -241,7 +278,7 @@ export function dungeonScene() {
       parts.push(' — loot: ');
       newItems.forEach((id, i) => {
         if (i > 0) parts.push(', ');
-        parts.push(itemName(DATA.items[id]));
+        parts.push(itemPic(id, 'log-art'), itemName(DATA.items[id])); // (0.00260: with its picture, like the Found line)
       });
     }
     return parts;

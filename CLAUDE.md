@@ -116,6 +116,7 @@ node tools/gen-bg.mjs [--only clock_tower]   # paint new rooms from docs/room-pr
 node tools/train-lora.mjs [--set rooms]      # train a style LoRA on the approved portraits / the paintings
 node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the collector (needs CASTLE_READ_KEY + the host allowed)
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
+node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
 ```
 
 ## The rules that matter
@@ -312,7 +313,17 @@ tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
 24, free rooms a run or two later. Measured and set aside: lifesteal
 halved everywhere (gentler, room 24 four runs later), healing only off
 damage dealt (no change), a per-fight heal cap (the deep game stalls),
-slower enemy damage growth (undoes the smoothing). **Shrines from the players' own picks (0.00252, the developer's call):**
+slower enemy damage growth (undoes the smoothing). **The weapon and the armor carry the stats (0.00259, the developer's
+call — the card shows only those two):** damage comes from the weapon,
+armor and HP from the body armor; boots, rings, trinkets and amulets are
+accessories — about a fifth of a weapon's damage (+1-3), a tenth of an
+armor's armor (+6-15) and a small HP top-up (+20/30/40/50 by tier),
+their identity in crit, lifesteal, dodge and the specials. The power
+moved into the two: weapons x1.5 damage, body armor x1.4 armor and HP
+on every piece (80-420). The simulator, 12 campaigns: run depth, the
+first room-8 kill, the late runs and coins all within noise of before
+(40 and 70 runs); the shrine study moves within its spread (Bulwark a
+little stronger late, Glass Cannon a little weaker). **Shrines from the players' own picks (0.00252, the developer's call):**
 the play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
 random) had Crit 23%, Armor 19%, Quicken 16% and Bulwark / Glass Cannon
 3% each (the bot rates Glass Cannon the best — real players fear its
@@ -645,6 +656,89 @@ interiors — the title's and the death's exteriors stay out — into
 destination model is made on first use) draws a room from its line
 alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
 
+**Item art (0.00260, the developer's direction and picks from the
+mockups).** Every item has a picture: `items.json art` per item, a 256 px
+WebP in `assets/items/` (~8 KB; 300 KB for all 36), read through
+`shared/itemArt.js` (`itemArtUrl`, `itemArtUrls`, and `gainLine(from,
+to)` — what a find raises over what it replaced) and drawn by `hud.js
+itemPic(id)` (an `<img class="item-pic tier-N">`; the tier sets `--rim` /
+`--rim-glow` for the small ones' rarity rim); `dataCheck` fails an item
+without one, the orphan check covers the folder. **The look:** dramatic
+low-key light, an Unreal Engine 5 render, a touch of Mike Mignola
+(`docs/item-prompts.md`: the style block and a line per item ending in its
+rarity's glow — common none, uncommon cold blue, epic violet, legendary
+red / orange). **Painting them:** `tools/gen-items.mjs` sends the block +
+the line as text alone (a reference picture made Nano Banana copy instead
+of restyle) to **Nano Banana Pro** (picked over Seedream 4 — dramatic but
+it added things and cropped — and Nano Banana — small objects); every
+candidate is kept (`assets/items/candidates/<id>_c<n>.webp`, 512 px,
+lab-only) and recorded in `assets/data/items-art.json`; `--hint` adds a
+direction (the axe's first roll had a hand on it); `--import [id|id_cN]`
+writes `assets/items/<id>_v<k>.webp` (a new name each time, rule 7) and
+edits the item's `art` line in place (`setArt`: items.json keeps its own
+layout); `--sheet` a contact sheet. A new item = its line in the doc, a
+roll, an import. **Where they show** (the developer's pick "B": the
+picture fading into the dark, the text over it): the hall's worn slots
+(`hubSections.js` — the desktop's `.gear-slot .slot-art` on the slot's
+outer side fading toward the card, the phone's twin at the Equipment
+row's left end; the art layer clips itself, not the slot — the purchase
+flash grows the name past the slot's edge — and is lifted
+(`brightness(1.45)`) so the low-key art does not sink under the fade);
+the hall's finds reveal (the picture flashes in under the gold flare,
+`hubScene.js reveal`, its filter list matching the CSS one); **a find in
+combat:** `run/loot.js takeItem` hands the log `extra.find = { id, slot,
+index, from }` (what the preview's `equipItems` changed),
+`combatQueue.js` turns it into the line's `fx: { kind: 'find' }`, and
+`ui/findFx.js findPop` raises the item as a card over the foes still
+standing (FOUND · the slot, the name in its rarity, its stats, "replaces
+X · +gain"), holds 1.5 s and flies it into the LOOT row bottom left,
+shrinking to a chip (0.00262, the developer's call: a find is the run's
+loot, worn only after the run — it used to fly into the hero's card;
+`findFx.js lootSpot`: the tray's next free place, past the cards still
+flying, the scene handing `fxCtx.loot` / `lootAhead`; on a phone, with
+no row, the XP / COINS counters; reduced motion and the shim: nothing,
+the log says it); the Found line and the room's loot summary lead with
+the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
+showLoot`: the newest six; shown as the run's first find takes off;
+none on a phone, whose top strip is the room title's — the hero card's
+inventory page lists them; a find's chip joins as its card lands, with
+a flash, an OVERKILL's silent finds when the room's lines are out); the hero
+card's inventory page (`battleLine.js invPage`); **the run's end**
+(`runEndScene.js findCard`: a card per slot `equipSummary.changes`
+changed — the picture fading down into the slot, the name, its stats,
+"over X · +gain", RELIC on a tier 4 — and the salvage as grey chips;
+`equipItems`' `equipped` / `salvaged` entries carry the `id` since).
+Preload: after the Descend essentials and before the rooms, decoded, the
+save's worn gear first, the potion's last (`preload.js itemUrls`;
+Descend waits for none of it). **The healing potion (0.00263, the
+developer's ask)** has a picture too (`difficulty.json potions.art`,
+`itemArt.js potionArtUrl`, `hud.js potionPic`; painted by the same tool,
+`gen-items.mjs EXTRAS` writes it into difficulty.json on `--import`): the
+hero card's count is the picture + `3/4` (`battleLine.js`), the log's
+"Found a healing potion!" carries it (a `{ potion: true }` part), and a
+potion found in combat rises as the same card (`findFx.js potionPop`:
+FOUND · Potion, what it heals, the satchel) and flies into that count —
+`queueEvents`' `potionQueued` hook has the card hold the potion back
+(`holdPotion`: the run's count is already up when the loot is rolled, a
+line before it prints), and the landing counts it with a glow
+(`landPotion`; under reduced motion at once). A full satchel's sale has no card.
+**The classes' starting kits (0.00265, the developer's approval):** a
+weapon and an armor per class in its look (`heroes.json kit`, `heroes.js
+heroKit`; dataCheck names a kit item of the wrong slot) — Barbarian:
+Notched Hand Axe + Wolfhide Jerkin; Wizard: Apprentice's Staff +
+Threadbare Robe; Necromancer: Grave Knife + Gravedigger's Shroud; Druid:
+Budding Branch + Bark Vest; Hexhunter: Worn Hand Crossbow + Witchfinder's
+Coat; Plague Sister: Tin Censer + Sister's Habit; the knight's is the
+Rusty Sword and the Oak Shield (`difficulty.json player.startingGear`,
+still every new save's gear until the pick). The twelve are tier 1 with
+exactly the Rusty Sword's or the Oak Shield's numbers (the classes play
+alike so far — a class's own numbers are the developer's next call) and
+`starter: true`: never in a kill's loot or the gilded chest (`loot.js
+droppable`), so the drop pool and the simulator are unchanged
+(byte-identical). A NEW save wears its class's kit on PROCEED
+(`heroScene.js wearKit`: slot by slot, only over the default starting
+gear, never over a find); a save that had chosen before keeps its gear.
+
 **Heroes (0.00248, the developer's call and layout).** Character classes:
 `assets/data/heroes.json` lists them (`default` the knight; per hero id,
 name, epithet, lore, traits — placeholders of mine for the lines — and
@@ -652,9 +746,10 @@ name, epithet, lore, traits — placeholders of mine for the lines — and
 share of the sheet's height so the heroes read in scale with one another),
 read through `shared/heroes.js` (`heroList`, `heroById`, `cleanHero`,
 `heroOf`, `lookUrl`, `lookOf`, the preload lists). Seven so far: the
-Curious Knight (one look, the chat's sheet) and the developer's Barbarian
-(5), Wizard (8), Necromancer (8), Druid (5), Hexhunter (4) and Plague
-Sister (4), 35 figures. **The art:** the developer uploads 1024x1536 sheets
+Curious Knight (5 since 0.00264: the developer's four standing sheets
+first, then the chat's crouching sheet — the one look marked `sprite`)
+and the developer's Barbarian (5), Wizard (8), Necromancer (8), Druid
+(5), Hexhunter (4) and Plague Sister (4), 39 figures. **The art:** the developer uploads 1024x1536 sheets
 on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
 tools/cut-heroes.mjs --import .` converts them to
 `assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
@@ -691,7 +786,7 @@ later: a click on the hall's portrait (`.knight-card.pickable`, its
 `.look-tag` says which look; the phone's Equipment sheet has a Look row,
 `L`) opens `ui/lookPicker.js` — the hero large between ‹ › (the arrow
 keys, A / D), saved as it turns, shared with the stats on close; a hero
-with one look (the knight) is not pickable. **The stats (0.00253):**
+with one look is not pickable (none since the knight's sheets, 0.00264). **The stats (0.00253):**
 every run record carries `hero` and `look` (`history.js runRecord`), the
 upload carries `profile.hero`, the collector keeps both (Worker 0.00253
 — paste it; the old one drops them), the dashboard shows a Hero column
@@ -705,7 +800,7 @@ the chosen one's pulse in it too), on the knight's card in combat
 (`battleLine.js frame(theme)`) and on the hall's portrait), `light` and
 `tint` (the card light behind the player: `cardFx.js cardStyle('player')`
 reads them, the knight's ether as before; `heavyName`, the heavy
-attack's name on the button and the STATS row — 0.00259, the
+attack's name on the button and the STATS row — 0.00266, the
 developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Go
 Feral, Hex, Last Rites; the blow is the same for every class,
 `shared/heroes.js heavyName`). The knight crimson, the
@@ -740,13 +835,16 @@ charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
 78% from 68%). No difficulty label on the cards (the developer's call:
 the variance stays quiet). **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
-hero's figure (`shared/portraits.js portraitUrl('player')`; the default
-hero keeps `cards.json player.art`, the file the Art Lab's import
-writes) and the card is named after the class — the name ABOVE the
+hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
+the knight's standing looks too — only a look marked `sprite: true`
+(`heroes.js lookIsSprite`, the knight's crouch) draws `cards.json
+player.art`, the file the Art Lab's import writes, as the wide sprite,
+and its card drops `.hero-standing`; the preload fetches that sprite
+with the essentials) and the card is named after the class — the name ABOVE the
 card (`.hero-title`, 0.00251, the developer's layout), the gear as two
 columns at the card's top (`.gear-block`: names left, LV / damage /
 armor right) and a standing hero a full card tall behind them
-(`.hero-standing`), the knight's wide sprite as it was; the numbers are the same
+(`.hero-standing`), the knight's crouching look as the wide sprite it was; the numbers are the same
 for every class — the gameplay side is the developer's next call. The
 preloader fetches the figures the screen opens on (every hero's first
 look and the profile's own) first among the Descend essentials, the
@@ -1011,13 +1109,18 @@ be served stale for ~4 hours.
   counts it as two enemy widths in the row's `--slots` (the `--card-h`
   budget), so the boss and its three summons (`maxAlive`) still fit
   without shrinking at 16:9. New boss art should suit a wide card.
-- The knight's card turns over on a click (0.00256, the developer's call):
-  `battleLine.js statsBack` — STATS, the run's totals only (health,
-  attack, armor, crit chance / damage, lifesteal, the heavy blow, potions,
-  a potion's heal), refreshed by the update tick while it shows; the turn
-  is two `rotateY` halves with the face swapped edge-on (`flipCard`,
-  `composite: 'add'` like the kick; instant under reduced motion); the
-  phone's twins compact the rows.
+- The knight's card turns over on a click (0.00256 / 0.00258, the
+  developer's call): front → STATS → INVENTORY → front (`battleLine.js
+  cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
+  is the run's totals only (health, attack, armor, crit chance / damage,
+  lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
+  worn per `GEAR_SLOTS` (forge levels in, `describeItem` lines) and the
+  run's finds (`run.itemsFound`, the newest three and a count) — worn
+  from the run's end. The shown page refreshes on the update tick; the
+  turn is two `rotateY` halves with the face swapped edge-on (`flipCard`,
+  `composite: 'add'` like the kick; instant under reduced motion). A
+  still gold ⓘ under the gear names says the card turns; the phone's
+  twins compact the pages.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`). A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
@@ -1366,8 +1469,8 @@ sometimes — fetch all branches to find it.
   design — a padded maskable variant would be the developer's art);
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
-  `assets/chars/candidates` (12.6MB) and `assets/style` (16MB with the
-  hero sheets, 0.00248) are
+  `assets/chars/candidates` (12.6MB), `assets/items/candidates` (1MB,
+  0.00260) and `assets/style` (16MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
@@ -1381,8 +1484,7 @@ sometimes — fetch all branches to find it.
 - Game: the classes' gameplay (0.00248 made the choice cosmetic: a class
   could carry its own base stats, starting gear, a signature move — the
   knight's heavy blow, the necromancer's thralls — and the Art Lab's
-  photoreal redraw path for its card) · a knight sheet in the standing
-  pose and his own looks · merchant room (endgame coin sink) · more bosses (only the Vampire
+  photoreal redraw path for its card) · merchant room (endgame coin sink) · more bosses (only the Vampire
   Lord; `boss.enemy` is data now) · the room-24 boss is a wall (~5% clear
   in the simulator) and meta saturates past ~60 runs — deeper tiers or
   NG+ (then move `finalBossRoom`) · thorns relic is a flat 4 damage, weak
@@ -1425,7 +1527,12 @@ sometimes — fetch all branches to find it.
   Throne, the ossuary test); the guide's other unused rooms are the next
   batch (`docs/image-prompting-guide.md` §3: arenas, thrones, corridors,
   antechambers, shrines) · a generated painting's fog is a default until
-  the Fog Lab tunes it · the mimic chest has art but no enemy entry.
+  the Fog Lab tunes it · the mimic chest has art but no enemy entry ·
+  the item pictures have no lab view yet (0.00260: reviewed on
+  `gen-items.mjs --sheet`; the Art Lab's COMPARE would suit them) ·
+  Moonbrand's runes and the Blood Eclipse amulet's corona were
+  re-asked for in their lines — a redraw with `--hint` if they still
+  read too plain in the game.
 - Other: orphaned legacy staging site cleanup.
 
 **Tried and removed:** 3D exploration (0.139–0.151): a three.js Dungeon

@@ -17,6 +17,7 @@
   "potionHeal": 300,
   "lowHpShare": 0.35,
   "potions": {
+    "art": "healing_potion_v1.webp",
     "startCount": 3,
     "startCap": 4,
     "maxCap": 10,

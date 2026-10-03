@@ -186,6 +186,22 @@ async function run(name, opts, url) {
     });
     await shot('5-fight');
     check(name, 'fight: nothing overflows sideways', fight.scrollW <= fight.w, `${fight.scrollW} of ${fight.w}`);
+    { // the LOOT row full (0.00260: six finds; a phone has none — its top strip is the room title's): clear of the knight's buttons, the log and the title
+      const finds = await page.evaluate(async () => {
+        const { itemPic } = await import('/src/ui/hud.js');
+        const row = document.querySelector('.res-loot'), tray = row?.querySelector('.loot-tray');
+        if (!tray) return null;
+        row.classList.remove('none');
+        tray.append(...['moonbrand', 'crimson_plate', 'umbral_treads', 'vampiric_ring', 'lucky_charm', 'amulet_of_the_blood_eclipse'].map((id) => itemPic(id, 'loot-chip')));
+        await new Promise((r) => setTimeout(r, 300));
+        const r = (e) => e.getBoundingClientRect(), res = r(document.querySelector('.resources'));
+        const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+        const others = [...document.querySelectorAll('.player-unit .unit-actions button, #combat-log, .room-title')].filter((e) => r(e).width > 0);
+        return { shown: getComputedStyle(row).display === 'none' ? 0 : [...tray.children].filter((c) => getComputedStyle(c).display !== 'none').length, overlaps: others.filter((e) => hit(res, r(e))).map((e) => e.id || e.className.split(' ')[0] || e.tagName), right: res.right, w: innerWidth };
+      });
+      check(name, 'fight: the LOOT row full — clear of the knight\'s buttons, the log and the room title', finds && finds.overlaps.length === 0 && finds.right <= finds.w && finds.shown === (phone ? 0 : 6), finds ? `${finds.shown} shown, overlaps: ${finds.overlaps.join(',') || 'none'}` : 'no LOOT row');
+      await shot('5a-fight-loot');
+    }
     if (phone) {
       check(name, 'fight: every card bottom on one line', new Set(fight.cards).size === 1, fight.cards.join(','));
       check(name, "fight: the foes' Attack buttons are gone (the card is the button)", fight.atk.every((b) => b.width === 0 && b.height === 0), `${fight.atk.length} buttons`);
@@ -217,12 +233,16 @@ async function run(name, opts, url) {
     await settled(page);
     await page.evaluate(async () => {
       const [{ runEndScene }, { show }, { createRun }] = await Promise.all([import('/src/ui/scenes/runEndScene.js'), import('/src/core/scene.js'), import('/src/run/runState.js')]);
-      const run = createRun(); Object.assign(run, { roomNumber: 2, kills: 6, coins: 43, coinsRetrieved: 22, coinsLost: 21, tollPct: 0.5, xp: 40, itemsFound: [{ id: 'ring_of_might' }], potions: 4, equipSummary: { equipped: [{ name: 'Ring of Might', tier: 2 }], salvaged: [], coins: 0 } });
+      // (0.00260: the worst case — every slot changed, a card each, and three salvaged)
+      const changes = [['weapon', 'rusty_sword', 'moonbrand'], ['armor', 'oak_shield', 'crimson_plate'], ['boots', null, 'umbral_treads'], ['rings', 'ring_of_might', 'vampiric_ring', 0], ['rings', null, 'ring_of_the_blood_moon', 1], ['trinket', null, 'lucky_charm'], ['amulet', null, 'amulet_of_the_blood_eclipse']]
+        .map(([slot, from, to, index]) => ({ slot, index, from, to }));
+      const salvaged = ['rusty_sword', 'oak_shield', 'ring_of_might'].map((id) => ({ id, name: id, tier: 1 }));
+      const run = createRun(); Object.assign(run, { roomNumber: 2, kills: 6, coins: 43, coinsRetrieved: 22, coinsLost: 21, tollPct: 0.5, xp: 40, itemsFound: changes.map((c) => c.to), potions: 4, equipSummary: { equipped: [], salvaged, coins: 24, changes } });
       show(runEndScene(run, 'death'));
     });
     await page.waitForTimeout(1800);
     const end = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /Great Hall/.test(x.textContent)); const r = b?.getBoundingClientRect(); const p = document.querySelector('#app > .panel'); return r ? { bottom: r.bottom, h: innerHeight, scroll: p ? p.scrollHeight - p.clientHeight : 0 } : null; });
-    check(name, 'run end: Return to the Great Hall on screen, nothing to scroll', end && end.bottom <= end.h + 0.5 && end.scroll <= 0, end ? `bottom ${Math.round(end.bottom)} of ${end.h}, ${end.scroll}px hidden` : 'no button');
+    check(name, 'run end: seven find cards and the salvage — Return to the Great Hall on screen, nothing to scroll', end && end.bottom <= end.h + 0.5 && end.scroll <= 0, end ? `bottom ${Math.round(end.bottom)} of ${end.h}, ${end.scroll}px hidden` : 'no button');
     await shot('6b-runend');
     for (const kind of ['shrine', 'treasure']) {
       await settled(page); // (the run end's fade: the room is rendered into a settled window)

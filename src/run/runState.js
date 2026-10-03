@@ -99,7 +99,7 @@ export function applyLoot(run, enemy, log) {
   log(`+${coins} coins, +${loot.xp} XP`, 'loot');
   const kept = loot.itemId ? takeItem(run, loot.itemId, log).kept : false;
   if (potionDrop()) {
-    if (addPotion(run)) log('Found a healing potion!', 'loot');
+    if (addPotion(run)) log(['Found a ', { potion: true }, 'healing potion!'], 'loot', { potion: true }); // (0.00263: the potion's card flies into the hero card's count — ui/findFx.js)
     else log(`Found a healing potion — satchel full, sold for ${satchelSellCoins()} coins.`, 'loot');
   }
   return { itemId: loot.itemId, kept };

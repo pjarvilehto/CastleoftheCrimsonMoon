@@ -12,7 +12,7 @@ fresh();
   const { readdirSync } = await import('fs');
   const chars = readdirSync('assets/chars');
   const { portraitFile, portraitUrl } = await import('../../src/shared/portraits.js');
-  const enemiesOk = ['player', ...Object.keys(DATA.enemies)].every((id) => chars.includes(portraitFile(id)) && portraitUrl(id) === `assets/chars/${portraitFile(id)}`); // (0.184: the file is data)
+  const enemiesOk = Object.keys(DATA.enemies).every((id) => chars.includes(portraitFile(id)) && portraitUrl(id) === `assets/chars/${portraitFile(id)}`) && chars.includes(portraitFile('player')); // (0.184: the file is data; 0.00264: the knight's card draws his standing look — cards.json player.art is his crouching look's sprite)
   const slots = new Set(['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet']);
   const itemsOk = Object.values(DATA.items).every((i) => slots.has(i.slot) && i.tier >= 1 && i.tier <= 4);
   ok('content integrity: enemy portraits + item slots', enemiesOk && itemsOk);
@@ -377,9 +377,10 @@ fresh();
     'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
     'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)
+    'assets/items': new Set([...Object.values(DATA.items).map((it) => it.art), DATA.difficulty.potions.art]), // (0.00260: the gear's pictures, 0.00263 the potion's; assets/items/candidates is gen-items.mjs's, outside)
   };
   const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
-  ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame and icon on disk is one the game names', orphans.length === 0, orphans.join(', '));
+  ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame, icon and item picture on disk is one the game names', orphans.length === 0, orphans.join(', '));
 }
 
 // 0.00226: the display font is D-DIN Condensed Bold (SIL OFL, its licence

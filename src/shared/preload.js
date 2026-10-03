@@ -17,8 +17,10 @@
 import { CHEST_ICONS } from '../run/treasure.js';
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
-import { portraitUrl } from './portraits.js';
+import { portraitUrl, portraitFile, PORTRAIT_DIR } from './portraits.js';
 import { heroFirstUrls, heroArtUrls } from './heroes.js';
+import { itemArtUrls } from './itemArt.js';
+import { GEAR_SLOTS } from '../meta/equipment.js';
 import { getProfile } from '../meta/profile.js';
 
 const bgUrl = (f) => `assets/bg/${f}`;
@@ -37,7 +39,7 @@ export function essentialUrls() {
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
   const icons = [...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)]; // (0.177; one table, run/treasure.js)
-  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons])]; // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
+  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), `${PORTRAIT_DIR}/${portraitFile('player')}`, ...icons])]; // (0.00264: the knight's wide sprite — his crouching look's — too, now the player's portrait is a standing figure) // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
 }
 
 // The room paintings (and their depth maps) not already loaded above —
@@ -51,7 +53,12 @@ export function roomUrls() {
 // Everything the dungeon and run-end screens use, essentials first.
 // The heroes' other looks (0.00248): the switcher's, after the essentials and before the rooms.
 export function heroLaterUrls() { const first = new Set(heroFirstUrls(getProfile())); return heroArtUrls().filter((u) => !first.has(u)); }
-export const restUrls = () => [...essentialUrls(), ...heroLaterUrls(), ...roomUrls()];
+// The gear's pictures (0.00260, ~300KB for all): the save's worn gear first — the hall paints those — then the rest a find can show.
+export function itemUrls() {
+  const eq = getProfile().equipment ?? {};
+  return itemArtUrls(GEAR_SLOTS.map(([k, i]) => (i === undefined ? eq[k] : eq[k]?.[i])).filter(Boolean));
+}
+export const restUrls = () => [...essentialUrls(), ...heroLaterUrls(), ...itemUrls(), ...roomUrls()];
 
 // img.decode() waits for a full decode, not just the network fetch.
 // Falls back to onload where decode is unavailable; resolves (never
@@ -105,7 +112,7 @@ export function preloadRest() {
     restState.total = urls.length;
     await pool(urls, 4, async (url) => { await warm(url); restState.done++; });
     restState.ready = true;
-    pool(roomUrls(), 3, fetchOnly); // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
+    pool(itemUrls(), 4, warm).then(() => pool(roomUrls(), 3, fetchOnly)); // (0.00260: the gear's pictures first — small, decoded, so a find's card shows its picture the moment it rises; Descend waits for neither) // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
   })();
   return rest;
 }

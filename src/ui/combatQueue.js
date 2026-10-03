@@ -30,7 +30,9 @@ export function voFor(ev, { run, combat }) {
   return undefined;
 }
 
-export function queueEvents(events, { run, combat, playback }) {
+// potionQueued (0.00263): a found potion's line was queued — the hero card
+// holds the count back until its card has flown in (battleLine.js holdPotion).
+export function queueEvents(events, { run, combat, playback, potionQueued = () => {} }) {
   for (const ev of events) {
     if (ev.type === 'kill' && ev.enemy) {
       // OVERKILL kill: loot silently — the one OVERKILL line plus the
@@ -38,7 +40,11 @@ export function queueEvents(events, { run, combat, playback }) {
       if (ev.silent) { applyLoot(run, ev.enemy, () => {}); continue; }
       // Death line prints on one tick; the card goes down on the next.
       playback.enqueue({ text: ev.text, cls: 'atk', snap: ev.snap, sink: combat.enemies.indexOf(ev.enemy), sfx: 'kill' });
-      applyLoot(run, ev.enemy, (text, cls) => playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot', vo: cls === 'relic' ? 'relic_found' : undefined }));
+      applyLoot(run, ev.enemy, (text, cls, extra) => {
+        if (extra?.potion) potionQueued();
+        playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot', vo: cls === 'relic' ? 'relic_found' : undefined,
+          fx: extra?.find ? { kind: 'find', ...extra.find } : extra?.potion ? { kind: 'potion' } : undefined }); // (0.00260: a kept find rises as a card; 0.00263 a potion — ui/findFx.js)
+      });
       continue;
     }
     const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;

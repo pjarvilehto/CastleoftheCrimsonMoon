@@ -3,13 +3,33 @@
 import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
-import { statBox, itemName } from '../hud.js';
+import { statBox, itemPic, describeItem, gearLabel } from '../hud.js';
+import { gainLine } from '../../shared/itemArt.js';
 import { play } from '../../audio/music.js';
 import { narrate } from '../../audio/narrator.js';
 
-// Join rendered item names with plain separators: [a, ', ', b, ', ', c]
-function joinItems(list, render) {
-  return list.flatMap((it, i) => (i ? [', ', render(it)] : [render(it)]));
+// The run's finds (0.00260): a card per slot they changed — the picture
+// fading down into the slot, the name in its rarity, its stats and what it
+// beat; a relic tagged. What was salvaged (the gear they replaced, a find a
+// later one beat) is a row of small grey chips with the coins.
+function findCard({ slot, index, from, to }) {
+  const it = DATA.items[to];
+  if (!it) return null;
+  const gain = gainLine(from, to);
+  return el('div', { class: `find-card tier-${Math.min(4, it.tier)}` },
+    el('div', { class: 'fc-art' }, itemPic(to)),
+    it.tier >= 4 ? el('div', { class: 'fc-tag' }, 'Relic') : null,
+    el('div', { class: 'fc-text' },
+      el('div', { class: 'fc-slot' }, gearLabel({ slot, index })),
+      el('div', { class: 'fc-name' }, it.name),
+      el('div', { class: 'fc-desc' }, describeItem(it)),
+      el('div', { class: 'fc-cmp' }, from && DATA.items[from] ? `over ${DATA.items[from].name}` : 'into an empty slot', gain ? [' · ', el('span', { class: 'up' }, gain)] : null)));
+}
+function salvageRow(sum) {
+  return el('div', { class: 'loot-summary salvage-row' },
+    el('span', { class: 'salvage-head' }, 'Salvaged'),
+    ...sum.salvaged.map((it) => el('span', { class: 'salvage-chip' }, itemPic(it.id), it.name)),
+    el('span', { class: 'salvage-coins' }, `+${sum.coins} coins`));
 }
 
 export function runEndScene(run, outcome) {
@@ -32,19 +52,10 @@ export function runEndScene(run, outcome) {
             statBox(outcome === 'death' ? 'Coins Retrieved' : 'Coins Earned', run.coinsRetrieved ?? run.coins),
             statBox('XP Earned', run.xp),
             statBox('Items Found', run.itemsFound.length)),
-          // Loot lists: equipped items in their rarity colors; salvaged
-          // stays muted in the lowest-tier ash tone on purpose.
-          run.equipSummary && run.equipSummary.equipped.length
-            ? el('div', { class: 'loot-summary equipped-line' },
-                'Equipped: ', ...joinItems(run.equipSummary.equipped, itemName))
+          run.equipSummary?.changes?.length
+            ? el('div', { class: 'finds-row' }, ...run.equipSummary.changes.map(findCard))
             : null,
-          run.equipSummary && run.equipSummary.salvaged.length
-            ? el('div', { class: 'loot-summary salvaged-line' },
-                'Salvaged: ',
-                ...joinItems(run.equipSummary.salvaged,
-                  (it) => el('span', { class: 'rarity-1 salvaged' }, it.name)),
-                ` (+${run.equipSummary.coins} coins)`)
-            : null,
+          run.equipSummary?.salvaged?.length ? salvageRow(run.equipSummary) : null,
           outcome === 'death'
             ? el('div', { class: 'toll-line' },
                 run.coinsLost > 0 ? `The castle claims its toll — ${run.coinsLost} gold lost (${Math.round(run.tollPct * 100)}%).` : null)

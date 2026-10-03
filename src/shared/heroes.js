@@ -22,12 +22,17 @@ export function cleanHero(h) {
 }
 /** The hero a profile plays, whole. */
 export const heroOf = (p) => heroById(cleanHero(p?.hero).id);
-/** The name of a profile's heavy attack (0.00259, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Go Feral, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; the blow itself is the same for every class. */
+/** The name of a profile's heavy attack (0.00266, the developer's picks): the knight's Heavy Attack, the Barbarian's Cleave, the Wizard's Fireball, the Necromancer's Soul Drain, the Druid's Go Feral, the Hexhunter's Hex, the Plague Sister's Last Rites — the button and the STATS row; the blow itself is the same for every class. */
 export const heavyName = (p) => heroOf(p).heavyName;
 /** A hero's colour theme (0.00254): { plate, light, tint } — the card plates' colour, the card light's look and tint. */
 export const heroTheme = (hero) => hero.theme;
 /** A hero's look, whole: { art, fh } (an index past the list is clamped). */
 export const lookOf = (hero, look = 0) => hero.looks[Math.min(Math.max(0, look), hero.looks.length - 1)];
+/** A look drawn in combat as the knight's wide sprite (0.00264): `sprite: true` in heroes.json — the knight's
+ *  first, crouching look; his card then draws cards.json player.art (the Art Lab's import path), a standing look its figure. */
+export const lookIsSprite = (hero, look = 0) => !!lookOf(hero, look).sprite;
+/** A class's starting kit (0.00265, heroes.json `kit`): { weapon, armor } — worn by a new save when it picks the class. */
+export const heroKit = (hero) => hero.kit;
 /** Where a hero's look is drawn from. */
 export const lookUrl = (hero, look = 0) => `${HERO_DIR}/${lookOf(hero, look).art}`;
 /** Every look of every hero. */

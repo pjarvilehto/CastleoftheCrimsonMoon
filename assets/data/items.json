@@ -3,93 +3,111 @@
     "name": "Rusty Sword",
     "slot": "weapon",
     "tier": 1,
-    "dmg": 4
+    "art": "rusty_sword_v1.webp",
+    "dmg": 6
   },
   "knights_blade": {
     "name": "Knight's Blade",
     "slot": "weapon",
     "tier": 2,
-    "dmg": 9
+    "art": "knights_blade_v1.webp",
+    "dmg": 14
   },
   "executioner_axe": {
     "name": "Executioner's Axe",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 16
+    "art": "executioner_axe_v1.webp",
+    "dmg": 24
   },
   "oak_shield": {
     "name": "Oak Shield",
     "slot": "armor",
     "tier": 1,
-    "armor": 30
+    "art": "oak_shield_v1.webp",
+    "armor": 40,
+    "hp": 80
   },
   "plate_armor": {
     "name": "Plate Armor",
     "slot": "armor",
     "tier": 2,
-    "armor": 80
+    "art": "plate_armor_v1.webp",
+    "armor": 110,
+    "hp": 130
   },
   "dragonscale_mail": {
     "name": "Dragonscale Mail",
     "slot": "armor",
     "tier": 3,
-    "armor": 140
+    "art": "dragonscale_mail_v1.webp",
+    "armor": 195,
+    "hp": 180
   },
   "traveler_boots": {
     "name": "Traveler's Boots",
     "slot": "boots",
     "tier": 1,
-    "hp": 80
+    "art": "traveler_boots_v1.webp",
+    "hp": 20
   },
   "knights_greaves": {
     "name": "Knight's Greaves",
     "slot": "boots",
     "tier": 2,
-    "armor": 30,
-    "hp": 100
+    "art": "knights_greaves_v1.webp",
+    "armor": 6,
+    "hp": 30
   },
   "ring_of_might": {
     "name": "Ring of Might",
     "slot": "ring",
     "tier": 1,
-    "dmg": 3
+    "art": "ring_of_might_v1.webp",
+    "dmg": 1
   },
   "vampiric_ring": {
     "name": "Vampiric Ring",
     "slot": "ring",
     "tier": 2,
+    "art": "vampiric_ring_v1.webp",
     "lifesteal": 0.3
   },
   "ring_of_protection": {
     "name": "Ring of Protection",
     "slot": "ring",
     "tier": 2,
-    "armor": 40
+    "art": "ring_of_protection_v1.webp",
+    "armor": 8
   },
   "lucky_charm": {
     "name": "Lucky Charm",
     "slot": "trinket",
     "tier": 1,
+    "art": "lucky_charm_v1.webp",
     "crit": 0.1
   },
   "hunters_talisman": {
     "name": "Hunter's Talisman",
     "slot": "trinket",
     "tier": 2,
+    "art": "hunters_talisman_v1.webp",
     "crit": 0.08,
-    "dmg": 3
+    "dmg": 1
   },
   "moonstriders": {
     "name": "Moonstriders",
     "slot": "boots",
     "tier": 3,
-    "armor": 40,
-    "hp": 140
+    "art": "moonstriders_v1.webp",
+    "armor": 12,
+    "hp": 40
   },
   "fang_of_the_crimson_moon": {
     "name": "Fang of the Crimson Moon",
     "slot": "trinket",
     "tier": 3,
+    "art": "fang_of_the_crimson_moon_v1.webp",
     "crit": 0.1,
     "lifesteal": 0.35
   },
@@ -97,75 +115,86 @@
     "name": "Amulet of Vigor",
     "slot": "amulet",
     "tier": 1,
-    "hp": 150
+    "art": "amulet_of_vigor_v1.webp",
+    "hp": 20
   },
   "amulet_of_the_crimson_moon": {
     "name": "Amulet of the Crimson Moon",
     "slot": "amulet",
     "tier": 3,
-    "dmg": 6,
+    "art": "amulet_of_the_crimson_moon_v1.webp",
+    "dmg": 2,
     "lifesteal": 0.3
   },
   "ritual_dagger": {
     "name": "Ritual Dagger",
     "slot": "weapon",
     "tier": 2,
-    "dmg": 6,
+    "art": "ritual_dagger_v1.webp",
+    "dmg": 9,
     "crit": 0.1
   },
   "crimson_reaver": {
     "name": "Crimson Reaver",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 12,
+    "art": "crimson_reaver_v1.webp",
+    "dmg": 18,
     "lifesteal": 0.5
   },
   "boneplate": {
     "name": "Boneplate",
     "slot": "armor",
     "tier": 2,
-    "armor": 60,
-    "hp": 100
+    "art": "boneplate_v1.webp",
+    "armor": 85,
+    "hp": 230
   },
   "ring_of_the_blood_moon": {
     "name": "Ring of the Blood Moon",
     "slot": "ring",
     "tier": 3,
-    "dmg": 5,
+    "art": "ring_of_the_blood_moon_v1.webp",
+    "dmg": 2,
     "crit": 0.08
   },
   "amulet_of_the_leech": {
     "name": "Amulet of the Leech",
     "slot": "amulet",
     "tier": 2,
+    "art": "amulet_of_the_leech_v1.webp",
     "lifesteal": 0.25,
-    "hp": 80
+    "hp": 30
   },
   "moonbrand": {
     "name": "Moonbrand",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 14,
+    "art": "moonbrand_v1.webp",
+    "dmg": 21,
     "crit": 0.1
   },
   "crimson_plate": {
     "name": "Crimson Plate",
     "slot": "armor",
     "tier": 3,
-    "armor": 110,
-    "hp": 200
+    "art": "crimson_plate_v1.webp",
+    "armor": 155,
+    "hp": 360
   },
   "wraithwalkers": {
     "name": "Wraithwalkers",
     "slot": "boots",
     "tier": 3,
-    "armor": 20,
-    "hp": 220
+    "art": "wraithwalkers_v1.webp",
+    "armor": 6,
+    "hp": 40
   },
   "ring_of_the_eclipse": {
     "name": "Ring of the Eclipse",
     "slot": "ring",
     "tier": 3,
+    "art": "ring_of_the_eclipse_v1.webp",
     "lifesteal": 0.7,
     "crit": 0.05
   },
@@ -173,29 +202,33 @@
     "name": "Bloodstone Band",
     "slot": "ring",
     "tier": 3,
-    "dmg": 7,
-    "hp": 100
+    "art": "bloodstone_band_v1.webp",
+    "dmg": 3,
+    "hp": 40
   },
   "relic_of_the_first_knight": {
     "name": "Relic of the First Knight",
     "slot": "trinket",
     "tier": 3,
-    "dmg": 4,
-    "armor": 40,
-    "hp": 100
+    "art": "relic_of_the_first_knight_v1.webp",
+    "dmg": 2,
+    "armor": 10,
+    "hp": 40
   },
   "amulet_of_the_blood_moon": {
     "name": "Amulet of the Blood Moon",
     "slot": "amulet",
     "tier": 3,
+    "art": "amulet_of_the_blood_moon_v1.webp",
     "lifesteal": 0.7,
-    "hp": 100
+    "hp": 40
   },
   "fang_of_the_eclipse": {
     "name": "Fang of the Eclipse",
     "slot": "weapon",
     "tier": 4,
-    "dmg": 16,
+    "art": "fang_of_the_eclipse_v1.webp",
+    "dmg": 24,
     "crit": 0.1,
     "heavyCd": 1
   },
@@ -203,47 +236,155 @@
     "name": "Bloodmoon Aegis",
     "slot": "armor",
     "tier": 4,
-    "armor": 160,
-    "hp": 200,
+    "art": "bloodmoon_aegis_v1.webp",
+    "armor": 225,
+    "hp": 420,
     "thorns": 4
   },
   "umbral_treads": {
     "name": "Umbral Treads",
     "slot": "boots",
     "tier": 4,
-    "armor": 60,
-    "hp": 160,
+    "art": "umbral_treads_v1.webp",
+    "armor": 15,
+    "hp": 50,
     "dodge": 0.08
   },
   "ring_of_the_red_veil": {
     "name": "Ring of the Red Veil",
     "slot": "ring",
     "tier": 4,
-    "dmg": 8,
+    "art": "ring_of_the_red_veil_v1.webp",
+    "dmg": 3,
     "dodge": 0.06
   },
   "signet_of_the_blood_pact": {
     "name": "Signet of the Blood Pact",
     "slot": "ring",
     "tier": 4,
-    "dmg": 6,
-    "hp": 80,
+    "art": "signet_of_the_blood_pact_v1.webp",
+    "dmg": 2,
+    "hp": 50,
     "lifesteal": 0.8
   },
   "heart_of_the_dying_moon": {
     "name": "Heart of the Dying Moon",
     "slot": "trinket",
     "tier": 4,
-    "hp": 100,
-    "armor": 50,
+    "art": "heart_of_the_dying_moon_v1.webp",
+    "hp": 50,
+    "armor": 15,
     "revive": 1
   },
   "amulet_of_the_blood_eclipse": {
     "name": "Amulet of the Blood Eclipse",
     "slot": "amulet",
     "tier": 4,
-    "hp": 120,
-    "armor": 40,
+    "art": "amulet_of_the_blood_eclipse_v1.webp",
+    "hp": 50,
+    "armor": 15,
     "lifesteal": 1
+  },
+  "notched_hand_axe": {
+    "name": "Notched Hand Axe",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "notched_hand_axe_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "wolfhide_jerkin": {
+    "name": "Wolfhide Jerkin",
+    "slot": "armor",
+    "tier": 1,
+    "art": "wolfhide_jerkin_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "apprentices_staff": {
+    "name": "Apprentice's Staff",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "apprentices_staff_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "threadbare_robe": {
+    "name": "Threadbare Robe",
+    "slot": "armor",
+    "tier": 1,
+    "art": "threadbare_robe_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "grave_knife": {
+    "name": "Grave Knife",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "grave_knife_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "gravediggers_shroud": {
+    "name": "Gravedigger's Shroud",
+    "slot": "armor",
+    "tier": 1,
+    "art": "gravediggers_shroud_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "budding_branch": {
+    "name": "Budding Branch",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "budding_branch_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "bark_vest": {
+    "name": "Bark Vest",
+    "slot": "armor",
+    "tier": 1,
+    "art": "bark_vest_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "worn_hand_crossbow": {
+    "name": "Worn Hand Crossbow",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "worn_hand_crossbow_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "witchfinders_coat": {
+    "name": "Witchfinder's Coat",
+    "slot": "armor",
+    "tier": 1,
+    "art": "witchfinders_coat_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
+  },
+  "tin_censer": {
+    "name": "Tin Censer",
+    "slot": "weapon",
+    "tier": 1,
+    "art": "tin_censer_v1.webp",
+    "starter": true,
+    "dmg": 6
+  },
+  "sisters_habit": {
+    "name": "Sister's Habit",
+    "slot": "armor",
+    "tier": 1,
+    "art": "sisters_habit_v1.webp",
+    "starter": true,
+    "armor": 40,
+    "hp": 80
   }
 }

@@ -13,9 +13,14 @@
         "Armor"
       ],
       "class": { "heavyName": "Heavy Blow", "hpMult": 1, "dmgMult": 1, "armorMult": 1, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "blow", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "kit": { "weapon": "rusty_sword", "armor": "oak_shield" },
       "theme": { "plate": "#8a1c1c", "light": "ether", "tint": [0.5, 0.55, 1.0] },
       "looks": [
-        { "art": "knight_v1_k2.webp", "fh": 0.739 }
+        { "art": "knight_v2.webp", "fh": 0.95 },
+        { "art": "knight_alt_v1.webp", "fh": 0.961 },
+        { "art": "knight_alt_v2.webp", "fh": 0.969 },
+        { "art": "knight_alt_v4.webp", "fh": 0.945 },
+        { "art": "knight_v1_k2.webp", "fh": 0.739, "sprite": true }
       ]
     },
     {
@@ -30,6 +35,7 @@
         "No armor"
       ],
       "class": { "heavyName": "Cleave", "hpMult": 1.15, "dmgMult": 1.1, "armorMult": 0.6, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 1, "heavy": "cleave", "charges": 0, "cleaveShare": 0.5, "rage": 0.35, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "kit": { "weapon": "notched_hand_axe", "armor": "wolfhide_jerkin" },
       "theme": { "plate": "#9e3e1a", "light": "embers", "tint": [0.95, 0.45, 0.15] },
       "looks": [
         { "art": "barbarian_v1_k2.webp", "fh": 0.883 },
@@ -51,6 +57,7 @@
         "Frail"
       ],
       "class": { "heavyName": "Fireball", "hpMult": 0.9, "dmgMult": 1.1, "armorMult": 0.7, "potionHealMult": 0.9, "dodge": 0, "heavyCd": 1, "heavyMult": 0.9, "heavy": "fireball", "charges": 3, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 1 },
+      "kit": { "weapon": "apprentices_staff", "armor": "threadbare_robe" },
       "theme": { "plate": "#24479a", "light": "ether", "tint": [0.4, 0.6, 1.0] },
       "looks": [
         { "art": "wizard_v1_k2.webp", "fh": 0.921 },
@@ -75,6 +82,7 @@
         "Lifesteal"
       ],
       "class": { "heavyName": "Soul Drain", "hpMult": 0.9, "dmgMult": 1, "armorMult": 0.8, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 1, "heavy": "drain", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0.6, "thrallShare": 0.6, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "kit": { "weapon": "grave_knife", "armor": "gravediggers_shroud" },
       "theme": { "plate": "#246b38", "light": "ether", "tint": [0.35, 0.9, 0.45] },
       "looks": [
         { "art": "necromancer_v1_k2.webp", "fh": 0.939 },
@@ -99,6 +107,7 @@
         "Wild shape"
       ],
       "class": { "heavyName": "Go Feral", "hpMult": 1.1, "dmgMult": 0.9, "armorMult": 0.9, "potionHealMult": 1, "dodge": 0, "heavyCd": 4, "heavyMult": 0.65, "heavy": "wildshape", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 3, "wildMult": 2.2, "mend": 0.04, "blightShare": 0, "potionArmor": 0, "markCrit": 0, "chargeOnKill": 0 },
+      "kit": { "weapon": "budding_branch", "armor": "bark_vest" },
       "theme": { "plate": "#4a7a24", "light": "fog", "tint": [0.55, 0.8, 0.4] },
       "looks": [
         { "art": "druid_v1_k2.webp", "fh": 0.938 },
@@ -120,6 +129,7 @@
         "Quick"
       ],
       "class": { "heavyName": "Hex", "hpMult": 0.9, "dmgMult": 1.0, "armorMult": 0.85, "potionHealMult": 1, "dodge": 0.2, "heavyCd": 2, "heavyMult": 0.8, "heavy": "mark", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0, "potionArmor": 0, "markCrit": 0.3, "chargeOnKill": 0 },
+      "kit": { "weapon": "worn_hand_crossbow", "armor": "witchfinders_coat" },
       "theme": { "plate": "#5e2d85", "light": "ether", "tint": [0.7, 0.45, 0.95] },
       "looks": [
         { "art": "hexhunter_v1_k2.webp", "fh": 0.961 },
@@ -140,6 +150,7 @@
         "Endurance"
       ],
       "class": { "heavyName": "Last Rites", "hpMult": 1.15, "dmgMult": 0.85, "armorMult": 1.2, "potionHealMult": 1, "dodge": 0, "heavyCd": 3, "heavyMult": 0.45, "heavy": "censer", "charges": 0, "cleaveShare": 0, "rage": 0, "drainShare": 0, "thrallShare": 0, "wildTurns": 0, "wildMult": 1, "mend": 0, "blightShare": 0.3, "potionArmor": 30, "markCrit": 0, "chargeOnKill": 0 },
+      "kit": { "weapon": "tin_censer", "armor": "sisters_habit" },
       "theme": { "plate": "#8a7420", "light": "fog", "tint": [0.8, 0.75, 0.35] },
       "looks": [
         { "art": "plaguesister_v1_k2.webp", "fh": 0.921 },

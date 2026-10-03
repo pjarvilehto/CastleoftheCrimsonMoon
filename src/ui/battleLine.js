@@ -7,7 +7,7 @@
 
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp } from './hud.js';
+import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -15,8 +15,9 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf, defaultHero, heavyName } from '../shared/heroes.js';
+import { heroOf, cleanHero, lookIsSprite, heavyName } from '../shared/heroes.js';
 import { potionHealAmount } from '../meta/leveling.js';
+import { GEAR_SLOTS } from '../meta/equipment.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
 // .idle-<family>), keyed by enemy ID — display names differ (golem is
@@ -132,10 +133,15 @@ const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) ret
 
 // The knight card's back (0.00256, the developer's call): a tap turns the
 // card around to STATS — the run's own numbers (run.stats: base, training,
-// gear and the shrine boons), the totals only — and a tap turns it back.
-// set() refreshes the values; the update tick calls it while it shows.
+// gear and the shrine boons), the totals only — a second to INVENTORY
+// (0.00258: the gear worn, and this run's finds, worn from the run's end),
+// a third back to the hero. set() refreshes the shown page; the update
+// tick calls it while the card is turned.
 const FLIP_MS = 420;
-function statsBack(run) {
+const PAGES = ['front', 'stats', 'inv'];
+const dots = (n) => el('div', { class: 'page-dots' }, ...PAGES.map((_, k) => el('i', { class: k === n ? 'on' : '' })));
+const SLOT_NAME = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', rings: 'Ring', ring: 'Ring', trinket: 'Trinket', amulet: 'Amulet' };
+function statsPage(run) {
   const tune = DATA.difficulty.combat;
   const pct = (x) => `${Math.round(x * 100)}%`;
   const rows = [
@@ -145,15 +151,50 @@ function statsBack(run) {
     ['Crit chance', () => pct(run.stats.crit)],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—')],
-    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00259: the class's name for its heavy)
+    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00266: the class's name for its heavy)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
     ['Potion heals', () => `${potionHealAmount()} HP`],
   ].map(([label, val, cls]) => ({ val, b: el('b', { class: cls ?? '' }, val()), label }));
-  const back = el('div', { class: 'card-back' },
+  const page = el('div', { class: 'back-page back-stats' },
     el('h2', {}, 'Stats'), el('div', { class: 'back-rule' }),
     ...rows.map((r) => el('div', { class: 'back-row' }, el('span', {}, r.label), r.b)),
-    el('div', { class: 'back-hint' }, 'tap to turn back'));
-  return { el: back, set: () => rows.forEach((r) => setText(r.b, r.val())) };
+    dots(1), el('div', { class: 'back-hint' }, 'tap for inventory'));
+  return { el: page, set: () => rows.forEach((r) => setText(r.b, r.val())) };
+}
+// The gear as worn (forge levels in), one row per slot, then what this run
+// has found so far (upgrades only, run.itemsFound) — the list grows mid-run.
+const FOUND_SHOWN = 3;
+function invPage(run) {
+  const p = getProfile();
+  const worn = GEAR_SLOTS.map(([key, i]) => {
+    const id = i === undefined ? p.equipment[key] : p.equipment[key]?.[i];
+    const item = id ? itemWithForge(id, p) : null;
+    return el('div', { class: 'inv-row' }, el('span', { class: 'inv-kind' }, SLOT_NAME[key]),
+      item ? el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase() + (item.forgeLvl ? ` +${item.forgeLvl}` : '')) : el('span', { class: 'inv-name inv-empty' }, 'Empty'),
+      el('span', { class: 'inv-desc' }, item ? describeItem(item) : ''));
+  });
+  const found = el('div', { class: 'inv-found-list' });
+  let shown = -1;
+  const set = () => {
+    const ids = run.itemsFound;
+    if (ids.length === shown) return;
+    shown = ids.length;
+    const known = ids.filter((id) => DATA.items[id]), items = known.map((id) => DATA.items[id]);
+    found.textContent = '';
+    found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
+      ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
+        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`)); }),
+      ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
+  };
+  set();
+  const page = el('div', { class: 'back-page back-inv' },
+    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), ...worn, found,
+    dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
+  return { el: page, set };
+}
+function cardBack(run) {
+  const stats = statsPage(run), inv = invPage(run);
+  return { el: el('div', { class: 'card-back' }, stats.el, inv.el), set: (page) => (page === 'inv' ? inv : stats).set() };
 }
 
 // Turns a card around its vertical axis in two halves, swapping its face at
@@ -173,7 +214,13 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const armor = p.equipment.armor ? itemWithForge(p.equipment.armor, p) : null;
   const hp = hpLine(run.hp, run.maxHp);
   const chip = el('div', { class: 'hud-chip' }, hp.line);
-  const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
+  // the potions (0.00263): the potion's picture and the count — a found potion's card flies into it, so the count holds
+  // that potion back until it lands (holdPotion, from the queue) and then glows and counts it (landPotion)
+  let held = 0;
+  const shownPotions = () => `${Math.max(0, run.potions - held)}/${run.potionCap}`;
+  const potionCount = el('span', { class: 'potion-count' }, shownPotions());
+  const potionIcon = potionPic('potion-ic');
+  const potions = el('div', { class: 'card-sub potions', title: 'Potions' }, potionIcon ?? 'POTIONS ', potionCount);
   const img = portrait('player', 'player', 'player');
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
@@ -189,26 +236,32 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const gear = el('div', { class: 'gear-block' },
     el('div', { class: 'gear-names' },
       weapon ? el('span', { class: rarityClass(weapon) }, weapon.name.toUpperCase() + (weapon.forgeLvl ? ` +${weapon.forgeLvl}` : '')) : el('span', {}, 'UNARMED'),
-      armor ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : '')) : el('span', { class: 'no-item' }, 'NO ARMOR')),
+      armor ? el('span', { class: rarityClass(armor) }, armor.name.toUpperCase() + (armor.forgeLvl ? ` +${armor.forgeLvl}` : '')) : el('span', { class: 'no-item' }, 'NO ARMOR'),
+      el('span', { class: 'info-i', 'aria-hidden': 'true' }, 'i')), // (0.00258: says the card turns over)
     el('div', { class: 'gear-vals' },
       el('span', { class: 'lv-badge' }, `LV${playerLevel(p)}`),
       el('span', { class: 'weapon-dmg' }, `${run.stats.dmg} DMG`),
       armorVal));
-  const card = el('div', { class: `char-card player-card${heroOf(p).id !== defaultHero().id ? ' hero-standing' : ''}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite)
+  const card = el('div', { class: `char-card player-card${lookIsSprite(heroOf(p), cleanHero(p.hero).look) ? '' : ' hero-standing'}` }, // (0.00250: a standing hero's figure stands taller than the knight's wide sprite; 0.00264: the knight stands too, but for his crouching look)
     plate, gear, img, chip, potions);
-  const back = statsBack(run);
+  const back = cardBack(run);
   card.append(back.el);
-  card.setAttribute('title', 'Stats');
-  let flipping = false;
-  card.addEventListener('click', async () => {
+  card.setAttribute('title', 'Stats and inventory');
+  let page = 0, flipping = false;
+  card.addEventListener('click', async () => { // front → stats → inventory → front
     if (flipping) return;
     flipping = true;
-    await flipCard(card, () => { back.set(); setClass(card, 'flipped', !card.classList.contains('flipped')); });
+    await flipCard(card, () => {
+      page = (page + 1) % PAGES.length;
+      back.set(PAGES[page]);
+      setClass(card, 'flipped', page > 0);
+      setClass(card, 'page-inv', PAGES[page] === 'inv');
+    });
     flipping = false;
   });
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00259: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
+  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00266: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
@@ -216,9 +269,9 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     hp.set(s.hp, run.maxHp);
     const low = isLowHp(s.hp, run.maxHp);
     setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
-    setText(potions, `POTIONS ${run.potions}/${run.potionCap}`);
+    setText(potionCount, shownPotions());
     setText(armorVal, armorText());
-    if (card.classList.contains('flipped')) back.set();
+    if (page > 0) back.set(PAGES[page]);
     setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
     heavyDisabled(!s.heavyReady);
@@ -231,7 +284,17 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(potionBtn, 'active-red', remind);
     setClass(potionBtn, 'potion-remind', remind);
   };
-  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update });
+  const holdPotion = () => { held++; setText(potionCount, shownPotions()); };
+  const landPotion = () => {
+    held = Math.max(0, held - 1);
+    setText(potionCount, shownPotions());
+    for (const [node, peak] of [[potionCount, 1.7], [potionIcon, 1.5]]) node?.animate?.([ // (one-shot: the count glows and counts the potion in)
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+      { transform: `scale(${peak})`, filter: 'brightness(2.4) drop-shadow(0 0 6px rgba(255, 90, 60, 0.95))', offset: 0.25 },
+      { transform: 'scale(1)', filter: 'brightness(1)' },
+    ], { duration: 700, easing: 'ease-out' });
+  };
+  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update, potionsEl: potions, holdPotion, landPotion });
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })

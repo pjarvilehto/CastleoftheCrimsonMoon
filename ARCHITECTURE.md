@@ -104,6 +104,7 @@ src/
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
     portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
+    itemArt.js          an item's picture (items.json art, assets/items/) and gainLine — what a find raises over what it replaced (0.00260)
     platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp();
                         deviceName() / deviceBlock() (a data block's `phone` sub-block merged on a phone — the phone power profile, 0.00222)
     refreshRates.js     the standard display rates (RATES, snapRate): perfMonitor's hz and the stats page's grades, one copy
@@ -137,6 +138,7 @@ src/
                         per printed line: tick, line, sound, effect
     combatQueue.js      combat events -> playback items (fx, hold, sfx, loot)
     combatFx.js  fxParts.js   effects per event; shake, spray, numbers...
+    findFx.js           a kept find in combat: its card rises over the foes and flies into the hero's (0.00260)
     combatSfx.js        a line's sound, panned to its card, timed to the blow
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
@@ -162,12 +164,14 @@ assets/
                         rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json)
   chars/                portraits (WebP with alpha; the file named in the data) + card
                         frames (PNG); candidates/ = the redraws tools/gen-art.mjs made
+  items/                the gear's pictures (256 px WebP, the file named in items.json art); candidates/ =
+                        what tools/gen-items.mjs painted from docs/item-prompts.md (items-art.json; 0.00260)
   audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; fonts/: the display
                         font as WOFF2 + the TTF fallback, 0.00223)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
-                        changelog; narration, art, rooms-art, lora (generated: the takes,
-                        the redrawn portraits, the painted rooms, the LoRA trainings)
+                        changelog; narration, art, rooms-art, items-art, lora (generated: the takes,
+                        the redrawn portraits, the painted rooms, the item pictures, the LoRA trainings)
 analytics/              /analytics/ play-stats page (static, versioned boot):
   stats.js              pure aggregation (sanitizes other people's saves)
   charts.js  perf.js  tables.js  dashboard.js  dashboard.css
@@ -252,7 +256,7 @@ primary button. While a dialog is open it owns the keyboard.
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
-| `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (named per class since 0.00259: Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites) / Drink Potion |
+| `A` `H` `P` | dungeon | Attack (front enemy) / the heavy attack (named per class since 0.00266: Heavy Attack, Cleave, Fireball, Soul Drain, Go Feral, Hex, Last Rites) / Drink Potion |
 | `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `G` | run end | Return to the Great Hall |
