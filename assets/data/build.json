@@ -1,5 +1,5 @@
 {
-  "version": "0.00314",
+  "version": "0.00315",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00315": [
+      "The title's fly-in, made for every screen: the game's vignette drawn over the film by the screen (not baked into it), a phone fetches a smaller 720p film after its PLAY tap, and the fade is timed by the film's own clock so a slow connection never fades mid-flight."
+    ],
     "0.00314": [
       "Housekeeping: the paintings are decoded with the option Chrome now asks for (a deprecation warning in the console is gone)"
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00301": [
       "The SFX Lab (a testing page): every sound effect where it plays, with or without the scene's music, with volume, pitch and speed to try and approve."
-    ],
-    "0.00300": [
-      "Combat: the cards no longer show hover tooltips; an enemy's ⓘ glows when you hover its name."
     ]
   }
 }
