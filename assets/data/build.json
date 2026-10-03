@@ -1,5 +1,5 @@
 {
-  "version": "0.00306",
+  "version": "0.00307",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -94,12 +94,16 @@
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
+    "src/ui/titleIntro.js",
     "src/ui/treasureUI.js",
     "src/ui/updatePrompt.js",
     "src/ui/victoryModal.js",
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00307": [
+      "A prototype of the title's fly-in: the castle approached from across the valley before the title shows, once a visit; a click or a key skips it."
+    ],
     "0.00306": [
       "The shrine chime deeper, the hollow hound's cries and the new potion and critical-hit sounds pitched down as reviewed; the SFX Lab's sliders reset after a review is applied."
     ],
@@ -145,9 +149,6 @@
     ],
     "0.00293": [
       "Immunities: the undead and the vermin can shrug off Last Rites' blight and the fire-born the Wizard's Fireball — 'Immune!' instead; the Wizard and the Plague Sister hit a little harder to make up for it"
-    ],
-    "0.00292": [
-      "Combat: click the LOOT row (bottom left) to see everything you've found this run, with pictures and stats, four at a time with a scroll for more."
     ]
   }
 }
