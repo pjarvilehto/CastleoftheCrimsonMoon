@@ -74,11 +74,11 @@ const API = 'https://api.replicate.com/v1';
 export const MODELS = {
   pro: { model: 'flux-kontext-apps/multi-image-kontext-pro', priceUsd: 0.04, build: (x) => ({ prompt: x.prompt, input_image_1: x.portrait, input_image_2: x.style, aspect_ratio: x.aspect, output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
   max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08, build: (x) => ({ prompt: x.prompt, input_image_1: x.portrait, input_image_2: x.style, aspect_ratio: x.aspect, output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
-  banana: { model: 'google/nano-banana', priceUsd: 0.04, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, output_format: 'png' }) },
-  bananapro: { model: 'google/nano-banana-pro', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, resolution: '2K', output_format: 'png', safety_filter_level: 'block_only_high' }) },
-  seedream: { model: 'bytedance/seedream-4', priceUsd: 0.03, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, size: '2K', enhance_prompt: false, sequential_image_generation: 'disabled' }) },
-  gpt: { model: 'openai/gpt-image-1.5', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style], aspect_ratio: x.aspect === '4:3' ? '3:2' : x.aspect, quality: 'high', input_fidelity: 'high', background: 'opaque', moderation: 'low', output_format: 'png' }) },
-  flux2: { model: 'black-forest-labs/flux-2-pro', priceUsd: 0.05, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style], aspect_ratio: x.aspect, resolution: '2 MP', output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
+  banana: { model: 'google/nano-banana', priceUsd: 0.04, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, output_format: 'png' }) },
+  bananapro: { model: 'google/nano-banana-pro', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, resolution: '2K', output_format: 'png', safety_filter_level: 'block_only_high' }) },
+  seedream: { model: 'bytedance/seedream-4', priceUsd: 0.03, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, size: '2K', enhance_prompt: false, sequential_image_generation: 'disabled' }) },
+  gpt: { model: 'openai/gpt-image-1.5', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect === '4:3' ? '3:2' : x.aspect, quality: 'high', input_fidelity: 'high', background: 'opaque', moderation: 'low', output_format: 'png' }) },
+  flux2: { model: 'black-forest-labs/flux-2-pro', priceUsd: 0.05, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, resolution: '2 MP', output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
   // the style LoRA (tools/train-lora.mjs): text to image, no source portrait — a NEW character (--new) or a fresh take on one
   lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON' },
 };
@@ -391,8 +391,9 @@ async function main() {
     if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
   }
-  const cost = jobs.reduce((s, j) => s + (j.from ? CLEAN.priceUsd : j.sheet ? FROM_SHEET.priceUsd : model.priceUsd), 0);
-  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => (j.from ? CLEAN.model : j.sheet ? FROM_SHEET.model : model.model)))].join(' + ')} (about $${cost.toFixed(2)}, from memory)`);
+  const modelOf = (j) => (j.from ? CLEAN : j.sheet && !model.list ? FROM_SHEET : model);
+  const cost = jobs.reduce((s, j) => s + modelOf(j).priceUsd, 0);
+  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => modelOf(j).model))].join(' + ')} (about $${cost.toFixed(2)}, from memory)`);
   for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : j.sheet ? `from the sheet ${j.style}` : `style ${j.style}`}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
   if (has('--dry-run')) { if (jobs.length) console.log(`\n--- the prompt for ${jobs[0].c.id} ---\n${jobs[0].prompt}\n---`); return; }
   if (!jobs.length) return;
@@ -408,11 +409,12 @@ async function main() {
       const name = candidateFile(j.c.id, j.n);
       try {
         const t0 = Date.now();
-        const use = j.from ? CLEAN.model : j.sheet ? FROM_SHEET.model : model.model;
+        const use = j.from ? CLEAN.model : j.sheet && !model.list ? FROM_SHEET.model : model.model;
         const input = j.from
           ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : j.sheet
-            ? { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed }
+            ? (model.list ? model.build({ prompt: j.prompt, portrait: await uploaded(j.sheet), style: null, aspect: DEFAULTS.aspect, seed: j.seed })
+              : { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed })
           : model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
             : model.build({ prompt: model.list ? j.prompt.replace(/\bimage 1\b/g, 'the first image').replace(/\bimage 2\b/g, 'the second image') : j.prompt,
