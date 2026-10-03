@@ -1,5 +1,5 @@
 {
-  "version": "0.00273",
+  "version": "0.00274",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -41,6 +41,7 @@
     "src/run/shrine.js",
     "src/run/treasure.js",
     "src/shared/balance.js",
+    "src/shared/classGear.js",
     "src/shared/data.js",
     "src/shared/dataCheck.js",
     "src/shared/debug.js",
@@ -95,6 +96,12 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00274": [
+      "Classes have their own gear: the Knight in plate and mail with swords and maces, the Barbarian in hides with axes and maces, the Wizard in robes with staves and daggers, the Necromancer in robes with daggers and scythes, the Druid in hides with staves and sickles, the Hexhunter in leathers with crossbows and swords, the Plague Sister in robes with censers and maces.",
+      "46 new items, each with its own picture — among them two signature pieces per class that feed its power (+1 and +2: a Fireball charge, an Entangle turn, Cleave reach and the like).",
+      "Another class's gear still drops: it rides in your loot, greyed, and is salvaged for coins at the end of the run. Gear your class can't use on an old save is swapped for its starting kit.",
+      "Balance: the Necromancer's armor and damage and the Plague Sister's armor are up, to carry them in their robes."
+    ],
     "0.00273": [
       "The Music Lab (a testing page): generated scores for the title and combat music from three music models, beside the music the game plays today, level-matched, with a blind mode for picking the next score."
     ],
@@ -143,9 +150,6 @@
       "Every piece of gear has its own painted picture: on your gear in the Great Hall (and the phone's Equipment sheet), on your hero's inventory and in the log.",
       "A find in combat rises as a card over the enemies — what it is, what it replaces and what it adds — then flies into your hero's card; LOOT, under your coins, keeps the run's finds.",
       "The run's end shows your finds as cards, each with what it replaced and gained, and what was salvaged as small grey pictures; back in the Great Hall each find's picture flashes into its slot."
-    ],
-    "0.00259": [
-      "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
     ]
   }
 }
