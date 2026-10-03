@@ -23,36 +23,19 @@
 // away), DEAD (unaffordable most of the time).
 
 import { fileURLToPath } from 'node:url';
-import { loadSim, withSeed, newAgg } from './simCore.mjs';
-
-const mean = (a) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
-const sd = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1)); };
+import { loadSim, baselineSnapshots, pairedRuns, mean, sd } from './simCore.mjs';
 
 export async function shrineStudy({ n = 300, seed = 1, stages = [2, 5, 10, 15, 20, 25, 30], hero = 'knight' } = {}) {
   const sim = await loadSim();
   const boons = sim.DATA.shrines.offers.map((o) => o.id);
-  // 1. profile snapshots along one baseline campaign
-  const snaps = [];
-  withSeed(seed, () => {
-    sim.fresh(hero);
-    const agg = newAgg();
-    for (let r = 0; r <= Math.max(...stages); r++) {
-      if (stages.includes(r)) snaps.push({ stage: r, profile: sim.snapshot(), derived: sim.derivedStats(sim.getProfile()) });
-      sim.playRun({ agg });
-      sim.spendInHub(agg);
-    }
-  });
+  // 1. profile snapshots along one baseline campaign (simCore.baselineSnapshots)
+  const snaps = baselineSnapshots(sim, { seed, stages, hero, onStage: () => ({ derived: sim.derivedStats(sim.getProfile()) }) });
   // 2 + 3. forced-boon runs from each snapshot, common random numbers
   const results = [];
   for (const snap of snaps) {
     const byPolicy = {};
     for (const policy of ['none', ...boons]) {
-      const recs = [];
-      for (let i = 0; i < n; i++) {
-        sim.restore(snap.profile);
-        recs.push(withSeed(seed * 100003 + snap.stage * 7919 + i, () => sim.playRun({ shrine: policy })));
-      }
-      byPolicy[policy] = recs;
+      byPolicy[policy] = pairedRuns(sim, snap, { seed, n, run: { shrine: policy } }).recs;
     }
     const base = byPolicy.none;
     const idx = base.map((r, i) => (r.shrineRoom !== null ? i : -1)).filter((i) => i >= 0); // reached the shrine

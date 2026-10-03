@@ -626,3 +626,18 @@ fresh();
   ok('Shrine picks: a boon\'s rate is taken over dealt; walk-aways counted', picks.met === 3 && picks.walked === 1 && crit.offered === 3 && crit.taken === 1 && Math.abs(crit.rate - 1 / 3) < 1e-9);
   fresh();
 }
+
+// 0.00322 (the developer's ask): the dashboard's Recent runs rows carry the hero played (its look), the finds (a relic starred), the XP and the turns
+{
+  const { runsTable } = await import('../../analytics/tables.js');
+  const names = { labelOf: (p) => `P${p}`, heroName: (id) => (id ? `Hero ${id}` : 'The Curious Knight'), enemyName: (id) => `Foe ${id}`, boonName: (b) => b, offers: () => ({ dmg: { icon: '⚔' } }) };
+  const run = { at: Date.now(), player: 1, build: '0.00322', outcome: 'death', room: 9, kills: 14, turns: 31, xp: 88, coins: 120, banked: 60, items: 3, relic: true, killedBy: 'rat', boons: ['dmg'], bosses: 1, potions: 2, ms: 60000, level: 3, maxHp: 900, dmg: 20, armor: 40, hero: 'wizard', look: 2 };
+  const html = runsTable([run, { ...run, hero: null, look: 0, relic: false, items: 0, coins: 60, outcome: 'retreat' }], names);
+  const cells = (row) => [...row.matchAll(/<td>(.*?)<\/td>/gs)].map((m) => m[1]);
+  const rows = html.split('<tr class=').slice(1);
+  const a = cells(rows[0]), b = cells(rows[1]);
+  ok('Recent runs: the hero and its look, the turns, the XP, the banked coins of the coins won, the finds with the relic starred, in the header\'s order',
+    html.includes('<th>Hero</th>') && html.includes('<th>Turns</th>') && html.includes('<th>XP</th>') && html.includes('<th>Finds</th>')
+    && a[2] === 'Hero wizard<small>look 3</small>' && a[7] === '31' && a[8] === '88' && a[9] === '60<small>of 120</small>' && a[10].startsWith('3 <span') && a[10].includes('★') && a[11] === 'Foe rat');
+  ok('…a run before the classes is the knight\'s with no look; nothing banked short shows no "of"; no relic, no star', b[2] === 'The Curious Knight' && b[9] === '60' && b[10] === '0');
+}

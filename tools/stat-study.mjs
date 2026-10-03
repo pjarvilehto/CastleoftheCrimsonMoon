@@ -20,11 +20,7 @@
 // unset — 0.00299: the study used to play a classless knight, see simCore.fresh).
 
 import { fileURLToPath } from 'node:url';
-import { loadSim, withSeed, newAgg } from './simCore.mjs';
-
-const mean = (a) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
-const se = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1) / Math.max(1, a.length)); };
-
+import { loadSim, baselineSnapshots, pairedRuns, mean, se } from './simCore.mjs';
 import { DISCIPLINES } from '../src/shared/level.js';
 const TRACKS = ['potency', 'efficiency', 'infusion'];
 
@@ -38,31 +34,13 @@ export async function statStudy({ n = 200, seed = 1, stages = [5, 15, 30, 60], r
     o[keys.at(-1)] = JSON.parse(raw);
   }
   const lv = await import('../src/meta/leveling.js');
-  const snaps = [];
-  withSeed(seed, () => {
-    sim.fresh(hero);
-    const agg = newAgg();
-    for (let r = 0; r <= Math.max(...stages); r++) {
-      if (stages.includes(r)) {
-        const recent = agg.runs.slice(-5);
-        snaps.push({ stage: r, profile: sim.snapshot(), xpPerRun: mean(recent.map((x) => x.xp)) || 60, coinsPerRun: mean(recent.map((x) => x.banked ?? x.coins)) || 60 });
-      }
-      sim.playRun({ agg });
-      sim.spendInHub(agg);
-    }
-  });
+  const snaps = baselineSnapshots(sim, { seed, stages, hero, onStage: (sim, agg) => {
+    const recent = agg.runs.slice(-5);
+    return { xpPerRun: mean(recent.map((x) => x.xp)) || 60, coinsPerRun: mean(recent.map((x) => x.banked ?? x.coins)) || 60 };
+  } });
   const results = [];
   for (const snap of snaps) {
-    const play = (prepare) => {
-      const recs = [];
-      let bought = 0;
-      for (let i = 0; i < n; i++) {
-        sim.restore(snap.profile);
-        if (prepare) bought = prepare(sim.getProfile());
-        recs.push(withSeed(seed * 100003 + snap.stage * 7919 + i, () => sim.playRun({})));
-      }
-      return { recs, bought };
-    };
+    const play = (prepare) => pairedRuns(sim, snap, { seed, n, prepare });
     const base = play(null).recs;
     const row = (name, kind, { recs, bought }) => {
       const d = recs.map((r, i) => r.depth - base[i].depth);

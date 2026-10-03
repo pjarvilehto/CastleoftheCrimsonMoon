@@ -72,6 +72,46 @@ const SHRINE_PRIORITY = ['quicken', 'leech', 'bulwark', 'secondwind', 'dmg', 'cr
 export const STAT_PRIORITY = ['vitality', 'power', 'endurance', 'precision', 'fortune'];
 const ALCHEMY_PRIORITY = ['potency', 'infusion', 'efficiency'];
 
+// The small statistics the studies print (0.00322: each had its own copy).
+export const mean = (a) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
+export const sd = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1)); };
+export const se = (a) => sd(a) / Math.sqrt(Math.max(1, a.length));
+
+// A baseline campaign snapshotted at the given stages (0.00322: the two
+// studies' first loop, once): the bot plays run after run, spending in the
+// hub between them, and at each stage in `stages` records the profile (plus
+// whatever `onStage(sim, agg)` adds — the derived stats, the recent runs'
+// income). The campaign is seeded, so a study's snapshots never move.
+export function baselineSnapshots(sim, { seed, stages, hero = 'knight', onStage = null }) {
+  const snaps = [];
+  withSeed(seed, () => {
+    sim.fresh(hero);
+    const agg = newAgg();
+    for (let r = 0; r <= Math.max(...stages); r++) {
+      if (stages.includes(r)) snaps.push({ stage: r, profile: sim.snapshot(), ...(onStage?.(sim, agg) ?? {}) });
+      sim.playRun({ agg });
+      sim.spendInHub(agg);
+    }
+  });
+  return snaps;
+}
+
+// n runs from one snapshot under common random numbers (the studies' second
+// loop): the profile restored before each, `prepare(profile)` applied to it
+// (a bought upgrade; its answer is handed back as `bought`), then the run
+// seeded by the study's seed, the stage and the run's index — so two policies
+// compared from the same snapshot meet the same rooms, foes and rolls.
+export function pairedRuns(sim, snap, { seed, n, prepare = null, run = {} }) {
+  const recs = [];
+  let bought = 0;
+  for (let i = 0; i < n; i++) {
+    sim.restore(snap.profile);
+    if (prepare) bought = prepare(sim.getProfile());
+    recs.push(withSeed(seed * 100003 + snap.stage * 7919 + i, () => sim.playRun(run)));
+  }
+  return { recs, bought };
+}
+
 export function newAgg() {
   return {
     runs: [], depths: [],

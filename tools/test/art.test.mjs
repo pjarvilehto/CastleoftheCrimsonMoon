@@ -5,7 +5,9 @@
 // Run via tools/smoke-test.mjs.
 
 import { ok, fresh, DATA, readFileSync } from './harness.mjs';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 fresh();
 
@@ -48,9 +50,27 @@ fresh();
     const reg = { rooms: { r: { name: 'R', candidates: [{ n: 1, file: 'a.jpg', verdict: 'no', note: 'old' }, { n: 2, file: 'b.jpg' }, { n: 3, file: 'c.jpg' }] } } };
     const v = BG.applyVerdicts(reg, { approved: [{ id: 'r', file: 'a.jpg' }], rejected: [{ id: 'r', file: 'b.jpg', note: 'too bright' }, { id: 'r', file: 'c.jpg' }], reroll: [] });
     const c = reg.rooms.r.candidates;
-    ok('gen-bg --rerender: an approval clears the old note, a rejection keeps its note (or none), an unknown file is ignored',
+    ok('gen-bg --rerender: an approval without a note clears the old one, a rejection keeps its note (or none), an unknown file is ignored (tools/registry.mjs applyVerdicts, 0.00322: one rule for every lab)',
       v.approved === 1 && v.rejected === 2 && c[0].verdict === 'ok' && !('note' in c[0]) && c[1].verdict === 'no' && c[1].note === 'too bright' && c[2].verdict === 'no' && !('note' in c[2])
       && BG.applyVerdicts(reg, { approved: [{ id: 'r', file: 'zzz.jpg' }] }).approved === 1 && c.every((k) => k.file !== 'zzz.jpg'));
+    // the shared registry (0.00322): the next candidate number, an approval's note kept, a tool's own extra on approve, the file's layout
+    {
+      const R = await import('../registry.mjs');
+      const dir = mkdtempSync(join(tmpdir(), 'reg-'));
+      const reg = R.registry(join(dir, 'x.json'), { key: 'things', doc: 'the doc', stamp: true });
+      const r = reg.load();
+      ok('registry.load gives an empty collection where the file is missing; nextN counts from the candidates', JSON.stringify(r) === '{"things":{}}' && R.nextN({ candidates: [] }) === 1 && R.nextN({ candidates: [{ n: 2 }, { n: 5 }] }) === 6);
+      r.things.t = { candidates: [{ n: 1, file: 'a' }, { n: 2, file: 'b', note: 'old' }] };
+      const v = R.applyVerdicts(Object.values(r.things), { approved: [{ file: 'a', note: 'the one', flip: true }, { file: 'b' }], rejected: [{ file: 'nope' }] }, { onApprove: (k, a) => { k.flip = !!a.flip; } });
+      const [a, b] = r.things.t.candidates;
+      ok('applyVerdicts: an approval keeps its note and a tool\'s extra, an approval without one clears the old note, the counts are the request\'s',
+        v.approved === 2 && v.rejected === 1 && a.verdict === 'ok' && a.note === 'the one' && a.flip === true && b.verdict === 'ok' && !('note' in b) && b.flip === false);
+      reg.save(r);
+      const text = readFileSync(join(dir, 'x.json'), 'utf8'), saved = JSON.parse(text);
+      ok('registry.save writes _doc, the stamp and the collection in that order, 2-space JSON with a final newline',
+        Object.keys(saved).join() === '_doc,generated,things' && saved._doc === 'the doc' && /^\d{4}-\d\d-\d\dT/.test(saved.generated) && text.endsWith('}\n') && text.includes('\n  "things"'));
+      rmSync(dir, { recursive: true, force: true });
+    }
     const rp = BG.basedOnPrompt(rdoc, rdoc.rooms[0], 'darker');
     ok('gen-bg: Regenerate with notes attaches the candidate and keeps the room\'s own prompt after the direction; --prune and --import by room are there; Seedream is the default',
       rp.startsWith('The first image is a painting of this room: keep its composition, palette and style and paint it again, darker. ') && rp.endsWith(rdoc.style)

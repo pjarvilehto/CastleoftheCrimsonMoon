@@ -54,10 +54,15 @@ export function playersTable(list, names) {
 export function runsTable(runs, names) {
   if (!runs.length) return '<p class="empty">No runs recorded yet.</p>';
   const latest = [...runs].sort((a, b) => b.at - a.at).slice(0, 60);
-  return `<div class="scroll"><table><tr><th>When</th><th>Player</th><th>Build</th><th>Result</th><th>Room</th><th>Kills</th><th>Banked</th><th>Killed by</th><th>Boons</th><th>Bosses</th><th>Potions</th><th>Time</th><th>Lvl / HP / Dmg / Armor</th></tr>${latest.map((r) => `
+  // 0.00322 (the developer's ask): the hero played (its look), the finds (a relic starred), the XP and the turns joined the row — every record carries them (history.js runRecord)
+  return `<div class="scroll"><table><tr><th>When</th><th>Player</th><th>Hero</th><th>Build</th><th>Result</th><th>Room</th><th>Kills</th><th>Turns</th><th>XP</th><th>Banked</th><th>Finds</th><th>Killed by</th><th>Boons</th><th>Bosses</th><th>Potions</th><th>Time</th><th>Lvl / HP / Dmg / Armor</th></tr>${latest.map((r) => `
     <tr class="${r.outcome}">
-      <td>${ago(r.at)}</td><td>${esc(names.labelOf(r.player))}</td><td>${esc(r.build)}</td>
-      <td>${r.outcome === 'death' ? 'died' : 'retreated'}</td><td>${r.room}</td><td>${r.kills}</td><td>${r.banked}</td>
+      <td>${ago(r.at)}</td><td>${esc(names.labelOf(r.player))}</td>
+      <td>${esc(names.heroName(r.hero))}${r.hero ? `<small>look ${(r.look ?? 0) + 1}</small>` : ''}</td>
+      <td>${esc(r.build)}</td>
+      <td>${r.outcome === 'death' ? 'died' : 'retreated'}</td><td>${r.room}</td><td>${r.kills}</td><td>${r.turns ?? 0}</td><td>${r.xp ?? 0}</td>
+      <td>${r.banked}${r.coins > r.banked ? `<small>of ${r.coins}</small>` : ''}</td>
+      <td>${r.items ?? 0}${r.relic ? ' <span title="a relic among them">★</span>' : ''}</td>
       <td>${esc(r.killedBy ? names.enemyName(r.killedBy) : '')}</td>
       <td>${(r.boons ?? []).map((b) => `<span title="${esc(names.boonName(b))}">${esc(names.offers()[b]?.icon ?? b)}</span>`).join(' ')}</td>
       <td>${r.bosses}</td><td>${r.potions}</td><td>${fmtDuration(r.ms)}</td>

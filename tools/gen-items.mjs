@@ -26,6 +26,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { token, predict } from './replicate.mjs';
+import { registry } from './registry.mjs';
 import { cli } from './util.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,8 +52,8 @@ export function readDoc(text = readFileSync(DOC, 'utf8')) {
 export const promptOf = (style, line, hint) => `${style}\n\nThe object: ${line}${hint ? `\nDirection: ${hint}` : ''}`;
 
 const { argv: args, flag, opt: arg } = cli(); // (tools/util.mjs, 0.00299)
-const loadReg = () => (existsSync(REGISTRY) ? JSON.parse(readFileSync(REGISTRY, 'utf8')) : { items: {} });
-const saveReg = (r) => writeFileSync(REGISTRY, `${JSON.stringify(r, null, 2)}\n`);
+const REG = registry(REGISTRY, { key: 'items' }); // (tools/registry.mjs, 0.00322; the file's own _doc stays)
+const loadReg = REG.load, saveReg = REG.save;
 const sharp = () => createRequire(import.meta.url)('sharp');
 const latest = (reg, id) => (reg.items[id] ?? []).at(-1);
 
