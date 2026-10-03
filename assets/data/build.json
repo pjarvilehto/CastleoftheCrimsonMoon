@@ -1,5 +1,5 @@
 {
-  "version": "0.00289",
+  "version": "0.00290",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -98,6 +98,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00290": [
+      "Combat: the inventory side of your hero's card shows each item as a strip with its picture, like the Great Hall's gear slots (this run's finds are no longer listed there)."
+    ],
     "0.00289": [
       "Calmer boss music: the throne room's score is a new, more restrained take (picked in the Music Lab), the menace held under the fight instead of on top of it."
     ],
@@ -142,9 +145,6 @@
     ],
     "0.00276": [
       "Housekeeping: the project notes, code map and comments caught up with the classes (seven heroes, their own gameplay since 0.00267, Entangle, the recordings); the Druid's Entangle sound lost its old claws-and-growl layers for roots bursting from the earth; a robots.txt keeps crawlers out of the tools and docs. Nothing else changes in the game."
-    ],
-    "0.00275": [
-      "Housekeeping: the class gear's notes name the build they came in; nothing changes in the game."
     ]
   }
 }
