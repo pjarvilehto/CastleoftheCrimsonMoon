@@ -1,4 +1,7 @@
 {
+  "0.00287": [
+    "The get-hit cries are off for now: a blow on your hero plays the plain hurt again and a struck foe makes no cry (the attack sounds stay)"
+  ],
   "0.00286": [
     "Combat: every class's special has its own key, underlined on the button — C for Cleave, F for Fireball, S for Soul Drain, E for Entangle, L for Last Rites (H for Heavy Attack and Hex) — and H still works for every class."
   ],
