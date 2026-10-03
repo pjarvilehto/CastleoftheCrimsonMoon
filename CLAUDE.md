@@ -740,6 +740,12 @@ be served stale for ~4 hours.
   height (`.hall-desk`), each purse in its section's head (`secHead`);
   1001-1400px wide the panels `zoom` down in three steps (an iPad gets the
   same hall smaller), under 1000px one scrolling column;
+  **a run's finds revealed (0.00248, the owner's ask):** `equipItems`
+  records `changes` (each slot the finds filled: from → to), the run's end
+  hands them to the hall (`go('hub', { fromRun, finds })`), and the hall
+  opens with the OLD items there (`shownProfile`; no Forge on them), then
+  each find takes its slot in turn — a gold flare, its name flashing, the
+  numbers it moves rolling up — and keeps a NEW tag for the visit;
   the stat boxes a purchase moved rolling up with the glow (`settleStats`,
   0.00235: Attack after Power or a forge, Coins / XP never),
   the two assemblies, Descend and the flash. A new player is asked their

@@ -51,7 +51,7 @@ export function runEndScene(run, outcome) {
             : el('div', { class: 'retrieved-line' },
                 run.coinsRetrieved > 0 ? `All ${run.coinsRetrieved} gold retrieved.` : null),
           el('div', { class: 'btn-row' },
-            el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub', { fromRun: true }) }, 'Return to the Great Hall'))
+            el('button', { class: 'primary', key: 'g', proceed: true, onclick: () => go('hub', { fromRun: true, finds: run.equipSummary?.changes ?? [] }) }, 'Return to the Great Hall'))
         )
       );
     },

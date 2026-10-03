@@ -717,3 +717,34 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   });
   fresh();
 }
+
+// After a run (0.00248, the owner's ask): the slots the finds filled are
+// recorded at settle; the hall opens with the old items there, then each new
+// one takes its place in turn with a NEW tag, the numbers following.
+{
+  fresh();
+  const { equipItems } = await import('../../src/meta/equipment.js');
+  const p = getProfile(); p.name = 'Finds';
+  Object.assign(p.equipment, { weapon: 'rusty_sword', armor: 'oak_shield', boots: null, rings: [null, null], trinket: null, amulet: null });
+  const sum = equipItems(p, ['knights_blade', 'ring_of_might']);
+  ok('equipItems records each slot the finds changed, in the hall\'s order', sum.changes.length === 2
+    && sum.changes[0].slot === 'weapon' && sum.changes[0].from === 'rusty_sword' && sum.changes[0].to === 'knights_blade'
+    && sum.changes[1].slot === 'rings' && sum.changes[1].index === 0 && sum.changes[1].from === null && sum.changes[1].to === 'ring_of_might', JSON.stringify(sum.changes));
+  await withAnimations(async () => {
+    const { whenWindowsBack } = await import('../../src/core/scene.js');
+    show(hubScene({ fromRun: true, finds: sum.changes })); // (as the game does: the reveal waits for the hall's windows)
+    let back = false; whenWindowsBack().then(() => { back = true; });
+    for (let i = 0; i < 200 && !back; i++) await sleep(50);
+    const slot = (label) => registry.app.all((n) => n.getAttribute?.('data-row') === `slot-${label}` || n.attrs?.['data-row'] === `slot-${label}`)[0];
+    const atk = () => registry.app.all((n) => /\bstat-box\b/.test(n.className ?? '') && n.children[0]?.textContent === 'Attack')[0]?.children[1]?.textContent;
+    const atk0 = atk();
+    const w0 = slot('Weapon')?.textContent ?? '';
+    ok('the hall opens with the old item in a found slot, and no Forge on it yet', /Rusty Sword/i.test(w0) && !/Knight/i.test(w0) && !/Forge/i.test(w0), w0);
+    await sleep(800);
+    const w1 = slot('Weapon')?.textContent ?? '';
+    ok('...then the find takes the slot, tagged NEW, the Attack it adds rolling up', /Knight's Blade/i.test(w1) && /New/.test(w1) && atk() !== atk0, `${w1} | ${atk0} -> ${atk()}`);
+    await sleep(1000);
+    ok('...and the next in turn (the ring)', /Ring of Might/i.test(slot('Ring I')?.textContent ?? '') && /New/.test(slot('Ring I')?.textContent ?? ''));
+  });
+  fresh();
+}

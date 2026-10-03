@@ -198,7 +198,7 @@ const LINES = DATA.narration.lines;
   ok('a potion, a death (the reliquary\'s, a boss\'s, the first), a boss slain', d.includes("narrate('potion')") && d.includes("'death_reliquary' : DATA.enemies[run.killedBy]?.boss ? 'death_boss' : 'death'")
     && d.includes("records.deaths === 0) narrate('first_death')") && d.includes("!maybeShowVictory() && run.room.isBoss) narrate('boss_slain')"));
   ok('the title greets on the first gesture; the hall after a run; a level, the forge', read('src/ui/scenes/titleScene.js').includes("armOnGesture('title_welcome')")
-    && read('src/ui/scenes/hubScene.js').includes("if (opts.fromRun) narrate('hall_return')") && read('src/ui/scenes/runEndScene.js').includes("go('hub', { fromRun: true })")
+    && read('src/ui/scenes/hubScene.js').includes("if (opts.fromRun) narrate('hall_return')") && read('src/ui/scenes/runEndScene.js').includes("go('hub', { fromRun: true")
     && read('src/ui/hubSections.js').includes("> lv) narrate('level_up')") && read('src/ui/hubSections.js').includes("narrate('forge')"));
   ok('a retreat, the victory, a boon, a chest, a relic from the reliquary', read('src/ui/scenes/runEndScene.js').includes("narrate('retreat')") && read('src/ui/victoryModal.js').includes("narrate('victory')")
     && read('src/ui/shrineUI.js').includes("narrate('shrine_take')") && read('src/ui/treasureUI.js').includes('narrate(`chest_${kind}`)') && read('src/ui/treasureUI.js').includes("narrate('relic_found')"));
