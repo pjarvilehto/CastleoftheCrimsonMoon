@@ -78,6 +78,17 @@ before structural changes. This file is the rules and the per-system notes.
     dive through the clouds to the place's first room. Drag, wheel and
     pinch; CLEAR fakes progress; COPY JSON gives the data and tuning back.
     Nothing touches the save; the design it prototypes is in the Backlog.
+  - **Hero Lab (0.00230):** `labs/heroes/` — the CHOOSE YOUR HERO screen
+    as a draft: five character classes (the Curious Knight and the owner's
+    Barbarian, Wizard, Necromancer and Druid sheets, `assets/style/heroes/`,
+    cut out of the grey by `tools/cutout.mjs` into the lab's folder, each
+    figure sized by its sheet box so the five stay in scale) over any
+    painting, two layouts (LINE-UP: five tall cards on the enemy frame,
+    the chosen one lifted with a breathing gold rim, its lines and BEGIN
+    under them; SHOWCASE: the chosen hero large beside the lines, the
+    five as a strip), an optional 3D fan, 1-5 / arrows / Space. `lab.js
+    HEROES` is the shape of a future `heroes.json`; names, lines and
+    traits are placeholders, the choice is cosmetic for now.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the owner from
   Kimi version cards — not maintained here.
 
