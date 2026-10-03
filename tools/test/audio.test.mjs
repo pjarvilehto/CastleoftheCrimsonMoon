@@ -115,7 +115,7 @@ fresh();
       && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 7) < 0.11 && !C.deeper.stinger // (-12 until the developer's 0.00302 review: +5)
       && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("function descend(btn) {\n    sfx('deeper');") && read('src/ui/scenes/titleScene.js').includes("onclick: () => { sfx('deeper'); enterFull();")
       && C.deeper.prime === true && read('src/audio/sfx.js').includes('if (c.prime && c.file) bufferFor(name)'));
-    ok('the tom\'s file starts on the hit (0.00307: 70 ms of silence trimmed off the recording — it felt late on the press)', C.deeper.peakMs < 80);
+    ok('the tom\'s file starts on the hit (0.00313: 70 ms of silence trimmed off the recording — it felt late on the press)', C.deeper.peakMs < 80);
   }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
   const h = read('src/ui/hubSections.js'); // (0.00223: the hall's rows live there)

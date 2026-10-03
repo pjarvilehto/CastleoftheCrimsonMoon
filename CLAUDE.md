@@ -1479,10 +1479,10 @@ developer found it too high). **The descent's strike (0.00298):** the
 `deeper` clip, the developer's huge tom (`deeper_v1.mp3`, the hits' -12 dB,
 no duck — it plays every room), struck as the player chooses Push Deeper
 (`dungeonScene.js nextRoom`, not the first room's entry) and as the hall's
-Descend is pressed (`hubScene.js descend`, 0.00307: on the press itself,
+Descend is pressed (`hubScene.js descend`, 0.00313: on the press itself,
 before the "Descend Now?" prompt and the art's gathering — it used to wait
 for both, and felt late) and on the title's Enter the Castle; the
-recording's 70 ms of leading silence went in 0.00307 (`deeper_v2.mp3`, the
+recording's 70 ms of leading silence went in 0.00313 (`deeper_v2.mp3`, the
 hit 55 ms in) and the clip is `prime: true` (`initSfx` decodes a primed
 clip ahead: Enter the Castle is the first gesture, and a decode after it
 put the strike late). **Reviewing the
