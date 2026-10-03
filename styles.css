@@ -409,6 +409,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hub-wrap h2 { margin: 10px 0 6px; }
 .hub-wrap .item-row { padding: 6px 12px; margin: 4px 0; font-size: 0.95rem; gap: 12px; }
 .hub-wrap .item-row button { padding: 8px 14px; font-size: 1rem; flex-shrink: 0; }
+/* a row's text (0.00231, the owner's ask): the title — the name and its level or count — reads first; what it does sits under it, small and muted */
+.row-text { min-width: 0; }
+.row-title { font-size: 1.12em; letter-spacing: 0.04em; line-height: 1.15; }
+.row-lv { color: var(--gold); margin-left: 0.45em; }
+.row-desc { color: #8a7c5e; font-size: 0.8em; letter-spacing: 0.06em; line-height: 1.2; margin-top: 1px; }
 /* the corner column overlaps the right panel on a tablet: keep clear of it (0.00205) */
 @media (max-width: 1400px) { .hub-container { padding-right: var(--corner-w); } }
 @media (max-width: 1000px) {
@@ -1147,6 +1152,8 @@ html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.pho
 html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
 html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }
+html.phone .phone-hub .row-title, html.phone .phone-hub .row-desc { display: inline; } /* (one line in a sheet: the title, then the small line beside it) */
+html.phone .phone-hub .row-desc { margin-left: 0.6em; font-size: 0.82em; }
 /* the equipment sheet (0.00218): every slot row the same height — the forge button no taller than a row without one, so all seven fit */
 html.phone .phone-hub .item-row .forge-btn { min-height: 24px; padding: 2px 8px; font-size: 0.72rem; }
 html.phone .phone-hub .item-row .equip-item { line-height: 1.15; }

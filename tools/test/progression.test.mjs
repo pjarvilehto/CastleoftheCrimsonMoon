@@ -242,16 +242,16 @@ fresh();
   const want = (l) => { // 0.113: every level also adds crit damage, so none reads +0%
     const gain = precisionCrit(eff(l + 1)) - precisionCrit(eff(l));
     const dmg = pct((eff(l + 1) - eff(l)) * DATA.difficulty.player.critDamagePerPrecision);
-    return gain >= 0.0005 ? `Crit Chance +${pct(gain)}, crit damage +${dmg}` : `crit chance maxed: crit damage +${dmg}`;
+    return gain >= 0.0005 ? `+${pct(gain)} crit chance, +${dmg} crit damage` : `crit chance maxed · +${dmg} crit damage`;
   };
   resetProfile();
   ok('precisionDesc shows the next click\'s actual gain (breakthroughs count double)', [0, 4, 9, 10, 19, 20, 30, 45].every((l) => precisionDesc(l) === want(l))
-    && precisionDesc(0) === 'Crit Chance +3%, crit damage +1%' && precisionDesc(4) === 'Crit Chance +6%, crit damage +2%',
+    && precisionDesc(0) === '+3% crit chance, +1% crit damage' && precisionDesc(4) === '+6% crit chance, +2% crit damage',
     [0, 4, 30].map(precisionDesc).join(' | '));
   ok('late precision never reads +0% (0.113)', [30, 46, 60, 99].every((l) => !precisionDesc(l).includes('+0%')), precisionDesc(46));
   getProfile().stats.precision = 12;
   hubScene().enter(registry.app);
-  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12 — ${want(12)}`));
+  ok('hub shows the tapered gain at lvl 12', registry.app.textContent.includes(`Lv 12${want(12)}`));
   // at the crit cap (crit gear), precision turns into crit damage instead
   const eq = getProfile().equipment;
   eq.trinket = 'fang_of_the_crimson_moon'; eq.weapon = 'moonbrand'; eq.rings = ['ring_of_the_blood_moon', 'ring_of_the_blood_moon'];
@@ -261,7 +261,7 @@ fresh();
   ok('crit past the cap becomes crit damage (0.112)', ds.crit === DATA.difficulty.player.critCap && ds.critBonus > 0
     && Math.abs(ds.critBonus - ((0.05 + 0.36 + precisionCrit(trainedLevel(getProfile(), 'precision')) - 0.6) * 1.5
       + trainedLevel(getProfile(), 'precision') * DATA.difficulty.player.critDamagePerPrecision)) < 1e-9
-    && precisionDesc(30).startsWith('crit chance maxed: crit damage +'));
+    && precisionDesc(30).startsWith('crit chance maxed · +'));
   resetProfile();
 }
 
@@ -501,7 +501,7 @@ fresh();
     && lv.efficiencyChance(20) > 0.49 && lv.efficiencyChance(20) < 0.51 && lv.efficiencyChance(40) - lv.efficiencyChance(20) > 0.04);
   resetProfile();
   getProfile().alchemy.efficiency = 20;
-  ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
+  ok('efficiency hub line: now and next', /^50% chance to keep a potion \(next \+0\.\d+%\)$/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
   // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
   getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
   const { canSpendCoins, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');

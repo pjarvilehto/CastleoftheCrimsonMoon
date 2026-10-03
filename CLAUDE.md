@@ -632,7 +632,9 @@ be served stale for ~4 hours.
   by `data-row` and glows, grows and flashes its label at its new level
   (`fx.js pulseNumber`, one `element.animate`, 0.8 s). The three
   sections' rows (Train, Alchemy, Equipment) are built in
-  `ui/hubSections.js` (0.00223); `hubScene.js` keeps the hall's table,
+  `ui/hubSections.js` (0.00223; each row's text is `rowText`: a title —
+  name + level or count — over a small muted line, one line on a phone,
+  0.00232); `hubScene.js` keeps the hall's table,
   the two assemblies, Descend and the flash. A new player is asked their
   name on Enter the Castle, not over the title (0.00200). Its glow is a `::after` layer whose opacity
   animates (0.00197): never animate `box-shadow` or `filter` in a loop —
@@ -1109,7 +1111,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: the hall rows' comments (hubText.js, hubSections.js, styles.css) say 0.00231 for 0.00232 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)

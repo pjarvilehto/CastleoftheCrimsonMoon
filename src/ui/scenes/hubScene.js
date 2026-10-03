@@ -169,7 +169,7 @@ const flashNext = (row) => { flashRow = row; }; // (then the handler's own rende
 function settleFlash(root) {
   if (!flashRow) return;
   const row = root.querySelector?.(`[data-row="${flashRow}"]`); flashRow = null;
-  const label = row?.querySelector?.('.equip-item') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus)
+  const label = row?.querySelector?.('.equip-item, .row-title') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus; an upgrade: its title, not the small line)
   if (label) { label.style.display = 'inline-block'; label.style.transformOrigin = 'left center'; pulseNumber(label); } // (a block would scale around its own centre, off the row)
 }
 let phonePick = 0, phoneScroll = 0; // the picked sheet and how far it was scrolled (a purchase re-renders: the sheet stays put)
