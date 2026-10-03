@@ -708,8 +708,8 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
     const box = (label) => registry.app.all((n) => /\bstat-box\b/.test(n.className ?? '') && n.children[0]?.textContent === label)[0]?.children[1];
     const before = Number(box('Attack').textContent);
     registry.app.all((n) => n.tagName === 'button' && /^Train/.test(n.textContent))[0].listeners.click[0](); // Power
-    const atk = box('Attack'), hp = box('HP'), xp = box('XP');
-    ok('training Power: Attack glows', atk.animations?.length === 1 && !hp.animations && !xp.animations);
+    const atk = box('Attack'), hp = box('HP'), xp = registry.app.all((n) => /\bpurse\b/.test(n.className ?? ''))[0]?.children[1];
+    ok('training Power: Attack glows', atk.animations?.length === 1 && !hp.animations && xp && !xp.animations);
     await sleep(1000);
     ok('…and rolls up to its new value', Number(atk.textContent) === before + DATA.difficulty.player.dmgPerPower, `${before} → ${atk.textContent}`);
     scene.enter(registry.app); // re-entering the hall is not a purchase

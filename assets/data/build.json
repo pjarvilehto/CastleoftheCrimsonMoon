@@ -1,5 +1,5 @@
 {
-  "version": "0.00237",
+  "version": "0.00238",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00238": [
+      "The Great Hall, redrawn on desktop and iPad: your knight on the left with his gear around him and all his numbers beneath, Train in the middle, Alchemy on the right — each with the XP or coins it spends"
+    ],
     "0.00237": [
       "Room paintings: the owner's prompting guide (docs/image-prompting-guide.md: the recipe every painting came from) is the prompt of tools/gen-bg.mjs — the room's line with its palette cue, the mood, the Darkest Dungeon 2 + Mignola style block verbatim, as text alone; the bake-off re-run on nine models (Imagen 4 and FLUX 1.1 Pro joined): Nano Banana Pro and Nano Banana land closest, Imagen a close third",
       "The rooms' style LoRA trained on the 48 paintings (gen-bg.mjs --model lora draws a room from its line alone); the character LoRA's prompt uses the training captions' words"
@@ -138,18 +141,6 @@
     ],
     "0.00224": [
       "Play stats: the By build table shows the newest ten builds and the three most played older ones; the save-code entry is gone — every tester is collected."
-    ],
-    "0.00223": [
-      "A death in a Sealed Reliquary now counts the room it led to, in your records and on the end screen.",
-      "A potion drunk between rooms no longer leaves phantom armor for the next fight; summons are never marked elite.",
-      "Benchmark: the Great Hall's ask waits for the hall to settle and its Continue always starts it; the ?debug button returns where it was pressed.",
-      "Music and narrator: MUSIC OFF or NARRATOR OFF no longer downloads the score or the takes; NARRATOR OFF stops the line playing; the welcome line no longer waits behind the music; a bed asked for while the music was switched off and on is the one that plays.",
-      "Narrator: a line dropped for waiting too long can still play later; with SOUND OFF no line is spent; a short sound under a narrator line no longer cuts the music's return short.",
-      "Phones: the save dialogs sit at the top for the keyboard; long room titles stay clear of XP and COINS; the boons sit beside the menu in shrine and treasure rooms; Push Deeper fits on every phone.",
-      "A narrow desktop window scrolls the Great Hall to Descend; the treasure room fits a MacBook-height window without a scrollbar.",
-      "Smoother: the glowing text (rare items, low health, the death and victory titles) no longer repaints every frame; the battle line writes only what changed; OVERKILL's banner is placed from the cards still standing.",
-      "If a screen fails to open, a Reload button appears instead of a blank window; a dialog opened mid-fade hears the keyboard; the display font is a third of its size.",
-      "Play stats: a bad run record no longer blanks the dashboard, and the collector agrees with the page on every field (Worker 0.00223 to paste)."
     ]
   }
 }

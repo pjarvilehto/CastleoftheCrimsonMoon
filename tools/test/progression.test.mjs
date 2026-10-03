@@ -199,7 +199,7 @@ fresh();
   ok('hub: three alchemy tracks', ['Potency', 'Efficiency', 'Infusion'].every((n) => html.includes(n)));
   ok('hub: xp-only train buttons', html.includes('Train (13xp)'));
   ok('hub: scribe removed', !html.includes('Scribe'));
-  ok('hub: forge button on equipped item', html.includes('+100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
+  ok('hub: forge button on equipped item', html.includes('Forge 100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
 }
 
 // T28: 0.062 — precision taper, armor floor, title panel docked low
@@ -346,22 +346,21 @@ fresh();
   ok('Great Hall shows potions as n/max and the satchel', txt.includes('3/4') && txt.includes('Potion Satchel'));
 }
 
-// T43: 0.081 — Great Hall stat boxes: 3 columns (Level/Coins/XP,
-// Attack/HP/Armor, Potions centered), label top-left, value bottom-right.
+// T43: the Great Hall's numbers (0.00237: the desktop's sit under the knight —
+// Attack, HP, Armor, Crit, Lifesteal, Potions — his level by his name, each
+// purse in the head of the section that spends it; the phone keeps 0.081's
+// 3x3 boxes, scenes.test.mjs).
 {
   resetProfile();
   const root = new El('main');
   hubScene().enter(root);
-  const grid = root.all((n) => n.className.includes('hub-stats'))[0];
-  const labels = grid ? grid.children.map((b) => b.children[0].textContent) : [];
-  ok('hub stat order', labels.join(',') === 'Level,Coins,XP,Attack,HP,Armor,Potions', labels.join(','));
-  ok('potions box centered', grid && grid.children[6].className.includes('stat-potions'));
-  const css = readFileSync('styles.css', 'utf8');
-  ok('hub stats: 3 columns, label top-left, value bottom-right',
-    css.includes('.hub-wrap .stat-grid.hub-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }')
-    && css.includes('.hub-stats .stat-box .label { align-self: flex-start; }')
-    && css.includes('.hub-stats .stat-box .value { align-self: flex-end;')
-    && css.includes('.hub-stats .stat-potions { grid-column: 2; }'));
+  const strip = root.all((n) => /\bknight-stats\b/.test(n.className ?? ''))[0];
+  const labels = strip ? strip.children.map((b) => b.children[0].textContent) : [];
+  ok('the knight\'s numbers, in order', labels.join(',') === 'Attack,HP,Armor,Crit,Lifesteal,Potions', labels.join(','));
+  const purses = root.all((n) => /\bpurse\b/.test(n.className ?? '')).map((n) => n.textContent);
+  ok('XP heads Train and Coins Alchemy', purses.length === 2 && /^XP/.test(purses[0]) && /^Coins/.test(purses[1]), purses.join(' | '));
+  ok('the knight, his level and his seven gear slots', root.all((n) => /\bknight-level\b/.test(n.className ?? '')).length === 1
+    && root.all((n) => /\bgear-slot\b/.test(n.className ?? '')).length === 7);
 }
 
 // T54: 0.091 — drops that can't beat the gear (as it will be after this
