@@ -423,8 +423,65 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
   .hub-container:not(.phone-hub) { max-height: 100%; overflow-y: auto; } /* one column: the stack is taller than the window, so the container scrolls — body does not, and Descend is reachable (0.00223) */
 }
 /* middle column: alchemy panel + records panel stacked */
-.hub-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; max-height: min(746px, calc(100vh - 124px)); } /* the stacked column as a whole keeps Descend on screen (0.00205; the same budget as the panels') */
-.hub-col > .panel { min-height: 0; } /* so the alchemy panel shrinks and scrolls, the records panel stays whole */
+/* ---- the desktop and tablet hall (0.00237, the owner's layout): the name and records up top, the knight | TRAIN |
+   ALCHEMY as three panels of one height, the way on at the foot. The phone keeps its sheets (.phone-hub, section 16). ---- */
+.hall-desk { height: 100%; justify-content: space-between; gap: 14px; }
+.hall-top { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hall-top h1 { font-size: 2.4rem; margin: 0; line-height: 1; }
+.hall-top .records-line { margin: 0; font-size: 0.9rem; letter-spacing: 0.14em; color: #85775a; }
+.hall-desk .btn-row { margin-top: 0; }
+@media (min-width: 1001px) {
+  .hall-desk .hub-wrap { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) minmax(0, 1fr); max-width: 1400px; align-items: stretch; }
+}
+/* the hall wants ~1300px of layout: under the corner column's reservation (1400px and narrower) the three
+   panels zoom down a step at a time, so an iPad gets the same hall a size smaller instead of 210px columns */
+@media (min-width: 1001px) and (max-width: 1400px) { .hall-desk .hub-wrap { zoom: 0.9; } }
+@media (min-width: 1001px) and (max-width: 1250px) { .hall-desk .hub-wrap { zoom: 0.78; } }
+@media (min-width: 1001px) and (max-width: 1100px) { .hall-desk .hub-wrap { zoom: 0.64; } }
+@media (max-width: 1000px) { .hall-desk .hub-wrap > .knight-panel { max-height: none; } } /* (one column: the knight whole, the hall scrolls) */
+.hall-desk .hub-wrap > .panel { display: flex; flex-direction: column; }
+.hall-desk .hub-wrap > .panel > .hall-sec { display: flex; flex-direction: column; flex: 1 0 auto; }
+.hall-desk .hall-sec > .item-row { flex: 1 1 auto; max-height: 76px; } /* the rows share the panel's height: TRAIN and ALCHEMY end with the knight */
+/* a section's head: the name, the purse it spends from, a one-line hint */
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hub-wrap .sec-head h2 { margin: 0; }
+.sec-hint { color: #85775a; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 0 6px; }
+.purse { font-size: 1.05rem; letter-spacing: 0.08em; color: #9a8b6a; text-transform: uppercase; white-space: nowrap; }
+.purse b { font-size: 1.45rem; color: var(--parchment); margin-left: 6px; }
+.purse.spendable b { color: #6fe07a; text-shadow: 0 0 10px rgba(111, 224, 122, 0.35); }
+/* the knight: name, level, his card with the gear around it, his numbers */
+.knight-name { text-align: center; color: var(--gold); font-size: 1.6rem; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.1; }
+.knight-level { text-align: center; color: #9a8b6a; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.95rem; }
+.knight-level b { color: var(--parchment); font-size: 1.2rem; display: inline-block; }
+.knight-panel > .sec-hint { text-align: center; margin: 2px 0 10px; }
+.knight-doll { display: grid; grid-template-columns: minmax(0, 1fr) 172px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.knight-card { align-self: center; position: relative; aspect-ratio: 663 / 1103; background: url('assets/chars/card_player.png') center / 100% 100% no-repeat; }
+.knight-card img { position: absolute; left: 50%; bottom: 7%; width: 125%; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)); pointer-events: none; }
+.gear-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* (over the portrait's sword) */
+.gear-slot { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 6px 9px 7px; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 4px; background: rgba(0, 0, 0, 0.45); text-transform: uppercase; }
+.gear-left .gear-slot { text-align: right; }
+.gear-slot.empty { justify-content: center; }
+.gear-rarity-2 { border-color: rgba(111, 168, 220, 0.45); }
+.gear-rarity-3 { border-color: rgba(192, 122, 232, 0.5); }
+.gear-rarity-4 { border-color: rgba(255, 107, 74, 0.5); }
+.slot-kind { position: absolute; top: 7px; color: #85775a; font-size: 0.68rem; letter-spacing: 0.12em; }
+.gear-left .slot-kind { right: 9px; }
+.gear-right .slot-kind { left: 9px; }
+.slot-name { color: var(--parchment); font-size: 0.92rem; line-height: 1.05; }
+.gear-slot.empty .slot-name { color: #4a4234; }
+.slot-plus { color: var(--gold); }
+.slot-desc { color: #85775a; font-size: 0.7rem; letter-spacing: 0.04em; }
+.gear-slot .forge-btn, .gear-slot .forge-max { position: absolute; top: 5px; padding: 2px 7px; font-size: 0.72rem; } /* the Forge in the slot's outer top corner */
+.gear-left .forge-btn, .gear-left .forge-max { left: 6px; }
+.gear-right .forge-btn, .gear-right .forge-max { right: 6px; }
+.knight-stats { margin-top: auto; padding-top: 12px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.knight-stats .stat-box { padding: 4px 7px 3px; display: flex; flex-direction: column; }
+.knight-stats .stat-box .label { font-size: 0.68rem; letter-spacing: 0.1em; }
+.knight-stats .stat-box .value { font-size: 1.2rem; align-self: flex-end; line-height: 1.1; }
+.knight-stats .none .value { color: #5a5040; }
+.knight-stats .potions-full .value { color: #6fe07a; }
+.knight-stats .potions-ok .value { color: #d8c95a; }
+.knight-stats .potions-low .value { color: #e05a4a; }
 .records-line { margin-bottom: 0; }
 
 /* Great Hall stats (0.081): three fixed columns; each box has its label
@@ -1148,7 +1205,7 @@ html.phone .phone-hub .tab-body.pick-3 > .panel:nth-child(2) { z-index: 1; }
 html.phone .phone-hub .tab-body > .panel.on { z-index: 3; transform: none; filter: none; cursor: auto; border-color: rgba(201,162,39,0.5); border-top-left-radius: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.9), 0 0 22px rgba(0,0,0,0.8); }
 html.phone .phone-hub .tab-body > .panel:nth-child(3).on { border-top-left-radius: 6px; border-top-right-radius: 0; }
 html.phone .phone-hub .tab-body > .panel:not(.on) > * { pointer-events: none; } /* a tap on a sheet behind lifts it, nothing more */
-html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle { display: none; }
+html.phone .phone-hub .tab-body h1, html.phone .phone-hub .tab-body h2, html.phone .phone-hub .tab-body .subtitle, html.phone .phone-hub .tab-body .sec-head, html.phone .phone-hub .tab-body .sec-hint { display: none; } /* (the tabs carry the names and the dots; 0.00237: the sections' heads too) */
 html.phone .phone-hub .item-row { padding: 3px 8px; margin: 3px 0; font-size: 0.78rem; gap: 8px; }
 html.phone .phone-hub .item-row > div:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 html.phone .phone-hub .item-row button { min-height: 34px; padding: 4px 8px; font-size: 0.8rem; white-space: nowrap; }

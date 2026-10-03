@@ -670,6 +670,15 @@ be served stale for ~4 hours.
   `ui/hubSections.js` (0.00223; each row's text is `rowText`: a title —
   name + level or count — over a small muted line, one line on a phone,
   0.00232); `hubScene.js` keeps the hall's table,
+  **the desktop / tablet hall (0.00237, the owner's layout; the phone keeps
+  its sheets until its own pass):** the name and the records up top, then
+  the knight (`hubSections.js knightSection`: his card with the gear
+  around it — three slots left, four right, as tall as the card, the
+  Forge in each slot's outer top corner — and Attack / HP / Armor / Crit /
+  Lifesteal / Potions under it), TRAIN and ALCHEMY as three panels of one
+  height (`.hall-desk`), each purse in its section's head (`secHead`);
+  1001-1400px wide the panels `zoom` down in three steps (an iPad gets the
+  same hall smaller), under 1000px one scrolling column;
   the stat boxes a purchase moved rolling up with the glow (`settleStats`,
   0.00235: Attack after Power or a forge, Coins / XP never),
   the two assemblies, Descend and the flash. A new player is asked their
@@ -1148,7 +1157,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: hubScene.js settleStats' comment says 0.00233 for 0.00235 — fix with the next build · `go()` is silently dropped during a transition (queue it)
+- Engineering: `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)
