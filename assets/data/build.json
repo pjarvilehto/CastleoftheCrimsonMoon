@@ -1,5 +1,5 @@
 {
-  "version": "0.00272",
+  "version": "0.00273",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00273": [
+      "The Music Lab (a testing page): generated scores for the title and combat music from three music models, beside the music the game plays today, level-matched, with a blind mode for picking the next score."
+    ],
     "0.00272": [
       "A foe's status shows in its figure: blighted foes turn sickly green and drained, rooted foes earthy brown, and either moves slower, its weave and bob stretched. (Phones keep the tag and the slower motion.)"
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00259": [
       "Balance: your weapon and armor now carry your damage, armor and health — boots, rings, trinkets and amulets give small amounts of those and keep their own strengths (crit, lifesteal, dodge and the rest). Overall difficulty is unchanged."
-    ],
-    "0.00258": [
-      "Combat: your hero's card shows a small (i) under the gear — tap the card for your stats, again for your inventory (the gear you wear and what this run has found), and once more to turn it back."
     ]
   }
 }

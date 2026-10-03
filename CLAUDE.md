@@ -95,6 +95,14 @@ before structural changes. This file is the rules and the per-system notes.
     SHOWCASE alternative (the chosen hero large beside the lines, the
     heroes as a strip); 1-7 / arrows / Space, COPY JSON gives the picks
     back.
+  - **Music Lab (0.00273):** `labs/music/` — the generated scores
+    (`tools/gen-score.mjs`, `assets/data/music-art.json`) beside the bed
+    the game plays, bed by bed over its painting: every take LEVEL-matched
+    by its measured LUFS (a gain node, -20 LUFS), SYNC keeps the position
+    across takes (an A/B at the same bar), BLIND shuffles the takes — the
+    game's own among them — and hides the models; Approve / Reject with a
+    note, re-rolls queued per bed; COPY JSON packs them as
+    `music-rerender.json` for `node tools/gen-score.mjs --rerender`.
 - **Staging (legacy):** ublgmuyncizrq.kimi.page, published by the developer from
   Kimi version cards — not maintained here.
 
@@ -118,6 +126,7 @@ node tools/reports.mjs [--reports|--json|--player x]   # the play stats from the
 node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out of the developer's sheets (assets/style/heroes -> assets/heroes; prints heroes.json's looks)
 node tools/gen-sfx.mjs [--dry-run|--only atk_wizard]   # the classes' sounds from docs/sfx-prompts.md (ElevenLabs sound generation; the key needs the sound_generation permission)
 node tools/gen-items.mjs [--only moonbrand] [--import]   # paint the gear's pictures from docs/item-prompts.md (Nano Banana Pro; needs REPLICATE_API_TOKEN), --import puts them in the game
+node tools/gen-score.mjs [--bakeoff|--only combat --model eleven]   # the music beds as generated scores from docs/music-prompts.md (ElevenLabs Music / Lyria 3 Pro / Stable Audio 2.5; needs ffmpeg)
 ```
 
 ## The rules that matter
@@ -1046,7 +1055,27 @@ generated beds (`audio.json music.tracks`; `python3 tools/gen-music.py
 `tailS` seconds appended, restarted every `loopS` by `musicLoop.js`. Measure
 for real with `node tools/audio-check.mjs`; tests use a fake AudioContext
 (`tools/test/fakeAudio.mjs`, which rejects NaN like browsers).
-**Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
+**Generated scores (0.00273, the music thread; the beds the game plays are
+still the procedural ones):** `docs/music-prompts.md` is a brief per bed —
+a style block, a common avoid list, the bed's line, global styles and
+timed sections ending where they began (the beds loop) — and
+`tools/gen-score.mjs` sends it to three models: **ElevenLabs Music** by
+its own API as a composition plan (`planFor`: the sections in ms, the
+avoid list as negative styles; the session's ELEVENLABS_API_KEY can
+compose), **Lyria 3 Pro** on Replicate (`lyriaPrompt`: the sections as
+`[0:00 - 0:16]` timestamps; `--image` attaches the bed's painting as
+the picture to score) and **Stable Audio 2.5** (`stablePrompt`: no
+structure, it ignores it). Every take is transcoded to 192 kbps MP3 in
+`assets/audio/candidates/<bed>_c<n>.mp3` (lab-only, never overwritten;
+the orphan check reads files directly in `assets/audio`, not this
+folder) and recorded in `assets/data/music-art.json` with its plan or
+prompt, seed, length and EBU R128 loudness (ffmpeg), the shipped beds'
+loudness under `current`. The bake-off (`--bakeoff`: title + combat,
+two takes per model, Lyria's second on the painting) went to the
+Music Lab in 0.00273; the next steps are the developer's verdicts, then
+an import that finds a loop seam (the end meeting the start), cuts the
+loop + `tailS`, measures it and points `audio.json music.tracks` at a
+new file (rule 7). **Voice-over** (0.161, `audio/narrator.js`): the Old Wizard, a chronicler
 who never shouts — the script is `docs/narration-script.md` (32 lines,
 four takes each; OVERKILL nine since 0.188), rendered with ElevenLabs by `tools/gen-vo.mjs` (voice
 "Old Wizard", `eleven_multilingual_v2`; the tool strips stage directions,
@@ -1634,7 +1663,7 @@ sometimes — fetch all branches to find it.
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
   `assets/chars/candidates` (12.6MB), `assets/items/candidates` (1MB,
-  0.00260) and `assets/style` (16MB with the hero sheets, 0.00248) are
+  0.00260), `assets/audio/candidates` (30MB, 0.00273) and `assets/style` (16MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
