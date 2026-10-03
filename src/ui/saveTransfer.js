@@ -15,7 +15,7 @@ export function exportDialog() {
   const ta = el('textarea', { class: 'save-code', readonly: true, rows: 4 }, code || 'No save yet — play a run first.');
   let dlg;
   const done = el('button', { class: 'primary', proceed: true, onclick: () => dlg.close() }, 'Done');
-  dlg = openDialog({ label: 'Export Save', proceed: done, onKey: (k, close) => { if (k === 'escape' || k === 'enter') close(); }, children: [
+  dlg = openDialog({ label: 'Export Save', proceed: done, closeKeys: [], children: [ // (closeKeys: Escape and Enter close, 0.00323)
     el('h2', { class: 'update-title' }, 'Export Save'),
     ta,
     el('div', { class: 'save-hint' }, 'Select the code and copy it. Paste it into Import Save on the other site.'),

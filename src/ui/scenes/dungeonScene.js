@@ -14,7 +14,7 @@
 //   relic — crimson (a relic found), revive — the Heart's second life
 
 import { openLootDialog } from '../lootDialog.js';
-import { fitGearToClass, canUse } from '../../shared/classGear.js';
+import { fitGearToClass } from '../../shared/classGear.js';
 import { previewProfile } from '../../run/loot.js';
 import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -25,6 +25,7 @@ import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
 import { logLine, itemName, itemPic, markWayOn } from '../hud.js';
+import { createLootRow } from '../lootRow.js';
 import { deathFlash, tickUp, DEATH_PEAK_MS } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
@@ -44,7 +45,6 @@ import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
-const LOOT_SHOWN = 6; // (the look: the row's length under XP / COINS; a phone has none, styles.css — its way to the finds is the hero card's inventory page's FINDS line, 0.00299)
 
 export function dungeonScene() {
   const run = createRun();
@@ -57,37 +57,31 @@ export function dungeonScene() {
   let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
-  let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures — a button since 0.00299 (I opens the pop-up)
-  let lootTray = null;  // its tray of chips
-  let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
-  let lootFlying = 0;   // finds whose card is still on its way to the row (0.00262)
+  const loot = createLootRow(() => run); // the LOOT row under XP / COINS (ui/lootRow.js, 0.00323)
 
   const playback = createPlayback({
     logEl: () => logEl,
     onTick: () => { if (ui) updateCombat(); },
     onEmpty: () => {
       tickUpChips();
-      showLoot(run.itemsFound.length - lootFlying); // (an OVERKILL's silent finds too, once the room's lines are out; a card still flying lands on its own)
+      loot.settle(); // (an OVERKILL's silent finds too, once the room's lines are out; a card still flying lands on its own)
       if (combat.over && !combat.victory) openDeathModal();
       // a boss falls: the win dialog the first time, else the narrator's word (0.161)
       if (combat.over && combat.victory && !maybeShowVictory() && run.room.isBoss) narrate('boss_slain');
     },
     onFx: (fx) => {
       if (!fx) return;
-      if (fx.kind === 'find') lootEl?.classList.remove('none'); // (0.00262: the row shows before the first find takes off — the card flies into it)
+      if (fx.kind === 'find') loot.reveal(); // (0.00262: the row shows before the first find takes off — the card flies into it)
       const landsIn = playFx(fx, fxCtx);
-      if (fx.kind !== 'find') return;
-      if (typeof landsIn !== 'number') { showLoot(lootShown + 1); return; } // (no flight — reduced motion: at once)
-      lootFlying++;
-      setTimeout(() => { lootFlying--; showLoot(lootShown + 1, false, true); }, landsIn); // (the row takes it as the card lands)
+      if (fx.kind === 'find') loot.land(landsIn); // (the row takes it as the card lands; at once with no flight)
     },
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
     onDeath: (i) => ui?.battle.deathStep(i), // the fallen card's leaving and the restack are a step of their own (0.00220) — only while a card is off screen (battleRoom.js)
   });
   const fxCtx = fxContext(() => ui, () => run); // what effects can touch (ui/battleRoom.js); the run: the class's traces (0.00283) and a found potion's card's count (0.00263)
-  fxCtx.loot = () => lootEl; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
-  fxCtx.lootAhead = () => lootFlying; // — past the ones still on their way
+  fxCtx.loot = () => loot.el; // a find's card flies into the LOOT row (0.00262, ui/findFx.js) —
+  fxCtx.lootAhead = () => loot.flying; // — past the ones still on their way
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
@@ -209,12 +203,12 @@ export function dungeonScene() {
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
-        lootEl = el('button', { class: 'res-row res-loot none', key: 'i', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), lootTray = el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js; 0.00299: a button — I opens them too, the one action on the screen that had no key)
+        loot.mount(() => { if (run.itemsFound.length) openLootDialog(run); })), // (0.00292: a click opens the run's finds, ui/lootDialog.js; 0.00299: a button — I opens them too; ui/lootRow.js since 0.00323)
       layer,
       logEl,
       proceed);
     logEl.className = 'docked';
-    showLoot(run.itemsFound.length, true); // (a new room: every find so far is out — a chest's too)
+    loot.show(run.itemsFound.length, true); // (a new room: every find so far is out — a chest's too)
     battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
@@ -239,24 +233,6 @@ export function dungeonScene() {
     }
     // Low with nothing to drink: Retreat pulses red and Push Deeper is plain (hud.js markWayOn, 0.00206) — on every update, since a potion drunk after the win changes the advice.
     if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
-  }
-
-  // The LOOT row (0.00260): the newest LOOT_SHOWN of the run's finds, oldest first.
-  // landed: a card has just flown in — the new chip pops (0.00262).
-  function showLoot(n, rebuild = false, landed = false) {
-    n = Math.min(n, run.itemsFound.length);
-    if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
-    const grew = n > lootShown;
-    lootShown = n;
-    const tray = lootTray;
-    tray.textContent = '';
-    tray.append(...run.itemsFound.slice(0, n).slice(-LOOT_SHOWN).map((id) => itemPic(id, `loot-chip${canUse(run.heroId, id) ? '' : ' off-class'}`)).filter(Boolean)); // (0.00274: another class's gear greyed — salvaged at the end)
-    lootEl.classList.toggle('none', n === 0 && !lootFlying);
-    const chip = tray.children[tray.children.length - 1];
-    if (landed && grew) chip?.animate?.([ // (one-shot: the chip lands with a flash)
-      { transform: 'scale(1.7)', filter: 'brightness(2.2)' },
-      { transform: 'scale(1)', filter: 'brightness(1)' },
-    ], { duration: 420, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----

@@ -144,7 +144,7 @@ before structural changes. This file is the rules and the per-system notes.
 ```bash
 python3 -m http.server 8000                  # repo root -> http://localhost:8000
 node tools/ship.mjs --note "..."             # ship: commit, merge main, next number, bump, suite, push (rule 6)
-node tools/smoke-test.mjs                    # the suite: ~1200 checks, a second or two on the virtual clock
+node tools/smoke-test.mjs                    # the suite: ~1280 checks, a second or two on the virtual clock
 node tools/layout-check.mjs [--only phone]   # desktop AND phone: the real game headless at seven screens (rule 8; needs Playwright)
 node tools/smoke-test.mjs combat             # test files whose name contains "combat"
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot (one campaign)
@@ -168,8 +168,10 @@ node tools/gen-score.mjs --import combat_c2 [--start 21-25 --end 70-86]   # a ta
 # libraries and helpers: tools/bump.mjs (ship.mjs's step: version + module list + changelist), check-bump.mjs (CI's bump guard),
 # cutout.mjs (the colour key the art tools share), replicate.mjs (every Replicate call), elevenlabs.mjs (every ElevenLabs call:
 # the key, one POST with the 192->128 kbps fallback and the 429 retry, measureDb), music-seam.mjs (the loop seam gen-score --import
-# cuts at), util.mjs (fnv1a / seedFor / cli, the generating tools' shared helpers, 0.00299), simCore.mjs (the bot simulate.mjs and
-# the two studies share; fresh(hero) puts the class on since 0.00299); python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes
+# cuts at), util.mjs (fnv1a / seedFor / cli, the generating tools' shared helpers, 0.00299), registry.mjs (the generating tools'
+# candidate registries: load / save / nextN / applyVerdicts, 0.00322), simCore.mjs (the bot simulate.mjs and the two studies share;
+# fresh(hero) puts the class on since 0.00299, baselineSnapshots / pairedRuns are the studies' loops since 0.00322);
+# python3 tools/gen-depth.py <model.onnx> <painting.jpg> makes
 # a depth map, tools/gen-music.py the old procedural beds (history since 0.00282)
 ```
 
@@ -1954,6 +1956,11 @@ collected players and this browser's save (every record untrusted:
 `sanitizeProfile()`; pasting save codes went in 0.00224 — every tester is
 collected), deduped by playerId; its By build table shows the newest ten
 builds and the three most played older ones (`stats.js condenseBuilds`);
+its Recent runs table (`tables.js runsTable`; 0.00322, the developer's ask)
+shows per run the hero played and its look, the build, the result, the
+room, kills, turns, XP, the coins banked of the coins won, the finds (a
+star for a relic), what killed, the boons, bosses, potions, time and the
+level / HP / damage / armor it was played at;
 the developer can give each player a
 **tester name** (kept in that browser, shown as "tester · player name").
 
@@ -2028,7 +2035,7 @@ hall benchmarks at that step (`q` on the result, shown on the dashboard).
   history, narration, art, cards, classes, fx, heroes, items, layout — the
   order is `smoke-test.mjs ORDER` (0.00299: the last four used to sort after
   layout by accident); layout last checks the phone layer's `html.phone` twins against the code and
-  the desktop rules, rule 8; ~1200 checks),
+  the desktop rules, rule 8; ~1280 checks),
   each starting from `fresh()`; a test file imports only the harness
   names it uses (0.00197). CI (`check-bump.mjs`) fails a push to `main`
   that changes what players load without a higher build number. `tools/test/harness.mjs` holds the DOM shim
@@ -2278,7 +2285,21 @@ sometimes — fetch all branches to find it.
   Backlog's list) and the refactors (0.00283: the class registry
   `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
   `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
-  simulator and the shrine study; the Backlog's "Refactors done" entry).
+  simulator and the shrine study). The round in full: `run/classes.js`,
+  the class registry — `HEAVIES` by kind (`spills`, `onHeavy`),
+  `AFTER_BLOW` and `FOE_TURN` hook lists in the old phases' order,
+  `HEAVY_KINDS` / `CLASS_KEYS` that `dataCheck` reads — in place of the
+  heavy-kind switches in `combat.js` and `shrine.js`; `combat.js damageFoe`
+  for the four damage copies, every foe a `fighter` with `blight` /
+  `entangled` 0; `run.hero` (`heroes.js heroSnapshot`) snapshotted at
+  `createRun` and on SWITCH CLASS, read by `combatQueue.js sfxFor`,
+  `battleLine.js createPlayerUnit`, `cardFx.js cardStyle` and `classFx.js`
+  through the fx context's `run` — the combat UI reads no class from the
+  profile; `fxParts.js lunge()` for the three lunges and the class effects
+  in `ui/classFx.js` (`CLASS_FX` by kind, `traceFor`); `particleLooks.js
+  LOOKS`, a table of generators on the shared primitives (`ink` / `spark` /
+  `heal` kept as written: restating them would move the seeded shapes);
+  the harness helpers and the `DATA` restore; the new `fx.test.mjs`.
 - 0.00303 (the character-gen thread): the 30 approved enemy redraws live,
   dealt per fight as variants (the Portraits notes); the Vampire Lord's
   three undecided candidates, the gargoyle's two and the mimic's three
@@ -2312,6 +2333,28 @@ sometimes — fetch all branches to find it.
   the six classes the fixes did not touch; CLAUDE.md's Systems got
   headings (the audio and the items in play out of the paragraphs that
   buried them).
+- 0.00300–0.00323 (0.00300–0.00313 and 0.00315–0.00321 were the other
+  threads': the cards' tooltips gone (0.00300), the SFX Lab (0.00301), the
+  save dialogs into the SETTINGS menu (0.00302), the 30 approved portraits
+  dealt per fight (0.00303), the SFX review's two pastes (0.00304–0.00306),
+  the title's fly-in (0.00307–0.00310, 0.00315 for every screen), the
+  title's own camera (0.00311), the stronger flash lights (0.00312), the
+  descent's drum on the press (0.00313), thicker mist (0.00318), a found
+  item's light as it flies (0.00319–0.00320), gentler depth in the hall
+  and the war room (0.00321)) — this thread's third review, run slowly
+  and cheaply: the deprecated `createImageBitmap` orientation option
+  (0.00314, the one real console issue behind a "Not secure" that was the
+  browser's own remembered allowance); the Recent runs columns (0.00322,
+  above); the backlog's refactors (0.00322–0.00323, every one
+  byte-identical in the simulator for all seven classes and in the two
+  studies): `tools/registry.mjs` for the five generating tools' candidate
+  registries (gen-bg's approve kept the note like gen-score's since),
+  `simCore.baselineSnapshots` / `pairedRuns` for the two studies' loops,
+  `ui/lootRow.js` out of dungeonScene.js, `lookPicker.js showLook` /
+  `lookDots` shared with CHOOSE YOUR HERO, the export dialog on
+  `closeKeys`; the code map and these notes brought up to date. Found
+  clean: no unused import, no dead CSS selector, no `?? N` copy, no
+  leftover of the retired tooltips.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by
@@ -2369,7 +2412,7 @@ sometimes — fetch all branches to find it.
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
 - Engineering: `go()` is silently dropped
-  during a transition (queue it) · about 160 of the ~1200 checks still
+  during a transition (queue it) · about 180 of the ~1280 checks still
   assert on source text rather than behaviour (inject recording stubs
   instead; 0.00283 gave the harness `byClass` / `button` and a `DATA`
   restore in `fresh()` for it) · the Actions deploy job (off until the developer opts in)
@@ -2392,51 +2435,24 @@ sometimes — fetch all branches to find it.
   or retire it (the developer's call) · WebP room paintings under new
   names (~49% smaller at q80; the developer judges q80 / q85 in the Fog
   Lab; `bg3dPuffs seedOf` should hash the stem first).
-- Refactors done in 0.00283 (the classes had landed as switches; the
-  simulator and the shrine study byte-identical for all seven classes):
-  `run/classes.js`, the class registry — `HEAVIES` by kind (`spills`,
-  `onHeavy`), `AFTER_BLOW` and `FOE_TURN` hook lists in the old phases'
-  order, `HEAVY_KINDS` / `CLASS_KEYS` that `dataCheck` reads (an unknown
-  heavy kind or a missing key is named) — in place of the heavy-kind
-  switches in `combat.js` and `shrine.js` (`usesCharges`); `combat.js
-  damageFoe` for the four damage copies, and every foe a `fighter` with
-  `blight` / `entangled` 0 (summons too) · `run.hero` (`heroes.js
-  heroSnapshot`: id, name, heavyName, theme, look) snapshotted at
-  `createRun` and on SWITCH CLASS, read by `combatQueue.js sfxFor(ev,
-  run.hero)`, `battleLine.js createPlayerUnit` (`heroArt(hero)`, the
-  title, the heavy's name, `frame(theme)`), `cardFx.js cardStyle(id,
-  boss, theme)` and `classFx.js` through the fx context's `run` — the
-  combat UI reads no class from the profile (a test plays a Wizard run
-  on a knight save) · `fxParts.js lunge()` for the three lunges (the
-  dodge and the thrall's blow took the attack's eased keyframes) and
-  the class effects in `ui/classFx.js` (`CLASS_FX` by kind, `traceFor`)
-  · `particleLooks.js LOOKS`, a table of generators on the shared
-  primitives (`ink` / `spark` / `heal` kept as written: restating them
-  would move the seeded shapes) · `tools/elevenlabs.mjs` (above) · the
-  harness helpers and the `DATA` restore (Testing notes); the new
-  `fx.test.mjs` asserts the lunges and the class-from-run reads. Still
-  open: `combatFx.js` could hand kick / enter / deal to a
-  `cardMotion.js` (contested: the kick is part of the hit's
+- Refactors still open from 0.00283 (the rest of that round is in the
+  history, 0.00276–0.00283): `combatFx.js` could hand kick / enter / deal
+  to a `cardMotion.js` (contested: the kick is part of the hit's
   choreography).
-- Open from the 0.00299 review (none urgent): `run.heroId` and `run.hero.id`
-  are two fields for one class — derive the first from the second once the
-  null-hero meaning is settled (today `heroId` null = "can use anything",
-  `run.hero` falls back to the knight; only tests and a null save reach it)
-  · the generating tools repeat their candidate registries (load / save /
-  entry / nextN / applyVerdicts, with a hidden fork: gen-bg's approve
-  drops the note, gen-score's keeps it), their contact sheets and the
-  Playwright launch — a `tools/registry.mjs` and `browser.mjs`; `cli()`
-  reached six tools, the rest parse their own way · shrine-study.mjs and
-  stat-study.mjs repeat the baseline-and-paired-runs loops (`simCore`
-  could hold `baselineSnapshots` / `pairedRuns`) · the collector's and the
+- Open from the 0.00299 review (none urgent; the registries, the studies'
+  loops, the look switcher and the LOOT row went in 0.00322–0.00323):
+  `run.heroId` and `run.hero.id` are two fields for one class — derive the
+  first from the second once the null-hero meaning is settled (today
+  `heroId` null = "can use anything", `run.hero` falls back to the knight;
+  only tests and a null save reach it) · the generating tools repeat their
+  contact sheets and the Playwright launch (a `tools/browser.mjs`); `cli()`
+  reached six tools, the rest parse their own way · the collector's and the
   dashboard's sanitizers are kept in step by one test on the run fields;
   a fixture run through both and diffed would catch the next drift ·
-  `heroScene.js` and `lookPicker.js` build the look switcher twice ·
-  `battleLine.js createPlayerUnit` (~95 lines) and the LOOT row's state
-  spread over `dungeonScene.js` want their own modules · the hotkey alt's
-  "served after every own key" has no two-button test · ~180 of the 1224
-  checks still read source text (the GLSL, the labs' HTML and the tool
-  CLIs stay that way by design).
+  `battleLine.js createPlayerUnit` (~95 lines) wants its own module · the
+  hotkey alt's "served after every own key" has no two-button test · ~180
+  of the ~1280 checks still read source text (the GLSL, the labs' HTML and
+  the tool CLIs stay that way by design).
 - Phone: a tap-to-show for hover-only text (a boon's full line, the elite
   star, the summon note) · the labs under a short window get no phone
   layer (by design) but the Card Lab's side panel and a 96vw budget

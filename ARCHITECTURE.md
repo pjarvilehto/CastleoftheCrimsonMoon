@@ -11,7 +11,7 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~1100 checks, a second or two on the virtual clock
+node tools/smoke-test.mjs            # the suite: ~1280 checks, a second or two on the virtual clock
 node tools/layout-check.mjs          # the layouts, desktop and phone, in a browser (rule 8)
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
@@ -206,10 +206,16 @@ src/
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js   (the SETTINGS menu, 0.00243;
                         debugToggles.js = DEBUG MODE's tools, SWITCH CLASS among them, 0.00269)
-    lookPicker.js       the hero's look, large between ‹ › (the hall's portrait, the phone's Look row; 0.00253)
+    lookPicker.js       the hero's look, large between ‹ › (the hall's portrait, the phone's Look row; 0.00253);
+                        showLook / lookDots, the look switcher's two moves, shared with heroScene.js (0.00323)
     lootDialog.js       the LOOT pop-up (0.00292): every find of the run as inventory strips, four in view,
                         ↑ ↓ scroll, C / Esc / Enter close; opened from the LOOT row (I) or the hero card's
                         INVENTORY page (0.00299)
+    lootRow.js          the LOOT row under XP / COINS (0.00262; its own module since 0.00323): the newest
+                        six finds as chips, shown as the first find takes off, a chip landing with a flash;
+                        createLootRow(() => run) -> mount / show / reveal / land / settle, el / flying
+    saveTransfer.js     EXPORT SAVE / IMPORT SAVE, the SETTINGS menu's GAME items (0.00302): a copy-out
+                        code, a paste-in that returns to the title; the dialogs since 0.00209
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
     titleIntro.js     the title's fly-in (0.00307 / 0.00315): the film over everything as the title enters, the
                         fade by its own clock onto the renderer put back at rest (bg3d.js bgArrive); preloaded at
@@ -270,18 +276,26 @@ labs/                   the testing pages (DEBUG MODE's LABS entry in the SETTIN
                         data and stylesheet: the LINE-UP or a SHOWCASE alternative (0.00247)
   music/                the generated scores beside the game's bed, level-matched, SYNC and
                         BLIND; verdicts -> music-rerender.json for gen-score.mjs --rerender (0.00273)
+  sfx/                  every clip of the sound registry where the game plays it, through the game's own
+                        sfx / mixer / music, the bed under it; Volume / Pitch / Speed, Approve, a note ->
+                        sfx-review.json for tools/render-sfx.mjs --apply (0.00301)
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
   layout-check.mjs  desktop AND phone: the real game headless at seven screens (two large desktops since
                         0.00299), the layouts' promises asserted (rule 8)
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots (simCore.fresh(hero) is the
-                        campaign start all three share, --hero on each; 0.00299)
+                        campaign start all three share, --hero on each; 0.00299; the two studies'
+                        baseline-and-paired-runs loops are simCore's baselineSnapshots / pairedRuns, 0.00322)
   ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197; a
                         crashed suite prints its stderr tail, 0.00223)
   check-bump.mjs        CI: a push to main that changes what players load needs a higher build
   bump.mjs              build number + module list + changelist notes
   audio-check.mjs       clip loudness + loops measured in Chromium
+  render-sfx.mjs        the SFX Lab's verdicts and edits into audio.json (a trim in place; a pitch or speed
+                        edit re-rendered by ffmpeg into a new file, measured again; `reviewed` stamped; 0.00301)
+  intro-check.mjs       the title's fly-in headless, on a desktop window and a phone (the films transcoded
+                        to VP9 for headless Chromium): the layer, the fade before the end, the hand-over (0.00315)
   gen-depth.py  gen-music.py (+ music/)   depth maps; the procedural beds (history since 0.00282)
   gen-score.mjs  music-seam.mjs   the music beds as generated scores (docs/music-prompts.md -> ElevenLabs
                         Music / Lyria 3 Pro / Stable Audio 2.5 -> assets/audio/candidates + music-art.json;
@@ -306,6 +320,9 @@ tools/
   train-lora.mjs        the two style LoRAs (characters on the approved candidates, rooms on the
                         paintings) -> private models on Replicate; lora.json records the trainings
   replicate.mjs         the Replicate client the four art tools share (token, files, predict, versions)
+  registry.mjs          the generating tools' candidate registries (0.00322): registry(path, { key, doc,
+                        stamp }).load() / .save(), nextN, applyVerdicts — gen-art, gen-bg, gen-score,
+                        gen-items and train-lora read and write their JSON through it
 package.json            tool dependencies only (sharp, for the art tools); the game has none
 ```
 

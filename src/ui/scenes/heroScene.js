@@ -20,6 +20,7 @@ import { el } from '../../core/dom.js';
 import { DATA } from '../../shared/data.js';
 import { getProfile, persist } from '../../meta/profile.js';
 import { heroList, heroById, cleanHero, lookUrl, lookOf, heroKit } from '../../shared/heroes.js';
+import { showLook, lookDots } from '../lookPicker.js';
 import { play } from '../../audio/music.js';
 
 // The class's kit replaces the default starting gear slot by slot (the knight's kit is that gear: no change).
@@ -77,8 +78,7 @@ export function heroScene() {
     function turn(d) {
       const h = heroById(chosen), n = h.looks.length;
       looks[chosen] = (looks[chosen] + d + n) % n;
-      figures[chosen].setAttribute('src', lookUrl(h, looks[chosen]));
-      figures[chosen].setAttribute('style', `--fh:${lookOf(h, looks[chosen]).fh}`);
+      showLook(figures[chosen], h, looks[chosen]);
       update();
     }
     function proceed() {
@@ -94,8 +94,7 @@ export function heroScene() {
       for (const [id, card] of Object.entries(cards)) card.classList.toggle('chosen', id === chosen);
       switcher.remove(); cards[chosen].append(switcher);
       const n = h.looks.length;
-      dots.innerHTML = ''; dots.append(...Array.from({ length: n }, (_, i) => el('i', { class: i === looks[chosen] ? 'on' : '' })));
-      which.textContent = `Look ${looks[chosen] + 1} of ${n}`;
+      lookDots(dots, which, n, looks[chosen]); // (ui/lookPicker.js, 0.00323: the picker's dots and line)
       switcher.classList.toggle('single', n < 2);
       detail.innerHTML = '';
       detail.append(

@@ -81,6 +81,7 @@
     "src/ui/hud.js",
     "src/ui/lookPicker.js",
     "src/ui/lootDialog.js",
+    "src/ui/lootRow.js",
     "src/ui/namePrompt.js",
     "src/ui/particleLooks.js",
     "src/ui/particles.js",
