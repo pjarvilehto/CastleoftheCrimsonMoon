@@ -29,7 +29,7 @@ fresh();
   ok('the prompts doc has a line for the knight and every enemy, each with its portrait on disk, the id from the data (the Shrieker\'s file is cave_shrieker.webp)',
     doc.chars.map((c) => c.id).sort().join() === ids.join() && doc.chars.every((c) => existsSync(`assets/chars/${c.file}`) && c.line.startsWith('CHARACTER:')) && doc.chars.find((c) => c.id === 'bat').file === 'cave_shrieker.webp', doc.chars.map((c) => c.id).join());
   ok('the style block fills in the facing: enemies face left, the knight right', doc.style.includes('[FACING]')
-    && promptFor(doc, doc.chars.find((c) => c.id === 'rat')).includes('Three-quarter view, facing left.') && promptFor(doc, doc.chars.find((c) => c.id === 'player')).includes('Three-quarter view, facing right.')
+    && /Three-quarter view,\s+facing left\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'rat'))) && /Three-quarter view,\s+facing right\./.test(promptFor(doc, doc.chars.find((c) => c.id === 'player')))
     && facing('vampire_lord') === 'facing left');
   const p = promptFor(doc, doc.chars.find((c) => c.id === 'rat'), 'simple big shapes');
   ok('a prompt = the style block, the character line, the facing once more, then a re-roll hint', p.startsWith('Redraw the character from image 1') && p.includes('\n\nCHARACTER: a huge hunched black sewer rat') && p.includes('\nFACING: the figure faces left,') && p.endsWith('\n\nsimple big shapes') && !p.includes('[FACING]'));

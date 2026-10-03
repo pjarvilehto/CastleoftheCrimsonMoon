@@ -13,6 +13,8 @@
 //                                                         # there is one; else the ossuary); any picture by path
 //   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
+//   node tools/gen-art.mjs --only gargoyle --from-sheet skeleton   # drawn from its line on a style sheet, its old
+//                                                         # art left out (the one-picture Kontext replaces the figure)
 //   node tools/gen-art.mjs --model lora --only gargoyle   # the style LoRA (tools/train-lora.mjs): drawn from the
 //                                                         # character line alone, no source portrait
 //   node tools/gen-art.mjs --model lora --new mimic --line "CHARACTER: a treasure chest with fangs..." --name "Mimic"
@@ -75,6 +77,13 @@ export function loraPrompt(c, hint = '') {
 /** A character not in the doc (--new mimic --line "CHARACTER: ..."): no current portrait, so its cut-out goes on a default canvas. */
 export const NEW_CANVAS = { w: 600, h: 1050, box: { x0: 30, y0: 30, x1: 570, y1: 1020 } };
 export const DEFAULTS = { n: 4, style: 'dungeon_ossuary.jpg', model: 'pro', aspect: '2:3', tolerance: 30, concurrency: 3 };
+// --from-sheet <id>: a character drawn without its old art (the gargoyle's is no
+// reference) — the one-picture Kontext gets a style sheet and replaces its figure.
+export const FROM_SHEET = { model: 'black-forest-labs/flux-kontext-pro', priceUsd: 0.04 };
+export function fromSheetPrompt(doc, c, hint = '') {
+  const style = doc.style.replace('[FACING]', facing(c.id)).split('\n\n').slice(1).join('\n\n'); // the block without its "image 1 / image 2" opening
+  return `Replace the character in this picture with a different one, drawn in exactly the same style, on the same plain flat grey background: ${c.line.replace(/^CHARACTER:\s*/, '')}\n\n${style}${hint ? `\n\n${hint.trim()}` : ''}`;
+}
 // The style reference for a character, when nothing is asked (--style, a
 // re-roll's style): its own finished sheet in the target style if the owner
 // put one in assets/style/<id>.png (0.191: seven of them — a sheet steers
@@ -329,14 +338,15 @@ async function main() {
   for (const j of jobs) {
     if (j.from) { j.prompt = CLEAN.prompt; j.style = j.from.style; continue; }
     if (model === MODELS.lora) { j.style = MODELS.lora.weights; j.prompt = loraPrompt(j.c, j.hint); continue; } // text to image: no pictures go in
+    if (val('--from-sheet')) { j.sheet = join(ROOT, STYLE_DIR, `${val('--from-sheet')}.png`); if (!existsSync(j.sheet)) throw new Error(`--from-sheet: no ${j.sheet}`); j.style = `${STYLE_DIR}/${val('--from-sheet')}.png`; j.prompt = fromSheetPrompt(doc, j.c, j.hint); continue; }
     if (j.c.isNew) throw new Error(`--new ${j.c.id} has no portrait to redraw: use --model lora`);
     j.stylePath = existsSync(join(ROOT, 'assets/bg', j.style)) ? join(ROOT, 'assets/bg', j.style) : existsSync(join(ROOT, j.style)) ? join(ROOT, j.style) : null;
     if (!j.stylePath) throw new Error(`no such style picture: assets/bg/${j.style} or ${j.style}`);
     j.prompt = promptFor(doc, j.c, j.hint);
   }
-  const cost = jobs.reduce((s, j) => s + (j.from ? CLEAN.priceUsd : model.priceUsd), 0);
-  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => (j.from ? CLEAN.model : model.model)))].join(' + ')} (about $${cost.toFixed(2)} at ~$${model.priceUsd} each, from memory)`);
-  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : `style ${j.style}`}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
+  const cost = jobs.reduce((s, j) => s + (j.from ? CLEAN.priceUsd : j.sheet ? FROM_SHEET.priceUsd : model.priceUsd), 0);
+  console.log(`${jobs.length} candidate${jobs.length === 1 ? '' : 's'} to generate with ${[...new Set(jobs.map((j) => (j.from ? CLEAN.model : j.sheet ? FROM_SHEET.model : model.model)))].join(' + ')} (about $${cost.toFixed(2)}, from memory)`);
+  for (const j of jobs) console.log(`  ${candidateFile(j.c.id, j.n)}  ${j.from ? `clean of c${j.from.n}` : j.sheet ? `from the sheet ${j.style}` : `style ${j.style}`}  seed ${j.seed}${j.hint ? `  hint "${j.hint}"` : ''}`);
   if (has('--dry-run')) { if (jobs.length) console.log(`\n--- the prompt for ${jobs[0].c.id} ---\n${jobs[0].prompt}\n---`); return; }
   if (!jobs.length) return;
   if (!token()) throw new Error('REPLICATE_API_TOKEN is not set');
@@ -351,9 +361,11 @@ async function main() {
       const name = candidateFile(j.c.id, j.n);
       try {
         const t0 = Date.now();
-        const use = j.from ? CLEAN.model : model.model;
+        const use = j.from ? CLEAN.model : j.sheet ? FROM_SHEET.model : model.model;
         const input = j.from
           ? { prompt: j.prompt, input_image: await uploaded(join(ROOT, j.from.raw)), aspect_ratio: 'match_input_image', output_format: 'png', safety_tolerance: 2, seed: j.seed }
+          : j.sheet
+            ? { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
             : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };

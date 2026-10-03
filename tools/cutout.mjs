@@ -99,11 +99,12 @@ export function keyOut(data, w, h, { tolerance = 30, paper = PAPER, shadow = SHA
  * all); a tooth is far too small. (Pale stone of the paper's own tone
  * would go too: --holes 0 then.) Returns how many went.
  */
-export const HOLES = { tolerance: 40, minArea: 0.003, fromY: 0 };
+export const HOLES = { tolerance: 40, minArea: 0.003, fromY: 0, white: { tolerance: 90, minLum: 200, maxSat: 0.12 } };
 export function fillHoles(data, alpha, w, h, bg, opts = {}) {
-  const { tolerance, minArea, fromY } = { ...HOLES, ...opts };
+  const { tolerance, minArea, fromY, white } = { ...HOLES, ...opts };
   const n = w * h, label = new Int32Array(n).fill(-1), yFrom = h * fromY;
-  const paperish = (p) => { const i = p * 4; return alpha[p] > 0 && dist(data, i, bg) <= tolerance && lum(data, i) >= PAPER.minLum && sat(data, i) <= PAPER.maxSat; };
+  // paper's own tone, or a near-white neutral pocket (a lighter paper under the feet, 0.00201: the gargoyles) — bone and skin are warmer than that
+  const paperish = (p) => { const i = p * 4, d = dist(data, i, bg); return alpha[p] > 0 && ((d <= tolerance && lum(data, i) >= PAPER.minLum && sat(data, i) <= PAPER.maxSat) || (white && d <= white.tolerance && lum(data, i) >= white.minLum && sat(data, i) <= white.maxSat)); };
   let gone = 0;
   for (let s = 0; s < n; s++) {
     if (label[s] >= 0 || !paperish(s)) continue;
