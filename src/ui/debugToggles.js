@@ -65,7 +65,7 @@ export function debugToggles() {
 // the Great Hall and CHOOSE YOUR HERO through relayout(), the dungeon
 // through its switchClass(): the run's stats rebuilt for the class (this
 // run's shrine boons are dropped — a debug tool), the fight's class state
-// reset (charges, the hex, the thrall, the roots) and the battle line
+// reset (charges, the hex, the thrall, the roots, the blight) and the battle line
 // rebuilt in place, the log saying so.
 export function switchClassButton() {
   const btn = el('button', { class: 'debug-toggle class-toggle', onclick: () => {

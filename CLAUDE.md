@@ -1749,24 +1749,15 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Display mismatches found by the 0.00272 review (each a small fix): the
-  STATS page's heavy row shows `combat.heavyMult` alone (the class's own
-  `heavyMult` factor is ignored) and "n turns" for a charge class
-  (`battleLine.js cardBack`) · "Potion heals" ignores the class's
-  `potionHealMult` in three places (the STATS row, the potion's find card,
-  the hall's line) · the Quicken card text says cooldown -1 while a
-  charge class gets a charge (`shrines.json`, `shrine.js`) · a foe's
-  HEXED / BLIGHT / ROOTED tags read the live `combat.enemies`, not the
-  replay snapshot (`battleRoom.js update`), so a tag can lead the line
-  that earns it · SWITCH CLASS resets the charges, the hex, the thrall
-  and the roots but leaves the foes' blight behind
-  (`dungeonScene.js switchClass`) · the orphan-asset check never looks
-  inside `assets/audio/sfx` (`content.test.mjs`: the folder set is one
-  level deep) · the audio registry's `variation` block repeats one `eq`
-  15 times and `layerRate` [0.85, 1.2] 17 times across its 24 entries
-  (a shared default would do), and a clip's `rate` is an unread copy
-  wherever its `variation` entry carries one (`sfx.js` reads
-  `vary.rate` first).
+- Display mismatches found by the 0.00272 review — fixed in 0.00277: the
+  STATS page's heavy row shows the class's own factor and a charge class's
+  charges; "Potion heals" is `leveling.js potionHealFor(klass)` in the
+  drink, the STATS page, the potion card and the Alchemy row; the Quicken
+  card reads HEAVY CHARGE +1 for a charge class (`shrine.js buffText`); the
+  foes' statuses ride the replay's snapshot (`combat.js statusOf`,
+  `combatPlayback.statusOf`); SWITCH CLASS resets the blight; the orphan
+  check reads `assets/audio/sfx`; the hurt clips lost the synth grunt layer
+  (the recordings carry each class's cry).
 - Engineering: `go()` is silently dropped
   during a transition (queue it) · about 160 of the ~1100 checks still
   assert on source text rather than behaviour (inject recording stubs

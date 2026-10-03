@@ -6,7 +6,7 @@
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
-import { dealOffers, noteDeal, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
+import { dealOffers, noteDeal, canAffordOffer, acceptOffer, costText, buffText } from '../run/shrine.js';
 import { hpBar, logLine, isLowHp, potionLevel, shouldRetreat, markWayOn } from './hud.js';
 import { updateBuffs, iconArt } from './buffs.js';
 import { attachCardFx, styleNamed, SHRINE_STYLE } from './cardFx.js';
@@ -65,7 +65,7 @@ function shrineBody(run, room, { log, refresh }) {
     el('div', { class: 'subtitle' }, 'A shrine hums with dark power. Accept one boon for this run — or walk away.'),
     el('div', { class: 'shrine-cards' },
       ...room.dealtOffers.map((o, i) => litCard(SHRINE_STYLE[o.id], el('div', { class: 'shrine-card' },
-        el('div', { class: 'shrine-buff' }, o.buff),
+        el('div', { class: 'shrine-buff' }, buffText(o, run)),
         el('div', { class: 'shrine-icon' }, iconArt(o.img, o.icon)),
         el('div', { class: 'shrine-cost' },
           el('div', { class: 'shrine-cost-label' }, 'COST:'),
@@ -78,7 +78,7 @@ function shrineBody(run, room, { log, refresh }) {
             narrate('shrine_take');
             acceptOffer(run, o);
             room.taken = true;
-            log(`The shrine takes its price. ${o.buff} is yours.`);
+            log(`The shrine takes its price. ${buffText(o, run)} is yours.`);
             refresh();
           },
         }, 'Accept'))))));

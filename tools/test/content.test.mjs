@@ -374,6 +374,7 @@ fresh();
     'assets/bg/depth': new Set(paintings.map((f) => base(depthUrl(f)))),
     'assets/audio': new Set([...Object.values(DATA.audio.clips).map((c) => c.file), ...Object.values(DATA.audio.music.tracks).map((x) => x.file)].filter(Boolean).map(base)),
     'assets/audio/vo': new Set(Object.values(DATA.narration.lines).flat().map((x) => base(x.file))),
+    'assets/audio/sfx': new Set(Object.values(DATA.audio.clips).map((c) => c.file).filter((f) => f?.startsWith('assets/audio/sfx/')).map(base)), // (0.00271: the class and foe recordings; a take left behind by gen-sfx --redo is an orphan)
     'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
     'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)

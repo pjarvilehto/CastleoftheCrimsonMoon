@@ -15,7 +15,7 @@ import { el } from '../core/dom.js';
 import { DATA } from '../shared/data.js';
 import { gainLine } from '../shared/itemArt.js';
 import { itemPic, potionPic, describeItem, gearLabel, statText } from './hud.js';
-import { potionHealAmount } from '../meta/leveling.js';
+import { potionHealFor } from '../meta/leveling.js';
 import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
 
@@ -67,7 +67,7 @@ export function findPop(fx, ctx) {
 // (battleLine.js holdPotion / landPotion; the scene holds it as the line is
 // queued, combatQueue.js potionQueued).
 export function potionCard(run) {
-  const heal = potionHealAmount();
+  const heal = potionHealFor(run.stats.klass); // (0.00277: the class's share in it)
   return el('div', { class: 'find-pop potion-pop' },
     el('div', { class: 'fp-art' }, potionPic()),
     el('div', { class: 'fp-text' },

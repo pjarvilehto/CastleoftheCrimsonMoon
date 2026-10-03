@@ -61,6 +61,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
       enemies: combat.enemies.map((e) => e.hp),
       hp: combat.run.hp,
       meters: combat.enemies.map((e) => (e.summonEvery ? e.summonMeter : null)), // 0.092
+      status: combat.enemies.map((e, i) => statusOf(combat, e, i)), // 0.00277: the hex, the blight and the roots as they stand at this line (the tags and the figures' looks follow the replay)
     };
     events.push(ev);
   };
@@ -299,6 +300,13 @@ function summonPhase(combat, push) {
   }
 }
 
+// A foe's statuses as the UI shows them (0.00277; battleRoom.js reads the
+// replay's snapshot through combatPlayback.statusOf): hexed by the
+// Hexhunter, blight stacks, the roots' turns — none once it has fallen.
+export function statusOf(combat, e, i) {
+  const live = e.hp > 0;
+  return { hexed: live && combat.marked === i, blight: live && e.blight > 0 ? e.blight : 0, entangled: live && e.entangled > 0 ? e.entangled : 0 };
+}
 // Heavy Attack's target: the front-most living summon, else the first
 // living enemy (0.092 — summons stand in front of the boss).
 export function heavyTarget(combat) {

@@ -85,6 +85,12 @@ export function noteDeal(run, offers) {
   (run.shrines ??= []).push({ o: offers.map((x) => x.id), t: null });
 }
 
+// A boon's line as this class reads it (0.00277): Quicken gives a charge
+// class (the Wizard) a charge, not a shorter cooldown — the card and the
+// buff bar say so; every other boon's line is the data's.
+export function buffText(o, run) {
+  return o.id === 'quicken' && run.stats.klass.charges > 0 ? `HEAVY CHARGE +${o.cdReduce}` : o.buff;
+}
 export function acceptOffer(run, o) {
   const met = run.shrines?.at(-1);
   if (met && met.t === null && met.o.includes(o.id)) met.t = o.id; // (the shrine at hand: its deal is the last noted)
@@ -139,5 +145,5 @@ export function acceptOffer(run, o) {
       break;
   }
   // label: the compact buff-bar text (0.096); full: the shrine card's text
-  run.buffs.push({ icon: o.icon, img: o.img, label: o.short ?? o.buff, full: o.buff, id: o.id }); // id: run history
+  run.buffs.push({ icon: o.icon, img: o.img, label: o.short ?? buffText(o, run), full: buffText(o, run), id: o.id }); // id: run history
 }

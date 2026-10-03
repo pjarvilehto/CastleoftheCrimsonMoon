@@ -17,7 +17,7 @@ import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
 import { heroOf, cleanHero, lookIsSprite, heavyName } from '../shared/heroes.js';
-import { potionHealAmount } from '../meta/leveling.js';
+import { potionHealFor } from '../meta/leveling.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
@@ -153,9 +153,9 @@ function statsPage(run) {
     ['Crit chance', () => pct(run.stats.crit), 'crit'],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`, 'crit'],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—'), 'ls'],
-    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00267: the class's name for its heavy)
+    [heavyName(getProfile()), () => `×${+(tune.heavyMult * run.stats.klass.heavyMult).toFixed(2)} · ${run.stats.klass.charges > 0 ? `${run.stats.klass.charges} charges` : `${run.stats.heavyCdMax} turns`}`], // (0.00267: the class's name for its heavy; 0.00277: its own factor, and charges for a charge class)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
-    ['Potion heals', () => `${potionHealAmount()} HP`, 'hp'],
+    ['Potion heals', () => `${potionHealFor(run.stats.klass)} HP`, 'hp'], // (0.00277: the class's share in it)
   ].map(([label, val, st]) => ({ val, b: el('b', {}, val()), label, st }));
   const page = el('div', { class: 'back-page back-stats' },
     el('h2', {}, 'Stats'), el('div', { class: 'back-rule' }),

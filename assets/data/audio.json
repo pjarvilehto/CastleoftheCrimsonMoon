@@ -949,11 +949,6 @@
       "layerDb": 2,
       "layers": [
         {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
-        },
-        {
           "name": "thud",
           "p": 0.6,
           "db": -6
@@ -1041,9 +1036,9 @@
       "layerDb": 2,
       "layers": [
         {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
+          "name": "thud",
+          "p": 0.5,
+          "db": -8
         }
       ]
     },
@@ -1123,9 +1118,9 @@
       "layerDb": 2,
       "layers": [
         {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
+          "name": "thud",
+          "p": 0.5,
+          "db": -8
         }
       ]
     },
@@ -1210,11 +1205,6 @@
       "layerDb": 2,
       "layers": [
         {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
-        },
-        {
           "name": "thud",
           "p": 0.4,
           "db": -8
@@ -1296,11 +1286,6 @@
       ],
       "layerDb": 2,
       "layers": [
-        {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
-        },
         {
           "name": "clank",
           "p": 0.3,
@@ -1389,9 +1374,9 @@
       "layerDb": 2,
       "layers": [
         {
-          "name": "grunt",
-          "p": 1,
-          "db": -3
+          "name": "thud",
+          "p": 0.5,
+          "db": -8
         }
       ]
     }
@@ -1511,5 +1496,5 @@
     "clip": "room_swoosh",
     "peakAtMs": 2000
   },
-  "_classSfx": "The classes' and the foes' sounds (0.00270; recordings since 0.00271): atk_<id> / heavy_<id> / hurt_<id> per hero (combatQueue.js sfxFor picks them by the save's class) and eatk_<id> / ehurt_<id> per foe (combatSfx.js: the struck foe's cry with the hero's blow, the striking foe's attack with the hero's hurt) are rendered recordings — tools/gen-sfx.mjs sends docs/sfx-prompts.md's line per clip through ElevenLabs' sound generation into assets/audio/sfx/<clip>_v1.mp3 (a new name per take, rule 7: --redo gives _v2) — each measured in the browser by tools/audio-check.mjs (measuredDb; ffmpeg's 16 kHz measure under-read the hissy ones by up to 4 dB) and trimmed by gainDb so a hero's blow and hurt land at -12 dB like the hits, a heavy at -10, a foe's own sound at -14 under the hero's. The class's variation entry rides on top as its colour: the pitch (rate) and the synth layers from audio/synth.js (swing, crackle, zap, wail, rake, chime, hiss, grunt — the grunt's layerRate is the class's voice). A possible doubled voice to listen for: the hurt recordings carry each class's own cry and the grunt layer still plays under them — a listen decides whether the grunt goes."
+  "_classSfx": "The classes' and the foes' sounds (0.00270; recordings since 0.00271): atk_<id> / heavy_<id> / hurt_<id> per hero (combatQueue.js sfxFor picks them by the save's class) and eatk_<id> / ehurt_<id> per foe (combatSfx.js: the struck foe's cry with the hero's blow, the striking foe's attack with the hero's hurt) are rendered recordings — tools/gen-sfx.mjs sends docs/sfx-prompts.md's line per clip through ElevenLabs' sound generation into assets/audio/sfx/<clip>_v1.mp3 (a new name per take, rule 7: --redo gives _v2) — each measured in the browser by tools/audio-check.mjs (measuredDb; ffmpeg's 16 kHz measure under-read the hissy ones by up to 4 dB) and trimmed by gainDb so a hero's blow and hurt land at -12 dB like the hits, a heavy at -10, a foe's own sound at -14 under the hero's. The class's variation entry rides on top as its colour: the pitch (rate) and the synth layers from audio/synth.js (swing, crackle, zap, wail, rake, chime, hiss, grunt — the grunt's layerRate is the class's voice). A possible doubled voice to listen for: the hurt recordings carry each class's own cry and the grunt layer still plays under them — a listen decides whether the grunt goes. 0.00277: the grunt layer came off every hurt_ clip (the recordings carry each class's cry; the two doubled)."
 }

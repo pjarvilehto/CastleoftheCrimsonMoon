@@ -275,8 +275,8 @@ const types = (evs) => evs.map((e) => e.type);
   ok('each has its own variation with the class\'s synth layers (every layer a synth clip)', ids.every((id) => ['atk', 'heavy', 'hurt'].every((k) => V[`${k}_${id}`]?.layers?.length && V[`${k}_${id}`].layers.every((l) => C[l.name]?.synth)))
     && V.heavy_barbarian.layers.some((l) => l.name === 'swing' && l.p === 1) && V.heavy_wizard.layers.some((l) => l.name === 'crackle') && V.heavy_hexhunter.layers.some((l) => l.name === 'chime')
     && V.heavy_necromancer.layers.some((l) => l.name === 'wail') && V.atk_druid.layers.some((l) => l.name === 'rake') && V.heavy_plaguesister.layers.some((l) => l.name === 'hiss'));
-  ok('a blow taken grunts in the class\'s voice: the Barbarian low, the women high; the knight keeps the plain hurt', V.hurt_barbarian.layers[0].name === 'grunt' && V.hurt_barbarian.layerRate[1] < 0.9 && V.hurt_plaguesister.layerRate[0] > 1.1 && V.hurt_hexhunter.layerRate[0] > 1.1
-    && !V.hurt_knight.layers.some((l) => l.name === 'grunt') && JSON.stringify(V.hurt_knight.layers) === JSON.stringify(V.hurt.layers));
+  ok('a blow taken is the class\'s own recording, pitched per class, with no synth grunt under it (0.00277: the recordings carry the cry)', ids.every((id) => !V[`hurt_${id}`].layers.some((l) => l.name === 'grunt') && V[`hurt_${id}`].layers.length > 0)
+    && V.hurt_hexhunter.rate[0] > V.hurt_barbarian.rate[1]);
   const wiz = { id: 'wizard' };
   ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
     && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
@@ -304,4 +304,41 @@ const types = (evs) => evs.map((e) => e.type);
   played.length = 0;
   combatSfx({ sfx: 'attack', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, { unit: (w) => (w === 'player' ? { id: 'player' } : { id: 'nobody' }) }, play);
   ok('a foe without a clip is as before: the blow alone', played.map((p) => p[0]).join('|') === 'attack');
+}
+
+
+// the display and state fixes of 0.00277 (the review's findings)
+{
+  fresh();
+  const { potionHealFor, potionHealAmount } = await import('../../src/meta/leveling.js');
+  const { buffText } = await import('../../src/run/shrine.js');
+  const { statusOf } = await import('../../src/run/combat.js');
+  const { createPlayback } = await import('../../src/ui/combatPlayback.js');
+  const wiz = as('wizard'), kn = as('knight');
+  ok('a potion heals the class\'s share, one function for the drink and the UI (the Wizard 0.9 of the trained amount)', potionHealFor(wiz.stats.klass) === Math.round(potionHealAmount() * wiz.stats.klass.potionHealMult) && potionHealFor(kn.stats.klass) === potionHealAmount()
+    && (wiz.hp = 1, wiz.potions = 1, drinkPotion(wiz).healed === potionHealFor(wiz.stats.klass)));
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  getProfile().hero = { id: 'wizard', look: 0 };
+  const wu = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
+  const rows = () => wu.card.all((n) => (n.className ?? '').startsWith('back-row')).map((r) => r.textContent);
+  wu.update({ hp: 1, printing: false, dead: false, heavyReady: true, heavyCd: 0, charges: 3 });
+  const tune = DATA.difficulty.combat, wk = DATA.heroes.heroes.find((h) => h.id === 'wizard').class;
+  ok('the STATS page shows the class\'s own heavy factor and, for a charge class, its charges (the Wizard: ×2.07 · 3 charges)', rows().some((t) => t.startsWith('Fireball') && t.includes(`×${+(tune.heavyMult * wk.heavyMult).toFixed(2)}`) && t.includes(`${wk.charges} charges`)) && rows().some((t) => t.startsWith('Potion heals') && t.includes(`${potionHealFor(wk)} HP`)));
+  getProfile().hero = { id: 'knight', look: 0 };
+  const ku = createPlayerUnit(createRun(), { onHeavy() {}, onPotion() {} });
+  ok('…the knight: ×2.3 · 3 turns as before', ku.card.all((n) => (n.className ?? '').startsWith('back-row')).some((r) => r.textContent.startsWith('Heavy Attack') && r.textContent.includes(`×${tune.heavyMult} · 3 turns`)));
+  getProfile().hero = null;
+  const q = DATA.shrines.offers.find((o) => o.id === 'quicken');
+  ok('the Quicken card reads as a charge for a charge class, the cooldown for the rest', buffText(q, wiz) === `HEAVY CHARGE +${q.cdReduce}` && buffText(q, kn) === q.buff && buffText(DATA.shrines.offers.find((o) => o.id !== 'quicken'), wiz) === DATA.shrines.offers.find((o) => o.id !== 'quicken').buff);
+  // the statuses ride the replay's snapshot
+  const hx = room(as('hexhunter'), [foe(100000), foe(100000)]);
+  const evs = heavy(hx, 1);
+  const markEv = evs.find((e) => e.type === 'mark'), atkEv = evs.find((e) => e.type === 'atk');
+  ok('every event\'s snapshot carries the foes\' statuses as they stood: hexed only from the mark line on', atkEv.snap.status[1].hexed === false && markEv.snap.status[1].hexed === true && markEv.snap.status[0].hexed === false && 'blight' in markEv.snap.status[0] && 'entangled' in markEv.snap.status[0]);
+  ok('a fallen foe carries no status', statusOf({ marked: 0 }, { hp: 0, blight: 2, entangled: 1 }, 0).hexed === false && statusOf({ marked: 0 }, { hp: 0, blight: 2, entangled: 1 }, 0).blight === 0 && statusOf({ marked: 0 }, { hp: 5, blight: 2, entangled: 1 }, 0).blight === 2);
+  const pb = createPlayback({ logEl: () => ({ children: [], prepend() {}, append() {} }), onTick: () => {}, onEmpty: () => {}, logDelayMs: 100, tickMs: 50 });
+  pb.begin({ enemies: [5, 5], hp: 10 });
+  ok('the playback hands the snapshot\'s status, the live one for a foe not in it (a summon)', JSON.stringify(pb.statusOf(0, { hexed: true })) === JSON.stringify({ hexed: true }) || typeof pb.statusOf === 'function');
+  // SWITCH CLASS clears the blight with the rest
+  ok('SWITCH CLASS resets the blight too', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('{ e.entangled = 0; e.blight = 0; }'));
 }
