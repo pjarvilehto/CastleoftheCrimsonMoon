@@ -1,4 +1,20 @@
-# Item matrix — who can wear what (proposal, for discussion)
+# Item matrix — who can wear what
+
+**Shipped in 0.00273** with the developer's calls on the open questions:
+one armor weight per class (Heavy = plate and mail, the Knight's;
+Leather & Hide = the Barbarian, the Druid, the Hexhunter; Cloth = the
+Wizard, the Necromancer, the Plague Sister); axes the Barbarian's alone;
+maces shared by three; a save's gear the class can't use becomes its kit
+(no payout); a class's two signature items feed its mechanic, +1 at
+tier 3 and +2 at tier 4; plate clearly stronger than cloth; another
+class's gear still drops and is salvaged at the run's end ("Can't use ·
+salvaged"), 80% of the drops rolled from the class's own pool
+(`difficulty.json classDropShare`). The data is the truth now
+(`items.json kind / class / mastery`, `heroes.json wields / wears /
+mastery`); the tables below are the proposal as discussed — where they
+differ, the data wins (Mail folded into Heavy; cloth's HP raised after
+the simulator: the least armor, the most HP; the signature items
+reworked into a tier-3 and a tier-4 accessory per class).
 
 Nothing here is in the game yet. Stats use the current scale (tier-1 kits:
 6 dmg / 40 armor + 80 HP; the 0.00259 rule that the weapon carries the

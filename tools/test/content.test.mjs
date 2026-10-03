@@ -76,7 +76,7 @@ fresh();
   const { createCombat, playerAttack } = await import('../../src/run/combat.js');
   const relics = Object.entries(DATA.items).filter(([, i]) => i.tier === 4);
   const slots = ['weapon', 'armor', 'boots', 'ring', 'trinket', 'amulet'];
-  ok('seven T4 relics, valid slots', relics.length === 7 && relics.every(([, i]) => slots.includes(i.slot)));
+  ok('twenty-four T4 relics (0.00273: the item matrix — a weapon per new kind, an armor per weight, a signature per class, the seven before), valid slots', relics.length === 24 && relics.every(([, i]) => slots.includes(i.slot)));
 
   // Drop gating: weak enemies never carry relics, bosses roll the relic table
   const origRandom = Math.random;

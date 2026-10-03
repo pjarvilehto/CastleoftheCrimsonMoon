@@ -3,6 +3,7 @@
 import { DATA } from '../shared/data.js';
 import { rollCoins, isElite, pick } from '../shared/balance.js';
 import { equipItems, salvageValue } from '../meta/equipment.js';
+import { canUse } from '../shared/classGear.js';
 
 export const RELIC_TIER = 4;
 export const relicIds = () => Object.keys(DATA.items).filter((id) => DATA.items[id].tier === RELIC_TIER);
@@ -14,8 +15,12 @@ export const droppable = (id) => !DATA.items[id]?.starter;
 // depth (0.071, t4MinRoom); direct calls default deep. hasRelic caps relics
 // at ONE per run (0.072) — they're build-defining drops, not a per-room
 // income stream.
-export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = false) {
+// heroId (0.00273, the item matrix): classDropShare of the drops are rolled
+// from what the class can use, the rest from everything — another class's
+// gear still drops, and is salvaged at the run's end.
+export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = false, heroId = null) {
   const diff = DATA.difficulty;
+  const ownPool = (ids) => { if (!heroId) return ids; const own = ids.filter((id) => canUse(heroId, id)); return own.length && Math.random() < diff.classDropShare ? own : ids; };
 
   const coins = Math.round(rollCoins(enemy) * (1 + fortuneBonus));
   const xp = enemy.xp;
@@ -26,12 +31,12 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
   // (0.071), so early elites can't hand out top-tier gear.
   const relicEligible = isElite(enemy) && roomNumber >= diff.t4MinRoom && !hasRelic;
   if (relicEligible && Math.random() < diff.t4Chance + fortuneBonus) {
-    const relics = relicIds();
+    const relics = ownPool(relicIds());
     if (relics.length) itemId = pick(relics);
   } else if (Math.random() < diff.dropChance + fortuneBonus) {
-    const pool = Object.keys(DATA.items).filter(
+    const pool = ownPool(Object.keys(DATA.items).filter(
       (id) => DATA.items[id].tier <= maxTierFor(enemy) && droppable(id)
-    );
+    ));
     if (pool.length) itemId = pick(pool);
   }
 
@@ -48,10 +53,19 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
 // extra.find = { id, slot, index, from }: the slot it takes in the preview
 // and what it replaces (null: an empty slot) — combat's find card.
 // Returns { itemId, kept, coins? }.
+// Another class's gear (0.00273, the developer's call) is carried, not judged:
+// into run.itemsFound and the LOOT row, salvaged at the run's end
+// (equipItems' offClass salvage); its line says whose it is.
 export function takeItem(run, itemId, log) {
   const item = DATA.items[itemId];
   if (item.tier === RELIC_TIER) run.relicFound = true; // the per-run relic cap, kept or not
-  const preview = equipItems({ equipment: run.gearPreview }, [itemId]); // (moves the preview on: the next find is judged against this one)
+  if (!canUse(run.heroId, itemId)) {
+    run.itemsFound.push(itemId);
+    const whose = offClassText(itemId);
+    log(['Found: ', { item, id: itemId }, ` — ${whose}, salvaged at the end.`], 'loot', { find: { id: itemId, slot: item.slot === 'ring' ? 'rings' : item.slot, index: 0, from: null, offClass: whose } });
+    return { itemId, kept: false, offClass: true };
+  }
+  const preview = equipItems({ equipment: run.gearPreview, hero: run.heroId ? { id: run.heroId } : null }, [itemId]); // (moves the preview on: the next find is judged against this one)
   if (preview.equipped.length > 0) {
     run.itemsFound.push(itemId);
     const change = preview.changes.find((c) => c.to === itemId) ?? preview.changes[0];
@@ -65,6 +79,13 @@ export function takeItem(run, itemId, log) {
   run.coins += coins;
   log(`+${coins} coins (salvaged ${item.name})`, 'loot');
   return { itemId, kept: false, coins };
+}
+
+// "Barbarian gear", "Wizard and Necromancer gear" — whose an item another class can use is.
+export function offClassText(itemId) {
+  const it = DATA.items[itemId];
+  const users = DATA.heroes.heroes.filter((h) => canUse(h.id, itemId)).map((h) => h.name.replace(/^The (Curious )?/, ''));
+  return `${users.length > 2 ? 'another class\'s' : users.join(' and ')} ${it.slot === 'weapon' ? 'weapon' : it.slot === 'armor' ? 'armor' : 'gear'}`;
 }
 
 function maxTierFor(enemy) {

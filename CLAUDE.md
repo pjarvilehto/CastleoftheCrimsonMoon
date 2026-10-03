@@ -768,6 +768,57 @@ droppable`), so the drop pool and the simulator are unchanged
 (`heroScene.js wearKit`: slot by slot, only over the default starting
 gear, never over a find); a save that had chosen before keeps its gear.
 
+**The item matrix (0.00273, the developer's calls; `docs/item-matrix.md`).**
+Who can use what, readable from an item's name: a weapon has a `kind`
+(sword, axe, mace, staff, dagger, scythe, crossbow, censer) and a class
+wields two (`heroes.json wields`: Knight sword + mace, Barbarian axe +
+mace, Wizard staff + dagger, Necromancer dagger + scythe, Druid staff +
+scythe, Hexhunter crossbow + sword, Plague Sister censer + mace); a body
+armor has a weight (`heavy` plate and mail, `hide`, `cloth`) and a class
+wears ONE (`wears`: the Knight heavy; Barbarian, Druid, Hexhunter hide;
+Wizard, Necromancer, Plague Sister cloth) — heavy clearly strongest,
+cloth the least armor and the most HP (a smoke check compares the tiers);
+an item with `class` is that class's alone whatever its kind (the kits,
+Knight's Blade / Greaves, the Relic of the First Knight, the signature
+items); everything else is everyone's. `shared/classGear.js` (`canUse`,
+`usersOf` / `usersText`, `masteryText`, `withMastery`, `kitFor`,
+`fitGearToClass`); dataCheck checks the kinds, the hero blocks and the
+mastery. 94 items (46 new in 0.00273, painted by `gen-items.mjs` from
+their lines in `docs/item-prompts.md`; every class has two weapons and a
+body armor to find at tiers 2, 3 and 4 — a smoke check). **Mastery:** a
+class's two signature accessories (`class` + `mastery`: 1 on its tier-3,
+2 on its tier-4) add `heroes.json mastery.per` per point to a key of its
+class block (`stats.js derivedStats` → `run.stats.klass`, through
+`withMastery`): the Knight +15% Heavy Attack damage (`heavyMult`), the
+Barbarian +15% Cleave reach, the Wizard +1 Fireball charge, the
+Necromancer +20% thrall strength, the Druid +1 Entangle turn, the
+Hexhunter +15% Hex crit damage, the Plague Sister +10% blight; the item's
+line says it (`hud.js describeItem`). **Drops:** `classDropShare` (0.8)
+of the item rolls come from what the class can use (`loot.js rollLoot`,
+the run's `run.heroId`), the rest from everything — another class's gear
+still drops: `takeItem` carries it into `run.itemsFound` with its line
+("Found: X — Barbarian armor, salvaged at the end."; the find card greyed
+with the same words, `fx.offClass`; its LOOT chip greyed), and at the
+run's end `equipItems` salvages it (`salvaged[].offClass`; the run-end's
+"Can't use · salvaged" row, its coins with the rest — the death toll
+applies). The gilded chest and the reliquary make their item for the
+class. **A save's gear:** `migrateProfile` fits it on every load
+(`fitGearToClass`: a weapon or armor the class can't use becomes its kit,
+an accessory comes off — the developer's call: no payout), so do the
+debug SWITCH CLASS and the dungeon's `switchClass` (the run's preview
+too); the simulator puts on the class's kit and plays the knight with his
+class set. **Balance (4 campaigns x 40 runs per class, mean depth / the
+last 10 runs' depth, before → after):** Knight 15.5 / 23.7 → 15.8 / 23.6,
+Barbarian 16.6 / 23.8 → 16.3 / 23.3, Wizard 17.3 / 23.8 → 16.4 / 23.4,
+Druid 15.9 / 24.1 → 15.9 / 23.8, Hexhunter 16.0 / 24.1 → 15.2 / 23.5;
+the two cloth classes that leaned on armor lost the most, so (the class
+numbers re-tuned for the matrix) the Necromancer's armor x0.8 → x1.1 and
+damage x1.0 → x1.1 (15.8 / 23.3 → 14.8 / 22.4, the weakest now — his
+daggers and scythes trade damage for crit and lifesteal) and the Plague
+Sister's armor x1.2 → x1.35 (16.3 / 23.6 → 15.5 / 23.0); the room-24
+boss column swings ±15-25 between seeds at this size — read it with
+more campaigns.
+
 **Stat colours (0.00266, the developer's call; the "moody" set after a
 brighter first try).** One colour per stat, the same on the Train row that
 raises it and everywhere the stat shows, so training reads as the stat it

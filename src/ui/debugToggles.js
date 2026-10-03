@@ -9,6 +9,7 @@
 // in this browser, so testers need no ?debug in the address (?debug still
 // turns it on for the visit; the headless checks use it).
 
+import { fitGearToClass } from '../shared/classGear.js';
 import { setBackground, currentScene } from '../core/scene.js';
 import { el } from '../core/dom.js';
 import { isBg3dActive, bgView, setBgView } from '../core/bg3d.js';
@@ -70,6 +71,7 @@ export function switchClassButton() {
   const btn = el('button', { class: 'debug-toggle class-toggle', onclick: () => {
     const list = heroList(), cur = heroOf(getProfile()), next = list[(list.findIndex((h) => h.id === cur.id) + 1) % list.length];
     getProfile().hero = cleanHero({ id: next.id, look: 0 });
+    fitGearToClass(getProfile()); // (0.00273: the new class's kit where the old gear is not its own)
     persist();
     const scene = currentScene(), root = document.getElementById?.('app');
     if (root) (scene?.switchClass ?? scene?.relayout)?.call(scene, root);

@@ -6,6 +6,7 @@
 
 import { DATA } from '../shared/data.js';
 import { heroOf } from '../shared/heroes.js';
+import { withMastery } from '../shared/classGear.js';
 import { levelFromStats } from '../shared/level.js';
 import { equippedItemIds } from './equipment.js';
 import { getProfile } from './profile.js';
@@ -112,6 +113,6 @@ export function derivedStats(p = getProfile()) {
     fortuneBonus: trainedLevel(p, 'fortune') * DATA.difficulty.fortuneLootBonus,
     potions: p.potions,
     potionCap: p.potionCap,
-    klass: { ...cls }, // the class block, snapshotted with the rest — a copy, a shrine's Quicken adds a charge to it (run/combat.js reads the heavy and the passives from it)
+    klass: withMastery(cls, heroOf(p), gear), // (0.00273: + the signature items' mastery, shared/classGear.js) the class block, snapshotted with the rest — a copy, a shrine's Quicken adds a charge to it (run/combat.js reads the heavy and the passives from it)
   };
 }

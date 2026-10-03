@@ -14,6 +14,8 @@
   "bossEvery": 8,
   "finalBossRoom": 24,
   "dropChance": 0.22,
+  "classDropShare": 0.8,
+  "_classDropShare": "0.00273, the item matrix: this share of the item drops (kills, the reliquary's relic) is rolled from what the class can use, the rest from everything — another class's gear still drops and is salvaged at the run's end (run/loot.js rollLoot).",
   "potionHeal": 300,
   "lowHpShare": 0.35,
   "potions": {

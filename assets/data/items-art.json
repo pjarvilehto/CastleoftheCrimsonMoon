@@ -627,6 +627,530 @@
         "at": "2026-10-03T10:17:50Z",
         "imported": "healing_potion_v1.webp"
       }
+    ],
+    "silvered_shortsword": [
+      {
+        "n": 1,
+        "file": "silvered_shortsword_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Silvered Shortsword, a short straight witch-hunter's sword with a bright silvered blade etched with small protective sigils, a simple black iron crossguard, a leather-wrapped grip. Uncommon item with a faint cold blue sheen. Shown diagonally, tip to the upper right.",
+        "at": "2026-10-03T12:19:17Z",
+        "imported": "silvered_shortsword_v1.webp"
+      }
+    ],
+    "flanged_mace": [
+      {
+        "n": 1,
+        "file": "flanged_mace_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Flanged Mace, a heavy iron mace with a head of seven sharp radiating flanges on a riveted steel shaft, a leather grip. Uncommon item with a faint cold blue sheen. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:18Z",
+        "imported": "flanged_mace_v1.webp"
+      }
+    ],
+    "ashwood_staff": [
+      {
+        "n": 1,
+        "file": "ashwood_staff_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ashwood Staff, a tall straight staff of pale ash wood, its head carved into an open hand cradling a small glowing blue crystal, bands of silver. Uncommon item with a faint cold blue glow. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:18Z",
+        "imported": "ashwood_staff_v1.webp"
+      }
+    ],
+    "bearded_war_axe": [
+      {
+        "n": 1,
+        "file": "bearded_war_axe_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bearded War Axe, a one-handed northern war axe with a long hooked 'bearded' iron blade, a thick ash haft bound in leather and wolf fur. Uncommon item with a faint cold blue sheen. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:19Z",
+        "imported": "bearded_war_axe_v1.webp"
+      }
+    ],
+    "silverbolt_crossbow": [
+      {
+        "n": 1,
+        "file": "silverbolt_crossbow_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Silverbolt Crossbow, a compact hunter's crossbow of dark oiled wood with steel limbs, loaded with a gleaming silver-tipped bolt. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:19:35Z",
+        "imported": "silverbolt_crossbow_v1.webp"
+      }
+    ],
+    "brass_thurible": [
+      {
+        "n": 1,
+        "file": "brass_thurible_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Brass Thurible, a round brass church censer hanging from three short chains, pale smoke curling from its pierced lid, a little worn and dented. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:19:37Z",
+        "imported": "brass_thurible_v1.webp"
+      }
+    ],
+    "wolfjaw_cleaver": [
+      {
+        "n": 1,
+        "file": "wolfjaw_cleaver_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Wolfjaw Cleaver, a brutal two-handed cleaver axe whose blade edge is set with a row of real wolf teeth, a bone handle bound in red leather. Epic item, a violet glow. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:37Z",
+        "imported": "wolfjaw_cleaver_v1.webp"
+      }
+    ],
+    "harvest_sickle": [
+      {
+        "n": 1,
+        "file": "harvest_sickle_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Harvest Sickle, a curved crescent sickle of dark old iron with a worn wooden handle wrapped in twine, a few stalks of dried wheat tied to it. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:19:37Z",
+        "imported": "harvest_sickle_v1.webp"
+      }
+    ],
+    "stormcaller_staff": [
+      {
+        "n": 1,
+        "file": "stormcaller_staff_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Stormcaller Staff, a twisted black staff whose head is a cage of iron prongs holding a crackling violet lightning orb, small arcs of lightning around it. Epic item, a violet glow. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:54Z",
+        "imported": "stormcaller_staff_v1.webp"
+      }
+    ],
+    "athame_of_ash": [
+      {
+        "n": 1,
+        "file": "athame_of_ash_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Athame of Ash, a slim double-edged ritual dagger of dark grey metal with a black handle carved with occult sigils, wisps of grey ash curling off the blade. Epic item, a violet glow. Shown diagonally, tip to the upper right.",
+        "at": "2026-10-03T12:19:54Z",
+        "imported": "athame_of_ash_v1.webp"
+      }
+    ],
+    "bonecrusher_maul": [
+      {
+        "n": 1,
+        "file": "bonecrusher_maul_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bonecrusher Maul, a massive two-handed war hammer with a blocky black iron head studded with spikes, a long iron-banded haft. Epic item, a violet glow. Shown diagonally, head to the upper right.",
+        "at": "2026-10-03T12:19:54Z",
+        "imported": "bonecrusher_maul_v1.webp"
+      }
+    ],
+    "reapers_scythe": [
+      {
+        "n": 1,
+        "file": "reapers_scythe_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Reaper's Scythe, a great two-handed war scythe with a long curved black blade on a crooked dark wood snath bound with chains and a small skull. Epic item, a violet glow.",
+        "at": "2026-10-03T12:19:54Z",
+        "imported": "reapers_scythe_v1.webp"
+      }
+    ],
+    "censer_of_ashen_mercy": [
+      {
+        "n": 1,
+        "file": "censer_of_ashen_mercy_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Censer of Ashen Mercy, an ornate silver censer on a long chain, shaped like a small cathedral, thick grey-violet smoke pouring from its windows. Epic item, a violet glow.",
+        "at": "2026-10-03T12:20:11Z",
+        "imported": "censer_of_ashen_mercy_v1.webp"
+      }
+    ],
+    "moonsplitter": [
+      {
+        "n": 1,
+        "file": "moonsplitter_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Moonsplitter, a legendary huge double-bladed great axe of black steel, its two crescent blades glowing molten red along the edges like a blood moon, a long haft wrapped in dark fur. Legendary item, radiating red light. Shown diagonally.",
+        "at": "2026-10-03T12:20:11Z",
+        "imported": "moonsplitter_v1.webp"
+      }
+    ],
+    "witchbane_arbalest": [
+      {
+        "n": 1,
+        "file": "witchbane_arbalest_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Witchbane Arbalest, a heavy steel arbalest crossbow with a crank, its stock carved with holy sigils, a silver bolt glowing faintly. Epic item, a violet glow.",
+        "at": "2026-10-03T12:20:11Z",
+        "imported": "witchbane_arbalest_v1.webp"
+      }
+    ],
+    "hammer_of_the_last_vigil": [
+      {
+        "n": 1,
+        "file": "hammer_of_the_last_vigil_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Hammer of the Last Vigil, a legendary holy war hammer of dark steel and gold, its head shaped like a small chapel with a burning red window, fiery red light pouring out. Legendary item, radiating red light. Shown diagonally.",
+        "at": "2026-10-03T12:20:12Z",
+        "imported": "hammer_of_the_last_vigil_v1.webp"
+      }
+    ],
+    "scythe_of_the_dying_moon": [
+      {
+        "n": 1,
+        "file": "scythe_of_the_dying_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Scythe of the Dying Moon, a legendary great scythe whose huge blade is a pale curved crescent moon cracked and bleeding red light, on a black bone snath. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:20:29Z",
+        "imported": "scythe_of_the_dying_moon_v1.webp"
+      }
+    ],
+    "eclipse_repeater": [
+      {
+        "n": 1,
+        "file": "eclipse_repeater_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Eclipse Repeater, a legendary black repeating crossbow with a magazine of red-glowing bolts on top, an eclipse disc ringed by red fire set in its stock. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:20:29Z",
+        "imported": "eclipse_repeater_v1.webp"
+      }
+    ],
+    "bloodletters_kris": [
+      {
+        "n": 1,
+        "file": "bloodletters_kris_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bloodletter's Kris, a legendary wavy-bladed kris dagger of dark red steel, blood running in channels along the blade and dripping from its tip, a black and gold handle. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:20:29Z"
+      },
+      {
+        "n": 2,
+        "file": "bloodletters_kris_c2.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bloodletter's Kris, a legendary wavy-bladed kris dagger of dark red steel, blood running in channels along the blade and dripping from its tip, a black and gold handle. Legendary item, radiating red light.",
+        "hint": "the dagger alone in the dark — no square, no panel, no frame behind it",
+        "at": "2026-10-03T12:24:32Z",
+        "imported": "bloodletters_kris_v1.webp"
+      }
+    ],
+    "staff_of_the_pale_moon": [
+      {
+        "n": 1,
+        "file": "staff_of_the_pale_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Staff of the Pale Moon, a legendary tall staff of white bone-like wood whose head holds a floating blood-red full moon orb inside a silver crescent, red light radiating. Legendary item, radiating red light. Shown diagonally.",
+        "at": "2026-10-03T12:20:29Z",
+        "imported": "staff_of_the_pale_moon_v1.webp"
+      }
+    ],
+    "studded_leather": [
+      {
+        "n": 1,
+        "file": "studded_leather_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Studded Leather, a hunter's vest of dark boiled leather covered in rows of steel studs, buckled straps at the sides. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:20:46Z",
+        "imported": "studded_leather_v1.webp"
+      }
+    ],
+    "riveted_hauberk": [
+      {
+        "n": 1,
+        "file": "riveted_hauberk_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Riveted Hauberk, a knee-length coat of riveted steel chainmail with short sleeves, leather-trimmed collar, laid out flat. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:20:46Z",
+        "imported": "riveted_hauberk_v1.webp"
+      }
+    ],
+    "thurible_of_the_black_abbey": [
+      {
+        "n": 1,
+        "file": "thurible_of_the_black_abbey_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Thurible of the Black Abbey, a legendary black iron censer on a heavy chain, shaped like a small ruined abbey, blood-red smoke and embers pouring from it. Legendary item, radiating red and orange light.",
+        "at": "2026-10-03T12:20:47Z",
+        "imported": "thurible_of_the_black_abbey_v1.webp"
+      }
+    ],
+    "scholars_robe": [
+      {
+        "n": 1,
+        "file": "scholars_robe_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Scholar's Robe, a deep blue hooded wizard's robe embroidered with small silver stars and runes at the hems and cuffs, a book-belt at the waist, laid out flat. Uncommon item with a faint cold blue glow in the embroidery.",
+        "at": "2026-10-03T12:20:47Z",
+        "imported": "scholars_robe_v1.webp"
+      }
+    ],
+    "ashen_vestments": [
+      {
+        "n": 1,
+        "file": "ashen_vestments_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ashen Vestments, ash-grey occult vestments with a high collar and long ragged sleeves, a black sash stitched with faded sigils, laid out flat. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:21:03Z",
+        "imported": "ashen_vestments_v1.webp"
+      }
+    ],
+    "shadowstalker_leathers": [
+      {
+        "n": 1,
+        "file": "shadowstalker_leathers_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Shadowstalker Leathers, a sleek dark leather hunter's armor with a hood and many small buckles, wisps of violet shadow clinging to it. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:04Z",
+        "imported": "shadowstalker_leathers_v1.webp"
+      }
+    ],
+    "bearhide_mantle": [
+      {
+        "n": 1,
+        "file": "bearhide_mantle_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bearhide Mantle, a heavy mantle of thick brown bear fur with the bear's head as a hood, leather straps and bone toggles, laid out. Epic item, a violet glow in the bear's eyes.",
+        "at": "2026-10-03T12:21:04Z",
+        "imported": "bearhide_mantle_v1.webp"
+      }
+    ],
+    "robe_of_starlit_thread": [
+      {
+        "n": 1,
+        "file": "robe_of_starlit_thread_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Robe of Starlit Thread, a midnight-black wizard's robe whose fabric is woven with tiny glowing violet stars and constellations, a high collar, laid out flat. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:04Z",
+        "imported": "robe_of_starlit_thread_v1.webp"
+      }
+    ],
+    "bloodsilk_vestments": [
+      {
+        "n": 1,
+        "file": "bloodsilk_vestments_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Bloodsilk Vestments, flowing dark crimson silk vestments of an occult priest, a black stole embroidered with violet runes, laid out flat. Epic item, a violet and red glow.",
+        "at": "2026-10-03T12:21:21Z",
+        "imported": "bloodsilk_vestments_v1.webp"
+      }
+    ],
+    "eclipse_mail": [
+      {
+        "n": 1,
+        "file": "eclipse_mail_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Eclipse Mail, a legendary full suit of black plate and mail armor, an eclipse disc ringed by blood-red fire on the breastplate, red light glowing in the joints. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:21:21Z",
+        "imported": "eclipse_mail_v1.webp"
+      }
+    ],
+    "hide_of_the_moon_wolf": [
+      {
+        "n": 1,
+        "file": "hide_of_the_moon_wolf_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Hide of the Moon-Wolf, a legendary armor made from a giant silver-black wolf's pelt, the wolf's head as a hood with glowing red eyes, a red crescent moon branded on the chest. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:21:22Z",
+        "imported": "hide_of_the_moon_wolf_v1.webp"
+      }
+    ],
+    "mantle_of_the_crimson_moon": [
+      {
+        "n": 1,
+        "file": "mantle_of_the_crimson_moon_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Mantle of the Crimson Moon, a legendary flowing hooded robe of deep crimson velvet embroidered in gold with a great full blood moon on its back, red light glowing from the embroidery. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:21:23Z"
+      },
+      {
+        "n": 2,
+        "file": "mantle_of_the_crimson_moon_c2.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Mantle of the Crimson Moon, a legendary flowing hooded robe of deep crimson velvet embroidered in gold with a great full blood moon on its back, red light glowing from the embroidery. Legendary item, radiating red light.",
+        "hint": "on a pure near-black background to every edge — no white, no grey backdrop",
+        "at": "2026-10-03T12:24:07Z",
+        "imported": "mantle_of_the_crimson_moon_v1.webp"
+      }
+    ],
+    "hobnailed_boots": [
+      {
+        "n": 1,
+        "file": "hobnailed_boots_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Hobnailed Boots, a pair of sturdy dark leather marching boots with iron hobnails in the soles and buckled shin straps. Uncommon item with a faint cold blue sheen.",
+        "at": "2026-10-03T12:21:39Z",
+        "imported": "hobnailed_boots_v1.webp"
+      }
+    ],
+    "warchiefs_torc": [
+      {
+        "n": 1,
+        "file": "warchiefs_torc_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Warchief's Torc, a heavy twisted iron neck torc ending in two snarling wolf heads, hung with a few bear claws. A barbarian's. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:39Z",
+        "imported": "warchiefs_torc_v1.webp"
+      }
+    ],
+    "necromancers_phylactery": [
+      {
+        "n": 1,
+        "file": "necromancers_phylactery_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Necromancer's Phylactery, a small ornate silver vial on a chain holding a swirling trapped green-violet soul, a tiny skull for a stopper. A necromancer's. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:39Z",
+        "imported": "necromancers_phylactery_v1.webp"
+      }
+    ],
+    "chained_grimoire": [
+      {
+        "n": 1,
+        "file": "chained_grimoire_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Chained Grimoire, a small thick leather-bound spellbook clasped shut with an iron lock and hung on a chain, glowing violet runes leaking from between its pages. A wizard's. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:40Z",
+        "imported": "chained_grimoire_v1.webp"
+      }
+    ],
+    "druids_antler_totem": [
+      {
+        "n": 1,
+        "file": "druids_antler_totem_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Druid's Antler Totem, a small totem of a stag's antler bound with green vines, feathers and moss, a tiny glowing green leaf at its centre. A druid's. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:56Z",
+        "imported": "druids_antler_totem_v1.webp"
+      }
+    ],
+    "abbey_reliquary": [
+      {
+        "n": 1,
+        "file": "abbey_reliquary_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Abbey Reliquary, a small gilded reliquary box on a chain with a tiny glass window holding a saint's bone, ochre and gold, faint holy smoke. A nursing sister's. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:57Z",
+        "imported": "abbey_reliquary_v1.webp"
+      }
+    ],
+    "witchfinders_signet": [
+      {
+        "n": 1,
+        "file": "witchfinders_signet_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Witchfinder's Signet, a heavy silver signet ring engraved with an eye inside a pentacle crossed by a stake, a witch hunter's seal. Epic item, a violet glow.",
+        "at": "2026-10-03T12:21:57Z",
+        "imported": "witchfinders_signet_v1.webp"
+      }
+    ],
+    "knight_commanders_seal": [
+      {
+        "n": 1,
+        "file": "knight_commanders_seal_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Knight-Commander's Seal, a legendary heavy gold medallion on a chain, a sword and crown engraved on it, a blood-red ruby at its centre blazing with light. A knight's. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:21:58Z",
+        "imported": "knight_commanders_seal_v1.webp"
+      }
+    ],
+    "ring_of_the_thrall_lord": [
+      {
+        "n": 1,
+        "file": "ring_of_the_thrall_lord_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Ring of the Thrall-Lord, a legendary black bone ring carved as a circle of tiny clutching skeletal hands holding a glowing red soul-gem. A necromancer's. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:22:15Z",
+        "imported": "ring_of_the_thrall_lord_v1.webp"
+      }
+    ],
+    "warlords_skull_totem": [
+      {
+        "n": 1,
+        "file": "warlords_skull_totem_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Warlord's Skull Totem, a legendary horned beast skull painted with red war paint, hung with braids, iron rings and teeth, red light glowing from its eye sockets. A barbarian's. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:22:15Z",
+        "imported": "warlords_skull_totem_v1.webp"
+      }
+    ],
+    "archmages_starstone": [
+      {
+        "n": 1,
+        "file": "archmages_starstone_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Archmage's Starstone, a legendary pendant holding a faceted star-shaped crystal with a tiny red galaxy swirling inside, set in an ornate silver frame. A wizard's. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:22:15Z",
+        "imported": "archmages_starstone_v1.webp"
+      }
+    ],
+    "heartwood_of_the_elder_grove": [
+      {
+        "n": 1,
+        "file": "heartwood_of_the_elder_grove_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Heartwood of the Elder Grove, a legendary pendant of ancient dark heartwood shaped like a heart, roots and tiny leaves growing from it, a red-amber sap glowing in its veins. A druid's. Legendary item, radiating red and orange light.",
+        "at": "2026-10-03T12:22:15Z",
+        "imported": "heartwood_of_the_elder_grove_v1.webp"
+      }
+    ],
+    "black_abbess_rosary": [
+      {
+        "n": 1,
+        "file": "black_abbess_rosary_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Black Abbess's Rosary, a legendary rosary of black beads and small bone skulls ending in an ornate iron censer-cross, red embers glowing in it. A plague nun's. Legendary item, radiating red and orange light.",
+        "at": "2026-10-03T12:22:33Z",
+        "imported": "black_abbess_rosary_v1.webp"
+      }
+    ],
+    "grand_inquisitors_badge": [
+      {
+        "n": 1,
+        "file": "grand_inquisitors_badge_c1.webp",
+        "model": "google/nano-banana-pro",
+        "version": "hidden",
+        "line": "Grand Inquisitor's Badge, a legendary iron and gold badge shaped like a flaming eye over crossed stakes, red fire burning in the eye. A witch hunter's. Legendary item, radiating red light.",
+        "at": "2026-10-03T12:22:33Z",
+        "imported": "grand_inquisitors_badge_v1.webp"
+      }
     ]
   }
 }
