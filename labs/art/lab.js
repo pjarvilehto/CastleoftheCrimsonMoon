@@ -13,7 +13,6 @@ import { loadData, DATA, buildQuery } from '../../src/shared/data.js';
 import { createEnemyUnit, createPlayerUnit } from '../../src/ui/battleLine.js';
 import { createRun } from '../../src/run/runState.js';
 import { scaleEnemy } from '../../src/shared/balance.js';
-import { portraitUrl } from '../../src/shared/portraits.js';
 
 const KEY = 'castle-art-lab';
 const $ = (id) => document.getElementById(id);
@@ -70,7 +69,7 @@ function line(units) {
 function compare() {
   const id = S.char, cs = candidates(id);
   const units = [unitFor(id, 0), ...cs.map((k, i) => unitFor(id, i + 1, k))];
-  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, NEW.includes(id) ? 'New character' : 'Current'), el('span', { class: 'meta' }, NEW.includes(id) ? 'not in the game yet (a stand-in card)' : portraitUrl(id).split('/').pop())));
+  units[0].el.append(el('div', { class: 'lab-cap' }, el('b', {}, NEW.includes(id) ? 'New character' : 'Current'), el('span', { class: 'meta' }, NEW.includes(id) ? 'not in the game yet (a stand-in card)' : `${units[0].art.split('/').pop()}${id !== 'player' && DATA.enemies[id].art.length > 1 ? ` (one of ${DATA.enemies[id].art.length}, at random)` : ''}`)));
   if (NEW.includes(id)) { units[0].portrait.style.display = 'none'; units[0].glint.style.display = 'none'; }
   cs.forEach((k, i) => {
     const u = units[i + 1], v = verdictOf(k);

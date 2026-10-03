@@ -158,7 +158,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     combat = createCombat(run, room);
     playback.reset();
     const none = () => {}; // the player's buttons do nothing here: the bot plays
-    const battle = mountBattle(run, combat, { onHeavy: none, onPotion: none, onAttack: none }); // the dungeon's own battle line
+    const battle = mountBattle(run, combat, { onHeavy: none, onPotion: none, onAttack: none, rand: () => 0 }); // the dungeon's own battle line (0.00303: a fixed deal of the portraits, the same faces every run)
     const title = el('h1', { class: 'room-title' }, 'Benchmark');
     const layer = el('div', { class: 'fx-layer' });
     root.innerHTML = '';

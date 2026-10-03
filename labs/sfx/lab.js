@@ -8,7 +8,10 @@
 // played at the pitch's rate through sfx.sfxFrom); Approve; a note. The
 // state lives in localStorage: { [clip]: { ok, vol, pitch, speed, note, at } }.
 // COPY JSON = { approved: [clips], edits: [{ clip, gainDb, pitch, speed, note, approved }] }
-// for tools/render-sfx.mjs --apply.
+// for tools/render-sfx.mjs --apply. A clip the tool touched carries
+// `reviewed` (an ISO date): a stored entry older than it is about the
+// clip as it was and is dropped (0.00306: the sliders used to keep their
+// positions after an apply and stack on the re-rendered files).
 
 import { loadData, DATA } from '../../src/shared/data.js';
 import { sfx, sfxFrom, sfxContext, initSfx, isMuted as sfxMuted, toggleMuted as toggleSfx } from '../../src/audio/sfx.js';
@@ -51,19 +54,19 @@ const SECTIONS = [
     ['attack', "The hero's blow", 'every strike, a spill and thorns; its variation entry picks a pitch, a tone and tick / thud / slice / clank layers each play (combatSfx.js: panned to the card, landing on the blow)'],
     ['hurt', 'A blow on the hero', 'the plain hurt (the class cries hurt_<id> sit behind audio.json cries.hero, off since 0.00287)'],
     ['kill', 'A foe falls', "a kill, a multi-kill, OVERKILL's line; also the mega crit's deep second hit at rate 0.72, -5 dB"],
-    ['ring', 'A crit', 'synth: the metallic ring on a crit (-14 dB), lower and louder on a mega crit (rate 0.8, -10 dB); also a coffer of coins'],
+    ['ring', 'A crit', 'the crit\'s impact (recorded since 0.00305, the review\'s ask), lower and louder on a mega crit (rate 0.8, +2 dB)'],
     ['boom', 'OVERKILL', 'synth: the low boom under the heavy blow that covers the room (-4 dB)'],
     ['swoosh', 'A dodge', "a foe's dodge, a bound foe's strain, Immune!"],
-    ['heal', 'Drink Potion', 'the potion, with the green light'],
+    ['heal', 'Drink Potion', 'the potion, with the green light (recorded in 0.00305: a cork, a gulp, a shimmer — the old one read as a coin jingle)'],
     ['loot', 'A find', 'a kill\'s item (tier 1-3) and the coins'],
     ['rare', 'A relic found', 'a tier-4 find'],
     ['shrine', "The boss's summons", 'the summon line (the same chime as a boon taken)'],
     ['revive', 'The Heart revives you', "the Heart of the Dying Moon's second life (0.00297, a stinger: the music ducks)"],
     ['death', 'YOU DIED', 'timed so its hit lands as the dialog flashes in (0.00297, a stinger)'],
-    ['tick', 'Strike layer', 'synth: the blade\'s glint, a random layer under a blow'],
-    ['thud', 'Strike layer / Entangle', "synth: the body of a blow; also Entangle's roots, the thrall's blows and its fall"],
-    ['slice', 'Strike layer', "synth: the swing's air"],
-    ['clank', 'Strike layer', 'synth: armour'],
+    ['tick', 'Strike layer', 'a knife shing (recorded since 0.00305), a random layer under a blow'],
+    ['thud', 'Strike layer / Entangle', "a strong impact with reverb (recorded since 0.00305): the body of a blow; also Entangle's roots, the thrall's blows and its fall"],
+    ['slice', 'Strike layer', 'a knife swing with its shing (recorded since 0.00305)'],
+    ['clank', 'Strike layer', 'a big metallic impact with reverb (recorded since 0.00305): armour under a blow on the hero'],
   ] },
   { id: 'classes', name: "The classes' sounds", bed: 'combat', rows: [
     ...heroes.flatMap((h) => [
@@ -86,9 +89,8 @@ const SECTIONS = [
   ]) },
   { id: 'panel', name: 'Shrine and treasure rooms', bed: 'shrine', rows: [
     ['shrine', 'A boon taken', 'the blessing chime (a stinger: the music ducks)'],
-    ['loot', 'The Gilded Chest / the reliquary', 'an item inside'],
+    ['loot', 'The chests', 'an item inside; the Iron Coffer\'s coins too (since 0.00305)'],
     ['rare', 'A relic', 'the reliquary\'s relic (and the chest\'s tier 4)'],
-    ['ring', 'The Iron Coffer', 'synth: coins alone'],
     ['revive', "The reliquary's price paid back", "the Heart gives the knight back after the seal drank him (0.00297)"],
     ['deeper', 'Push Deeper', 'leaving a panel room, as in combat'],
   ] },
@@ -107,6 +109,11 @@ const BEDS = { title: 'title / Great Hall', combat: 'combat', boss: 'boss', shri
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {}; } catch { state = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* private mode */ } };
+// an entry older than the clip's `reviewed` stamp (the tool applied it) is stale: gone, the sliders at rest
+const stale = (clip, s) => !!(CLIPS[clip]?.reviewed && (!s?.at || s.at < Date.parse(CLIPS[clip].reviewed)));
+for (const clip of Object.keys(state)) if (!CLIPS[clip] || stale(clip, state[clip])) delete state[clip];
+save();
+const touch = (clip) => { S(clip).at = Date.now(); };
 const S = (clip) => (state[clip] ??= { ok: false, vol: 0, pitch: 0, speed: 100, note: '' });
 const edited = (clip) => { const s = state[clip]; return !!s && (s.vol !== 0 || s.pitch !== 0 || s.speed !== 100); };
 const approved = (clip) => state[clip]?.ok ?? !!CLIPS[clip].approved; // the registry's approval is the base; this browser's verdict overrides
@@ -222,7 +229,7 @@ function count() {
 const knob = (r, key, label, min, max, step) => {
   const input = el('input', { type: 'range', min, max, step, value: S(r.clip)[key] });
   const out = el('output');
-  input.addEventListener('input', () => { S(r.clip)[key] = Number(input.value); save(); paintAll(r.clip); });
+  input.addEventListener('input', () => { S(r.clip)[key] = Number(input.value); touch(r.clip); save(); paintAll(r.clip); });
   input.addEventListener('change', () => { setCurrent(rows.indexOf(r)); playClip(r.clip); });
   return { wrap: el('label', {}, el('span', {}, label), input, out), input, out };
 };
@@ -238,15 +245,16 @@ for (const sec of SECTIONS) {
     const vol = knob(r, 'vol', 'Volume', -12, 12, 0.5), pitch = knob(r, 'pitch', 'Pitch', -12, 12, 1), speed = knob(r, 'speed', 'Speed', 50, 200, 5);
     if (c.synth || !c.file) { speed.input.disabled = true; speed.wrap.classList.add('lock'); speed.wrap.title = 'a generated sound: pitch and speed are one knob'; }
     const note = el('input', { type: 'text', placeholder: 'a note for the render (what was wrong, what you want)' });
-    note.addEventListener('input', () => { S(clip).note = note.value; save(); for (const o of rows) if (o.clip === clip && o !== r) o.knobs.note.value = note.value; });
+    note.addEventListener('input', () => { S(clip).note = note.value; touch(clip); save(); for (const o of rows) if (o.clip === clip && o !== r) o.knobs.note.value = note.value; });
     r.knobs = { vol, pitch, speed, note };
     r.row = el('div', { class: 'clip', onclick: () => setCurrent(rows.indexOf(r)) },
-      el('span', { class: 'name' }, clip, el('small', {}, c.file ? c.file.split('/').pop() : 'generated (audio/synth.js)'), el('small', {}, level(clip), c.stinger ? ' · stinger' : '', DATA.audio.duck.clips[clip] ? ` · ducks the music ${DATA.audio.duck.clips[clip]} s` : '')),
+      el('span', { class: 'name' }, clip, el('small', {}, c.file ? c.file.split('/').pop() : 'generated (audio/synth.js)'), el('small', {}, level(clip), c.stinger ? ' · stinger' : '', DATA.audio.duck.clips[clip] ? ` · ducks the music ${DATA.audio.duck.clips[clip]} s` : ''),
+        c.reviewed ? el('small', {}, `review applied ${c.reviewed.slice(0, 10)} — the sliders start from the clip as it is now`) : null),
       el('span', { class: 'where' }, where, el('small', {}, detail)),
       el('div', { class: 'acts' },
         el('button', { class: 'play', onclick: (e) => { e.stopPropagation(); setCurrent(rows.indexOf(r)); playClip(clip); } }, '▶ Play'),
-        el('button', { class: 'b-ok small', onclick: (e) => { e.stopPropagation(); S(clip).ok = !approved(clip); S(clip).at = Date.now(); save(); paintAll(clip); } }, 'Approve'),
-        el('button', { class: 'b-reset small', onclick: (e) => { e.stopPropagation(); Object.assign(S(clip), { vol: 0, pitch: 0, speed: 100, note: '' }); save(); paintAll(clip); } }, 'Reset')),
+        el('button', { class: 'b-ok small', onclick: (e) => { e.stopPropagation(); S(clip).ok = !approved(clip); touch(clip); save(); paintAll(clip); } }, 'Approve'),
+        el('button', { class: 'b-reset small', onclick: (e) => { e.stopPropagation(); Object.assign(S(clip), { vol: 0, pitch: 0, speed: 100, note: '' }); touch(clip); save(); paintAll(clip); } }, 'Reset')),
       el('div', { class: 'knobs' }, vol.wrap, pitch.wrap, speed.wrap, note));
     rows.push(r);
     box.append(r.row);
@@ -282,7 +290,7 @@ document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   const r = rows[current];
   if (k === ' ') { e.preventDefault(); playClip(r.clip); }
-  else if (k === 'a') { S(r.clip).ok = !approved(r.clip); S(r.clip).at = Date.now(); save(); paintAll(r.clip); }
+  else if (k === 'a') { S(r.clip).ok = !approved(r.clip); touch(r.clip); save(); paintAll(r.clip); }
   else if (k === 'm') $('music').click();
   else if (k === 'v') $('vary').click();
   else if (k === 'r') r.row.querySelector('.b-reset').click();

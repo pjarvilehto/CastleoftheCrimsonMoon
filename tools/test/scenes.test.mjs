@@ -37,6 +37,24 @@ setBackground('castle_great_hall.png');
   ok('dungeon renders after Descend', t().includes('Room 1') && !registry.app.classList.contains('hidden'));
 }
 
+// the title's fly-in (0.00307, ui/titleIntro.js): where no video can play
+// (the shim's element has no play(), headless Chromium no H.264) nothing is
+// mounted and nothing held — the title shows as it always has; the clip
+// the data names is on disk
+{
+  const { preloadIntro, introReady, playIntro } = await import('../../src/ui/titleIntro.js');
+  preloadIntro();
+  const readyAt = Date.now();
+  const ready = await introReady();
+  ok('the intro gives way at once where no video can play (no wait, nothing to play)', ready === false && Date.now() - readyAt === 0 && playIntro() === null);
+  resetProfile();
+  show(titleScene());
+  await sleep(1100);
+  const panel = byClass(registry.app, 'title-panel');
+  ok('the title shows with its panel not held and no intro layer', panel.length === 1 && !panel[0].classList.contains('intro-hold') && !registry.body.all((e) => e.id === 'intro').length);
+  ok('the intro clip the data names is on disk', statSync(`assets/video/${DATA.backgrounds.intro.file}`).isFile());
+}
+
 // T9: transitionTo resilience — a throwing work() must not brick the UI.
 // The throw escapes the timer callback (uncaught), so swallow ONLY the
 // intentional one; anything else is a real failure.

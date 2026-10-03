@@ -68,7 +68,28 @@ before). The same rules: short, dry, close, the loudest moment early.
 | ehurt_vampire_lord | 0.8 | A vampire lord snarling in pain, a deep inhuman hiss and growl, one short cry, dry, close |
 | eatk_crypt_spider | 0.8 | A giant spider biting with chittering mandibles and a wet venomous snap, dry, close, no reverb |
 | ehurt_crypt_spider | 0.7 | A giant spider screeching in pain, a chittering hiss, one short cry, dry, close |
-| eatk_hollow_hound | 0.8 | A hollow hound lunging with a snarl and a snap of jaws, a deep bark, dry, close, no reverb |
+| eatk_hollow_hound | 0.9 | A hollow hound's low gnarling growl rising into a vicious snarl and a snap of jaws, deep and guttural, dry, close, no reverb |
 | ehurt_hollow_hound | 0.7 | A hound yelping in pain, a sharp whimpering yelp, one short cry, dry, close |
 | eatk_blood_knight | 0.9 | A blood knight swinging a great sword, a heavy whoosh and a brutal steel impact, armour clanking, dry, close |
 | ehurt_blood_knight | 0.7 | A knight in heavy armour grunting as he is struck, steel plate clanging, one short hit, dry, close |
+
+## The strikes' layers, the crit's impact and the potion (0.00305, the developer's SFX Lab review)
+
+Until 0.00305 these were generated in `audio/synth.js`; the review asked
+for recordings: "a knife shing" for the tick and the slice, "a strong
+impact with reverb" for the thud, "a bigger metallic impact with reverb"
+for the clank, "an impressive Critical Hit impact sound" for the ring (the
+crit's sweetener; the mega crit plays it lower and louder, the Iron
+Coffer's coins moved to the loot jingle), and a healing potion that is not
+"jingle like / coin like". The layers ride under the hits by their
+`variation` entries' `db` (their trims keep the synth's raw levels, so the
+mix is as it was); the reverb asked for is the exception to the dry rule.
+
+| clip | seconds | prompt |
+|---|---|---|
+| tick | 0.6 | A knife shing: a blade drawn sharply across steel, one bright metallic sching, short, dry, close |
+| slice | 0.7 | A fast knife swing with a bright metallic shing and a cutting whoosh, one short stroke, dry, close |
+| thud | 1.0 | A strong heavy impact, a deep body blow landing with weight, a short cavernous reverb tail, close |
+| clank | 1.0 | A big metallic impact, heavy steel struck hard with a loud clang and a short stone-hall reverb tail, close |
+| ring | 1.2 | A critical hit impact: a massive steel blade strike with a bright metallic ring and a deep punch, impressive, a short reverb tail, close |
+| heal | 1.0 | A healing potion drunk: a cork pop, one gulp, then a soft warm magical shimmer rising and fading, no coins, no bells, dry, close |

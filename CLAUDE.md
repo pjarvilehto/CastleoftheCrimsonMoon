@@ -657,6 +657,46 @@ New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
+#### The title's fly-in (0.00307, a prototype — the developer's idea, the video thread)
+
+The title painting is the END of a short flight: as the title scene
+enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
+everything (`#intro`, z-index above the corner column), the camera
+arrives at the castle, the film's last frame — the painting itself,
+baked in as a 0.4 s crossfade at the file's end — fades `intro.fadeMs`
+onto the 3D renderer's rest pose, the fade beginning `intro.leadMs`
+before the film's end with the film playing on under it (0.00308, the
+developer's ask after seeing it; `holdMs` = a hold after the end instead,
+with leadMs 0; 0.00309, the developer's ask: a room change's whoosh
+peaks `intro.whooshAtMs` into the flight (`sfx.js transitionSfx(atMs)`)
+and the Descend strike, `deeper`, sounds as the title's panel comes up —
+before any gesture `sfx.js adoptRunning` takes the context only where
+the browser let the title bed start on its own (RUNNING; a suspended
+one would hold the sounds for a stale burst on the first click), so a
+desktop that blocks autoplay sees the flight silent and a phone, whose
+PLAY tap precedes the title, hears both) (the same
+painting cover-fit; what the fade covers is the renderer's haze and
+vignette), and the title's panel, held under it (`.intro-hold`), fades
+in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,
+`file` in `assets/video/`, `waitMs`); the data check and the orphan
+check know the folder. Boot fetches the film beside the art
+(`preloadIntro`, after the data) and the loader waits at 100% up to
+`waitMs` for it (`introReady`) — not ready, no H.264 (the codec is
+asked for by name: headless Chromium plays no MP4, so the layout check
+never meets it), reduced motion, or already played this session: the
+title shows as it always has (`playIntro` answers null, nothing is
+mounted). A click, a tap or any key but the browser's own skips it (the
+key is stopped before the title's hotkeys; the fade starts from where
+the film is). Made by plan B of two: a far, wide view of the castle
+outpainted by Nano Banana Pro from the painting, then Kling 2.5 flying
+from it INTO the painting with the painting as the take's last frame —
+the motion forwards, the landing exact (plan A, pull back and reverse,
+would fly the crows backwards); Hailuo 02, Seedance 1 Pro and Veo 3.1
+rolled beside it; the take eased to 3.2 s by ffmpeg. The prompts, the
+models' results and the cut are `docs/video-prompts.md`; the video
+models run on Replicate through `tools/replicate.mjs`; no
+`gen-video.mjs` yet (the Backlog).
+
 ### Portraits (0.184)
 
 The file is data: `enemies.json art` per enemy and
@@ -668,6 +708,34 @@ read through
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
 away.
+
+#### The approved redraws in the game (0.00303, the developer's call)
+
+All 30 approved enemy redraws are live: `enemies.json art` is a LIST,
+one file per approved candidate (`rat_v2.webp`, `rat_v3.webp` …, in the
+candidates' order), and `ref` is the original every redraw was made from
+(the prompts doc's File column, gen-art's image 1 and `idsByFile`; on
+disk, drawn by no fight; the Particle Lab uses four of them). A fight
+DEALS the pictures (`portraits.js dealPortrait(fight, foe, rand)`, called
+by `battleRoom.js mountBattle` with the combat as the fight): each foe of
+a kind gets its own picture while the kind's variants last (three Giant
+Rats: both rat pictures, then a fresh shuffle), the boss one of his three
+at random each fight, a summon from the fight's deck; a foe keeps its
+picture for the fight (a WeakMap per foe object: a relayout or SWITCH
+CLASS re-mounting the line shows the same faces). The deal draws from
+`crypto.getRandomValues`, never `Math.random` (the simulator and the
+seeded scene fights are byte-identical); the benchmark passes `rand: ()
+=> 0`, the same faces every run. Preload: every picture of the tier-1
+foes (the first rooms) and the first of every other foe are Descend
+essentials; the other variants (`preload.js portraitLaterUrls`) come right
+after, decoded, before the gear's pictures and the rooms (the 30 are
+~4 MB; the 12 originals were 1.5 MB). The boss's redraws are on the wide
+canvas (`gen-art.mjs WIDE`, 1100 px): the figure sits right of the card's
+centre, the head over the name bar and the sword sweeping across the row,
+as the boss composition asks — the Art Lab's FIGHT view showed them the
+same way. Variants per foe: spider, hound and Fellblade 4; Shrieker,
+skeleton and the Vampire Lord 3; rat, acolyte and gargoyle 2; Cinderborn,
+Wraith and Blood Knight 1.
 
 #### Redrawing them (0.00201, after three directions)
 
@@ -720,9 +788,11 @@ art-rerender.json` (verdicts recorded, re-rolls generated: `{ id, n,
 hint, style, model }`, `{ id, clean: n }`, `{ id, basedOn: n, hint, n,
 model }`) → `--prune` (an approved character keeps only its approval;
 `--keep-models a,b [--clear-verdicts]` for a change of direction) →
-`--import` (the approved candidate, or `--pick rat=3`, to
-`assets/chars/<id>_v<k>.webp` and the data; a Clean first if a shadow
-is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
+`--import` (every approved candidate not imported yet, or `--pick rat=3`,
+to `assets/chars/<id>_v<k>.webp`, ADDED to the enemy's `art` list — the
+original `ref` leaves it with the first import (0.00303); the knight's
+latest approval replaces `cards.json player.art`; a Clean first if a
+shadow is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
 draws a character the game does not have (a default canvas; the lab
 shows it on a stand-in card) once the LoRA exists. `sharp` is the one
 npm dependency (`package.json`; the suite runs without it).
@@ -1366,7 +1436,33 @@ sounds:** the SFX Lab (`labs/sfx/`, "Where things live") plays every clip
 where it belongs with the bed under it and hands the edits to
 `tools/render-sfx.mjs`; `sfx()` takes `plain` (no variation, no jitter)
 and `sfxFrom(name, buffer, opts)` plays a buffer of the caller's through
-the same path (both 0.00301, the lab's).
+the same path (both 0.00301, the lab's). **The first review (0.00304,
+`render-sfx.mjs --apply`):** 7 approvals, 31 re-renders (every foe's cry
+and attack pitched down 5-10 semitones, some slowed; the death, shrine,
+rare and kill lower; the whooshes lifted another 3-7.5 dB to -4.5..-9),
+9 trims. **Its notes (0.00305):** the strikes' layers `tick` / `thud` /
+`slice` / `clank` and the crit's `ring` are RECORDINGS now (ElevenLabs,
+their lines in `docs/sfx-prompts.md`'s third table; `gen-sfx.mjs
+readPrompts` takes any clip id since) — a `variation` layer may be a
+file clip (`sfx.js start`: decoded once, started at the blow's moment;
+`initSfx` decodes them ahead; dataCheck allows either), their trims
+keep the synths' raw levels (tick -17.1, slice -23.5; the thud -8 and
+the clank -10, "stronger, with reverb") so the mix under the hits is as
+it was; the ring lands at -10 with `sweeteners.crit.ringDb` 0 and
+`mega.ringDb` +2 (they offset the synth's raw level before), and the
+Iron Coffer's coins play the loot jingle; `heal` is a new recording (a
+cork, a gulp, a shimmer — the old read as coins) and the hollow hound's
+attack a gnarl. `gen-sfx.mjs nextFile` never goes below the registry's
+current version (a `--redo` after a render-sfx move wrote `_v1` again).
+`audio/synth.js` keeps the five old instruments unused. **The second paste (0.00306):** the lab's
+sliders had kept their positions after the first apply (its state is
+this browser's), so the re-export restated every edit over the
+re-rendered files — only the five whose values had changed were applied
+(the shrine 7 semitones further down and its speed back to 100%, the
+hounds' cries, the new heal and ring takes pitched down as set); since,
+`render-sfx.mjs` stamps every clip it touches with `reviewed` and the
+lab drops a stored entry older than the stamp (the row says "review
+applied <date>"), so the sliders start from the clip as it is now.
 
 #### Music beds
 
@@ -2128,6 +2224,10 @@ sometimes — fetch all branches to find it.
   `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
   `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
   simulator and the shrine study; the Backlog's "Refactors done" entry).
+- 0.00303 (the character-gen thread): the 30 approved enemy redraws live,
+  dealt per fight as variants (the Portraits notes); the Vampire Lord's
+  three undecided candidates, the gargoyle's two and the mimic's three
+  wait in the Art Lab.
 - 0.00293 and 0.00299 (this thread; 0.00285–0.00292 and 0.00294 were the
   other threads' — the title bed from the title, the special-attack keys,
   the cries pulled, the calmer boss take, the inventory strips, the
@@ -2185,6 +2285,12 @@ sometimes — fetch all branches to find it.
   narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
   pulled behind `audio.json cries` (0.00287) until their content is
   rethought — new recordings would be new files (rule 7).
+- Video (0.00307, the title's fly-in is the prototype): `tools/gen-video.mjs`
+  with candidates, verdicts and `--import` (the cut, the bake, the encode)
+  like the other generators, and a lab to compare takes · a 720p file for
+  phones · a take with the painting's own crows and smoke (the models add
+  their own) · the other cinematics (the descent, the boss's entrance, YOU
+  DIED, the victory) once the title's sticks.
 - Game: a foe's immunities show nowhere before the cast (0.00293: a tag or
   a hover line on the card would let the Wizard and the Plague Sister aim)
   · the classes' next round — the thrall card and the rage chip (the
@@ -2218,11 +2324,7 @@ sometimes — fetch all branches to find it.
   the manifest has no 192 px icon (180 and 512 only; Android wants 192)
   · ship.mjs is
   still two commits per ship (the work commit carries the previous
-  build's number; rehearse against a bare scratch remote) · import the
-  approved portraits (`gen-art.mjs --import`, `--pick id=N` where a
-  character has several approvals) once the developer wants the redraws
-  live — the knight's part is moot since his looks are `heroes.json`
-  figures (0.00264) · `guide_torch_corridor` is approved in
+  build's number; rehearse against a bare scratch remote) · `guide_torch_corridor` is approved in
   `rooms-art.json` but never imported (`gen-bg.mjs --import`) ·
   `gen-bg.mjs --import` rewrites backgrounds.json through JSON.stringify
   (1.0 → 1, the phone block on several lines — harmless, noisy; 0.00244

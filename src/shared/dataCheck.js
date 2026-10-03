@@ -97,7 +97,10 @@ export function checkData(data) {
   if (!data.enemies?.[data.difficulty?.boss?.enemy]) out.push(`difficulty.json: boss.enemy (${data.difficulty?.boss?.enemy}) is not in enemies.json`);
   for (const slot of ['weapon', 'armor']) if (!data.items?.[data.difficulty?.player?.startingGear?.[slot]]) out.push(`difficulty.json: player.startingGear.${slot} is not an item`);
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
-  for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
+  for (const [id, e] of Object.entries(data.enemies ?? {})) { // (0.00303: art = the variants a fight deals, ref = the original the redraws were made from)
+    if (!Array.isArray(e?.art) || !e.art.length || !e.art.every((f) => typeof f === 'string' && f)) out.push(`enemies.json: ${id}.art (a list of its portrait files in assets/chars/, the variants a fight deals)`);
+    if (typeof e?.ref !== 'string' || !e.ref) out.push(`enemies.json: ${id}.ref (its original portrait in assets/chars/, the redraws' reference)`);
+  }
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
   // every item names its picture (0.00260): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
   for (const [id, it] of Object.entries(data.items ?? {})) if (typeof it?.art !== 'string' || !/\.webp$/.test(it.art)) out.push(`items.json: ${id}.art (the item's picture, a .webp in assets/items/)`);
@@ -149,7 +152,7 @@ export function checkData(data) {
     if (v.eq && !['lo', 'hi', 'db', 'q'].every((k) => isNum(v.eq[k]))) out.push(`audio.json: variation.${id}.eq`);
     if (v.layers) {
       if (!(v.layerRate?.length === 2 && v.layerRate.every(isNum) && isNum(v.layerDb))) out.push(`audio.json: variation.${id} layerRate / layerDb`);
-      for (const l of v.layers) if (!data.audio.clips?.[l.name]?.synth || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a synth clip, p, db)`);
+      for (const l of v.layers) if (!data.audio.clips?.[l.name] || !isNum(l.p) || !isNum(l.db)) out.push(`audio.json: variation.${id} layer ${l?.name} (a clip — synth or a recording since 0.00305 — p, db)`);
     }
   }
   for (const [name, secs] of Object.entries(data.audio?.duck?.clips ?? {})) {
@@ -176,6 +179,10 @@ export function checkData(data) {
   if (!(bg.antechambers?.length > 0) || bg.antechambers.some((f) => !bg.rooms?.includes(f) || bg.entrance?.includes(f))) out.push('backgrounds.json: antechambers (fight paintings, not entrance ones)');
   // the paintings the code reads whole (0.00223): the four named ones, the three lists, a fight painting outside the antechambers
   for (const k of ['title', 'hub', 'death', 'shrine']) if (typeof bg[k] !== 'string' || !bg[k]) out.push(`backgrounds.json: ${k}`);
+  // the title's fly-in (0.00307, ui/titleIntro.js): the clip, its kill switch and its three timings
+  if (typeof bg.intro?.enabled !== 'boolean') out.push('backgrounds.json: intro.enabled (true / false)');
+  if (typeof bg.intro?.file !== 'string' || !bg.intro.file) out.push('backgrounds.json: intro.file');
+  for (const k of ['waitMs', 'holdMs', 'leadMs', 'fadeMs', 'whooshAtMs']) if (!isNum(bg.intro?.[k])) out.push(`backgrounds.json: intro.${k}`);
   for (const k of ['rooms', 'bosses', 'treasure']) if (!(bg[k]?.length > 0)) out.push(`backgrounds.json: ${k} is empty`);
   if (bg.rooms?.length && bg.rooms.every((f) => bg.antechambers?.includes(f))) out.push('backgrounds.json: rooms has no fight painting outside antechambers');
   // the potions' price ladder is read whole; the shrine deals from its offers; room 1 needs a tier-1 enemy; the benchmark round is a build at most one ahead of this one

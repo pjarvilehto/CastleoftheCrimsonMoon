@@ -1,5 +1,5 @@
 {
-  "version": "0.00302",
+  "version": "0.00309",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -94,12 +94,34 @@
     "src/ui/scenes/runEndScene.js",
     "src/ui/scenes/titleScene.js",
     "src/ui/shrineUI.js",
+    "src/ui/titleIntro.js",
     "src/ui/treasureUI.js",
     "src/ui/updatePrompt.js",
     "src/ui/victoryModal.js",
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00309": [
+      "The title's fly-in has sound: a whoosh mid-flight and the Descend strike as the title appears (where the browser lets the music start on its own, and on a phone after PLAY)."
+    ],
+    "0.00308": [
+      "The title's fly-in fades into the living painting a little earlier, while the film is still arriving."
+    ],
+    "0.00307": [
+      "A prototype of the title's fly-in: the castle approached from across the valley before the title shows, once a visit; a click or a key skips it."
+    ],
+    "0.00306": [
+      "The shrine chime deeper, the hollow hound's cries and the new potion and critical-hit sounds pitched down as reviewed; the SFX Lab's sliders reset after a review is applied."
+    ],
+    "0.00305": [
+      "New recorded sounds from the SFX Lab review: a knife shing on the blows, a heavier thud and a bigger metallic clank under the hits, an impact for a critical hit, a new potion sound and a gnarling hollow hound."
+    ],
+    "0.00304": [
+      "The sound effects re-tuned from the SFX Lab review: the foes' cries and attacks pitched down, the whooshes louder, the death and shrine hits deeper, the blows and the kill a touch lower."
+    ],
+    "0.00303": [
+      "The enemies are redrawn: every approved new portrait is in the game, and a fight gives each foe of a kind its own picture (three Giant Rats, different rats where there are pictures enough); the Vampire Lord wears one of his three at random each fight."
+    ],
     "0.00302": [
       "Export Save and Import Save moved from the title screen into the Settings menu (under Game)."
     ],
@@ -127,27 +149,6 @@
     ],
     "0.00295": [
       "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
-    ],
-    "0.00294": [
-      "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
-    ],
-    "0.00293": [
-      "Immunities: the undead and the vermin can shrug off Last Rites' blight and the fire-born the Wizard's Fireball — 'Immune!' instead; the Wizard and the Plague Sister hit a little harder to make up for it"
-    ],
-    "0.00292": [
-      "Combat: click the LOOT row (bottom left) to see everything you've found this run, with pictures and stats, four at a time with a scroll for more."
-    ],
-    "0.00291": [
-      "Your hero's crouching knight look now shows the same inked figure in combat and the Great Hall as in the look picker (the old painted knight is gone)."
-    ],
-    "0.00290": [
-      "Combat: the inventory side of your hero's card shows each item as a strip with its picture, like the Great Hall's gear slots (this run's finds are no longer listed there)."
-    ],
-    "0.00289": [
-      "Calmer boss music: the throne room's score is a new, more restrained take (picked in the Music Lab), the menace held under the fight instead of on top of it."
-    ],
-    "0.00288": [
-      "The Music Lab has four calmer takes for the boss music to choose from."
     ]
   }
 }

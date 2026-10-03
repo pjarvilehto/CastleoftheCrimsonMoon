@@ -393,7 +393,14 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* ================= 6 Title screen ================= */
 /* (0.062) the title dialog docks low so the castle stays visible: an auto
    top margin overrides #app's centering */
-#app > .panel.title-panel { margin-top: auto; margin-bottom: 1.5vh; }
+#app > .panel.title-panel { margin-top: auto; margin-bottom: 1.5vh; transition: opacity 0.8s ease-in-out; }
+/* the title's fly-in (0.00307, ui/titleIntro.js): the clip over everything — the corner column and the build tag too, nothing
+   under it takes a click — until its held last frame fades (--fade = intro.fadeMs) onto the renderer's rest pose, the same
+   painting cover-fit; the title's panel waits under it (intro-hold) and fades in once the layer is gone */
+#intro { position: fixed; inset: 0; z-index: 60; background: #0d0808; cursor: pointer; transition: opacity var(--fade, 700ms) ease-in-out; }
+#intro.fading { opacity: 0; pointer-events: none; }
+#intro video { display: block; width: 100%; height: 100%; object-fit: cover; }
+#app > .panel.title-panel.intro-hold { opacity: 0; transition: none; }
 /* Save transfer: quiet buttons + copy/paste code box */
 .save-code {
   width: 100%; margin-top: 10px;

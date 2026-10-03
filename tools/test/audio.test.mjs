@@ -78,15 +78,21 @@ fresh();
 
   const C = DATA.audio.clips; // the sound registry (0.118)
   for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
-    ok(`sfx clip registered + on disk: ${c}`, C[c]?.file === `assets/audio/sfx-${c}.mp3` && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
+    // (0.00302: a clip the SFX Lab's review re-rendered moved into sfx/ as <c>_v<k>.mp3; the rest keep their first names)
+    ok(`sfx clip registered + on disk: ${c}`, (C[c]?.file === `assets/audio/sfx-${c}.mp3` || new RegExp(`^assets/audio/sfx/${c}_v\\d+\\.mp3$`).test(C[c]?.file)) && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
   }
   // 0.00297: the developer's recordings — the death hit (a huge wooden tube, timed to the dialog) and the Heart's revive (a spooky metal hit), both stingers that duck the music
-  ok('the death hit: a new file with its loudest moment measured, a stinger', C.death.file === 'assets/audio/sfx/death_v2.mp3' && statSync(C.death.file).size > 100 * 1024
+  ok('the death hit: a new file with its loudest moment measured, a stinger', /^assets\/audio\/sfx\/death_v\d+\.mp3$/.test(C.death.file) && statSync(C.death.file).size > 100 * 1024
     && Number.isFinite(C.death.peakMs) && C.death.peakMs > 0 && C.death.stinger === true && DATA.audio.duck.clips.death > 0 && !readdirSync('assets/audio').includes('sfx-death.mp3'));
   ok('the revive hit: a file clip, a stinger ducking the music like the shrine', C.revive.file === 'assets/audio/sfx/revive_v1.mp3' && statSync(C.revive.file).size > 100 * 1024
     && C.revive.stinger === true && DATA.audio.duck.clips.revive === DATA.audio.duck.clips.shrine);
-  ok('the death and the revive sit at the stingers\' level (death -8, revive -10)', Math.abs(C.death.measuredDb + C.death.gainDb + 8) < 0.11 && Math.abs(C.revive.measuredDb + C.revive.gainDb + 10) < 0.11);
-  ok('generated sounds registered as synth', ['ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
+  ok('the death and the revive sit at the stingers\' level, above the hits (death -7.5 since the 0.00302 review, revive -10)', Math.abs(C.death.measuredDb + C.death.gainDb + 7.5) < 0.11 && Math.abs(C.revive.measuredDb + C.revive.gainDb + 10) < 0.11);
+  ok('generated sounds registered as synth (the boom and the classes\' colours; 0.00305: the strikes\' layers and the crit\'s ring are recordings now)', ['boom', 'swing', 'crackle', 'zap', 'wail', 'rake', 'chime', 'hiss', 'grunt'].every((n) => C[n]?.synth === true && !C[n].file)
+    && ['ring', 'tick', 'thud', 'slice', 'clank', 'heal'].every((n) => /^assets\/audio\/sfx\/\w+_v\d+\.mp3$/.test(C[n]?.file) && !C[n].synth && statSync(C[n].file).size > 5 * 1024));
+  ok('the strikes\' recorded layers keep the synths\' raw levels under the hits (tick -17.1, slice -23.5; the thud and the clank a little stronger, the developer\'s ask), the crit\'s ring at -10 with the sweeteners from 0',
+    Math.abs(C.tick.measuredDb + C.tick.gainDb + 17.1) < 0.11 && Math.abs(C.slice.measuredDb + C.slice.gainDb + 23.5) < 0.11 && Math.abs(C.thud.measuredDb + C.thud.gainDb + 8) < 0.11 && Math.abs(C.clank.measuredDb + C.clank.gainDb + 10) < 0.11
+    && Math.abs(C.ring.measuredDb + C.ring.gainDb + 10) < 0.11 && DATA.audio.sweeteners.crit.ringDb === 0 && DATA.audio.sweeteners.mega.ringDb > 0
+    && readFileSync('src/ui/treasureUI.js', 'utf8').includes("? 'rare' : 'loot');") && readFileSync('src/shared/dataCheck.js', 'utf8').includes('a clip — synth or a recording since 0.00305'));
   ok('combat sounds jittered', ['attack', 'kill', 'hurt', 'loot'].every((n) => C[n].rate?.length === 2 && C[n].jitterDb > 0));
 
   const read = (f) => readFileSync(f, 'utf8'); // cwd = repo root (harness)
@@ -106,7 +112,7 @@ fresh();
     ok('the reliquary\'s revive plays the hit too (treasureUI: the Heart unspent before, spent after, the knight alive)', read('src/ui/treasureUI.js').includes("if (!got.died && heart && !run.revive) sfx('revive');"));
     // 0.00298: the huge tom on Push Deeper (every chosen room change, not the first room's entry) and as the hall's Descend begins
     ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', C.deeper.file === 'assets/audio/sfx/deeper_v1.mp3' && statSync(C.deeper.file).size > 100 * 1024
-      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 12) < 0.11 && !C.deeper.stinger
+      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 7) < 0.11 && !C.deeper.stinger // (-12 until the developer's 0.00302 review: +5)
       && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("sfx('deeper'); // the descent begins"));
   }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
@@ -201,11 +207,12 @@ fresh();
 {
   const A = DATA.audio, T = A.transition, cs = T.clips.map((n) => A.clips[n]);
   ok('the transition lists ten whoosh recordings, each a measured file clip with its loudest moment', T.clips.length === 10 && new Set(T.clips).size === 10 && !T.clip
-    && cs.every((c) => /^assets\/audio\/sfx\/whoosh_\w+_v1\.mp3$/.test(c.file) && statSync(c.file).size > 100 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0)
+    && cs.every((c) => /^assets\/audio\/sfx\/whoosh_\w+_v\d+\.mp3$/.test(c.file) && statSync(c.file).size > 100 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0)
     && !A.clips.whoosh && !A.clips.room_swoosh && !A.variation.room_swoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
   ok('every whoosh\'s peak comes before mid-transition (2 s), so each can be timed to the crossfade; the level varied a little each play', T.peakAtMs === 2000
     && cs.every((c) => T.peakAtMs - c.peakMs > 0 && c.jitterDb > 0));
-  ok('the whooshes all sit at one level, the hits\' -12 (0.00298, the developer: at the old swoosh\'s -19.3 they were way too quiet)', cs.every((c) => Math.abs(c.measuredDb + c.gainDb + 12) < 0.11));
+  ok('the whooshes sit well above the hits\' -12, each at the developer\'s own level (0.00302: his SFX Lab review lifted them 3 to 7.5 dB; 0.00298 had them at -12, at the old swoosh\'s -19.3 they were way too quiet)',
+    cs.every((c) => { const l = c.measuredDb + c.gainDb; return l > -10 && l <= -4; }), cs.map((c) => (c.measuredDb + c.gainDb).toFixed(1)).join());
   ok('the old swoosh and death files are gone from the folder players download (rule 7: new names)', !readdirSync('assets/audio').some((f) => /room-swoosh|sfx-death/.test(f)));
 }
 
@@ -229,9 +236,9 @@ fresh();
     && plans.every((p) => p.rate >= 0.84 && p.rate <= 1.2 && p.eq.freq >= 500 && p.eq.freq <= 4500 && Math.abs(p.eq.gain) <= 6));
   ok('variation: none for clips without a config', am.planVariation(undefined) === null);
   const syn = readFileSync('src/audio/synth.js', 'utf8'), sfxSrc = readFileSync('src/audio/sfx.js', 'utf8');
-  ok('strike layers are generated: tick, thud, slice (yours), clank, thud (on the knight)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && A.clips[n]?.synth)
+  ok('strike layers: tick, thud, slice (yours), clank, thud (on the knight) — recordings since 0.00305 (the synth instruments stay in synth.js, unused)', ['tick', 'thud', 'slice', 'clank'].every((n) => syn.includes(`function ${n}(`) && A.clips[n]?.file && !A.clips[n].synth)
     && A.variation.attack.layers.map((l) => l.name).join() === 'tick,thud,slice' && A.variation.hurt.layers.map((l) => l.name).join() === 'clank,thud');
-  ok('sfx: the layers on every strike go through start()', sfxSrc.includes('for (const l of vary?.layers ?? []) start(l.name, null, t,')); // (the EQ, the pitch and a layer are heard in T83)
+  ok('sfx: the layers on every strike go through start() — a recorded one from its decoded buffer, a synth one as before', sfxSrc.includes('if (lc?.file) bufferFor(l.name).then((b) => start(l.name, b, t,') && sfxSrc.includes('else start(l.name, null, t,')); // (the EQ, the pitch and a layer are heard in T83)
   ok('coin jingle 3 dB quieter (0.110)', Math.abs(A.clips.loot.gainDb - 0.9) < 1e-9);
 }
 
@@ -391,6 +398,14 @@ fresh();
   ok('every registered sound plays with finite levels (synth layers included)', ctx.errors.length === 0, ctx.errors.join('; '));
   const synthStarts = ctx.started.filter((s) => s.kind === 'osc').length;
   ok('...clips start buffer sources, synth sounds oscillators/noise', ctx.started.some((s) => s.kind === 'buffer' && s.buffer) && synthStarts > 0);
+  // 0.00305: a recorded layer (the strikes' tick / thud / slice / clank) starts as a buffer at the blow's own moment, through the layer's trim
+  {
+    const n0 = ctx.started.length, blows = [];
+    await withSeedAsync(9, async () => { for (let i = 0; i < 6; i++) { ctx.currentTime += 1; blows.push(ctx.currentTime); sfxMod.sfx('attack'); await sleep(30); } });
+    const started = ctx.started.slice(n0).filter((s) => s.kind === 'buffer');
+    const layers = started.filter((s) => !blows.some((b) => Math.abs(s.started[0] - b) < 1e-9 && s === started.find((x) => Math.abs(x.started[0] - b) < 1e-9)));
+    ok('a strike\'s recorded layers start as buffers at their blow\'s moment (six blows: some layers, every one on a blow)', layers.length > 0 && layers.every((l) => blows.some((b) => Math.abs(l.started[0] - b) < 1e-9)), `${started.length} buffers, ${layers.length} layers`);
+  }
 
   // the 0.116 case: crit / mega crit / overkill sweeteners + strike layers
   const { combatSfx } = await import('../../src/ui/combatSfx.js');
@@ -464,8 +479,8 @@ fresh();
   // variation (0.110) heard: a peaking EQ, a pitch off 1 and a synthesized layer on the strikes
   const nN = ctx.nodes.length, nS = ctx.started.length;
   await withSeedAsync(5, async () => { for (let i = 0; i < 10; i++) { ctx.currentTime += 1; sfxMod.sfx('attack'); await sleep(5); } });
-  ok('every strike varies: a random peaking EQ, a pitch off 1, a generated layer', ctx.nodes.slice(nN).some((n) => n.kind === 'biquad' && n.type === 'peaking')
-    && ctx.started.slice(nS).some((s) => s.kind === 'buffer' && s.playbackRate.value !== 1) && ctx.started.slice(nS).some((s) => s.kind === 'osc'));
+  ok('every strike varies: a random peaking EQ, a pitch off 1, a layer (a recording since 0.00305)', ctx.nodes.slice(nN).some((n) => n.kind === 'biquad' && n.type === 'peaking')
+    && ctx.started.slice(nS).some((s) => s.kind === 'buffer' && s.playbackRate.value !== 1) && ctx.started.slice(nS).filter((s) => s.kind === 'buffer').length > 10);
 
   // music: the bed loops exactly, at its level, through the music bus
   music.play('combat');
@@ -566,7 +581,8 @@ fresh();
   const { readPrompts, nextFile } = await import('../gen-sfx.mjs');
   const { post, hasKey, RETRY_WAITS_S } = await import('../elevenlabs.mjs');
   const rows = readPrompts();
-  const recorded = Object.entries(DATA.audio.clips).filter(([k, c]) => /^(atk|heavy|hurt|eatk|ehurt)_/.test(k) && c.file?.startsWith('assets/audio/sfx/')).map(([k]) => k);
+  const EXTRA = ['tick', 'thud', 'slice', 'clank', 'ring', 'heal']; // (0.00305: the third table — the strikes' layers, the crit's impact, the potion)
+  const recorded = Object.entries(DATA.audio.clips).filter(([k, c]) => (/^(atk|heavy|hurt|eatk|ehurt)_/.test(k) || EXTRA.includes(k)) && c.file?.startsWith('assets/audio/sfx/')).map(([k]) => k);
   ok('sfx-prompts.md: a row per recorded clip (seconds and a prompt), and a recording for every row',
     rows.length >= 45 && rows.every((r) => r.seconds > 0 && r.prompt.length > 20 && recorded.includes(r.clip)) && recorded.every((k) => rows.some((r) => r.clip === k)), `${rows.length} rows, ${recorded.length} clips`);
   ok('readPrompts reads the table alone (a heading or prose row is skipped)',
@@ -657,18 +673,20 @@ fresh();
   const t2 = setClip(text, 'loot', { approved: true });
   const J2 = JSON.parse(t2), J0 = JSON.parse(text);
   ok('render-sfx: setClip rewrites one clip in place (a clip whose block holds an array too), the rest byte for byte',
-    J2.clips.loot.approved === true && J2.clips.loot.rate[0] === J0.clips.loot.rate[0] && t2.split('\n').length === text.split('\n').length + 1
+    J2.clips.loot.approved === true && J2.clips.loot.rate[0] === J0.clips.loot.rate[0] && t2.split('\n').length === text.split('\n').length + (J0.clips.loot.approved ? 0 : 1)
     && JSON.stringify({ ...J2, clips: { ...J2.clips, loot: null } }) === JSON.stringify({ ...J0, clips: { ...J0.clips, loot: null } }));
   const logs = [], removed = [], rendered = [];
   const out = JSON.parse(applyReview(text, { approved: ['click'], edits: [
-    { clip: 'deeper', gainDb: 1, pitch: -2, speed: 100, approved: true }, { clip: 'ring', gainDb: -1, pitch: 2 }, { clip: 'loot', gainDb: 1.5 }, { clip: 'nope' }] },
-  { render: (src, dst, f) => rendered.push([src, dst, f]), measure: () => ({ db: -5, ms: 200 }), remove: (f) => removed.push(f), log: (l) => logs.push(l) }));
+    { clip: 'deeper', gainDb: 1, pitch: -2, speed: 100, approved: true }, { clip: 'boom', gainDb: -1, pitch: 2 }, { clip: 'loot', gainDb: 1.5 }, { clip: 'nope' }] },
+  { render: (src, dst, f) => rendered.push([src, dst, f]), measure: () => ({ db: -5, ms: 200 }), remove: (f) => removed.push(f), log: (l) => logs.push(l), stamp: '2026-10-03T12:00:00.000Z' }));
+  ok('render-sfx: every clip touched carries the review\'s stamp (the lab drops older stored edits, 0.00306)', out.clips.click.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.deeper.reviewed === '2026-10-03T12:00:00.000Z' && out.clips.loot.reviewed === '2026-10-03T12:00:00.000Z' && !out.clips.swoosh?.reviewed
+    && readFileSync('labs/sfx/lab.js', 'utf8').includes('if (!CLIPS[clip] || stale(clip, state[clip])) delete state[clip];'));
   ok('render-sfx: an approval marks the clip; a pitch edit renders a new file, measures it, keeps the level plus the offset, moves the peak and removes the old file',
     out.clips.click.approved === true && rendered.length === 1 && rendered[0][0] === 'assets/audio/sfx/deeper_v1.mp3' && rendered[0][1] === 'assets/audio/sfx/deeper_v2.mp3'
     && out.clips.deeper.file === 'assets/audio/sfx/deeper_v2.mp3' && out.clips.deeper.measuredDb === -5 && out.clips.deeper.peakMs === 200 && out.clips.deeper.approved === true
     && Math.abs(out.clips.deeper.gainDb - (J0.clips.deeper.measuredDb + J0.clips.deeper.gainDb + 1 + 5)) < 1e-9 && removed.join() === 'assets/audio/sfx/deeper_v1.mp3');
   ok('render-sfx: a synth clip takes the offset alone and its pitch is a note for the hand; a volume-only edit is the trim; an unknown clip is skipped',
-    out.clips.ring.gainDb === J0.clips.ring.gainDb - 1 && logs.some((l) => /ring: a generated sound/.test(l)) && Math.abs(out.clips.loot.gainDb - (J0.clips.loot.gainDb + 1.5)) < 1e-9 && out.clips.loot.file === J0.clips.loot.file
+    out.clips.boom.gainDb === J0.clips.boom.gainDb - 1 && logs.some((l) => /boom: a generated sound/.test(l)) && Math.abs(out.clips.loot.gainDb - (J0.clips.loot.gainDb + 1.5)) < 1e-9 && out.clips.loot.file === J0.clips.loot.file
     && logs.some((l) => /nope: not a clip/.test(l)));
   const dry = applyReview(text, { approved: ['click'], edits: [{ clip: 'deeper', pitch: 1 }] }, { render: () => { throw new Error('rendered on a dry run'); }, log: () => {}, dry: true });
   ok('render-sfx: --dry-run changes nothing and renders nothing', dry === text);

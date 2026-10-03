@@ -118,7 +118,8 @@ src/
                         classes.js, the boon keys from shrine.js BOONS)
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
-    portraits.js        where a character's portrait is (enemies.json art); portraitUrl('player') is
+    portraits.js        where a character's portrait is (enemies.json art: the list of variants,
+                        dealt per fight by dealPortrait, 0.00303; ref = the original); portraitUrl('player') is
                         the chosen hero's look (assets/heroes/) for every look since 0.00291 — the
                         knight's crouch (`sprite`) too; cards.json player.art is the Art Lab's alone
     heroes.js           the classes (heroes.json): heroList / heroById / cleanHero / heroOf / lookOf /
@@ -210,6 +211,8 @@ src/
                         ↑ ↓ scroll, C / Esc / Enter close; opened from the LOOT row (I) or the hero card's
                         INVENTORY page (0.00299)
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
+    titleIntro.js     the title's fly-in (0.00307): the film over everything as the title enters, its held
+                        last frame (the painting) fading onto the renderer; preloaded at boot, skipped by a key
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near); candidates/ = the new
                         rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json; lab-only)
@@ -223,6 +226,7 @@ assets/
   world/                the World Lab's painting (the prototype's, 0.00210)
   items/                the gear's pictures (256 px WebP, the file named in items.json art); candidates/ =
                         what tools/gen-items.mjs painted from docs/item-prompts.md (items-art.json; 0.00260)
+  video/                the title's fly-in (H.264 MP4, backgrounds.json intro.file; docs/video-prompts.md; 0.00307)
   audio/  fonts/        (audio/: the five beds, music-<bed>-v<k>.mp3; audio/vo/: the narrator's 136
                         takes, tools/gen-vo.mjs; audio/sfx/: the 45 class and foe recordings,
                         tools/gen-sfx.mjs, 0.00271; audio/candidates/: the generated scores' takes,
@@ -292,7 +296,8 @@ tools/
   reports.mjs           the play stats pulled from the collector (CASTLE_READ_KEY; 0.00229)
   gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
                         Banana and five others; MODELS) -> assets/chars/candidates + art.json;
-                        --import puts one in the game; --model lora draws from the line alone
+                        --import puts the approved ones in the game (an enemy's variants);
+                        --model lora draws from the line alone
   gen-bg.mjs            new room paintings: docs/room-prompts.md (the developer's prompting guide's
                         recipe) -> Seedream 4 -> assets/bg/candidates + rooms-art.json; --rerender
                         takes the Background Lab's verdicts, --prune, --import makes the game's JPEG
@@ -372,7 +377,7 @@ x, a, y, n, l), as on the desktop where every panel shows.
   fallback copies; a new knob gets a line in `shared/dataCheck.js`.
 - **Saves:** shape changes go through `SAVE_VERSION` + a new `MIGRATIONS`
   step (never edit a shipped step); new defaults in `profile.js DEFAULTS`.
-- **New enemy:** `enemies.json` (with its `art` file in `assets/chars/`) (+ an idle family
+- **New enemy:** `enemies.json` (its `art` list and `ref` original in `assets/chars/`) (+ an idle family
   in `battleLine.js`, + a `MATERIAL` in `particleLooks.js` if not flesh).
 - **New item / boon / background:** see CLAUDE.md's cheat-sheet.
 - **New scene:** `ui/scenes/xScene.js` returning `{ enter(root) }`,

@@ -15,7 +15,9 @@
 //   - opts: { pan (-1..1), delayMs (schedule ahead, e.g. to land on the
 //     visual strike), rate, gainDb, plain (0.00301: no random variation,
 //     layers or level jitter — the SFX Lab's dry listen) };
-//   - 'ring' / 'boom' / strike layers are synthesized (synth.js);
+//   - 'boom' and the classes' colour layers are synthesized (synth.js); the
+//     strikes' tick / thud / slice / clank and the crit's ring are recordings
+//     since 0.00305 (the developer's SFX Lab review);
 //   - 0.118: every sound is an entry in audio.json clips (the registry);
 //   - 0.110: strikes vary every hit (audio.json variation: pitch, a random
 //     peaking EQ, random tick/thud/slice/clank layers from synth.js);
@@ -97,13 +99,18 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0, plain = fal
   voices.push(voice);
   const duck = A.duck?.clips?.[name];
   if (duck) duckMusic(duck, t);
-  for (const l of vary?.layers ?? []) start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
+  for (const l of vary?.layers ?? []) { // (0.00305: a layer may be a recording — the strikes' tick / thud / slice / clank — decoded once, started at the same moment)
+    const lc = clip(l.name);
+    if (lc?.file) bufferFor(l.name).then((b) => start(l.name, b, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb })).catch(() => {});
+    else start(l.name, null, t, { pan, rate: l.rate, gainDb: gainDb + l.gainDb });
+  }
 }
 
 // Fire a one-shot by its audio.json clips name. Before the first gesture
 // (or when muted) it silently drops — effects are cosmetic, never queued.
 export function sfx(name, opts = {}) {
   const c = clip(name);
+  if (!ctx) adoptRunning(); // (0.00309: the title's fly-in sounds before any gesture where the browser let the title bed start)
   if (!c || !ctx || mute.on) return;
   const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
   if (c.synth) {
@@ -146,9 +153,22 @@ export function sfxPeakAt(name, atMs, opts = {}) {
 // of the one pitched-down swoosh), scheduled so the clip's loudest moment
 // lands peakAtMs into the transition — the middle of windows out,
 // crossfade, windows in. jitterDb varies each play's level a little.
-export function transitionSfx() {
+export function transitionSfx(atMs = DATA.audio.transition.peakAtMs) { // (0.00309: the title's fly-in asks for its own moment)
   const T = DATA.audio.transition;
-  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], T.peakAtMs);
+  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], atMs);
+}
+
+// Before the first gesture the module has no context: a sound asked for
+// then is dropped. 0.00309: where the browser let the title bed start on
+// its own (music.js startEarly — the context is RUNNING), the fly-in's
+// whoosh and the Descend strike may sound too, through the same mixer. A
+// suspended context is left alone: a source scheduled on one plays the
+// moment it resumes, a stale burst on the first click.
+function adoptRunning() {
+  const c = ensureCtx();
+  if (c?.state !== 'running') return;
+  ctx = c;
+  mixer();
 }
 
 export const isMuted = () => mute.on;
@@ -185,5 +205,7 @@ export function initSfx() {
       if (name.startsWith('ehurt_') && !cries.foe) continue;
       fetchBytes(c.file).catch(() => {});
     }
+    // the strikes' recorded layers decoded ahead (0.00305): a layer that waited on its first decode would land late under the first blow
+    for (const v of Object.values(DATA.audio.variation ?? {})) for (const l of v.layers ?? []) if (clip(l.name)?.file) bufferFor(l.name).catch(() => {});
   });
 }

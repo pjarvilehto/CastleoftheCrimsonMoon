@@ -36,8 +36,10 @@
 //   node tools/gen-art.mjs --recut rat_c2 --flip          # the figure mirrored on the cut (a candidate drawn facing the
 //                                                         # wrong way; the lab's Flip records it per candidate as k.flip,
 //                                                         # which --import honours — --import --flip mirrors every pick)
-//   node tools/gen-art.mjs --import [--only rat] [--pick rat=2]   # the approved candidate (or the pick)
-//                                                         # into the game under a NEW filename (rat_v2.webp)
+//   node tools/gen-art.mjs --import [--only rat] [--pick rat=2]   # every approved candidate not yet imported (or the
+//                                                         # pick) into the game under a NEW filename (rat_v2.webp);
+//                                                         # an enemy's become its variants (enemies.json art, a list:
+//                                                         # a fight deals them out, 0.00303) — the knight's replaces his
 //   node tools/gen-art.mjs --prune [--only rat]           # a character with an approved candidate loses its
 //                                                         # other candidates (files and records); the rest untouched
 //   node tools/gen-art.mjs --prune --keep-models banana,bananapro [--only rat] [--clear-verdicts]
@@ -175,10 +177,10 @@ export function parsePrompts(md, ids = idsByFile()) {
   if (!chars.length) throw new Error('docs/portrait-prompts.md: no character lines');
   return { style: block[1].trim(), chars };
 }
-/** portrait file -> character id, from the data (enemies.json art, cards.json player.art). */
+/** portrait file -> character id, from the data (enemies.json ref — the original every redraw is made from, 0.00303: art is the list of variants — cards.json player.art). */
 export function idsByFile(root = ROOT) {
   const enemies = JSON.parse(readFileSync(join(root, 'assets/data/enemies.json'), 'utf8')), cards = JSON.parse(readFileSync(join(root, 'assets/data/cards.json'), 'utf8'));
-  return { [cards.player.art]: 'player', ...Object.fromEntries(Object.entries(enemies).map(([id, e]) => [e.art, id])) };
+  return { [cards.player.art]: 'player', ...Object.fromEntries(Object.entries(enemies).map(([id, e]) => [e.ref, id])) };
 }
 export const facing = (id) => (id === 'player' ? 'facing right' : 'facing left');
 // A boss's composition replaces the shared paragraph (which asks for feet; the first instruction wins):
@@ -346,32 +348,38 @@ async function main() {
     saveRegistry(reg); console.log(`${list.length - failed} recut${failed ? `, ${failed} FAILED` : ''}`); if (failed) process.exit(1); return;
   }
 
-  if (has('--import')) { // the approved candidate (or the pick) into the game, under a new filename
+  if (has('--import')) { // the approved candidates (or the pick) into the game, under new filenames
     const picks = Object.fromEntries(args.filter((a, i) => args[i - 1] === '--pick').map((p) => p.split('=')));
     const enemies = JSON.parse(readFileSync(join(ROOT, 'assets/data/enemies.json'), 'utf8'));
     const cards = JSON.parse(readFileSync(join(ROOT, 'assets/data/cards.json'), 'utf8'));
     let done = 0;
     for (const c of chars) {
       const e = charEntry(reg, c);
-      const k = picks[c.id] ? e.candidates.find((x) => x.n === Number(picks[c.id])) : [...e.candidates].reverse().find((x) => x.verdict === 'ok');
-      if (!k) { if (picks[c.id]) throw new Error(`--pick ${c.id}=${picks[c.id]}: no such candidate`); continue; }
-      let v = 2; while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++; // never overwrite: the next free version
-      const file = `${c.id}_v${v}.webp`;
-      const S = await sharp();
-      let img = S(join(ROOT, k.file));
-      if (k.flip || has('--flip')) img = img.flop();
-      await img.webp({ quality: 90, alphaQuality: 100 }).toFile(join(CHARS, file));
-      k.imported = file;
-      if (c.id === 'player') cards.player.art = file;
-      else if (enemies[c.id]) enemies[c.id].art = file;
-      else console.log(`  (${c.id} is not in enemies.json yet: add the enemy with "art": "${file}" when it joins the game)`);
-      console.log(`  ${c.id}: candidate ${k.n} -> assets/chars/${file}${k.flip ? ' (flipped)' : ''}${k.from ? ` (a clean of c${k.from})` : ' (not a clean pass: a ground shadow may be in it — --clean first if so)'}`);
-      done++;
+      // 0.00303: every approved candidate not in the game yet — an enemy's approvals are its variants
+      // (the knight has one portrait: his latest approval, as before)
+      const ok = e.candidates.filter((x) => x.verdict === 'ok' && !x.imported);
+      const ks = picks[c.id] ? [e.candidates.find((x) => x.n === Number(picks[c.id]))] : c.id === 'player' ? ok.slice(-1) : ok;
+      if (!ks[0]) { if (picks[c.id]) throw new Error(`--pick ${c.id}=${picks[c.id]}: no such candidate`); continue; }
+      for (const k of ks) {
+        let v = 2; while (existsSync(join(CHARS, `${c.id}_v${v}.webp`))) v++; // never overwrite: the next free version
+        const file = `${c.id}_v${v}.webp`;
+        const S = await sharp();
+        let img = S(join(ROOT, k.file));
+        if (k.flip || has('--flip')) img = img.flop();
+        await img.webp({ quality: 90, alphaQuality: 100 }).toFile(join(CHARS, file));
+        k.imported = file;
+        const foe = enemies[c.id];
+        if (c.id === 'player') cards.player.art = file;
+        else if (foe) foe.art = [...foe.art.filter((f) => f !== foe.ref), file]; // the original (ref) leaves the list with the first import
+        else console.log(`  (${c.id} is not in enemies.json yet: add the enemy with "art": ["${file}"] when it joins the game)`);
+        console.log(`  ${c.id}: candidate ${k.n} -> assets/chars/${file}${k.flip ? ' (flipped)' : ''}${k.from ? ` (a clean of c${k.from})` : ' (not a clean pass: a ground shadow may be in it — --clean first if so)'}`);
+        done++;
+      }
     }
     writeFileSync(join(ROOT, 'assets/data/enemies.json'), JSON.stringify(enemies, null, 2) + '\n');
-    writeFileSync(join(ROOT, 'assets/data/cards.json'), JSON.stringify(cards, null, 2) + '\n');
+    if (chars.some((c) => c.id === 'player')) writeFileSync(join(ROOT, 'assets/data/cards.json'), JSON.stringify(cards, null, 2) + '\n'); // (0.00303: only when the knight was in the import — the file keeps its own layout otherwise)
     saveRegistry(reg);
-    console.log(`${done} portrait${done === 1 ? '' : 's'} imported (enemies.json art / cards.json player.art point at the new files; the old art stays on disk)`);
+    console.log(`${done} portrait${done === 1 ? '' : 's'} imported (enemies.json art lists the new files / cards.json player.art points at the knight's; the originals stay on disk as ref, the redraws' reference)`);
     return;
   }
 

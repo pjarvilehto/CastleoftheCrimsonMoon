@@ -27,6 +27,7 @@ import { shareStats } from './meta/telemetry.js';
 import { getProfile } from './meta/profile.js';
 import { isPhone, watchPhoneLayout, fullscreenOn, enterFullscreen, exitFullscreen } from './shared/platform.js';
 import { phoneGate, regateOnExit } from './ui/phoneGate.js';
+import { preloadIntro, introReady } from './ui/titleIntro.js';
 import { ensureCtx } from './audio/audioCore.js';
 
 const SAVER_KEY = 'castle-power-saver'; // BATTERY SAVER (0.00222), this browser's choice
@@ -56,11 +57,13 @@ async function boot() {
     pct));
 
   await loadData();
+  preloadIntro(); // the title's fly-in (0.00307): its film is fetched beside the art
   await preloadAssets((loaded, total) => {
     const p = Math.round((loaded / total) * 100);
     fill.style.width = `${p}%`;
     pct.textContent = `${p}%`;
   });
+  await introReady(); // (at 100%: up to intro.waitMs for the film, else the title shows as it always has)
 
   await fontReady; // images took seconds — the font is long done, this is free
   initHotkeys();
