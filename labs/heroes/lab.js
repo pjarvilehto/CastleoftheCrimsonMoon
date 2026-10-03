@@ -1,4 +1,4 @@
-// labs/heroes/lab.js — the Hero Lab (0.00230, see index.html): the CHOOSE
+// labs/heroes/lab.js — the Hero Lab (0.00247, see index.html): the CHOOSE
 // YOUR HERO screen as a draft over a room painting. HEROES is the shape a
 // future heroes.json would take (id, name, epithet, lore, traits, art and
 // the figure's share of its sheet's height, so the five read in scale with
