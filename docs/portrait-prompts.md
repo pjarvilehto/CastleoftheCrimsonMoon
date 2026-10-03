@@ -117,5 +117,7 @@ gargoyle; the skeleton's original, or its inked sheet with `--refs sheets`).
 to GitHub or the chat named by the file column, e.g. `rat.png`, for an
 import that trimmed and cut out each one. Since 0.00201 `tools/gen-art.mjs`
 renders, cuts out and records every candidate itself, the Art Lab gives
-the verdicts, and `--import` puts an approved one in the game under a new
-file name.)
+the verdicts, and `--import` puts the approved ones in the game under new
+file names — since 0.00303 every approved enemy redraw is a variant in
+`enemies.json art`, dealt out per fight, and the File column's original
+is the enemy's `ref`.)

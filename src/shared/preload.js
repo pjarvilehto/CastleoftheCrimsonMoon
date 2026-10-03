@@ -17,7 +17,7 @@
 import { CHEST_ICONS } from '../run/treasure.js';
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
-import { portraitUrl } from './portraits.js';
+import { portraitUrl, portraitUrls } from './portraits.js';
 import { heroFirstUrls, heroArtUrls } from './heroes.js';
 import { itemArtUrls } from './itemArt.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
@@ -39,8 +39,15 @@ export function essentialUrls() {
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
   const icons = [...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)]; // (0.177; one table, run/treasure.js)
-  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons])]; // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
+  return [...new Set([...heroFirstUrls(getProfile()), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...firstFoeUrls(), ...icons])]; // (0.00248: the figures CHOOSE YOUR HERO opens on first — it follows the title; the knight's card draws one of them, so a Set)
 }
+// The portraits' variants (0.00303, ~4MB for the 30): every picture of the
+// foes the first rooms can hold (tier 1) waits with the essentials, one of
+// every other foe's too; their other variants come right after, decoded,
+// before the gear and the rooms — rooms 4 and on are minutes away, and a
+// picture not in yet simply loads as its card shows.
+const firstFoeUrls = () => Object.keys(DATA.enemies).filter((id) => DATA.enemies[id].tier === 1).flatMap(portraitUrls);
+export function portraitLaterUrls() { const first = new Set(essentialUrls()); return Object.keys(DATA.enemies).flatMap(portraitUrls).filter((u) => !first.has(u)); }
 
 // The room paintings (and their depth maps) not already loaded above —
 // the entrance corridors first (0.171: room 1 is always one of them).
@@ -58,7 +65,7 @@ export function itemUrls() {
   const eq = getProfile().equipment ?? {};
   return itemArtUrls(GEAR_SLOTS.map(([k, i]) => (i === undefined ? eq[k] : eq[k]?.[i])).filter(Boolean));
 }
-export const restUrls = () => [...essentialUrls(), ...heroLaterUrls(), ...itemUrls(), ...roomUrls()];
+export const restUrls = () => [...essentialUrls(), ...portraitLaterUrls(), ...heroLaterUrls(), ...itemUrls(), ...roomUrls()];
 
 // img.decode() waits for a full decode, not just the network fetch.
 // Falls back to onload where decode is unavailable; resolves (never
@@ -112,7 +119,7 @@ export function preloadRest() {
     restState.total = urls.length;
     await pool(urls, 4, async (url) => { await warm(url); restState.done++; });
     restState.ready = true;
-    pool(itemUrls(), 4, warm).then(() => pool(roomUrls(), 3, fetchOnly)); // (0.00260: the gear's pictures first — small, decoded, so a find's card shows its picture the moment it rises; Descend waits for neither) // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
+    pool([...portraitLaterUrls(), ...itemUrls()], 4, warm).then(() => pool(roomUrls(), 3, fetchOnly)); // (0.00303: the portraits' other variants first) // (0.00260: the gear's pictures first — small, decoded, so a find's card shows its picture the moment it rises; Descend waits for neither) // (the rooms keep coming; nobody waits for them; 0.00222: into the cache, not decoded)
   })();
   return rest;
 }

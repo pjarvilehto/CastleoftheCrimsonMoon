@@ -649,6 +649,34 @@ fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
 away.
 
+#### The approved redraws in the game (0.00303, the developer's call)
+
+All 30 approved enemy redraws are live: `enemies.json art` is a LIST,
+one file per approved candidate (`rat_v2.webp`, `rat_v3.webp` …, in the
+candidates' order), and `ref` is the original every redraw was made from
+(the prompts doc's File column, gen-art's image 1 and `idsByFile`; on
+disk, drawn by no fight; the Particle Lab uses four of them). A fight
+DEALS the pictures (`portraits.js dealPortrait(fight, foe, rand)`, called
+by `battleRoom.js mountBattle` with the combat as the fight): each foe of
+a kind gets its own picture while the kind's variants last (three Giant
+Rats: both rat pictures, then a fresh shuffle), the boss one of his three
+at random each fight, a summon from the fight's deck; a foe keeps its
+picture for the fight (a WeakMap per foe object: a relayout or SWITCH
+CLASS re-mounting the line shows the same faces). The deal draws from
+`crypto.getRandomValues`, never `Math.random` (the simulator and the
+seeded scene fights are byte-identical); the benchmark passes `rand: ()
+=> 0`, the same faces every run. Preload: every picture of the tier-1
+foes (the first rooms) and the first of every other foe are Descend
+essentials; the other variants (`preload.js portraitLaterUrls`) come right
+after, decoded, before the gear's pictures and the rooms (the 30 are
+~4 MB; the 12 originals were 1.5 MB). The boss's redraws are on the wide
+canvas (`gen-art.mjs WIDE`, 1100 px): the figure sits right of the card's
+centre, the head over the name bar and the sword sweeping across the row,
+as the boss composition asks — the Art Lab's FIGHT view showed them the
+same way. Variants per foe: spider, hound and Fellblade 4; Shrieker,
+skeleton and the Vampire Lord 3; rat, acolyte and gargoyle 2; Cinderborn,
+Wraith and Blood Knight 1.
+
 #### Redrawing them (0.00201, after three directions)
 
 `docs/portrait-prompts.md` holds the style block and a line per
@@ -700,9 +728,11 @@ art-rerender.json` (verdicts recorded, re-rolls generated: `{ id, n,
 hint, style, model }`, `{ id, clean: n }`, `{ id, basedOn: n, hint, n,
 model }`) → `--prune` (an approved character keeps only its approval;
 `--keep-models a,b [--clear-verdicts]` for a change of direction) →
-`--import` (the approved candidate, or `--pick rat=3`, to
-`assets/chars/<id>_v<k>.webp` and the data; a Clean first if a shadow
-is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
+`--import` (every approved candidate not imported yet, or `--pick rat=3`,
+to `assets/chars/<id>_v<k>.webp`, ADDED to the enemy's `art` list — the
+original `ref` leaves it with the first import (0.00303); the knight's
+latest approval replaces `cards.json player.art`; a Clean first if a
+shadow is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
 draws a character the game does not have (a default canvas; the lab
 shows it on a stand-in card) once the LoRA exists. `sharp` is the one
 npm dependency (`package.json`; the suite runs without it).
@@ -2101,6 +2131,10 @@ sometimes — fetch all branches to find it.
   `run/classes.js`, `run.hero`, `classFx.js`, the `LOOKS` table,
   `tools/elevenlabs.mjs`, the harness helpers — all byte-identical in the
   simulator and the shrine study; the Backlog's "Refactors done" entry).
+- 0.00303 (the character-gen thread): the 30 approved enemy redraws live,
+  dealt per fight as variants (the Portraits notes); the Vampire Lord's
+  three undecided candidates, the gargoyle's two and the mimic's three
+  wait in the Art Lab.
 - 0.00293 and 0.00299 (this thread; 0.00285–0.00292 and 0.00294 were the
   other threads' — the title bed from the title, the special-attack keys,
   the cries pulled, the calmer boss take, the inventory strips, the
@@ -2191,11 +2225,7 @@ sometimes — fetch all branches to find it.
   the manifest has no 192 px icon (180 and 512 only; Android wants 192)
   · ship.mjs is
   still two commits per ship (the work commit carries the previous
-  build's number; rehearse against a bare scratch remote) · import the
-  approved portraits (`gen-art.mjs --import`, `--pick id=N` where a
-  character has several approvals) once the developer wants the redraws
-  live — the knight's part is moot since his looks are `heroes.json`
-  figures (0.00264) · `guide_torch_corridor` is approved in
+  build's number; rehearse against a bare scratch remote) · `guide_torch_corridor` is approved in
   `rooms-art.json` but never imported (`gen-bg.mjs --import`) ·
   `gen-bg.mjs --import` rewrites backgrounds.json through JSON.stringify
   (1.0 → 1, the phone block on several lines — harmless, noisy; 0.00244

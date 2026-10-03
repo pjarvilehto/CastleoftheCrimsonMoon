@@ -365,7 +365,7 @@ fresh();
 {
   const bg = DATA.backgrounds;
   const { depthUrl } = await import('../../src/core/bg3d.js');
-  const { portraitFile } = await import('../../src/shared/portraits.js');
+  const { portraitFiles } = await import('../../src/shared/portraits.js');
   const { CHEST_ICONS } = await import('../../src/run/treasure.js');
   const base = (f) => f.split('/').pop();
   const paintings = [...new Set([bg.title, bg.hub, bg.death, bg.shrine, ...bg.rooms, ...bg.bosses, ...bg.treasure])];
@@ -375,7 +375,7 @@ fresh();
     'assets/audio': new Set([...Object.values(DATA.audio.clips).map((c) => c.file), ...Object.values(DATA.audio.music.tracks).map((x) => x.file)].filter(Boolean).map(base)),
     'assets/audio/vo': new Set(Object.values(DATA.narration.lines).flat().map((x) => base(x.file))),
     'assets/audio/sfx': new Set(Object.values(DATA.audio.clips).map((c) => c.file).filter((f) => f?.startsWith('assets/audio/sfx/')).map(base)), // (0.00271: the class and foe recordings; a take left behind by gen-sfx --redo is an orphan)
-    'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].map(portraitFile), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]),
+    'assets/chars': new Set([...['player', ...Object.keys(DATA.enemies)].flatMap(portraitFiles), ...Object.values(DATA.enemies).map((e) => e.ref), ...[...readFileSync('styles.css', 'utf8').matchAll(/assets\/chars\/([\w.-]+)/g)].map((m) => m[1])]), // (0.00303: every variant, and the originals — gen-art's references)
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
     'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)
     'assets/items': new Set([...Object.values(DATA.items).map((it) => it.art), DATA.difficulty.potions.art]), // (0.00260: the gear's pictures, 0.00263 the potion's; assets/items/candidates is gen-items.mjs's, outside)

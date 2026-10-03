@@ -27,7 +27,7 @@ fresh();
   const boot = pre.bootUrls(), later = pre.restUrls(), staged = new Set([...boot, ...later]);
   ok('boot preloads only the title + hub art (and their depth maps)', boot.length <= 4 && boot.includes(`assets/bg/${DATA.backgrounds.title}`) && boot.includes(depthUrl(DATA.backgrounds.hub)));
   ok('boot + background stage cover every background, depth map and portrait',
-    bgs.every((f) => staged.has(`assets/bg/${f}`) && staged.has(depthUrl(f))) && Object.keys(DATA.enemies).every((id) => staged.has(`assets/chars/${DATA.enemies[id].art}`)) && staged.has(portraitUrl('player'))
+    bgs.every((f) => staged.has(`assets/bg/${f}`) && staged.has(depthUrl(f))) && Object.keys(DATA.enemies).every((id) => DATA.enemies[id].art.every((f) => staged.has(`assets/chars/${f}`))) && staged.has(portraitUrl('player'))
     && boot.every((u) => !later.includes(u)));
   await pre.preloadRest();
   const rp = pre.restProgress();
@@ -37,7 +37,11 @@ fresh();
   ok('background stage completes and reports progress (over the essentials)', rp.ready && rp.done === rp.total && rp.total === need.length);
   ok('the stage waits for no room painting; the rooms load after the essentials',
     DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
-    && later.join() === [...need, ...pre.heroLaterUrls(), ...pre.itemUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between; 0.00260: the gear's pictures)
+    && later.join() === [...need, ...pre.portraitLaterUrls(), ...pre.heroLaterUrls(), ...pre.itemUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between; 0.00260: the gear's pictures; 0.00303: the portraits' other variants first)
+  const tier1 = Object.keys(DATA.enemies).filter((id) => DATA.enemies[id].tier === 1);
+  ok('Descend waits for every picture of the first rooms\' foes (tier 1) and one of every other foe; their other variants come right after (0.00303)',
+    tier1.every((id) => DATA.enemies[id].art.every((f) => need.includes(`assets/chars/${f}`))) && Object.keys(DATA.enemies).every((id) => need.includes(`assets/chars/${DATA.enemies[id].art[0]}`))
+    && pre.portraitLaterUrls().length > 0 && pre.portraitLaterUrls().every((u) => !need.includes(u) && u.startsWith('assets/chars/')));
   {
     const { getProfile } = await import('../../src/meta/profile.js');
     const items = pre.itemUrls(), weapon = `assets/items/${DATA.items[getProfile().equipment.weapon].art}`;

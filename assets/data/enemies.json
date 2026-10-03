@@ -9,7 +9,11 @@
       3,
       7
     ],
-    "art": "rat.webp",
+    "art": [
+      "rat_v2.webp",
+      "rat_v3.webp"
+    ],
+    "ref": "rat.webp",
     "immune": {
       "blight": 0.5,
       "fire": 0
@@ -26,7 +30,12 @@
       2,
       6
     ],
-    "art": "cave_shrieker.webp",
+    "art": [
+      "bat_v2.webp",
+      "bat_v3.webp",
+      "bat_v4.webp"
+    ],
+    "ref": "cave_shrieker.webp",
     "immune": {
       "blight": 0.5,
       "fire": 0
@@ -43,7 +52,12 @@
       6,
       12
     ],
-    "art": "skeleton.webp",
+    "art": [
+      "skeleton_v2.webp",
+      "skeleton_v3.webp",
+      "skeleton_v4.webp"
+    ],
+    "ref": "skeleton.webp",
     "immune": {
       "blight": 0.9,
       "fire": 0
@@ -60,7 +74,10 @@
       10,
       18
     ],
-    "art": "ghoul.webp",
+    "art": [
+      "ghoul_v2.webp"
+    ],
+    "ref": "ghoul.webp",
     "immune": {
       "blight": 0.25,
       "fire": 0.9
@@ -77,7 +94,11 @@
       12,
       22
     ],
-    "art": "cultist.webp",
+    "art": [
+      "cultist_v2.webp",
+      "cultist_v3.webp"
+    ],
+    "ref": "cultist.webp",
     "immune": {
       "blight": 0,
       "fire": 0
@@ -94,7 +115,13 @@
       20,
       35
     ],
-    "art": "golem.webp",
+    "art": [
+      "golem_v2.webp",
+      "golem_v3.webp",
+      "golem_v4.webp",
+      "golem_v5.webp"
+    ],
+    "ref": "golem.webp",
     "immune": {
       "blight": 0,
       "fire": 0
@@ -111,7 +138,10 @@
       22,
       38
     ],
-    "art": "wraith.webp",
+    "art": [
+      "wraith_v2.webp"
+    ],
+    "ref": "wraith.webp",
     "immune": {
       "blight": 0.9,
       "fire": 0.4
@@ -128,7 +158,11 @@
       18,
       32
     ],
-    "art": "gargoyle.webp",
+    "art": [
+      "gargoyle_v2.webp",
+      "gargoyle_v3.webp"
+    ],
+    "ref": "gargoyle.webp",
     "immune": {
       "blight": 0.5,
       "fire": 0.5
@@ -146,7 +180,12 @@
       110
     ],
     "boss": true,
-    "art": "vampire_lord.webp",
+    "art": [
+      "vampire_lord_v2.webp",
+      "vampire_lord_v3.webp",
+      "vampire_lord_v4.webp"
+    ],
+    "ref": "vampire_lord.webp",
     "immune": {
       "blight": 0.4,
       "fire": 0
@@ -163,7 +202,13 @@
       3,
       8
     ],
-    "art": "crypt_spider.webp",
+    "art": [
+      "crypt_spider_v2.webp",
+      "crypt_spider_v3.webp",
+      "crypt_spider_v4.webp",
+      "crypt_spider_v5.webp"
+    ],
+    "ref": "crypt_spider.webp",
     "immune": {
       "blight": 0,
       "fire": 0
@@ -180,7 +225,13 @@
       11,
       20
     ],
-    "art": "hollow_hound.webp",
+    "art": [
+      "hollow_hound_v2.webp",
+      "hollow_hound_v3.webp",
+      "hollow_hound_v4.webp",
+      "hollow_hound_v5.webp"
+    ],
+    "ref": "hollow_hound.webp",
     "immune": {
       "blight": 0.5,
       "fire": 0
@@ -197,7 +248,10 @@
       20,
       36
     ],
-    "art": "blood_knight.webp",
+    "art": [
+      "blood_knight_v2.webp"
+    ],
+    "ref": "blood_knight.webp",
     "immune": {
       "blight": 0.25,
       "fire": 0.25

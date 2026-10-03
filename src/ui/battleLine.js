@@ -15,7 +15,7 @@ import { isElite } from '../shared/balance.js';
 import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
-import { portraitUrl as ART } from '../shared/portraits.js';
+import { dealPortrait } from '../shared/portraits.js';
 import { heroById, lookUrl, lookIsSprite } from '../shared/heroes.js';
 import { usesCharges, ELEMENTS } from '../run/classes.js';
 import { potionHealFor } from '../meta/leveling.js';
@@ -344,11 +344,13 @@ function foeBack(e, name, lv, elite) {
   return { el: page, set: (hp) => setText(hpVal, `${Math.max(0, hp)} / ${e.maxHp}`) };
 }
 
-export function createEnemyUnit(e, i, { onAttack, onGone }) {
+// `art`: the picture the fight dealt this foe (battleRoom.js, 0.00303: one of
+// its approved variants); a unit built outside a fight (the labs, tests)
+// draws one of them at random.
+export function createEnemyUnit(e, i, { onAttack, onGone, art = dealPortrait(e, e) }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
   const family = IDLE_FAMILY[e.id] ?? 'prowl';
-  const art = ART(e.id);
   const img = portrait(art, e.name, family);
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;

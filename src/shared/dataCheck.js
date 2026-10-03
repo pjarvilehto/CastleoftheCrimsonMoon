@@ -97,7 +97,10 @@ export function checkData(data) {
   if (!data.enemies?.[data.difficulty?.boss?.enemy]) out.push(`difficulty.json: boss.enemy (${data.difficulty?.boss?.enemy}) is not in enemies.json`);
   for (const slot of ['weapon', 'armor']) if (!data.items?.[data.difficulty?.player?.startingGear?.[slot]]) out.push(`difficulty.json: player.startingGear.${slot} is not an item`);
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
-  for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
+  for (const [id, e] of Object.entries(data.enemies ?? {})) { // (0.00303: art = the variants a fight deals, ref = the original the redraws were made from)
+    if (!Array.isArray(e?.art) || !e.art.length || !e.art.every((f) => typeof f === 'string' && f)) out.push(`enemies.json: ${id}.art (a list of its portrait files in assets/chars/, the variants a fight deals)`);
+    if (typeof e?.ref !== 'string' || !e.ref) out.push(`enemies.json: ${id}.ref (its original portrait in assets/chars/, the redraws' reference)`);
+  }
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
   // every item names its picture (0.00260): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
   for (const [id, it] of Object.entries(data.items ?? {})) if (typeof it?.art !== 'string' || !/\.webp$/.test(it.art)) out.push(`items.json: ${id}.art (the item's picture, a .webp in assets/items/)`);

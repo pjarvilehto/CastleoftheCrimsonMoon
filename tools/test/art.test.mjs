@@ -129,16 +129,53 @@ fresh();
 }
 
 // The portrait file is data (enemies.json art, cards.json player.art), checked at load; the code reads it through shared/portraits.js
+// 0.00303: an enemy's art is the list of its approved redraws (the variants a fight deals), ref the original they were made from
 {
-  const { portraitUrl, portraitFile } = await import('../../src/shared/portraits.js');
+  const { portraitUrl, portraitFile, portraitFiles, portraitUrls, dealPortrait } = await import('../../src/shared/portraits.js');
   const { checkData } = await import('../../src/shared/dataCheck.js');
-  ok('every portrait path comes from the data, and the files exist', ['player', ...Object.keys(DATA.enemies)].every((id) => /^[a-z_]+(_v\d+)?\.webp$/.test(portraitFile(id)) && existsSync(portraitUrl(id))));
-  const broken = structuredClone(DATA); delete broken.enemies.rat.art; broken.cards.player.art = '';
+  const reg = JSON.parse(readFileSync('assets/data/art.json', 'utf8')).chars;
+  ok('every portrait path comes from the data, and the files exist', ['player', ...Object.keys(DATA.enemies)].every((id) => portraitFiles(id).every((f) => /^[a-z_]+(_v\d+)?\.webp$/.test(f)) && portraitUrls(id).every((u) => existsSync(u)) && portraitFile(id) === portraitFiles(id)[0] && existsSync(portraitUrl(id))));
+  ok('every enemy draws its approved redraws (0.00303): art = the imported files of its approved candidates, in order; ref = the original, on disk and in no fight',
+    Object.entries(DATA.enemies).every(([id, e]) => e.art.join() === reg[id].candidates.filter((k) => k.verdict === 'ok').map((k) => k.imported).join() && existsSync(`assets/chars/${e.ref}`) && !e.art.includes(e.ref)),
+    Object.entries(DATA.enemies).map(([id, e]) => `${id}: ${e.art.join('/')}`).join('; '));
+  const broken = structuredClone(DATA); delete broken.enemies.rat.art; broken.enemies.bat.art = 'cave_shrieker.webp'; broken.enemies.skeleton.art = []; delete broken.enemies.ghoul.ref; broken.cards.player.art = '';
   const probs = checkData(broken);
-  ok('the data check reports a missing portrait file', probs.some((p) => p.includes('rat.art')) && probs.some((p) => p.includes('player.art')), probs.join('; '));
-  ok('battleLine and preload read the portrait path from the data, not a hardcoded assets/chars/<id>.webp',
-    readFileSync('src/ui/battleLine.js', 'utf8').includes("import { portraitUrl as ART } from '../shared/portraits.js'") && !readFileSync('src/ui/battleLine.js', 'utf8').includes('`assets/chars/${id}.webp`')
-    && readFileSync('src/shared/preload.js', 'utf8').includes('chars.map(portraitUrl)'));
+  ok('the data check reports a missing or malformed portrait list, a missing ref and a missing knight file', ['rat.art', 'bat.art', 'skeleton.art', 'ghoul.ref', 'player.art'].every((k) => probs.some((p) => p.includes(k))), probs.join('; '));
+  ok('battleLine and preload read the portrait paths from the data, not a hardcoded assets/chars/<id>.webp',
+    readFileSync('src/ui/battleLine.js', 'utf8').includes("import { dealPortrait } from '../shared/portraits.js'") && !readFileSync('src/ui/battleLine.js', 'utf8').includes('`assets/chars/${id}.webp`')
+    && readFileSync('src/shared/preload.js', 'utf8').includes('chars.map(portraitUrl)') && readFileSync('src/shared/preload.js', 'utf8').includes('flatMap(portraitUrls)'));
+
+  // The deal: three rats where the rat has two pictures — both shown before one repeats; a foe keeps its face for the fight
+  const seq = (xs) => { let i = 0; return () => xs[i++ % xs.length]; };
+  const fight = {}, rats = [{ id: 'rat' }, { id: 'rat' }, { id: 'rat' }], hounds = [0, 1, 2, 3].map(() => ({ id: 'hollow_hound' }));
+  const ratFaces = rats.map((r) => dealPortrait(fight, r));
+  const houndFaces = hounds.map((h) => dealPortrait(fight, h));
+  ok('a fight deals each foe of a kind its own picture while the kind\'s variants last (two rats, two pictures; four hounds, four)',
+    new Set(ratFaces.slice(0, 2)).size === 2 && ratFaces.every((u) => portraitUrls('rat').includes(u)) && new Set(houndFaces).size === 4, [...ratFaces, ...houndFaces].join());
+  ok('…and a foe keeps its picture: dealt again (a relayout, SWITCH CLASS) it is the same', rats.every((r, i) => dealPortrait(fight, r) === ratFaces[i]) && dealPortrait({}, rats[0]) === ratFaces[0]);
+  const summon = dealPortrait(fight, { id: 'skeleton' }), summon2 = dealPortrait(fight, { id: 'skeleton' }), summon3 = dealPortrait(fight, { id: 'skeleton' });
+  ok('the boss\'s summons draw from the fight\'s deck: three skeletons, three faces', new Set([summon, summon2, summon3]).size === Math.min(3, portraitUrls('skeleton').length));
+  const lords = new Set(Array.from({ length: 60 }, () => dealPortrait({}, { id: 'vampire_lord' })));
+  ok('the boss: one of his approved pictures at random each fight (60 fights show every one)', lords.size === DATA.enemies.vampire_lord.art.length && [...lords].every((u) => portraitUrls('vampire_lord').includes(u)), [...lords].join());
+  ok('a fixed source deals a fixed hand (the benchmark\'s rand: () => 0)', dealPortrait({}, { id: 'golem' }, () => 0) === dealPortrait({}, { id: 'golem' }, () => 0) && dealPortrait({}, { id: 'golem' }, seq([0.9, 0.1, 0.5])) !== undefined);
+  const before = Math.random; let calls = 0; Math.random = () => { calls++; return before(); };
+  try { dealPortrait({}, { id: 'crypt_spider' }); } finally { Math.random = before; }
+  ok('the deal never calls Math.random (its order is the seeded fights\' and the simulator\'s)', calls === 0);
+
+  // the battle line: the room's units carry the dealt pictures, the glint copies the same one
+  const { mountBattle } = await import('../../src/ui/battleRoom.js');
+  const { createRun } = await import('../../src/run/runState.js');
+  const { createCombat } = await import('../../src/run/combat.js');
+  const { scaleEnemy } = await import('../../src/shared/balance.js');
+  const run = createRun();
+  const combat = createCombat(run, { number: 2, kind: 'combat', enemies: ['rat', 'rat', 'crypt_spider', 'crypt_spider'].map((id) => scaleEnemy(id, 2)) });
+  const none = () => {};
+  const b = mountBattle(run, combat, { onHeavy: none, onPotion: none, onAttack: none });
+  const srcs = b.enemies.map((u) => u.portrait.attrs.src);
+  ok('a room of two rats and two spiders: four different pictures, each one of its kind\'s, the unit\'s art its portrait',
+    new Set(srcs).size === 4 && srcs.slice(0, 2).every((u) => portraitUrls('rat').includes(u)) && srcs.slice(2).every((u) => portraitUrls('crypt_spider').includes(u)) && b.enemies.every((u) => u.art === u.portrait.attrs.src), srcs.join());
+  const again = mountBattle(run, combat, { onHeavy: none, onPotion: none, onAttack: none });
+  ok('the line mounted again for the same fight (a relayout) shows the same faces', again.enemies.map((u) => u.portrait.attrs.src).join() === srcs.join());
 }
 
 // The Art Lab: on the game's real units, the registry, verdicts -> --rerender

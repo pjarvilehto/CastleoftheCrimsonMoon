@@ -118,7 +118,8 @@ src/
                         classes.js, the boon keys from shrine.js BOONS)
     balance.js          enemy scaling, LV naming, elites
     preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
-    portraits.js        where a character's portrait is (enemies.json art); portraitUrl('player') is
+    portraits.js        where a character's portrait is (enemies.json art: the list of variants,
+                        dealt per fight by dealPortrait, 0.00303; ref = the original); portraitUrl('player') is
                         the chosen hero's look (assets/heroes/) for every look since 0.00291 — the
                         knight's crouch (`sprite`) too; cards.json player.art is the Art Lab's alone
     heroes.js           the classes (heroes.json): heroList / heroById / cleanHero / heroOf / lookOf /
@@ -292,7 +293,8 @@ tools/
   reports.mjs           the play stats pulled from the collector (CASTLE_READ_KEY; 0.00229)
   gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
                         Banana and five others; MODELS) -> assets/chars/candidates + art.json;
-                        --import puts one in the game; --model lora draws from the line alone
+                        --import puts the approved ones in the game (an enemy's variants);
+                        --model lora draws from the line alone
   gen-bg.mjs            new room paintings: docs/room-prompts.md (the developer's prompting guide's
                         recipe) -> Seedream 4 -> assets/bg/candidates + rooms-art.json; --rerender
                         takes the Background Lab's verdicts, --prune, --import makes the game's JPEG
@@ -372,7 +374,7 @@ x, a, y, n, l), as on the desktop where every panel shows.
   fallback copies; a new knob gets a line in `shared/dataCheck.js`.
 - **Saves:** shape changes go through `SAVE_VERSION` + a new `MIGRATIONS`
   step (never edit a shipped step); new defaults in `profile.js DEFAULTS`.
-- **New enemy:** `enemies.json` (with its `art` file in `assets/chars/`) (+ an idle family
+- **New enemy:** `enemies.json` (its `art` list and `ref` original in `assets/chars/`) (+ an idle family
   in `battleLine.js`, + a `MATERIAL` in `particleLooks.js` if not flesh).
 - **New item / boon / background:** see CLAUDE.md's cheat-sheet.
 - **New scene:** `ui/scenes/xScene.js` returning `{ enter(root) }`,

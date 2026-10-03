@@ -4,12 +4,15 @@
 // tick restarted the CSS animations). Shared by the dungeon and the
 // benchmark, so the benchmark draws exactly what a real fight draws.
 //
-// mountBattle(run, combat, { onHeavy, onPotion, onAttack(i) })
+// mountBattle(run, combat, { onHeavy, onPotion, onAttack(i), rand })
 //   -> { player, enemies, row, line, update(playback, { heavyReady, dead }) }
+// (rand: the portraits' deal, shared/portraits.js dealPortrait — the benchmark
+// passes a fixed one, so every run of it draws the same faces)
 
 import { statusOf } from '../run/combat.js';
 import { el } from '../core/dom.js';
 import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
+import { dealPortrait } from '../shared/portraits.js';
 
 // What effects can touch — the live units of the current battle line.
 // ui(): the scene's current { player, enemies, layer } (null between rooms).
@@ -31,13 +34,14 @@ export const snapshot = (combat) => ({
 // The boss card's width in enemy-card widths (styles.css .boss-card aspect-ratio).
 const BOSS_SLOTS = 2;
 
-export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
+export function mountBattle(run, combat, { onHeavy, onPotion, onAttack, rand }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
   const gone = []; // per enemy: resolves once its fallen card has left the row (0.00220: the playback waits for it)
   const unit = (i) => {
     let left;
     gone[i] = new Promise((r) => { left = r; });
     return createEnemyUnit(combat.enemies[i], i, {
+      art: dealPortrait(combat, combat.enemies[i], rand), // each foe its own of the kind's approved pictures (0.00303), kept for the fight
       onAttack: () => onAttack(i),
       onGone: () => { fit(); left(); }, // a fallen enemy leaves the row: the slots left grow into the room (0.00216)
     });
