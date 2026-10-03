@@ -45,6 +45,7 @@ export function createRun() {
     potionCap: stats.potionCap,  // satchel size — pickups beyond it are sold
     kills: 0,
     buffs: [], // shrine blessings: {icon, label} — run-scoped, die with the run
+    shrines: [], // every shrine met: { o: the offers dealt (ids), t: the one taken, or null } — the play stats' pick rates (0.00251)
     shrineRooms: [randomShrineRoom(0, treasureRoom)], // the shrine comes before these rooms: one per stretch, added on entry
     treasureRoom,                // the treasure room comes before this room (run/treasure.js), or null
     interludeShown: 0,           // the room whose interlude (shrine / treasure) was already met (0.171)

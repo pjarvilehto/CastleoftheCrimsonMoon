@@ -24,6 +24,7 @@ export function runRecord(run, outcome, now = Date.now()) {
     items: run.itemsFound.length,
     relic: !!run.relicFound,
     boons: (run.buffs ?? []).map((b) => b.id).filter(Boolean),
+    shrines: (run.shrines ?? []).map(({ o, t }) => ({ o: [...o], t })), // 0.00251: each shrine's deal and the pick (null = walked away)
     bosses: run.bossesBeaten ?? 0,
     killedBy: outcome === 'death' ? run.killedBy ?? null : null,
     potions: run.potionsDrunk ?? 0,

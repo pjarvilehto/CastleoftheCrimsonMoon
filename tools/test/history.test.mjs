@@ -563,3 +563,28 @@ fresh();
   const down = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
   ok('reports: no key, a refused key and an unreachable host each say what to set, and never the key', noKey.includes(KEY_VAR) && noKey.includes('new session') && refused.includes('401') && !refused.includes('secret-k') && down.includes('network policy') && !down.includes('secret-k'));
 }
+
+// Shrine deals (0.00251): each shrine's three offers and the pick land in the
+// run record, the collector and the stats page clean them alike, and the
+// Shrine picks card counts a boon's rate against the times it was dealt.
+{
+  fresh();
+  const { createRun } = await import('../../src/run/runState.js');
+  const { noteDeal, acceptOffer, shrineOffers } = await import('../../src/run/shrine.js');
+  const { runRecord } = await import('../../src/meta/history.js');
+  const { cleanRun } = await import('../../collector/worker.js');
+  const { shrinePicks } = await import('../../analytics/stats.js');
+  const run = createRun(); run.coins = 500;
+  const all = shrineOffers(), by = (id) => all.find((o) => o.id === id);
+  noteDeal(run, [by('crit'), by('greed'), by('bulwark')]);
+  acceptOffer(run, by('crit'));
+  noteDeal(run, [by('dmg'), by('crit'), by('glasscannon')]); // walked away
+  const rec = runRecord(run, 'retreat');
+  ok('a run records each shrine\'s deal and the pick (null: walked away)', JSON.stringify(rec.shrines) === JSON.stringify([{ o: ['crit', 'greed', 'bulwark'], t: 'crit' }, { o: ['dmg', 'crit', 'glasscannon'], t: null }]));
+  const clean = cleanRun({ ...rec, shrines: [...rec.shrines, 'junk', { o: ['x'.repeat(99)], t: 5 }] });
+  ok('the collector keeps the deals, typed and capped', clean.shrines.length === 3 && clean.shrines[0].t === 'crit' && clean.shrines[2].o[0].length === 24 && clean.shrines[2].t === '5');
+  const picks = shrinePicks([rec, { shrines: [{ o: ['crit', 'armor', 'leech'], t: 'armor' }] }]);
+  const crit = picks.boons.find((b) => b.boon === 'crit');
+  ok('Shrine picks: a boon\'s rate is taken over dealt; walk-aways counted', picks.met === 3 && picks.walked === 1 && crit.offered === 3 && crit.taken === 1 && Math.abs(crit.rate - 1 / 3) < 1e-9);
+  fresh();
+}
