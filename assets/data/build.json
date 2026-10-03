@@ -1,5 +1,5 @@
 {
-  "version": "0.00309",
+  "version": "0.00310",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00310": [
+      "The title's fly-in lands on the living painting exactly: the camera returns to rest as the film fades, the mist and the sway rising after; the film carries the game's vignette; its whoosh a fifth quieter."
+    ],
     "0.00309": [
       "The title's fly-in has sound: a whoosh mid-flight and the Descend strike as the title appears (where the browser lets the music start on its own, and on a phone after PLAY)."
     ],
@@ -146,9 +149,6 @@
     ],
     "0.00296": [
       "On a computer, Enter the Castle now switches the game to full screen (Esc or the corner icon leaves it)."
-    ],
-    "0.00295": [
-      "Tap an enemy's name to turn its card over: its level, health, attack, special, immunities and a line of lore"
     ]
   }
 }
