@@ -1,5 +1,5 @@
 {
-  "version": "0.00231",
+  "version": "0.00232",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00232": [
+      "The Great Hall reads at a glance: each upgrade's name and level stand out, with a shorter, quieter line under it saying what it does"
+    ],
     "0.00231": [
       "Art Lab: the portraits redrawn in their own photoreal rendering (glows, one hue family each, the boss wide) by Nano Banana and five other editors behind --model; a matting model cuts the figures out (no more missing legs or blade edges); Regenerate with notes on every candidate (that candidate as the design, your note as the direction, a model picker), Clean, long rows in two lines",
       "The candidates pruned to the Nano Banana set, the Pro bake-off and Seedream's two Vampire Lords; the inked-round approvals cleared"
@@ -151,9 +154,6 @@
     ],
     "0.00218": [
       "Phone: the equipment sheet's rows are all the same height, so every slot fits on the sheet (a forgeable slot's row used to be taller)"
-    ],
-    "0.00217": [
-      "The build-available prompt keeps Reload and Later on screen: a long changelist scrolls inside it (it pushed the buttons off a phone's screen)"
     ]
   }
 }
