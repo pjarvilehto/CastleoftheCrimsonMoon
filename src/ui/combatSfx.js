@@ -34,7 +34,7 @@ export function combatSfx(item, ctx, play = sfx) {
     } else if (fx.crit) play('ring', { ...opts, gainDb: S.crit.ringDb });
     return;
   }
-  if (fx?.kind === 'smash') {
+  if (fx?.kind === 'overkill') {
     play(item.sfx, { pan: lastPan = 0.3 * DATA.audio.pan.width });
     play('boom', { gainDb: S.overkill.boomDb });
     return;

@@ -25,7 +25,15 @@ const shipped = () => ({ fogScale: base.fogScale, fogSpeed: base.fogSpeed, puffs
   light: { warm: 0, lit: 1, cool: 0, shade: 1 } });
 let S = shipped();
 let file = scenes[0];
-try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.puffs) { S = { ...shipped(), ...saved }; file = scenes.includes(saved.file) ? saved.file : file; } } catch { /* fresh */ }
+// the saved state knob by knob over the shipped values (0.00223: spread whole, a knob added or removed since broke the sliders and COPY JSON)
+const mergeState = (base, saved) => {
+  const s = { ...base };
+  for (const k of ['fogScale', 'fogSpeed', 'ownFog']) if (saved[k] !== undefined) s[k] = saved[k];
+  for (const k of ['puffs', 'mist', 'haze', 'push', 'light']) for (const kk of Object.keys(base[k])) if (saved[k]?.[kk] !== undefined) s[k][kk] = saved[k][kk];
+  s.scene = saved.scene ?? {};
+  return s;
+};
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.puffs) { S = mergeState(shipped(), saved); file = scenes.includes(saved.file) ? saved.file : file; } } catch { /* fresh */ }
 
 // the lit / shaded tints come from four readable sliders
 const tints = ({ warm, lit, cool, shade }) => ({

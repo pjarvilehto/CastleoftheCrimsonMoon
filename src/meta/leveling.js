@@ -66,12 +66,17 @@ export function buyStat(stat) {
 // ---- Potions (coins) ----
 
 // 0.080: potions are a persistent stock capped by the satchel
-// (profile.potionCap). They're consumables now, so the price is flat — the
-// old escalating price only made sense when a purchase was permanent.
+// (profile.potionCap). The price climbs with each potion bought between
+// runs (0.00204; a flat 30 from 0.080 to 0.00203): potions.priceSteps for
+// the first ones (10, 20, 25), then priceStep more for each after (30, 35,
+// ...). profile.potionsBought counts them and settleRun() starts it over
+// after every run — a ladder that never reset made the bot spend 27,000
+// of a campaign's coins on potions and lose the deep rooms.
 const POT = () => DATA.difficulty.potions;
 
-export function potionCost() {
-  return POT().price;
+export function potionCost(p = getProfile()) {
+  const { priceSteps, priceStep } = POT(), n = p.potionsBought ?? 0;
+  return n < priceSteps.length ? priceSteps[n] : priceSteps[priceSteps.length - 1] + (n - priceSteps.length + 1) * priceStep;
 }
 
 export function satchelFull(p = getProfile()) {
@@ -80,10 +85,11 @@ export function satchelFull(p = getProfile()) {
 
 export function restockPotion() {
   const p = getProfile();
-  const cost = potionCost();
+  const cost = potionCost(p);
   if (p.coins < cost || satchelFull(p)) return false;
   p.coins -= cost;
   p.potions += 1;
+  p.potionsBought = (p.potionsBought ?? 0) + 1;
   persist();
   return true;
 }
@@ -143,9 +149,12 @@ export function potionHealAmount() {
     + (p.alchemy.potency ?? 0) * trackData('potency').healPerLevel;
 }
 
-// Chance a drunk potion is not consumed. 0.112: tapers (stats.taper:
-// +8% for the first 3 levels, then smaller and smaller steps toward the
-// track's max) — it used to stop dead at 40% while the price kept rising.
+// Chance a drunk potion is not consumed. 0.112: tapers (stats.taper with
+// the data's `tail`; 0.113: +8% for the first `linear` levels, then a
+// shrinking power-law step with no ceiling — the track shows MAX once a
+// level adds less than `minStep`, alchemyMaxed below; `max` is an optional
+// ceiling the data does not set) — it used to stop dead at 40% while the
+// price kept rising.
 export function efficiencyChance(level = getProfile().alchemy.efficiency ?? 0) {
   const t = trackData('efficiency');
   return taper(level, { perLevel: t.perLevel, linear: t.linear, tail: t.tail, max: t.max });

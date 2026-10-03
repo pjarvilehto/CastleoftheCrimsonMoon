@@ -8,6 +8,7 @@
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 export { readFileSync, readdirSync, statSync };
+import { mulberry32 } from '../simCore.mjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -63,7 +64,7 @@ export class El {
     this.tagName = tag;
     this.attrs = {};
     this.listeners = {};
-    this.style = {};
+    this.style = { setProperty(k, v) { this[k] = String(v); } }; // (0.00223: battleRoom.js sets --n / --slots on #app through it)
     this.dataset = {};
     this.parent = null;
     this._text = '';
@@ -81,7 +82,9 @@ export class El {
   get className() { return this._cls || ''; }
   setAttribute(k, v) { this.attrs[k] = v; }
   removeAttribute(k) { delete this.attrs[k]; }
+  hasAttribute(k) { return k in this.attrs; }
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); }
+  removeEventListener(t, fn) { this.listeners[t] = (this.listeners[t] ?? []).filter((f) => f !== fn); }
   append(...nodes) {
     for (const n of nodes) {
       if (n instanceof El) { n.parent = this; this.children.push(n); }
@@ -91,6 +94,7 @@ export class El {
     }
   }
   remove() { if (this.parent) { const i = this.parent.children.indexOf(this); if (i >= 0) this.parent.children.splice(i, 1); } }
+  contains(n) { for (let x = n; x; x = x.parent) if (x === this) return true; return false; }
   insertBefore(n, ref) {
     if (n.remove) n.remove();
     n.parent = this;
@@ -98,6 +102,7 @@ export class El {
     this.children.splice(i < 0 ? this.children.length : i, 0, n);
   }
   get parentNode() { return this.parent ?? null; }
+  get parentElement() { return this.parent ?? null; }
   after(...nodes) { // real DOM: insert right after this element
     if (!this.parent) return;
     const kids = this.parent.children;
@@ -137,6 +142,9 @@ globalThis.document = {
   createTextNode: (t) => ({ text: t, textContent: t, walk() {} }),
   listeners: {},
   addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); },
+  removeEventListener(t, fn) { this.listeners[t] = (this.listeners[t] ?? []).filter((f) => f !== fn); },
+  hidden: false, // a test sets it and fires document.listeners.visibilitychange (the benchmark, 0.00219)
+  get visibilityState() { return this.hidden ? 'hidden' : 'visible'; }, // (the mixer and the update poll read this one, 0.00223)
   // the scene (#app), then the dialogs on body (0.157: the death dialog is one)
   querySelector: (sel) => { let hit = null; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (!hit && match(e, sel)) hit = e; }); return hit; },
   querySelectorAll: (sel) => { const out = []; for (const r of [registry.app, document.body]) r?.walk?.((e) => { if (match(e, sel)) out.push(e); }); return out; },
@@ -178,4 +186,30 @@ export function fresh() {
   getProfile().name ||= 'Tester'; // 0.109: unnamed saves get the name prompt on the title screen
   registry.app.innerHTML = '';
   closeAllDialogs();
+  delete El.prototype.animate; // (a withAnimations block that threw)
+}
+
+// A test under a seeded Math.random (0.00223: the fights that walked on the
+// real one could die or not; a seed makes one outcome — the order of the
+// calls is part of it, see CLAUDE.md's testing notes). Async: the scenes
+// sleep on the virtual clock.
+export async function withSeedAsync(seed, fn) {
+  const orig = Math.random;
+  Math.random = mulberry32(seed);
+  try { return await fn(); } finally { Math.random = orig; }
+}
+
+// Web Animations for a block (0.00223): the shim has none, so the effects
+// skip their animate() calls; under this every element records what it was
+// asked to play (el.animations: { kf, opts }) and hands back a finished
+// animation, so a kick, a deal or a glint sweep can be asserted on.
+export async function withAnimations(fn) {
+  El.prototype.animate = function (kf, opts) {
+    (this.animations ??= []).push({ kf, opts });
+    const a = { kf, opts, pause() {}, play() {}, cancel() {} };
+    a.finished = Promise.resolve(a);
+    return a;
+  };
+  globalThis.getComputedStyle ??= () => ({ filter: 'none' });
+  try { return await fn(); } finally { delete El.prototype.animate; }
 }

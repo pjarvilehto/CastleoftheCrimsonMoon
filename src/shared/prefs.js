@@ -26,3 +26,12 @@ export function getJsonPref(key, fallback = null) {
 }
 
 export const setJsonPref = (key, value) => setPref(key, JSON.stringify(value));
+
+// An on/off setting remembered as '1' / '0' (0.00223: the music, the sound
+// effects and the narrator each carried a copy of this). Closures, no
+// `this`, so a detached toggle works; `on` as a getter for terse reads.
+export function mutePref(key) {
+  let on = getPref(key) === '1';
+  const set = (v) => { on = !!v; setPref(key, on ? '1' : '0'); return on; };
+  return { get on() { return on; }, get: () => on, set, toggle: () => set(!on) };
+}

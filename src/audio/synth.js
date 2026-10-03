@@ -81,7 +81,7 @@ function partials(ctx, out, t, base, ratios, decay, levels) {
     o.frequency.value = base * r;
     const g = envelope(ctx, out, t, 0.0015, decay * (5 - i));
     const lvl = ctx.createGain();
-    lvl.gain.value = levels[i] ?? 0.3;
+    lvl.gain.value = levels[i];
     o.connect(lvl);
     lvl.connect(g);
     o.start(t);

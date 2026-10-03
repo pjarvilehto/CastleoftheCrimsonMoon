@@ -2,7 +2,8 @@
 // main.js, 0.115): INVULNERABLE (0.079), background evaluation — HIDE
 // FOREGROUND, BG VIEW (3D / FLAT / DEPTH), NEXT BG, BG TUNING (0.083/0.084)
 // — FORCE CRITS / FORCE MEGA CRITS (0.105), LABS (0.168: the menu of the
-// testing pages — Fog, VO and Particle Lab — labs/, in a new tab) and
+// testing pages, labs/index.html — a card per labs/<name>/ folder, kept in
+// step by the suite — in a new tab) and
 // BENCHMARK (0.131, ui/benchmark.js). Players never see them.
 
 import { setBackground } from '../core/scene.js';

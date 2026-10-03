@@ -27,10 +27,15 @@ const BOSS_SLOTS = 2;
 
 export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const player = createPlayerUnit(run, { onHeavy, onPotion });
-  const unit = (i) => createEnemyUnit(combat.enemies[i], i, {
-    onAttack: () => onAttack(i),
-    onGone: () => fit(), // a fallen summon crumbles away, freeing its slot
-  });
+  const gone = []; // per enemy: resolves once its fallen card has left the row (0.00220: the playback waits for it)
+  const unit = (i) => {
+    let left;
+    gone[i] = new Promise((r) => { left = r; });
+    return createEnemyUnit(combat.enemies[i], i, {
+      onAttack: () => onAttack(i),
+      onGone: () => { fit(); left(); }, // a fallen enemy leaves the row: the slots left grow into the room (0.00216)
+    });
+  };
   const enemies = combat.enemies.map((e, i) => unit(i));
   const row = el('div', { class: 'enemy-row' }, ...enemies.map((u) => u.el));
   // --n drives the card size (styles.css --card-h): crowded rooms shrink
@@ -41,7 +46,14 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
   const wide = combat.enemies.some((e) => e.boss) ? BOSS_SLOTS - 1 : 0;
   const sizing = (n) => `--n:${n};--slots:${n + wide}`;
   const line = el('div', { class: 'battle-line', style: sizing(enemies.length), ondragstart: (e) => e.preventDefault?.() }, player.el, row);
-  const fit = () => line.setAttribute('style', sizing(Math.max(1, row.children.length)));
+  // 0.00209: the line's parent (#app) gets the two numbers too — the phone's
+  // card budget is computed there, so the log strip and the boons' bar
+  // follow the cards' real height (dungeonScene calls fit() once the line is in)
+  const fit = () => {
+    const n = Math.max(1, row.children.length);
+    line.setAttribute('style', sizing(n));
+    line.parentElement?.style?.setProperty?.('--n', n); line.parentElement?.style?.setProperty?.('--slots', n + wide);
+  };
 
   // Summons join mid-fight (0.092): each card appears as its summon line
   // prints (the playback view says how many enemies exist yet), in front
@@ -75,5 +87,6 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
     });
   }
 
-  return { player, enemies, row, line, update };
+  const whenGone = (i) => gone[i] ?? Promise.resolve();
+  return { player, enemies, row, line, update, fit, whenGone };
 }

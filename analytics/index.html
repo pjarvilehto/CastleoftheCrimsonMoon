@@ -35,7 +35,7 @@
       }
       fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' }) // (0.00197: past the CDN's copy too)
         .then(function (r) { return r.json(); })
-        .then(function (b) { boot(b.version); })
+        .then(function (b) { window.__castleBuild = b; boot(b.version); }) // (dashboard.js reads the build from here, 0.00223)
         .catch(function () { boot(''); });
     })();
   </script>

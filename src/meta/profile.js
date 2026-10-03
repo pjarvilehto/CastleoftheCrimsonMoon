@@ -24,6 +24,7 @@ const DEFAULTS = {
   // potions. A new profile takes potions.startCount/startCap from the data.)
   potions: 2,
   potionCap: 4,
+  potionsBought: 0, // potions bought since the last run: the price climbs with it, settleRun resets it (0.00204)
   records: { kills: 0, bestRoom: 0, runs: 0, deaths: 0 },
   history: [], // 0.095: one record per finished run (meta/history.js)
   name: '',     // 0.109: what the player calls themselves (title screen prompt; analytics)

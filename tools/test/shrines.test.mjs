@@ -1,7 +1,7 @@
 // tools/test/shrines.test.mjs — shrine placement, the shrine room, boon tuning text, the buff bar.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, generateRoom, shrineOffers, canAffordOffer, acceptOffer, dungeonScene, getProfile, readFileSync, statSync, withSeedAsync } from './harness.mjs';
 
 fresh();
 
@@ -84,15 +84,17 @@ fresh();
   const scene = dungeonScene();
   scene.enter(registry.app);
   let guard = 0;
-  while (!t().includes('shrine hums') && guard++ < 120) {
-    if (t().includes('YOU DIED')) break; // fail fast — don't burn the guard loop
-    if (t().includes('Push Deeper')) { handleKey('d'); await sleep(1600); continue; }
-    // Drink below 60% HP ("HP 26/92" on the player card) — potions are a
-    // no-op at full HP, and the pre-0.072 walker never drank at all.
-    const hp = t().match(/HP (\d+)\/(\d+)/);
-    if (hp && Number(hp[1]) < Number(hp[2]) * 0.6) { handleKey('p'); await sleep(300); }
-    for (let k = 0; k < 3; k++) { handleKey('a'); await sleep(900); }
-  }
+  await withSeedAsync(3, async () => { // (0.00223: seeded — the walk is the same every run; the bounded loop stays as the safety net)
+    while (!t().includes('shrine hums') && guard++ < 120) {
+      if (t().includes('YOU DIED')) break; // fail fast — don't burn the guard loop
+      if (t().includes('Push Deeper')) { handleKey('d'); await sleep(1600); continue; }
+      // Drink below 60% HP ("HP 26/92" on the player card) — potions are a
+      // no-op at full HP, and the pre-0.072 walker never drank at all.
+      const hp = t().match(/HP (\d+)\/(\d+)/);
+      if (hp && Number(hp[1]) < Number(hp[2]) * 0.6) { handleKey('p'); await sleep(300); }
+      for (let k = 0; k < 3; k++) { handleKey('a'); await sleep(900); }
+    }
+  });
   if (!t().includes('shrine hums')) {
     const { derivedStats: dd2 } = await import('../../src/meta/stats.js');
     const dd = dd2();
@@ -244,6 +246,13 @@ fresh();
     ok('treasure: the reliquary\'s kill closes the chests and takes the way on away', died === 1 && run.hp === 0 && buttons.length === 0);
     handleKey(' ');
     ok('treasure: Space goes to the death dialog, not to Push Deeper', deeper === 0 && dlg && !dlg.isOpen());
+    // 0.00223: the death is settled at the room the reliquary led to (its depth), not the fights so far — the record, the history and the end screen agree
+    run.room = rm; // (enterNextRoom sets it in the game)
+    const bestBefore = getProfile().records.bestRoom;
+    rs.settleRun(run, 'death');
+    const last = getProfile().history.at(-1);
+    ok('treasure: a reliquary death settles at the room it led to', rs.deathRoom(run) === rm.depth && run.roomNumber === rm.depth && last.room === rm.depth && last.killedBy === 'reliquary'
+      && getProfile().records.bestRoom === Math.max(bestBefore, rm.depth), `${rs.deathRoom(run)} ${run.roomNumber} ${last.room}`);
   }
   fresh();
 }

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500&display=swap">
 <style>
 /* Layout: one control bar, then a 2x2 wall of live stages (current look + three references), notes under each. Single dark look on purpose: it is the game's own world. */
-@font-face { font-family: "DIN Condensed"; src: url("../../assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "D-DIN Condensed"; src: url("../../assets/fonts/D-DINCondensed-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 :root {
   --bg: #0d0808;
   --panel: #161009;
@@ -21,7 +21,7 @@
   --parchment: #d8c9a3;
   --muted: #9a8b6a;
   --blood: #a01818;
-  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --display: "D-DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
   --room: url("../../assets/bg/castle_chapel_interior.jpg");
   --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
   color-scheme: dark;
@@ -522,8 +522,8 @@ setInterval(() => {
 setMaterial('blood');
 // every room background from the game's data, so a look can be judged on the darkest and brightest rooms
 const roomSel = document.getElementById('room');
-fetch('../../assets/data/backgrounds.json', { cache: 'no-cache' }).then((r) => r.json()).then((bg) => {
-  for (const f of [...(bg.rooms ?? []), bg.boss, bg.shrine].filter(Boolean)) {
+fetch(`../../assets/data/backgrounds.json?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.json()).then((bg) => { // (0.00223: uncached, and the lists as named since 0.156)
+  for (const f of [...(bg.rooms ?? []), ...(bg.bosses ?? []), ...(bg.treasure ?? []), bg.shrine].filter(Boolean)) {
     const o = document.createElement('option'); o.value = f; o.textContent = bg.roomNames?.[f] ?? f; roomSel.append(o);
   }
   roomSel.value = 'castle_chapel_interior.jpg';

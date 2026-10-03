@@ -5,11 +5,14 @@
 // <base-ref>, or those files stay cached in players' browsers (0.127).
 // tools/ship.mjs bumps on every ship, so this only catches a hand-made push.
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { compareVersions } from '../src/shared/version.js';
 
-const base = process.argv[2] ?? 'HEAD~1';
+const arg = process.argv[2];
+// the push's first parent (CI passes github.event.before); an unknown or all-zero ref (a branch's first push) falls back to the last commit
+const known = (ref) => !!ref && !/^0+$/.test(ref) && spawnSync('git', ['cat-file', '-e', `${ref}^{commit}`]).status === 0; // (0.00210: it named a ROOT that did not exist and crashed every run on main)
+const base = known(arg) ? arg : known('HEAD~1') ? 'HEAD~1' : 'HEAD'; // (a one-commit checkout — the smoke job's — has no parent: nothing to compare, nothing to fail)
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
 const changed = git('diff', '--name-only', base, 'HEAD').split('\n').filter(Boolean);
 const loaded = changed.filter((f) => /^(src\/|styles\.css$|index\.html$|analytics\/|labs\/|assets\/data\/)/.test(f) && !/build\.json$|changelog\.json$/.test(f));

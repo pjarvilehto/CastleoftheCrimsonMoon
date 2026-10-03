@@ -49,7 +49,7 @@ export function createRun() {
     treasureRoom,                // the treasure room comes before this room (run/treasure.js), or null
     interludeShown: 0,           // the room whose interlude (shrine / treasure) was already met (0.171)
     seenBackgrounds: [],         // paintings shown this run: none twice while the pool lasts (0.156)
-    revive: stats.revive,        // Heart of the Dying Moon — once per run (tryRevive)
+    revive: stats.revive,        // Heart of the Dying Moon — once per run (loot.js tryRevive)
     // run history (0.095, meta/history.js): who went in, and the tallies
     startedAt: Date.now(),
     level: playerLevel(),
@@ -103,7 +103,7 @@ export function applyLoot(run, enemy, log) {
 }
 
 function satchelSellCoins() {
-  return DATA.difficulty.potions?.fullSatchelSellCoins;
+  return DATA.difficulty.potions.fullSatchelSellCoins; // (dataCheck lists it: a boot error, never NaN coins)
 }
 
 // Put one potion in the satchel. At the cap it's sold on the spot instead
@@ -118,32 +118,28 @@ export function addPotion(run) {
   return false;
 }
 
-// The Heart of the Dying Moon (a T4 relic): a killing blow — in combat or
-// the reliquary's blood price — leaves the knight at player.reviveHpPct of
-// max HP instead, once per run. Returns the log line, or null when it
-// could not save him.
-export function tryRevive(run) {
-  if (!run.revive) return null;
-  const pct = DATA.difficulty.player.reviveHpPct;
-  run.revive = false;
-  run.hp = Math.ceil(run.maxHp * pct);
-  return `The Heart of the Dying Moon beats again! You rise at ${pct === 0.5 ? 'half' : `${Math.round(pct * 100)}% of full`} health.`;
-}
-
 // Returns { healed, free, armor } on success, false when undrinkable.
 // free: Efficiency alchemy — the potion is not consumed.
-// armor: Infusion alchemy — temporary armor until the room ends.
-export function drinkPotion(run) {
+// armor: Infusion alchemy — temporary armor until the room ends; none
+// between rooms (inCombat false), where enterNextRoom would discard it
+// (0.00223: a potion drunk after the win announced armor the next room threw away).
+export function drinkPotion(run, inCombat = true) {
   if (run.potions <= 0 || run.hp >= run.maxHp) return false;
   const healed = potionHealAmount(); // potency-trained
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;
   run.potionsDrunk += 1;
   run.hp = Math.min(run.maxHp, run.hp + healed);
-  const armor = infusionArmor();
+  const armor = inCombat ? infusionArmor() : 0;
   if (armor > 0) run.tempArmor += armor;
   return { healed, free, armor };
 }
+
+// The room the knight fell in: the one an interlude led to when the
+// reliquary killed him (0.155 / 0.171; 0.00223 — a reliquary death was
+// recorded one room short, so the run's end, the history and the dashboard
+// counted a cleared room and a beaten boss as lost).
+export const deathRoom = (run) => (run.room?.number === null && run.room.depth ? run.room.depth : run.roomNumber);
 
 // Single transaction: run earnings -> profile. Idempotent (0.077): the old
 // screen stays clickable during its 1s fade-out, and a double-clicked
@@ -151,6 +147,11 @@ export function drinkPotion(run) {
 export function settleRun(run, outcome) {
   const p = getProfile();
   if (run.over) return p;
+  if (outcome === 'death') run.roomNumber = deathRoom(run); // a reliquary death counts as a death THERE, as a fight death in that room would
+  // Items auto-equip into their slots at run end (kept even on death);
+  // replaced/weaker items are salvaged for coins. (First: the one path that
+  // could throw on a foreign item id — the profile is never left half-settled, 0.00223.)
+  const equip = equipItems(p, run.itemsFound);
   p.xp += run.xp;
   p.records.kills += run.kills;
   p.records.runs += 1;
@@ -159,9 +160,7 @@ export function settleRun(run, outcome) {
   // Potions are a persistent stock (0.080): what you didn't drink comes
   // home — on retreat AND on death (the toll only takes coins).
   p.potions = Math.max(0, Math.min(run.potions, p.potionCap));
-  // Items auto-equip into their slots at run end (kept even on death);
-  // replaced/weaker items are salvaged for coins.
-  const equip = equipItems(p, run.itemsFound);
+  p.potionsBought = 0; // the potion price ladder starts over after every run (0.00204: 10, 20, 25, +5 each; meta/leveling.js potionCost)
   run.coins += equip.coins;
   // Death toll: the castle takes half of everything you carried out.
   // Retreat banks the full purse.

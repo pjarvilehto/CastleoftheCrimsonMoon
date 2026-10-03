@@ -1,9 +1,9 @@
 // audio/music.js — scene background music. Five looping beds (title /
 // combat / boss / shrine / end), crossfaded on scene change. Browsers
 // block audio before a user gesture, so the AudioContext is created on the
-// first pointerdown/keydown and the pending track fades in then. Mute
-// state persists in this browser (shared/prefs.js). Without a Web Audio
-// implementation, everything is a safe no-op.
+// first gesture (see audioCore.js GESTURE_EVENTS) and the pending track
+// fades in then. MUSIC: OFF persists in this browser (shared/prefs.js
+// mutePref). Without a Web Audio implementation, everything is a safe no-op.
 //
 // The beds are the dark ambient score (0.114; tools/gen-music.py — the
 // classic beds and their section-chaining went in 0.118). Each is an
@@ -16,13 +16,12 @@
 // playing, and the previous bed's decode is dropped once it has faded.
 
 import { DATA } from '../shared/data.js';
-import { getPref, setPref } from '../shared/prefs.js';
+import { mutePref } from '../shared/prefs.js';
 import { hasAudio, ensureCtx, fetchBytes, decode, onFirstGesture, cached } from './audioCore.js';
 import { mixer, musicInput, setBusMuted } from './mixer.js';
 import { dbToGain } from './audioMath.js';
 import { createLoop } from './musicLoop.js';
 
-const MUTE_KEY = 'castle-music-muted';
 const fadeS = () => DATA.audio.music.fadeS;
 // A scene's bed: title (title screen + hub), combat, boss, shrine, end.
 const bed = (name) => DATA.audio?.music?.tracks?.[name] ?? null;
@@ -32,8 +31,8 @@ let buffers = {};        // file -> Promise<AudioBuffer> — only the playing be
 let current = null;      // { loop, gain } of the audible track
 let currentName = null;
 let pending = 'title';   // title screen is the first scene
-let muted = getPref(MUTE_KEY) === '1';
-setBusMuted('music', muted);
+const mute = mutePref('castle-music-muted');
+setBusMuted('music', mute.on);
 
 function initCtx() {
   if (ctx || !hasAudio()) return;
@@ -46,11 +45,17 @@ const bufferFor = (file) => cached(buffers, file, () => decode(file));
 
 async function startTrack(name) {
   const b = bed(name);
-  if (!b || !ctx || muted || currentName === name) { pending = name; return; }
+  if (!b || !ctx || mute.on || currentName === name) { pending = name; return; }
   pending = name;
   let buffer;
   try { buffer = await bufferFor(b.file); } catch { return; } // never block the game on audio
-  if (pending !== name) return; // a newer request superseded this decode
+  // a newer request superseded this decode, or MUSIC went OFF meanwhile (0.00209:
+  // the bed used to start behind the muted bus and hold its buffer), or a
+  // concurrent call for this same bed already started it off the shared decode
+  // (0.00223: two loops of one bed, one fading the other — the gesture's title
+  // start and the hub's play('title') during the decode; a mute and unmute
+  // inside one decode too)
+  if (pending !== name || mute.on || currentName === name) return;
   currentName = name;
 
   const gain = ctx.createGain();
@@ -80,11 +85,13 @@ async function startTrack(name) {
 export function play(name) {
   if (!bed(name)) return;
   pending = name;
-  if (ctx && !muted) startTrack(name);
+  if (ctx && !mute.on) startTrack(name);
 }
 
 // Warm the compressed bytes of every bed in the background, so a scene
-// switch only waits on a decode (fast), never on the network.
+// switch only waits on a decode (fast), never on the network. Not while
+// MUSIC is OFF (0.00223: a muted player used to download the whole score
+// at the first gesture); the unmute warms them then.
 function warmOthers() {
   for (const t of Object.values(DATA.audio?.music?.tracks ?? {})) fetchBytes(t.file).catch(() => {});
 }
@@ -94,31 +101,30 @@ export function initMusic() {
   if (!hasAudio()) return;
   onFirstGesture(() => {
     initCtx();
-    ctx.resume?.();
-    if (!muted && pending) startTrack(pending);
-    warmOthers();
+    ctx.resume?.().catch?.(() => {});
+    if (!mute.on) { if (pending) startTrack(pending); warmOthers(); }
   });
 }
 
-export function isMuted() { return muted; }
+export const isMuted = () => mute.on;
 
 export function toggleMuted() {
-  muted = !muted;
-  setPref(MUTE_KEY, muted ? '1' : '0');
-  setBusMuted('music', muted);
-  if (muted && current) { // 0.00197: the bed stops (it kept scheduling its loop and holding its decoded buffer, ~20MB, behind a silent bus)
+  const m = mute.toggle();
+  setBusMuted('music', m);
+  if (m && current) { // 0.00197: the bed stops (it kept scheduling its loop and holding its decoded buffer, ~20MB, behind a silent bus)
     const old = current;
-    try { old.loop.stop(); old.gain.disconnect(); } catch { /* already gone */ }
-    current = null; pending = currentName; currentName = null;
+    try { old.loop.stop(ctx.currentTime + 0.2); } catch { /* already gone */ } // (0.00223: after the bus's 0.15 s ramp, not a hard cut)
+    setTimeout(() => { try { old.gain.disconnect(); } catch { /* already gone */ } }, 250);
+    current = null; currentName = null; // (pending keeps the latest ask — 0.00223: it used to be reset to the playing bed, so a bed asked for during its decode was forgotten)
     for (const f of Object.keys(buffers)) delete buffers[f];
   }
-  if (!muted) {
+  if (!m) {
     initCtx();
     if (ctx) {
-      ctx.resume?.();
+      ctx.resume?.().catch?.(() => {});
       if (pending) startTrack(pending);
       warmOthers();
     }
   }
-  return muted;
+  return m;
 }

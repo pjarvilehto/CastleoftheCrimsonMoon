@@ -11,6 +11,11 @@
 //   overkill  a heavier exterior scene, a room-wiping OVERKILL every turn
 // Nothing touches the run history: the result is saved to profile.bench
 // (meta/profile.js recordBenchmark) and goes out with the play stats.
+// Phones (0.00219): the screen is kept awake for the hands-off 40 s (the
+// Wake Lock API, where the browser has it — a locked phone stops the
+// frames), and a benchmark that went to the background partway (a call,
+// the home button, the lock) is not saved: the frames were never drawn,
+// and the Great Hall asks again next time.
 
 import { setBackground, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -24,9 +29,11 @@ import { queueEvents } from '../combatQueue.js';
 import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { combatSfx } from '../combatSfx.js';
-import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
-import { holdQuality, isBg3dActive, bgQualityLevel } from '../../core/bg3d.js';
-import { recordBenchmark } from '../../meta/profile.js';
+import { newRecording, addFrame, summarizeFrames, beginRecording, endRecording } from '../../core/perfMonitor.js';
+import { buildReport, phaseReport, keepReport } from '../../meta/perfReport.js';
+import { holdQuality, isBg3dActive, bgQualityLevel, powerMode, whenPushSettled } from '../../core/bg3d.js';
+import { isPhone } from '../../shared/platform.js';
+import { recordBenchmark, getProfile } from '../../meta/profile.js';
 import { showBenchmarkResult, PHASES } from '../benchmark.js';
 import { closeAllDialogs } from '../dialog.js';
 
@@ -41,13 +48,16 @@ const SLEEP_MS = 5000;
 // Seeded Math.random (Park-Miller): the same fight on every machine.
 const seeded = (seed) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
-// returnTo: the scene to go back to ('title' from the ?debug button; the
+// returnTo: the scene to go back to ('title' from the ?debug button on the
+// title, 'hub' from the hall or its ask — 0.00223; the
 // Great Hall's prompt passes 'hub', 0.133).
 export function benchmarkScene({ returnTo = 'title' } = {}) {
   const realRandom = Math.random, debugWas = { ...DEBUG }; // restored as it ends
   let run = null, combat = null, ui = null, root = null, logEl = null;
   let phase = -1, rec = null, endsAt = 0, last = 0, done = false, turn = 0, botTimer = null;
-  const results = {};
+  let wakeLock = null, interrupted = false;
+  const results = {}, recs = {}; // per phase: the summary, and the recording the device report reads (0.00225)
+  const onVisibility = () => { if (document.hidden) interrupted = true; };
 
   const playback = createPlayback({
     logEl: () => logEl,
@@ -55,6 +65,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     onEmpty: () => { botTimer = setTimeout(bot, BEAT_MS); },
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx),
+    onDeath: (i) => ui?.battle.whenGone(i), // (0.00220, as the dungeon: the fight pauses for each death)
   });
   const fxCtx = fxContext(() => ui);
 
@@ -67,6 +78,8 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
       // the knight can't die; the ?debug crit toggles must not change the fight (0.136)
       Object.assign(DEBUG, { invulnerable: true, forceCrit: false, forceMegaCrit: false });
       holdQuality(true); // measure at this machine's current quality; never step it down here
+      document.addEventListener('visibilitychange', onVisibility);
+      navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; if (done) l.release().catch(() => {}); }).catch(() => {}); // a phone's screen stays on
       run = createRun();
       Object.assign(run.stats, { dmg: 12, crit: 0.3, armor: 30, maxHp: 400 });
       run.hp = run.maxHp = 400;
@@ -76,17 +89,29 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     },
   };
 
-  function nextPhase() {
-    if (rec) results[PHASES[phase].id] = summarizeFrames(rec);
+  // 0.00222: a phase's clock starts once the room is at rest — the painting
+  // faded in, the windows back, the push settled, the deal played out
+  // (every wait a duration the data already holds). Idle used to record
+  // the room change itself, the renderer's heaviest moment on a phone.
+  async function nextPhase() {
+    if (rec) { results[PHASES[phase].id] = summarizeFrames(rec); recs[PHASES[phase].id] = rec; }
+    endRecording();
     phase += 1;
     if (phase >= PHASES.length) return finish();
     const ph = PHASES[phase];
-    setBackground(ph.bg);
+    rec = null;
+    const faded = setBackground(ph.bg);
     newRoom();
+    if (ui?.title) ui.title.textContent = `Benchmark — ${ph.label} · settling…`;
+    await Promise.all([faded, whenWindowsBack(), whenPushSettled()]);
+    const M = DATA.cards.motion;
+    await new Promise((resolve) => setTimeout(resolve, M.enterDelayMs + M.enterMs + ph.enemies.length * M.enterStaggerMs));
+    if (done || PHASES[phase] !== ph) return;
     rec = newRecording(); last = 0;
+    beginRecording(rec); // the subsystems' spans and the stalls land in this phase (0.00225)
     endsAt = performance.now() + ph.secs * 1000;
     clearTimeout(botTimer);
-    if (ph.act) botTimer = setTimeout(bot, 600); // let the room's entrance play
+    if (ph.act) botTimer = setTimeout(bot, 0);
     else setTimeout(() => { if (PHASES[phase] === ph) nextPhase(); }, ph.secs * 1000);
   }
 
@@ -109,7 +134,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     if (performance.now() >= endsAt) return nextPhase();
     if (combat.over) { newRoom(); botTimer = setTimeout(bot, 600); return; }
     turn += 1;
-    if (ph.act === 'smash') { // every turn a room-wiping heavy
+    if (ph.act === 'overkill') { // every turn a room-wiping heavy
       run.stats.dmg = 100000; combat.heavyCd = 0;
       useHeavy(combat); act(() => playerAttack(combat, heavyTarget(combat), true));
     } else if (canHeavy(combat) && turn % 3 === 0) {
@@ -138,6 +163,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     const layer = el('div', { class: 'fx-layer' });
     root.innerHTML = '';
     root.append(title, battle.line, layer, logEl);
+    battle.fit(); // (as dungeonScene: the line is in #app now, whose --n / --slots the phone's card budget reads; 0.00223 — a phone benchmark drew one-enemy-sized cards)
     ui = { battle, player: battle.player, enemies: battle.enemies, layer, title };
     playFx({ kind: 'enter' }, fxCtx);
     whenWindowsBack().then(() => playFx({ kind: 'deal' }, fxCtx)); // (0.184)
@@ -155,13 +181,18 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     Math.random = realRandom;
     Object.assign(DEBUG, debugWas);
     holdQuality(false);
+    endRecording();
+    document.removeEventListener('visibilitychange', onVisibility);
+    wakeLock?.release().catch(() => {}); wakeLock = null;
+    if (interrupted || document.hidden) return showBenchmarkResult({ interrupted: true }, () => go(returnTo), returnTo === 'hub'); // not saved: it asks again
     const result = {
       at: Date.now(), build: DATA.build?.version ?? '?',
-      bg: isBg3dActive() ? '3d' : 'flat', q: isBg3dActive() ? bgQualityLevel() : -1,
+      bg: isBg3dActive() ? '3d' : 'flat', q: isBg3dActive() ? bgQualityLevel() : -1, power: powerMode(isPhone()),
       dpr: Math.round((globalThis.devicePixelRatio || 1) * 100) / 100,
       vw: Math.round(globalThis.innerWidth || 0), vh: Math.round(globalThis.innerHeight || 0),
       phases: results,
     };
+    keepReport(buildReport('bench', Object.fromEntries(Object.entries(recs).map(([id, r]) => [id, phaseReport(r)])), getProfile())); // the device report goes with the result's upload (0.00225)
     recordBenchmark(result);
     showBenchmarkResult(result, () => go(returnTo), returnTo === 'hub');
   }

@@ -1,7 +1,7 @@
 // tools/test/scenes.test.mjs — scene manager, transitions, hotkeys, versioned boot, update prompt.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, setBackground, transitionTo, createRun, dungeonScene, hubScene, titleScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -16,7 +16,10 @@ fresh();
 // T2: background crossfade
 setBackground('medieval_castle.png');
 setBackground('castle_great_hall.png');
-ok('bg crossfade swaps layers', registry.bg1.style.opacity === '1' && registry.bg0.style.opacity === '0');
+{ // (0.00223: relative — whichever layer is up holds the newer painting, the other the older, faded)
+  const up = [registry.bg0, registry.bg1].find((l) => l.style.opacity === '1'), down = [registry.bg0, registry.bg1].find((l) => l !== up);
+  ok('bg crossfade swaps layers', !!up && up.dataset.file === 'castle_great_hall.png' && down.style.opacity === '0' && down.dataset.file === 'medieval_castle.png');
+}
 
 // T3: title -> hub -> dungeon transition path
 {
@@ -41,6 +44,59 @@ process.on('uncaughtException', (e) => {
   transitionTo(() => { throw new Error('intentional'); });
   await sleep(1300);
   ok('transitionTo try/finally recovery', !registry.app.classList.contains('hidden'));
+  // 0.00223: a scene whose enter() throws shows a panel with a Reload button Space presses (an empty, un-hidden #app before)
+  const realLoc = globalThis.location; let reloads = 0;
+  globalThis.location = { reload: () => { reloads++; } };
+  show({ enter() { throw new Error('intentional'); } });
+  await sleep(1100);
+  const reload = registry.app.all((e) => e.tagName === 'button' && e.attrs['data-key2'] === ' ');
+  ok('a throwing enter() leaves a Reload button Space can press', !registry.app.classList.contains('hidden') && reload.length === 1 && reload[0].textContent.includes('Reload') && handleKey(' ') === true && reloads === 1);
+  globalThis.location = realLoc;
+  // 0.00223: a dialog opened mid-transition hears the keyboard; the scene's own keys stay deaf
+  const { openDialog } = await import('../../src/ui/dialog.js');
+  const { isTransitioning, onSceneChange, whenWindowsBack } = await import('../../src/core/scene.js');
+  const { el: mk } = await import('../../src/core/dom.js');
+  let dlgKeys = 0, sceneClicks = 0;
+  registry.app.append(mk('button', { key: 'z', onclick: () => { sceneClicks++; } }, 'Z'));
+  transitionTo(() => {}, 500);
+  const mid = isTransitioning();
+  const sceneKeyMid = handleKey('z');
+  const dlg = openDialog({ label: 'Mid', children: [], onKey: () => { dlgKeys++; } });
+  const dlgKeyMid = handleKey('escape');
+  dlg.close();
+  await sleep(700);
+  ok('a dialog opened mid-transition hears the keyboard, the scene\'s keys stay deaf (the 0.077 guard holds)', mid && sceneKeyMid === false && sceneClicks === 0 && dlgKeyMid === true && dlgKeys === 1);
+  // 0.00223: the scene listener fires once the windows are back, never mid-fade or for a bare room change
+  const fired = [];
+  onSceneChange((s) => fired.push({ s, mid: isTransitioning(), hidden: registry.app.classList.contains('hidden') }));
+  const sceneX = { enter() {} };
+  show(sceneX);
+  await sleep(500);
+  const early = fired.length;
+  await sleep(700);
+  transitionTo(() => {}, 100);
+  await sleep(300);
+  ok('onSceneChange fires once the windows are back, once per scene switch, never for a bare transition', early === 0 && fired.length === 1 && fired[0].s === sceneX && !fired[0].mid && !fired[0].hidden);
+  onSceneChange(null);
+  // 0.00223: go() names its scene
+  const { go } = await import('../../src/core/scene.js');
+  go('hub'); await sleep(1100);
+  ok('go() names the scene it shows', (await import('../../src/core/scene.js')).currentScene().name === 'hub');
+  fresh(); // (the hub and the 'z' button must not reach the hotkey checks below)
+  // 0.00223: the very first painting resolves at once on the flat path (it is painted under transition: none); later ones wait the CSS fade
+  const realGcs = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = () => ({ transitionDuration: '2s' });
+  try {
+    const first = await import('../../src/core/scene.js?first'); // a fresh instance: no painting yet
+    let doneA = false, doneB = false;
+    first.setBackground('castle_a.jpg').then(() => { doneA = true; });
+    await sleep(50);
+    first.setBackground('castle_b.jpg').then(() => { doneB = true; });
+    await sleep(1900);
+    const held = !doneB;
+    await sleep(300);
+    ok('the first painting resolves at once on the flat path; the next waits the layer\'s 2 s fade', doneA && held && doneB);
+  } finally { globalThis.getComputedStyle = realGcs; }
 }
 
 // T14: space = "proceed further" (el() proceed: true; 0.124 everywhere).
@@ -80,6 +136,12 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   registry.app.append(btn);
   transitionTo(() => {}, 50);
   ok('hotkeys ignored during a transition', handleKey('r') === false && clicked === 0);
+  // 0.00223: a dialog opened mid-transition hears the keyboard (the trap comes before the guard; a dialog used to be deaf until the windows were back)
+  const { openDialog } = await import('../../src/ui/dialog.js');
+  const { isTransitioning } = await import('../../src/core/scene.js');
+  const heard = [];
+  const dlgMid = openDialog({ label: 'mid', children: [], onKey: (k, close) => { heard.push({ k, mid: isTransitioning() }); if (k === 'escape') close(); } });
+  ok('a dialog opened mid-transition hears the keyboard; the scene\'s own keys stay off', handleKey('escape') === true && heard.length === 1 && heard[0].k === 'escape' && heard[0].mid && !dlgMid.isOpen() && handleKey('r') === false && clicked === 0);
   await sleep(100);
   ok('hotkeys work again after the transition', handleKey('r') === true && clicked === 1);
 
@@ -158,6 +220,17 @@ const { initHotkeys } = await import('../../src/core/hotkeys.js');
   ok('the prompt owns the keyboard', !!prompt() && t() === hubText && reloaded === 0);
   handleKey('n');
   ok('N puts it off', !prompt() && reloaded === 0);
+  // 0.00223: no poll while the tab is hidden; a visibility change re-checks
+  let hits = 0;
+  globalThis.fetch = async (url) => { if (String(url).includes('build.json')) hits++; return { ok: true, json: async () => served }; };
+  const stop = up.initUpdateCheck(60000);
+  globalThis.document.hidden = true;
+  await sleep(120000);
+  const hiddenHits = hits;
+  globalThis.document.hidden = false;
+  await sleep(60000);
+  stop();
+  ok('the build poll skips a hidden tab and resumes when it shows', hiddenHits === 0 && hits === 1);
   await up.checkForUpdate();
   ok('...and that version stays quiet this session', !prompt());
   served = { version: '9.002', changelog: { '9.002': ['More'], '9.001': ['Bosses dance'] } };
@@ -290,9 +363,10 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   resetProfile();
 }
 
-// T71: 0.109 — "Enter your name": asked on the title screen while the
-// save has none (the title's hotkeys wait), kept clean and short, kept
-// through a progress wipe, changeable from the title, sent with the stats.
+// T71: 0.109 — "Enter your name": asked while the save has none — on the
+// way in, when Enter the Castle is pressed (0.00200; it used to open over
+// the title before the player had seen anything) — kept clean and short,
+// kept through a progress wipe, changeable from the title, sent with the stats.
 {
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -305,8 +379,11 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   getProfile().name = '';
   show(titleScene());
   await sleep(1100);
+  ok('the title shows first, no prompt over it', !dialog() && t().includes('CASTLE OF THE CRIMSON MOON'));
+  handleKey('e');
+  await sleep(100);
   const d = dialog();
-  ok('an unnamed player is asked their name on the title screen', !!d && d.textContent.includes('Enter Your Name'));
+  ok('an unnamed player is asked their name on Enter the Castle, and stays on the title until named', !!d && d.textContent.includes('Enter Your Name') && !t().includes('GREAT HALL'));
   handleKey('e');
   await sleep(1300);
   ok('the title\'s hotkeys wait while it asks', !!dialog() && t().includes('CASTLE OF THE CRIMSON MOON') && !t().includes('GREAT HALL'));
@@ -321,15 +398,22 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   btn.listeners.click[0]();
   ok('the name is saved (cleaned) and the dialog closes', !dialog() && getProfile().name === 'Lady Morgana'
     && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).name === 'Lady Morgana');
-  ok('the title greets the player by name', t().includes('Playing as Lady Morgana') && t().includes('Morgana'));
-  handleKey('e');
   await sleep(1300);
-  ok('hotkeys work again once named', t().includes('GREAT HALL'));
+  ok('and the way in continues: the Great Hall, its Descend pulsing (nothing to spend yet)', t().includes('GREAT HALL')
+    && registry.app.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'd').some((b) => b.className.includes('active')));
+  show(titleScene());
+  await sleep(1100);
+  ok('the title greets the player by name', t().includes('Playing as Lady Morgana') && t().includes('Morgana'));
   resetProfile();
   ok('a progress wipe keeps the name (same person)', getProfile().name === 'Lady Morgana');
   show(titleScene());
   await sleep(1100);
+  handleKey('e');
+  await sleep(100);
   ok('a named player is not asked again', !dialog());
+  await sleep(1300);
+  show(titleScene());
+  await sleep(1100);
   const change = registry.app.all((n) => n.tagName === 'button' && n.className === 'link-btn')[0];
   change.listeners.click[0]();
   ok('"change" reopens it, and Esc cancels a change', !!dialog() && dialog().textContent.includes('Change Your Name') && (handleKey('escape'), !dialog()) && getProfile().name === 'Lady Morgana');
@@ -422,21 +506,41 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('a held Space (auto-repeat) steps only once', hk.includes("if (e.repeat && e.key === ' ')"));
 }
 
-// T86: 0.125 — phones and tablets get the "not supported yet" notice
-// instead of the game; ?desktop skips the check.
+// T86: 0.125 — phones get the "not supported yet" notice instead of the
+// game; tablets play, sideways (0.00205); ?desktop skips the check.
 {
-  const { isMobile } = await import('../../src/shared/platform.js');
+  const { isMobile, deviceClass, isPhone, TABLET_MIN_PX } = await import('../../src/shared/platform.js');
   const iphone = { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', maxTouchPoints: 5 };
   const android = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36' };
   const ipad = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 5 };
   const mac = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', maxTouchPoints: 0 };
   const win = { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36', maxTouchPoints: 10 };
   const hinted = { userAgent: 'Mozilla/5.0 (Linux) Chrome/120', userAgentData: { mobile: true } };
-  ok('phones, tablets and iPadOS count as mobile', [iphone, android, ipad, hinted].every((n) => isMobile(n, '')));
+  ok('phones, tablets and iPadOS count as handhelds', [iphone, android, ipad, hinted].every((n) => isMobile(n, '')));
   ok('desktops (a touch-screen Windows laptop too) do not', !isMobile(mac, '') && !isMobile(win, ''));
   ok('?desktop skips the check', !isMobile(iphone, '?desktop'));
+  // 0.00205: the screen's longer side tells a phone from a tablet
+  ok('a phone screen is a phone, a tablet screen a tablet, a desktop a desktop', deviceClass(iphone, { width: 390, height: 844 }, '') === 'phone'
+    && deviceClass(android, { width: 412, height: 915 }, '') === 'phone' && deviceClass(ipad, { width: 1024, height: 1366 }, '') === 'tablet'
+    && deviceClass(android, { width: 800, height: 1280 }, '') === 'tablet' && deviceClass(mac, { width: 1440, height: 900 }, '') === 'desktop'
+    && deviceClass(iphone, { width: 390, height: 844 }, '?desktop') === 'desktop' && TABLET_MIN_PX === 1000 && isPhone(iphone, { width: 390, height: 844 }, '') && !isPhone(ipad, { width: 1024, height: 1366 }, ''));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('boot stops at the notice on mobile', /if \(isMobile\(\)\) \{[\s\S]*Mobile platforms not supported yet[\s\S]*return;\s*\}/.test(m));
+  // 0.00208: phones play — the gate before the title instead of the old notice (0.00209: the narrator armed and the audio resumed on its tap)
+  ok('boot mounts the rotate notice for a handheld held upright, and the play / install gate on a phone', !m.includes('Phones are not supported yet')
+    && m.includes("el('div', { class: 'rotate-notice' }") && /if \(isPhone\(\)\) \{[\s\S]*armOnGesture\('title_welcome'\)[\s\S]*await phoneGate\(\{ onPlay[\s\S]*regateOnExit\(\);\s*\}\s*go\('title'\)/.test(m));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('touch: no double-tap zoom, no image callout, 44px targets and no hotkey hints on a coarse pointer, hover styles only where hover exists, a rotate notice in portrait',
+    css.includes('html { touch-action: manipulation; }') && css.includes('img { -webkit-touch-callout: none; }') && css.includes('@media (pointer: coarse) {') && css.includes('min-height: 44px;')
+    && css.includes('@media (hover: hover) { button:hover:not(:disabled) {') && css.includes('@media (pointer: coarse) and (orientation: portrait) { .rotate-notice { display: flex; } }'));
+  // the home-screen app (0.00205): a manifest the page links, its icons on disk, the Apple metas
+  const html = readFileSync('index.html', 'utf8'), man = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
+  ok('a web app manifest: fullscreen, landscape, icons on disk, linked with the Apple metas and a cover-fit viewport',
+    man.display === 'fullscreen' && man.orientation === 'landscape' && man.icons.length >= 2 && man.icons.every((i) => { try { return statSync(i.src).isFile(); } catch { return false; } })
+    && html.includes('<link rel="manifest" href="manifest.webmanifest">') && html.includes('apple-mobile-web-app-capable') && html.includes('viewport-fit=cover'));
+  // the device line (0.00205): an iPad reads as iPadOS, not macOS
+  const { osOf } = await import('../../src/core/perfMonitor.js');
+  ok('the device line tells iPadOS (a Macintosh with touch), iOS and Android from macOS', osOf(ipad.userAgent, true) === 'iPadOS' && osOf(mac.userAgent, false) === 'macOS'
+    && osOf(iphone.userAgent, true) === 'iOS' && osOf(android.userAgent, true) === 'Android' && osOf(win.userAgent, true) === 'Windows');
 }
 
 // 0.154 — transitions strictly in order (the owner's call): the windows fade
@@ -465,4 +569,131 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   await sleep(200);
   ok('transition: a painting that never arrives holds the windows 4s at most', stillHeld && !registry.app.classList.contains('hidden') && !isTransitioning());
   onBackgroundChange(() => undefined);
+}
+
+// T90: 0.00208 — phones play. The phone layout is <html class="phone">, set
+// by the boot from the one query (platform.js PHONE_MQ) and re-rendering the
+// hall when it flips; the Great Hall's phone assembly is a stats strip,
+// three stacked sheets under their tabs (the pick lifts one and lasts a
+// re-render; a dot per sheet by what IT sells), the records line and the way
+// on; the short wording carries the data's numbers; the play / install gate
+// is a dialog that resolves on PLAY and skips a home-screen app.
+{
+  const { PHONE_MQ, phoneLayout, standaloneApp, isIos, fullscreenOn } = await import('../../src/shared/platform.js');
+  const { statDesc, alchemyDesc, potionDesc, satchelDesc, recordsLine } = await import('../../src/ui/hubText.js');
+  const { phoneGate } = await import('../../src/ui/phoneGate.js');
+  const { anyDialogOpen } = await import('../../src/ui/dialog.js');
+  const { canSpendAlchemy, canForgeAny, canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
+  const { forgeCost, alchemyCost, ALCHEMY_DEFS } = await import('../../src/meta/leveling.js');
+  const css = readFileSync('styles.css', 'utf8'), m = readFileSync('src/main.js', 'utf8');
+  // 0.00223: the watcher lives in platform.js with the query and the document injectable — run it
+  const { watchPhoneLayout } = await import('../../src/shared/platform.js');
+  const flips = [];
+  const classes = new Set();
+  const fakeDoc = { documentElement: { classList: { toggle: (c, on) => { on ? classes.add(c) : classes.delete(c); } } } };
+  let mq = null;
+  const fakeMm = (q) => (mq = { matches: q === PHONE_MQ, listeners: [], addEventListener(t, fn) { this.listeners.push(fn); } });
+  watchPhoneLayout(() => flips.push(1), fakeMm, fakeDoc);
+  const wasPhone = classes.has('phone');
+  mq.matches = false; mq.listeners.forEach((fn) => fn());
+  ok('the boot sets html.phone from the platform query and re-lays the scene out when it flips; the layer\'s rules are html.phone twins',
+    wasPhone && !classes.has('phone') && flips.length === 1 && m.includes('watchPhoneLayout(() => currentScene()?.relayout?.(app))') && css.includes('html.phone #app > .panel {') && css.includes('html.phone .battle-line {')
+    && !phoneLayout(undefined) && phoneLayout((q) => ({ matches: q === PHONE_MQ })) && !phoneLayout((q) => ({ matches: q !== PHONE_MQ })));
+  ok('a home-screen app is standalone by display-mode or Safari\'s flag; iOS and fullscreen read the right fields', standaloneApp((q) => ({ matches: q === '(display-mode: standalone)' }), {}) && standaloneApp(undefined, { standalone: true })
+    && !standaloneApp((q) => ({ matches: false }), {}) && isIos({ userAgent: 'iPhone' }) && isIos({ userAgent: 'Macintosh', maxTouchPoints: 5 }) && !isIos({ userAgent: 'Android' }) && !fullscreenOn({}) && fullscreenOn({ webkitFullscreenElement: {} }));
+  const pl = DATA.difficulty.player, tr = DATA.difficulty.alchemyTracks;
+  ok('the short wording carries the data\'s numbers', statDesc('power', 0, true) === `+${pl.dmgPerPower} dmg / lv` && statDesc('vitality', 0, true) === `+${pl.hpPerVitality} hp / lv`
+    && statDesc('endurance', 0, true) === `+${pl.armorPerEndurance} armor / lv` && /^\+[\d.]+% crit, \+[\d.]+% crit dmg$/.test(statDesc('precision', 0, true)) && statDesc('fortune', 0, true) === 'better loot'
+    && alchemyDesc('potency', true) === `+${tr.potency.healPerLevel} heal / lv (now ${DATA.difficulty.potionHeal})` && alchemyDesc('infusion', true) === `potion armor +0 (+${tr.infusion.armorPerLevel} / lv)`
+    && alchemyDesc('infusion').includes(`+${tr.infusion.armorPerLevel} per level`) // (the long line carries it too, 0.00209)
+    && /^potion not spent: 0% \(\+[\d.]+%\)$/.test(alchemyDesc('efficiency', true)) && potionDesc({ potions: 2, potionCap: 4 }, true) === '2/4 — price climbs per buy'
+    && satchelDesc({ potionCap: 4 }, false, true) === '+1 capacity (now 4)' && satchelDesc({ potionCap: 6 }, true, true) === 'carries 6 (max)'
+    && statDesc('power', 0) === `+${pl.dmgPerPower} damage per level` && recordsLine({ records: { runs: 3, kills: 15, bestRoom: 6 } }) === '3 runs, 15 kills, deepest room 6.');
+  // coins buy in two places: the dots follow each (0.00209)
+  fresh();
+  const forge = getProfile(); forge.equipment.weapon = 'knights_blade'; forge.potions = forge.potionCap; forge.coins = forgeCost('knights_blade');
+  ok('a forge price in the purse dots Equipment, and Alchemy only if a track is that cheap', canForgeAny(forge) && canSpendCoins(forge) && canSpendAlchemy(forge) === Object.keys(ALCHEMY_DEFS).some((t) => forge.coins >= alchemyCost(t)));
+  // the hub, under the phone query
+  fresh();
+  const prof = getProfile(); prof.coins = 95; prof.xp = 40;
+  const mmBefore = globalThis.matchMedia; globalThis.matchMedia = (q) => ({ matches: q === PHONE_MQ });
+  try {
+    const scene = hubScene(); scene.enter(registry.app);
+    const hub = registry.app.all((n) => /\bphone-hub\b/.test(n.className ?? ''))[0];
+    const tabs = hub && hub.all((n) => n.className?.startsWith('tabs'))[0];
+    const body = hub && hub.all((n) => n.className?.startsWith('tab-body'))[0];
+    ok('the phone hall: a head with the stats, three tabs, three sheets, a foot with the records and the way on', hub && tabs && body && tabs.children.length === 3 && body.children.length === 3
+      && tabs.children.map((b) => b.textContent).join('|') === 'Train|Alchemy|Equipment' && hub.all((n) => /\brecords-line\b/.test(n.className ?? '')).length === 1
+      && hub.all((n) => n.tagName === 'button' && /Descend/.test(n.textContent)).length === 1 && hub.all((n) => /\bhub-stats\b/.test(n.className ?? '')).length === 1 && typeof scene.relayout === 'function');
+    ok('the first sheet is up; the tabs with something to buy carry the dot (XP for Train, a potion for Alchemy, nothing to forge)', tabs.children[0].classList.contains('on') && body.children[0].classList.contains('on') && body.className === 'tab-body pick-1'
+      && tabs.children[0].classList.contains('spend') && tabs.children[1].classList.contains('spend') && !tabs.children[2].classList.contains('spend'));
+    tabs.children[2].listeners.click[0]();
+    ok('a tab lifts its sheet and the stacking order follows', tabs.children[2].classList.contains('on') && body.children[2].classList.contains('on') && !body.children[0].classList.contains('on') && body.className === 'tab-body pick-3');
+    hubScene().enter(registry.app); // a purchase re-renders: the pick stays
+    const tabs2 = registry.app.all((n) => n.className?.startsWith('tabs'))[0];
+    ok('the pick lasts a re-render', tabs2.children[2].classList.contains('on'));
+    globalThis.matchMedia = (q) => ({ matches: false }); scene.relayout(registry.app); // the query flipped back: the desktop assembly
+    ok('relayout swaps the assembly when the query flips', !registry.app.all((n) => /\bphone-hub\b/.test(n.className ?? '')).length && registry.app.all((n) => /\bhub-wrap\b/.test(n.className ?? '')).length === 1);
+    globalThis.matchMedia = (q) => ({ matches: q === PHONE_MQ }); scene.relayout(registry.app);
+    tabs2.children[0].listeners.click[0]?.(); // (the old tabs: no effect; leave the first sheet up for the next test)
+    const row = registry.app.all((n) => /\bitem-row\b/.test(n.className ?? ''))[0];
+    ok('the sheets carry the short wording', row && row.textContent.includes('dmg / lv'));
+  } finally { globalThis.matchMedia = mmBefore; }
+  fresh();
+  // the gate: a dialog; PLAY resolves and runs onPlay; a home-screen app gets no card
+  let played = 0;
+  const doc = { fullscreenEnabled: false, documentElement: {}, addEventListener() {} };
+  const p1 = phoneGate({ onPlay: () => played++, doc, nav: { userAgent: 'iPhone', maxTouchPoints: 5 } });
+  const gate = registry.body.children.find((n) => /\bphone-gate\b/.test(n.className ?? ''));
+  const playBtn = gate && gate.all((n) => n.tagName === 'button' && /^Play/.test(n.textContent))[0]; // (proceed: true adds the [space] hint to the label)
+  ok('the gate: a dialog (key trap, anyDialogOpen) with PLAY and the iPhone\'s way to the full screen', gate && anyDialogOpen() && playBtn && gate.textContent.includes('Add to Home Screen') && !gate.textContent.includes('aA'));
+  playBtn.listeners.click[0]();
+  ok('PLAY runs onPlay and takes the card away', (await p1) === true && played === 1 && !anyDialogOpen() && !registry.body.children.some((n) => /\bphone-gate\b/.test(n.className ?? '')));
+  ok('a home-screen app gets no card', (await phoneGate({ onPlay: () => played++, doc, nav: { standalone: true, userAgent: 'iPhone' } })) === false && played === 2 && !anyDialogOpen());
+  fresh();
+}
+
+// T91: 0.00209 — Export / Import Save are dialogs (the title used to expand a
+// textarea at its foot, under a phone's keyboard): Export shows the code
+// and closes on Done; Import loads a pasted code or says it is not one.
+{
+  const { anyDialogOpen, closeAllDialogs } = await import('../../src/ui/dialog.js');
+  const { exportSave } = await import('../../src/meta/profile.js');
+  fresh();
+  getProfile().coins = 4242; getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  const btn = (re) => registry.app.all((n) => n.tagName === 'button' && re.test(n.textContent))[0];
+  btn(/Export Save/).listeners.click[0]();
+  const dlg = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  const ta = dlg && dlg.all((n) => n.tagName === 'textarea')[0];
+  ok('Export Save opens a dialog holding the save code', anyDialogOpen() && ta && ta.textContent === exportSave() && /save-code/.test(ta.className));
+  dlg.all((n) => n.tagName === 'button' && /^Done/.test(n.textContent))[0].listeners.click[0]();
+  ok('...Done closes it', !anyDialogOpen());
+  const code = exportSave();
+  resetProfile(); getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg2 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  const ta2 = dlg2.all((n) => n.tagName === 'textarea')[0];
+  const load = dlg2.all((n) => n.tagName === 'button' && /Load Save/.test(n.textContent))[0];
+  ta2.value = 'not a code'; load.listeners.click[0]();
+  ok('Import Save: a bad code is refused in the dialog', anyDialogOpen() && dlg2.textContent.includes('valid save') && getProfile().coins !== 4242);
+  ta2.value = code; load.listeners.click[0]();
+  ok('...a good code loads and closes it', !anyDialogOpen() && getProfile().coins === 4242);
+  // 0.00223: the save dialogs from the keyboard — Escape closes, Space is the way on (Done / Load Save)
+  btn(/Export Save/).listeners.click[0]();
+  ok('Export Save: Escape closes it', anyDialogOpen() && handleKey('escape') === true && !anyDialogOpen());
+  btn(/Export Save/).listeners.click[0]();
+  ok('...and Space (Done is the way on)', anyDialogOpen() && handleKey(' ') === true && !anyDialogOpen());
+  resetProfile(); getProfile().name = 'Tester';
+  titleScene().enter(registry.app);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg3 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  dlg3.all((n) => n.tagName === 'textarea')[0].value = 'not a code';
+  ok('Import Save: a bad value closes on Escape without loading', handleKey('escape') === true && !anyDialogOpen() && getProfile().coins !== 4242);
+  btn(/Import Save/).listeners.click[0]();
+  const dlg4 = registry.body.children.find((n) => /update-overlay/.test(n.className ?? ''));
+  dlg4.all((n) => n.tagName === 'textarea')[0].value = code;
+  ok('Import Save: Space loads a good code (Load Save is the way on)', handleKey(' ') === true && !anyDialogOpen() && getProfile().coins === 4242);
+  closeAllDialogs(); fresh();
 }

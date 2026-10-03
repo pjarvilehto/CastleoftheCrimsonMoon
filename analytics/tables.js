@@ -14,10 +14,11 @@ export function ago(t) {
   return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 48 * 60 ? `${Math.round(m / 60)}h ago` : new Date(t).toLocaleDateString();
 }
 
-export function buildTable(rows) {
+// { rows, older, hidden } from stats.js condenseBuilds (0.00224): the newest builds, a divider, the most played older ones, a footer for the rest
+export function buildTable({ rows, older = [], hidden = { builds: 0, runs: 0 } }) {
   if (!rows.length) return '<p class="empty">No runs recorded yet.</p>';
-  return `<table><tr><th>Build</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th></tr>${rows.map((r) =>
-    `<tr><td>${esc(r.build)}</td><td>${r.runs}</td><td>${r.avgRoom.toFixed(1)}</td><td>${r.bestRoom}</td><td>${pct(r.deathRate)}</td></tr>`).join('')}</table>`;
+  const row = (r) => `<tr><td>${esc(r.build)}</td><td>${r.runs}</td><td>${r.avgRoom.toFixed(1)}</td><td>${r.bestRoom}</td><td>${pct(r.deathRate)}</td></tr>`;
+  return `<table><tr><th>Build</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th></tr>${rows.map(row).join('')}${older.length ? `<tr class="divider"><td colspan="5">older, most played</td></tr>${older.map(row).join('')}` : ''}${hidden.builds ? `<tr class="divider"><td colspan="5">${hidden.builds} more build${hidden.builds === 1 ? '' : 's'}, ${hidden.runs} run${hidden.runs === 1 ? '' : 's'}, not shown</td></tr>` : ''}</table>`;
 }
 
 export function playersTable(list, names) {
@@ -38,10 +39,9 @@ export function playersTable(list, names) {
       <td>${esc(names.itemName(eq.weapon))}<small>${esc(names.itemName(eq.armor))}</small></td>
       <td>${p.coins ?? 0}c<small>${p.xp ?? 0} xp · ${p.potions ?? 0}/${p.potionCap ?? 0} potions</small></td>
       <td>${ago(last?.at)}<small>${esc(last?.build ?? '')}</small></td>
-      <td>${pl.source === 'code' ? `<button class="small" data-act="remove" data-key="${esc(pl.key)}">Remove</button>` : ''}</td>
     </tr>`;
   }).join('');
-  return `<div class="scroll"><table><tr><th>Player</th><th>Tester</th><th>Lvl</th><th>Runs</th><th>Best room</th><th>Avg (last 10)</th><th>Deaths</th><th>Disciplines</th><th>Gear</th><th>Purse</th><th>Last played</th><th></th></tr>${rows}</table></div>`;
+  return `<div class="scroll"><table><tr><th>Player</th><th>Tester</th><th>Lvl</th><th>Runs</th><th>Best room</th><th>Avg (last 10)</th><th>Deaths</th><th>Disciplines</th><th>Gear</th><th>Purse</th><th>Last played</th></tr>${rows}</table></div>`;
 }
 
 export function runsTable(runs, names) {

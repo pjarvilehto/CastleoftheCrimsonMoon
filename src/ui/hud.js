@@ -7,6 +7,17 @@ import { DATA } from '../shared/data.js';
 // knight's HP bar glows red and, with potions left, Drink Potion pulses.
 export const isLowHp = (hp, maxHp) => hp > 0 && hp / maxHp <= DATA.difficulty.lowHpShare;
 
+// The way on, after a cleared room (0.00206): low on health with no potion
+// left, Retreat with Loot is the advice (pulsing red) and Push Deeper is
+// plain; otherwise Push Deeper pulses yellow as always (0.079). Call it on
+// every update — a potion drunk after the win changes the answer.
+export const shouldRetreat = (run) => isLowHp(run.hp, run.maxHp) && run.potions <= 0;
+export function markWayOn(deeper, retreat, run) {
+  const flee = shouldRetreat(run);
+  if (deeper) deeper.classList.toggle('active', !flee);
+  if (retreat) { retreat.classList.toggle('active', flee); retreat.classList.toggle('active-red', flee); }
+}
+
 // Potion count colour (0.089): green when the satchel is full, red when
 // running low (1 or none, or a quarter of the satchel or less). The Great
 // Hall's stat box and the panel rooms' HUD (styles.css .potions-*).
@@ -36,15 +47,19 @@ const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '
 // part renders via itemName(), so game logic can name items without DOM.
 // The dungeon log is one element for the whole run — a deep run prints
 // thousands of lines, so only the newest LOG_MAX_LINES stay in the DOM.
+// 0.00222: the newest line is the FIRST child and the box is a reversed
+// flex column (styles.css #combat-log), which the browser keeps scrolled
+// to its end on its own — a scroll-position write here (the element's
+// full height) forced a synchronous layout of the whole room in the middle
+// of every hit's frame.
 const LOG_MAX_LINES = 200;
 
 export function logLine(logEl, content, cls = 'sys') {
   const parts = (Array.isArray(content) ? content : [content])
     .map((p) => (p && typeof p === 'object' && p.item ? itemName(p.item) : p));
   const line = el('div', { class: cls }, GLYPHS[cls] ?? '', ...parts);
-  logEl.append(line);
-  while (logEl.children.length > LOG_MAX_LINES) logEl.children[0].remove();
-  logEl.scrollTop = logEl.scrollHeight;
+  logEl.insertBefore(line, logEl.children[0] ?? null);
+  while (logEl.children.length > LOG_MAX_LINES) logEl.children[logEl.children.length - 1].remove();
 }
 
 // Item rarity scheme driven by items.json `tier` (see styles.css):

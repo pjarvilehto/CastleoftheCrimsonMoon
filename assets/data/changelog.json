@@ -1,4 +1,125 @@
 {
+  "0.00230": [
+    "An easier start: the weakest enemies (rats, Cave Shriekers, skeletons, Crypt Spiders) hit a quarter softer and a new game starts with 3 potions",
+    "Training gives a little less per level (+2 damage, +72 HP, +8 armor) and costs a little less XP, so the knight outgrows the early rooms a few runs later"
+  ],
+  "0.00229": [
+    "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
+  ],
+  "0.00228": [
+    "Benchmark round: 0.00228 — 0.00227's note named 0.00226, another build that landed first; a benchmark from 0.00227 does not count, please run it once more on this build."
+  ],
+  "0.00227": [
+    "Card light: every card now draws its glow on a canvas of its own, handed from room to room, instead of copying each card's picture out of one hidden canvas every frame (the iPhone spent 13 ms a tick on that at rest).",
+    "A new benchmark round (0.00226): please run the benchmark again on each device — the Great Hall asks once past room 6, the ?debug BENCHMARK button any time."
+  ],
+  "0.00226": [
+    "A new typeface: D-DIN Condensed Bold, free to use (Open Font License), replaces the old DIN Condensed — the look is the same, the font is a third of the download"
+  ],
+  "0.00225": [
+    "Device reports: every run and benchmark now sends a small performance report with the play stats (frame-time histogram, time per subsystem, stalls with what was happening, the renderer's settings) — anonymous, never stored in your save.",
+    "Play stats: a Device reports card with Copy / Copy all; the benchmark round is 0.00225, so the Great Hall asks once more."
+  ],
+  "0.00224": [
+    "Play stats: the By build table shows the newest ten builds and the three most played older ones; the save-code entry is gone — every tester is collected."
+  ],
+  "0.00223": [
+    "A death in a Sealed Reliquary now counts the room it led to, in your records and on the end screen.",
+    "A potion drunk between rooms no longer leaves phantom armor for the next fight; summons are never marked elite.",
+    "Benchmark: the Great Hall's ask waits for the hall to settle and its Continue always starts it; the ?debug button returns where it was pressed.",
+    "Music and narrator: MUSIC OFF or NARRATOR OFF no longer downloads the score or the takes; NARRATOR OFF stops the line playing; the welcome line no longer waits behind the music; a bed asked for while the music was switched off and on is the one that plays.",
+    "Narrator: a line dropped for waiting too long can still play later; with SOUND OFF no line is spent; a short sound under a narrator line no longer cuts the music's return short.",
+    "Phones: the save dialogs sit at the top for the keyboard; long room titles stay clear of XP and COINS; the boons sit beside the menu in shrine and treasure rooms; Push Deeper fits on every phone.",
+    "A narrow desktop window scrolls the Great Hall to Descend; the treasure room fits a MacBook-height window without a scrollbar.",
+    "Smoother: the glowing text (rare items, low health, the death and victory titles) no longer repaints every frame; the battle line writes only what changed; OVERKILL's banner is placed from the cards still standing.",
+    "If a screen fails to open, a Reload button appears instead of a blank window; a dialog opened mid-fade hears the keyboard; the display font is a third of its size.",
+    "Play stats: a bad run record no longer blanks the dashboard, and the collector agrees with the page on every field (Worker 0.00223 to paste)."
+  ],
+  "0.00222": [
+    "Phones: a lighter picture — the background at a lower resolution and rest rate, a thinner mist buffer, 1x particles, the card glow at 20 fps, the figures without their drop shadow (the same look, fewer pixels; the owner's iPhone ran hot)",
+    "BATTERY SAVER in the corner column: the smallest background and no mist, for a hot phone or a long session; remembered per browser",
+    "The room change no longer stalls the game for a quarter second: the painting is decoded off the main thread, and the heavy work is split over two frames",
+    "The vignette is drawn by the background's shaders, the glint by transforms, the glow loops as breathing layers, the particle layer is hidden between bursts: less work for every screen every frame",
+    "Play stats: the refresh rate is read from the busiest frame interval (120 Hz Macs read 144, iPhones 90 or 75 before, with every ordinary frame 'dropped'); stalls and the worst frame's moment are recorded; old rows are graded by their fps",
+    "The benchmark measures each room at rest — a new round, so everyone is asked again; about 50 seconds now"
+  ],
+  "0.00221": [
+    "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
+  ],
+  "0.00220": [
+    "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
+    "The benchmark round moved with it: a benchmark from an older build is asked again"
+  ],
+  "0.00219": [
+    "The benchmark ask is back for everyone: once your best room reaches 6, the Great Hall asks once for a 40-second scripted fight (a new round, so a benchmark from an older build is asked again)",
+    "Phones: the benchmark keeps the screen awake, and one that went to the background partway is not saved (the game asks again)"
+  ],
+  "0.00218": [
+    "Phone: the equipment sheet's rows are all the same height, so every slot fits on the sheet (a forgeable slot's row used to be taller)"
+  ],
+  "0.00217": [
+    "The build-available prompt keeps Reload and Later on screen: a long changelist scrolls inside it (it pushed the buttons off a phone's screen)"
+  ],
+  "0.00216": [
+    "Fallen enemies leave the battle line: the row closes up and the cards left grow into the room (the faint skull cards are gone)",
+    "Numbers that change glow and grow for a moment — XP and coins in combat, and the row you just bought in the Great Hall (Precision LV2 flashes to LV3, 3/4 potions to 4/4)",
+    "Buy Potion pulses whenever a potion can be bought, not only when the stock runs low",
+    "Phone: the run's end fits the screen (Return to the Great Hall used to clip), and the PLAY card's iPhone line reads simply: Share, then Add to Home Screen"
+  ],
+  "0.00215": [
+    "World Lab: the clouds are drawn in screen space each frame, never scaled with the map — the flickering hairlines were the browser seaming the raster tiles of a scaled canvas"
+  ],
+  "0.00214": [
+    "World Lab: the clouds drift without seams (whole-pixel tiles), they reach a whole painting past every edge with the painting's margins fading into the clouded land beneath, and the map zooms out far enough to see it"
+  ],
+  "0.00213": [
+    "World Lab: the owner's cloud picks — sparser, darker and faster clouds with the world dim beneath them, tighter windows around what is cleared, the sky view a touch lower and steeper"
+  ],
+  "0.00212": [
+    "Housekeeping: the build-number check also runs in the one-commit checkout the test job uses"
+  ],
+  "0.00211": [
+    "Housekeeping: the build-number check that runs after every push works again (it had crashed since 0.00209; the game itself was never affected)"
+  ],
+  "0.00210": [
+    "World Lab (under ?debug LABS): the world map above the dungeon as a prototype — the castle as one pin on a painted world under clouds, clearing a place burns the clouds away around its roads, seen from above or from the sky, with the dive through the clouds into a place"
+  ],
+  "0.00209": [
+    "Review after the phone work: the shrine, treasure and title panels now get the phone's compact layout (a desktop rule used to win), the hall keeps clear of the notch, XP and coins are readable, the boons sit on top of the knight's card, and FULLSCREEN leaves the phone's menu — PLAY is the way in",
+    "A phone's first tap starts the music and the narrator's welcome (a touch counts at the tap's end); PLAY is a proper dialog and INSTALL works more than once",
+    "The 3D background draws at no more than 2x pixel density on sharp phone screens (cooler, smoother)",
+    "Export Save and Import Save open as dialogs; the Great Hall's dot on EQUIPMENT lights when something can be forged (it used to light ALCHEMY)",
+    "Fixes: a failed load says so and a tap retries; a room change on a flat background waits for the painting; music muted during its first load stays silent; a rare freeze after an effect error; the equipment rows' styles"
+  ],
+  "0.00208": [
+    "Phones play: hold your phone sideways — one line of big cards, Heavy Attack and Drink Potion under the knight, a one-line log, the corner buttons behind ☰, and PLAY / INSTALL before the title for the full screen",
+    "The Great Hall on a phone: a strip of your stats and TRAIN, ALCHEMY and EQUIPMENT as three stacked sheets — tap a tab or a sheet's edge to lift it; a green dot marks a sheet with something to buy",
+    "The boons' icons sit on top of the knight's card on a phone; the shrine and treasure rooms fit the shortest screens"
+  ],
+  "0.00207": [
+    "The Great Hall's panels fit a laptop screen again without a scrollbar (0.00205's tablet budget was too generous on the desktop)"
+  ],
+  "0.00206": [
+    "Low on health with no potion left, Retreat with Loot pulses red after a cleared room and Push Deeper stays plain (drink one and it flips back)",
+    "Attack buttons breathe faintly in red while it is your move — the recharged Heavy Attack no longer glows alone"
+  ],
+  "0.00205": [
+    "Tablets are in: the game plays on an iPad or Android tablet held sideways (phones still get the notice) — tap-sized buttons, no double-tap zoom, no hotkey hints on touch, the Great Hall fits a 1024-wide screen, the corner buttons keep clear of the cards",
+    "Add the game to your home screen for a fullscreen, landscape app (Safari's Share, Add to Home Screen; Chrome's Install)",
+    "The play stats name iPads, iPhones and Android devices as themselves (an iPad used to read as macOS)"
+  ],
+  "0.00204": [
+    "Potions are cheaper: the first costs 10 coins, the second 20, the third 25, then 5 more each — and the price starts over after every run"
+  ],
+  "0.00203": [
+    "Heavy Attack glows gold when it is charged again: a bright flare as the charge lands, then a steady breathing halo (its old glow was mostly hidden by the button's own style)"
+  ],
+  "0.00202": [
+    "First steps: the title shows before the castle asks your name (it asks on Enter the Castle), the shrine says its boon lasts this run, and the Great Hall's Descend button pulses while there is nothing to spend yet"
+  ],
+  "0.00201": [
+    "The benchmark no longer asks to run after room 10 (it may come back for testers later)"
+  ],
   "0.00200": [
     "Art Lab: the Vampire Lord's card is twice as wide here too, as in the game since 0.196"
   ],

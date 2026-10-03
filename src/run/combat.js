@@ -10,7 +10,7 @@
 import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
-import { tryRevive } from './runState.js';
+import { tryRevive } from './loot.js';
 
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
@@ -94,13 +94,14 @@ function rollHit(combat, heavy) {
 // SMASH / OVERKILL: a heavy hit whose damage covers EVERY living enemy's
 // remaining HP (2+ enemies) wipes the room in one line — no per-enemy
 // drip, so overpowered players breeze through early rooms. Kill events
-// are silent: the scene still applies loot per enemy. True if it smashed.
+// are silent: the scene still applies loot per enemy. True if it overkilled
+// (the smash phase; 0.00223: the event is `overkill`, as the UI names it).
 function smash(combat, { dmg, heavy }, push) {
   const alive = living(combat);
   if (!heavy || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false;
   for (const e of alive) e.hp = 0; // before the line: its snap shows the wiped room
   // victims: their indices, so every card can burst (0.128)
-  push({ type: 'smash', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
+  push({ type: 'overkill', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
   for (const e of alive) push({ type: 'kill', enemy: e, silent: true });
   return true;
 }

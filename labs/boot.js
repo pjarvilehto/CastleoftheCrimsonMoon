@@ -3,8 +3,12 @@
 // import map that loads every game module under ?v=<build>, then load the
 // lab's script the same way. Without it a browser kept a lab's old script
 // and the game's old modules for ~10 minutes after a deploy (0.186: the
-// Art Lab came up empty and silent). Also a catch-all: an error while the
-// lab loads or runs is written onto the page, never only to the console.
+// Art Lab came up empty and silent). A stylesheet link marked
+// data-versioned is reloaded under ?v=<build> too, before the script
+// (0.00223: the Card and Art labs drew the game's new modules against a
+// cached old styles.css; the bare href stays as the fallback for an old
+// cached boot.js). Also a catch-all: an error while the lab loads or runs
+// is written onto the page, never only to the console.
 //   <script src="labs/boot.js" data-lab="labs/art/lab.js" data-extra="labs/cards/cardFx.js"></script>
 (function () {
   var me = document.currentScript;
@@ -30,10 +34,21 @@
       im.textContent = JSON.stringify(map);
       document.head.appendChild(im);
     }
-    var s = document.createElement('script');
-    s.type = 'module';
-    s.src = new URL(lab + q, document.baseURI).href;
-    document.body.appendChild(s);
+    function script() {
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = new URL(lab + q, document.baseURI).href;
+      document.body.appendChild(s);
+    }
+    var links = q ? Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"][data-versioned]')) : [];
+    if (!links.length) return script();
+    var left = links.length, done = false;
+    function settle() { if (!done && --left <= 0) { done = true; script(); } }
+    links.forEach(function (link) {
+      link.onload = link.onerror = settle;
+      link.href = new URL(link.getAttribute('href') + q, document.baseURI).href;
+    });
+    setTimeout(function () { if (!done) { done = true; script(); } }, 4000); // (a link that never settles must not hold the lab)
   }
   fetch(new URL('assets/data/build.json?t=' + Date.now(), document.baseURI).href, { cache: 'no-store' }) // (0.00197: past the CDN's copy too)
     .then(function (r) { return r.json(); })

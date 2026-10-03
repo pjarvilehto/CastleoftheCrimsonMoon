@@ -19,7 +19,7 @@ import { createRun, enterNextRoom, drinkPotion, settleRun } from '../../run/runS
 import { shareStats } from '../../meta/telemetry.js';
 import { getProfile, markVictorySeen } from '../../meta/profile.js';
 import { createCombat, playerAttack, canHeavy, useHeavy, heavyTarget } from '../../run/combat.js';
-import { logLine, itemName } from '../hud.js';
+import { logLine, itemName, markWayOn } from '../hud.js';
 import { deathFlash, tickUp } from '../fx.js';
 import { createPlayback } from '../combatPlayback.js';
 import { combatSfx } from '../combatSfx.js';
@@ -35,6 +35,7 @@ import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
+import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
@@ -46,7 +47,7 @@ export function dungeonScene() {
   let currentRoot = null;
   let shownCoins = 0;    // animated HUD counter values (tick up to reality)
   let shownXp = 0;
-  let buffBar = null;    // bottom-left shrine blessing bar
+  let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
 
@@ -62,6 +63,7 @@ export function dungeonScene() {
     onFx: (fx) => fx && playFx(fx, fxCtx),
     onSfx: (item) => combatSfx(item, fxCtx), // stereo + timed to the blow (0.107)
     onVo: (id) => narrate(id, { delayMs: DATA.audio.narration.combatDelayMs }), // the narrator, just after the line's sound (0.161)
+    onDeath: (i) => ui?.battle.whenGone(i), // the fallen card's leaving and the restack are a step of their own (0.00220)
   });
   const fxCtx = fxContext(() => ui); // what effects can touch (ui/battleRoom.js)
 
@@ -138,7 +140,7 @@ export function dungeonScene() {
         // 0.080: potions persist, so topping up between rooms is allowed
         // (after a win) — never while dead or mid-playback.
         if ((combat.over && !combat.victory) || playback.isPrinting()) return;
-        const sip = drinkPotion(run);
+        const sip = drinkPotion(run, !combat.over); // (between rooms: no Infusion armor the next room would discard, 0.00223)
         if (sip) {
           combatSfx({ sfx: 'heal', fx: { kind: 'heal', to: 'player' } }, fxCtx);
           narrate('potion');
@@ -164,7 +166,7 @@ export function dungeonScene() {
       logEl,
       proceed);
     logEl.className = 'docked';
-    logEl.scrollTop = logEl.scrollHeight;
+    battle.fit(); // (the line is in #app now: its card numbers go on #app too, for the phone's strip and boons)
     root.append(buffBar);
     updateBuffs(buffBar, run.buffs);
     ui = { root, battle, player: battle.player, enemies: battle.enemies, proceed, layer };
@@ -186,6 +188,8 @@ export function dungeonScene() {
     } else if (!showProceed && ui.proceed.children.length) {
       ui.proceed.innerHTML = '';
     }
+    // Low with nothing to drink: Retreat pulses red and Push Deeper is plain (hud.js markWayOn, 0.00206) — on every update, since a potion drunk after the win changes the advice.
+    if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
   }
 
   // ---- shrine: panel layout (shrineUI.js) ----
@@ -283,7 +287,9 @@ export function dungeonScene() {
 
   function endRun(root, outcome) {
     run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
-    shareStats(settleRun(run, outcome)); // play stats (0.102)
+    const settled = settleRun(run, outcome);
+    keepReport(runReport(settled)); // the device report rides with this upload (0.00225)
+    shareStats(settled); // play stats (0.102)
     go('runEnd', run, outcome);
   }
 }

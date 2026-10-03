@@ -1,8 +1,9 @@
 // audio/sfx.js — one-shot sound effects. Short clips fired from game events
 // (attacks, clicks, transitions, loot, death...), gesture-gated like
-// music.js: the shared AudioContext unlocks on the first pointerdown/keydown
-// (initSfx from main.js). Mute persists separately from music
-// ('castle-sfx-muted'). Without Web Audio (tests) everything is a no-op.
+// music.js: the shared AudioContext unlocks on the first gesture (see
+// audioCore.js GESTURE_EVENTS; initSfx from main.js). SOUND: OFF persists
+// separately from music (shared/prefs.js mutePref, 'castle-sfx-muted').
+// Without Web Audio (tests) everything is a no-op.
 //
 // 0.107 (the audio pass):
 //   - every clip has a loudness trim (assets/data/audio.json clips) and
@@ -24,9 +25,8 @@ import { hasAudio, ensureCtx, decode, onFirstGesture, cached } from './audioCore
 import { mixer, sfxInput, setBusMuted, duckMusic } from './mixer.js';
 import { dbToGain, planVoice, planVariation } from './audioMath.js';
 import { playSynth } from './synth.js';
-import { getPref, setPref } from '../shared/prefs.js';
+import { mutePref } from '../shared/prefs.js';
 
-const MUTE_KEY = 'castle-sfx-muted';
 // The sound registry (0.118): assets/data/audio.json `clips` — per name a
 // file or `synth` (audio/synth.js), its trim, and stinger / jitter flags.
 const clip = (name) => DATA.audio.clips[name] ?? null;
@@ -34,13 +34,13 @@ const clip = (name) => DATA.audio.clips[name] ?? null;
 let ctx = null;
 const buffers = {}; // name -> Promise<AudioBuffer> (clips are tiny; all stay decoded)
 let voices = [];    // sounding / scheduled: { name, t0, t1, stinger, stop(t) }
-let muted = getPref(MUTE_KEY) === '1';
-setBusMuted('sfx', muted);
+const mute = mutePref('castle-sfx-muted');
+setBusMuted('sfx', mute.on);
 
 const bufferFor = (name) => cached(buffers, name, () => decode(clip(name).file));
 
 function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
-  if (muted) return;
+  if (mute.on) return;
   const A = DATA.audio;
   const t = Math.max(at, ctx.currentTime);
   voices = voices.filter((v) => v.t1 > ctx.currentTime);
@@ -103,7 +103,7 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0 }) {
 // (or when muted) it silently drops — effects are cosmetic, never queued.
 export function sfx(name, opts = {}) {
   const c = clip(name);
-  if (!c || !ctx || muted) return;
+  if (!c || !ctx || mute.on) return;
   const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
   if (c.synth) {
     try { start(name, null, at, opts); } catch { /* audio must never break gameplay */ }
@@ -123,13 +123,12 @@ export function transitionSfx() {
   sfx(T.clip, { delayMs: Math.max(0, T.peakAtMs - clip(T.clip).peakMs) });
 }
 
-export function isMuted() { return muted; }
+export const isMuted = () => mute.on;
 
 export function toggleMuted() {
-  muted = !muted;
-  setPref(MUTE_KEY, muted ? '1' : '0');
-  setBusMuted('sfx', muted);
-  return muted;
+  const m = mute.toggle();
+  setBusMuted('sfx', m);
+  return m;
 }
 
 // Called once from main.js: the first gesture anywhere unlocks the context
@@ -139,7 +138,7 @@ export function initSfx() {
   onFirstGesture(() => {
     ctx = ensureCtx();
     mixer();
-    ctx.resume?.();
+    ctx.resume?.().catch?.(() => {});
     for (const [name, c] of Object.entries(DATA.audio.clips)) if (c.file) bufferFor(name).catch(() => {});
   });
 }

@@ -75,12 +75,21 @@ const LINES = DATA.narration.lines;
   const mx = await import('../../src/audio/mixer.js');
   const { dbToGain } = await import('../../src/audio/audioMath.js');
   ok('narrator: on by default, the toggle persists', nar.isNarratorMuted() === false && nar.toggleNarrator() === true
-    && localStorage.getItem('castle-narration-muted') === '1' && nar.toggleNarrator() === false);
-  nar.initNarrator();
+    && localStorage.getItem('castle-narration-muted') === '1');
+  const fetched = []; const inner = globalThis.fetch;
+  globalThis.fetch = (url) => { fetched.push(String(url)); return inner(url); };
+  const voFetched = () => fetched.filter((u) => u.includes('assets/audio/vo/'));
+  nar.initNarrator(); // with NARRATOR: OFF
   fa.gesture();
   const ctx = fa.ctx();
   ctx.decodeAudioData = async () => ctx.createBuffer(1, 2 * 48000, 48000); // 2 s takes
   await sleep(10);
+  ok('NARRATOR: OFF at the first gesture downloads no take (0.00223)', voFetched().length === 0);
+  const takeCount = Object.values(LINES).flat().length;
+  nar.toggleNarrator(); nar.narrate('descent_begin'); // ON: the takes warm; a line asked for in the same tick
+  await sleep(10);
+  ok('...ON warms every take, and a line asked for meanwhile goes ahead of them (the pool)', nar.isNarratorMuted() === false && voFetched().length === takeCount
+    && voFetched()[2]?.includes('vo_descent_begin_'), voFetched().slice(0, 3).join(' '));
   const started = () => ctx.started.filter((s) => s.kind === 'buffer' && s.buffer?.duration === 2 && s.started[2] === undefined); // the narrator's (a music loop starts with a duration)
   const gainOf = (src) => src.outs[0]?.gain?.value;
   nar.narratorRun();
@@ -107,11 +116,45 @@ const LINES = DATA.narration.lines;
   for (let i = 0; i < 4; i++) nar.narrate('treasure_enter');
   await sleep(10);
   ok('lines that would wait longer than maxWaitS are dropped', started().length < n1 + 4 && started().every((s) => s.started[0] - 103 <= N.maxWaitS + 1e-9));
+
+  // SOUND: OFF (0.00223): nothing to hear, so no take is spent and the music is not ducked
+  mx.setBusMuted('sfx', true);
+  ctx.currentTime = 150;
+  const nS = started().length, nD = mx.mixer().duck.gain.events.length;
+  ok('SOUND: OFF — the moment counts, no take plays, no duck', nar.narrate('boss_enter') === true && (await sleep(10), started().length === nS && mx.mixer().duck.gain.events.length === nD));
+  mx.setBusMuted('sfx', false);
+
+  // a line dropped for the wait gives its once-per rule back (0.00223)
+  ctx.currentTime = 160; nar.narratorRun();
+  nar.narrate('boss_enter'); nar.narrate('shrine_enter'); // 2 x (2 s + the gap) queued: a third would wait past maxWaitS
+  const nU = started().length;
+  ok('a line dropped for the wait keeps its once per run', nar.narrate('new_record') === true && (await sleep(10), started().length === nU + 2)
+    && (ctx.currentTime = 170, nar.narrate('new_record') === true) && (await sleep(10), started().length === nU + 3));
+  const rnd = Math.random; Math.random = () => 0; // (the forge's chance roll always passes)
+  ctx.currentTime = 180;
+  nar.narrate('boss_enter'); nar.narrate('shrine_enter');
+  const nF = started().length;
+  ok('...and its once per session', nar.narrate('forge') === true && (await sleep(10), started().length === nF + 2)
+    && (ctx.currentTime = 190, nar.narrate('forge') === true) && (await sleep(10), started().length === nF + 3)
+    && (ctx.currentTime = 195, nar.narrate('forge') === false)); // (heard once: the session rule holds)
+  Math.random = rnd;
+
   ctx.currentTime = 200;
-  nar.toggleNarrator();
+  nar.narrate('retreat'); await sleep(10);
+  const playing = started().at(-1);
+  nar.toggleNarrator(); // OFF
+  ok('NARRATOR: OFF stops the line playing (0.00223)', typeof playing?.stopped === 'number' && playing.outs[0].gain.events.some((e) => e[0] === 'target' && e[1] === 0));
   const n2 = started().length;
   ok('NARRATOR: OFF — the moment still counts, nothing plays', nar.narrate('descent_begin') === true && (await sleep(10), started().length === n2));
-  nar.toggleNarrator();
+  nar.toggleNarrator(); // ON
+  let release; const decode2s = ctx.decodeAudioData;
+  ctx.decodeAudioData = () => new Promise((r) => { release = () => r(ctx.createBuffer(1, 2 * 48000, 48000)); });
+  nar.narrate('retreat'); await sleep(1); // its decode held open
+  nar.toggleNarrator(); // OFF while it decodes
+  release(); await sleep(10);
+  ok('...and drops a line still decoding when it came', started().length === n2);
+  ctx.decodeAudioData = decode2s;
+  nar.toggleNarrator(); // ON
   ok('an unknown line is ignored', nar.narrate('nope') === false);
   ok('no audio errors', ctx.errors.length === 0, ctx.errors.join('; '));
 
@@ -133,7 +176,7 @@ const LINES = DATA.narration.lines;
   const run = { maxHp: 1000 };
   const c = { over: false, victory: false, isBoss: false };
   ok('OVERKILL / multi-kill (SMASH) / mega crit / revive / summon map to their lines',
-    voFor({ type: 'smash' }, { run, combat: c }) === 'overkill' && voFor({ type: 'multi' }, { run, combat: c }) === 'smash'
+    voFor({ type: 'overkill' }, { run, combat: c }) === 'overkill' && voFor({ type: 'multi' }, { run, combat: c }) === 'smash'
     && voFor({ type: 'atk', megaCrit: true }, { run, combat: c }) === 'mega_crit' && voFor({ type: 'atk', crit: true }, { run, combat: c }) === undefined
     && voFor({ type: 'revive' }, { run, combat: c }) === 'revive' && voFor({ type: 'summon' }, { run, combat: c }) === 'boss_summon');
   ok('the room cleared: a line, except after a boss (which has its own)', voFor({ type: 'sys' }, { run, combat: { over: true, victory: true, isBoss: false } }) === 'room_cleared'
@@ -156,7 +199,7 @@ const LINES = DATA.narration.lines;
     && d.includes("records.deaths === 0) narrate('first_death')") && d.includes("!maybeShowVictory() && run.room.isBoss) narrate('boss_slain')"));
   ok('the title greets on the first gesture; the hall after a run; a level, the forge', read('src/ui/scenes/titleScene.js').includes("armOnGesture('title_welcome')")
     && read('src/ui/scenes/hubScene.js').includes("if (opts.fromRun) narrate('hall_return')") && read('src/ui/scenes/runEndScene.js').includes("go('hub', { fromRun: true })")
-    && read('src/ui/scenes/hubScene.js').includes("> lv) narrate('level_up')") && read('src/ui/scenes/hubScene.js').includes("narrate('forge')"));
+    && read('src/ui/hubSections.js').includes("> lv) narrate('level_up')") && read('src/ui/hubSections.js').includes("narrate('forge')"));
   ok('a retreat, the victory, a boon, a chest, a relic from the reliquary', read('src/ui/scenes/runEndScene.js').includes("narrate('retreat')") && read('src/ui/victoryModal.js').includes("narrate('victory')")
     && read('src/ui/shrineUI.js').includes("narrate('shrine_take')") && read('src/ui/treasureUI.js').includes('narrate(`chest_${kind}`)') && read('src/ui/treasureUI.js').includes("narrate('relic_found')"));
   const m = read('src/main.js');

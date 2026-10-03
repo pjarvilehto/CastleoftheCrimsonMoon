@@ -5,7 +5,7 @@
 // Descriptor shape: { kind, from?, to?, dmg?, crit?, heavy?, amount?, share? }
 //   share: a hit on the knight / his max HP (sizes the big-hit sway)
 //   from / to: an enemy index, or 'player'
-//   kinds: attack, hit, dodge, heal, smash, multi, revive, die, enter, deal, summon
+//   kinds: attack, hit, dodge, heal, overkill, multi, revive, die, enter, deal, summon
 //   (enter = the room is built: the units wait unseen; deal = the windows are
 //   back: the cards are dealt in — scene.js whenWindowsBack, 0.184)
 //
@@ -22,7 +22,8 @@
 import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
-import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep } from './fxParts.js';
+import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
+import { markActivity } from '../core/perfSpans.js';
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
@@ -35,7 +36,7 @@ export function fxFor(ev, who = {}) {
     case 'dmg': return { kind: 'attack', from: ev.source, to: 'player', dmg: ev.taken, share: who.maxHp ? ev.taken / who.maxHp : 0 };
     case 'dodge': return { kind: 'dodge', from: ev.source, to: 'player' };
     case 'heal': return { kind: 'heal', to: 'player', amount: ev.healed };
-    case 'smash': return { kind: 'smash', dmg: ev.dmg, victims: ev.victims ?? [] };
+    case 'overkill': return { kind: 'overkill', dmg: ev.dmg, victims: ev.victims ?? [] };
     case 'multi': return { kind: 'multi' };
     case 'revive': return { kind: 'revive', to: 'player' };
     case 'summon': return { kind: 'summon', from: ev.source, to: ev.target };
@@ -63,6 +64,7 @@ export const strikeMs = (fx) => (fx?.heavy ? LUNGE_MS * 1.3 : LUNGE_MS) * STRIKE
 
 // Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer }
 export function playFx(fx, ctx) {
+  markActivity(fx.kind); // a stall's label in the device report (0.00225)
   switch (fx.kind) {
     case 'attack': return attack(fx, ctx);
     case 'hit': return hit(ctx.unit(fx.to), fx, 0, ctx);
@@ -72,7 +74,7 @@ export function playFx(fx, ctx) {
     case 'dodge': return dodge(fx, ctx);
     case 'heal': return heal(fx, ctx);
     case 'revive': return revive(ctx);
-    case 'smash': return overkill(fx, ctx);
+    case 'overkill': return overkill(fx, ctx);
     case 'multi': shake(ctx, 1.1); return bgSway(1.2, 1);
     case 'summon': return summon(fx, ctx);
     default: return undefined;
@@ -84,31 +86,45 @@ const OVERKILL_STAGGER_MS = 70;
 // OVERKILL (0.106): one blow wipes the room — the mega-crit treatment across
 // the whole enemy line: a huge number + caption, a hard shake, the widest
 // sway, and a red-hot flash lighting the scene where they stood.
+// The box around a set of rects, empty ones dropped (a fallen enemy's unit
+// has left the row since 0.00216 and its detached card reads 0x0 — the
+// banner and the flash used to be placed from those; 0.00223). null when
+// nothing is left.
+export function unionRect(rects) {
+  const live = rects.filter((r) => r && r.width > 0 && r.height > 0);
+  if (!live.length) return null;
+  const left = Math.min(...live.map((r) => r.left)), top = Math.min(...live.map((r) => r.top));
+  const right = Math.max(...live.map((r) => r.right ?? r.left + r.width)), bottom = Math.max(...live.map((r) => r.bottom ?? r.top + r.height));
+  return { left, top, width: right - left, height: bottom - top };
+}
+// The victims' cards, read once (the sprays take these rects too).
+export const overkillRects = (fx, ctx) => (fx.victims ?? []).map((i) => ctx.unit(i)?.card?.getBoundingClientRect?.() ?? null);
+export const overkillArea = (fx, ctx) => unionRect(overkillRects(fx, ctx));
 function overkill(fx, ctx) {
   shake(ctx, 2);
   bgSway(2, 1);
-  const rects = [];
-  for (let i = 0; ctx.unit(i); i++) { const r = ctx.unit(i).card?.getBoundingClientRect?.(); if (r) rects.push(r); }
-  if (!rects.length) return;
-  const left = Math.min(...rects.map((r) => r.left)), right = Math.max(...rects.map((r) => r.right));
-  const top = Math.min(...rects.map((r) => r.top)), bottom = Math.max(...rects.map((r) => r.bottom));
-  const area = { left, top, width: right - left, height: bottom - top };
+  const rects = overkillRects(fx, ctx);
+  const area = unionRect(rects);
+  if (!area) return;
   bgLight('overkill', area);
   floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!');
   // every enemy the blow wiped bursts as a kill and takes the kick, rippling down the line (0.128, 0.183)
-  (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
+  // (0.00222: each spray takes the rect read above — a getBoundingClientRect in its own later task was a forced layout per victim)
+  (fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[n]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }, n * OVERKILL_STAGGER_MS));
 }
 
 function attack(fx, ctx) {
   const a = ctx.unit(fx.from);
   const d = ctx.unit(fx.to);
+  // the defender's rects once, before any write (0.00223: each printed line forced ~5 layouts — reads interleaved with the animations' writes)
+  const rd = d?.el?.getBoundingClientRect?.() ?? null, rc = d?.card?.getBoundingClientRect?.() ?? null;
   const dur = fx.heavy ? LUNGE_MS * 1.3 : LUNGE_MS;
   const strike = strikeMs(fx);
   const stop = fx.crit || fx.heavy ? HITSTOP_MS : 0;
   if (can(a?.el) && can(d?.el) && !reduced()) {
     // Lunge a slice of the way toward the target: anticipation (pull
     // back) -> strike -> recover.
-    const ra = a.el.getBoundingClientRect(), rd = d.el.getBoundingClientRect();
+    const ra = a.el.getBoundingClientRect();
     const toward = (rd.left + rd.width / 2) - (ra.left + ra.width / 2);
     const reach = Math.sign(toward) * Math.min(Math.abs(toward) * 0.14, ra.width * (fx.heavy ? 0.5 : 0.35));
     const lunge = a.el.animate([
@@ -120,7 +136,7 @@ function attack(fx, ctx) {
     // Hit-stop: freeze the attacker at the moment of impact.
     if (stop) setTimeout(() => { lunge.pause(); setTimeout(() => lunge.play(), stop); }, strike);
   }
-  hit(d, fx, strike, ctx, stop);
+  hit(d, fx, strike, ctx, stop, rd, rc);
   // The player's big blows shake the fighters and kick the camera; crits
   // shove the whole background along the blow, left -> right (0.092).
   if (fx.from === 'player' && (fx.heavy || fx.crit)) {
@@ -158,13 +174,17 @@ function kick(u, power, away, delay = 0) {
 
 // Defender: knockback shake + flash + floating number, after `delay` ms
 // (the lunge's strike moment); the knockback waits out any hit-stop.
-function hit(u, fx, delay, ctx, stop = 0) {
+// re / rc: the unit's and the card's rects when the caller read them
+// (attack() does, before its writes); a card still being dealt may move
+// between the print and the strike — accepted.
+function hit(u, fx, delay, ctx, stop = 0, re = null, rc = null) {
   if (!u) return;
   const away = u === ctx.unit('player') ? -1 : 1; // knocked back, away from the attacker's side
   const M = DATA.cards.motion;
+  re ??= u.el?.getBoundingClientRect?.() ?? null; rc ??= u.card?.getBoundingClientRect?.() ?? null;
   kick(u, fx.mega || fx.crit ? M.critKick : fx.heavy ? M.heavyKick : 1, away, delay + stop);
-  if (can(u.el) && !reduced()) {
-    const k = (fx.heavy ? 1.6 : 1) * u.el.getBoundingClientRect().width * 0.03;
+  if (can(u.el) && !reduced() && re) {
+    const k = (fx.heavy ? 1.6 : 1) * re.width * 0.03;
     u.el.animate([
       { transform: 'translateX(0)' },
       { transform: `translateX(${away * k}px)` },
@@ -178,16 +198,17 @@ function hit(u, fx, delay, ctx, stop = 0) {
     const pre = base === 'none' ? '' : base;
     u.portrait.animate([
       { filter: `${pre} brightness(2.6) saturate(0.2)` },
-      { filter: `${pre} sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.15)`, offset: 0.35 },
+      { filter: `${pre} ${HIT_TINT}`, offset: 0.35 },
       { filter: base },
     ], { duration: 260, delay, easing: 'ease-out' });
   }
-  if (fx.dmg > 0) setTimeout(() => spray(u, away, fx.heavy || fx.crit ? 1.5 : 1), delay);
+  if (fx.dmg > 0) setTimeout(() => spray(u, away, fx.heavy || fx.crit ? 1.5 : 1, false, rc), delay);
   if (fx.dmg > 0) barFlash(u, 'damage', delay);
   if (fx.dmg > 0) {
     const cls = fx.mega ? 'fx-crit fx-mega' : fx.crit ? 'fx-crit' : fx.thorns ? 'fx-thorns' : 'fx-dmg';
-    floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.mega ? 'MEGA CRIT!' : fx.crit ? 'CRIT!' : null); // 0.095: CRIT! caption
+    floatNumber(ctx, u, `-${fx.dmg}`, cls, delay, fx.mega ? 'MEGA CRIT!' : fx.crit ? 'CRIT!' : null, rc); // 0.095: CRIT! caption
   }
+  return rc;
 }
 
 // Enemy swings and misses: the lunge still happens, the knight side-steps.
@@ -284,7 +305,7 @@ function enter(ctx) {
 // cards dealt to a table, the enemies from the right, staggered, the
 // player from the left; the glint crosses each as it turns.
 function deal(ctx) {
-  if (reduced()) return;
+  if (reduced()) { for (const [u] of lineUp(ctx)) if (can(u?.el)) u.el.style.opacity = ''; return; } // motion may have been reduced since enter() hid them (0.00223)
   const M = DATA.cards.motion, G = DATA.cards.glint;
   for (const [u, side, i] of lineUp(ctx)) {
     if (!can(u?.el)) continue;

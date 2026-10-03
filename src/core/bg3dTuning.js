@@ -6,6 +6,7 @@
 
 import { getJsonPref, setJsonPref, removePref } from '../shared/prefs.js';
 import { DATA } from '../shared/data.js';
+import { deviceBlock } from '../shared/platform.js';
 
 // ?debug tuning sliders (ui/bgTuner.js, 0.084) adjust these live; "Save"
 // keeps them in this browser's localStorage (they apply here even without
@@ -22,9 +23,12 @@ export function storeLive(values) {
   else { live = {}; removePref(SAVE_KEY); }
 }
 
-export function tuning(file) {
+// device (0.00222): 'phone' takes parallax.phone's knobs over the base (the
+// phone power profile, shared/platform.js deviceBlock); the per-file
+// overrides and the saved sliders still come on top.
+export function tuning(file, device) {
   const p = DATA.backgrounds.parallax;
-  return { ...p, ...(p.overrides?.[file] ?? {}), ...live };
+  return { ...deviceBlock(p, device), ...(p.overrides?.[file] ?? {}), ...live };
 }
 
 // Depth map by naming convention, unless backgrounds.json parallax.depthFiles

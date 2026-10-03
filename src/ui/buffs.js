@@ -1,5 +1,6 @@
-// ui/buffs.js — the bottom-left buff bar (shrine blessings): icon with
-// a short label underneath (full text on hover). Lives outside the panel
+// ui/buffs.js — the buff bar (shrine blessings; bottom-left, on a phone on
+// top of the knight's card): icon with a short label underneath (full text
+// on hover — no touch path yet, backlog). Lives outside the panel
 // so per-tick combat re-renders can't touch it. 0.096: compact equal
 // cells, and the same boon twice is one icon with a ×2 badge.
 

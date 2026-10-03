@@ -1,13 +1,14 @@
 // tools/test/combat.test.mjs — combat engine + the battle line: attacks, spill, SMASH, death, playback, animation, summons.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, transitionTo, createRun, generateRoom, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync, withSeedAsync } from './harness.mjs';
 
 fresh();
 
 // T4: combat attack kills something, log drips (default profile needs
-// a few swings — keep attacking until the first kill lands)
-{
+// a few swings — keep attacking until the first kill lands; seeded since 0.00223)
+{ // (0.00223: under a seed — the walk below is one fight, the same every run; the order of the Math.random calls is part of it)
+await withSeedAsync(4, async () => {
   show(dungeonScene()); // (was entered by T3 before the 0.098 split)
   await sleep(1100);
   let killed = false;
@@ -46,6 +47,7 @@ fresh();
     }
     ok('T4 death settled (end screen mounted, no late timers)', settled);
   }
+});
 }
 
 // T7: multi-kill spill — heavy attacks only (0.049: basic attacks are
@@ -107,7 +109,7 @@ fresh();
   const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
   const evs = playerAttack(cb, 0, true);
   const kills = evs.filter((e) => e.type === 'kill');
-  ok('smash wipes room in one silent event', evs.some((e) => e.type === 'smash')
+  ok('OVERKILL wipes room in one silent event', evs.some((e) => e.type === 'overkill')
     && kills.length === 3 && kills.every((e) => e.silent)
     && !evs.some((e) => e.type === 'atk' || e.type === 'spill' || e.type === 'multi')
     && cb.over && cb.victory && cb.enemies.every((e) => e.hp === 0));
@@ -135,8 +137,10 @@ fresh();
   const { el: mkEl } = await import('../../src/core/dom.js');
   const log = mkEl('div', {});
   for (let i = 0; i < 260; i++) logLine(log, `line ${i}`);
-  ok('combat log capped at 200 lines', log.children.length === 200 && log.children[0].textContent.includes('line 60'));
   const css = readFileSync('styles.css', 'utf8');
+  ok('combat log capped at 200 lines, the newest first (0.00222: a reversed column, no scrollTop write per line)', log.children.length === 200 && log.children[0].textContent.includes('line 259') && log.children[199].textContent.includes('line 60')
+    && !readFileSync('src/ui/hud.js', 'utf8').includes('scrollTop') && !readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('scrollTop') && !readFileSync('src/ui/shrineUI.js', 'utf8').includes('scrollTop')
+    && /#combat-log \{[^}]*flex-direction: column-reverse/.test(css) && css.includes('html.phone #combat-log.docked > :not(:first-child) { display: none; }'));
   ok('enemy row never wraps', /\.enemy-row \{[^}]*flex-wrap: nowrap/.test(css));
   ok('cards size from --card-h', /\.char-card \{[^}]*height: var\(--card-h\)/.test(css) && css.includes('--card-h: min(50vh'));
   ok('the battle line carries --n (ui/battleRoom.js, shared by dungeon and benchmark)', readFileSync('src/ui/battleRoom.js', 'utf8').includes('sizing(enemies.length)') && readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('mountBattle(run, combat') && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('mountBattle(run, combat'));
@@ -185,7 +189,7 @@ fresh();
     && hits[1].snap.hp === run.hp && hits[0].snap.hp === run.hp + hits[1].taken);
   const big = createRun(); big.stats.dmg = 500; big.stats.crit = 0;
   const cb2 = createCombat(big, { number: 1, kind: 'combat', enemies: [rat('A'), rat('B')] });
-  const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'smash');
+  const sm = playerAttack(cb2, 0, true).find((e) => e.type === 'overkill');
   ok('SMASH snapshot shows the wiped room', sm && sm.snap.enemies.every((h) => h === 0));
   ok('the room-wipe line reads OVERKILL (0.095)', sm.text === 'OVERKILL! Everyone dies!');
   const { fxFor } = await import('../../src/ui/combatFx.js');
@@ -201,7 +205,8 @@ fresh();
   scene.enter(registry.app);
   await sleep(50);
   const line = registry.app.all((e) => e.className === 'battle-line')[0];
-  const firstEnemyCard = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0];
+  const cardsAtStart = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'));
+  const enemiesAtStart = cardsAtStart.length;
   const playerHpText = () => registry.app.all((e) => e.className === 'hp-text')[0].textContent;
   const before = playerHpText();
   handleKey('a');
@@ -209,16 +214,17 @@ fresh();
   await sleep(3000); // drain
   const after = playerHpText();
   const lineAfter = registry.app.all((e) => e.className === 'battle-line')[0];
-  ok('battle line is not rebuilt during playback', line === lineAfter
-    && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char'))[0] === firstEnemyCard);
+  ok('battle line is not rebuilt during playback (the cards left are the ones dealt; a fallen one has gone, 0.00216)', line === lineAfter
+    && registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char')).every((c) => cardsAtStart.includes(c)));
   ok('player HP holds until the enemy hit prints', duringFirstLine === before, `${before} / ${duringFirstLine} / ${after}`);
   ok('HP settles on the real value after playback', after.startsWith('HP ') && after.includes(`/`));
-  const deadCards = registry.app.all((e) => e.className && e.className.startsWith('char-card enemy-char') && e.classList.contains('dead'));
-  ok('dead cards keep their portrait node (CSS swaps in the skull)', deadCards.every((c) => c.children.some((k) => k.tagName === 'img')));
-  const css = readFileSync('styles.css', 'utf8');
-  ok('portrait/skull swap is CSS-driven', /\n\.char-card\.dead \.skull \{[^}]*display: block;/.test(css) && /\n\.char-card\.dead \.portrait \{[^}]*display: none;/.test(css));
   // Drain the fight so no timers leak into later tests.
   for (let g = 0; g < 40 && !t().includes('Push Deeper') && !t().includes('YOU DIED'); g++) { handleKey('a'); await sleep(900); }
+  await sleep(1500);
+  // 0.00216: a fallen enemy leaves the row (no skull card), the slots left grow (fit: --n follows the row)
+  const rowNow = registry.app.all((e) => e.className === 'enemy-row')[0];
+  if (rowNow) ok('fallen enemies have left the row (no skull cards) and the line counts the living', rowNow.children.length < enemiesAtStart && !registry.app.all((e) => e.className === 'skull').length
+    && String(lineAfter.attrs.style).includes(`--n:${Math.max(1, rowNow.children.length)}`), `${rowNow.children.length} of ${enemiesAtStart} cards, ${lineAfter.attrs.style}`);
 }
 
 // T48: 0.087 — character animation: every enemy has an idle family with a
@@ -287,7 +293,7 @@ fresh();
   try {
     for (const fx of [{ kind: 'attack', from: 'player', to: 0, dmg: 9, crit: true, heavy: true }, { kind: 'attack', from: 0, to: 'player', dmg: 3 },
       { kind: 'hit', to: 0, dmg: 2, thorns: true }, { kind: 'dodge', from: 0, to: 'player' }, { kind: 'heal', to: 'player', amount: 5 },
-      { kind: 'revive', to: 'player' }, { kind: 'smash', dmg: 99 }, { kind: 'multi' }, { kind: 'enter' }, { kind: 'die', to: 0 }]) playFx(fx, ctx);
+      { kind: 'revive', to: 'player' }, { kind: 'overkill', dmg: 99 }, { kind: 'multi' }, { kind: 'enter' }, { kind: 'die', to: 0 }]) playFx(fx, ctx);
   } catch (e) { threw = e.message; }
   ok('every effect kind is safe without Web Animations', threw === null, threw ?? '');
   ok('bgJolt is a no-op without WebGL', bg3d.bgJolt(1) === undefined);
@@ -383,6 +389,9 @@ fresh();
   const fill = bu.el.all((e) => e.className === 'summon-fill')[0];
   ok('boss card has a summon bar that fills', !!fill && fill.style.width === `${Math.round((200) / cfg.every)}%`);
   ok('regular cards have no summon bar', createEnemyUnit(scaleEnemy('rat', 1), 0, { onAttack() {} }).el.all((e) => e.className === 'summon-line').length === 0);
+  const star = (u) => u.el.all((x) => x.className === 'elite-star' || /^aura/.test(x.className ?? '')).length;
+  const big = { ...sk, maxHp: DATA.difficulty.eliteMinHp + 1, hp: DATA.difficulty.eliteMinHp + 1 };
+  ok('a summon is never elite — no star, no aura — however big it scales; the same card unsummoned is (0.00223)', star(createEnemyUnit(big, 1, { onAttack() {} })) === 0 && star(createEnemyUnit({ ...big, summoned: false }, 1, { onAttack() {} })) === 2 && star(bu) === 2);
   let gone = 0;
   const row = new El('div');
   const su = createEnemyUnit(sk, 1, { onAttack() {}, onGone: () => gone++ });
@@ -444,7 +453,7 @@ fresh();
   // the elite star no longer drops its name below the others.
   const css = readFileSync('styles.css', 'utf8');
   ok('button caps centered via text-box trim (with fallback nudge)', /@supports \(text-box: trim-both cap alphabetic\) \{\s*\.btn-label \{ top: 0; text-box: trim-both cap alphabetic; padding-block: calc\(\(1lh - 1cap\) \/ 2\); \}/.test(css)
-    && css.includes('.btn-label { position: relative; top: 0.15em; }'));
+    && css.includes('.btn-label { position: relative; top: 0.015em; }')); // (0.00226: D-DIN Condensed's metrics)
   ok('elite star stays out of the name line box', /\.elite-star \{[^}]*line-height: 0;/.test(css));
   resetProfile();
 }
@@ -506,15 +515,21 @@ fresh();
 // T68: 0.106 — OVERKILL gets the mega-crit treatment across the enemy line.
 {
   const fx = readFileSync('src/ui/combatFx.js', 'utf8');
-  ok('OVERKILL: banner over the whole enemy line, red-hot flash, big sway', fx.includes("case 'smash': return overkill(fx, ctx);")
+  ok('OVERKILL: banner over the whole enemy line, red-hot flash, big sway', fx.includes("case 'overkill': return overkill(fx, ctx);")
     && fx.includes("floatBanner(ctx, area, `-${fx.dmg}`, 'fx-crit fx-mega fx-overkill', 'OVERKILL!')") && fx.includes("bgLight('overkill', area)")
     && /\.fx-crit\.fx-mega\.fx-overkill \{[^}]*font-size/.test(readFileSync('styles.css', 'utf8'))
     && DATA.backgrounds.parallax.lights.overkill.strength > DATA.backgrounds.parallax.lights.megacrit.strength);
   ok('mega crits: one crit in five (0.106)', DATA.difficulty.combat.megaCritChance === 0.2);
+  // 0.00223: the banner and the flash are placed from the victims' LIVE cards, read once (a fallen unit's detached card reads 0x0 and used to pull the box to the origin)
+  const { unionRect, overkillArea } = await import('../../src/ui/combatFx.js');
+  const rects = [{ left: 800, top: 200, width: 100, height: 100 }, { left: 850, top: 250, right: 1050, bottom: 500, width: 200, height: 250 }, { left: 0, top: 0, width: 0, height: 0 }];
+  const u = unionRect(rects);
+  const area = overkillArea({ victims: [0, 1, 2] }, { unit: (i) => ({ card: { getBoundingClientRect: () => rects[i] } }) });
+  ok('OVERKILL\'s area is the box around the victims\' live cards, empty ones dropped', u.left === 800 && u.top === 200 && u.width === 250 && u.height === 300
+    && JSON.stringify(area) === JSON.stringify(u) && unionRect([null, rects[2]]) === null && overkillArea({ victims: [] }, { unit: () => null }) === null);
 }
 
-// T72: 0.109 — dead enemy cards fade almost away (10%).
-ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacity: 0\.2;/.test(readFileSync('styles.css', 'utf8')));
+// T72: 0.109's faint dead cards went in 0.00216 — a fallen enemy leaves the row (the check above, and 'a fallen summon leaves the row').
 
 // T84: 0.121 — beating the final boss (difficulty.json finalBossRoom) shows
 // the "you've won" dialog once per save; it owns the keys while open, and
@@ -538,7 +553,7 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   DEBUG.invulnerable = true;
   getProfile().stats.power = 5000;
   ok('a new save has not seen the victory', getProfile().victorySeen === false);
-  await killBoss();
+  await withSeedAsync(7, killBoss); // (0.00223: seeded)
   const said = body.textContent;
   ok('victory dialog after the final boss', victoryShown() && said.includes('Victory!') && said.includes('won the game')
     && said.includes('Start a New Game'));
@@ -547,7 +562,7 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   ok('dialog owns the keys', victoryShown() && t().includes('Push Deeper'));
   handleKey('enter');
   ok('Enter closes the victory dialog', !victoryShown() && t().includes('Push Deeper'));
-  await killBoss();
+  await withSeedAsync(8, killBoss);
   ok('victory dialog shows only once', !victoryShown() && t().includes('Push Deeper'));
   Object.assign(d, saved);
   DEBUG.invulnerable = false;
@@ -573,8 +588,45 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   ok('low health + potions: Drink Potion pulses red', btn.classList.contains('active') && btn.classList.contains('active-red'));
   run.potions = 0; upd(low);
   ok('no potions left: no pulse (the bar still glows)', !btn.classList.contains('active') && chip.classList.contains('lowhp'));
+  const bl = readFileSync('src/ui/battleLine.js', 'utf8');
+  ok('the line writes only what changed (0.00223: every tick used to rewrite every card\'s text and classes)', bl.includes('if (hp === lastHp && maxHp === lastMax) return;') && bl.includes('classList.toggle(') && /const setText = /.test(bl));
   const css = readFileSync('styles.css', 'utf8');
-  ok('the low-HP bar glow is styled', css.includes('.lowhp .hpbar { animation: lowhp-bar'));
+  ok('the low-HP bar glow is a breathing layer of its own (0.00222: opacity, never a box-shadow loop)', css.includes('.lowhp .hpbar::after {') && /\.lowhp \.hpbar::after \{[^}]*animation: glow-breathe/.test(css) && !/@keyframes [\w-]+ \{[^}]*box-shadow/.test(css) && !/@keyframes [\w-]+ \{[^}]*\n[^}]*box-shadow/.test(css));
+  ok('...the bar lets the layer show, its text glow is static, and Drink Potion\'s quicker pulse sits on the glow layer (0.00223)', /\.lowhp \.hpbar \{[^}]*overflow: visible/.test(css) && /\.lowhp \{ text-shadow:[^}]*\}/.test(css) && !css.includes('lowhp-pulse')
+    && css.includes('button.active.potion-remind::after { animation-duration: 2.2s; }') && !/button\.active\.potion-remind \{/.test(css));
+  fresh();
+}
+
+// T88: 0.00206 — the way on after a cleared room: Push Deeper pulses, unless
+// the knight is low with no potion left — then Retreat with Loot pulses red
+// and Push Deeper is plain; a potion drunk after the win flips it back. The
+// panel rooms' Retreat (once a boon is taken) follows the same rule. And a
+// live Attack button breathes (its glow layer is CSS, off when disabled).
+{
+  const { markWayOn, shouldRetreat } = await import('../../src/ui/hud.js');
+  const { renderShrineRoom } = await import('../../src/ui/shrineUI.js');
+  const { generateInterlude } = await import('../../src/run/roomGen.js');
+  fresh();
+  const run = createRun();
+  const low = Math.floor(run.maxHp * DATA.difficulty.lowHpShare);
+  const deeper = new El('button'), retreat = new El('button');
+  run.hp = run.maxHp; run.potions = 0; markWayOn(deeper, retreat, run);
+  ok('healthy: Push Deeper pulses, Retreat does not', deeper.classList.contains('active') && !retreat.classList.contains('active'));
+  run.hp = low; run.potions = 1; markWayOn(deeper, retreat, run);
+  ok('low with a potion left: still Push Deeper (Drink Potion is the red one)', deeper.classList.contains('active') && !retreat.classList.contains('active') && !shouldRetreat(run));
+  run.potions = 0; markWayOn(deeper, retreat, run);
+  ok('low with no potion: Retreat pulses red, Push Deeper is plain', !deeper.classList.contains('active') && retreat.classList.contains('active') && retreat.classList.contains('active-red'));
+  run.hp = run.maxHp; markWayOn(deeper, retreat, run);
+  ok('healed after the win: back to Push Deeper', deeper.classList.contains('active') && !retreat.classList.contains('active') && !retreat.classList.contains('active-red'));
+  // the shrine's row, a boon taken
+  const root = new El('div');
+  const room = generateInterlude('shrine', 3, run); room.taken = true;
+  run.hp = low; run.potions = 0;
+  renderShrineRoom(root, run, room, { title: [room.name], logEl: new El('div'), buffBar: new El('div'), coins: 0, xp: 0, onDeeper() {}, onRetreat() {}, refresh() {}, onDeath() {} });
+  const sr = root.all((n) => n.tagName === 'button').find((b) => b.textContent.includes('Retreat'));
+  ok('shrine, low with no potion: Retreat pulses red', sr && sr.classList.contains('active') && sr.classList.contains('active-red'));
+  const css = readFileSync('styles.css', 'utf8');
+  ok('a live Attack breathes (glow layer, opacity only)', css.includes('.enemy-unit .unit-actions button:not(:disabled)::after') && /@keyframes attack-glow \{ 0%, 100% \{ opacity:/.test(css));
   fresh();
 }
 
@@ -608,10 +660,10 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const run = createRun();
   run.stats.dmg = 500; run.stats.crit = 0;
   const cb = createCombat(run, { number: 1, kind: 'combat', isBoss: false, background: 'x.png', name: 'T', enemies: [rat('A'), rat('B'), rat('C')] });
-  const sm = playerAttack(cb, 0, true).find((e) => e.type === 'smash');
+  const sm = playerAttack(cb, 0, true).find((e) => e.type === 'overkill');
   const fx = fxFor(sm, { maxHp: run.maxHp });
   ok('OVERKILL names its victims, and the effect bursts each', sm.victims.join() === '0,1,2' && fx.victims.join() === '0,1,2'
-    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }'));
+    && readFileSync('src/ui/combatFx.js', 'utf8').includes('(fx.victims ?? []).forEach((i, n) => setTimeout(() => { spray(ctx.unit(i), 0, 0, true, rects[n]); kick(ctx.unit(i), DATA.cards.motion.overkillKick, 1); }')); // (0.00222: the rects read once, not per victim; 0.00223: by the victim's place in the list)
 }
 // T90: 0.129 — the particle renderer stays batched and cheap.
 {
@@ -619,8 +671,10 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   ok('particles: batched Path2D buckets, cached flash sprite, dirty-box clear, one canvas per session',
     src.includes('function bucket(buckets, glow, stroke, rgb, a, w = 0)') && src.includes('glowSprite(p.color)')
     && src.includes('c.clearRect(box[0], box[1]') && src.includes('if (!shared) {') && !/\.save\(\)|createRadialGradient\(p\./.test(src));
-  ok('particles: 1.25x resolution, 1x once the background stepped down; crowded bursts thin out',
-    src.includes('bgQualityLevel() > 0 ? 1 : 1.25') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);"));
+  ok('particles: the DPR cap, budget and floor are data (a phone has its own), 1x once the background stepped down; crowded bursts thin out',
+    src.includes('bgQualityLevel() > 0 ? 1 : knobs().dprCap') && src.includes("const THINNABLE = new Set(['streak', 'blob', 'dot']);") && !/\b(450|300|1\.25)\b/.test(src.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''))
+    && DATA.cards.particles.budget === 300 && DATA.cards.particles.phone.budget < DATA.cards.particles.budget && DATA.cards.particles.phone.dprCap === 1
+    && src.includes("canvas.style.opacity = '0'") && src.includes("canvas.style.opacity = ''"));
 }
 // T93: 0.132 — splats (slow fades that overlap on the floor) are drawn one
 // by one with smooth alpha: batched, overlapping splats switched between
@@ -643,9 +697,7 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   Math.random = seeded(42); const b = JSON.stringify(spawnParticles('dust', 0, 0, { kind: 'crit' }));
   Math.random = real;
   ok('particles follow a seeded Math.random', a === b);
-  const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
-  ok('benchmark: crit toggles off while it runs, every debug flag restored after',
-    bs.includes('forceCrit: false, forceMegaCrit: false') && bs.includes('Object.assign(DEBUG, debugWas);'));
+  // (the benchmark's own flags — crits off while it runs, everything restored after — are driven for real in history.test T94)
   const hub = readFileSync('src/ui/scenes/hubScene.js', 'utf8');
   ok('no benchmark ask once a descent has started (it can wait for the art)', hub.includes('leaving = true;') && hub.includes('!leaving && maybeAskBenchmark()'));
 }
@@ -672,4 +724,50 @@ ok('dead enemy cards at 20% opacity (0.112)', /\n\.char-card\.dead \{[^}]*opacit
   const cssL = readFileSync('styles.css', 'utf8');
   ok('portraits are not draggable, the battle line cancels drags, its text is unselectable',
     u.portrait.attrs.draggable === 'false' && prevented === 1 && cssL.includes('.battle-line, .unit-actions { user-select: none;') && cssL.includes('.portrait { -webkit-user-drag: none;'));
+}
+
+// T98: 0.00220 (the owner's call) — a death is a playback step of its own:
+// after the death line's sink tick the log waits for the card to leave the
+// row (onDeath's promise), lets the row close up for combatPacing.restackMs,
+// and only then prints the next line; deathMaxMs caps the wait (a hidden
+// tab pauses animations); a reset() while waiting never resumes the old room.
+{
+  const { createPlayback } = await import('../../src/ui/combatPlayback.js');
+  const quiet = { onFx: () => {}, onSfx: () => {}, onVo: () => {} };
+  const log = new El('div');
+  const lines = () => log.children.map((c) => c.textContent);
+  const has = (s) => lines().some((x) => x.includes(s));
+  const { restackMs, deathMaxMs } = DATA.difficulty.combatPacing;
+  const delay = DATA.difficulty.logDelayMs;
+  let leave; const gone = new Promise((r) => { leave = r; });
+  let empty = 0;
+  const pb = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => { empty++; }, onDeath: () => gone });
+  pb.enqueue({ text: 'Rat died!', cls: 'atk', snap: { enemies: [0], hp: 10 }, sink: 0 });
+  pb.enqueue({ text: 'Found 3 coins', cls: 'loot' });
+  pb.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + 10); // the sink tick
+  ok('the death line prints, the card goes down on the next tick, and the next line waits', lines().length === 1 && pb.deadOf(0, 0) === true && pb.isPrinting());
+  await sleep(1500);
+  ok('…for as long as the card is on its way out', lines().length === 1 && pb.isPrinting());
+  leave();
+  await sleep(restackMs - 20);
+  ok('the row closes up for restackMs before the next line', lines().length === 1 && restackMs >= 500);
+  await sleep(40);
+  ok('then the next line prints and the queue drains', lines().length === 2 && (await sleep(delay + 10), empty === 1 && !pb.isPrinting()));
+  const pb2 = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => {}, onDeath: () => new Promise(() => {}) });
+  pb2.enqueue({ text: 'Rat died!', cls: 'atk', sink: 0 }); pb2.enqueue({ text: 'after the cap', cls: 'sys' });
+  pb2.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + deathMaxMs - 50);
+  const held = !has('after the cap');
+  await sleep(100 + restackMs);
+  ok('deathMaxMs caps the wait (an animation that never ends does not hold the fight)', held && has('after the cap') && deathMaxMs >= 2000);
+  let late; const pb3 = createPlayback({ ...quiet, logEl: () => log, onTick: () => {}, onEmpty: () => {}, onDeath: () => new Promise((r) => { late = r; }) });
+  pb3.enqueue({ text: 'Rat died!', cls: 'atk', sink: 0 }); pb3.enqueue({ text: 'stale room', cls: 'sys' });
+  pb3.begin({ enemies: [5], hp: 10 });
+  await sleep(delay + 10);
+  pb3.reset(); // a new room
+  late(); await sleep(restackMs + deathMaxMs + 100);
+  ok('a reset while a card leaves drops the old wait', !has('stale room') && !pb3.isPrinting());
+  ok('the dungeon and the benchmark hand the playback the card\'s leaving (battleRoom.js whenGone)', readFileSync('src/ui/scenes/dungeonScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)')
+    && readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8').includes('onDeath: (i) => ui?.battle.whenGone(i)'));
 }

@@ -22,11 +22,14 @@ fresh();
   const pc = DATA.difficulty.potions;
   resetProfile();
   const p = getProfile();
-  ok('fresh profile: 2/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
-  p.coins = 1000;
+  ok('fresh profile: 3/4 potions', p.potions === pc.startCount && p.potionCap === pc.startCap);
+  p.coins = 1000; p.potions = 2; // (0.00230: the stock starts at 3 — two short of the cap for the ladder below)
   const c0 = potionCost();
-  restockPotion(); restockPotion();
-  ok('potion price is flat', c0 === pc.price && potionCost() === pc.price && p.potions === 4 && p.coins === 1000 - 2 * pc.price);
+  restockPotion(); const c1 = potionCost(); restockPotion();
+  ok('potion price climbs: 10, 20, then 25 and +5 each (0.00204)', c0 === 10 && c1 === 20 && potionCost() === 25 && p.potions === 4 && p.coins === 1000 - 30
+    && p.potionsBought === 2 && potionCost({ potionsBought: 3 }) === 30 && potionCost({ potionsBought: 10 }) === 65 && potionCost({}) === 10);
+  { const { settleRun } = await import('../../src/run/runState.js'); const r = createRun(); settleRun(r, 'retreat'); }
+  ok('the price ladder starts over after a run', getProfile().potionsBought === 0 && potionCost() === 10);
   ok('cannot buy past the cap', restockPotion() === false && p.potions === 4);
   const s0 = satchelCost();
   expandSatchel();
@@ -45,6 +48,16 @@ fresh();
   resetProfile();
   ok('importSave restores coins from code', typeof code === 'string' && importSave(code) === true && getProfile().coins === 777);
   ok('importSave rejects garbage', importSave('not-a-save-code') === false && getProfile().coins === 777);
+  // 0.00223: an unknown item id (a retired item, a foreign code), a foreign forge entry and a numeric string are made whole — settleRun and kill loot used to throw on them
+  const { settleRun, createRun: newRun } = await import('../../src/run/runState.js');
+  const base = JSON.parse(JSON.stringify(getProfile()));
+  const odd = { ...base, equipment: { ...base.equipment, weapon: 'no_such_item', rings: ['x', null] }, forged: { no_such_item: 2, [Object.keys(DATA.items)[0]]: '3' }, stats: { ...base.stats, power: '3' }, potions: 'two' };
+  let threw = null;
+  ok('importSave makes an odd code whole: unknown ids off, numbers numbers, the rest at their defaults', importSave(Buffer.from(JSON.stringify(odd)).toString('base64')) === true && getProfile().equipment.weapon === null
+    && getProfile().equipment.rings[0] === null && !('no_such_item' in getProfile().forged) && getProfile().forged[Object.keys(DATA.items)[0]] === 3 && getProfile().stats.power === 3 && getProfile().potions === 2);
+  try { settleRun(newRun(), 'retreat'); } catch (e) { threw = e; }
+  ok('...and a run settles on it', threw === null, threw && threw.message);
+  resetProfile();
 }
 
 // T17: alchemy tracks — escalating costs, potency drives heal, legacy save migrates
@@ -114,16 +127,16 @@ fresh();
   const p = getProfile();
   p.coins = 0; p.xp = 10000;
   p.equipment = { weapon: null, armor: null, boots: null, rings: [null, null], trinket: null, amulet: null };
-  ok('training is XP-only', statCost(0).xp === 15 && statCost(0).coins === undefined);
+  ok('training is XP-only', statCost(0).xp === DATA.difficulty.statTrainXpBase && DATA.difficulty.statTrainXpBase === 13 && statCost(0).coins === undefined);
   buyStat('power'); // lvl 1, 15xp
-  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 15 && p.stats.power === 1);
+  ok('buyStat spends xp, not coins', p.coins === 0 && p.xp === 10000 - 13 && p.stats.power === 1);
   p.stats.power = 4;
   const r = buyStat('power'); // -> lvl 5 = breakthrough
   ok('breakthrough doubles every 5th level', r === 'breakthrough' && trainedLevel(p, 'power') === 6);
   p.stats.precision = 5; p.stats.endurance = 7; p.stats.vitality = 0;
   const d = derivedStats(p);
-  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 80
-    && d.dmg === 24 && d.maxHp === 400);
+  ok('precision/endurance feed crit/armor (tapered crit)', Math.abs(d.crit - (0.05 + 0.03 * 6)) < 1e-9 && d.armor === 64
+    && d.dmg === 18 && d.maxHp === 400); // (0.00230: +8 armor, +2 damage a level)
 }
 
 // T23: alchemy tracks — base costs, efficiency free drinks, infusion temp armor
@@ -148,6 +161,9 @@ fresh();
   ok('infusion: temp armor applied', sip.armor === 60 && run.tempArmor === 60);
   enterNextRoom(run);
   ok('infusion: temp armor clears next room', run.tempArmor === 0);
+  run.hp = 100; run.potions = 2;
+  const late = drinkPotion(run, false); // between rooms (after the win)
+  ok('infusion: no armor from a potion drunk between rooms (0.00223: it used to arm the knight for a room that never came)', late.armor === 0 && run.tempArmor === 0 && run.hp > 100);
 }
 
 // T24: The Forge — per-item enhancement, escalating cost, derived stats boosted
@@ -181,7 +197,7 @@ fresh();
   const html = t();
   ok('hub: five disciplines', ['Power', 'Vitality', 'Fortune', 'Precision', 'Endurance'].every((n) => html.includes(n)));
   ok('hub: three alchemy tracks', ['Potency', 'Efficiency', 'Infusion'].every((n) => html.includes(n)));
-  ok('hub: xp-only train buttons', html.includes('Train (15xp)'));
+  ok('hub: xp-only train buttons', html.includes('Train (13xp)'));
   ok('hub: scribe removed', !html.includes('Scribe'));
   ok('hub: forge button on equipped item', html.includes('+100c')); // knights_blade T2 lvl0 (T1 gear gets no button since 0.068)
 }
@@ -288,10 +304,10 @@ fresh();
   resetProfile();
   const p = getProfile();
   const r1 = createRun();
-  ok('run draws the stock and cap', r1.potions === 2 && r1.potionCap === 4);
+  ok('run draws the stock and cap', r1.potions === 3 && r1.potionCap === 4);
   r1.hp = 1; drinkPotion(r1);
   settleRun(r1, 'retreat');
-  ok('unused potions come home (retreat)', p.potions === 1);
+  ok('unused potions come home (retreat)', p.potions === 2);
   const r2 = createRun(); r2.potions = 3;
   settleRun(r2, 'death');
   ok('unused potions come home (death)', p.potions === 3);
@@ -312,7 +328,7 @@ fresh();
   const v1 = { ...JSON.parse(JSON.stringify(p)), saveVersion: 1, potions: 7, potionsBought: 5 };
   delete v1.potionCap;
   ok('v1 save migrates: count becomes a full satchel', importSave(Buffer.from(JSON.stringify(v1)).toString('base64'))
-    && getProfile().potionCap === 7 && getProfile().potions === 7 && getProfile().potionsBought === undefined
+    && getProfile().potionCap === 7 && getProfile().potions === 7 && getProfile().potionsBought === 0 // (the v2 step drops the old count; the whole-making puts the 0.00204 field back at its default)
     && getProfile().saveVersion === SAVE_VERSION);
   const v1small = { ...v1, potions: 2 };
   importSave(Buffer.from(JSON.stringify(v1small)).toString('base64'));
@@ -327,7 +343,7 @@ fresh();
   hub.enter(root);
   const txt = root.textContent;
   ok('Great Hall shows Level before Coins', txt.indexOf('Level') !== -1 && txt.indexOf('Level') < txt.indexOf('Coins'));
-  ok('Great Hall shows potions as n/max and the satchel', txt.includes('2/4') && txt.includes('Potion Satchel'));
+  ok('Great Hall shows potions as n/max and the satchel', txt.includes('3/4') && txt.includes('Potion Satchel'));
 }
 
 // T43: 0.081 — Great Hall stat boxes: 3 columns (Level/Coins/XP,
@@ -453,11 +469,12 @@ fresh();
   // Death toll knob
   const { settleRun } = await import('../../src/run/runState.js');
   resetProfile();
+  const toll = DATA.difficulty.deathCoinToll; // (restored after — 0.00223: the test used to put 0.5 back by hand and read the file to check it)
   DATA.difficulty.deathCoinToll = 0.25;
   const dr = createRun(); dr.coins = 100; dr.roomNumber = 3;
   settleRun(dr, 'death');
-  DATA.difficulty.deathCoinToll = 0.5;
-  ok('death toll comes from difficulty.json', dr.coinsLost === 25 && dr.coinsRetrieved === 75 && JSON.parse(readFileSync('assets/data/difficulty.json', 'utf8')).deathCoinToll === 0.5);
+  DATA.difficulty.deathCoinToll = toll;
+  ok('death toll comes from difficulty.json', dr.coinsLost === 25 && dr.coinsRetrieved === 75 && toll > 0 && toll < 1);
   resetProfile();
 
   // Blur gone, small favicon, dead code gone
@@ -487,12 +504,13 @@ fresh();
   ok('efficiency hub line: now and next', /now 50%, next \+0\.\d+%/.test((await import('../../src/ui/hubText.js')).efficiencyDesc()), (await import('../../src/ui/hubText.js')).efficiencyDesc());
   // 0.113: once a level would add < minStep the track is done — MAX, no button, no charge
   getProfile().alchemy.efficiency = 200; getProfile().coins = 1e6;
-  const { canSpendCoins } = await import('../../src/ui/scenes/hubScene.js');
+  const { canSpendCoins, canSpendAlchemy } = await import('../../src/ui/scenes/hubScene.js');
   hubScene().enter(registry.app);
   ok('maxed efficiency: MAX, not trainable, not counted as spendable', lv.alchemyMaxed('efficiency') && !lv.trainAlchemy('efficiency')
     && getProfile().coins === 1e6 && (await import('../../src/ui/hubText.js')).efficiencyDesc().includes('max') && registry.app.textContent.includes('MAX')
     && !lv.alchemyMaxed('potency') && !lv.alchemyMaxed('infusion'));
-  ok('canSpendCoins skips maxed tracks', canSpendCoins.toString().includes('!alchemyMaxed(t) && p.coins >= alchemyCost(t)'));
+  getProfile().alchemy.potency = 1e9; getProfile().alchemy.infusion = 1e9; getProfile().potions = getProfile().potionCap; getProfile().potionCap = DATA.difficulty.potions.maxCap; getProfile().potions = getProfile().potionCap;
+  ok('canSpendCoins skips maxed tracks (0.00209: by behaviour — every track maxed or priced out, the satchel full and maxed: nothing to buy)', !canSpendAlchemy(getProfile()) && !canSpendCoins(getProfile()));
   const { critMultiplier } = await import('../../src/run/combat.js');
   const src = readFileSync('src/run/combat.js', 'utf8');
   ok('crit overflow raises the crit multiplier in combat', src.includes('critMult: tune.critMult + combat.run.stats.critBonus')

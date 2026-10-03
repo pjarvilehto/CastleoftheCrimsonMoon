@@ -6,6 +6,7 @@
 // became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
 import { el } from '../core/dom.js';
+import { DEATH_TINT } from './fxParts.js';
 import { hpBar, rarityClass, isLowHp } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
@@ -33,15 +34,33 @@ function portrait(id, alt, family) {
   img.style.animationDelay = `-${(Math.random() * 6).toFixed(2)}s`;
   return img;
 }
-// The glint (0.183): a second copy of the portrait, bright and masked to a
-// band (styles.css .portrait.glint) that fxParts.js glintSweep sweeps across
-// the figure as the card turns. It runs the same idle loop at the same
-// phase, so it sits on the figure; the 'dead' class hides both.
-function glint(id, family, img) {
+// The glint (0.183): a second copy of the portrait, bright, inside a band
+// (styles.css .glint-band: three cards wide, masked to a soft stripe) that
+// fxParts.js glintSweep slides across the figure as the card turns. The
+// copy runs the same idle loop at the same phase, so it sits on the
+// figure. 0.00222: mounted for the sweep's length only, through the unit's
+// `glint` getter (mountGlint) — six invisible copies used to run their
+// idle loops and blend-plus-filter surfaces all fight long.
+function glintBand(id, family, img) {
   const g = el('img', { class: `portrait glint idle-${family}`, src: ART(id), alt: '', draggable: 'false', 'aria-hidden': 'true' });
   g.style.animationDelay = img.style.animationDelay;
-  return g;
+  return el('div', { class: 'glint-band', 'aria-hidden': 'true' }, g);
 }
+// The unit's band, mounted right after its portrait; unmountGlint takes it
+// away again (the sweep's end, fxParts.js).
+export function mountGlint(u) {
+  if (u.glintEl) return u.glintEl;
+  const band = glintBand(u.id, u.family, u.portrait);
+  const kids = u.card.children;
+  u.card.insertBefore(band, kids[Array.prototype.indexOf.call(kids, u.portrait) + 1] ?? null);
+  u.glintEl = band;
+  return band;
+}
+export function unmountGlint(u) {
+  u.glintEl?.remove();
+  u.glintEl = null;
+}
+const withGlint = (u) => Object.defineProperty(u, 'glint', { get() { return mountGlint(this); }, enumerable: false });
 // --band: the glint's half-width (cards.json), on the unit for its two portraits.
 const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 // The card's frame art (0.195: a layer instead of a ::before, so the shader
@@ -50,12 +69,13 @@ const bandStyle = () => `--band:${DATA.cards.glint.band}%`;
 const frame = () => el('div', { class: 'card-frame' });
 
 // Death collapse (0.087): sink, flash red, fade — then the card turns
-// into the skull. Without the Web Animations API (tests) it's instant.
+// and away. Without the Web Animations API (tests) it's instant.
 const COLLAPSE_MS = 700;
-function collapse(img, done) {
+// u: the unit, whose baseFilter fxParts.js caches on the first hit (0.00222: a getComputedStyle here mid-turn was a forced style resolution per death)
+function collapse(img, done, u = null) {
   if (!img.animate || reducedMotion()) { done(); return; }
-  const base = getComputedStyle(img).filter;
-  const red = `${base === 'none' ? '' : base} sepia(1) saturate(6) hue-rotate(-40deg) brightness(1.3)`;
+  const base = u ? (u.baseFilter ??= getComputedStyle(img).filter) : getComputedStyle(img).filter;
+  const red = `${base === 'none' ? '' : base} ${DEATH_TINT}`;
   img.animate([
     { translate: '0 0', opacity: 1, filter: base },
     { translate: '0 4%', opacity: 1, filter: red, offset: 0.3 },
@@ -63,8 +83,9 @@ function collapse(img, done) {
   ], { duration: COLLAPSE_MS, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
 }
 
-// A fallen summon's whole unit fades out and leaves the row (0.092) —
-// a long boss fight would otherwise fill the line with skulls.
+// A fallen enemy's whole unit fades out and leaves the row (summons since
+// 0.092 — a long boss fight filled the line with skulls; every enemy since
+// 0.00216).
 function vanish(unit, done) {
   const out = () => { unit.remove(); done?.(); };
   if (!unit.animate) { out(); return; }
@@ -83,16 +104,23 @@ function hpLine(cur, max) {
   const text = el('span', { class: 'hp-text' }, `HP ${cur}/${max}`);
   const bar = hpBar(cur, max);
   const line = el('div', { class: 'hp-line' }, text, bar);
+  let lastHp = cur, lastMax = max;
   const set = (hp, maxHp = max) => {
+    if (hp === lastHp && maxHp === lastMax) return; // (0.00223: no write when nothing changed)
+    lastHp = hp; lastMax = maxHp;
     text.textContent = `HP ${hp}/${maxHp}`;
     bar.children[0].style.width = `${Math.max(0, Math.round((hp / maxHp) * 100))}%`;
   };
   return { line, set };
 }
 
-// Class toggling that also works in the smoke-test DOM shim (no toggle()).
-const setClass = (node, cls, on) => (on ? node.classList.add(cls) : node.classList.remove(cls));
-const setDisabled = (btn, on) => (on ? btn.setAttribute('disabled', '') : btn.removeAttribute('disabled'));
+// Idempotent writes (0.00223: every playback tick rewrote every unit's
+// text, buttons and classes even when nothing changed): toggle with force
+// runs no update steps on a present token; text and attributes compare
+// first; a button's disabled state is remembered per button.
+const setClass = (node, cls, on) => node.classList.toggle(cls, !!on);
+const setText = (node, s) => { if (node.textContent !== s) node.textContent = s; };
+const disabler = (btn) => { let cur = null; return (on) => { if (on === cur) return; cur = on; on ? btn.setAttribute('disabled', '') : btn.removeAttribute('disabled'); }; };
 
 // ---- persistent units (0.086) ----
 // The battle line is built ONCE per room; playback ticks only patch it
@@ -108,7 +136,6 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const chip = el('div', { class: 'hud-chip' }, hp.line);
   const potions = el('div', { class: 'card-sub potions' }, `POTIONS ${run.potions}/${run.potionCap}`);
   const img = portrait('player', 'player', 'player');
-  const shine = glint('player', 'player', img);
   // Total armor (like the weapon line's total damage), plus the Infusion
   // potion bonus while it lasts: "14 ARMOR" / "14+2 ARMOR" (0.089).
   const armorText = () => `${run.stats.armor}${run.tempArmor > 0 ? `+${run.tempArmor}` : ''} ARMOR`;
@@ -134,7 +161,6 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
         : el('span', { class: 'no-item' }, 'NO ARMOR'),
       armorVal),
     img,
-    shine,
     chip,
     potions);
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
@@ -142,17 +168,18 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn));
+  const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);
   const update = (s) => {
     hp.set(s.hp, run.maxHp);
     const low = isLowHp(s.hp, run.maxHp);
     setClass(chip, 'lowhp', low); // the HP bar glows (0.126)
-    potions.textContent = `POTIONS ${run.potions}/${run.potionCap}`;
-    armorVal.textContent = armorText();
-    cd.textContent = s.heavyCd > 0 ? ` (${s.heavyCd})` : '';
+    setText(potions, `POTIONS ${run.potions}/${run.potionCap}`);
+    setText(armorVal, armorText());
+    setText(cd, s.heavyCd > 0 ? ` (${s.heavyCd})` : '');
     setClass(heavyBtn, 'ready', s.heavyReady);
-    setDisabled(heavyBtn, !s.heavyReady);
+    heavyDisabled(!s.heavyReady);
     // Drinkable after a cleared room too (0.080) — just not once dead.
-    setDisabled(potionBtn, s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
+    potionDisabled(s.dead || s.printing || run.potions <= 0 || run.hp >= run.maxHp);
     // Low on health with potions left: Drink Potion pulses red (0.126) —
     // kept on while a turn prints, so the glow doesn't restart every blow.
     const remind = low && !s.dead && run.potions > 0;
@@ -160,7 +187,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
     setClass(potionBtn, 'active-red', remind);
     setClass(potionBtn, 'potion-remind', remind);
   };
-  return { el: unit, card, portrait: img, glint: shine, id: 'player', update };
+  return withGlint({ el: unit, card, portrait: img, id: 'player', family: 'player', glintEl: null, update });
 }
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })
@@ -168,8 +195,8 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
 export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
-  const img = portrait(e.id, e.name, IDLE_FAMILY[e.id] ?? 'prowl');
-  const shine = glint(e.id, IDLE_FAMILY[e.id] ?? 'prowl', img);
+  const family = IDLE_FAMILY[e.id] ?? 'prowl';
+  const img = portrait(e.id, e.name, family);
   // Boss summon bar (0.092): fills each turn; full = a summon joins.
   const meterFill = e.summonEvery ? el('div', { class: 'summon-fill' }) : null;
   const meterLine = e.summonEvery
@@ -177,9 +204,11 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
       el('span', { class: 'summon-text' }, 'SUMMON'), el('div', { class: 'summon-bar' }, meterFill))
     : null;
   // Elites and bosses: a slow-pulsing glow behind the figure (0.089).
-  const aura = isElite(e) ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
-  // Portrait and skull both live in the card; the 'dead' class swaps them
-  // (styles.css), so the card never has to be rebuilt.
+  const elite = isElite(e) && !e.summoned; // summons are never elite: applyLoot carries nothing for them (0.092; 0.00223 — they wore the star and the aura)
+  const aura = elite ? el('div', { class: `aura${e.boss ? ' aura-boss' : ''}` }) : null;
+  // A fallen enemy's figure collapses, then the whole unit fades and leaves
+  // the row (0.00216, the owner's call: the faint skull cards went; the row
+  // restacks and the cards grow into the room — fit() through onGone).
   // 0.155: the whole card is a target too — a click attacks, exactly as its
   // Attack button would (and only when that button could)
   const plate = frame();
@@ -187,42 +216,40 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     plate,
     el('div', { class: 'card-head' },
       el('span', { class: 'card-name' }, name,
-        isElite(e) ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
+        elite ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
-    shine,
-    el('div', { class: 'skull' }, '☠'),
     hp.line,
     meterLine);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
-  // Dead cards keep their slot: the button row stays mounted with the
-  // button hidden (ghost-btn), so the bottom-aligned card can't shift.
+  // A fallen enemy's Attack button stays mounted but hidden (ghost-btn)
+  // through the collapse, so the bottom-aligned card can't shift before
+  // vanish() removes the whole unit (0.00216).
   const atk = el('button', { key: 'a', onclick: onAttack }, 'Attack');
   const unit = el('div', { class: 'unit enemy-unit', style: bandStyle() }, card, el('div', { class: 'unit-actions' }, atk));
   let down = false; // dead state already applied (or collapsing)
   let canHit = false; // the Attack button is live (the card clicks through to it)
+  const atkDisabled = disabler(atk);
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
     if (meterFill && s.meter != null) {
-      meterFill.style.width = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
+      const w = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
+      if (meterFill.style.width !== w) meterFill.style.width = w;
       setClass(meterLine, 'full', s.meter >= e.summonEvery);
     }
     if (s.dead && !down) {
       down = true;
       setClass(card, 'dying', true);
-      collapse(img, () => {
-        setClass(card, 'dying', false);
-        if (e.summoned) vanish(unit, onGone); // no skull slot: summons crumble away
-        else setClass(card, 'dead', true);
-      });
+      collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
     setClass(atk, 'ghost-btn', s.dead);
-    setDisabled(atk, s.dead || s.combatOver || s.printing);
+    atkDisabled(s.dead || s.combatOver || s.printing);
     canHit = !(s.dead || s.combatOver || s.printing);
     setClass(card, 'targetable', canHit);
   };
-  return { el: unit, card, portrait: img, glint: shine, id: e.id, summoned: !!e.summoned, update };
+  const self = withGlint({ el: unit, card, portrait: img, id: e.id, family, glintEl: null, summoned: !!e.summoned, update });
+  return self;
 }
 
 // One-shot builder (tests): an enemy unit in a given state.

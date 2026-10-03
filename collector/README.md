@@ -49,11 +49,28 @@ the KV binding stay as they are.
   (0.119). 0.130: each run may carry `perf` (fps, p95 frame ms, % dropped
   frames, worst frame, refresh rate, background mode, window size), and
   `device` (GPU, browser, OS, cores, memory, screen) is kept per player.
-  0.131: the profile's `bench` — ?debug BENCHMARK results (the game keeps its newest 10). Limits: 30 POSTs a minute per client IP (in memory, never
+  0.131: the profile's `bench` — BENCHMARK results (the ?debug button;
+  since 0.00219 also the Great Hall's one-time ask per round for every
+  player with best room >= telemetry.json `benchmarkPromptRoom`). The game
+  keeps its newest 10, the Worker up to 20; per result `at`, `build`, `bg`
+  (3d / flat), `q` (the quality step), `dpr`, `vw` / `vh`, and per phase
+  (idle / combat / overkill) `fps`, `p95`, `drop`, `worst`, `hz`, `secs`.
+  The dashboard compares `build` with telemetry.json `benchmarkSince` and
+  mutes results from an older round. 0.00223: `cleanRun` drops a record
+  whose `room` is not a whole number from 0 to 999 and clamps the other
+  counts (a bad field used to break the dashboard for everyone); `outcome`
+  defaults to death on both sides. 0.00225: `report` — the device report
+  (src/meta/perfReport.js), kept as the newest three per player under
+  `reports`, bounded rather than typed (`cleanReport`: strings cut to 120,
+  lists and objects to 64 entries, a depth limit, 24 KB at most). Limits: 30 POSTs a minute per client IP (in memory, never
   stored), one per second per player → `429`.
 - `GET /players` with `authorization: Bearer <READ_KEY>` (0.119; the older
   `?key=READ_KEY` still works) — every player
 - `GET /version` — the deployed collector's version
+
+From a cloud session `node tools/reports.mjs` reads `/players` with the key
+from the environment secret `CASTLE_READ_KEY` (0.00229) and summarizes
+every player, or hands the device reports over as JSON (`--reports`).
 
 ## Optional extra protection
 

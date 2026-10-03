@@ -2,7 +2,7 @@
 
 Gothic roguelite browser game. Vanilla JS ES modules, **no framework, no
 build step**, DOM-based UI over full-screen painted backgrounds (rendered in
-3D when WebGL allows). DIN Condensed Bold via @font-face; all-caps UI
+3D when WebGL allows). D-DIN Condensed Bold (OFL) via @font-face; all-caps UI
 chrome, mixed-case combat log. `CLAUDE.md` holds the working rules and the
 per-system notes; this file is the map.
 
@@ -11,7 +11,8 @@ per-system notes; this file is the map.
 ```bash
 python3 -m http.server 8000          # repo root -> http://localhost:8000
 ./"Play Castle.command"              # macOS: the same, and opens the browser
-node tools/smoke-test.mjs            # the suite: ~690 checks, under a second
+node tools/smoke-test.mjs            # the suite: ~870 checks, a second or two on the virtual clock
+node tools/layout-check.mjs          # the layouts, desktop and phone, in a browser (rule 8)
 node tools/smoke-test.mjs combat     # one area (test files whose name matches)
 node tools/simulate.mjs --runs 40 --seed 1   # headless balance bot
 ```
@@ -40,10 +41,13 @@ index.html              versioned boot: reads build.json, loads styles.css +
                         every module under ?v=<version> (import map)
 styles.css              all styling, grouped by screen (index at the top)
 src/
-  main.js               boot: mobile check -> loader panel -> loadData ->
-                        preloadAssets -> hotkeys, corner column (+ ?debug
-                        tools), 3D backgrounds, audio, update check ->
-                        title; the rest of the art loads in the background
+  main.js               boot: html.phone from platform.js PHONE_MQ (and a
+                        re-layout when it flips) -> rotate notice -> loader
+                        panel -> loadData -> preloadAssets -> hotkeys, corner
+                        column (+ ?debug tools), 3D backgrounds, audio, update
+                        check -> (a phone: the play / install gate) -> title;
+                        the rest of the art loads in the background; a failed
+                        boot says so and a tap reloads
   core/                 engine-level, no game rules
     scene.js            show()/transitionTo() (fade, try/finally; strictly in
                         order: windows out, swap, the new painting fully in,
@@ -55,12 +59,17 @@ src/
     hotkeys.js          handleKey(), Space = proceed, dialog key-trap stack
     bg3d.js             3D backgrounds: depth-displaced mesh, orbit camera,
                         crossfade, jolts/sways/flash lights, quality ladder,
-                        CSS fallback; gpuName(), holdQuality()
+                        CSS fallback; gpuName(), holdQuality(); setPowerSaver() /
+                        powerMode() (BATTERY SAVER, 0.00222), whenPushSettled()
     bg3dGL.js  bg3dMath.js  bg3dTuning.js  bg3dQuality.js  bg3dFog.js
     bg3dPuffs.js  bg3dPuffGL.js  bg3dLights.js
                         its plumbing: shaders, pure math (tested in Node),
                         settings, frame-rate ladder, fog, mist puffs, lights
-    perfMonitor.js      frame-rate recorder (runs + benchmark), device info
+    perfMonitor.js      frame-rate recorder (runs + benchmark), device info; the
+                        refresh-rate estimate (the busiest interval, 0.00222), stalls;
+                        the histogram kept and the stalls labelled for the device report (0.00225)
+    perfSpans.js        span(name): the subsystems' main-thread time per frame, markActivity(): a
+                        stall's label (no imports, so the renderer can time itself; 0.00225)
   meta/                 PERSISTS across runs (localStorage)
     storage.js          the only file touching the save; base64 save codes
     profile.js          the profile: defaults, lifecycle, small setters
@@ -69,32 +78,40 @@ src/
     leveling.js         training/alchemy/forge costs and purchases
     equipment.js        slots, auto-equip, salvage
     history.js          one record per finished run (+ its perf)
-    telemetry.js        sends the save's stats (+ device) to the collector
+    telemetry.js        sends the save's stats (+ device, + the device report waiting) to the collector
+    perfReport.js       the device report (0.00225): per phase the histogram, the subsystems' split,
+                        the stalls, the long tasks; the device, the renderer, the card light, the
+                        particles, the last runs; built at a run's end and after a benchmark
     names.js            player-name cleaning
   run/                  EXISTS only during a dungeon run
-    runState.js         run object, rooms, potions, loot routing, tryRevive(),
-                        settleRun()
+    runState.js         run object, rooms, potions, loot routing, settleRun(),
+                        deathRoom() (a reliquary death counts the room it led to)
     roomGen.js          threat-budget rooms, boss every 8 (a throne room of 4),
                         room 1 an entrance corridor; generateInterlude = the
                         shrine / treasure room between fights (unnumbered); paintings
                         never repeat in a run (pickFresh, run.seenBackgrounds)
-    combat.js           one action in phases: rollHit -> smash | strike(+spill)
+    combat.js           one action in phases: rollHit -> overkill | strike(+spill)
                         -> lifesteal -> enemyPhase -> summons -> cleared
     shrine.js           boon deal + costs + effects (ids map to code)
     loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
-                        or salvage on the spot, for kills and chests alike
+                        or salvage on the spot, for kills and chests alike;
+                        tryRevive() (the Heart's revive, 0.00223: here so runState
+                        and treasure share no import cycle)
     treasure.js         treasure rooms: placement, the three chests (0.155)
   shared/               no DOM, used everywhere (and by the analytics page)
     data.js             loads assets/data/*.json into DATA
     dataCheck.js        every number the code reads, checked at load
     balance.js          enemy scaling, LV naming, elites
-    preload.js          fetch + decode art (boot set, the essentials, then the rooms)
+    preload.js          fetch + decode art (boot set, the essentials); the rooms into the HTTP cache only (0.00222)
     portraits.js        where a character's portrait is (enemies.json art, cards.json player.art)
-    platform.js         isMobile() (the boot's "not supported yet" notice)
+    platform.js         isMobile() / deviceClass() / isPhone(); PHONE_MQ + phoneLayout() (the phone layer's query); standaloneApp();
+                        deviceName() / deviceBlock() (a data block's `phone` sub-block merged on a phone — the phone power profile, 0.00222)
+    refreshRates.js     the standard display rates (RATES, snapRate): perfMonitor's hz and the stats page's grades, one copy
     motion.js           the one reduced-motion check (0.00197)
     debug.js  prefs.js  version.js  level.js (levelFromStats(stats, every):
                         the cadence is difficulty.json levelEvery, passed in —
-                        the analytics page has no DATA)
+                        the analytics page has no DATA); prefs.js mutePref() is the
+                        one on/off setting the three audio toggles share (0.00223)
   audio/
     audioCore.js        one AudioContext, compressed bytes cache
     mixer.js            buses -> master -> limiter, sliders, ducking
@@ -108,29 +125,43 @@ src/
                         registered in scenes/index.js, never import each other
     battleRoom.js       a room's battle line: mount, summon sync, tick update,
                         the effects' context and the pre-action snapshot
-                        (dungeon + benchmark)
+                        (dungeon + benchmark); onGone -> fit() recounts --n when a
+                        fallen card leaves, whenGone(i) = that card's leaving
     battleLine.js       the units: knight card + enemy cards, built once,
-                        update() patches in place
-    combatPlayback.js   log drip + replay view (each event's snapshot)
+                        update() patches in place (only what changed, 0.00223);
+                        a fallen card collapses and vanish()es from the row (0.00216)
+    combatPlayback.js   log drip + replay view (each event's snapshot); a death
+                        is a step of its own — waits onDeath(i), then
+                        combatPacing.restackMs, deathMaxMs caps it (0.00220);
+                        per printed line: tick, line, sound, effect
     combatQueue.js      combat events -> playback items (fx, hold, sfx, loot)
     combatFx.js  fxParts.js   effects per event; shake, spray, numbers...
     combatSfx.js        a line's sound, panned to its card, timed to the blow
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
-    cardFx.js           the shader light behind every card (one GL context,
-                        a 2D canvas per card); looks per enemy / boon / chest
+    cardFx.js           the shader light behind every card: a pooled WebGL
+                        canvas per lit card, reused across rooms (0.00227; the
+                        cards past the pool take an ImageBitmap copy out of one
+                        overflow context, 2D drawImage as the last fallback);
+                        looks per enemy / boon / chest
     shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
-    buffs.js  hud.js  fx.js  hubText.js
+    buffs.js  hud.js  fx.js
+    hubText.js          the Great Hall's lines from the data: statDesc / precisionDesc / efficiencyDesc / alchemyDesc / potionDesc / satchelDesc (each long, or `short` for the phone's 45%-wide sheets), recordsLine
+    hubSections.js      the hall's three sections (Train / Alchemy / Equipment) as rows, each handler
+                        naming its row for the purchase flash (0.00223; hubScene.js keeps the table, the
+                        two assemblies, Descend and the flash)
     dialog.js           openDialog(): overlay + keyboard; open-dialog registry
     confirmPrompt.js  namePrompt.js  updatePrompt.js  changelog.js
     deathModal.js  victoryModal.js  benchmark.js (BENCHMARK button, prompt,
                         result; the script's PHASES)
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
+    phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
 assets/
   bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
   chars/                portraits (WebP with alpha; the file named in the data) + card
                         frames (PNG); candidates/ = the redraws tools/gen-art.mjs made
-  audio/  fonts/        (audio/vo/: the narrator's 122 takes, tools/gen-vo.mjs)
+  audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; fonts/: the display
+                        font as WOFF2 + the TTF fallback, 0.00223)
   data/                 ALL tuning as JSON: enemies, items, difficulty,
                         shrines, backgrounds, audio, telemetry, build,
                         changelog; narration, art (generated: the takes, the redraws)
@@ -140,6 +171,10 @@ analytics/              /analytics/ play-stats page (static, versioned boot):
 collector/              the stats Worker (Cloudflare + KV; deployed by
                         pasting worker.js — see collector/README.md)
 labs/                   the testing pages (?debug LABS button): index.html is the menu,
+  boot.js               the labs' shared boot (0.188): reads build.json (?t=, no-store), installs an
+                        import map so the game's modules, the lab's lab.js (+ data-extra) and the
+                        `data-versioned` stylesheets load under ?v=<build> (0.00223), and writes a
+                        load / runtime error onto the page
   fog/                  the mist on every painting, every fog knob live, on the
                         game's own renderer (base href = the site root)
   vo/                   review the narrator's takes: play, approve, disapprove ->
@@ -149,11 +184,16 @@ labs/                   the testing pages (?debug LABS button): index.html is th
   art/                  the redrawn portraits on the real units over any room:
                         compare, line-up, fight; verdicts -> art-rerender.json
   particles/            standalone particle-look experiments
+  world/                the world map above the dungeon (0.00210, a prototype): the
+                        owner's painting under clouds, places as pins, the reveal,
+                        two looks and the dive; WORLD in lab.js = the future world.json
 particle-lab/ fog-lab/ vo-lab/   forwarding stubs to labs/ (old bookmarks)
 tools/
   smoke-test.mjs  test/ the suite
+  layout-check.mjs  desktop AND phone: the real game headless at five screens, the layouts' promises asserted (rule 8)
   simulate.mjs  simCore.mjs  shrine-study.mjs  stat-study.mjs   balance bots
-  ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197)
+  ship.mjs              the release loop: commit, merge main, next number, bump, suite, push (0.00197; a
+                        crashed suite prints its stderr tail, 0.00223)
   check-bump.mjs        CI: a push to main that changes what players load needs a higher build
   bump.mjs              build number + module list + changelist notes
   audio-check.mjs       clip loudness + loops measured in Chromium
@@ -190,14 +230,14 @@ primary button. While a dialog is open it owns the keyboard.
 | Key | Where | Action |
 |---|---|---|
 | `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
-| `Space` | everywhere | Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close |
+| `Space` | everywhere | Play (the phone gate) · Enter the Castle · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close · the save dialogs' Done / Load Save |
 | `E` / `N` | title | Enter the Castle / Start a New Game (then `W` wipes, `K` keeps the save) |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |
 | `D` / `B` | hub | Descend / Back |
 | `A` `H` `P` | dungeon | Attack (front enemy) / Heavy Attack / Drink Potion |
-| `D` / `R` | dungeon | Push Deeper / Retreat with Loot (after a won room) |
+| `D` / `R` | dungeon, shrine, treasure | Push Deeper / Retreat with Loot (after a won room; in a shrine or treasure room once a boon or chest is taken) |
 | `F` | dungeon | Accept Your Fate (death) |
 | `G` | run end | Return to the Great Hall |
 | `Y` `N` (Enter / Esc) | yes/no dialogs | the two answers (each prompt names its own letters) |
@@ -205,7 +245,11 @@ primary button. While a dialog is open it owns the keyboard.
 | `C` | changelist, benchmark | Close / Continue |
 | `Enter` / `Esc` | name prompt | Save / cancel (Esc only when changing a name) |
 
-Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mouse-only.
+Corner toggles (MUSIC, FULLSCREEN, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug
+tools) are mouse-only; on a phone they fold behind ☰ (FULLSCREEN is not
+offered there: the gate is the way in). The phone hall's tabs have no keys;
+the hotkeys of the rows on the sheets behind still fire (p, v, f, r, e, u,
+x, a, y, n), as on the desktop where every panel shows.
 
 ## Editing conventions
 
@@ -225,6 +269,12 @@ Corner toggles (MUSIC, SOUND, NARRATOR, VOLUME, CHANGELIST, ?debug tools) are mo
   browser's `confirm()`.
 - **Combat layout is fluid** (vh/vw, cards 50vh): never fixed px in that
   block of styles.css; panel scenes stay in px. Card internals are `em`.
+  The phone layer (section 16) is the exception by design: its strips and
+  buttons are tap-sized in px (40 / 52px) against a 72svh card.
+- **Two layouts, one code path** (CLAUDE.md rule 8): a phone rule is
+  `html.phone` + the desktop rule's own selector, in section 16; the hub's
+  two assemblies come from one table; `node tools/layout-check.mjs` holds
+  both layouts in a browser.
 - **Card art:** frame on the card's `.card-frame` layer (opacity 0.85, the shader light inside it); portraits are
   absolute, bottom-anchored and larger than the card; text rows sit above.
 - **Button labels** centre their capitals (`text-box: trim-both cap
@@ -250,7 +300,7 @@ the number above main's, bumps, runs the suite by exit code, pushes to
 `main` and the working branch; retries when main moves). Push to live:
 GitHub Pages deploys in 45-70 s; `build.json` is always fetched with a
 fresh `?t=` so the CDN's 10-minute copy never hides a build; the update
-prompt polls every minute.
+prompt polls every minute while the tab is visible, and once on its return.
 
 **Saves are per origin** (localStorage): the title screen's export/import
 save codes carry a save between origins.

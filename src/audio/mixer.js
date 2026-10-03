@@ -13,7 +13,7 @@
 // call is a no-op; volumes still load/persist.
 
 import { DATA } from '../shared/data.js';
-import { hasAudio, ensureCtx } from './audioCore.js';
+import { hasAudio, ensureCtx, GESTURE_EVENTS } from './audioCore.js';
 import { dbToGain, sliderGain } from './audioMath.js';
 import { getJsonPref, setJsonPref } from '../shared/prefs.js';
 
@@ -23,6 +23,7 @@ const cfg = () => DATA.audio;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 let nodes = null;                         // { ctx, music, duck, sfx, master, limiter }
+let duckUntil = 0;                        // context time the latest duck releases (a running max, never reset)
 const muted = { music: false, sfx: false }; // the corner toggles (music.js / sfx.js own their persistence)
 let volumes = null;
 
@@ -97,15 +98,19 @@ export const musicInput = () => mixer()?.music ?? null;
 export const sfxInput = () => mixer()?.sfx ?? null;
 
 // The music dips by duck.db under a stinger starting at `at` (context
-// time) and comes back after `seconds`.
+// time) and comes back after `seconds` — or when the longest duck still
+// running ends (0.00223: the hold drops every later event, the earlier
+// duck's release included, so a short stinger under a narrator line used
+// to bring the music back early).
 export function duckMusic(seconds, at = 0) {
   if (!nodes) return;
   const d = cfg().duck;
   const g = nodes.duck.gain;
   const t = Math.max(at, nodes.ctx.currentTime);
+  duckUntil = Math.max(duckUntil, t + seconds);
   hold(g, t);
   g.setTargetAtTime(dbToGain(d.db), t, d.attack / 3);
-  g.setTargetAtTime(1, t + seconds, d.release / 3);
+  g.setTargetAtTime(1, duckUntil, d.release / 3);
 }
 
 // A hidden tab goes quiet (and stops using the CPU for audio); it comes back
@@ -116,7 +121,7 @@ function watchVisibility(ctx) {
     if (doc.visibilityState === 'hidden') ctx.suspend?.().catch?.(() => {});
     else ctx.resume?.().catch?.(() => {});
   });
-  globalThis.addEventListener?.('pointerdown', () => {
+  for (const t of GESTURE_EVENTS) globalThis.addEventListener?.(t, () => { // (0.00209: the tap's end too — a touch activates there)
     if (ctx.state !== 'running' && doc?.visibilityState !== 'hidden') ctx.resume?.().catch?.(() => {});
   });
 }

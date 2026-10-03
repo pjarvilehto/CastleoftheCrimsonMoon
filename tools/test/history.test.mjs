@@ -1,7 +1,12 @@
 // tools/test/history.test.mjs — run history (profile) and the /analytics/ dashboard.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, sleep, t, fresh, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { ok, sleep, t, fresh, registry, El, DATA, show, handleKey, createRun, scaleEnemy, createCombat, playerAttack, dungeonScene, hubScene, resetProfile, getProfile, readFileSync } from './harness.mjs';
+import { compareVersions } from '../../src/shared/version.js';
+import { DEBUG } from '../../src/shared/debug.js';
+import { currentScene } from '../../src/core/scene.js';
+// how many builds past build.json a build number is (<= 0 = shipped already, 1 = the one being shipped; ship.mjs bumps build.json after the suite's first run)
+const buildsAhead = (v) => Number(String(v).split('.')[1]) - Number(DATA.build.version.split('.')[1]);
 
 fresh();
 
@@ -65,6 +70,14 @@ fresh();
   const bs = st.boonStats(runs);
   ok('boon stats: taken + avg depth', bs.find((b) => b.boon === 'crit').taken === 2 && bs.find((b) => b.boon === 'dmg').avgRoom === 12.5 && bs.find((b) => b.boon === '(none)').taken === 1);
   ok('by build: newest first (numeric)', st.byBuild(runs).map((b) => b.build).join() === '0.100,0.096,0.095');
+  // 0.00224: the table condensed — the newest 10, then the 3 most played older ones, the rest counted in a footer
+  const many = Array.from({ length: 16 }, (_, i) => ({ build: `0.00${String(300 - i).padStart(3, '0')}`, runs: i === 12 ? 40 : i === 15 ? 9 : i === 11 ? 9 : 1, avgRoom: 1, bestRoom: 1, deathRate: 0 }));
+  const c = st.condenseBuilds(many);
+  ok('condenseBuilds: the newest ten, the three most played of the rest in build order, the rest counted', c.rows.length === 10 && c.rows[0].build === '0.00300' && c.rows[9].build === '0.00291'
+    && c.older.map((r) => r.build).join() === '0.00289,0.00288,0.00285' && c.hidden.builds === 3 && c.hidden.runs === 3 && st.condenseBuilds(many.slice(0, 4)).older.length === 0 && st.condenseBuilds(many.slice(0, 4)).hidden.builds === 0);
+  const { buildTable } = await import('../../analytics/tables.js');
+  const bt = buildTable(c);
+  ok('the By build table shows the divider and the footer', (bt.match(/<tr>/g) ?? []).length === 14 && bt.includes('older, most played') && bt.includes('3 more builds, 3 runs, not shown') && !buildTable(st.condenseBuilds(many.slice(0, 4))).includes('divider'));
   ok('filters by player and build', st.filterRuns(runs, { build: '0.095' }).length === 2 && st.filterRuns(runs, { player: 'zz' }).length === 0);
   ok('killers ranked', st.countBy(runs, 'killedBy').length === 3);
   const csv = st.toCsv(runs, () => 'Te,"st"');
@@ -81,6 +94,9 @@ fresh();
   ok('charts render lines + columns', ch.lines(st.depthSeries(players, runs)).includes('<path') && ch.columns([{ x: 1, parts: [1, 2] }], { names: ['a', 'b'] }).includes('<rect'));
   const html = readFileSync('analytics/index.html', 'utf8');
   ok('/analytics/ boots versioned, not indexed', html.includes("fetch('../assets/data/build.json?t=' + Date.now(), { cache: 'no-store' })") && html.includes("'dashboard.js'") && html.includes('noindex'));
+  const dashSrc = readFileSync('analytics/dashboard.js', 'utf8');
+  ok('the dashboard reads the build index.html fetched and every data file under ?v=<build> (0.00223: a bare URL served the CDN\'s old copy)', html.includes('window.__castleBuild = b') && dashSrc.includes('globalThis.__castleBuild') && dashSrc.includes('.json${q}') && !dashSrc.includes("'build', 'telemetry'"));
+  ok('a record the page cannot draw shows why instead of "Loading play stats…"', /function render\(\) \{\n  try \{ renderInner\(\); \} catch/.test(dashSrc));
   resetProfile();
 
   // CRIT! caption
@@ -116,7 +132,7 @@ fresh();
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
     && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
-  ok('sent after every run and once per session', src.includes('shareStats(settleRun(run, outcome))') && src.includes('shareStats(getProfile())'));
+  ok('sent after every run (with the device report) and once per session', src.includes('const settled = settleRun(run, outcome);') && src.includes('keepReport(runReport(settled));') && src.includes('shareStats(settled);') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
 
   // the Worker, against an in-memory KV
@@ -128,15 +144,29 @@ fresh();
   } };
   const post = (obj, cf) => wk.default.fetch(Object.assign(new Request('https://w/collect', { method: 'POST', body: typeof obj === 'string' ? obj : JSON.stringify(obj) }), { cf }), env);
   const run = (at) => ({ at, room: at });
-  const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] } }, { country: 'FI' });
+  const report = (at) => ({ v: 1, at, build: '0.00225', kind: 'bench', device: { gpu: 'g'.repeat(300), nested: { deep: { deeper: { deepest: 1 } } } }, phases: { idle: { fps: 60, hist: { counts: Array.from({ length: 100 }, (_, i) => i) }, stalls: [{ ms: 150, label: 'overkill' }], split: { bg: { avg: 2, max: 9 } } } }, junk: 'x' });
+  const cr1 = wk.cleanReport(report(5));
+  ok('collector: a report is bounded — strings cut, lists capped, depth limited, junk dropped, the top level typed', cr1.device.gpu.length === 120 && cr1.device.nested.deep === null && cr1.phases.idle.hist.counts.length === 64 && cr1.phases.idle.stalls[0].label === 'overkill' && cr1.phases.idle.split.bg.max === 9
+    && !('junk' in cr1) && cr1.kind === 'bench' && wk.cleanReport({ at: 1, kind: 'evil' }).kind === 'run' && wk.cleanReport({ build: 'x' }) === null && wk.cleanReport({ at: 1, phases: Object.fromEntries(Array.from({ length: 64 }, (_, i) => [i, Object.fromEntries(Array.from({ length: 64 }, (_, j) => [j, 'y'.repeat(200)]))])) }) === null); // (bounded, then over MAX_REPORT: dropped whole)
+  ok('...the newest three kept, merged by time', wk.mergeReports([report(1), report(2)], [report(3), report(2)]).map((r) => r.at).join() === '1,2,3' && wk.mergeReports([report(1), report(2), report(3)], [report(4)]).map((r) => r.at).join() === '2,3,4');
+  const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] }, report: report(7) }, { country: 'FI' });
   await sleep(1100); // one player at most once a second (0.119)
   const r2 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(3)] } }); // e.g. after a progress wipe
   const rec = JSON.parse(kv.get('player:abc123'));
   ok('collector stores a player by id; history merged by timestamp (a wipe loses nothing)', r1.status === 200 && r2.status === 200
     && rec.profile.history.map((r) => r.at).join() === '1,2,3' && rec.country === 'FI' && !/"(ip|clientIp|cf-connecting-ip)":/i.test(JSON.stringify(rec)));
+  ok('...and the device report, kept across a later upload without one', rec.reports.length === 1 && rec.reports[0].at === 7 && rec.reports[0].phases.idle.fps === 60);
   const bad = await Promise.all([post('nope'), post({ playerId: '../x', profile: { history: [] } }), post({ playerId: 'abcd', profile: {} }),
     post({ playerId: 'abcd', profile: { history: [], pad: 'x'.repeat(300000) } })]);
   ok('collector rejects bad json, ids, payloads and oversize bodies', bad.map((r) => r.status).join() === '400,400,400,413' && kv.size === 1);
+  // 0.00223: a fractional or huge room in one record used to break the whole dashboard — the collector drops it, the page clamps it
+  const st = await import('../../analytics/stats.js');
+  const odd = st.sanitizeProfile({ playerId: 'abcd', history: [{ at: 1, room: 3.5 }, { at: 2, room: 1e9, kills: -4 }] }).history;
+  ok('the dashboard keeps rooms and counts whole, never negative, rooms at most 999; endRooms copes', odd[0].room === 3 && odd[1].room === 999 && odd[1].kills === 0 && st.endRooms(odd).length === 999
+    && wk.cleanRun({ at: 1, room: 1e9 }) === null && wk.cleanRun({ at: 1, room: 3.5 }) === null && wk.cleanRun({ at: 1, room: 7 }).room === 7);
+  const numsLine = readFileSync('collector/worker.js', 'utf8').match(/const RUN_NUMS = (\[[^\]]*\]);/)[1];
+  ok('the collector and the dashboard keep the same run fields and read an unknown outcome the same way', JSON.stringify(JSON.parse(numsLine.replace(/'/g, '"'))) === JSON.stringify(st.RUN_FIELDS)
+    && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === st.sanitizeProfile({ history: [{ at: 1, outcome: 'victory' }] }).history[0].outcome && wk.cleanRun({ at: 1, outcome: 'victory' }).outcome === 'death');
   const locked = await wk.default.fetch(new Request('https://w/players'), env);
   const open = await wk.default.fetch(new Request('https://w/players?key=k'), env);
   const list = await open.json();
@@ -163,9 +193,20 @@ fresh();
   ok('GET /version names the deployed collector, matching what the dashboard expects', ver.version === wk.VERSION && DATA.telemetry.collectorVersion === wk.VERSION);
   const dash = readFileSync('analytics/dashboard.js', 'utf8');
   ok('dashboard: collected players, deduped by player id, tester names kept locally', dash.includes('/players') && dash.includes('seen.has(id)') && dash.includes('write(TESTERS, all)'));
+  const paste = dash.indexOf('paste collector/worker.js'), lt = dash.indexOf('const stale = cmp < 0'), gt = dash.indexOf('cmp > 0 ?');
+  ok('dashboard: a collector behind this page asks for the paste; one ahead of it says the page is behind main (0.00223)', dash.includes("compareVersions(server.version ?? '0', data.collectorVersion)") && lt > 0 && paste > lt && gt > paste && dash.lastIndexOf('paste collector/worker.js') === paste);
   ok('dashboard: tester names (0.136) show beside the typed name, never replace it; old renames fold in; codes keep their own label',
     dash.includes("label: tester ? `${tester} · ${pl.base}` : pl.base") && dash.includes('base: `${profile.name ||') && dash.includes('t[id] ??= String(n)')
-    && dash.includes('({ key, label: base, profile, importedAt })') && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
+    && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
+  const pfr = await import('../../analytics/perf.js');
+  const reps = pfr.sanitizeReports([{ at: 2, kind: 'bench', build: '0.00225', phases: { combat: { fps: 44.4, p95: 31, stalls: [{ ms: 160, label: 'overkill' }, { ms: 110, label: 'play' }], split: { bg: { avg: 3.2 }, cards: { avg: 1.1 } } }, idle: { fps: 60, p95: 17, stalls: [], split: { bg: { avg: 2.5 } } } } }, { at: 1, kind: 'run', build: '<b>', phases: {} }, 'junk']);
+  const rt = pfr.reportsTable([{ key: 's:x', label: 'Pete', device: { gpu: 'Apple GPU', browser: 'Safari 26', os: 'iOS' }, reports: reps }]);
+  ok('dashboard: the device reports card — newest first, each phase\'s fps and stalls, the worst stall with its label, the main thread per subsystem, a Copy button per report (0.00225)',
+    reps.length === 2 && reps[0].at === 2 && rt.indexOf('bench') < rt.indexOf('run') && rt.includes('combat <b>44.4</b> fps · 31 ms · 2 stalls') && rt.includes('160 ms<small>overkill</small>') && rt.includes('bg 3.2 · cards 1.1') && rt.includes('&lt;b&gt;')
+    && (rt.match(/data-act="copy-report"/g) ?? []).length === 2 && rt.includes('data-at="2"') && pfr.reportsTable([{ reports: [] }]).includes('No device reports yet'));
+  ok('...Copy all packs every player\'s reports with the device; the page copies to the clipboard, else shows the text', JSON.parse(pfr.reportsText([{ label: 'Pete', device: null, reports: reps }, { label: 'None', reports: [] }])).length === 1
+    && dash.includes("act === 'copy-report' || act === 'copy-all'") && dash.includes('navigator.clipboard?.writeText') && dash.includes("card('Device reports") && dash.includes('reports: sanitizeReports(r.reports)'));
+  ok('dashboard: no save-code entry any more — every tester is collected (0.00224)', !dash.includes('addCode') && !dash.includes('add-code') && !dash.includes('decodeSave') && !readFileSync('analytics/tables.js', 'utf8').includes("data-act=\"remove\""));
   ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();
@@ -183,7 +224,7 @@ fresh();
   ok('frame summary: fps, p95, refresh rate, dropped frames, worst', s.hz === 60 && s.fps === Math.round(1000 * 10000 / r60.ms) / 10
     && s.p95 === 18 && s.drop === 4 && s.worst === 61 && s.secs === Math.round(r60.ms / 1000), JSON.stringify(s));
   const hz = (d) => pm.summarizeFrames(rec([[d, 2000]])).hz;
-  ok('refresh rate snapped from the fastest frames: 60 / 120 / 144 / 165 Hz', hz(16.67) === 60 && hz(8.33) === 120 && hz(6.94) === 144 && hz(6.06) === 165);
+  ok('refresh rate from the busiest interval: 60 / 120 / 144 / 165 Hz', hz(16.67) === 60 && hz(8.33) === 120 && hz(6.94) === 144 && hz(6.06) === 165);
   const slow = pm.summarizeFrames(rec([[150, 30], [400, 10]]));
   ok('a device that cannot keep up: 60 Hz assumed, nearly every frame dropped', slow.hz === 60 && slow.drop === 100 && slow.fps === Math.round(40 * 10000 / 8500) / 10);
   pm.stopPerf(); // ends a recording an earlier test's dungeon left running
@@ -202,6 +243,31 @@ fresh();
   const cr = wk.cleanRun({ at: 1, room: 3, perf: { fps: '59.5', p95: 18, bg: 'evil', junk: 1, q: 2 } });
   ok('collector keeps a run\'s perf, typed', cr.perf.fps === 59.5 && cr.perf.bg === '3d' && cr.perf.q === 2 && !('junk' in cr.perf)
     && wk.cleanRun({ at: 1 }).perf === null);
+  // 0.00225: the device report's pieces — the histogram kept, the subsystems' spans, the stalls labelled, the report built and sent once
+  const h = pm.histogramOf(r60);
+  ok('the histogram coarsened: every frame in a bucket, the busiest the 16-18 ms one', h.counts.reduce((a, b) => a + b, 0) === r60.frames && h.counts[pm.HIST_EDGES.indexOf(18)] === 960 && h.counts[pm.HIST_EDGES.indexOf(40)] === 30 && h.counts[pm.HIST_EDGES.indexOf(66)] === 10 && h.edges.length + 1 === h.counts.length);
+  const r2 = pm.newRecording();
+  pm.beginRecording(r2);
+  const endBg = pm.span('bg'); await sleep(3); endBg();
+  const endBg2 = pm.span('bg'); await sleep(5); endBg2();
+  pm.markActivity('overkill'); pm.addFrame(r2, 150);
+  await sleep(700); pm.addFrame(r2, 120); pm.addFrame(r2, 130, true); pm.addFrame(r2, 16);
+  pm.endRecording();
+  pm.span('bg')();
+  const sp = pm.spansOf(r2);
+  ok('spans: the time per call and its maximum, into the recording begun; none once ended', sp.bg.n === 2 && sp.bg.avg === 4 && sp.bg.max === 5 && sp.bg.total === 8 && Object.keys(sp).length === 1);
+  ok('stalls carry what was happening: the last effect, else play, a room change by the frame\'s flag', r2.stalls.map((x) => `${x.ms}:${x.label}`).join() === '150:overkill,120:play,130:room change' && r2.stalls[0].at === 0.2);
+  const many = pm.newRecording(); for (let i = 0; i < 30; i++) pm.addFrame(many, 200);
+  ok('...at most telemetry.json report.stalls of them', many.stalls.length === DATA.telemetry.report.stalls);
+  const pr = await import('../../src/meta/perfReport.js');
+  const ph = pr.phaseReport(r60);
+  const rep = pr.buildReport('run', { run: ph }, { history: Array.from({ length: 14 }, (_, i) => ({ at: i, build: '0.1', room: i, outcome: 'death', perf: null })) });
+  ok('the report: the phase with its summary, histogram, split, stalls and long tasks; the device, the renderer, the card light, the particles; the last runs', ph.fps === s.fps && ph.hist.counts.length === 22 && Array.isArray(ph.stalls) && ph.longTasks === 0
+    && rep.v === 1 && rep.kind === 'run' && rep.build === DATA.build.version && rep.renderer.bg === 'flat' && 'lit' in rep.cards && 'budget' in rep.particles && rep.runs.length === DATA.telemetry.report.runs && rep.runs[0].at === 4 && typeof rep.device.phone === 'boolean');
+  pr.keepReport(rep);
+  const withReport = tm.statsPayload(getProfile()), without = tm.statsPayload(getProfile());
+  ok('the upload carries the report waiting, once', withReport.report === rep && !('report' in without) && pr.takeReport() === null);
+  ok('a run with nothing recorded makes no report', pr.runReport(getProfile()) === null || typeof pr.runReport(getProfile()) === 'object');
   const dev = wk.cleanDevice({ gpu: 'g'.repeat(500), browser: 'Chrome 129', os: 'macOS', cores: '10', mem: 16, extra: 'x' });
   ok('collector keeps the device, capped', dev.gpu.length === 120 && dev.cores === 10 && !('extra' in dev) && wk.cleanDevice('nope') === null
     && readFileSync('collector/worker.js', 'utf8').includes('device: cleanDevice(body.device) ?? prev?.device ?? null'));
@@ -217,10 +283,10 @@ fresh();
   const players = [{ key: 'a', label: '<b>A</b>', profile: prof, device: pf.sanitizeDevice({ gpu: '<img>', browser: 'Chrome 129', cores: 8 }) }];
   const runs = st.allRuns(players);
   const rows = pf.perfRows(players, runs);
-  ok('dashboard: per-player medians over measured runs', rows.length === 1 && rows[0].runs === 2 && rows[0].fps === 50 && rows[0].worst === 90 && rows[0].q === 0);
+  ok('dashboard: per-player medians over measured runs; the worst frame as a median and as the worst run\'s', rows.length === 1 && rows[0].runs === 2 && rows[0].fps === 50 && rows[0].worst === 65 && rows[0].worstRun === 90 && rows[0].q === 0);
   const html = pf.perfTable(players, runs);
   ok('dashboard: the Performance card escapes save text and grades fps', html.includes('&lt;b&gt;A&lt;/b&gt;') && html.includes('&lt;img&gt;') && !html.includes('<img>')
-    && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs), true)")
+    && html.includes('perf-ok') && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Performance', perfTable(shown, runs, data.perf), true)")
     && readFileSync('analytics/index.html', 'utf8').includes("'perf.js'"));
   ok('dashboard: CSV has the frame rate per run', st.toCsv(runs).split('\n')[0].endsWith(',fps,p95,drop,hz') && st.toCsv(runs).split('\n')[2].includes(',60,17,1,60'));
 }
@@ -235,9 +301,8 @@ fresh();
     PHASES.map((p) => p.id).join() === 'idle,combat,overkill' && PHASES.every((p) => p.enemies.every((id) => DATA.enemies[id]) && DATA.backgrounds.rooms.includes(p.bg))
     && ['rat', 'skeleton', 'ghoul', 'wraith'].every((id) => PHASES[1].enemies.includes(id)));
   const bs = readFileSync('src/ui/scenes/benchmarkScene.js', 'utf8');
-  ok('benchmark: seeded and invulnerable while it runs, everything restored after; quality ladder held',
-    bs.includes('Math.random = seeded(') && bs.includes('Math.random = realRandom;') && bs.includes('Object.assign(DEBUG, debugWas);')
-    && bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
+  ok('benchmark: the quality ladder held while it runs; nothing settled or recorded as a run (its flags are driven in T94)',
+    bs.includes('holdQuality(true)') && bs.includes('holdQuality(false)') && !bs.includes('settleRun') && !bs.includes('recordRun'));
   const { recordBenchmark, BENCH_MAX } = await import('../../src/meta/profile.js');
   const histBefore = getProfile().history.length;
   for (let i = 0; i < BENCH_MAX + 2; i++) recordBenchmark({ at: i, build: '0.131', phases: {} });
@@ -257,54 +322,109 @@ fresh();
   const pf = await import('../../analytics/perf.js');
   const bench = pf.sanitizeBench([{ at: 7, build: '<i>', bg: '3d', q: 0, dpr: 2, vw: 1440, vh: 900, phases: { idle: { fps: 60, p95: 17, drop: 0, worst: 30, hz: 60 }, combat: { fps: 44, p95: 31, drop: 18, worst: 120, hz: 60 } } }]);
   const html = pf.benchTable([{ label: 'A', profile: { bench }, device: null }]);
-  ok('dashboard: Benchmarks card, escaped, graded per phase', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
-    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown), true)"));
+  ok('dashboard: Benchmarks card, escaped, graded per phase, the build in its own column', html.includes('&lt;i&gt;') && html.includes('perf-good') && html.includes('perf-ok') && html.includes('—')
+    && html.includes('<th>Build</th>') && !html.includes('bench-old')
+    && readFileSync('analytics/dashboard.js', 'utf8').includes("card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)"));
+  // 0.00221: the current round (telemetry.json benchmarkSince) — an older build's row is marked and muted, a newer one is not
+  const two = pf.sanitizeBench([{ at: 1, build: '0.00218', phases: {} }, { at: 2, build: '0.00221', phases: {} }]);
+  const roundHtml = pf.benchTable([{ label: 'A', profile: { bench: two }, device: null }], '0.00220');
+  ok('dashboard: a benchmark from before the current round is marked "older round"', (roundHtml.match(/bench-old/g) ?? []).length === 1 && roundHtml.includes('older round') && roundHtml.includes('current round is build 0.00220')
+    && roundHtml.indexOf('0.00221') < roundHtml.indexOf('0.00218'));
   ok('BENCHMARK sits in the ?debug column and asks first', readFileSync('src/ui/debugToggles.js', 'utf8').includes('benchmarkButton()')
-    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark')"));
+    && readFileSync('src/ui/benchmark.js', 'utf8').includes("onYes: () => go('benchmark', { returnTo: currentScene()?.name === 'hub' ? 'hub' : 'title' })"));
   getProfile().bench = [];
 }
 
 // T94: 0.133 — every player is asked once: entering the Great Hall with a
-// best room of telemetry.json benchmarkPromptRoom (10) or more and no
-// result yet, a dialog offers only Continue; the benchmark plays (virtual
+// best room of telemetry.json benchmarkPromptRoom (6 since 0.00219) or more
+// and no result from this round (benchmarkSince) yet, a dialog offers only Continue; the benchmark plays (virtual
 // time), saves its result and returns to the Great Hall — no second ask.
 {
   const bm = await import('../../src/ui/benchmark.js');
   const ep = DATA.telemetry.endpoint;
   DATA.telemetry.endpoint = 'https://stats.example';
+  const realLoc94 = globalThis.location; globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' }; // (0.00223: the ask only where stats are sent)
   fresh();
   const p = getProfile();
-  p.records.bestRoom = 9;
-  ok('not due before room 10, or without stats collection', !bm.benchmarkDue(p) && DATA.telemetry.benchmarkPromptRoom === 10);
+  // 0.00201 turned the ask off (the owner's call); 0.00219 turned it on again for the phone testers, from room 6
+  const bp = DATA.telemetry.benchmarkPrompt;
   p.records.bestRoom = 12;
-  ok('due from room 10 on, until a result exists', bm.benchmarkDue(p) && !bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
+  DATA.telemetry.benchmarkPrompt = false;
+  ok('the ask can be turned off (telemetry.json benchmarkPrompt)', !bm.benchmarkDue(p));
+  DATA.telemetry.benchmarkPrompt = true;
+  ok('on as shipped, from room 6, this round from the build that turned it on', bp === true && DATA.telemetry.benchmarkPromptRoom === 6 && /^\d+(\.\d+)+$/.test(DATA.telemetry.benchmarkSince) && buildsAhead(DATA.telemetry.benchmarkSince) <= 1); // the round is a shipped build or the one being shipped
+  p.records.bestRoom = 5;
+  ok('not due before room 6, or without stats collection', !bm.benchmarkDue(p));
+  p.records.bestRoom = 12;
+  globalThis.location = { hostname: 'localhost' };
+  ok('never on localhost, where nothing is sent (0.00223)', !bm.benchmarkDue(p));
+  globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
+  ok('due from room 6 on, until a result from this round exists (an older build\'s does not count)', bm.benchmarkDue(p)
+    && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: DATA.telemetry.benchmarkSince }] }) && !bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00300' }] })
+    && bm.benchmarkDue({ ...p, bench: [{ at: 1, build: '0.00218' }] }) && bm.benchmarkDue({ ...p, bench: [{ at: 1 }] })
     && !(DATA.telemetry.endpoint = '', bm.benchmarkDue(p)) && (DATA.telemetry.endpoint = 'https://stats.example'));
-  ok('the prompt quotes the real length', bm.benchmarkSeconds() === 40 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
+  const M = DATA.cards.motion, settle = bm.PHASES.reduce((s, x) => s + DATA.backgrounds.parallax.fadeMs + M.enterDelayMs + M.enterMs + x.enemies.length * M.enterStaggerMs, 0) / 1000;
+  ok('the prompt quotes the real length: the phases plus each room\'s settle (0.00222), rounded up to 5 s', bm.benchmarkSeconds() === Math.ceil((36 + settle) / 5) * 5 && bm.benchmarkSeconds() === 50 && bm.PHASES.reduce((s, x) => s + x.secs, 0) === 36);
+  const since = DATA.telemetry.benchmarkSince;
+  DATA.telemetry.benchmarkSince = DATA.build.version; // this round = the build under test (ship.mjs bumps build.json after the suite's first run)
   const realBody = globalThis.document.body;
   const body = new El('body');
   globalThis.document.body = body;
   const dlg = () => body.children.find((c) => /update-overlay/.test(c.className ?? ''));
+  const realRnd = Math.random; DEBUG.forceCrit = true; // (a ?debug toggle left on: the benchmark must switch it off and put it back)
   show(hubScene());
   await sleep(1100); // the fade to the hall
   ok('no ask while the hall is still fading in', !dlg());
   await sleep(1300);
-  ok('Great Hall asks once the hall has faded in', !!dlg() && dlg().textContent.includes('about 40 seconds') && dlg().textContent.includes('Continue')
+  ok('Great Hall asks once the hall has faded in', !!dlg() && dlg().textContent.includes(`about ${bm.benchmarkSeconds()} seconds`) && dlg().textContent.includes('Continue')
     && dlg().textContent.includes('[space]'));
   handleKey('escape'); handleKey('d');
   ok('nothing skips it (Esc, the hall\'s hotkeys)', !!dlg() && t().includes('GREAT HALL'));
+  const sent94 = [], realFetch94 = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { sent94.push(JSON.parse(o.body)); return { ok: true }; };
   handleKey(' ');
   ok('Space starts the benchmark', !dlg());
   await sleep(1300);
   ok('the benchmark scene runs', t().includes('Benchmark'));
-  await sleep(45000); // the whole script, in virtual time
+  const n0 = bm.PHASES[0].enemies.length;
+  ok('while it runs: a seeded Math.random, invulnerable, the crit toggles off, the line sized on #app (0.00223: driven, not read from the source)',
+    Math.random !== realRnd && DEBUG.invulnerable && !DEBUG.forceCrit && !DEBUG.forceMegaCrit && registry.app.style['--n'] === String(n0) && Number(registry.app.style['--slots']) >= n0, `${registry.app.style['--n']} ${registry.app.style['--slots']}`);
+  await sleep(60000); // the whole script, in virtual time
   const res = dlg();
   ok('result shown with thanks; saved', res && res.textContent.includes('Benchmark complete') && res.textContent.includes('Thank you')
     && getProfile().bench.length === 1 && getProfile().bench[0].phases.combat?.fps > 0 && getProfile().history.length === 0);
+  ok('after it: the real Math.random and every debug flag back as they were', Math.random === realRnd && DEBUG.forceCrit === true && !DEBUG.invulnerable && !DEBUG.forceMegaCrit);
+  globalThis.fetch = realFetch94;
+  const up = sent94.at(-1)?.report;
+  ok('the result\'s upload carries the device report: the three phases, each with its histogram, split, stalls and the frame summary (0.00225)', !!up && up.kind === 'bench' && ['idle', 'combat', 'overkill'].every((id) => up.phases[id] && up.phases[id].hist.counts.length === 22 && typeof up.phases[id].split === 'object' && Array.isArray(up.phases[id].stalls) && up.phases[id].fps > 0)
+    && up.renderer.bg === 'flat' && up.build === DATA.build.version && sent94.length === 1, up && JSON.stringify(Object.keys(up)));
+  DEBUG.forceCrit = false;
   handleKey(' ');
   await sleep(1100);
-  ok('back to the Great Hall, and it does not ask again', t().includes('GREAT HALL') && (await sleep(2500), !dlg()));
+  ok('back to the Great Hall (the scene by name), and it does not ask again', t().includes('GREAT HALL') && currentScene()?.name === 'hub' && (await sleep(2500), !dlg()));
+  // 0.00219 (phones): the benchmark keeps the screen awake where it can, and one that went to the
+  // background partway (a call, the lock) is not saved — the hall asks again
+  getProfile().bench = [];
+  const { benchmarkScene } = await import('../../src/ui/scenes/benchmarkScene.js');
+  const vis = () => (globalThis.document.listeners.visibilitychange ?? []).length; // (other modules listen too: count the benchmark's own)
+  const before = vis();
+  show(benchmarkScene({ returnTo: 'hub' }));
+  await sleep(1300);
+  const listening = vis() - before;
+  globalThis.document.hidden = true;
+  for (const fn of globalThis.document.listeners.visibilitychange ?? []) fn();
+  globalThis.document.hidden = false;
+  await sleep(60000);
+  const cut = dlg();
+  ok('a benchmark that went to the background is not saved and says so', listening === 1 && cut && cut.textContent.includes('Benchmark interrupted') && cut.textContent.includes('ask again')
+    && getProfile().bench.length === 0 && bm.benchmarkDue(getProfile()) && vis() === before);
+  handleKey(' ');
+  await sleep(1100);
+  ok('…and the Great Hall asks again', t().includes('GREAT HALL') && (await sleep(2500), !!dlg() && dlg().textContent.includes('A quick benchmark')));
+  handleKey(' '); await sleep(1300); await sleep(60000); handleKey(' '); await sleep(1100); // let it finish cleanly before the next block
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep;
+  DATA.telemetry.endpoint = ep; globalThis.location = realLoc94;
+  DATA.telemetry.benchmarkPrompt = bp; DATA.telemetry.benchmarkSince = since;
   fresh();
 }
 
@@ -314,8 +434,11 @@ fresh();
 {
   const ep = DATA.telemetry.endpoint;
   DATA.telemetry.endpoint = 'https://stats.example';
+  const realLoc95 = globalThis.location; globalThis.location = { hostname: 'www.castleofthecrimsonmoon.com' };
   fresh();
   const p = getProfile();
+  const bp = DATA.telemetry.benchmarkPrompt;
+  DATA.telemetry.benchmarkPrompt = true;
   p.records.bestRoom = 12; p.coins = 522; // unspent coins: Descend asks first
   const realBody = globalThis.document.body;
   const body = new El('body');
@@ -336,11 +459,11 @@ fresh();
   confirmPrompt({ title: 'Left over', lines: [], yes: ['Yes', 'y'], no: ['No', 'n'], onYes: () => { throw new Error('acted under the benchmark'); } });
   await sleep(1300);
   ok('the benchmark clears dialogs left on screen', t().includes('Benchmark') && dialogs().length === 0);
-  await sleep(45000);
+  await sleep(60000);
   handleKey(' ');
   await sleep(1100);
   globalThis.document.body = realBody;
-  DATA.telemetry.endpoint = ep;
+  DATA.telemetry.endpoint = ep; DATA.telemetry.benchmarkPrompt = bp; globalThis.location = realLoc95;
   fresh();
 }
 
@@ -365,4 +488,78 @@ fresh();
   ok('dashboard: a capped run is green against 30 and says so', html.includes('perf-good') && html.includes('capped at 30'));
   ok('dashboard: this browser\'s row shows the device from its collected copy',
     readFileSync('analytics/dashboard.js', 'utf8').includes('device: ownDevice }]'));
+}
+
+// T99: 0.00222 — the refresh rate from the busiest frame interval. The
+// owner's dashboard showed two 120 Hz Macs as "144 Hz" (119.8 fps, amber)
+// and 60 Hz iPhones as "90 / 75 Hz" with 56-61% "dropped" at 59 fps: the
+// fastest 10% of frames, a refresh short on jittered timestamps. Each
+// fixture asserts hz AND drop (the drop is what the owner reads).
+{
+  const pm = await import('../../src/core/perfMonitor.js');
+  const rec = (pairs) => { const r = pm.newRecording(); for (const [d, n] of pairs) for (let k = 0; k < n; k++) pm.addFrame(r, d); return r; };
+  const s = (pairs) => pm.summarizeFrames(rec(pairs));
+  const K = DATA.telemetry.perf;
+  ok('perf knobs shipped: nearShare, paceShare, goodShare, okFps, hzSince (the build being shipped)', K.nearShare === 0.06 && K.paceShare === 0.15 && K.goodShare === 0.9 && K.okFps === 30 && buildsAhead(K.hzSince) <= 1);
+  const mac = s([[8.33, 900], [7.25, 100]]);
+  ok('a 120 Hz Mac with catch-up frames reads 120 Hz, nothing dropped (it read 144)', mac.hz === 120 && mac.drop === 0, JSON.stringify(mac));
+  const phone = s([[16.67, 700], [12, 150], [21, 150]]);
+  ok('a 60 Hz iPhone with jittered timestamps reads 60 Hz, nothing dropped (it read 90, 15%)', phone.hz === 60 && phone.drop === 0, JSON.stringify(phone));
+  const smear = s([[11.5, 120], [14.5, 300], [19, 530], [26, 50]]);
+  ok('the iPhone smear (p95 26 ms) reads 60 Hz with 5% dropped (it read 90, 58%)', smear.hz === 60 && smear.drop === 5, JSON.stringify(smear));
+  ok('144 Hz at full rate still reads 144', s([[6.94, 970], [13.9, 30]]).hz === 144);
+  const d45 = s([[16.67, 2000], [33.33, 1000]]);
+  ok('a 60 Hz display at 45 fps: 60 Hz, a third dropped', d45.hz === 60 && d45.drop === 33.3);
+  const d50 = s([[16.67, 2000], [33.33, 500]]);
+  ok('a 60 Hz display at 50 fps: 60 Hz, a fifth dropped (never 50 Hz)', d50.hz === 60 && d50.drop === 20);
+  const d70 = s([[8.33, 400], [16.67, 500], [25, 100]]);
+  ok('a 120 Hz display mostly taking two refreshes: still 120 Hz, 60% dropped', d70.hz === 120 && d70.drop === 60, JSON.stringify(d70));
+  const alt = s([[11.11, 1000], [22.22, 1000]]);
+  ok('a 90 Hz display dropping alternately reads 90 (a pure alternation is one; the owner\'s rows are smears)', alt.hz === 90 && alt.drop === 50);
+  ok('the knobs are read from the data (a wide pace share lets the average decide)', pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.6 }).hz === 60 && pm.summarizeFrames(rec([[21.5, 1000], [11.5, 1000]]), { nearShare: 0.06, paceShare: 0.5 }).hz === 90);
+  // stalls and the worst frame's moment (0.00222)
+  const r = rec([[16.7, 600], [120, 2]]); pm.addFrame(r, 130, true);
+  const st2 = pm.summarizeFrames(r);
+  ok('stalls = frames of 100 ms or more; the worst frame remembers it fell in a room change', st2.stalls === 3 && st2.worst === 130 && st2.worstOut === 1 && pm.summarizeFrames(rec([[16.7, 600], [120, 1]])).worstOut === 0);
+  // the dashboard: old rows graded by their fps, their dropped share hidden; trusted rows as they are
+  const pf = await import('../../analytics/perf.js');
+  const row = (build, perf) => [{ player: 'a', at: 1, build, perf: { bg: '3d', q: 0, dpr: 2, vw: 1747, vh: 930, secs: 60, stalls: 1, worstOut: 1, ...perf } }];
+  const pl = [{ key: 'a', label: 'Mac', device: null }];
+  const old = pf.perfTable(pl, row('0.00221', { fps: 119.8, p95: 10, drop: 0.1, worst: 151, hz: 144 }), K);
+  ok('dashboard: a pre-fix 120 Hz Mac row is green and shows no dropped share; stalls and the worst frame\'s moment show', old.includes('perf-good') && old.includes('—') && !old.includes('0.1%') && old.includes('<th>Stalls</th>') && old.includes('room change'));
+  const fresh2 = pf.perfTable(pl, row(K.hzSince, { fps: 73, p95: 20, drop: 30, worst: 90, hz: 120 }), K);
+  ok('dashboard: a trusted row keeps its own grade and dropped share', fresh2.includes('perf-ok') && fresh2.includes('30.0%'));
+  const both = pf.perfRows(pl, [...row('0.00221', { fps: 58.6, p95: 26, drop: 58, worst: 78, hz: 90 }), { ...row(K.hzSince, { fps: 59.5, p95: 18, drop: 3, worst: 60, hz: 60 })[0], at: 2 }], K);
+  ok('dashboard: medians over the trusted runs only, once a player has one', both[0].drop === 3 && both[0].runs === 2 && both[0].misread === false);
+  const bench = pf.benchTable([{ label: 'A', device: null, profile: { bench: pf.sanitizeBench([{ at: 1, build: '0.00220', phases: { idle: { fps: 59.1, p95: 28, drop: 61.3, worst: 80, hz: 90 } } }]) } }], '0.00220', K);
+  ok('dashboard: a pre-fix iPhone benchmark phase is green with its dropped share hidden', bench.includes('perf-good') && !bench.includes('61.3%'));
+  const wk = await import('../../collector/worker.js');
+  ok('collector keeps stalls and worstOut; its version moved with telemetry.json', wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).stalls === 2 && wk.cleanPerf({ fps: 60, stalls: 2, worstOut: 1 }).worstOut === 1 && wk.VERSION === DATA.telemetry.collectorVersion);
+}
+
+// tools/reports.mjs (0.00229): the collector pulled into the session — one
+// player summarized with the newest benchmark and report, a missing key
+// and a refused key named plainly (never the key itself), the players
+// list taken from the Worker's answer
+{
+  const { summarize, render, fetchPlayers, matches, KEY_VAR } = await import('../reports.mjs');
+  const pl = { playerId: 'abcdef0123456789', lastSeen: Date.UTC(2026, 9, 3, 6, 0), build: '0.00228', device: { gpu: 'Apple GPU', browser: 'Safari 26', os: 'iOS', cores: 6 },
+    profile: { name: 'Petri', records: { bestRoom: 9 }, history: [{ at: 1 }, { at: 2 }], bench: [{ at: 5, build: '0.00225', bg: '3d', q: 0, vw: 852, vh: 393, dpr: 3, phases: { idle: { fps: 59.8, hz: 60, p95: 28, drop: 12 } } }, { at: 9, build: '0.00228', bg: '3d', q: 1, vw: 852, vh: 393, dpr: 3, phases: { idle: { fps: 60, hz: 60, p95: 17, drop: 0.4 }, combat: { fps: 59.9, hz: 60, p95: 21, drop: 1 } } }] },
+    reports: [{ at: 7, kind: 'bench', build: '0.00228', phases: { idle: { split: { cards: { avg: 0.05 }, bg: { avg: 0.2 } }, stalls: [{ ms: 120 }] }, combat: { split: { cards: { avg: 0.1 } }, stalls: [] } }, cards: { lit: 7, own: 7, pool: 8 } }] };
+  const s = summarize(pl);
+  ok('reports: a player summarized — name, short id, device, counts, the NEWEST benchmark and report', s.name === 'Petri' && s.id === 'abcdef01' && s.device === 'Apple GPU · Safari 26 · iOS · 6 cores' && s.runs === 2 && s.bestRoom === 9 && s.benchmarks === 2
+    && s.bench.build === '0.00228' && s.bench.q === 1 && s.bench.idle.startsWith('60.0/60 Hz, p95 17 ms, drop 0.4%') && s.bench.overkill === '—' && s.report.kind === 'bench' && s.report.stalls === 1 && s.report.spans.idle === 'cards 0.05 ms, bg 0.20 ms' && s.report.cards.pool === 8);
+  const text = render(s);
+  ok('reports: the text names the player, the benchmark phases and the spans', text.includes('Petri  (abcdef01)') && text.includes('combat 59.9/60 Hz') && text.includes('idle: cards 0.05 ms, bg 0.20 ms') && text.includes('"own":7'));
+  ok('reports: --player matches the name, the id or the device, case aside', matches(pl, 'petri') && matches(pl, 'abcdef') && matches(pl, 'safari') && !matches(pl, 'android') && matches(pl, null));
+  const got = await fetchPlayers({ endpoint: 'https://stats.example/', key: 'k', fetchFn: async (u, o) => ({ ok: true, status: 200, json: async () => ({ players: [pl] }), u, o }) });
+  ok('reports: the players come from the Worker\'s answer', got.length === 1 && got[0] === pl);
+  let seen = null;
+  await fetchPlayers({ endpoint: 'https://stats.example/', key: 'secret-k', fetchFn: async (u, o) => { seen = { u, o }; return { ok: true, status: 200, json: async () => ({}) }; } });
+  ok('reports: the key goes in the Bearer header, the URL has no trailing slash doubled', seen.u === 'https://stats.example/players' && seen.o.headers.authorization === 'Bearer secret-k');
+  const err = async (args) => { try { await fetchPlayers(args); return ''; } catch (e) { return e.message; } };
+  const noKey = await err({ endpoint: 'https://stats.example', key: '' });
+  const refused = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => ({ ok: false, status: 401 }) });
+  const down = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
+  ok('reports: no key, a refused key and an unreachable host each say what to set, and never the key', noKey.includes(KEY_VAR) && noKey.includes('new session') && refused.includes('401') && !refused.includes('secret-k') && down.includes('network policy') && !down.includes('secret-k'));
 }

@@ -75,12 +75,20 @@ export function migrateProfile(p, DEFAULTS) {
   while (v < SAVE_VERSION) MIGRATIONS[v++](p);
   p.saveVersion = Math.max(v, SAVE_VERSION);
   // An imported code is not trusted (0.00197; the stats page has
-  // sanitizeProfile, the game had nothing): the gear slots, the numbers
-  // and the lists are made whole, so a malformed paste cannot break the
-  // Great Hall on every entry (after the steps: they read a legacy save's own shape)
+  // sanitizeProfile, the game had nothing): made whole, after the steps
+  // (they read a legacy save's own shape) — the gear slots (shape, and
+  // every worn id checked against items.json: an unknown one, a retired
+  // item or a foreign code, made settleRun and kill loot throw and left
+  // the profile half-settled, 0.00223), the numbers (the top-level ones,
+  // the stats / alchemy / records tables, the forge levels), the lists.
   p.equipment = { ...emptyEquipment(), ...(p.equipment || {}) };
   if (!Array.isArray(p.equipment.rings) || p.equipment.rings.length !== 2) p.equipment.rings = [null, null];
-  for (const k of ['coins', 'xp', 'potions', 'potionCap']) p[k] = Number.isFinite(Number(p[k])) ? Number(p[k]) : DEFAULTS[k];
+  const known = (id) => (typeof id === 'string' && Object.hasOwn(DATA.items, id) ? id : null);
+  for (const s of Object.keys(p.equipment)) p.equipment[s] = s === 'rings' ? p.equipment.rings.map(known) : known(p.equipment[s]);
+  for (const k of ['coins', 'xp', 'potions', 'potionCap', 'potionsBought']) p[k] = Number.isFinite(Number(p[k])) ? Number(p[k]) : DEFAULTS[k];
+  for (const t of ['stats', 'alchemy', 'records']) { if (!p[t] || typeof p[t] !== 'object') p[t] = {}; for (const k of Object.keys(DEFAULTS[t])) p[t][k] = Number.isFinite(Number(p[t][k])) ? Number(p[t][k]) : DEFAULTS[t][k]; }
+  if (!p.forged || typeof p.forged !== 'object') p.forged = {};
+  for (const [id, lvl] of Object.entries(p.forged)) { if (!Object.hasOwn(DATA.items, id) || !Number.isFinite(Number(lvl))) delete p.forged[id]; else p.forged[id] = Number(lvl); }
   for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
 
 }

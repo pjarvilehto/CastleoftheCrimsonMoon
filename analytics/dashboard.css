@@ -1,8 +1,8 @@
 /* analytics/dashboard.css — the play-stats page (0.095). Same palette and
    face as the game; plain responsive grid. */
 @font-face {
-  font-family: 'DIN Condensed';
-  src: url('../assets/fonts/DINCondensedBold.ttf') format('truetype');
+  font-family: 'D-DIN Condensed';
+  src: url('../assets/fonts/D-DINCondensed-Bold.woff2') format('woff2');
   font-display: swap;
 }
 :root {
@@ -11,7 +11,7 @@
 }
 * { box-sizing: border-box; }
 body {
-  font-family: 'DIN Condensed', 'Arial Narrow', sans-serif; font-size: 17px; letter-spacing: 0.02em;
+  font-family: 'D-DIN Condensed', 'Arial Narrow', sans-serif; font-size: 17px; letter-spacing: 0.02em;
   background: radial-gradient(ellipse at 50% 0%, #2a1410 0%, var(--bg) 60%) fixed; color: var(--text);
 }
 #dash { max-width: 1280px; margin: 0 auto; padding: 24px 16px 60px; }
@@ -35,6 +35,8 @@ button:hover:not(:disabled) { border-color: var(--gold); color: #fff; }
 button:disabled { opacity: 0.4; cursor: default; }
 button.small { padding: 3px 9px; font-size: 0.85rem; }
 .msg { margin: 10px 0 0; color: var(--gold); }
+.report-out { width: 100%; min-height: 140px; margin-top: 10px; font-size: 11px; }
+tr.divider td { color: var(--muted, #9a8b6a); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 10px; }
 .filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 0 0 16px; }
 .filters label { color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
 .filters button { margin-left: auto; }
@@ -71,6 +73,7 @@ tr.retreat td:nth-child(4) { color: #7bc98a; }
 .empty { color: var(--muted); margin: 6px 0; }
 /* Performance card (0.130): FPS against the screen's refresh rate */
 .perf-good { color: #7bc98a; }
+tr.bench-old td { opacity: 0.55; } /* a benchmark from before the current round (0.00221) */
 .perf-ok { color: #e0b84a; }
 .perf-bad { color: var(--red); }
 @media (max-width: 760px) {

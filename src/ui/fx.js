@@ -17,10 +17,23 @@ export function deathFlash(onPeak) {
   }, 900);
 }
 
-// Roll a number counter up from `from` to `to` over `ms`.
+// A number that just changed glows and grows for a moment (0.00216, the
+// owner's ask: XP and coins in combat, the hall's rows): one element.animate,
+// transform and a text glow — never a loop.
+export function pulseNumber(el, ms = 820) {
+  el?.animate?.([
+    { transform: 'scale(1)', color: 'inherit', textShadow: 'none' },
+    { transform: 'scale(1.18)', color: '#fff4d0', textShadow: '0 0 14px rgba(232,196,92,1), 0 0 28px rgba(232,196,92,0.6)', offset: 0.25 },
+    { transform: 'scale(1.08)', color: '#fff4d0', textShadow: '0 0 10px rgba(232,196,92,0.8)', offset: 0.6 },
+    { transform: 'scale(1)', color: 'inherit', textShadow: 'none' },
+  ], { duration: ms, easing: 'ease-out' });
+}
+
+// Roll a number counter up from `from` to `to` over `ms`, with the pulse above.
 export function tickUp(el, from, to, ms = 700) {
   if (!el) return;
   if (from === to) { el.textContent = String(to); return; }
+  pulseNumber(el, ms + 120);
   const start = performance.now();
   const step = (now) => {
     const t = Math.min(1, (now - start) / ms);

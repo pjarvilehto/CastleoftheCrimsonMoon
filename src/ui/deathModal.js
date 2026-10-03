@@ -7,6 +7,7 @@
 // reliquary death used to leave Push Deeper live).
 
 import { el } from '../core/dom.js';
+import { deathRoom } from '../run/runState.js';
 import { openDialog } from './dialog.js';
 
 export function showDeathModal(run, onAccept) {
@@ -15,7 +16,7 @@ export function showDeathModal(run, onAccept) {
     label: 'You died', overlayClass: 'death-overlay', modalClass: 'death-modal', proceed: accept,
     children: [
       el('h1', { class: 'death-title' }, 'YOU DIED!'),
-      el('p', { class: 'death-sub' }, `The castle claims another soul on room ${run.roomNumber}.`),
+      el('p', { class: 'death-sub' }, `The castle claims another soul on room ${deathRoom(run)}.`), // (the reliquary's room is the one it led to, 0.00223)
       accept,
     ],
     onKey: (k) => { if (k === 'f' || k === 'enter') accept.click(); },

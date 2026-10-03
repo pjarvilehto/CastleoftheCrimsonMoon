@@ -1,7 +1,7 @@
 // tools/test/backgrounds.test.mjs — 3D backgrounds: depth maps, tuning sliders, camera math.
 // Run via tools/smoke-test.mjs (0.098 split; T-numbers are historical).
 
-import { ok, t, fresh, registry, El, DATA, handleKey, generateRoom, hubScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
+import { ok, t, sleep, fresh, registry, El, DATA, handleKey, generateRoom, hubScene, resetProfile, getProfile, readFileSync, statSync } from './harness.mjs';
 
 fresh();
 
@@ -16,8 +16,8 @@ fresh();
   const all = [...new Set([b.title, b.hub, ...b.bosses, b.death, b.shrine, ...b.rooms, ...b.treasure])];
   const missing = all.filter((f) => { try { return !statSync(bg3d.depthUrl(f)).isFile(); } catch { return true; } });
   ok('every background has a depth map', missing.length === 0, missing.join(','));
-  const png = readFileSync(bg3d.depthUrl(b.title));
-  ok('depth maps are 8-bit grayscale PNGs', png.readUInt32BE(16) === 512 && png[24] === 8 && png[25] === 0);
+  const odd = all.filter((f) => { const png = readFileSync(bg3d.depthUrl(f)); return ![512, 1024].includes(png.readUInt32BE(16)) || png[24] !== 8 || png[25] !== 0; });
+  ok('every depth map is an 8-bit grayscale PNG, 512 or 1024 wide (0.00223: the title\'s alone was checked)', odd.length === 0, odd.join(','));
   // Staged preload (0.098): boot = what the title + hub paint; the rest
   // (rooms, boss/shrine/death, portraits) loads after the title shows.
   const pre = await import('../../src/shared/preload.js');
@@ -99,10 +99,22 @@ fresh();
   const pushCfg = DATA.backgrounds.parallax.push;
   ok('a camera dolly pushes into the painting: things move outward, near things faster', off(pushCfg.dist, 0.5) < off(0, 0.5) && (off(0, 0.9) - off(pushCfg.dist, 0.9)) > (off(0, 0.1) - off(pushCfg.dist, 0.1))
     && pushCfg.dist > 0 && pushCfg.dist <= 0.3 && pushCfg.inMs > 0 && pushCfg.outMs > 0);
-  const sc = readFileSync('src/core/scene.js', 'utf8'), b3 = readFileSync('src/core/bg3d.js', 'utf8'), cssP = readFileSync('styles.css', 'utf8');
-  ok('the transition starts the push as the windows fade; the 3D renderer dollies per layer, the flat layer scales (not under reduced motion)',
-    sc.includes("transitionListener?.(fadeOutMs);") && sc.includes("activeBg?.classList.add('push')") && readFileSync('src/main.js', 'utf8').includes('onTransition(() => { transitionSfx(); bgPush(); })')
-    && b3.includes('dollyOf(L, now, i === layers.length - 1)') && cssP.includes('.bg-layer.push { transform: scale(') && /prefers-reduced-motion: reduce\) \{ \.bg-layer, \.bg-layer\.push/.test(cssP));
+  const b3 = readFileSync('src/core/bg3d.js', 'utf8'), cssP = readFileSync('styles.css', 'utf8');
+  // the scene side, run (0.00223: it was asserted on source text): the transition tells the renderer as the windows start to fade, the flat layer takes the push
+  const { onTransition, setBackground: setBg, transitionTo: trans } = await import('../../src/core/scene.js');
+  let told = null, ran = false;
+  onTransition((ms) => { told = ms; });
+  setBg('dungeon_a.jpg');
+  await sleep(10);
+  const layer = [registry.bg0, registry.bg1].find((l) => l.dataset.file === 'dungeon_a.jpg');
+  trans(() => { ran = true; setBg('dungeon_b.jpg'); }, 50);
+  const early = { told, ran, push: layer.classList.contains('push') };
+  await sleep(5000);
+  onTransition(null);
+  ok('the transition starts the push as the windows fade: the renderer is told first, the flat layer pushes, and is at rest again after',
+    early.told === 50 && !early.ran && early.push && ran && [registry.bg0, registry.bg1].every((l) => !l.classList.contains('push') && !l.classList.contains('pushed')));
+  ok('the 3D renderer dollies per layer, the flat layer scales (not under reduced motion)',
+    b3.includes('dollyOf(L, now, i === layers.length - 1)') && cssP.includes('.bg-layer.push { transform: scale(') && /prefers-reduced-motion: reduce\) \{ \.bg-layer, \.bg-layer\.push/.test(cssP));
   const cover = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(extreme, a, bm.requiredOverscan(extreme, a))));
   ok('auto skirt covers the screen at max slider settings', cover > 0, cover.toFixed(4));
   const tuner = readFileSync('src/ui/bgTuner.js', 'utf8');
@@ -127,10 +139,8 @@ fresh();
   const p = getProfile();
   p.xp = 0; p.coins = 0;
   ok('nothing to spend: no green', !hub.canSpendXp(p) && !hub.canSpendCoins(p));
-  p.xp = 1000; p.coins = DATA.difficulty.potions.price;
+  p.xp = 1000; p.coins = DATA.difficulty.potions.priceSteps[0];
   ok('XP/coins green when something is affordable', hub.canSpendXp(p) && hub.canSpendCoins(p));
-  ok('potion glow below 30% of the satchel', hub.potionsLow({ potions: 1, potionCap: 4 }) && !hub.potionsLow({ potions: 2, potionCap: 4 })
-    && hub.potionsLow({ potions: 2, potionCap: 8 }) && !hub.potionsLow({ potions: 3, potionCap: 8 }));
   p.potions = 1; p.potionCap = 4;
   const root = new El('main');
   hub.hubScene().enter(root);
@@ -259,7 +269,33 @@ fresh();
   for (let x = 16; x < 48; x++) { top += l(x, 16); bottom += l(x, 44); }
   ok('sprites are lit from above (baked self-shadow)', top > bottom);
   const src = readFileSync('src/core/bg3dPuffGL.js', 'utf8');
-  ok('puffs render at half resolution, then blend over the scene once', src.includes('Math.ceil(w / 2)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)'));
+  ok('puffs render at 1/puffDiv of the canvas (half on the desktop, a third on a phone — data, 0.00222), then blend over the scene once',
+    src.includes('Math.ceil(w / div)') && src.includes('gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)') && DATA.backgrounds.parallax.puffDiv === 2 && DATA.backgrounds.parallax.phone.puffDiv === 3
+    && readFileSync('src/core/bg3d.js', 'utf8').includes('div: L.tune.puffDiv'));
+  // the phone power profile (0.00222): parallax.phone over the base on a phone, nothing elsewhere; every phone knob exists at the top level
+  const { tuning } = await import('../../src/core/bg3dTuning.js');
+  const { deviceBlock } = await import('../../src/shared/platform.js');
+  const Pp = DATA.backgrounds.parallax;
+  ok('the phone profile: parallax.phone merged over the base on a phone only, every key a real knob',
+    tuning('', 'phone').maxDpr === Pp.phone.maxDpr && tuning('', 'phone').motionMaxFps === Pp.phone.motionMaxFps && tuning('', 'desktop').maxDpr === Pp.maxDpr && tuning('').maxDpr === Pp.maxDpr
+    && Object.keys(Pp.phone).every((k) => k in Pp) && deviceBlock({ a: 1, phone: { a: 2 } }, 'phone').a === 2 && deviceBlock({ a: 1, phone: { a: 2 } }, 'desktop').a === 1
+    && Pp.phone.maxDpr < Pp.maxDpr && Pp.phone.motionMaxFps <= Pp.motionMaxFps && Pp.phone.maxFps <= Pp.maxFps);
+  // the ladder's threshold (0.00222): a struggling device is judged against minFps, a fast display against what the throttle can reach
+  const { slowAt } = await import('../../src/core/bg3dQuality.js');
+  const Q = { minFps: 22, maxFps: 30, quality: { reachShare: 0.9 } };
+  ok('slowAt: a device at 15 rAF/s must reach 22 (it used to be judged against 13.5 and never stepped down); a 40 Hz display against 18; a 60 Hz one 22; no rate yet 22',
+    slowAt(15, Q) === 22 && slowAt(40, Q) === 18 && slowAt(60, Q) === 22 && slowAt(0, Q) === 22 && slowAt(30, Q) === 22 && Pp.quality.reachShare === 0.9
+    && readFileSync('src/core/bg3d.js', 'utf8').includes('return slowAt(rafRate, cfg)'));
+  // the vignette is the shaders' (0.00222): both passes multiply it, the CSS layer hides under the live canvas
+  const glSrc = readFileSync('src/core/bg3dGL.js', 'utf8');
+  ok('the vignette lives in the shaders under the live canvas (both passes), the CSS one only over the flat layers',
+    glSrc.includes('gl_FragColor = vec4(c * vignette(), uAlpha)') && src.includes('gl_FragColor.rgb *= vignette()') && readFileSync('styles.css', 'utf8').includes('#bg-stack.gl ~ #vignette { display: none; }')
+    && glSrc.includes('0.55 + (min(d, 1.0) - 0.75) / 0.25 * 0.35'));
+  // a flash light alone no longer lifts the frame cap (0.00222); the painting arrives decoded off the main thread
+  const bgSrc = readFileSync('src/core/bg3d.js', 'utf8');
+  ok('a flash alone keeps the rest rate; the painting and depth map come through loadPicture (createImageBitmap) and the fill waits a frame',
+    bgSrc.includes('const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps') && bgSrc.includes("loadPicture(`assets/bg/${file}`)") && glSrc.includes('createImageBitmap(blob')
+    && bgSrc.includes('await new Promise((resolve) => requestAnimationFrame(resolve))') && bgSrc.includes('img.close?.()'));
   ok('puffs fade softly into the scene in front of them (depth map)', src.includes('clamp((surf - d) / uSoft, 0.0, 1.0)') && P.soft > 0);
   const Pb = DATA.backgrounds.parallax, wind = (f) => Pb.overrides?.[f]?.fogWind ?? Pb.fogWind;
   const allBg = [...new Set([DATA.backgrounds.title, DATA.backgrounds.hub, ...DATA.backgrounds.bosses, DATA.backgrounds.death, DATA.backgrounds.shrine, ...DATA.backgrounds.rooms, ...DATA.backgrounds.treasure])];
@@ -292,8 +328,8 @@ fresh();
   ok('quality ladder: resolution first, then fog, then flat', q.LADDER[0].scale === 1 && q.LADDER[0].fog
     && q.LADDER.findIndex((s) => s.scale < 1) < q.LADDER.findIndex((s) => !s.fog) && !q.LADDER.at(-1).fog);
   const src = readFileSync('src/core/bg3d.js', 'utf8');
-  ok('past the last step: back to the flat backgrounds', src.includes('if (level >= LADDER.length) { shutdown(); return false; }')
-    && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
+  ok('past the last step: back to the flat backgrounds (nextStep, 0.00223)', q.nextStep(q.LADDER.length) === null && q.nextStep(q.LADDER.length - 1).fog === false && q.nextStep(0).scale === 1
+    && src.includes('const step = nextStep(++level)') && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }') && DATA.backgrounds.parallax.minFps > 0);
 }
 
 // 0.156 — no painting twice in a run (while the pool lasts), and the boss

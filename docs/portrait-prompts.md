@@ -1,11 +1,13 @@
-# Portrait prompts for Kimi: knight and enemies in the room style
+# Portrait prompts: the knight and enemies
 
-Goal: redraw the 13 character portraits (the knight and 12 enemies) in the
-style of the room paintings, "Mike Mignola meets Darkest Dungeon 2", keeping
-each character's identity, pose and colour accent so the game's animations
-and hit effects still fit.
+Goal: redraw the 13 character portraits (the knight and 12 enemies) in
+their own rendering — photoreal dark fantasy, the character's glow
+lighting it, one hue family each (0.00201: the inked room style was tried
+and dropped) — complete, consistent and cut out cleanly, keeping each
+character's identity, pose and colour accent so the game's animations and
+hit effects still fit.
 
-## How to use
+## How it is used
 
 1. Attach **two reference images** to each request:
    - **Image 1:** the character's current portrait from `assets/chars/`, for

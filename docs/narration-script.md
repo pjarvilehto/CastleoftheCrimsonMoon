@@ -18,19 +18,17 @@ even on "Overkill!". Think fireside storyteller crossed with a judge. He is
 low and close to the microphone, with some gravel and breath, and has no
 accent gimmicks.
 
-**ElevenLabs tips**
-- Pick an "old", "wise" or "narrator" voice from the Voice Library, or design
-  one: *"elderly male wizard, deep, slow, gravelly, intimate, storyteller"*.
-- Settings to start from: Stability ~40%, Similarity ~75%, Style ~20%,
-  speed 0.85–0.9. Lower stability gives more drama; raise it if takes wobble.
-- Ellipses ("…") make pauses and dashes make short breaks. Generate each take
-  separately and keep the best one.
-- Download as MP3 (44.1 kHz, 128 kbps or better), with no music or effects.
-  The game adds reverb if needed.
+Ellipses ("…") make pauses and dashes make short breaks.
 
-**File names.** Use the ID in the table, then the take number:
-`vo_descent_begin_1.mp3`, `vo_descent_begin_2.mp3`, … Upload them all as one
-batch, like the art.
+**Rendering.** `node tools/gen-vo.mjs` renders every missing take with
+ElevenLabs (needs `ELEVENLABS_API_KEY`; `--dry-run` lists what is missing,
+`--only <id>` one line, `--stability / --style / --speed` a steadier take;
+the defaults are `gen-vo.mjs VOICE`: stability 0.5, similarity 0.75, style
+0.1, speed 0.9). Files land as `assets/audio/vo/vo_<id>_<take>.mp3` and are
+listed in `assets/data/narration.json`, never overwritten (delete a file to
+re-render it). Reviewing: the VO Lab (`labs/vo/`) → `vo-rerender.json` →
+`--rerender`: approvals recorded, disapproved takes nudged and re-rendered
+under the same name with a `rendered` stamp that cache-busts the URL.
 
 **How often.** "Every" means the line plays each time the moment happens.
 "Sometimes" means a chance per event, so it doesn't get old. "Once" means once

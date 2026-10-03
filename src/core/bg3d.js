@@ -13,14 +13,15 @@
 // Tuning: backgrounds.json `parallax` (+ per-file `overrides`).
 
 import { coverScale, sampleDepth, orbit, buildGrid, mvp, requiredOverscan, joltOffset, withJoltReserve, JOLT_MAX, JOLT_LIFE_MS, swayOffset, SWAY_MAX, SWAY_LIFE_MS } from './bg3dMath.js';
-import { VS, FS, program, buffer, loadImage, readDepth, makeTexture, smallPixels } from './bg3dGL.js';
+import { VS, FS, program, buffer, loadPicture, readDepth, makeTexture, smallPixels } from './bg3dGL.js';
 import { fogColor } from './bg3dFog.js';
 import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
 import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
-import { LADDER, backingSize, fpsWindow } from './bg3dQuality.js';
+import { LADDER, backingSize, fpsWindow, slowAt, nextStep } from './bg3dQuality.js';
 import { reducedMotion } from '../shared/motion.js';
+import { span } from './perfSpans.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
 
@@ -49,7 +50,7 @@ let push = null;      // the room transition's camera push (0.171): { t0, rel } 
 // the camera starts pushing into the painting now, so the new one can
 // appear pushed in and pull back — one movement (parallax.push).
 export function bgPush() {
-  if (!gl || view === 'flat' || !(cfg.push.dist > 0)) return;
+  if (!gl || !layers.length || view === 'flat' || !(cfg.push.dist > 0)) return; // no painting on screen yet (the boot's first transition, or a first layer that failed to load): nothing to push through — the flat fallback skips it too (scene.js, activeBg null); 0.00223: the title painting zoomed in 16% and back out over eight seconds
   push = { t0: performance.now(), rel: null };
 }
 
@@ -59,15 +60,15 @@ const unit = (t) => Math.min(1, Math.max(0, t));
 function dollyOf(L, now, last) {
   if (!push) return 0;
   const { dist, inMs, outMs } = cfg.push;
-  if (last && L.born > push.t0) return dist * (1 - easeOut(unit((now - L.born) / outMs))); // the new painting pulls back to rest
+  if (last && L.born > push.t0 && !(push.rel && L.born >= push.rel)) return dist * (1 - easeOut(unit((now - L.born) / outMs))); // the new painting pulls back to rest (one that came after the ease-back began rides it with the old one, 0.00223: it used to appear at full depth over a painting at rest and pull back a second time — transitionTo gives the windows back at BG_WAIT_MAX_MS, the push eases back at inMs + fadeMs, and a streaming room painting can land between)
   const d = dist * easeIn(unit((now - push.t0) / inMs));
   return push.rel ? d * (1 - easeOut(unit((now - push.rel) / outMs))) : d; // the old one keeps going in (or eases back)
 }
 // Over? (the new painting is at rest, or the old one eased back)
 function settlePush(now) {
   const { inMs, outMs } = cfg.push;
-  const incoming = layers.length > 1 || layers[0]?.born > push.t0 ? layers[layers.length - 1] : null;
-  if (incoming && incoming.born > push.t0) { if (now - incoming.born >= outMs) push = null; return; }
+  const top = layers[layers.length - 1];
+  if (!push.rel && top?.born > push.t0) { if (now - top.born >= outMs) push = null; return; } // (a layer born after the ease-back began no longer restarts the push's life, 0.00223)
   if (!push.rel && now - push.t0 > inMs + cfg.fadeMs) push.rel = now; // no new painting came: ease back
   if (push.rel && now - push.rel >= outMs) push = null;
 }
@@ -137,7 +138,7 @@ export function initBg3d({ allowSoftware = false } = {}) {
   loc = {};
   for (const n of ['aGrid', 'aDepth']) loc[n] = gl.getAttribLocation(prog, n);
   for (const n of ['uMVP', 'uUvScale', 'uPlane', 'uDepthScale', 'uPivot', 'uTex', 'uAlpha', 'uShowDepth',
-    'uFog', 'uFogColor', 'uHaze', 'uHazeMax', 'uLightPos', 'uLightCol', 'uLightR2']) loc[n] = gl.getUniformLocation(prog, n);
+    'uFog', 'uFogColor', 'uHaze', 'uHazeMax', 'uLightPos', 'uLightCol', 'uLightR2', 'uRes']) loc[n] = gl.getUniformLocation(prog, n);
   puffR = createPuffRenderer(gl); // null: the haze alone
   gl.useProgram(prog);
   gridBuf = gl.createBuffer();
@@ -158,8 +159,9 @@ export function initBg3d({ allowSoftware = false } = {}) {
 // most recent request becomes visible. First one appears instantly.
 // Resolves once the new layer has fully faded in (0.154: the windows wait
 // for it, scene.js transitionTo).
-export async function showBackground3d(file) {
-  if (!gl) return;
+// null when the renderer is off (shut down, never started): scene.js then waits for its CSS layer instead (0.00209)
+export function showBackground3d(file) { return gl ? show3d(file) : null; }
+async function show3d(file) {
   wanted = file;
   let layer;
   try { layer = await loadLayer(file); } catch { return; } // flat CSS keeps showing
@@ -170,16 +172,28 @@ export async function showBackground3d(file) {
   if (layer.born !== -Infinity) await new Promise((resolve) => setTimeout(resolve, cfg.fadeMs));
 }
 
+// 0.00222: the painting and its depth map arrive decoded (bg3dGL.js
+// loadPicture: createImageBitmap off the main thread where the browser
+// has it — an <img> handed to texImage2D re-decoded the 2048x1152 JPEG on
+// the main thread, in the same task as the 9 MB upload, the depth read,
+// the fog colour and the 37k-vertex fill: a quarter-second stall while the
+// push dolly played), and that task is split in two: the uploads first,
+// the vertex fill and the puffs on the next frame.
 async function loadLayer(file) {
-  const [img, dimg] = await Promise.all([loadImage(`assets/bg/${file}`), loadImage(depthUrl(file)).catch(() => null)]);
+  const [img, dimg] = await Promise.all([loadPicture(`assets/bg/${file}`), loadPicture(depthUrl(file)).catch(() => null)]);
   if (!gl) return null;
   const depth = dimg ? readDepth(dimg) : null;
   const tune = tuning(file);
   // the mist takes the colour of the scene's own distance (0.099)
-  const mist = tune.fogColor ?? fogColor(smallPixels(img), 64, 36, (u, v) => (depth ? sampleDepth(depth, u, v) : 0.5));
+  const small = smallPixels(img);
+  const mist = tune.fogColor ?? fogColor(small.data, small.w, small.h, (u, v) => (depth ? sampleDepth(depth, u, v) : tune.pivot)); // (no map: the pivot depth, as fillDepth)
   const tex = makeTexture(gl, img);
-  const layer = { file, tex, depth, mist, img: { w: img.naturalWidth, h: img.naturalHeight }, depthBuf: gl.createBuffer(), tune,
-    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: makePuffs(seedOf(file), tune.puffs) };
+  const layer = { file, tex, depth, mist, img: { w: img.naturalWidth ?? img.width, h: img.naturalHeight ?? img.height }, depthBuf: gl.createBuffer(), tune,
+    depthTex: depthTexture(gl, dimg, tune.pivot), puffs: null };
+  img.close?.(); dimg?.close?.(); // the bitmaps' pixels are on the GPU now
+  await new Promise((resolve) => requestAnimationFrame(resolve)); // the rest in a task of its own
+  if (!gl) { dropLayer(layer); return null; }
+  layer.puffs = makePuffs(seedOf(file), tune.puffs);
   fillDepth(layer);
   return layer;
 }
@@ -212,31 +226,33 @@ let rafT0 = 0, rafN = 0, rafRate = 0;
 function slowBelow(now) {
   rafN++;
   if (now - rafT0 >= 1000) { if (rafT0) rafRate = (rafN * 1000) / (now - rafT0); rafT0 = now; rafN = 0; }
-  if (!rafRate) return cfg.minFps;
-  const reachable = rafRate / Math.ceil(rafRate / cfg.maxFps);
-  return Math.min(cfg.minFps, reachable * 0.9);
+  return slowAt(rafRate, cfg); // (core/bg3dQuality.js, 0.00222: a struggling device is judged against minFps, not 0.9 of its own rate)
 }
 
 function frame(now) {
   if (!gl) return;
   requestAnimationFrame(frame);
-  const slowAt = slowBelow(now); // (counts this rAF call, drawn or not)
+  const slowRate = slowBelow(now); // (counts this rAF call, drawn or not)
   // (filtered only while something plays: the quiet frame makes no garbage)
   if (jolts.length) jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
   if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
   if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
-  // maxFps when nothing moves; motionMaxFps while a jolt / sway / flash /
-  // push plays (at 30 fps those stutter; uncapped, 0.00197, they ran the
-  // whole scene at the display's rate through most of a fight)
-  const cap = push || jolts.length || sways.length || flashes.length ? cfg.motionMaxFps : cfg.maxFps;
+  // maxFps when nothing moves; motionMaxFps while a jolt / sway / push
+  // plays (at 30 fps those stutter; uncapped, 0.00197, they ran the whole
+  // scene at the display's rate through most of a fight). A flash light
+  // alone does not lift the cap (0.00222): its slow exponential fade reads
+  // the same at the rest rate, and it used to hold 60 fps for up to 2.8 s
+  // after every crit and potion.
+  const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps;
   if (!layers.length || now - lastDraw < 1000 / cap - 2) return;
   lastDraw = now;
+  const endSpan = span('bg'); // the draw's main-thread time, for the device report (0.00225)
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
   else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
   if (monitor && !held) {
-    fpsW = fpsWindow(fpsW, now, slowAt, cfg.quality);
-    if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;
+    fpsW = fpsWindow(fpsW, now, slowRate, cfg.quality);
+    if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
   const j = joltOffset(jolts, now);
@@ -266,6 +282,24 @@ function frame(now) {
   if (layers.length > 1 && now - layers[layers.length - 1].born >= cfg.fadeMs) {
     while (layers.length > 1) dropLayer(layers.shift());
   }
+  endSpan();
+}
+
+// The renderer as it stands, for the device report (0.00225): the quality
+// step, the fog, the backing store, the mist buffer's divisor, the caps in
+// force (the phone profile's on a phone), the rAF rate seen, the GL facts.
+export function rendererState() {
+  if (!gl) return { bg: 'flat', q: -1 };
+  const L = layers[layers.length - 1];
+  const webgl2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+  let maxTex = 0;
+  try { maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE); } catch { /* lost */ }
+  return {
+    bg: '3d', q: level, fog: fogOn, view, held, saver: saverFrom >= 0, layers: layers.length, painting: L?.file ?? null,
+    canvas: [canvas.width, canvas.height], css: [canvas.clientWidth || 0, canvas.clientHeight || 0], puffDiv: L?.tune.puffDiv ?? null,
+    rafRate: Math.round(rafRate), caps: { maxFps: cfg.maxFps, motionMaxFps: cfg.motionMaxFps, maxDpr: cfg.maxDpr, maxPixels: cfg.maxPixels, minFps: cfg.minFps },
+    gl: { webgl2, maxTex, renderer: gpuName() },
+  };
 }
 
 function draw(L, alpha) {
@@ -303,17 +337,40 @@ function drawPuffs(L, alpha, f) {
   puffR.draw(puffFrame(L.puffs, fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
     pivot: L.tune.pivot, depthTex: L.depthTex, artTex: L.tex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
     flow: [fogT * P.flow, P.flowScale, P.flowAmount], light: L.tune.mist,
-    width: canvas.width, height: canvas.height });
+    width: canvas.width, height: canvas.height, div: L.tune.puffDiv });
   gl.useProgram(mainProg);
 }
+
+// BATTERY SAVER (0.00222, the corner column): the ladder's last 3D rung
+// (the smallest canvas, no mist) as the player's own choice — on from any
+// rung, and OFF back to where the ladder had got on its own (the ladder's
+// "never back up" is for its own steps). The particles follow the rung as
+// always (1x), the card light its own saverFps (ui/cardFx.js).
+let saverFrom = -1; // the rung the saver was switched on from, -1 = off
+export function setPowerSaver(on) {
+  if (!gl) { saverFrom = on ? Math.max(saverFrom, 0) : -1; return; }
+  const last = LADDER.length - 1;
+  if (on && saverFrom < 0) { saverFrom = level; level = last; }
+  else if (!on && saverFrom >= 0) { level = saverFrom; saverFrom = -1; }
+  else return;
+  fpsW = null;
+  fogOn = LADDER[level].fog;
+  resize();
+}
+export const powerSaver = () => saverFrom >= 0;
+// 'saver' | 'phone' | 'full': what the picture is drawn under, for the
+// stats (core/perfMonitor.js, the benchmark; the dashboard shows it).
+export const powerMode = (phone = false) => (saverFrom >= 0 ? 'saver' : phone ? 'phone' : 'full');
+// The room push has settled (the benchmark starts a phase's clock only then, 0.00222).
+export const whenPushSettled = () => new Promise((resolve) => { const check = () => (push ? requestAnimationFrame(check) : resolve()); check(); });
 
 // Too slow: one step down the quality ladder (core/bg3dQuality.js).
 // false = past the last step, back to the flat backgrounds.
 function degrade() {
-  level++;
+  const step = nextStep(++level);
   fpsW = null; // measure the new step afresh
-  if (level >= LADDER.length) { shutdown(); return false; }
-  fogOn = LADDER[level].fog;
+  if (!step) { shutdown(); return false; } // past the last step: back to the flat backgrounds
+  fogOn = step.fog;
   resize();
   return true;
 }
@@ -328,8 +385,10 @@ function resize() {
   // Backing store: device pixels, but at most maxPixels (the art is 2048
   // wide), times the quality ladder's scale (core/bg3dQuality.js).
   [canvas.width, canvas.height] = backingSize(canvas.clientWidth, canvas.clientHeight,
-    globalThis.devicePixelRatio, cfg.maxPixels, LADDER[level].scale);
+    Math.min(globalThis.devicePixelRatio || 1, cfg.maxDpr), cfg.maxPixels, LADDER[level].scale); // (maxDpr, 0.00209: a DPR-3 phone drew 1080p's pixels at 60 fps and never stepped down)
   gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.useProgram(mainProg);
+  gl.uniform2f(loc.uRes, canvas.width, canvas.height); // the vignette's frame (bg3dGL.js VIGNETTE_GLSL)
   refit();
   layers.forEach(fillDepth);
 }
@@ -398,7 +457,7 @@ function shutdown() {
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
   t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null;
-  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; // (0.00197: clean for a later initBg3d, as promised)
+  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; saverFrom = -1; // (0.00197: clean for a later initBg3d, as promised)
   document.getElementById('bg-stack')?.classList.remove('gl'); // the CSS layers show again
   canvas?.remove();
   canvas = null;

@@ -36,11 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0 # (0.00209: the whole push, not its last commit — an unbumped src commit followed by a docs commit used to pass)
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node tools/check-bump.mjs HEAD~1
+      - run: node tools/check-bump.mjs ${{ github.event.before }}
   deploy:
     needs: smoke
     if: vars.DEPLOY_VIA_ACTIONS == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'

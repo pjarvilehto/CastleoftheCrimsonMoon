@@ -13,10 +13,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap">
 <style>
 /* Single dark look on purpose: it is the game's own world. */
-@font-face { font-family: "DIN Condensed"; src: url("../assets/fonts/DINCondensedBold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "D-DIN Condensed"; src: url("../assets/fonts/D-DINCondensed-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 :root {
   --bg: #0d0808; --panel: #161009; --line: #3a2c18; --gold: #c9a227; --parchment: #d8c9a3; --muted: #9a8b6a;
-  --display: "DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
+  --display: "D-DIN Condensed", "Oswald", "Arial Narrow", sans-serif;
   --body: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
   color-scheme: dark;
 }
@@ -77,6 +77,12 @@ footer a { color: var(--gold); }
       <span class="kind">Portraits &middot; <kbd>5</kbd></span>
       <h2>Art Lab</h2>
       <p>The portraits redrawn in the room paintings' style, on the real cards over any room: current beside the candidates, a line-up of all thirteen, a fight at the game's size. Approve or reject with a note; COPY JSON packs the verdicts and re-rolls for the generator.</p>
+      <span class="go">Enter &rsaquo;</span>
+    </a>
+    <a class="lab" href="world/" data-lab="world">
+      <span class="kind">The world above the dungeon &middot; <kbd>6</kbd></span>
+      <h2>World Lab</h2>
+      <p>The world map as the top layer: the castle you play today is one pin on the owner's painting, the rest under clouds. Clear a place and the clouds burn away around its roads. Two looks &mdash; the known world from above, and from the sky over one place &mdash; and the dive through the clouds that would lead into a place.</p>
       <span class="go">Enter &rsaquo;</span>
     </a>
   </nav>

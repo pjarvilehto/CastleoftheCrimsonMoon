@@ -67,6 +67,7 @@ for (let round = 1; round <= ROUNDS; round++) {
   const merge = tryGit('merge', '--no-edit', 'origin/main');
   if (merge.status !== 0) {
     const conflicts = git('diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
+    if (!conflicts.length) fail(`the merge failed without a conflict (${(merge.stderr || merge.stdout || '').trim().split('\n')[0]}) — see git status`);
     if (conflicts.some((f) => !GENERATED.includes(f))) { tryGit('merge', '--abort'); fail(`conflicts outside the generated files: ${conflicts.join(', ')} — resolve by hand, then ship again`); }
     for (const f of conflicts) git('checkout', '--theirs', f);
     git('add', ...conflicts);
@@ -83,7 +84,12 @@ for (let round = 1; round <= ROUNDS; round++) {
     for (const f of changed) {
       let text; try { text = readFileSync(join(ROOT, f), 'utf8'); } catch { continue; }
       if (!re.test(text)) continue;
-      writeFileSync(join(ROOT, f), text.replace(re, next));
+      // only the lines this branch ADDED carry its number (0.00209: a mention main shipped meanwhile in a shared file, CLAUDE.md say, must stay)
+      const added = new Set(git('diff', '-U0', 'origin/main...HEAD', '--', f).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++')).map((l) => l.slice(1)));
+      const lines = text.split('\n').map((l) => (added.has(l) ? l.replace(re, next) : l));
+      const out = lines.join('\n');
+      if (out === text) continue;
+      writeFileSync(join(ROOT, f), out);
       renumbered.push(f);
     }
     if (renumbered.length) console.log(`ship: ${version} -> ${next} in ${renumbered.join(', ')}`);
@@ -92,16 +98,23 @@ for (let round = 1; round <= ROUNDS; round++) {
   // 4. bump, suite, commit
   execFileSync('node', ['tools/bump.mjs', version, ...notes.flatMap((n) => ['--note', n])], { cwd: ROOT, stdio: 'inherit' });
   claimed = version;
-  const suite = spawnSync('node', ['tools/smoke-test.mjs'], { cwd: ROOT, encoding: 'utf8' });
-  const tail = suite.stdout.trim().split('\n').slice(-1)[0];
-  if (suite.status !== 0) { console.error(suite.stdout.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); fail(`the suite failed (${tail}); nothing pushed — the bump and the merge are in the tree`); }
+  const suite = spawnSync('node', ['tools/smoke-test.mjs'], { cwd: ROOT, encoding: 'utf8' }); // (piped: a passing suite writes a deliberate stack to stderr)
+  const last = suite.stdout.trim().split('\n').pop() || '(no output)';
+  const tail = /^──/.test(last) ? `crashed in ${last}` : last; // (a section header as the last line: the suite died inside it — 0.00223, it used to read as "the suite failed (── zz ──)")
+  if (suite.status !== 0) {
+    console.error(suite.stdout.split('\n').filter((l) => l.startsWith('FAIL')).join('\n'));
+    const err = suite.stderr.trim();
+    if (err) console.error(err.split('\n').slice(-15).join('\n')); // (the crash itself)
+    fail(`the suite failed (${tail}); nothing pushed — the bump and the merge are in the tree`);
+  }
   console.log(`ship: suite ${tail}`);
   git('add', '-A');
   if (git('status', '--porcelain')) git('commit', '-q', '-m', message(version));
   // 5. still on top of main?
   git('fetch', 'origin', 'main');
   if (tryGit('merge-base', '--is-ancestor', 'origin/main', 'HEAD').status === 0) {
-    git('push', '-u', 'origin', 'HEAD:main');
+    const push = tryGit('push', '-u', 'origin', 'HEAD:main');
+    if (push.status !== 0) { console.log(`ship: main refused the push during round ${round} (${(push.stderr || '').trim().split('\n').pop()}); merging again`); continue; } // (0.00209: it used to throw here)
     git('push', '-u', 'origin', `HEAD:${branch}`);
     console.log(`ship: ${version} is on main and ${branch}`);
     process.exit(0);

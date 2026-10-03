@@ -1,14 +1,18 @@
-// shared/platform.js — is this a phone or tablet? (0.125) The game is
-// built for a keyboard and a landscape screen; on mobile, main.js shows a
-// "not supported yet" notice instead of booting. ?desktop in the URL skips
-// the check (testing, or a tablet with a keyboard).
-//
-// Signals, any one of which counts: the browser's own answer
-// (navigator.userAgentData.mobile, Chromium), a phone/tablet user agent,
-// or iPadOS — which reports itself as a Mac, but a Mac has no touch screen.
+// shared/platform.js — what kind of device this is (0.125; 0.00205: tablets
+// play). A handheld is a touch device by its user agent (iPadOS says
+// "Macintosh" but has touch points); phone or tablet is the SCREEN's size:
+// the longer side under TABLET_MIN_PX is a phone (390x844, 412x915), at or
+// over it a tablet (768x1024 and up). Both play sideways (styles.css
+// .rotate-notice in portrait); a phone gets the phone layout (PHONE_MQ: the
+// styles.css phone layer and hubScene's phone assembly agree on it) and the
+// play / install gate (ui/phoneGate.js, 0.00208 — the "not supported"
+// notice from 0.125 is gone). ?desktop skips the check (testers, the
+// headless checks).
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle|BlackBerry|Opera Mini|IEMobile/i;
+export const TABLET_MIN_PX = 1000; // the screen's longer side, CSS px (a layout breakpoint, like the stylesheet's)
 
+// A touch handheld of any size (phone or tablet), by user agent.
 export function isMobile(nav = globalThis.navigator, search = globalThis.location?.search ?? '') {
   if (new URLSearchParams(search).has('desktop')) return false;
   if (!nav) return false;
@@ -16,4 +20,67 @@ export function isMobile(nav = globalThis.navigator, search = globalThis.locatio
   const ua = String(nav.userAgent ?? '');
   if (MOBILE_UA.test(ua)) return true;
   return /Macintosh/.test(ua) && (nav.maxTouchPoints ?? 0) > 1;
+}
+
+// 'desktop' | 'tablet' | 'phone'
+export function deviceClass(nav = globalThis.navigator, scr = globalThis.screen, search = globalThis.location?.search ?? '') {
+  if (!isMobile(nav, search)) return 'desktop';
+  const longer = Math.max(Number(scr?.width) || 0, Number(scr?.height) || 0);
+  return longer >= TABLET_MIN_PX ? 'tablet' : 'phone';
+}
+export const isPhone = (...args) => deviceClass(...args) === 'phone';
+
+// The phone power profile (0.00222): a data block may carry a `phone`
+// sub-block with the knobs that differ on a phone (backgrounds.json
+// parallax.phone, cards.json fx.phone / particles.phone); deviceBlock()
+// merges it over the block on a phone and returns the block as it is
+// elsewhere. The device is decided once per session (the screen and the
+// user agent do not change; ?desktop keeps the desktop values for testers
+// and the headless checks); tests pass the device by name.
+let device = null;
+export const deviceName = () => (device ??= isPhone() ? 'phone' : 'desktop');
+export const deviceBlock = (block, dev = deviceName()) => (dev === 'phone' && block?.phone ? { ...block, ...block.phone } : block);
+
+// The phone layout (0.00208): a sideways screen under 500px tall — the
+// iPhone and Android phone, never a tablet (an iPad mini is 744 sideways).
+// styles.css's phone layer sits under the same query (a smoke check keeps
+// the two in step); hubScene builds its phone assembly when it matches.
+export const PHONE_MQ = '(max-height: 500px) and (orientation: landscape)';
+export function phoneLayout(mm = globalThis.matchMedia) {
+  return typeof mm === 'function' ? !!mm(PHONE_MQ)?.matches : false;
+}
+// The phone layout is a class on <html> set from the one query, so the
+// stylesheet needs no media query of its own and a scene can re-lay itself
+// out when the query flips (a desktop window dragged across 500px tall, a
+// phone turned during a transition): onFlip runs then (main.js hands it the
+// current scene's relayout). 0.00223: here from main.js, with the query and
+// the document injectable, so the suite can run it.
+export function watchPhoneLayout(onFlip, mm = globalThis.matchMedia, doc = globalThis.document) {
+  const mq = typeof mm === 'function' ? mm(PHONE_MQ) : null;
+  if (!mq) return;
+  const apply = () => doc.documentElement.classList.toggle('phone', mq.matches);
+  apply();
+  mq.addEventListener?.('change', () => { apply(); onFlip?.(); });
+}
+
+// Opened from the home screen (the manifest's fullscreen app, 0.00205) —
+// no browser bars, so the play / install gate has nothing to offer.
+export function standaloneApp(mm = globalThis.matchMedia, nav = globalThis.navigator) {
+  if (nav?.standalone) return true; // iOS Safari's own flag
+  return typeof mm === 'function' && ['fullscreen', 'standalone', 'minimal-ui'].some((m) => !!mm(`(display-mode: ${m})`)?.matches);
+}
+
+// iPhone / iPad Safari (iPadOS says Macintosh with touch points): no page
+// fullscreen, no orientation lock, no install prompt — the gate's hint path.
+export const isIos = (nav = globalThis.navigator) => /iPhone|iPod|iPad/.test(String(nav?.userAgent ?? '')) || (/Macintosh/.test(String(nav?.userAgent ?? '')) && (nav?.maxTouchPoints ?? 0) > 1);
+
+// Page fullscreen, with Safari's prefixed names (iPad has them; 0.00205).
+export const fullscreenOn = (d = globalThis.document) => !!(d?.fullscreenElement || d?.webkitFullscreenElement);
+export const canFullscreen = (d = globalThis.document) => !!(d?.fullscreenEnabled || d?.webkitFullscreenEnabled);
+export function enterFullscreen(d = globalThis.document) {
+  const root = d.documentElement;
+  return Promise.resolve((root.requestFullscreen ?? root.webkitRequestFullscreen)?.call(root)).catch(() => {}); // denied / unavailable (an iframe): the game plays windowed
+}
+export function exitFullscreen(d = globalThis.document) {
+  return Promise.resolve((d.exitFullscreen ?? d.webkitExitFullscreen)?.call(d)).catch(() => {});
 }
