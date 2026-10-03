@@ -1,5 +1,5 @@
 {
-  "version": "0.00287",
+  "version": "0.00288",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -98,6 +98,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00288": [
+      "The Music Lab has four calmer takes for the boss music to choose from."
+    ],
     "0.00287": [
       "The get-hit cries are off for now: a blow on your hero plays the plain hurt again and a struck foe makes no cry (the attack sounds stay)"
     ],
@@ -145,9 +148,6 @@
       "46 new items, each with its own picture — among them two signature pieces per class that feed its power (+1 and +2: a Fireball charge, an Entangle turn, Cleave reach and the like).",
       "Another class's gear still drops: it rides in your loot, greyed, and is salvaged for coins at the end of the run. Gear your class can't use on an old save is swapped for its starting kit.",
       "Balance: the Necromancer's armor and damage and the Plague Sister's armor are up, to carry them in their robes."
-    ],
-    "0.00273": [
-      "The Music Lab (a testing page): generated scores for the title and combat music from three music models, beside the music the game plays today, level-matched, with a blind mode for picking the next score."
     ]
   }
 }
