@@ -327,9 +327,9 @@ const types = (evs) => evs.map((e) => e.type);
   const frame = u.card.all((n) => n.className === 'card-frame')[0];
   ok('the hero title, the heavy button, the plate\'s theme and the figure follow run.hero (the Wizard\'s third look), the STATS row too', title === 'THE WIZARD' && label.startsWith('Fireball') && frame.attrs.style === `--theme:${heroById('wizard').theme.plate}`
     && u.portrait.attrs.src === lookUrl(heroById('wizard'), 2) && u.art === lookUrl(heroById('wizard'), 2) && u.card.all((n) => (n.className ?? '').startsWith('back-row')).some((r) => r.textContent.startsWith('Fireball')) && u.card.classList.contains('hero-standing'));
-  ok('heroArt: a look\'s file, the knight\'s crouch the wide sprite from cards.json', heroArt({ id: 'necromancer', look: 1 }) === lookUrl(heroById('necromancer'), 1) && heroArt({ id: 'knight', look: heroById('knight').looks.findIndex((l) => l.sprite) }) === `assets/chars/${DATA.cards.player.art}`);
+  ok('heroArt: every look\'s own file, the knight\'s crouch too (0.00291: never the old cards.json player.art)', heroArt({ id: 'necromancer', look: 1 }) === lookUrl(heroById('necromancer'), 1) && heroArt({ id: 'knight', look: heroById('knight').looks.findIndex((l) => l.sprite) }) === lookUrl(heroById('knight'), 4));
   const sprite = createPlayerUnit({ ...run, hero: heroSnapshot({ hero: { id: 'knight', look: 4 } }) }, { onHeavy() {}, onPotion() {} });
-  ok('…and the card drops hero-standing for the sprite', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === `assets/chars/${DATA.cards.player.art}`);
+  ok('…and the card keeps the crouch\'s wide placement (no hero-standing), drawing the look\'s figure', !sprite.card.classList.contains('hero-standing') && sprite.portrait.attrs.src === lookUrl(heroById('knight'), 4));
   ok('cardStyle(\'player\') takes the run\'s theme; without one the profile\'s class (the hall, the labs)', cardStyle('player', false, heroById('barbarian').theme).look === 'embers' && cardStyle('player').look === 'ether' && cardStyle('rat', false, heroById('barbarian').theme).look === 'blood');
   ok('battleLine reads no class from the profile any more', !/heroOf\(|heavyName\(|cleanHero\(/.test(readFileSync('src/ui/battleLine.js', 'utf8')) && !readFileSync('src/ui/combatQueue.js', 'utf8').includes('getProfile'));
   getProfile().hero = null;
@@ -387,7 +387,10 @@ const types = (evs) => evs.map((e) => e.type);
     && V.hurt_hexhunter.rate[0] > V.hurt_barbarian.rate[1]);
   const wiz = { id: 'wizard' };
   ok('sfxFor picks the class\'s clips: the blow, the heavy, the reach, a blow taken; the rest as before', sfxFor({ type: 'atk' }, wiz) === 'atk_wizard' && sfxFor({ type: 'atk', heavy: true }, wiz) === 'heavy_wizard' && sfxFor({ type: 'spill' }, wiz) === 'atk_wizard'
-    && sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
+    && sfxFor({ type: 'dmg' }, wiz) === 'hurt' && sfxFor({ type: 'kill' }, wiz) === 'kill' && sfxFor({ type: 'atk' }, { id: 'nobody' }) === 'attack' && sfxFor({ type: 'dmg' }, { id: 'nobody' }) === 'hurt');
+  const cries = DATA.audio.cries;
+  ok('the get-hit recordings are pulled (0.00287, audio.json cries): a blow taken is the plain hurt until cries.hero is on', cries.hero === false && cries.foe === false
+    && (DATA.audio.cries = { hero: true, foe: false }, sfxFor({ type: 'dmg' }, wiz) === 'hurt_wizard') && (DATA.audio.cries = cries, sfxFor({ type: 'dmg' }, wiz) === 'hurt'));
   ok('…by the run\'s class (run.hero, 0.00283), the plain sound when none is given', sfxFor({ type: 'atk', heavy: true }, as('druid').hero) === 'heavy_druid' && sfxFor({ type: 'atk', heavy: true }) === 'attack' && sfxFor({ type: 'dmg' }) === 'hurt');
   getProfile().hero = null;
   {
@@ -414,10 +417,15 @@ const types = (evs) => evs.map((e) => e.type);
   const unitOf = (who) => (who === 'player' ? { id: 'player', card: null } : { id: ['rat', 'skeleton'][who], card: null });
   const ctx = { unit: unitOf };
   combatSfx({ sfx: 'atk_knight', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, ctx, play);
-  ok('the hero\'s blow plays his attack and the struck foe\'s cry (ehurt_rat), both on the strike', played.map((p) => p[0]).join('|') === 'atk_knight|ehurt_rat' && played.every((p) => p[1] > 0));
+  ok('the hero\'s blow plays his attack on the strike; the struck foe\'s cry (ehurt_rat) is pulled (0.00287, cries.foe)', played.map((p) => p[0]).join('|') === 'atk_knight' && played.every((p) => p[1] > 0));
+  played.length = 0;
+  const cries2 = DATA.audio.cries; DATA.audio.cries = { ...cries2, foe: true };
+  combatSfx({ sfx: 'atk_knight', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, ctx, play);
+  DATA.audio.cries = cries2;
+  ok('…and comes back with cries.foe on', played.map((p) => p[0]).join('|') === 'atk_knight|ehurt_rat');
   played.length = 0;
   combatSfx({ sfx: 'hurt_knight', fx: { kind: 'attack', from: 1, to: 'player', dmg: 5 } }, ctx, play);
-  ok('a foe\'s blow plays the hero\'s hurt and the foe\'s attack (eatk_skeleton)', played.map((p) => p[0]).join('|') === 'hurt_knight|eatk_skeleton');
+  ok('a foe\'s blow plays the hero\'s hurt and the foe\'s attack (eatk_skeleton; the attack is not a cry, it stays)', played.map((p) => p[0]).join('|') === 'hurt_knight|eatk_skeleton');
   played.length = 0;
   combatSfx({ sfx: 'attack', fx: { kind: 'attack', from: 'player', to: 0, dmg: 5 } }, { unit: (w) => (w === 'player' ? { id: 'player' } : { id: 'nobody' }) }, play);
   ok('a foe without a clip is as before: the blow alone', played.map((p) => p[0]).join('|') === 'attack');

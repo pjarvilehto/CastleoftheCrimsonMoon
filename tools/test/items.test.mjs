@@ -161,14 +161,17 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   ok('...what was salvaged as small pictures with the coins', chips.length === 1 && chips[0].all((n) => n.className?.includes?.('item-pic')).length === 1 && root.textContent.includes('+8 coins'));
 }
 
-// the hero card's inventory page: the run's finds with their pictures
+// the hero card's inventory page: the worn gear, each slot a strip with its item's picture (0.00290; the run's finds no longer listed there)
 {
   const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
   const run = createRun();
-  run.itemsFound.push('moonbrand');
+  run.itemsFound.push('fang_of_the_eclipse');
   const u = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
-  const pics = u.el.all((n) => n.className?.includes?.('inv-pic'));
-  ok('the hero card\'s inventory: each find of the run with its picture', pics.length === 1 && pics[0].attrs.src === itemArtUrl('moonbrand'));
+  const worn = byClass(u.el, 'inv-row').filter((r) => !String(r.className).split(' ').includes('empty'));
+  const pics = worn.map((r) => byClass(r, 'slot-art')[0]?.children[0]?.attrs?.src);
+  const eq = getProfile().equipment;
+  ok('the hero card\'s inventory: each worn item\'s picture on its strip, the run\'s finds not listed', worn.length > 0 && pics[0] === itemArtUrl(eq.weapon) && pics.every(Boolean)
+    && !pics.includes(itemArtUrl('fang_of_the_eclipse')) && !Object.values(eq).flat().includes('fang_of_the_eclipse'));
 }
 
 // the dungeon's LOOT row under XP / COINS (the developer named it): there from the first room, hidden until a find
@@ -362,4 +365,27 @@ ok('...nothing raised is an empty line; a revive or a quicker heavy is named fir
   const { findCard } = await import('../../src/ui/findFx.js');
   const card = findCard({ id: 'bearhide_mantle', slot: 'armor', from: null, offClass: 'Barbarian, Druid and Hexhunter armor' });
   ok('the find card: another class\'s gear greyed, whose it is, salvaged at the end', card.className.includes('off-class') && card.textContent.includes('salvaged at the end') && !card.textContent.includes('replaces'));
+}
+
+// The LOOT pop-up (0.00292): the run's finds as strips, newest first, each with the slot it will
+// upgrade (another class's gear marked Salvage); the dialog closes on C / Escape.
+{
+  fresh();
+  const { openLootDialog } = await import('../../src/ui/lootDialog.js');
+  const { anyDialogOpen } = await import('../../src/ui/dialog.js');
+  const run = createRun();
+  run.heroId = 'knight';
+  const other = Object.keys(DATA.items).find((id) => DATA.items[id].slot === 'weapon' && DATA.items[id].class && DATA.items[id].class !== 'knight');
+  run.itemsFound.push('vampiric_ring', 'moonbrand', other, 'no_such_item');
+  const dlg = openLootDialog(run);
+  const strips = byClass(document.body, 'loot-list')[0]?.children ?? [];
+  const tags = strips.map((r) => byClass(r, 'inv-tag')[0]);
+  ok('the LOOT pop-up: every find of the run as a strip, newest first, with its slot or Salvage (an unknown id skipped)', anyDialogOpen() && strips.length === 3
+    && strips[0].textContent.includes(DATA.items[other].name.toUpperCase()) && tags[0].textContent === 'Salvage' && String(tags[0].className).includes('inv-off')
+    && strips[1].textContent.includes('MOONBRAND') && tags[1].textContent === 'Weapon ↑' && tags[2].textContent === 'Ring ↑'
+    && byClass(strips[1], 'slot-art')[0]?.children[0]?.attrs?.src === itemArtUrl('moonbrand'));
+  dlg.close();
+  ok('…and it closes', !anyDialogOpen());
+  const css = readFileSync('styles.css', 'utf8');
+  ok('…four strips in view, the rest scrolled to', css.includes('.loot-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(4 * 64px + 3 * 8px); overflow-y: auto;') && css.includes('.loot-list .inv-row { flex: none; height: 64px;'));
 }

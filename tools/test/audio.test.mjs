@@ -339,6 +339,13 @@ fresh();
   music.toggleMuted(); // ON: the title bed starts and the score warms
   await sleep(10);
   ok('...ON warms the whole score and starts the title bed', bedsFetched() === bedFiles.length && ctx.started.some((s) => s.buffer?.tag === sizes[A.music.tracks.title.file]));
+  // 0.00285: with MUSIC on, the title bed is fetched and decoded at boot and starts with no gesture where the browser lets the context run (a second music.js instance boots against the running fake context)
+  const nStarted = ctx.started.length;
+  const early = await import('../../src/audio/music.js?boot-early');
+  early.initMusic();
+  await sleep(10);
+  ok('MUSIC on at boot: the title bed is decoded and started before any gesture where the context runs (0.00285)', ctx.started.slice(nStarted).some((s) => s.buffer?.tag === sizes[A.music.tracks.title.file]));
+  early.toggleMuted(); if (music.isMuted()) music.toggleMuted(); // (the early instance's loop stopped; the shared pref and bus back ON for the rest of the block)
 
   // every registered sound, at every option combination the game uses
   for (const name of Object.keys(A.clips)) {

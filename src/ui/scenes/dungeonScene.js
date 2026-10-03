@@ -13,6 +13,7 @@
 //   summon — violet (the boss calls a skeleton, 0.092)
 //   relic — crimson (a relic found), revive — the Heart's second life
 
+import { openLootDialog } from '../lootDialog.js';
 import { fitGearToClass, canUse } from '../../shared/classGear.js';
 import { setBackground, transitionTo, go, whenWindowsBack } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -204,7 +205,7 @@ export function dungeonScene() {
       el('div', { class: 'resources' },
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'XP'), el('b', { id: 'hud-xp' }, String(shownXp))),
         el('div', { class: 'res-row' }, el('span', { class: 'res-label' }, 'COINS'), el('b', { id: 'hud-coins' }, String(shownCoins))),
-        lootEl = el('div', { class: 'res-row res-loot none' }, el('span', { class: 'res-label' }, 'LOOT'), el('span', { class: 'loot-tray' }))),
+        lootEl = el('div', { class: 'res-row res-loot none', title: 'Show the loot', onclick: () => { if (run.itemsFound.length) openLootDialog(run); } }, el('span', { class: 'res-label' }, 'LOOT'), el('span', { class: 'loot-tray' }))), // (0.00292: a click opens the run's finds, ui/lootDialog.js)
       layer,
       logEl,
       proceed);

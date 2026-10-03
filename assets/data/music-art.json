@@ -694,7 +694,7 @@
           "at": "2026-10-03T12:49:38.194Z",
           "verdict": "ok",
           "note": "works 0:27 onwards. the beginning is too much organ stuff. ",
-          "imported": {
+          "replaced": {
             "file": "assets/audio/music-boss-v3.mp3",
             "start": 28.189,
             "end": 68.185,
@@ -702,18 +702,395 @@
             "tailS": 3,
             "gainDb": -1,
             "lufs": -11,
-            "at": "2026-10-03T12:59:36.974Z"
+            "at": "2026-10-03T12:59:36.974Z",
+            "by": "boss_c4"
           }
+        },
+        {
+          "n": 3,
+          "file": "assets/audio/candidates/boss_c3.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "dark brooding orchestral",
+              "low string ostinato",
+              "soft war drums",
+              "distant wordless choir",
+              "muted low brass",
+              "a bell tolling far away",
+              "72 bpm",
+              "menacing",
+              "restrained",
+              "mid-level dynamics",
+              "steady"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "organ solo",
+              "full-ensemble climax",
+              "brass stabs",
+              "cymbal crashes",
+              "choir in the foreground",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Dread",
+                "positive_local_styles": [
+                  "low strings and soft war drums together from the first beat",
+                  "a bell far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a distant wordless choir behind muted low brass",
+                  "the drums steady"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Pressure",
+                "positive_local_styles": [
+                  "the string ostinato tightens and the drums fill out a little",
+                  "still held back"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "back to the low strings and soft drums of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 60,
+          "lufs": -15.7,
+          "seconds": 60.1,
+          "at": "2026-10-03T13:12:38.243Z"
+        },
+        {
+          "n": 4,
+          "file": "assets/audio/candidates/boss_c4.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "dark brooding orchestral",
+              "low string ostinato",
+              "soft war drums",
+              "distant wordless choir",
+              "muted low brass",
+              "a bell tolling far away",
+              "72 bpm",
+              "menacing",
+              "restrained",
+              "mid-level dynamics",
+              "steady"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "organ solo",
+              "full-ensemble climax",
+              "brass stabs",
+              "cymbal crashes",
+              "choir in the foreground",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Dread",
+                "positive_local_styles": [
+                  "low strings and soft war drums together from the first beat",
+                  "a bell far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a distant wordless choir behind muted low brass",
+                  "the drums steady"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Pressure",
+                "positive_local_styles": [
+                  "the string ostinato tightens and the drums fill out a little",
+                  "still held back"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "back to the low strings and soft drums of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 60,
+          "lufs": -14.1,
+          "seconds": 60.1,
+          "at": "2026-10-03T13:12:36.382Z",
+          "verdict": "ok",
+          "note": "let's go with Take 4 for now (boss_c2 was too in-your-face)",
+          "imported": {
+            "file": "assets/audio/music-boss-v4.mp3",
+            "start": 13.003,
+            "end": 46.335,
+            "loopS": 33.3322,
+            "tailS": 3,
+            "gainDb": 2.5,
+            "lufs": -14.5,
+            "at": "2026-10-03T13:23:16.320Z"
+          }
+        },
+        {
+          "n": 5,
+          "file": "assets/audio/candidates/boss_c5.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "dark brooding orchestral",
+              "low string ostinato",
+              "soft war drums",
+              "distant wordless choir",
+              "muted low brass",
+              "a bell tolling far away",
+              "72 bpm",
+              "menacing",
+              "restrained",
+              "mid-level dynamics",
+              "steady"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "organ solo",
+              "full-ensemble climax",
+              "brass stabs",
+              "cymbal crashes",
+              "choir in the foreground",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Dread",
+                "positive_local_styles": [
+                  "low strings and soft war drums together from the first beat",
+                  "a bell far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a distant wordless choir behind muted low brass",
+                  "the drums steady"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Pressure",
+                "positive_local_styles": [
+                  "the string ostinato tightens and the drums fill out a little",
+                  "still held back"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "back to the low strings and soft drums of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 60,
+          "lufs": -15.8,
+          "seconds": 60.1,
+          "at": "2026-10-03T13:12:48.668Z"
+        },
+        {
+          "n": 6,
+          "file": "assets/audio/candidates/boss_c6.mp3",
+          "model": "elevenlabs/music_v1",
+          "label": "ElevenLabs Music",
+          "seed": null,
+          "plan": {
+            "positive_global_styles": [
+              "dark cinematic orchestral",
+              "gothic fantasy game score",
+              "instrumental",
+              "D minor",
+              "long stone-hall reverb",
+              "dark brooding orchestral",
+              "low string ostinato",
+              "soft war drums",
+              "distant wordless choir",
+              "muted low brass",
+              "a bell tolling far away",
+              "72 bpm",
+              "menacing",
+              "restrained",
+              "mid-level dynamics",
+              "steady"
+            ],
+            "negative_global_styles": [
+              "vocals",
+              "lyrics",
+              "pop",
+              "electronic beat",
+              "synth lead",
+              "bright major key",
+              "acoustic guitar",
+              "comedy",
+              "sudden silence",
+              "organ solo",
+              "full-ensemble climax",
+              "brass stabs",
+              "cymbal crashes",
+              "choir in the foreground",
+              "hopeful",
+              "triumphant"
+            ],
+            "sections": [
+              {
+                "section_name": "Dread",
+                "positive_local_styles": [
+                  "low strings and soft war drums together from the first beat",
+                  "a bell far away"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              },
+              {
+                "section_name": "Choir",
+                "positive_local_styles": [
+                  "a distant wordless choir behind muted low brass",
+                  "the drums steady"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Pressure",
+                "positive_local_styles": [
+                  "the string ostinato tightens and the drums fill out a little",
+                  "still held back"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 18000,
+                "lines": []
+              },
+              {
+                "section_name": "Return",
+                "positive_local_styles": [
+                  "back to the low strings and soft drums of the opening",
+                  "ready to loop"
+                ],
+                "negative_local_styles": [],
+                "duration_ms": 12000,
+                "lines": []
+              }
+            ]
+          },
+          "asked": 60,
+          "lufs": -14.7,
+          "seconds": 60.1,
+          "at": "2026-10-03T13:12:50.618Z"
         }
       ],
       "painting": "castle_throne_room.jpg",
       "current": {
-        "file": "assets/audio/music-boss-v3.mp3",
-        "loopS": 39.9964,
-        "lufs": -11,
-        "seconds": 43.3
+        "file": "assets/audio/music-boss-v4.mp3",
+        "loopS": 43.3342,
+        "lufs": -15.1,
+        "seconds": 46.6
       },
-      "line": "The throne room and the vampire lord who rules it: ceremonial, menacing and heavy, an organ and a chanting choir over war drums."
+      "line": "The throne room and the vampire lord who rules it: menacing and ceremonial but held back, a slow dread that sits under the fight rather than on top of it."
     },
     "shrine": {
       "name": "Sanctum",

@@ -5,10 +5,9 @@
 // Portraits: WebP with alpha in assets/chars/ (0.078: q85 — 9.6MB of PNGs
 // became 1.5MB), the file named in the data (shared/portraits.js, 0.184).
 
-import { canUse } from '../shared/classGear.js';
 import { el } from '../core/dom.js';
 import { DEATH_TINT } from './fxParts.js';
-import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText } from './hud.js';
+import { hpBar, rarityClass, isLowHp, describeItem, itemPic, potionPic, statText, itemStrip } from './hud.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel } from '../meta/stats.js';
 import { isElite } from '../shared/balance.js';
@@ -16,7 +15,6 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { PORTRAIT_DIR, portraitFile } from '../shared/portraits.js'; // (the knight's wide sprite, for the run's look — heroArt)
 import { heroById, lookUrl, lookIsSprite } from '../shared/heroes.js';
 import { usesCharges } from '../run/classes.js';
 import { potionHealFor } from '../meta/leveling.js';
@@ -36,12 +34,9 @@ export const IDLE_FAMILY = {
 // The hero's figure for the run's class and look (run.hero, 0.00283 — the
 // combat UI reads the class from the run, never the profile; shared/portraits.js
 // portraitUrl('player') is the hall's, off the profile): the look's file in
-// assets/heroes/, or cards.json player.art for a look marked `sprite` (the
-// knight's crouch, 0.00264).
-export function heroArt(hero) {
-  const h = heroById(hero.id);
-  return lookIsSprite(h, hero.look) ? `${PORTRAIT_DIR}/${portraitFile('player')}` : lookUrl(h, hero.look);
-}
+// assets/heroes/, every look's (0.00291: the knight's crouch too — it used to
+// draw the old photoreal cards.json player.art; `sprite` now only places it).
+export const heroArt = (hero) => lookUrl(heroById(hero.id), hero.look);
 
 // A portrait (`src`) with its idle loop, started at a random phase so a room
 // of identical skeletons doesn't breathe in unison.
@@ -175,39 +170,26 @@ function statsPage(run) {
     dots(1), el('div', { class: 'back-hint' }, 'tap for inventory'));
   return { el: page, set: () => rows.forEach((r) => setText(r.b, r.val())) };
 }
-// The gear as worn (forge levels in), one row per slot, then what this run
-// has found so far (upgrades only, run.itemsFound) — the list grows mid-run.
-const FOUND_SHOWN = 3;
-function invPage(run) {
+// The gear as worn (forge levels in), a strip per slot like the Great Hall's
+// slots (0.00290, the developer's layout): the item's picture on the right,
+// fading into the dark under its name and stats on the left. The run's finds
+// are not listed here (a list of their own is to come) — the page is the
+// save's gear and does not change mid-run.
+function invPage() {
   const p = getProfile();
   const worn = GEAR_SLOTS.map(([key, i]) => {
     const id = i === undefined ? p.equipment[key] : p.equipment[key]?.[i];
     const item = id ? itemWithForge(id, p) : null;
-    return el('div', { class: 'inv-row' }, el('span', { class: 'inv-kind' }, SLOT_NAME[key]),
-      item ? el('span', { class: `inv-name ${rarityClass(item)}` }, item.name.toUpperCase() + (item.forgeLvl ? ` +${item.forgeLvl}` : '')) : el('span', { class: 'inv-name inv-empty' }, 'Empty'),
-      el('span', { class: 'inv-desc' }, ...(item ? statText(describeItem(item)) : [''])));
+    if (!item) return el('div', { class: 'inv-row empty' }, el('span', { class: 'inv-name inv-empty' }, `${SLOT_NAME[key]} — empty`));
+    return itemStrip(id, item);
   });
-  const found = el('div', { class: 'inv-found-list' });
-  let shown = -1;
-  const set = () => {
-    const ids = run.itemsFound;
-    if (ids.length === shown) return;
-    shown = ids.length;
-    const known = ids.filter((id) => DATA.items[id]), items = known.map((id) => DATA.items[id]);
-    found.textContent = '';
-    found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
-      ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
-        el('span', { class: rarityClass(it) }, it.name.toUpperCase()), canUse(run.heroId, id) ? el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`) : el('small', { class: 'inv-off' }, 'salvage')); }), // (0.00274: another class's gear: salvaged at the end)
-      ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
-  };
-  set();
   const page = el('div', { class: 'back-page back-inv' },
-    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), ...worn, found,
+    el('h2', {}, 'Inventory'), el('div', { class: 'back-rule' }), el('div', { class: 'inv-list inv-strips' }, ...worn),
     dots(2), el('div', { class: 'back-hint' }, 'tap to turn back'));
-  return { el: page, set };
+  return { el: page, set: () => {} };
 }
 function cardBack(run) {
-  const stats = statsPage(run), inv = invPage(run);
+  const stats = statsPage(run), inv = invPage();
   return { el: el('div', { class: 'card-back' }, stats.el, inv.el), set: (page) => (page === 'inv' ? inv : stats).set() };
 }
 
@@ -279,7 +261,9 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   });
   attachCardFx(card, cardStyle('player', false, hero.theme), { into: plate }); // the shader light behind the hero (0.183), in the class's theme (0.00254)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, hero.heavyName, cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
+  // The special's key (0.00286): a letter of its own name, underlined like Attack's A (heroes.json
+  // heavyKey — C for Cleave, F for Fireball…), and H on every class as before (data-key-alt).
+  const heavyBtn = el('button', { key: hero.heavyKey, 'data-key-alt': 'h', onclick: onHeavy }, hero.heavyName, cd); // (0.00267: the class's own name)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, hero.name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);

@@ -591,9 +591,10 @@ New room art: JPEG in `assets/bg/`, entries in
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
 **Portraits (0.184).** The file is data: `enemies.json art` per enemy and
-`cards.json player.art` for the knight's crouching look alone (0.00264:
-only a look marked `sprite: true` draws it; every other look of every
-class is a `heroes.json` figure — see "Heroes"), read through
+`cards.json player.art` (0.00291: drawn nowhere in the game any more —
+every look of every class, the knight's crouch marked `sprite: true`
+included, is its `heroes.json` figure; the file stays for the Art Lab),
+read through
 `shared/portraits.js portraitUrl(id)` (battleLine, preload; `dataCheck`
 fails on a missing one) — a redraw lands under a NEW filename (rule 7,
 `rat_v2.webp`) and the data points at it, so the old art is one edit
@@ -758,9 +759,14 @@ no row, the XP / COINS counters; reduced motion and the shim: nothing,
 the log says it); the Found line and the room's loot summary lead with
 the picture; the **LOOT** row under XP / COINS (`dungeonScene.js
 showLoot`: the newest six; shown as the run's first find takes off;
-none on a phone, whose top strip is the room title's — the hero card's
-inventory page lists them; a find's chip joins as its card lands, with
-a flash, an OVERKILL's silent finds when the room's lines are out); the hero
+none on a phone, whose top strip is the room title's — since 0.00290
+nothing lists them there mid-run (the finds' own list is to come); a find's chip joins as its card lands, with
+a flash, an OVERKILL's silent finds when the room's lines are out); **a click on the
+row opens the LOOT pop-up** (0.00292, `ui/lootDialog.js`: every find of
+the run, newest first, as the hero card's inventory strips — `hud.js
+itemStrip`, the strip styles under `.inv-strips` — four in view and the
+rest a scroll / arrow key away, each with the slot it will upgrade or
+Salvage for another class's gear); the hero
 card's inventory page (`battleLine.js invPage`); **the run's end**
 (`runEndScene.js findCard`: a card per slot `equipSummary.changes`
 changed — the picture fading down into the slot, the name, its stats,
@@ -1015,11 +1021,11 @@ thrall card (the log alone says it rose, took a blow, crumbled), a rage
 chip. `tools/test/classes.test.mjs` is the behaviour, class by class. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; 0.00264:
-the knight's standing looks too — only a look marked `sprite: true`
-(`heroes.js lookIsSprite`, the knight's crouch) draws `cards.json
-player.art`, the file the Art Lab's import writes, as the wide sprite,
-and its card drops `.hero-standing`; the preload fetches that sprite
-with the essentials) and the card is named after the class — the name ABOVE the
+the knight's standing looks too; 0.00291: his crouch as well — a look
+marked `sprite: true` (`heroes.js lookIsSprite`) draws its own figure
+and only keeps the wide placement, its card without `.hero-standing`;
+the old photoreal `cards.json player.art` it used to draw is gone from
+the game) and the card is named after the class — the name ABOVE the
 card (`.hero-title`, 0.00251, the developer's layout), the gear as two
 columns at the card's top (`.gear-block`: names left, LV / damage /
 armor right) and a standing hero a full card tall behind them
@@ -1051,7 +1057,12 @@ vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
 ~1.25 the Hexhunter and the Plague Sister — the hurt recordings carry
 each class's own cry too, so a struck hero may sound twice, the
 recording's cry under the synth grunt: a listen decides whether the
-grunt layer goes). `combatQueue.js sfxFor(ev)`
+grunt layer goes). **The get-hit cries are pulled (0.00287, the
+developer's call: the content wants more thought):** `audio.json cries`
+— `hero` false plays the plain hurt for a blow on the hero instead of
+`hurt_<class>`, `foe` false silences the struck foe's `ehurt_<id>` (its
+`eatk_` attack stays); the clips and files stay registered, flip to true
+to hear them. `combatQueue.js sfxFor(ev)`
 picks them by the save's class (a class without the clip falls back to
 the plain one); the class events have sounds too (`EV_SFX`: the hex a
 chime, the blight a hiss, Entangle a thud and a bound foe's strain a
@@ -1091,7 +1102,15 @@ against the Descend essentials; 0.00223: a file already queued is moved
 to the front when it is asked to play — the title's welcome take used to
 wait behind the whole score — and a MUSIC: OFF / NARRATOR: OFF player no
 longer downloads the beds or the takes, turning either on warms them
-then). Muting the music stops the bed and frees its decoded buffer (two
+then). **The title bed from the title screen on (0.00285, the developer's ask):**
+`music.js startEarly` fetches and decodes the title bed at boot (MUSIC ON
+only) — on a desktop the first gesture is usually Enter the Castle, and
+the download and decode after it put the music's start in the Great Hall
+— and resumes the context at once: where the browser lets a page sound
+before any click (Chrome's media engagement, Firefox's
+`getAutoplayPolicy`) the bed plays over the title; elsewhere the first
+click or key starts the decoded bed at once. The hero screen and the hall
+ask for the same bed, so it plays on until the descent. Muting the music stops the bed and frees its decoded buffer (two
 asks for one bed inside its decode start one loop, and a bed asked for
 while MUSIC went OFF and ON is the one that plays — 0.00223); the
 narrator's lines decode in the order they were asked for (a death and
@@ -1133,7 +1152,15 @@ loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
 Music Lab in 0.00273; **the developer picked ElevenLabs for both**
 (`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
-two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
+two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). New takes change `assets/data/music-art.json`, which the bump check
+counts as loaded by players (everything under `assets/data`): ship them
+with `tools/ship.mjs`, never a bare push (0.00288). **The boss's second
+brief (0.00288, the developer's note: `boss_c2` too in-your-face):** 60 s,
+the menace held back — no organ opening, no full-ensemble climax, the
+choir distant; four takes, `boss_c3`–`c6`; the developer took
+`boss_c4` "for now" (0.00289): 0:13.0 → 0:46.3, a 33 s loop (the take
+opens on its pulse and fades after 0:53; a 43 s loop from 0:02 put the
+seam in a quiet bar). **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
@@ -1158,9 +1185,13 @@ and its fade; a 47 s loop to 1:14 matched less well), shrine 0:02.4 →
 0:38.8 (36 s, "the first about 37 secs", through the phrase's breath at
 0:36), end 0:39.0 → 1:17.9 (39 s, "0:37 to the end", the end pinned to
 the last steady stretch before the fade). `tools/audio-check.mjs` judges
-a generated bed by its seam's level (the quietest 0.5 s of the crossfade
-against the quieter of the seconds either side; flagged under -4 dB):
-title -3.4, combat -2.9, boss -0.5, shrine +2.4, end -0.6. **ElevenLabs limits:** two requests at a time per
+a generated bed by its seam's level: the quietest 0.5 s inside the
+crossfade as rendered, against the quietest 0.5 s of the same span in
+either passage alone (the take carrying on past the loop point, or its
+start) — a seam you hear is quieter than both; flagged under -3 dB
+(0.00289: it was the quieter of the seconds either side, which the boss
+take's drum gaps and sparser start fooled). As of 0.00289: title +0.5,
+combat +9.6, boss +3.7, shrine +3.7, end +4.7. **ElevenLabs limits:** two requests at a time per
 subscription (`DEFAULTS.elevenConcurrency`; a 429 — busy or over the
 limit — waits and retries), and the API key carries its own credit cap
 (ElevenLabs → Developers → API Keys; ~12.5 credits a second of music:
@@ -1215,14 +1246,22 @@ be served stale for ~4 hours.
   `#app` without a key trap, and a reliquary death left Push Deeper live
   under it). Yes/no: `ui/confirmPrompt.js` (the title's Start a New Game
   included). Never the browser's `confirm()`.
-- Keyboard-reachable buttons get `key: 'x'` in `el()`; a screen's way
+- Keyboard-reachable buttons get `key: 'x'` in `el()` (a second key: a
+  `data-key-alt` attribute, served after every button's own — 0.00286: H on
+  every class's special, whose own key is a letter of its name, `heroes.json
+  heavyKey`); a screen's way
   forward also gets `proceed: true` (Space clicks it, a tiny `[space]` sits
   under its label; in a dialog pass it as `openDialog({ proceed })`).
   Yes/no prompts and text fields don't get one. A held Space steps once.
 - The obvious next button gets `class: 'active'` (pulsing yellow) or
   `'active active-red'`. The Great Hall's Descend pulses while nothing
   there can be bought (a new player's first visit: three panels of
-  upgrades and nothing to spend; 0.00200). Buy Potion pulses whenever a
+  upgrades and nothing to spend; 0.00200). **The Forge never stops a
+  descent (0.00285, the developer's call: its use is very optional):**
+  the "Descend Now?" prompt counts XP (`canSpendXp`) and Alchemy
+  (`canSpendAlchemy`) only, and Descend pulses when only a Forge level is
+  affordable; the green Coins box and the phone's Equipment dot still
+  point at the Forge (`canSpendCoins` / `canForgeAny`). Buy Potion pulses whenever a
   potion can be bought (0.00216; it used to wait for the stock to run low).
   **A purchase's feedback (0.00216):** every hub row carries `data-row`;
   a handler calls `flashNext(row)` and then its own `render(root)`, and
@@ -1402,9 +1441,11 @@ be served stale for ~4 hours.
   cardBack`, the card's `.flipped` / `.page-inv`, three page dots). STATS
   is the run's totals only (health, attack, armor, crit chance / damage,
   lifesteal, the heavy blow, potions, a potion's heal); INVENTORY the gear
-  worn per `GEAR_SLOTS` (forge levels in, `describeItem` lines) and the
-  run's finds (`run.itemsFound`, the newest three and a count) — worn
-  from the run's end. The shown page refreshes on the update tick; the
+  worn per `GEAR_SLOTS` as strips like the hall's slots (0.00290, the
+  developer's layout: the item's picture on the right fading under its
+  name, forge level and stats on the left, the rarity's rim; an empty slot
+  dashed) — the run's finds are no longer listed there (a list of their
+  own is to come). The shown page refreshes on the update tick; the
   turn is two `rotateY` halves with the face swapped edge-on (`flipCard`,
   `composite: 'add'` like the kick; instant under reduced motion). A
   still gold ⓘ under the gear names says the card turns; the phone's
@@ -1813,7 +1854,9 @@ sometimes — fetch all branches to find it.
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the developer's (quota per key) · the reliquary's revive is not
-  narrated.
+  narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
+  pulled behind `audio.json cries` (0.00287) until their content is
+  rethought — new recordings would be new files (rule 7).
 - Game: a foe's immunities show nowhere before the cast (0.00285: a tag or
   a hover line on the card would let the Wizard and the Plague Sister aim)
   · the classes' next round — the thrall card and the rage chip (the

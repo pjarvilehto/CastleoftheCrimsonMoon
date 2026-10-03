@@ -118,6 +118,9 @@ export function checkData(data) {
     for (const slot of ['weapon', 'armor']) { const id = h?.kit?.[slot]; if (data.items?.[id]?.slot !== slot) out.push(`heroes.json: ${h?.id}.kit.${slot} (the class's starting ${slot}, an item of that slot; 0.00265)`); }
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00267)`);
+    // the special's key (0.00286): one letter of its own name (so the button underlines it), never a key combat already
+    // answers to — A Attack, P Drink Potion, D Push Deeper, R Retreat (H is every class's second key: the knight's and the Hex's own)
+    if (!/^[a-z]$/.test(h?.heavyKey ?? '') || !String(h?.heavyName).toLowerCase().includes(h.heavyKey) || 'apdr'.includes(h.heavyKey)) out.push(`heroes.json: ${h?.id}.heavyKey (a letter of heavyName, not A / P / D / R, 0.00286)`);
     for (const k of ['atk', 'heavy', 'hurt']) if (!data.audio?.clips?.[`${k}_${h?.id}`]) out.push(`audio.json: clips.${k}_${h?.id} (the class's own ${k === 'hurt' ? 'get-hit' : k === 'heavy' ? 'heavy' : 'attack'} sound, 0.00270)`);
     // the class (0.00258, live 0.00267): every number present, the heavy one the engine knows — both lists the registry's (run/classes.js, 0.00283)
     const c = h?.class;
@@ -192,6 +195,7 @@ export function checkData(data) {
     if (!rules[id]) out.push(`audio.json: narration.lines.${id} missing (narration.json has takes)`);
     for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb) || !isNum(t?.take)) out.push(`narration.json: ${id} take ${t?.take} needs take + file + measuredDb`);
   }
+  for (const k of ['hero', 'foe']) if (typeof data.audio?.cries?.[k] !== 'boolean') out.push(`audio.json: cries.${k} (true / false: the get-hit recordings on or off, 0.00287)`);
   const NEEDS = {
     dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],
     leech: ['hpCostPct', 'lifestealAdd', 'lifestealCap'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], secondwind: ['coinCost', 'potionsAdd'],

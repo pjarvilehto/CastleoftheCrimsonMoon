@@ -97,8 +97,27 @@ function warmOthers() {
 }
 
 // Called once from main.js: the first gesture anywhere unlocks audio.
+// 0.00285 (the developer's ask: the hall's bed from the title screen on):
+// the title bed is fetched and decoded at boot, not at the first gesture —
+// on a desktop that gesture is usually Enter the Castle, and the download
+// and decode after it put the music's start in the Great Hall — and where
+// the browser lets a page sound before any click (Chrome's media
+// engagement for a site played often; Firefox says so through
+// getAutoplayPolicy), it starts at once. Elsewhere the context waits
+// suspended and the first click or key starts the decoded bed at once.
+// The hero screen and the hall ask for the same bed: it plays on.
+function startEarly() {
+  if (mute.on || !bed(pending)) return;
+  if (globalThis.navigator?.getAutoplayPolicy?.('audiocontext') === 'disallowed') { fetchBytes(bed(pending).file).catch(() => {}); return; } // (no context before a gesture where the browser says it won't run: the bytes only)
+  initCtx();
+  if (!ctx) return;
+  bufferFor(bed(pending).file).catch(() => {}); // (a suspended context decodes too)
+  Promise.resolve(ctx.resume?.()).catch(() => {}).then(() => { if (ctx.state === 'running' && !mute.on && pending) startTrack(pending); });
+}
+
 export function initMusic() {
   if (!hasAudio()) return;
+  startEarly();
   onFirstGesture(() => {
     initCtx();
     ctx.resume?.().catch?.(() => {});

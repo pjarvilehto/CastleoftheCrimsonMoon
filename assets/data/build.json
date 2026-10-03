@@ -1,5 +1,5 @@
 {
-  "version": "0.00284",
+  "version": "0.00292",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -80,6 +80,7 @@
     "src/ui/hubText.js",
     "src/ui/hud.js",
     "src/ui/lookPicker.js",
+    "src/ui/lootDialog.js",
     "src/ui/namePrompt.js",
     "src/ui/particleLooks.js",
     "src/ui/particles.js",
@@ -98,6 +99,31 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00292": [
+      "Combat: click the LOOT row (bottom left) to see everything you've found this run, with pictures and stats, four at a time with a scroll for more."
+    ],
+    "0.00291": [
+      "Your hero's crouching knight look now shows the same inked figure in combat and the Great Hall as in the look picker (the old painted knight is gone)."
+    ],
+    "0.00290": [
+      "Combat: the inventory side of your hero's card shows each item as a strip with its picture, like the Great Hall's gear slots (this run's finds are no longer listed there)."
+    ],
+    "0.00289": [
+      "Calmer boss music: the throne room's score is a new, more restrained take (picked in the Music Lab), the menace held under the fight instead of on top of it."
+    ],
+    "0.00288": [
+      "The Music Lab has four calmer takes for the boss music to choose from."
+    ],
+    "0.00287": [
+      "The get-hit cries are off for now: a blow on your hero plays the plain hurt again and a struck foe makes no cry (the attack sounds stay)"
+    ],
+    "0.00286": [
+      "Combat: every class's special has its own key, underlined on the button — C for Cleave, F for Fireball, S for Soul Drain, E for Entangle, L for Last Rites (H for Heavy Attack and Hex) — and H still works for every class."
+    ],
+    "0.00285": [
+      "The Great Hall's music starts on the title screen: it loads with the title and begins at your first click (or at once, where the browser allows), then plays on through the hero choice and the hall.",
+      "The Forge no longer stops a descent: coins only the Forge could spend don't bring up the Descend Now? prompt."
+    ],
     "0.00284": [
       "Housekeeping: the notes in the code name the build the refactors shipped in"
     ],
@@ -120,35 +146,6 @@
     ],
     "0.00278": [
       "The Old Wizard remarks on a critical hit now and then (five lines, 12% of them with a pause between), and has four more things to say about a mega crit"
-    ],
-    "0.00277": [
-      "Fixes from the review: the STATS page shows each class's own heavy strength (and the Wizard's charges), a potion's heal is shown as the class really gets it, the Quicken boon reads as a charge for the Wizard, a foe's HEXED / BLIGHT / ROOTED tag and look now change on the line that causes them, and SWITCH CLASS clears the blight too. A struck hero no longer grunts twice: the recordings carry each class's cry."
-    ],
-    "0.00276": [
-      "Housekeeping: the project notes, code map and comments caught up with the classes (seven heroes, their own gameplay since 0.00267, Entangle, the recordings); the Druid's Entangle sound lost its old claws-and-growl layers for roots bursting from the earth; a robots.txt keeps crawlers out of the tools and docs. Nothing else changes in the game."
-    ],
-    "0.00275": [
-      "Housekeeping: the class gear's notes name the build they came in; nothing changes in the game."
-    ],
-    "0.00274": [
-      "Classes have their own gear: the Knight in plate and mail with swords and maces, the Barbarian in hides with axes and maces, the Wizard in robes with staves and daggers, the Necromancer in robes with daggers and scythes, the Druid in hides with staves and sickles, the Hexhunter in leathers with crossbows and swords, the Plague Sister in robes with censers and maces.",
-      "46 new items, each with its own picture — among them two signature pieces per class that feed its power (+1 and +2: a Fireball charge, an Entangle turn, Cleave reach and the like).",
-      "Another class's gear still drops: it rides in your loot, greyed, and is salvaged for coins at the end of the run. Gear your class can't use on an old save is swapped for its starting kit.",
-      "Balance: the Necromancer's armor and damage and the Plague Sister's armor are up, to carry them in their robes."
-    ],
-    "0.00273": [
-      "The Music Lab (a testing page): generated scores for the title and combat music from three music models, beside the music the game plays today, level-matched, with a blind mode for picking the next score."
-    ],
-    "0.00272": [
-      "A foe's status shows in its figure: blighted foes turn sickly green and drained, rooted foes earthy brown, and either moves slower, its weave and bob stretched. (Phones keep the tag and the slower motion.)"
-    ],
-    "0.00271": [
-      "The Druid's heavy is now Entangle: roots burst from the ground at every foe's feet and bind them for two turns; a bound foe that tries to attack may strain against the roots and lose its blow (Entangled!). Go Feral is gone (potions are never blocked). Tuned in the simulator to sit beside the Knight.",
-      "Every class's attack, heavy and get-hit sounds are real recordings now, made for each class: the Knight's sword, the Barbarian's axe and roar, the Wizard's staff and fireball, the Necromancer's knife and soul-drain, the Druid's staff and roots, the Hexhunter's crossbow and hex, the Plague Sister's censer and rites, and each one's own cry when struck.",
-      "Every foe has its own voice too: its attack as it strikes you and its cry as you strike it — the rat's squeak, the skeleton's clatter, the wraith's wail, the golem's clang, the vampire lord's hiss and the rest."
-    ],
-    "0.00270": [
-      "Every class sounds its own: the blows, the heavy and a blow taken are pitched per class (the Barbarian low and heavy, the Wizard and the two women higher) with each class's own voice under them — a wide swing for Cleave, a fireball's roar and crackle, the Necromancer's grave wail, the Druid's claws and growl, the Hexhunter's crossbow click and hex chime, the Plague Sister's censer chain and smoke hiss — and a grunt in the hero's own voice when struck. The hex chimes, the blight hisses, Go Feral growls, a charge back zaps, the thrall wails as it rises and thuds as it takes a blow."
     ]
   }
 }

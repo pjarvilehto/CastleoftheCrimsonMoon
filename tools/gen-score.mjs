@@ -227,6 +227,7 @@ function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, minLoop =
   writeFileSync(AUDIO, setTrack(tracksText, id, track));
   const refs = JSON.stringify(JSON.parse(readFileSync(AUDIO, 'utf8')));
   if (old?.file && old.file !== file && !refs.includes(`"${old.file}"`)) { unlinkSync(join(ROOT, old.file)); console.log(`removed ${old.file} (nothing names it now)`); }
+  for (const other of e.candidates) if (other !== k && other.imported) { other.replaced = { ...other.imported, by: `${id}_c${k.n}` }; delete other.imported; } // (0.00289: one take is the bed; the one it replaced keeps its record)
   k.imported = { file, start: Math.round(seam.start * 1000) / 1000, end: Math.round(endS * 1000) / 1000, loopS, tailS: tail, gainDb: track.gainDb, lufs: m.lufs, at: new Date().toISOString() };
   console.log(`→ ${file}: ${m.seconds} s, ${m.lufs} LUFS (the old bed ${oldLufs} at ${old.gainDb} dB) → gainDb ${track.gainDb}`);
   return track;

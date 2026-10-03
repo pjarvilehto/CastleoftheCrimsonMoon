@@ -60,15 +60,21 @@ Avoid: drum kit, cymbal crashes on every bar, heroic fanfare
 
 ### boss — The Vampire Lord
 
-Seconds: 90
+The second brief (after 0.00285). The first — 90 s of organ, chanting choir,
+war drums and brass stabs, "the full ensemble at their heaviest" — gave
+`boss_c2`, in the game from 0:28 and too in-your-face for a bed under a
+whole fight. This one holds the menace back and opens on its pulse, with no
+organ solo first.
+
+Seconds: 60
 Painting: castle_throne_room.jpg
-Line: The throne room and the vampire lord who rules it: ceremonial, menacing and heavy, an organ and a chanting choir over war drums.
-Global: gothic horror orchestral, pipe organ, chanting wordless male choir, heavy war drums, brass stabs, tolling bell, 72 bpm, menacing, ceremonial, epic
-Avoid: hopeful, triumphant
-- 0:00-0:18 Organ: a low pipe organ chord progression, a tolling bell, the drums in a slow heavy pulse
-- 0:18-0:45 Choir: a chanting wordless male choir joins, brass stabs on the downbeats
-- 0:45-1:10 Assault: the full ensemble, organ, choir, drums and brass at their heaviest, dark and relentless
-- 1:10-1:30 Return: the brass and choir fall back, the organ and the slow drum pulse of the opening, ready to loop
+Line: The throne room and the vampire lord who rules it: menacing and ceremonial but held back, a slow dread that sits under the fight rather than on top of it.
+Global: dark brooding orchestral, low string ostinato, soft war drums, distant wordless choir, muted low brass, a bell tolling far away, 72 bpm, menacing, restrained, mid-level dynamics, steady
+Avoid: organ solo, full-ensemble climax, brass stabs, cymbal crashes, choir in the foreground, hopeful, triumphant
+- 0:00-0:12 Dread: low strings and soft war drums together from the first beat, a bell far away
+- 0:12-0:30 Choir: a distant wordless choir behind muted low brass, the drums steady
+- 0:30-0:48 Pressure: the string ostinato tightens and the drums fill out a little, still held back
+- 0:48-1:00 Return: back to the low strings and soft drums of the opening, ready to loop
 
 ### shrine — Sanctum
 
