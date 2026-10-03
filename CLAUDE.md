@@ -684,7 +684,7 @@ be served stale for ~4 hours.
   `ui/hubSections.js` (0.00223; each row's text is `rowText`: a title —
   name + level or count — over a small muted line, one line on a phone,
   0.00232); `hubScene.js` keeps the hall's table,
-  **the desktop / tablet hall (0.00237, the owner's layout; the phone keeps
+  **the desktop / tablet hall (0.00238, the owner's layout; the phone keeps
   its sheets until its own pass):** the name and the records up top, then
   the knight (`hubSections.js knightSection`: his card with the gear
   around it — three slots left, four right, as tall as the card, the
@@ -1171,7 +1171,7 @@ sometimes — fetch all branches to find it.
   and the save gains a world record (rule 3); the hall's Descend goes to
   the last place chosen with a MAP beside; `labs/world/lab.js WORLD` is
   the shape of the future `world.json`).
-- Engineering: `go()` is silently dropped during a transition (queue it)
+- Engineering: the new hall's comments (hubSections.js, hubScene.js, styles.css) say 0.00237 for 0.00238 — fix with the next build · `go()` is silently dropped during a transition (queue it)
   · ~60 checks still assert on source text rather than behaviour (inject
   recording stubs instead) · `fresh()` does not restore `DATA` after a
   test patches it · the Actions deploy job (off until the owner opts in)
