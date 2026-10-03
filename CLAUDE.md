@@ -286,23 +286,28 @@ animate only translate/rotate/scale, never filter). **Card effects
 embers or ether by the enemy's particle material (`cardStyle`: bone fog,
 embers flames, the wraith ether, flesh blood; the boss flames, the knight
 ether), the shrine's boons and the treasure chests each their own
-(`SHRINE_STYLE` / `CHEST_STYLE`, through `shrineUI.js litCard`). ONE
-WebGL context for the session draws every card in turn into a hidden
-canvas and each card's own canvas takes its picture as an ImageBitmap
-(a `bitmaprenderer` context; a `drawImage` into a small 2D canvas was a
-GPU readback per card per frame, 0.00197; 2D stays as the fallback —
-and since 0.00226 the hidden canvas is an `OffscreenCanvas` whose
-`transferToImageBitmap()` MOVES the picture to the card, no copy: the
-first device report put Safari's `createImageBitmap(canvas)` at 13.5 ms
-of main thread per tick on the owner's iPhone, the whole of its Idle
-drops; the `<canvas>` + `createImageBitmap` path stays where there is
-no OffscreenCanvas with WebGL)
+(`SHRINE_STYLE` / `CHEST_STYLE`, through `shrineUI.js litCard`). Every
+lit card draws on a WebGL canvas of its own from a POOL (0.00226:
+`cardFx.js POOL_MAX` 8 — every fight fits — handed from one room's cards
+to the next room's as they come and go, `acquire` / `release`, so the
+browser's ceiling on live contexts is never reached; `WARM` of them are
+made and compiled behind the title; a new room's card that finds the
+pool held by the last room's — the scenes mount the new line, then
+clear the root — gets its canvas on the next tick, `place`, after the
+tick's filter has returned the last room's). Before 0.00226 ONE hidden context
+drew every card in turn and each card's 2D canvas took its picture as
+an ImageBitmap (a `bitmaprenderer` context, 0.00197): the first device
+report (0.00225, the owner's iPhone) put that at 13.5 ms of main thread
+per tick at rest and 6-8 ms in the fights — Safari serves
+`createImageBitmap()` of a WebGL canvas as a GPU readback, one per lit
+card per tick. That copy path stays for the cards past the pool and
+where no pool canvas can be made; a pooled canvas whose context is lost
+leaves the pool for good and its card goes unlit for the room
 (`.card-fx`,
 screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
 see-through opacity, so the plate stays as transparent as the lab's
-(0.195) — masked to the frame's window or a panel's rounded edge; a WebGL context per card would run the browser
-out of them as rooms come and go). Drawn at `fx.scale` of the card's
+(0.195) — masked to the frame's window or a panel's rounded edge). Drawn at `fx.scale` of the card's
 pixels at `fx.fps`, a fallen card lit until its unit leaves the row
 (0.00216); off with the particles (flat
 background, reduced motion). The cards in 3D: `perspective` on
@@ -1026,9 +1031,13 @@ sometimes — fetch all branches to find it.
   iPhone): the renderer's draw 0.1-0.3 ms of main thread, the card light
   13.5 ms a tick in Idle and 6-8 ms in the fights — Safari's
   `createImageBitmap` from a WebGL canvas is a readback — hence the Idle
-  phase's 29% dropped frames at the display rate; 0.00226 moves the
-  picture instead (OffscreenCanvas). The next report says how much it
-  bought.
+  phase's 29% dropped frames at the display rate.
+- 0.00226: the card light's pool — a WebGL canvas per lit card, reused
+  across rooms, no copy at all (an OffscreenCanvas whose
+  `transferToImageBitmap` MOVES the picture was tried first and measured
+  at 420 ms a tick under the sandbox's software GL: a transfer there is a
+  readback too). A new benchmark round (`benchmarkSince` 0.00226): the
+  next iPhone report says how much it bought.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by

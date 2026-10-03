@@ -139,9 +139,10 @@ src/
     combatSfx.js        a line's sound, panned to its card, timed to the blow
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
-    cardFx.js           the shader light behind every card: one GL context draws
-                        each card in turn, each card's canvas takes an ImageBitmap
-                        (bitmaprenderer; 2D drawImage as the fallback, 0.00197);
+    cardFx.js           the shader light behind every card: a pooled WebGL
+                        canvas per lit card, reused across rooms (0.00226; the
+                        cards past the pool take an ImageBitmap copy out of one
+                        overflow context, 2D drawImage as the last fallback);
                         looks per enemy / boon / chest
     shrineUI.js  treasureUI.js   the panel rooms (renderPanelRoom shared)
     buffs.js  hud.js  fx.js
