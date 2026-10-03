@@ -1,5 +1,5 @@
 {
-  "version": "0.00263",
+  "version": "0.00264",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -95,6 +95,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00264": [
+      "The Curious Knight now stands like the other classes, in four new looks to choose from; his old crouching pose is still there as the fifth."
+    ],
     "0.00263": [
       "Potions have a picture: on your hero's card beside the count, and in the log.",
       "A potion found in combat rises as a card like a find, then flies into your hero's potion count, which glows as it counts it."
@@ -143,9 +146,6 @@
     ],
     "0.00250": [
       "Choose your hero: the chosen card's gold rim sits on the card's own edge and its red plate pulses slowly; a standing hero fills the knight's card in the fights (the wizard read small beside the enemies)."
-    ],
-    "0.00249": [
-      "Back in the Great Hall after a run, every item you found takes its place one by one — your old gear first, then the new piece glowing in with a NEW tag as your stats climb"
     ]
   }
 }
