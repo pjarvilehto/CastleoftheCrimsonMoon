@@ -18,6 +18,7 @@ import { CHEST_ICONS } from '../run/treasure.js';
 import { DATA } from './data.js';
 import { depthUrl } from '../core/bg3d.js';
 import { portraitUrl } from './portraits.js';
+import { heroArtUrls } from './heroes.js';
 
 const bgUrl = (f) => `assets/bg/${f}`;
 
@@ -35,7 +36,7 @@ export function essentialUrls() {
   const art = [...new Set([b.death, b.shrine])].filter((f) => !first.has(f));
   const chars = ['player', ...Object.keys(DATA.enemies)];
   const icons = [...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)]; // (0.177; one table, run/treasure.js)
-  return [...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons];
+  return [...heroArtUrls(), ...art.map(bgUrl), ...art.map(depthUrl), ...chars.map(portraitUrl), ...icons]; // (0.00248: the hero figures first — CHOOSE YOUR HERO follows the title)
 }
 
 // The room paintings (and their depth maps) not already loaded above —

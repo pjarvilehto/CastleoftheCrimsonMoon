@@ -1,0 +1,50 @@
+{
+  "default": "knight",
+  "heroes": [
+    {
+      "id": "knight",
+      "name": "The Curious Knight",
+      "epithet": "Steel and stubbornness",
+      "lore": "A wanderer who came for the legend and stayed for the fight. A sword, a coat of mail and no sense of when to leave.",
+      "traits": ["Sword", "Heavy blows", "Armor"],
+      "fh": 0.739,
+      "looks": ["knight_v1.webp", "knight_v1.webp", "knight_v1.webp", "knight_v1.webp"]
+    },
+    {
+      "id": "barbarian",
+      "name": "The Barbarian",
+      "epithet": "The axe decides",
+      "lore": "From the frozen marches, where the moon is one more thing to kill. Hits harder, bleeds more, drinks last.",
+      "traits": ["Great axe", "Rage", "No armor"],
+      "fh": 0.884,
+      "looks": ["barbarian_v1.webp", "barbarian_v1.webp", "barbarian_v1.webp", "barbarian_v1.webp"]
+    },
+    {
+      "id": "wizard",
+      "name": "The Wizard",
+      "epithet": "Old fire, older book",
+      "lore": "He has read what the castle is and came anyway, with a staff, a chained grimoire and three good spells.",
+      "traits": ["Staff", "Spells", "Frail"],
+      "fh": 0.851,
+      "looks": ["wizard_v1.webp", "wizard_v1.webp", "wizard_v1.webp", "wizard_v1.webp"]
+    },
+    {
+      "id": "necromancer",
+      "name": "The Necromancer",
+      "epithet": "The dead owe him",
+      "lore": "The castle's own trade, turned against it. Every corpse on the floor is a servant waiting for its word.",
+      "traits": ["Ritual dagger", "Thralls", "Lifesteal"],
+      "fh": 0.934,
+      "looks": ["necromancer_v1.webp", "necromancer_v1.webp", "necromancer_v1.webp", "necromancer_v1.webp"]
+    },
+    {
+      "id": "druid",
+      "name": "The Druid",
+      "epithet": "The forest remembers",
+      "lore": "Antlers, feathers and a staff that still grows. The wild has its own quarrel with the Crimson Moon.",
+      "traits": ["Living staff", "Mending", "Wild shape"],
+      "fh": 0.938,
+      "looks": ["druid_v1.webp", "druid_v1.webp", "druid_v1.webp", "druid_v1.webp"]
+    }
+  ]
+}

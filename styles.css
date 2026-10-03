@@ -385,6 +385,56 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .save-hint { font-size: 0.85rem; color: #9a8b6a; text-align: center; margin-top: 6px; }
 .save-error { font-size: 0.9rem; color: #c14b4b; text-align: center; margin-top: 6px; }
 
+/* ================= 6b Choose your hero (0.00248) ================= */
+/* CHOOSE YOUR HERO (ui/scenes/heroScene.js), the developer's layout from the
+   Hero Lab's second draft: over the hall's painting, five tall cards on the
+   enemy frame in a row, the chosen one lifted with a breathing gold rim
+   (a layer whose opacity animates, like .active), the look switcher under
+   it, and one bar with the hero's lines and PROCEED. Fluid (vh / vw) like
+   combat: --hero-h is a card's height, the figure's height its sheet
+   share (--fh, heroes.json) of that, so the five keep their scale. */
+.hero-screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 5vh 3vw 2.5vh; gap: 1.5vh; }
+.hero-head { text-align: center; }
+.hero-head h1 { font-size: min(4.2vh, 4vw); letter-spacing: 0.18em; margin: 0; }
+.hero-head .subtitle { margin: 0.2em 0 0; font-size: min(1.7vh, 1.6vw); letter-spacing: 0.22em; text-transform: uppercase; }
+/* the row keeps a margin above for the figures that climb over their frames and the chosen card's lift */
+.hero-row { display: flex; gap: 1.4vw; align-items: flex-end; justify-content: center; --hero-h: min(64vh, 28vw); margin-top: calc(var(--hero-h) * 0.14); }
+.hero { position: relative; flex: 0 0 auto; width: calc(var(--hero-h) * var(--ratio-e)); height: var(--hero-h); cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s; filter: brightness(0.72) saturate(0.85); }
+@media (hover: hover) { .hero:hover { filter: brightness(0.92) saturate(0.95); transform: translateY(-1.5%); } }
+.hero.chosen, .hero.chosen:hover { filter: none; transform: translateY(-3%) scale(1.05); z-index: 2; }
+.hero .plate { position: absolute; inset: 0; background: url('assets/chars/card_enemy.png') center / 100% 100% no-repeat; opacity: 0.85; }
+.hero .rim { position: absolute; inset: -0.6%; border-radius: 4% / 1.6%; box-shadow: 0 0 0 0.25vh var(--gold), 0 0 2.4vh rgba(201,162,39,0.9), 0 0 5vh rgba(201,162,39,0.45); opacity: 0; pointer-events: none; }
+.hero.chosen .rim { animation: hero-rim 1.6s ease-in-out infinite; }
+@keyframes hero-rim { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hero.chosen .rim { animation: none; opacity: 0.8; } .hero { transition: none; } }
+.hero .figure { position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); height: calc(var(--hero-h) * var(--fh)); max-width: 150%; width: auto; object-fit: contain; object-position: bottom center;
+  filter: drop-shadow(0 0.8vh 1.2vh rgba(0,0,0,0.7)); -webkit-user-drag: none; user-select: none; pointer-events: none; }
+.hero .name { position: absolute; left: 4%; right: 4%; bottom: 3.5%; text-align: center; text-transform: uppercase; letter-spacing: 0.12em; color: var(--parchment); font-size: calc(var(--hero-h) * 0.048); line-height: 1.05; text-shadow: 0 1px 4px #000; }
+.hero .name small { display: block; font-size: 0.62em; letter-spacing: 0.16em; color: #9a8b6a; margin-top: 0.15em; }
+.hero.chosen .name { color: var(--gold); }
+/* the number badge is the card's hotkey button (1-5) */
+.hero .num { position: absolute; left: 5%; top: 3%; min-width: 0; min-height: 0; padding: 0.1em 0.45em 0; font-size: calc(var(--hero-h) * 0.04); letter-spacing: 0.1em; color: #9a8b6a; background: rgba(10, 7, 5, 0.5); border: 1px solid rgba(201, 162, 39, 0.25); border-radius: 3px; opacity: 0.8; }
+/* the looks: the chosen hero's versions, switched by the arrows under its card (the arrow keys) */
+.hero .looks { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 1vh; display: none; align-items: center; gap: 0.6vw; white-space: nowrap; }
+.hero.chosen .looks { display: flex; }
+.hero .looks.single { visibility: hidden; } /* (a hero with one look: the gap stays, the switcher does not) */
+.hero .looks button { font-size: calc(var(--hero-h) * 0.08); line-height: 1; color: var(--gold); background: rgba(10, 7, 5, 0.75); border: 1px solid var(--panel-border); border-radius: 50%; width: 1.5em; height: 1.5em; min-width: 0; min-height: 0; padding: 0 0 0.1em; display: grid; place-items: center; text-shadow: 0 1px 3px #000; }
+.hero .looks button .key-hint { display: none; }
+.hero .looks .dots { display: flex; gap: 0.45em; font-size: calc(var(--hero-h) * 0.036); }
+.hero .looks .dots i { width: 1em; height: 1em; border-radius: 50%; border: 1px solid var(--gold); background: transparent; }
+.hero .looks .dots i.on { background: var(--gold); box-shadow: 0 0 0.6em rgba(201,162,39,0.8); }
+.hero .looks .which { letter-spacing: 0.16em; text-transform: uppercase; color: #9a8b6a; font-size: calc(var(--hero-h) * 0.034); text-shadow: 0 1px 3px #000; }
+/* the chosen hero's lines and the way forward: one bar, the text left and PROCEED right */
+.hero-detail { width: min(78vw, 1180px); max-width: none; padding: 1.4vh 2.2vw 1.3vh; text-align: left; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name go" "epithet go" "lore go" "traits go"; column-gap: 2.4vw; row-gap: 0.25vh; align-items: center; margin-top: calc(var(--hero-h, 50vh) * 0.13 + 1vh); overflow: visible; } /* (the look switcher hangs 12% of a card under the row, plus its 1vh) */
+.hero-detail h2 { grid-area: name; margin: 0; font-size: min(3.2vh, 2.8vw); letter-spacing: 0.16em; text-transform: uppercase; }
+.hero-detail .epithet { grid-area: epithet; color: #9a8b6a; letter-spacing: 0.2em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); }
+.hero-detail .lore { grid-area: lore; color: var(--parchment); font-size: min(2.2vh, 1.8vw); line-height: 1.3; max-width: 64ch; margin: 0.2em 0 0; text-transform: none; letter-spacing: 0.03em; }
+.hero-detail .traits { grid-area: traits; display: flex; gap: 0.8vw; margin-top: 0.5vh; flex-wrap: wrap; }
+.hero-detail .traits span { letter-spacing: 0.12em; text-transform: uppercase; font-size: min(1.6vh, 1.4vw); color: var(--parchment); border: 1px solid var(--panel-border); border-radius: 3px; padding: 0.25em 0.8em 0.15em; background: rgba(0,0,0,0.35); }
+.hero-detail .btn-row { grid-area: go; margin-top: 0; }
+.hero-detail .btn-row button { font-size: min(2.6vh, 2.2vw); padding-inline: 2.2em; }
+
 /* ================= 7 The Great Hall (hub) ================= */
 /* Three side-by-side windows, slightly smaller so the painted background
    stays visible around them. Grid (not flex) — WebKit mis-sizes nested
@@ -456,7 +506,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .knight-panel > .sec-hint { text-align: center; margin: 2px 0 10px; }
 .knight-doll { display: grid; grid-template-columns: minmax(0, 1fr) 172px minmax(0, 1fr); gap: 10px; align-items: stretch; }
 .knight-card { align-self: center; position: relative; aspect-ratio: 663 / 1103; background: url('assets/chars/card_player.png') center / 100% 100% no-repeat; }
-.knight-card img { position: absolute; left: 50%; bottom: 7%; width: 125%; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)); pointer-events: none; }
+.knight-card img { position: absolute; left: 50%; bottom: 7%; width: 125%; max-height: 82%; object-fit: contain; object-position: bottom center; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)); pointer-events: none; } /* (0.00248: a standing hero fits under the name; the knight's wide sprite is as it was) */
 .gear-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* (over the portrait's sword) */
 .gear-slot { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 6px 9px 7px; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 4px; background: rgba(0, 0, 0, 0.45); text-transform: uppercase; }
 .gear-left .gear-slot { text-align: right; }
@@ -1280,3 +1330,20 @@ html.phone .gate-card { max-width: 560px; padding: 14px 24px; }
 html.phone .gate-card h1 { font-size: 1.5rem; margin: 0 0 6px; }
 html.phone .gate-card .btn-row { margin-top: 12px; }
 html.phone .gate-card .btn-row button { min-height: 44px; padding: 0 22px; font-size: 1.05rem; }
+
+/* ---- CHOOSE YOUR HERO (0.00248): the five cards at the phone's height, the bar as name + traits + PROCEED ---- */
+html.phone .hero-screen { padding: 6px calc(2vw + env(safe-area-inset-right, 0px)) 4px calc(2vw + env(safe-area-inset-left, 0px)); gap: 2px; }
+html.phone .hero-head h1 { font-size: 1.25rem; letter-spacing: 0.14em; }
+html.phone .hero-head .subtitle { font-size: 0.6rem; margin: 0; }
+html.phone .hero-row { --hero-h: min(46svh, 19vw); gap: 2vw; margin-top: calc(var(--hero-h) * 0.12); }
+html.phone .hero .figure { filter: none; } /* (iOS re-renders a filtered layer per frame) */
+html.phone .hero .looks { margin-top: 2px; gap: 6px; }
+html.phone .hero .looks button { width: 32px; height: 32px; font-size: 1.1rem; }
+html.phone .hero .looks .which { display: none; }
+html.phone .hero-detail { width: 94vw; padding: 4px 12px; margin-top: 40px; grid-template-areas: "name go" "traits go"; row-gap: 0; }
+html.phone .hero-detail h2 { font-size: 1rem; }
+html.phone .hero-detail .epithet { display: none; }
+html.phone .hero-detail .lore { display: none; }
+html.phone .hero-detail .traits { margin-top: 2px; gap: 6px; }
+html.phone .hero-detail .traits span { font-size: 0.65rem; padding: 2px 8px 1px; }
+html.phone .hero-detail .btn-row button { font-size: 0.95rem; padding-inline: 1.4em; }

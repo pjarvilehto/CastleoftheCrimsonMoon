@@ -1,4 +1,4 @@
-// ui/scenes/titleScene.js — title screen -> hub, plus save transfer.
+// ui/scenes/titleScene.js — title screen -> CHOOSE YOUR HERO -> hub (0.00248), plus save transfer.
 
 import { setBackground, go } from '../../core/scene.js';
 import { el } from '../../core/dom.js';
@@ -67,7 +67,7 @@ export function titleScene() {
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
           // 0.00200: a new player is asked their name on the way in (the prompt's button reads Enter the Castle), not over the title before seeing anything
-          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? go('hub') : namePrompt(() => go('hub'))) }, 'Enter the Castle'),
+          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? go('hero') : namePrompt(() => go('hero'))) }, 'Enter the Castle'), // (0.00248: CHOOSE YOUR HERO, then the Great Hall)
           // Shown only when a save with progress exists: offer to wipe
           // (the game's own yes/no dialog, not the browser's).
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)

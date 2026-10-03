@@ -24,7 +24,7 @@ export async function loadData() {
   // the boot's copy when there is one (index.html, 0.00197: one read per page, so code and data agree); else a fresh URL, past the CDN's copy too
   DATA.build = globalThis.__castleBuild ?? await get('build', `?t=${Date.now()}`, 'no-store');
   const q = DATA.build?.version ? `?v=${encodeURIComponent(DATA.build.version)}` : '';
-  const files = ['enemies', 'items', 'difficulty', 'backgrounds', 'shrines', 'telemetry', 'audio', 'narration', 'cards'];
+  const files = ['enemies', 'items', 'difficulty', 'backgrounds', 'shrines', 'telemetry', 'audio', 'narration', 'cards', 'heroes'];
   await Promise.all(files.map(async (name) => { DATA[name] = await get(name, q, 'no-cache'); }));
   for (const problem of checkData(DATA)) console.error(`[data] ${problem}`);
   return DATA;

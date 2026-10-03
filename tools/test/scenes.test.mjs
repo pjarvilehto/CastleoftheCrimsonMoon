@@ -28,7 +28,10 @@ setBackground('castle_great_hall.png');
   await sleep(1100);
   handleKey('e');
   await sleep(1300);
-  ok('hub renders after Enter', t().includes('GREAT HALL') && !registry.app.classList.contains('hidden'));
+  ok('CHOOSE YOUR HERO renders after Enter (0.00248)', t().includes('CHOOSE YOUR HERO') && !t().includes('GREAT HALL') && !registry.app.classList.contains('hidden'));
+  handleKey(' ');
+  await sleep(1300);
+  ok('hub renders after Proceed', t().includes('GREAT HALL') && !registry.app.classList.contains('hidden'));
   handleKey('d');
   await sleep(1300);
   ok('dungeon renders after Descend', t().includes('Room 1') && !registry.app.classList.contains('hidden'));
@@ -399,7 +402,10 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   ok('the name is saved (cleaned) and the dialog closes', !dialog() && getProfile().name === 'Lady Morgana'
     && JSON.parse(localStorage.getItem('castle-roguelike-profile-v1')).name === 'Lady Morgana');
   await sleep(1300);
-  ok('and the way in continues: the Great Hall, its Descend pulsing (nothing to spend yet)', t().includes('GREAT HALL')
+  ok('and the way in continues: CHOOSE YOUR HERO (0.00248)', t().includes('CHOOSE YOUR HERO'));
+  handleKey(' ');
+  await sleep(1300);
+  ok('then the Great Hall, its Descend pulsing (nothing to spend yet)', t().includes('GREAT HALL')
     && registry.app.all((n) => n.tagName === 'button' && n.attrs['data-key'] === 'd').some((b) => b.className.includes('active')));
   show(titleScene());
   await sleep(1100);
@@ -477,6 +483,9 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   show(titleScene());
   await sleep(1100);
   ok('title: [space] under Enter the Castle', /Enter the Castle\s*\[space\]/i.test(t()));
+  handleKey(' ');
+  await sleep(1300);
+  ok('Space enters CHOOSE YOUR HERO, [space] under Proceed (0.00248)', t().includes('CHOOSE YOUR HERO') && /Proceed\s*\[space\]/i.test(t()));
   handleKey(' ');
   await sleep(1300);
   ok('Space enters the Great Hall', t().includes('GREAT HALL') && /Descend into the Dungeon\s*\[space\]/i.test(t()));

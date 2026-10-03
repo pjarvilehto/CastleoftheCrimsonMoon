@@ -89,6 +89,16 @@ export function checkData(data) {
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
   for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
+  // the character classes (0.00248): every hero whole, the default one of them
+  const heroes = Array.isArray(data.heroes?.heroes) ? data.heroes.heroes : [];
+  if (!heroes.length) out.push('heroes.json: heroes (a list)');
+  for (const h of heroes) {
+    if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
+    if (!isNum(h?.fh) || h.fh <= 0 || h.fh > 1) out.push(`heroes.json: ${h?.id}.fh (the figure's share of its sheet, 0-1)`);
+    if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((f) => typeof f === 'string' && f)) out.push(`heroes.json: ${h?.id}.looks (the figure files in assets/heroes/, one per look)`);
+    if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
+  }
+  if (heroes.length && !heroes.some((h) => h.id === data.heroes.default)) out.push(`heroes.json: default (${data.heroes?.default}) is not a hero`);
   for (const [id, c] of Object.entries(data.audio?.clips ?? {})) {
     if (!isNum(c?.gainDb)) out.push(`audio.json: clips.${id}.gainDb`);
     if (!c?.file === !c?.synth) out.push(`audio.json: clips.${id} needs a file or synth: true (one of them)`);
