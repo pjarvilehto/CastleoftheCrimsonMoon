@@ -1,5 +1,5 @@
 {
-  "version": "0.00311",
+  "version": "0.00312",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00312": [
+      "Combat's background flashes (crits, potions, revives, OVERKILL) are stronger and reach further, so they show past the cards.",
+      "Fog Lab: flash-light sliders with card stand-ins, and the mist's tints now start from the game's own."
+    ],
     "0.00311": [
       "The title screen's castle has its own deeper, wider-swaying 3D depth."
     ],
@@ -144,11 +148,6 @@
     "0.00298": [
       "A huge tom strikes as you Push Deeper and as the descent from the Great Hall begins.",
       "The room-change whooshes play much louder (they sat where the old quiet swoosh did)."
-    ],
-    "0.00297": [
-      "New room-change sounds: one of ten whoosh recordings, picked at random, its loudest moment timed to the paintings' crossfade.",
-      "The YOU DIED dialog lands with a huge wooden hit, and the Heart's revive rings a spooky metal strike (in the reliquary too).",
-      "The coin jingle plays an octave lower."
     ]
   }
 }
