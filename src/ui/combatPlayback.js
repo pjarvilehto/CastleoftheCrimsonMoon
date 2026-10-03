@@ -59,6 +59,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
   // Boss summon meters, and how many enemies exist yet (summons join
   // mid-fight — their card appears when the summon line prints; 0.092).
   const meterOf = (i, real) => (view ? view.meters[i] ?? null : real);
+  const statusOf = (i, real) => (view ? view.status?.[i] ?? real : real); // 0.00277: the foe's hex / blight / roots at the printed line (a summon not yet in the snapshot reads live)
   const enemyCount = (real) => (view ? view.hp.length : real);
 
   // New combat (room): tear down any in-flight chain so stale ticks can't
@@ -115,6 +116,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         view.hp = [...item.snap.enemies];
         view.php = item.snap.hp;
         if (item.snap.meters) view.meters = [...item.snap.meters];
+        if (item.snap.status) view.status = [...item.snap.status];
       }
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
       const endSpan = span('playback'); // a printed line's main-thread cost, for the device report (0.00225)
@@ -131,5 +133,5 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
     step();
   }
 
-  return { enqueue, begin, reset, isPrinting, hpOf, deadOf, playerHpOf, meterOf, enemyCount };
+  return { enqueue, begin, reset, isPrinting, hpOf, deadOf, playerHpOf, meterOf, statusOf, enemyCount };
 }

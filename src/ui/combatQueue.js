@@ -35,11 +35,12 @@ export function sfxFor(ev, hero = heroOf(getProfile())) {
 // Combat event -> narrator line (audio/narrator.js decides whether it is
 // said; 0.161): OVERKILL, a multi-kill ("SMASH"), a mega crit, the revive
 // relic, a boss summon, the room cleared (not a boss's: that fight has its
-// own line) and the knight's HP falling low.
+// own line), a critical (mega or plain) and the knight's HP falling low.
 export function voFor(ev, { run, combat }) {
   if (ev.type === 'overkill') return 'overkill';
   if (ev.type === 'multi') return 'smash'; // (the narration id and the script's name for a multi-kill)
   if (ev.type === 'atk' && ev.megaCrit) return 'mega_crit';
+  if (ev.type === 'atk' && ev.crit) return 'crit'; // (0.00278: a plain critical, rarer and with a cooldown in audio.json)
   if (ev.type === 'revive') return 'revive';
   if (ev.type === 'summon') return 'boss_summon';
   if (ev.type === 'sys' && combat.over && combat.victory && !combat.isBoss) return 'room_cleared';

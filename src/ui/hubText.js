@@ -5,7 +5,8 @@
 
 import { DATA } from '../shared/data.js';
 import { getProfile } from '../meta/profile.js';
-import { precisionGain, efficiencyChance, alchemyMaxed, potionHealAmount, infusionArmor } from '../meta/leveling.js';
+import { precisionGain, efficiencyChance, alchemyMaxed, potionHealFor, infusionArmor } from '../meta/leveling.js';
+import { heroOf } from '../shared/heroes.js';
 
 const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
 
@@ -45,7 +46,7 @@ export function efficiencyDesc(short = false) {
 // The alchemy rows' other lines, long and short.
 export function alchemyDesc(track, short = false) {
   const t = DATA.difficulty.alchemyTracks;
-  if (track === 'potency') return short ? `+${t.potency.healPerLevel} heal / lv (now ${potionHealAmount()})` : `+${t.potency.healPerLevel} healing / level (now ${potionHealAmount()} HP)`;
+  if (track === 'potency') return short ? `+${t.potency.healPerLevel} heal / lv (now ${potionHealFor(heroOf(getProfile()).class)})` : `+${t.potency.healPerLevel} healing / level (now ${potionHealFor(heroOf(getProfile()).class)} HP)`;
   if (track === 'infusion') return short ? `potion armor +${infusionArmor()} (+${t.infusion.armorPerLevel} / lv)` : `potion armor +${infusionArmor()} for the room (+${t.infusion.armorPerLevel} / level)`;
   return efficiencyDesc(short);
 }

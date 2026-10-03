@@ -6,7 +6,7 @@
 import { getProfile, persist } from '../meta/profile.js';
 import { derivedStats, playerLevel } from '../meta/stats.js';
 import { recordRun } from '../meta/history.js';
-import { potionHealAmount, efficiencyChance, infusionArmor } from '../meta/leveling.js';
+import { potionHealFor, efficiencyChance, infusionArmor } from '../meta/leveling.js';
 import { equipItems } from '../meta/equipment.js';
 import { generateRoom, generateInterlude } from './roomGen.js';
 import { rollLoot, potionDrop, takeItem } from './loot.js';
@@ -127,7 +127,7 @@ export function addPotion(run) {
 // (0.00223: a potion drunk after the win announced armor the next room threw away).
 export function drinkPotion(run, inCombat = true) {
   if (run.potions <= 0 || run.hp >= run.maxHp) return false;
-  const healed = Math.round(potionHealAmount() * run.stats.klass.potionHealMult); // potency-trained (x the class's share, 0.00258, live 0.00267)
+  const healed = potionHealFor(run.stats.klass); // potency-trained, times the class's share (0.00258, live 0.00267; one function with the UI since 0.00277)
   const free = Math.random() < efficiencyChance();
   if (!free) run.potions -= 1;
   run.potionsDrunk += 1;

@@ -148,6 +148,11 @@ export function potionHealAmount() {
   return DATA.difficulty.potionHeal
     + (p.alchemy.potency ?? 0) * trackData('potency').healPerLevel;
 }
+// What a potion heals THIS class (0.00277): the trained amount times the
+// class's potionHealMult (heroes.json class; the Wizard's 0.9) — the one
+// function the drink (runState.js), the STATS page, the potion card and
+// the Alchemy row share, so the number shown is the number healed.
+export const potionHealFor = (klass) => Math.round(potionHealAmount() * klass.potionHealMult);
 
 // Chance a drunk potion is not consumed. 0.112: tapers (stats.taper with
 // the data's `tail`; 0.113: +8% for the first `linear` levels, then a

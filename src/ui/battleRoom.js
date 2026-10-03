@@ -7,6 +7,7 @@
 // mountBattle(run, combat, { onHeavy, onPotion, onAttack(i) })
 //   -> { player, enemies, row, line, update(playback, { heavyReady, dead }) }
 
+import { statusOf } from '../run/combat.js';
 import { el } from '../core/dom.js';
 import { createPlayerUnit, createEnemyUnit } from './battleLine.js';
 
@@ -84,7 +85,7 @@ export function mountBattle(run, combat, { onHeavy, onPotion, onAttack }) {
       u.update({
         hp: playback.hpOf(i, e.hp), dead: playback.deadOf(i, e.hp), printing, combatOver: combat.over,
         meter: playback.meterOf(i, e.summonMeter ?? null),
-        hexed: combat.marked === i && e.hp > 0, blight: e.hp > 0 ? (e.blight ?? 0) : 0, entangled: e.hp > 0 ? (e.entangled ?? 0) : 0, // (0.00267: the hexhunter's hex, the plague sister's blight; 0.00271 the Druid's roots)
+        ...playback.statusOf(i, statusOf(combat, e, i)), // (0.00267: the hexhunter's hex, the plague sister's blight; 0.00271 the Druid's roots; 0.00277 from the replay's snapshot)
       });
     });
   }
