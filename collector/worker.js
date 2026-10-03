@@ -25,7 +25,7 @@
 // screen); the latest device is kept on the player. 0.131: the profile's
 // `bench` — ?debug BENCHMARK results (idle / combat / overkill phases).
 
-export const VERSION = '0.00223'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
+export const VERSION = '0.00225'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -67,6 +67,33 @@ export function cleanBench(b) {
     ...pick(b, ['at', 'q', 'dpr', 'vw', 'vh'], num), build: str(b.build, 12), bg: b.bg === 'flat' ? 'flat' : '3d', power: POWER.has(b.power) ? b.power : 'full',
     phases: Object.fromEntries(BENCH_PHASES.map((k) => [k, ph[k] && typeof ph[k] === 'object' ? pick(ph[k], ['fps', 'p95', 'drop', 'worst', 'hz', 'secs'], num) : null])),
   };
+}
+
+// The device report (0.00225, meta/perfReport.js): JSON for the owner to
+// read, so it is bounded rather than typed field by field — numbers finite,
+// strings short, lists and objects capped, a depth limit, MAX_REPORT bytes
+// in all; the top level typed. The newest MAX_REPORTS per player are kept.
+const MAX_REPORT = 24000, MAX_REPORTS = 3;
+export function bounded(v, depth) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') return v.slice(0, 120);
+  if (depth <= 0) return null;
+  if (Array.isArray(v)) return v.slice(0, 64).map((x) => bounded(x, depth - 1));
+  if (typeof v === 'object') return Object.fromEntries(Object.entries(v).slice(0, 64).map(([k, x]) => [String(k).slice(0, 32), bounded(x, depth - 1)]));
+  return null;
+}
+export function cleanReport(r) {
+  if (!r || typeof r !== 'object' || !Number.isFinite(r.at)) return null;
+  const out = { v: int(r.v, 99), at: num(r.at), build: str(r.build, 12), kind: r.kind === 'bench' ? 'bench' : 'run',
+    device: bounded(r.device, 2), renderer: bounded(r.renderer, 3), cards: bounded(r.cards, 2), particles: bounded(r.particles, 2), phases: bounded(r.phases, 5), runs: bounded(r.runs, 3) };
+  return JSON.stringify(out).length <= MAX_REPORT ? out : null;
+}
+export function mergeReports(old = [], add = []) {
+  const byAt = new Map();
+  for (const r of [...old, ...add]) if (r && Number.isFinite(r.at)) byAt.set(r.at, r);
+  return [...byAt.values()].sort((a, b) => a.at - b.at).slice(-MAX_REPORTS);
 }
 
 export function cleanDevice(d) {
@@ -139,6 +166,7 @@ export async function collect(req, env, now = Date.now()) {
     firstSeen: prev?.firstSeen ?? now,
     lastSeen: now,
     device: cleanDevice(body.device) ?? prev?.device ?? null,
+    reports: mergeReports(prev?.reports, [cleanReport(body.report)].filter(Boolean)), // (0.00225: the device reports, newest few)
     profile: { ...clean, history: mergeHistory(prev?.profile?.history, clean.history) },
   };
   await env.STATS.put(key, JSON.stringify(record));

@@ -9,7 +9,7 @@
 import { LOCAL_SAVE_KEY, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
   boonStats, byBuild, condenseBuilds, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
-import { perfTable, benchTable, sanitizeDevice, PERF_DEFAULTS } from './perf.js';
+import { perfTable, benchTable, sanitizeDevice, sanitizeReports, reportsTable, reportText, reportsText, PERF_DEFAULTS } from './perf.js';
 import { compareVersions } from '../src/shared/version.js';
 import { buildTable, playersTable, runsTable, pct } from './tables.js';
 
@@ -21,6 +21,7 @@ const server = { status: 'off', records: [], at: 0, version: null, busy: false, 
 const view = { player: 'all', build: 'all' };
 let players = [];
 let message = '';
+let copyOut = ''; // a report's JSON shown for hand copying where the clipboard refused (0.00225)
 
 const read = (k) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null'); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
@@ -50,7 +51,7 @@ function loadPlayers() {
   const mine = mineP ? [{ key: 'local', base: mineP.name ? `${mineP.name} (this browser)` : 'This browser', source: 'local', profile: mineP, device: ownDevice }] : [];
   const collected = server.records.map((r) => {
     const profile = sanitizeProfile(r.profile), id = profile.playerId ?? '?';
-    return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0, device: sanitizeDevice(r.device),
+    return { key: `s:${id}`, source: 'server', profile, country: country(r.country), firstSeen: Number(r.firstSeen) || 0, device: sanitizeDevice(r.device), reports: sanitizeReports(r.reports),
       // the name the player typed (0.109), else their id
       base: `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`.slice(0, 40) };
   });
@@ -189,8 +190,17 @@ function renderInner() {
   </div>
   ${card('Performance', perfTable(shown, runs, data.perf), true)}
   ${card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)}
+  ${card('Device reports <em>(0.00225: what a speed optimization needs — copy and paste to the chat)</em>', `<div class="add-row"><button data-act="copy-all"${shown.some((pl) => pl.reports?.length) ? '' : ' disabled'}>Copy all (JSON)</button></div>${reportsTable(shown)}${copyOut ? `<p class="help">The clipboard refused: select the text and copy it.</p><textarea class="report-out" readonly>${esc(copyOut)}</textarea>` : ''}`, true)}
   ${card('Players', playersTable(shown, names), true)}
   ${card(`Recent runs <em>(latest ${Math.min(60, runs.length)} of ${runs.length})</em>`, runsTable(runs, names), true)}`;
+}
+
+// To the clipboard, else into a box on the page to copy by hand (0.00225)
+function copyText(text) {
+  const shown = () => { copyOut = text; message = ''; render(); };
+  const ok = () => { copyOut = ''; message = `Copied ${Math.round(text.length / 1024)} KB of JSON — paste it into the chat.`; render(); };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(ok, shown);
+  else shown();
 }
 
 function download(name, text) {
@@ -206,7 +216,13 @@ function wire() {
   root.addEventListener('click', (e) => {
     const btn = e.target.closest?.('[data-act]');
     const act = btn?.dataset.act;
-    if (act === 'refresh') {
+    if (act === 'copy-report' || act === 'copy-all') {
+      const pl = players.find((p) => p.key === btn.dataset.key);
+      const one = pl?.reports?.find((r) => String(r.at) === btn.dataset.at);
+      const text = act === 'copy-all' ? reportsText(view.player === 'all' ? players : players.filter((p) => p.key === view.player)) : one ? reportText(one) : '';
+      if (text) copyText(text);
+    } else if (act === 'refresh') {
+      copyOut = '';
       refresh();
     } else if (act === 'key') {
       write(KEY, document.getElementById('read-key').value.trim());

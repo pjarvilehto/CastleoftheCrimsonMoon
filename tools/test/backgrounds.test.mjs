@@ -329,7 +329,7 @@ fresh();
     && q.LADDER.findIndex((s) => s.scale < 1) < q.LADDER.findIndex((s) => !s.fog) && !q.LADDER.at(-1).fog);
   const src = readFileSync('src/core/bg3d.js', 'utf8');
   ok('past the last step: back to the flat backgrounds (nextStep, 0.00223)', q.nextStep(q.LADDER.length) === null && q.nextStep(q.LADDER.length - 1).fog === false && q.nextStep(0).scale === 1
-    && src.includes('const step = nextStep(++level)') && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;') && DATA.backgrounds.parallax.minFps > 0);
+    && src.includes('const step = nextStep(++level)') && src.includes('if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }') && DATA.backgrounds.parallax.minFps > 0);
 }
 
 // 0.156 — no painting twice in a run (while the pool lasts), and the boss

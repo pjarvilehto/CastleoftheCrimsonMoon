@@ -23,6 +23,7 @@ import { DATA } from '../shared/data.js';
 import { bgJolt, bgSway, bgLight } from '../core/bg3d.js';
 import { attachParticles, burst, materialOf } from './particles.js';
 import { reduced, can, spray, shake, barFlash, glow, floatNumber, floatBanner, baseFilter, glintSweep, HIT_TINT } from './fxParts.js';
+import { markActivity } from '../core/perfSpans.js';
 
 
 // Combat event (run/combat.js) -> effect descriptor, or null.
@@ -63,6 +64,7 @@ export const strikeMs = (fx) => (fx?.heavy ? LUNGE_MS * 1.3 : LUNGE_MS) * STRIKE
 
 // Play one effect. ctx: { unit(i | 'player') -> { el, card, portrait }, layer }
 export function playFx(fx, ctx) {
+  markActivity(fx.kind); // a stall's label in the device report (0.00225)
   switch (fx.kind) {
     case 'attack': return attack(fx, ctx);
     case 'hit': return hit(ctx.unit(fx.to), fx, 0, ctx);

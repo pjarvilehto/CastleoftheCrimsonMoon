@@ -66,7 +66,10 @@ src/
                         its plumbing: shaders, pure math (tested in Node),
                         settings, frame-rate ladder, fog, mist puffs, lights
     perfMonitor.js      frame-rate recorder (runs + benchmark), device info; the
-                        refresh-rate estimate (the busiest interval, 0.00222), stalls
+                        refresh-rate estimate (the busiest interval, 0.00222), stalls;
+                        the histogram kept and the stalls labelled for the device report (0.00225)
+    perfSpans.js        span(name): the subsystems' main-thread time per frame, markActivity(): a
+                        stall's label (no imports, so the renderer can time itself; 0.00225)
   meta/                 PERSISTS across runs (localStorage)
     storage.js          the only file touching the save; base64 save codes
     profile.js          the profile: defaults, lifecycle, small setters
@@ -75,7 +78,10 @@ src/
     leveling.js         training/alchemy/forge costs and purchases
     equipment.js        slots, auto-equip, salvage
     history.js          one record per finished run (+ its perf)
-    telemetry.js        sends the save's stats (+ device) to the collector
+    telemetry.js        sends the save's stats (+ device, + the device report waiting) to the collector
+    perfReport.js       the device report (0.00225): per phase the histogram, the subsystems' split,
+                        the stalls, the long tasks; the device, the renderer, the card light, the
+                        particles, the last runs; built at a run's end and after a benchmark
     names.js            player-name cleaning
   run/                  EXISTS only during a dungeon run
     runState.js         run object, rooms, potions, loot routing, settleRun(),

@@ -223,11 +223,11 @@ fresh();
   ok('data check names what is missing or not a number', probs.some((p) => p.includes('boss.hpMult')) && probs.some((p) => p.includes('player.baseHp'))
     && probs.some((p) => p.includes('clips.attack.gainDb')), probs.join('; '));
   const broken2 = structuredClone({ ...DATA });
-  broken2.backgrounds.bosses = []; broken2.difficulty.potions.priceSteps[1] = 'x'; broken2.shrines.dealCount = 99; broken2.telemetry.benchmarkSince = '9.99999';
+  broken2.backgrounds.bosses = []; broken2.difficulty.potions.priceSteps[1] = 'x'; broken2.shrines.dealCount = 99; broken2.telemetry.benchmarkSince = '9.99999'; broken2.telemetry.report.stalls = 'many';
   for (const e of Object.values(broken2.enemies)) if (e.tier === 1) e.tier = 2;
   const probs2 = checkData(broken2);
   ok('data check: the painting lists, the price ladder, the deal count, a tier-1 enemy for room 1 and the benchmark round (0.00223)',
-    ['bosses is empty', 'priceSteps', 'dealCount above the offers', 'no tier-1 enemy', 'benchmarkSince is more than one build above'].every((m) => probs2.some((p) => p.includes(m))), probs2.join('; '));
+    ['bosses is empty', 'priceSteps', 'dealCount above the offers', 'no tier-1 enemy', 'benchmarkSince is more than one build above', 'report.stalls'].every((m) => probs2.some((p) => p.includes(m))), probs2.join('; '));
   ok('loadData runs the check', readFileSync('src/shared/data.js', 'utf8').includes('checkData(DATA)'));
   // 0.187: the data is loaded under ?v=<build> like the code (build.json itself uncached), so a deploy never runs new code on old JSON
   {

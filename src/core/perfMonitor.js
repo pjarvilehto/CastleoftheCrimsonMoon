@@ -7,12 +7,24 @@
 // long pauses (> PAUSE_MS) don't count. deviceInfo() describes the machine
 // (GPU, browser, OS, cores) for the stats upload — never stored in the
 // save. Everything is a safe no-op without a browser.
+//
+// The device report (0.00225, meta/perfReport.js) keeps more than the
+// summary: the recording's histogram coarsened (histogramOf), the main
+// thread's time per subsystem (span(): the renderer, the card light, the
+// particles, the playback wrap their frame work in one), every stall with
+// what was happening (markActivity: the last effect played, or a room
+// change) and the browser's long tasks. The recording spans and stalls
+// land in is the one begun with beginRecording() — the run's, or a
+// benchmark phase's (core/perfSpans.js: no imports, so the renderer can
+// time itself without a cycle).
 
 import { isBg3dActive, bgQualityLevel, gpuName, powerMode } from './bg3d.js';
 import { isPhone } from '../shared/platform.js';
 import { isTransitioning } from './scene.js';
 import { DATA } from '../shared/data.js';
 import { RATES, snapRate } from '../shared/refreshRates.js';
+import { beginRecording, endRecording, activityNow } from './perfSpans.js';
+export { beginRecording, endRecording, span, markActivity } from './perfSpans.js';
 
 const BIN_MS = 0.25; // histogram resolution (quarter-ms bins: the busiest 2.25 ms places any standard rate)
 const BINS = 1000;         // 250 ms of bins; longer frames go in the last one
@@ -24,10 +36,11 @@ const MIN_MS = 5000, MIN_FRAMES = 20;
 const STALL_MS = 100; // a frame this long is a stall the player feels (counted per run, 0.00222)
 
 let st = null;
-
+let lastRec = null;   // the run's recording after stopPerf() (the report reads it)
 export function startPerf() {
   if (!globalThis.requestAnimationFrame) return;
   st = newRecording();
+  beginRecording(st);
   const s = st;
   const loop = (now) => {
     if (st !== s) return; // stopped (or restarted)
@@ -39,19 +52,22 @@ export function startPerf() {
   requestAnimationFrame(loop);
 }
 
-export const newRecording = () => ({ hist: new Uint32Array(BINS), frames: 0, ms: 0, worst: 0, worstOut: 0, last: 0 });
-// out: the frame fell in a room change (the windows faded out) — kept for the worst one
+export const newRecording = () => ({ hist: new Uint32Array(BINS), frames: 0, ms: 0, worst: 0, worstOut: 0, last: 0, spans: {}, stalls: [], longTasks: 0, longMs: 0 });
+// out: the frame fell in a room change (the windows faded out) — kept for the worst one, and as a stall's label
 export function addFrame(s, d, out = false) {
   s.hist[Math.min(BINS - 1, Math.floor(d / BIN_MS))]++;
   s.frames++; s.ms += d;
   if (d > s.worst) { s.worst = d; s.worstOut = out ? 1 : 0; }
+  if (d >= STALL_MS && s.stalls.length < DATA.telemetry.report.stalls) s.stalls.push({ ms: Math.round(d), at: Math.round(s.ms / 100) / 10, label: out ? 'room change' : activityNow() }); // (at: seconds into the recording)
 }
 
 // Ends the recording: the run's perf summary, or null (too short / no browser).
 export function stopPerf() {
   const s = st;
   st = null;
+  endRecording();
   if (!s) return null;
+  lastRec = s;
   const sum = summarizeFrames(s);
   if (!sum) return null;
   const w = globalThis.innerWidth || 0, h = globalThis.innerHeight || 0; // the window, CSS px
@@ -63,6 +79,29 @@ export function stopPerf() {
     dpr: Math.round((globalThis.devicePixelRatio || 1) * 100) / 100,
     vw: Math.round(w), vh: Math.round(h),
   };
+}
+
+// The run's recording after stopPerf() (meta/perfReport.js builds the device report from it).
+export const lastRecording = () => lastRec;
+
+// The histogram coarsened for the report (0.00225): frames per bucket of
+// frame time, the buckets' upper edges in ms (the last one open-ended).
+export const HIST_EDGES = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 33, 40, 50, 66, 83, 100, 150, 200, 250];
+export function histogramOf(rec) {
+  const counts = new Array(HIST_EDGES.length + 1).fill(0);
+  for (let i = 0; i < rec.hist.length; i++) {
+    if (!rec.hist[i]) continue;
+    const ms = i * BIN_MS;
+    let k = 0;
+    while (k < HIST_EDGES.length && ms >= HIST_EDGES[k]) k++;
+    counts[k] += rec.hist[i];
+  }
+  return { edges: HIST_EDGES, counts };
+}
+// The subsystems' time (span()) as per-call averages and maxima, ms.
+export function spansOf(rec) {
+  const r1 = (x) => Math.round(x * 100) / 100;
+  return Object.fromEntries(Object.entries(rec.spans ?? {}).map(([k, s]) => [k, { avg: r1(s.ms / Math.max(1, s.n)), max: r1(s.max), n: s.n, total: Math.round(s.ms) }]));
 }
 
 // Pure: { hist, frames, ms, worst, worstOut } -> { fps, p95, drop, worst,

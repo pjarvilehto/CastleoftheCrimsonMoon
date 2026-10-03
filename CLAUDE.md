@@ -766,7 +766,28 @@ collected players and this browser's save (every record untrusted:
 collected), deduped by playerId; its By build table shows the newest ten
 builds and the three most played older ones (`stats.js condenseBuilds`);
 the owner can give each player a
-**tester name** (kept in that browser, shown as "tester · player name"). **BENCHMARK**
+**tester name** (kept in that browser, shown as "tester · player name").
+**The device report (0.00225, `meta/perfReport.js`):** what a later speed
+optimization needs that the run summary does not say, sent with the
+stats after every run and benchmark (one per upload, `telemetry.js
+statsPayload`; never in the save): per phase the frame summary, the
+frame-time histogram (`perfMonitor.js histogramOf`, 22 buckets), the main
+thread's time per subsystem (`core/perfSpans.js span()` wraps the
+renderer's draw, the card light, the particles' frame and a printed
+line's work — `bg`, `cards`, `particles`, `playback`, per call), every
+stall of 100 ms or more with what was happening (`markActivity`: the
+last effect played, else play, or a room change) and the browser's long
+tasks; plus the device (DPR, viewport, touch, the home-screen app,
+reduced motion), the renderer's state (`bg3d.js rendererState`: quality
+step, fog, backing store, mist divisor, the caps in force, the rAF rate,
+WebGL facts), the card light's and the particles' knobs
+(`cardFxState` / `particleState`) and the last `telemetry.json
+report.runs` runs' summaries (`report.stalls` stalls kept). The
+collector keeps the newest three per player, bounded rather than typed
+(`cleanReport`: strings cut, lists and depth capped, 24 KB at most); the
+dashboard's Device reports card shows each with a Copy button and a Copy
+all — the JSON goes to the clipboard (or into a box to copy by hand) for
+pasting into the chat. Raising it: `REPORT_VERSION`. **BENCHMARK**
 (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's
 quality ladder held; result → `profile.bench` (newest 10, never the run
@@ -788,8 +809,8 @@ so an old round never reads as the current one. **A round** is
 so raising it to the build being shipped asks everyone again — do that
 when the script (`PHASES`) or what it draws changes (the card effects in
 0.183, the fallen cards leaving in 0.00216, the phone profile and the
-phases at rest in 0.00222): the numbers mean something else then; say so
-in the changelist. **Each phase's clock starts at rest (0.00222):** the
+phases at rest in 0.00222, the device report in 0.00225): the numbers
+mean something else then; say so in the changelist. **Each phase's clock starts at rest (0.00222):** the
 painting faded in, the windows back, the push settled, the deal played
 (`benchmarkScene.js nextPhase`; "settling…" in the title meanwhile) —
 Idle used to record the room change itself, the renderer's heaviest
@@ -991,6 +1012,13 @@ sometimes — fetch all branches to find it.
   the narrow-window layout profile, `withSeedAsync` / `withAnimations`,
   the check-bump fixture, the orphan-asset check, a dozen behavioural
   checks in place of source greps.
+- 0.00224–0.00225: the By build table condensed and the save-code entry
+  gone (every tester is collected); the device report with every run and
+  benchmark, the collector keeping the newest three, the dashboard's
+  Device reports card with Copy / Copy all (the phone's heat is gone
+  since 0.00222, the owner reports; the iPhone's Idle phase still drops
+  12% of its frames at a 28 ms tail with the display rate held — the
+  report's `bg` span is what says whether it is the mist or the mesh).
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by

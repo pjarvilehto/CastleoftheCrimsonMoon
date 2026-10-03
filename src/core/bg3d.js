@@ -21,6 +21,7 @@ import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
 import { flashAt, activeLights } from './bg3dLights.js';
 import { LADDER, backingSize, fpsWindow, slowAt, nextStep } from './bg3dQuality.js';
 import { reducedMotion } from '../shared/motion.js';
+import { span } from './perfSpans.js';
 
 export { TUNABLE, tuning, depthUrl } from './bg3dTuning.js';
 
@@ -245,12 +246,13 @@ function frame(now) {
   const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps;
   if (!layers.length || now - lastDraw < 1000 / cap - 2) return;
   lastDraw = now;
+  const endSpan = span('bg'); // the draw's main-thread time, for the device report (0.00225)
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
   else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
   t0 = now;
   if (monitor && !held) {
     fpsW = fpsWindow(fpsW, now, slowRate, cfg.quality);
-    if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) return;
+    if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }
   }
   const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
   const j = joltOffset(jolts, now);
@@ -280,6 +282,24 @@ function frame(now) {
   if (layers.length > 1 && now - layers[layers.length - 1].born >= cfg.fadeMs) {
     while (layers.length > 1) dropLayer(layers.shift());
   }
+  endSpan();
+}
+
+// The renderer as it stands, for the device report (0.00225): the quality
+// step, the fog, the backing store, the mist buffer's divisor, the caps in
+// force (the phone profile's on a phone), the rAF rate seen, the GL facts.
+export function rendererState() {
+  if (!gl) return { bg: 'flat', q: -1 };
+  const L = layers[layers.length - 1];
+  const webgl2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+  let maxTex = 0;
+  try { maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE); } catch { /* lost */ }
+  return {
+    bg: '3d', q: level, fog: fogOn, view, held, saver: saverFrom >= 0, layers: layers.length, painting: L?.file ?? null,
+    canvas: [canvas.width, canvas.height], css: [canvas.clientWidth || 0, canvas.clientHeight || 0], puffDiv: L?.tune.puffDiv ?? null,
+    rafRate: Math.round(rafRate), caps: { maxFps: cfg.maxFps, motionMaxFps: cfg.motionMaxFps, maxDpr: cfg.maxDpr, maxPixels: cfg.maxPixels, minFps: cfg.minFps },
+    gl: { webgl2, maxTex, renderer: gpuName() },
+  };
 }
 
 function draw(L, alpha) {

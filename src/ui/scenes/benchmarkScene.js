@@ -29,10 +29,11 @@ import { queueEvents } from '../combatQueue.js';
 import { mountBattle, fxContext, snapshot } from '../battleRoom.js';
 import { playFx } from '../combatFx.js';
 import { combatSfx } from '../combatSfx.js';
-import { newRecording, addFrame, summarizeFrames } from '../../core/perfMonitor.js';
+import { newRecording, addFrame, summarizeFrames, beginRecording, endRecording } from '../../core/perfMonitor.js';
+import { buildReport, phaseReport, keepReport } from '../../meta/perfReport.js';
 import { holdQuality, isBg3dActive, bgQualityLevel, powerMode, whenPushSettled } from '../../core/bg3d.js';
 import { isPhone } from '../../shared/platform.js';
-import { recordBenchmark } from '../../meta/profile.js';
+import { recordBenchmark, getProfile } from '../../meta/profile.js';
 import { showBenchmarkResult, PHASES } from '../benchmark.js';
 import { closeAllDialogs } from '../dialog.js';
 
@@ -55,7 +56,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
   let run = null, combat = null, ui = null, root = null, logEl = null;
   let phase = -1, rec = null, endsAt = 0, last = 0, done = false, turn = 0, botTimer = null;
   let wakeLock = null, interrupted = false;
-  const results = {};
+  const results = {}, recs = {}; // per phase: the summary, and the recording the device report reads (0.00225)
   const onVisibility = () => { if (document.hidden) interrupted = true; };
 
   const playback = createPlayback({
@@ -93,7 +94,8 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
   // (every wait a duration the data already holds). Idle used to record
   // the room change itself, the renderer's heaviest moment on a phone.
   async function nextPhase() {
-    if (rec) results[PHASES[phase].id] = summarizeFrames(rec);
+    if (rec) { results[PHASES[phase].id] = summarizeFrames(rec); recs[PHASES[phase].id] = rec; }
+    endRecording();
     phase += 1;
     if (phase >= PHASES.length) return finish();
     const ph = PHASES[phase];
@@ -106,6 +108,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     await new Promise((resolve) => setTimeout(resolve, M.enterDelayMs + M.enterMs + ph.enemies.length * M.enterStaggerMs));
     if (done || PHASES[phase] !== ph) return;
     rec = newRecording(); last = 0;
+    beginRecording(rec); // the subsystems' spans and the stalls land in this phase (0.00225)
     endsAt = performance.now() + ph.secs * 1000;
     clearTimeout(botTimer);
     if (ph.act) botTimer = setTimeout(bot, 0);
@@ -178,6 +181,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
     Math.random = realRandom;
     Object.assign(DEBUG, debugWas);
     holdQuality(false);
+    endRecording();
     document.removeEventListener('visibilitychange', onVisibility);
     wakeLock?.release().catch(() => {}); wakeLock = null;
     if (interrupted || document.hidden) return showBenchmarkResult({ interrupted: true }, () => go(returnTo), returnTo === 'hub'); // not saved: it asks again
@@ -188,6 +192,7 @@ export function benchmarkScene({ returnTo = 'title' } = {}) {
       vw: Math.round(globalThis.innerWidth || 0), vh: Math.round(globalThis.innerHeight || 0),
       phases: results,
     };
+    keepReport(buildReport('bench', Object.fromEntries(Object.entries(recs).map(([id, r]) => [id, phaseReport(r)])), getProfile())); // the device report goes with the result's upload (0.00225)
     recordBenchmark(result);
     showBenchmarkResult(result, () => go(returnTo), returnTo === 'hub');
   }

@@ -46,6 +46,37 @@ const median = (xs) => {
 // a row's fps within nearShare of a standard rate below its hz is that
 // rate, at full rate, and its dropped share — counted against the wrong
 // refresh — is not shown.
+// The device reports (0.00225, collector `reports`): JSON the owner copies
+// out for a later speed optimization — bounded here as the collector bounds
+// them, newest first.
+export function sanitizeReports(list) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(-3).map((r) => (r && typeof r === 'object' && Number.isFinite(Number(r.at)) ? bounded(r, 6) : null)).filter(Boolean).sort((a, b) => b.at - a.at);
+}
+function bounded(v, depth) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') return v.slice(0, 120);
+  if (depth <= 0) return null;
+  if (Array.isArray(v)) return v.slice(0, 64).map((x) => bounded(x, depth - 1));
+  if (typeof v === 'object') return Object.fromEntries(Object.entries(v).slice(0, 64).map(([k, x]) => [String(k).slice(0, 32), bounded(x, depth - 1)]));
+  return null;
+}
+// One report, or every player's newest, as the text to copy.
+export const reportText = (r) => JSON.stringify(r);
+export const reportsText = (players) => JSON.stringify(players.filter((pl) => pl.reports?.length).map((pl) => ({ player: pl.label, device: pl.device ?? null, reports: pl.reports })));
+export function reportsTable(players) {
+  const rows = players.flatMap((pl) => (pl.reports ?? []).map((r) => ({ pl, r }))).sort((x, y) => y.r.at - x.r.at);
+  if (!rows.length) return '<p class="empty">No device reports yet: one arrives with every run and benchmark from build 0.00225 on.</p>';
+  const phases = (r) => Object.entries(r.phases ?? {}).map(([id, p]) => (p && Number.isFinite(p.fps) ? `${esc(id)} <b>${p.fps.toFixed(1)}</b> fps · ${num(p.p95)} ms · ${(p.stalls ?? []).length} stall${(p.stalls ?? []).length === 1 ? '' : 's'}` : `${esc(id)} —`)).join('<br>');
+  const worst = (r) => { const all = Object.values(r.phases ?? {}).flatMap((p) => p?.stalls ?? []); if (!all.length) return '—'; const w = all.reduce((a, b) => (num(b.ms) > num(a.ms) ? b : a)); return `${num(w.ms)} ms<small>${esc(String(w.label ?? ''))}</small>`; };
+  const split = (r) => { const all = Object.values(r.phases ?? {}).map((p) => p?.split).filter(Boolean); const keys = [...new Set(all.flatMap((s) => Object.keys(s)))]; return keys.map((k) => { const vals = all.map((s) => s[k]?.avg).filter(Number.isFinite); return vals.length ? `${esc(k)} ${Math.max(...vals).toFixed(1)}` : ''; }).filter(Boolean).join(' · ') || '—'; };
+  const d = (r, pl) => { const dv = r.device ?? pl.device; return dv ? `<span title="${esc(dv.gpu ?? '')}">${esc(gpuShort(dv.gpu ?? ''))}</span><small>${esc([dv.browser, dv.os, dv.standalone ? 'home screen' : ''].filter(Boolean).join(' · '))}</small>` : '<small>not reported</small>'; };
+  return `<div class="scroll"><table><tr><th>Player</th><th>When</th><th>Kind</th><th>Build</th><th>Phases</th><th>Worst stall</th><th>Main thread, ms per call (max over phases)</th><th>Device</th><th></th></tr>${rows.map(({ pl, r }) =>
+    `<tr><td>${esc(pl.label)}</td><td>${esc(new Date(r.at).toLocaleString())}</td><td>${esc(r.kind)}</td><td>${esc(String(r.build))}</td><td>${phases(r)}</td><td>${worst(r)}</td><td>${split(r)}</td><td>${d(r, pl)}</td><td><button class="small" data-act="copy-report" data-key="${esc(pl.key)}" data-at="${num(r.at)}">Copy</button></td></tr>`).join('')}</table></div>`;
+}
+
 export const PERF_DEFAULTS = { nearShare: 0.06, paceShare: 0.15, goodShare: 0.9, okFps: 30, hzSince: '0.00222' };
 const trusted = (build, k) => compareVersions(build ?? '0', k.hzSince) >= 0;
 const misread = (p, build, k) => !!p && !trusted(build, k) && RATES.some((r) => r < p.hz && Math.abs(p.fps - r) <= k.nearShare * r);

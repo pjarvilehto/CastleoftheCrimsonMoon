@@ -11,6 +11,7 @@ import { spawnParticles, R, rr } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
 import { DATA } from '../shared/data.js';
 import { deviceBlock } from '../shared/platform.js';
+import { span } from '../core/perfSpans.js';
 
 export { MATERIAL, materialOf, STYLE_OF, spawnParticles } from './particleLooks.js';
 
@@ -29,6 +30,9 @@ function particlesEnabled() {
 // session (0.129): a new full-screen one per room cost a ~10 ms hitch on
 // each room's first hit (allocating its backing store).
 let shared = null;
+// The particles' knobs and load, for the device report (0.00225).
+export const particleState = () => ({ ...knobs(), live: parts.length, canvas: canvas ? [canvas.width, canvas.height] : null });
+
 export function attachParticles(layer) {
   parts = []; box = null;
   canvas = null;
@@ -213,6 +217,7 @@ function render(c) {
 
 function tick(now) {
   if (!canvas?.isConnected) { running = false; parts = []; box = null; return; }
+  const endSpan = span('particles'); // (the device report, 0.00225)
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (fit()) box = null; // a resized canvas starts blank
@@ -224,6 +229,7 @@ function tick(now) {
   }
   parts.length = n;
   render(ctx2d);
+  endSpan();
   if (parts.length) requestAnimationFrame(tick);
   else { running = false; canvas.style.opacity = '0'; } // render() already cleared the last painted area; 0.00222: an opacity-0 layer is skipped by the compositor between bursts (the backing store stays, so the first hit's hitch of 0.129 does not return)
 }

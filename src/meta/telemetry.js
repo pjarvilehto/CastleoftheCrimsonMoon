@@ -13,15 +13,18 @@
 
 import { DATA } from '../shared/data.js';
 import { deviceInfo } from '../core/perfMonitor.js';
+import { takeReport } from './perfReport.js';
 
 const LOCAL_HOST = /^(localhost|127\.|0\.0\.0\.0|\[::1\]|$)/;
 
-// What goes over the wire: the dashboard's fields, nothing else.
-export function statsPayload(p) {
+// What goes over the wire: the dashboard's fields, nothing else — plus the
+// device report waiting to go (0.00225: a run's or a benchmark's, once).
+export function statsPayload(p, report = takeReport()) {
   return {
     playerId: p.playerId,
     build: DATA.build?.version ?? '?',
     device: deviceInfo(), // 0.130: the machine (GPU, browser, OS, cores) — the latest one wins
+    ...(report ? { report } : {}),
     profile: {
       playerId: p.playerId, name: p.name ?? '', coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
       stats: p.stats, records: p.records, equipment: p.equipment, history: p.history ?? [],

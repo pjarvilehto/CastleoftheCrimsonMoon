@@ -25,6 +25,7 @@ import { MATERIAL } from './particleLooks.js';
 import { reducedMotion } from '../shared/motion.js';
 import { program } from '../core/bg3dGL.js';
 import { deviceBlock } from '../shared/platform.js';
+import { span } from '../core/perfSpans.js';
 
 export const VS = `attribute vec2 a; varying vec2 v; void main() { v = a * 0.5 + 0.5; gl_Position = vec4(a, 0.0, 1.0); }`;
 export const FS = `
@@ -199,6 +200,7 @@ function tick(now) {
   const F = fxKnobs();
   if (now - last < 1000 / (saver ? F.saverFps : F.fps) - 2) return;
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const endSpan = span('cards'); // (the device report, 0.00225)
   const { gl, loc, canvas: src } = shared;
   for (const e of entries) {
     if (sizes && e.w === undefined) continue; // not measured yet (0.00222: a clientWidth read here forced a layout on the room's first tick); the observer's first report is a tick away
@@ -216,6 +218,13 @@ function tick(now) {
     if (e.bmp) createImageBitmap(src, 0, 0, w, h).then((b) => e.bmp.transferFromImageBitmap(b), () => {});
     else e.ctx.drawImage(src, 0, 0, w, h, 0, 0, w, h);
   }
+  endSpan();
+}
+
+// The card light as it runs, for the device report (0.00225).
+export function cardFxState() {
+  const F = fxKnobs();
+  return { lit: entries.length, fps: saver ? F.saverFps : F.fps, scale: F.scale, saver, shared: shared ? [shared.canvas.width, shared.canvas.height] : null, bitmap: entries.some((e) => !!e.bmp) };
 }
 
 // The hidden canvas grows to the largest lit card, in GRAIN steps (0.00222:

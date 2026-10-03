@@ -53,7 +53,7 @@ const NUM = {
     ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],
-  telemetry: ['benchmarkPromptRoom', 'perf.nearShare', 'perf.paceShare', 'perf.goodShare', 'perf.okFps'],
+  telemetry: ['benchmarkPromptRoom', 'perf.nearShare', 'perf.paceShare', 'perf.goodShare', 'perf.okFps', 'report.runs', 'report.stalls'],
   cards: [ // the card effects (0.183): ui/cardFx.js, combatFx.js, fxParts.js
     ...['amt', 'speed', 'scale', 'fps', 'panelAmt', 'phone.fps', 'saverFps'].map((k) => `fx.${k}`),
     ...['budget', 'max', 'keepFloor', 'dprCap', 'phone.budget', 'phone.dprCap'].map((k) => `particles.${k}`),

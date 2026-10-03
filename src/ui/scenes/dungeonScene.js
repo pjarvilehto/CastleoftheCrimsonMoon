@@ -35,6 +35,7 @@ import { sfx } from '../../audio/sfx.js';
 import { showDeathModal } from '../deathModal.js';
 import { showVictoryModal } from '../victoryModal.js';
 import { startPerf, stopPerf } from '../../core/perfMonitor.js';
+import { keepReport, runReport } from '../../meta/perfReport.js';
 import { narrate, narratorRoom, narratorRun } from '../../audio/narrator.js';
 import { isElite } from '../../shared/balance.js';
 
@@ -286,7 +287,9 @@ export function dungeonScene() {
 
   function endRun(root, outcome) {
     run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
-    shareStats(settleRun(run, outcome)); // play stats (0.102)
+    const settled = settleRun(run, outcome);
+    keepReport(runReport(settled)); // the device report rides with this upload (0.00225)
+    shareStats(settled); // play stats (0.102)
     go('runEnd', run, outcome);
   }
 }

@@ -59,7 +59,10 @@ the KV binding stay as they are.
   mutes results from an older round. 0.00223: `cleanRun` drops a record
   whose `room` is not a whole number from 0 to 999 and clamps the other
   counts (a bad field used to break the dashboard for everyone); `outcome`
-  defaults to death on both sides. Limits: 30 POSTs a minute per client IP (in memory, never
+  defaults to death on both sides. 0.00225: `report` — the device report
+  (src/meta/perfReport.js), kept as the newest three per player under
+  `reports`, bounded rather than typed (`cleanReport`: strings cut to 120,
+  lists and objects to 64 entries, a depth limit, 24 KB at most). Limits: 30 POSTs a minute per client IP (in memory, never
   stored), one per second per player → `429`.
 - `GET /players` with `authorization: Bearer <READ_KEY>` (0.119; the older
   `?key=READ_KEY` still works) — every player

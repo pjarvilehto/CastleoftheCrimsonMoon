@@ -132,7 +132,7 @@ fresh();
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
     && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
-  ok('sent after every run and once per session', src.includes('shareStats(settleRun(run, outcome))') && src.includes('shareStats(getProfile())'));
+  ok('sent after every run (with the device report) and once per session', src.includes('const settled = settleRun(run, outcome);') && src.includes('keepReport(runReport(settled));') && src.includes('shareStats(settled);') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
 
   // the Worker, against an in-memory KV
@@ -144,12 +144,18 @@ fresh();
   } };
   const post = (obj, cf) => wk.default.fetch(Object.assign(new Request('https://w/collect', { method: 'POST', body: typeof obj === 'string' ? obj : JSON.stringify(obj) }), { cf }), env);
   const run = (at) => ({ at, room: at });
-  const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] } }, { country: 'FI' });
+  const report = (at) => ({ v: 1, at, build: '0.00225', kind: 'bench', device: { gpu: 'g'.repeat(300), nested: { deep: { deeper: { deepest: 1 } } } }, phases: { idle: { fps: 60, hist: { counts: Array.from({ length: 100 }, (_, i) => i) }, stalls: [{ ms: 150, label: 'overkill' }], split: { bg: { avg: 2, max: 9 } } } }, junk: 'x' });
+  const cr1 = wk.cleanReport(report(5));
+  ok('collector: a report is bounded — strings cut, lists capped, depth limited, junk dropped, the top level typed', cr1.device.gpu.length === 120 && cr1.device.nested.deep === null && cr1.phases.idle.hist.counts.length === 64 && cr1.phases.idle.stalls[0].label === 'overkill' && cr1.phases.idle.split.bg.max === 9
+    && !('junk' in cr1) && cr1.kind === 'bench' && wk.cleanReport({ at: 1, kind: 'evil' }).kind === 'run' && wk.cleanReport({ build: 'x' }) === null && wk.cleanReport({ at: 1, phases: Object.fromEntries(Array.from({ length: 64 }, (_, i) => [i, Object.fromEntries(Array.from({ length: 64 }, (_, j) => [j, 'y'.repeat(200)]))])) }) === null); // (bounded, then over MAX_REPORT: dropped whole)
+  ok('...the newest three kept, merged by time', wk.mergeReports([report(1), report(2)], [report(3), report(2)]).map((r) => r.at).join() === '1,2,3' && wk.mergeReports([report(1), report(2), report(3)], [report(4)]).map((r) => r.at).join() === '2,3,4');
+  const r1 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(1), run(2)] }, report: report(7) }, { country: 'FI' });
   await sleep(1100); // one player at most once a second (0.119)
   const r2 = await post({ playerId: 'abc123', build: '0.102', profile: { history: [run(3)] } }); // e.g. after a progress wipe
   const rec = JSON.parse(kv.get('player:abc123'));
   ok('collector stores a player by id; history merged by timestamp (a wipe loses nothing)', r1.status === 200 && r2.status === 200
     && rec.profile.history.map((r) => r.at).join() === '1,2,3' && rec.country === 'FI' && !/"(ip|clientIp|cf-connecting-ip)":/i.test(JSON.stringify(rec)));
+  ok('...and the device report, kept across a later upload without one', rec.reports.length === 1 && rec.reports[0].at === 7 && rec.reports[0].phases.idle.fps === 60);
   const bad = await Promise.all([post('nope'), post({ playerId: '../x', profile: { history: [] } }), post({ playerId: 'abcd', profile: {} }),
     post({ playerId: 'abcd', profile: { history: [], pad: 'x'.repeat(300000) } })]);
   ok('collector rejects bad json, ids, payloads and oversize bodies', bad.map((r) => r.status).join() === '400,400,400,413' && kv.size === 1);
@@ -192,6 +198,14 @@ fresh();
   ok('dashboard: tester names (0.136) show beside the typed name, never replace it; old renames fold in; codes keep their own label',
     dash.includes("label: tester ? `${tester} · ${pl.base}` : pl.base") && dash.includes('base: `${profile.name ||') && dash.includes('t[id] ??= String(n)')
     && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
+  const pfr = await import('../../analytics/perf.js');
+  const reps = pfr.sanitizeReports([{ at: 2, kind: 'bench', build: '0.00225', phases: { combat: { fps: 44.4, p95: 31, stalls: [{ ms: 160, label: 'overkill' }, { ms: 110, label: 'play' }], split: { bg: { avg: 3.2 }, cards: { avg: 1.1 } } }, idle: { fps: 60, p95: 17, stalls: [], split: { bg: { avg: 2.5 } } } } }, { at: 1, kind: 'run', build: '<b>', phases: {} }, 'junk']);
+  const rt = pfr.reportsTable([{ key: 's:x', label: 'Pete', device: { gpu: 'Apple GPU', browser: 'Safari 26', os: 'iOS' }, reports: reps }]);
+  ok('dashboard: the device reports card — newest first, each phase\'s fps and stalls, the worst stall with its label, the main thread per subsystem, a Copy button per report (0.00225)',
+    reps.length === 2 && reps[0].at === 2 && rt.indexOf('bench') < rt.indexOf('run') && rt.includes('combat <b>44.4</b> fps · 31 ms · 2 stalls') && rt.includes('160 ms<small>overkill</small>') && rt.includes('bg 3.2 · cards 1.1') && rt.includes('&lt;b&gt;')
+    && (rt.match(/data-act="copy-report"/g) ?? []).length === 2 && rt.includes('data-at="2"') && pfr.reportsTable([{ reports: [] }]).includes('No device reports yet'));
+  ok('...Copy all packs every player\'s reports with the device; the page copies to the clipboard, else shows the text', JSON.parse(pfr.reportsText([{ label: 'Pete', device: null, reports: reps }, { label: 'None', reports: [] }])).length === 1
+    && dash.includes("act === 'copy-report' || act === 'copy-all'") && dash.includes('navigator.clipboard?.writeText') && dash.includes("card('Device reports") && dash.includes('reports: sanitizeReports(r.reports)'));
   ok('dashboard: no save-code entry any more — every tester is collected (0.00224)', !dash.includes('addCode') && !dash.includes('add-code') && !dash.includes('decodeSave') && !readFileSync('analytics/tables.js', 'utf8').includes("data-act=\"remove\""));
   ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
@@ -229,6 +243,31 @@ fresh();
   const cr = wk.cleanRun({ at: 1, room: 3, perf: { fps: '59.5', p95: 18, bg: 'evil', junk: 1, q: 2 } });
   ok('collector keeps a run\'s perf, typed', cr.perf.fps === 59.5 && cr.perf.bg === '3d' && cr.perf.q === 2 && !('junk' in cr.perf)
     && wk.cleanRun({ at: 1 }).perf === null);
+  // 0.00225: the device report's pieces — the histogram kept, the subsystems' spans, the stalls labelled, the report built and sent once
+  const h = pm.histogramOf(r60);
+  ok('the histogram coarsened: every frame in a bucket, the busiest the 16-18 ms one', h.counts.reduce((a, b) => a + b, 0) === r60.frames && h.counts[pm.HIST_EDGES.indexOf(18)] === 960 && h.counts[pm.HIST_EDGES.indexOf(40)] === 30 && h.counts[pm.HIST_EDGES.indexOf(66)] === 10 && h.edges.length + 1 === h.counts.length);
+  const r2 = pm.newRecording();
+  pm.beginRecording(r2);
+  const endBg = pm.span('bg'); await sleep(3); endBg();
+  const endBg2 = pm.span('bg'); await sleep(5); endBg2();
+  pm.markActivity('overkill'); pm.addFrame(r2, 150);
+  await sleep(700); pm.addFrame(r2, 120); pm.addFrame(r2, 130, true); pm.addFrame(r2, 16);
+  pm.endRecording();
+  pm.span('bg')();
+  const sp = pm.spansOf(r2);
+  ok('spans: the time per call and its maximum, into the recording begun; none once ended', sp.bg.n === 2 && sp.bg.avg === 4 && sp.bg.max === 5 && sp.bg.total === 8 && Object.keys(sp).length === 1);
+  ok('stalls carry what was happening: the last effect, else play, a room change by the frame\'s flag', r2.stalls.map((x) => `${x.ms}:${x.label}`).join() === '150:overkill,120:play,130:room change' && r2.stalls[0].at === 0.2);
+  const many = pm.newRecording(); for (let i = 0; i < 30; i++) pm.addFrame(many, 200);
+  ok('...at most telemetry.json report.stalls of them', many.stalls.length === DATA.telemetry.report.stalls);
+  const pr = await import('../../src/meta/perfReport.js');
+  const ph = pr.phaseReport(r60);
+  const rep = pr.buildReport('run', { run: ph }, { history: Array.from({ length: 14 }, (_, i) => ({ at: i, build: '0.1', room: i, outcome: 'death', perf: null })) });
+  ok('the report: the phase with its summary, histogram, split, stalls and long tasks; the device, the renderer, the card light, the particles; the last runs', ph.fps === s.fps && ph.hist.counts.length === 22 && Array.isArray(ph.stalls) && ph.longTasks === 0
+    && rep.v === 1 && rep.kind === 'run' && rep.build === DATA.build.version && rep.renderer.bg === 'flat' && 'lit' in rep.cards && 'budget' in rep.particles && rep.runs.length === DATA.telemetry.report.runs && rep.runs[0].at === 4 && typeof rep.device.phone === 'boolean');
+  pr.keepReport(rep);
+  const withReport = tm.statsPayload(getProfile()), without = tm.statsPayload(getProfile());
+  ok('the upload carries the report waiting, once', withReport.report === rep && !('report' in without) && pr.takeReport() === null);
+  ok('a run with nothing recorded makes no report', pr.runReport(getProfile()) === null || typeof pr.runReport(getProfile()) === 'object');
   const dev = wk.cleanDevice({ gpu: 'g'.repeat(500), browser: 'Chrome 129', os: 'macOS', cores: '10', mem: 16, extra: 'x' });
   ok('collector keeps the device, capped', dev.gpu.length === 120 && dev.cores === 10 && !('extra' in dev) && wk.cleanDevice('nope') === null
     && readFileSync('collector/worker.js', 'utf8').includes('device: cleanDevice(body.device) ?? prev?.device ?? null'));
@@ -341,6 +380,8 @@ fresh();
     && dlg().textContent.includes('[space]'));
   handleKey('escape'); handleKey('d');
   ok('nothing skips it (Esc, the hall\'s hotkeys)', !!dlg() && t().includes('GREAT HALL'));
+  const sent94 = [], realFetch94 = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { sent94.push(JSON.parse(o.body)); return { ok: true }; };
   handleKey(' ');
   ok('Space starts the benchmark', !dlg());
   await sleep(1300);
@@ -353,6 +394,10 @@ fresh();
   ok('result shown with thanks; saved', res && res.textContent.includes('Benchmark complete') && res.textContent.includes('Thank you')
     && getProfile().bench.length === 1 && getProfile().bench[0].phases.combat?.fps > 0 && getProfile().history.length === 0);
   ok('after it: the real Math.random and every debug flag back as they were', Math.random === realRnd && DEBUG.forceCrit === true && !DEBUG.invulnerable && !DEBUG.forceMegaCrit);
+  globalThis.fetch = realFetch94;
+  const up = sent94.at(-1)?.report;
+  ok('the result\'s upload carries the device report: the three phases, each with its histogram, split, stalls and the frame summary (0.00225)', !!up && up.kind === 'bench' && ['idle', 'combat', 'overkill'].every((id) => up.phases[id] && up.phases[id].hist.counts.length === 22 && typeof up.phases[id].split === 'object' && Array.isArray(up.phases[id].stalls) && up.phases[id].fps > 0)
+    && up.renderer.bg === 'flat' && up.build === DATA.build.version && sent94.length === 1, up && JSON.stringify(Object.keys(up)));
   DEBUG.forceCrit = false;
   handleKey(' ');
   await sleep(1100);

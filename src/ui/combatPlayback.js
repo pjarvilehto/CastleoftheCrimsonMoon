@@ -33,6 +33,7 @@ import { DATA } from '../shared/data.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
 import { logLine } from './hud.js';
+import { span } from '../core/perfSpans.js';
 
 export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx = (item) => sfx(item.sfx), onVo = (id) => narrate(id), onDeath = () => null }) {
   let queue = [];
@@ -116,6 +117,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         if (item.snap.meters) view.meters = [...item.snap.meters];
       }
       if (item.sink !== undefined && item.sink !== null) pendingSink = item.sink;
+      const endSpan = span('playback'); // a printed line's main-thread cost, for the device report (0.00225)
       onTick(); // before the effect (a summon's card must exist to animate in) and before the log line (0.00223: one layout after the tick's writes, not one per read)
       if (item.text) logLine(logEl(), item.text, item.cls);
       try { // (0.00209: a throw here left printing = true and the room taking no input)
@@ -123,6 +125,7 @@ export function createPlayback({ logEl, onTick, onEmpty, onFx = () => {}, onSfx 
         if (item.vo) onVo(item.vo);
         if (item.fx) onFx(item.fx);
       } catch (e) { console.error(e); }
+      endSpan();
       schedule(step, item.hold ?? delay);
     };
     step();
