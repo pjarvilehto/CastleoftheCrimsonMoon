@@ -23,13 +23,15 @@ const EV_SFX = {
 // for each foe, eatk_ / ehurt_ in ui/combatSfx.js — rendered by
 // tools/gen-sfx.mjs, with the class's synth layers riding on top as its
 // colour, audio.json variation); a class without the clip falls back to the
-// plain one, so the registry can grow a class at a time. `hero` is the
+// plain one, so the registry can grow a class at a time. The get-hit
+// recordings are pulled while their content is rethought (0.00287,
+// audio.json cries.hero): a blow taken plays the plain hurt. `hero` is the
 // run's class (run.hero, 0.00283 — the UI reads it from the run, never the
 // profile); without one the plain sounds.
 export function sfxFor(ev, hero = null) {
   const plain = EV_SFX[ev.type];
   if (!hero?.id) return plain;
-  const own = ev.type === 'atk' ? (ev.heavy ? `heavy_${hero.id}` : `atk_${hero.id}`) : ev.type === 'spill' ? `atk_${hero.id}` : ev.type === 'dmg' ? `hurt_${hero.id}` : null;
+  const own = ev.type === 'atk' ? (ev.heavy ? `heavy_${hero.id}` : `atk_${hero.id}`) : ev.type === 'spill' ? `atk_${hero.id}` : ev.type === 'dmg' && DATA.audio.cries.hero ? `hurt_${hero.id}` : null;
   return own && DATA.audio.clips[own] ? own : plain;
 }
 

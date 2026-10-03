@@ -1,5 +1,5 @@
 {
-  "version": "0.00286",
+  "version": "0.00288",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -98,6 +98,12 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00288": [
+      "The Music Lab has four calmer takes for the boss music to choose from."
+    ],
+    "0.00287": [
+      "The get-hit cries are off for now: a blow on your hero plays the plain hurt again and a struck foe makes no cry (the attack sounds stay)"
+    ],
     "0.00286": [
       "Combat: every class's special has its own key, underlined on the button — C for Cleave, F for Fireball, S for Soul Drain, E for Entangle, L for Last Rites (H for Heavy Attack and Hex) — and H still works for every class."
     ],
@@ -142,12 +148,6 @@
       "46 new items, each with its own picture — among them two signature pieces per class that feed its power (+1 and +2: a Fireball charge, an Entangle turn, Cleave reach and the like).",
       "Another class's gear still drops: it rides in your loot, greyed, and is salvaged for coins at the end of the run. Gear your class can't use on an old save is swapped for its starting kit.",
       "Balance: the Necromancer's armor and damage and the Plague Sister's armor are up, to carry them in their robes."
-    ],
-    "0.00273": [
-      "The Music Lab (a testing page): generated scores for the title and combat music from three music models, beside the music the game plays today, level-matched, with a blind mode for picking the next score."
-    ],
-    "0.00272": [
-      "A foe's status shows in its figure: blighted foes turn sickly green and drained, rooted foes earthy brown, and either moves slower, its weave and bob stretched. (Phones keep the tag and the slower motion.)"
     ]
   }
 }

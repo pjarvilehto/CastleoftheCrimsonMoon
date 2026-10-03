@@ -31,7 +31,7 @@ export function combatSfx(item, ctx, play = sfx) {
     // the foe's own voice (0.00271, the developer's ask: every character its own): struck by the hero it cries out (ehurt_<id>), striking him it attacks (eatk_<id>) — audio.json clips, rendered by tools/gen-sfx.mjs; a foe without one is as before
     const foe = fx.from === 'player' ? ctx?.unit?.(fx.to)?.id : ctx?.unit?.(fx.from)?.id;
     const own = foe && foe !== 'player' ? `${fx.from === 'player' ? 'ehurt' : 'eatk'}_${foe}` : null;
-    if (own && DATA.audio.clips[own]) play(own, opts);
+    if (own && DATA.audio.clips[own] && (fx.from !== 'player' || DATA.audio.cries.foe)) play(own, opts); // (the cry waits on audio.json cries.foe, 0.00287)
     if (fx.mega) {
       play('ring', { ...opts, rate: S.mega.ringRate, gainDb: S.mega.ringDb });
       play('kill', { ...opts, rate: S.mega.deepRate, gainDb: S.mega.deepDb });

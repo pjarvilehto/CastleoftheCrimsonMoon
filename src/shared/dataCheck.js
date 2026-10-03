@@ -192,6 +192,7 @@ export function checkData(data) {
     if (!rules[id]) out.push(`audio.json: narration.lines.${id} missing (narration.json has takes)`);
     for (const t of takes) if (typeof t?.file !== 'string' || !isNum(t?.measuredDb) || !isNum(t?.take)) out.push(`narration.json: ${id} take ${t?.take} needs take + file + measuredDb`);
   }
+  for (const k of ['hero', 'foe']) if (typeof data.audio?.cries?.[k] !== 'boolean') out.push(`audio.json: cries.${k} (true / false: the get-hit recordings on or off, 0.00287)`);
   const NEEDS = {
     dmg: ['hpCostPct', 'dmgMult'], crit: ['coinCost', 'critAdd', 'critCap'], armor: ['potionCost', 'armorMin', 'armorMult'],
     leech: ['hpCostPct', 'lifestealAdd', 'lifestealCap'], bulwark: ['armorPct', 'armorAdd', 'dmgCostPct'], secondwind: ['coinCost', 'potionsAdd'],

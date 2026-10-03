@@ -1026,7 +1026,12 @@ vowel formants, its `layerRate` the class's voice — ~0.8 the Barbarian,
 ~1.25 the Hexhunter and the Plague Sister — the hurt recordings carry
 each class's own cry too, so a struck hero may sound twice, the
 recording's cry under the synth grunt: a listen decides whether the
-grunt layer goes). `combatQueue.js sfxFor(ev)`
+grunt layer goes). **The get-hit cries are pulled (0.00287, the
+developer's call: the content wants more thought):** `audio.json cries`
+— `hero` false plays the plain hurt for a blow on the hero instead of
+`hurt_<class>`, `foe` false silences the struck foe's `ehurt_<id>` (its
+`eatk_` attack stays); the clips and files stay registered, flip to true
+to hear them. `combatQueue.js sfxFor(ev)`
 picks them by the save's class (a class without the clip falls back to
 the plain one); the class events have sounds too (`EV_SFX`: the hex a
 chime, the blight a hiss, Entangle a thud and a bound foe's strain a
@@ -1116,7 +1121,12 @@ loudness under `current`. The bake-off (`--bakeoff`: title + combat,
 two takes per model, Lyria's second on the painting) went to the
 Music Lab in 0.00273; **the developer picked ElevenLabs for both**
 (`title_c2`, `combat_c2`; boss / shrine / end rolled on it in 0.00280,
-two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). **The import (0.00280, `--import
+two takes each, and picked in 0.00282: `boss_c2`, `shrine_c2`, `end_c1`). New takes change `assets/data/music-art.json`, which the bump check
+counts as loaded by players (everything under `assets/data`): ship them
+with `tools/ship.mjs`, never a bare push (0.00288). **The boss's second
+brief (0.00288, the developer's note: `boss_c2` too in-your-face):** 60 s,
+the menace held back — no organ opening, no full-ensemble climax, the
+choir distant; four takes, `boss_c3`–`c6`, awaiting verdicts. **The import (0.00280, `--import
 <bed>_c<n>`):** `tools/music-seam.mjs` finds the loop seam — per frame
 a chroma + log-band vector, a seam's score the mean likeness of the 4 s
 after START against the 4 s after END, less 0.015 per dB of level
@@ -1804,7 +1814,9 @@ sometimes — fetch all branches to find it.
 
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the developer's (quota per key) · the reliquary's revive is not
-  narrated.
+  narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
+  pulled behind `audio.json cries` (0.00287) until their content is
+  rethought — new recordings would be new files (rule 7).
 - Game: the classes' next round — the thrall card and the rage chip (the
   class UI's "not yet": the log alone says the thrall rose, took a blow,
   crumbled; the Barbarian's rage shows nowhere), the kits' own numbers
