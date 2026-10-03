@@ -17,7 +17,7 @@
 //                                                       # approvals and rejections (+ notes), generates the re-rolls
 //                                                       # ({ id, model, n, hint, image })
 //   node tools/gen-score.mjs --measure                  # (re)measure the shipped beds' loudness for the lab
-//   node tools/gen-score.mjs --import combat_c2 [--start 21-25] [--end 70-86] [--tail 3] [--dry-run]
+//   node tools/gen-score.mjs --import combat_c2 [--start 21-25] [--end 70-86] [--tail 3] [--min-loop 60] [--dry-run]
 //                                                       # a take into the game (0.00280): the loop seam found
 //                                                       # (tools/music-seam.mjs: the START and END that sound most
 //                                                       # alike, before the piece's fade; --start / --end pin the
@@ -201,7 +201,7 @@ export function setTrack(text, id, t) {
   return `${text.slice(0, open)}"${id}": {\n${body}\n${indent}}${text.slice(close + 1)}`;
 }
 const parseRange = (v) => (v ? v.split('-').map(Number) : null);
-function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, dry = false } = {}) {
+function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, minLoop = DEFAULTS.minLoop, dry = false } = {}) {
   const [id, cn] = ref.split('_c');
   const bed = doc.beds.find((b) => b.id === id), e = reg.beds[id];
   const k = cn ? e?.candidates.find((c) => c.n === Number(cn)) : [...(e?.candidates ?? [])].reverse().find((c) => c.verdict === 'ok');
@@ -210,7 +210,7 @@ function importBed(reg, doc, ref, { start, end, tail = DEFAULTS.tailS, dry = fal
   const x = decode(src), f = features(x);
   const auto = autoRanges(f, tail);
   const ranges = { startRange: start ?? auto.startRange, endRange: end ?? auto.endRange };
-  const seam = findSeam(f, { ...ranges, minLoop: DEFAULTS.minLoop, tailS: tail });
+  const seam = findSeam(f, { ...ranges, minLoop, tailS: tail });
   const endS = alignEnd(x, seam.start, seam.end);
   const SR44 = 44100, a = Math.round(seam.start * SR44), b = Math.round(endS * SR44), loopS = Math.round(((b - a) / SR44) * 1e4) / 1e4;
   console.log(`${id}_c${k.n}: seam ${stamp(Math.round(seam.start))} → ${stamp(Math.round(endS))} (${seam.start.toFixed(2)} → ${endS.toFixed(2)} s), loop ${loopS} s + ${tail} s tail · alike ${seam.sim.toFixed(3)}, ${seam.dDb.toFixed(1)} dB apart · searched start ${ranges.startRange.map((v) => v.toFixed(0)).join('-')} s, end ${ranges.endRange.map((v) => v.toFixed(0)).join('-')} s`);
@@ -259,7 +259,7 @@ async function main() {
 
   if (has('--import')) {
     if (has('--rerender')) { const v = applyVerdicts(reg, JSON.parse(readFileSync(val('--rerender'), 'utf8'))); console.log(`verdicts: ${v.approved} approved, ${v.rejected} rejected`); }
-    for (const ref of val('--import').split(',')) importBed(reg, doc, ref, { start: parseRange(val('--start')), end: parseRange(val('--end')), tail: Number(val('--tail') ?? DEFAULTS.tailS), dry: has('--dry-run') });
+    for (const ref of val('--import').split(',')) importBed(reg, doc, ref, { start: parseRange(val('--start')), end: parseRange(val('--end')), tail: Number(val('--tail') ?? DEFAULTS.tailS), minLoop: Number(val('--min-loop') ?? DEFAULTS.minLoop), dry: has('--dry-run') });
     if (!has('--dry-run')) { measureCurrent(reg, doc); saveRegistry(reg); }
     return;
   }

@@ -691,15 +691,27 @@
           "asked": 90,
           "lufs": -11.7,
           "seconds": 90.1,
-          "at": "2026-10-03T12:49:38.194Z"
+          "at": "2026-10-03T12:49:38.194Z",
+          "verdict": "ok",
+          "note": "works 0:27 onwards. the beginning is too much organ stuff. ",
+          "imported": {
+            "file": "assets/audio/music-boss-v3.mp3",
+            "start": 28.189,
+            "end": 68.185,
+            "loopS": 39.9964,
+            "tailS": 3,
+            "gainDb": -1,
+            "lufs": -11,
+            "at": "2026-10-03T12:59:36.974Z"
+          }
         }
       ],
       "painting": "castle_throne_room.jpg",
       "current": {
-        "file": "assets/audio/music-boss-v2.mp3",
-        "loopS": 60,
-        "lufs": -14.3,
-        "seconds": 62
+        "file": "assets/audio/music-boss-v3.mp3",
+        "loopS": 39.9964,
+        "lufs": -11,
+        "seconds": 43.3
       },
       "line": "The throne room and the vampire lord who rules it: ceremonial, menacing and heavy, an organ and a chanting choir over war drums."
     },
@@ -858,15 +870,27 @@
           "asked": 100,
           "lufs": -13.2,
           "seconds": 100,
-          "at": "2026-10-03T12:49:50.892Z"
+          "at": "2026-10-03T12:49:50.892Z",
+          "verdict": "ok",
+          "note": "we can just loop the first about 37 secs. ",
+          "imported": {
+            "file": "assets/audio/music-shrine-v3.mp3",
+            "start": 2.368,
+            "end": 38.777,
+            "loopS": 36.4089,
+            "tailS": 3,
+            "gainDb": 3.3,
+            "lufs": -14.4,
+            "at": "2026-10-03T12:59:39.933Z"
+          }
         }
       ],
       "painting": "castle_shrine_gold.jpg",
       "current": {
-        "file": "assets/audio/music-shrine-v2.mp3",
-        "loopS": 80,
-        "lufs": -14.3,
-        "seconds": 82.1
+        "file": "assets/audio/music-shrine-v3.mp3",
+        "loopS": 36.4089,
+        "lufs": -14.4,
+        "seconds": 39.7
       },
       "line": "A candlelit shrine where the knight rests and trades: a moment of eerie grace, sacred but not safe."
     },
@@ -957,7 +981,19 @@
           "asked": 90,
           "lufs": -14.9,
           "seconds": 90.1,
-          "at": "2026-10-03T12:50:09.712Z"
+          "at": "2026-10-03T12:50:09.712Z",
+          "verdict": "ok",
+          "note": "0:37 onwards is a nice somber part. let's just go from there to the end. ",
+          "imported": {
+            "file": "assets/audio/music-end-v3.mp3",
+            "start": 39.01,
+            "end": 77.88,
+            "loopS": 38.8702,
+            "tailS": 3,
+            "gainDb": 2.6,
+            "lufs": -14.5,
+            "at": "2026-10-03T12:59:42.771Z"
+          }
         },
         {
           "n": 2,
@@ -1048,10 +1084,10 @@
       ],
       "painting": "castle_chapel_exterior.jpg",
       "current": {
-        "file": "assets/audio/music-end-v2.mp3",
-        "loopS": 72,
-        "lufs": -15.1,
-        "seconds": 74
+        "file": "assets/audio/music-end-v3.mp3",
+        "loopS": 38.8702,
+        "lufs": -14.5,
+        "seconds": 42.2
       },
       "line": "The run is over, by death or retreat: grief and acceptance, a felt piano over low strings in a ruined chapel."
     }

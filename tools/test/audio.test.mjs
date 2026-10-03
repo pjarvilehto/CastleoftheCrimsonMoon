@@ -23,7 +23,7 @@ fresh();
   const tracks = DATA.audio.music.tracks; // the beds live in audio.json (0.114; one score since 0.118)
   for (const t of ['title', 'combat', 'boss', 'shrine', 'end']) {
     const secs = statSync(tracks[t].file).size * 8 / 128000; // 128 kbps
-    ok(`music bed ${t}: on disk, an exact loop + its tail`, Math.abs(secs - (tracks[t].loopS + tracks[t].tailS)) < 0.6 && tracks[t].loopS >= 60);
+    ok(`music bed ${t}: on disk, a loop + its tail, at least 30 s`, Math.abs(secs - (tracks[t].loopS + tracks[t].tailS)) < 0.6 && tracks[t].loopS >= 30); // (0.00281: the developer's shrine loop is the take's first ~35 s)
   }
   ok('the classic beds are gone (0.118)', !readdirSync('assets/audio').some((f) => /^music-(title|combat|boss|shrine|end)\.mp3$/.test(f)));
   ok('no stale ambient/dungeon track refs', !musicSrc.includes('ambient.mp3') && !musicSrc.includes('dungeon.mp3'));

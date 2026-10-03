@@ -659,22 +659,25 @@
         "gainDb": 0.2
       },
       "boss": {
-        "file": "assets/audio/music-boss-v2.mp3",
-        "loopS": 60,
-        "tailS": 2,
-        "gainDb": 2.3
+        "file": "assets/audio/music-boss-v3.mp3",
+        "loopS": 39.9964,
+        "tailS": 3,
+        "crossfade": "power",
+        "gainDb": -1
       },
       "shrine": {
-        "file": "assets/audio/music-shrine-v2.mp3",
-        "loopS": 80,
-        "tailS": 2,
-        "gainDb": 3.2
+        "file": "assets/audio/music-shrine-v3.mp3",
+        "loopS": 36.4089,
+        "tailS": 3,
+        "crossfade": "power",
+        "gainDb": 3.3
       },
       "end": {
-        "file": "assets/audio/music-end-v2.mp3",
-        "loopS": 72,
-        "tailS": 2,
-        "gainDb": 3.2
+        "file": "assets/audio/music-end-v3.mp3",
+        "loopS": 38.8702,
+        "tailS": 3,
+        "crossfade": "power",
+        "gainDb": 2.6
       }
     }
   },
