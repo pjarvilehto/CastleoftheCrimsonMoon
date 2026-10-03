@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/intro-check.mjs — the title's fly-in (ui/titleIntro.js, 0.00311)
+// tools/intro-check.mjs — the title's fly-in (ui/titleIntro.js, 0.00315)
 // driven headless in the real game, on a desktop window and on a phone:
 //
 //   node tools/intro-check.mjs [--only desktop|phone] [--out /tmp/intro-check]

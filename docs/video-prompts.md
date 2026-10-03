@@ -97,7 +97,7 @@ ffmpeg -i eased.mp4 -i still.mp4 -filter_complex "[0:v][1:v]xfade=transition=fad
   -c:v libx264 -preset slow -crf 20 -movflags +faststart -pix_fmt yuv420p assets/video/title_flyin_v1.mp4
 ```
 
-**0.00310 (`title_flyin_v2.mp4`, undone in 0.00311):** the game's vignette baked over the
+**0.00310 (`title_flyin_v2.mp4`, undone in 0.00315):** the game's vignette baked over the
 whole film — the CSS `#vignette` ellipse (centre to the farthest corner,
 0 at 30%, 0.55 at 75%, 0.9 at 100%; the shader draws the same under the
 live canvas) as a mask ffmpeg's `geq` makes and overlays, so the film's
@@ -114,7 +114,7 @@ ffmpeg -i title_flyin_v1.mp4 -i vignette.png -filter_complex "[0:v][1:v]overlay=
   -c:v libx264 -preset slow -crf 20 -movflags +faststart -pix_fmt yuv420p assets/video/title_flyin_v2.mp4
 ```
 
-**0.00311 (`title_flyin_v3.mp4` = the 0.00307 cut byte for byte, under a new
+**0.00315 (`title_flyin_v3.mp4` = the 0.00307 cut byte for byte, under a new
 name; `title_flyin_720_v1.mp4` its 1280x720 encode for phones, crf 22,
 0.8 MB):** the baked vignette went — it was the 16:9 frame's ellipse, and
 a phone or an ultrawide crops the film, so the corners no longer matched

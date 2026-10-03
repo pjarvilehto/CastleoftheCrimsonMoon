@@ -114,7 +114,7 @@ async function boot() {
     await phoneGate({ onPlay: () => ensureCtx()?.resume?.().catch?.(() => {}) }); // a touch activates on the tap's end: resume the context in the gesture itself
     regateOnExit();
   }
-  await introReady(); // the fly-in's film (0.00307): up to intro.waitMs for it — on a phone after the PLAY tap (0.00311), the wait used to run before the gate — else the title shows as it always has
+  await introReady(); // the fly-in's film (0.00307): up to intro.waitMs for it — on a phone after the PLAY tap (0.00315), the wait used to run before the gate — else the title shows as it always has
   go('title');
   preloadRest(); // dungeon art, in the background (0.098; the hub's Descend waits for it)
   shareStats(getProfile()); // play stats: history from before this session too (0.102)

@@ -379,7 +379,7 @@ fresh();
     'assets/icons': new Set([...DATA.shrines.offers.map((o) => o.img), ...Object.values(CHEST_ICONS)].map(base)),
     'assets/heroes': new Set(DATA.heroes.heroes.flatMap((h) => h.looks.map((l) => l.art))), // (0.00248: the figures the hero screen and the cards draw)
     'assets/items': new Set([...Object.values(DATA.items).map((it) => it.art), DATA.difficulty.potions.art]), // (0.00260: the gear's pictures, 0.00263 the potion's; assets/items/candidates is gen-items.mjs's, outside)
-    'assets/video': new Set([bg.intro.file, bg.intro.phone.file]), // (0.00307: the title's fly-in; 0.00311 the phone's 720p file)
+    'assets/video': new Set([bg.intro.file, bg.intro.phone.file]), // (0.00307: the title's fly-in; 0.00315 the phone's 720p file)
   };
   const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
   ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame, icon and item picture on disk is one the game names', orphans.length === 0, orphans.join(', '));

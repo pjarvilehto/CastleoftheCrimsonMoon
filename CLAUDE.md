@@ -675,7 +675,7 @@ New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).
 
-#### The title's fly-in (0.00307 the prototype, 0.00311 shipping — the developer's idea, the video thread)
+#### The title's fly-in (0.00307 the prototype, 0.00315 shipping — the developer's idea, the video thread)
 
 The title painting is the END of a short flight: as the title scene
 enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
@@ -712,7 +712,7 @@ in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,
 file a phone fetches, 0.8 MB, through `platform.js deviceBlock`;
 `waitMs`); the data check and the orphan check know the folder. **The
 vignette over the film is the layer's own** (`#intro::after`, the one
-gradient `#vignette` draws, 0.00311): baked into the 16:9 file it was
+gradient `#vignette` draws, 0.00315): baked into the 16:9 file it was
 the frame's ellipse, not the screen's, and a phone or an ultrawide
 cropped it — the film and the painting are both cover-fit from the
 centre, so the hand-over holds on every aspect ratio, a 19.5:9 phone
@@ -2339,7 +2339,7 @@ sometimes — fetch all branches to find it.
   narrated · the get-hit cries (`hurt_<class>`, `ehurt_<foe>`) are
   pulled behind `audio.json cries` (0.00287) until their content is
   rethought — new recordings would be new files (rule 7).
-- Video (0.00307, the title's fly-in; shipping since 0.00311): `tools/gen-video.mjs`
+- Video (0.00307, the title's fly-in; shipping since 0.00315): `tools/gen-video.mjs`
   with candidates, verdicts and `--import` (the cut, the bake, the encode,
   the 720p file) like the other generators, and a lab to compare takes · a
   dialog opened during the film (the update prompt fires as the title's

@@ -1,4 +1,4 @@
-// ui/titleIntro.js — the title's fly-in (0.00307; shipping since 0.00311):
+// ui/titleIntro.js — the title's fly-in (0.00307; shipping since 0.00315):
 // a short film flying from far across the valley into the title painting,
 // played once per session over everything as the title scene enters. Its
 // last stretch IS the painting (cover-fit, like the renderer's rest pose),
@@ -92,7 +92,7 @@ export function playIntro() {
       setTimeout(() => {
         v.pause();
         layer.remove();
-        v.removeAttribute('src'); v.load(); // (the decoder and its buffers released: the film played once, 0.00311)
+        v.removeAttribute('src'); v.load(); // (the decoder and its buffers released: the film played once, 0.00315)
         resolve(true);
       }, c.fadeMs);
     };
