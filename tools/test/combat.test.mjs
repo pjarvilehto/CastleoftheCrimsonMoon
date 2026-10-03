@@ -304,7 +304,7 @@ await withSeedAsync(4, async () => {
   const cfg = bg3d.tuning('');
   const worst = Math.min(...[4 / 3, 16 / 9, 21 / 9].map((a) => bm.edgeMargin(bm.withJoltReserve(cfg), a, cfg.overscan)));
   ok('edge skirt covers sway + strongest jolt', cfg.joltDeg > 0 && worst > 0, worst.toFixed(4));
-  ok('renderer sizes the skirt with the jolt reserve', readFileSync('src/core/bg3d.js', 'utf8').includes('requiredOverscan(withJoltReserve(cfg)'));
+  ok('renderer sizes the skirt with the jolt reserve, for the most demanding painting shown (0.00304)', readFileSync('src/core/bg3d.js', 'utf8').includes('requiredOverscan(withJoltReserve(c), aspect)'));
   const css = readFileSync('styles.css', 'utf8');
   const missing = ['fx-dmg', 'fx-crit', 'fx-thorns', 'fx-miss', 'fx-heal', 'fx-revive'].filter((c) => !css.includes(`.${c} {`));
   ok('every floating-number style exists', missing.length === 0, missing.join(','));

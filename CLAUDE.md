@@ -653,6 +653,14 @@ eases back. The flat fallback scales the CSS layers the same way
 arrows play the game's sequence (push, a second, the painting) with the
 three knobs as sliders. The timings themselves (1 s out, 2 s crossfade,
 1 s in) are the developer's and unchanged.
+**A painting's own camera (0.00304):** `parallax.overrides.<file>` may
+carry any of the BG TUNING sliders' knobs (`bgTuner.js`: depthScale,
+pivot, yawDeg, pitchDeg, speed, fogScale, fogSpeed) — each layer keeps its
+own sway and fog clocks (`L.tau` / `L.fogT`, a new layer carrying the
+last one's on), its own orbit, and the skirt fits the most demanding
+painting shown (`refit`); the title's (`medieval_castle.jpg`) are the
+developer's slider picks (depth 1.2, focus 0.45, sway 3.6° / 1°, speed
+2.15, fog x1.15). BG TUNING's live sliders still win over every painting.
 New room art: JPEG in `assets/bg/`, entries in
 `backgrounds.json` (`rooms`, `roomNames`) and a depth map (`python3
 tools/gen-depth.py <model.onnx> new.jpg`; the suite fails without one).

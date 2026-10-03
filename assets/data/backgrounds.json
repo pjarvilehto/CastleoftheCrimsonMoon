@@ -299,6 +299,13 @@
     "fadeMs": 2000,
     "overrides": {
       "medieval_castle.jpg": {
+        "depthScale": 1.2,
+        "speed": 2.15,
+        "yawDeg": 3.6,
+        "pitchDeg": 1,
+        "pivot": 0.45,
+        "fogScale": 1.15,
+        "fogSpeed": 3.5,
         "fog": 0.64,
         "fogWind": [
           0.011,

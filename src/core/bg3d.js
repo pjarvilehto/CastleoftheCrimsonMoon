@@ -29,13 +29,10 @@ let gl = null, canvas = null, loc = null, gridBuf = null, idxBuf = null, grid = 
 let layers = []; // bottom -> top: { file, tex, depth, depthBuf, depthTex, img, uvScale, mist, tune, puffs, born }
 let view = '3d'; // '3d' | 'flat' | 'depth' (debug)
 let t0 = null, lastDraw = 0, wanted = null, cfg = null; // cfg: tuning(''), from initBg3d on
-let tau = 0;     // sway clock: seconds x speed, accumulated per frame so a
-                 // speed change never jumps the camera
 let gridM = -1;  // overscan the current grid was built with
 let jolts = [];  // active camera kicks: { t0, amp (rad), dir }
 let sways = [];  // active big-hit sways: { t0, amp (rad), dir }
 let mainProg = null, puffR = null; // the background program; the fog puffs' renderer (0.101)
-let fogT = 0;         // fog clock: seconds x fogSpeed (accumulated, like tau)
 let fogIn = 0;        // 0..1 fog fade-in after the handover from the CSS image
 let fogOn = true;     // false once the quality ladder gave the fog up
 let level = 0;        // quality ladder step (core/bg3dQuality.js)
@@ -63,7 +60,7 @@ export function bgPush() {
 // coming alive as the film goes.
 export function bgArrive() {
   if (!gl) return;
-  tau = 0; jolts = []; sways = []; push = null;
+  layers.forEach((L) => { L.tau = 0; }); jolts = []; sways = []; push = null;
   arrived = performance.now();
   if (firstFrame !== null) firstFrame = arrived;
 }
@@ -182,8 +179,11 @@ async function show3d(file) {
   try { layer = await loadLayer(file); } catch { return; } // flat CSS keeps showing
   if (!gl || wanted !== file) { if (layer) dropLayer(layer); return; }
   layer.born = layers.length ? performance.now() : -Infinity; // first: no fade
+  const top = layers.at(-1); // (0.00304: each painting keeps its own clocks — its speed and fog drift its own — and a new one carries the last one's on, so nothing jumps)
+  layer.tau = top?.tau ?? 0; layer.fogT = top?.fogT ?? 0;
   layers.push(layer);
   while (layers.length > 2) dropLayer(layers.shift());
+  if (refit()) layers.forEach(fillDepth); // (0.00304: a painting with more depth or sway of its own wants a wider skirt)
   if (layer.born !== -Infinity) await new Promise((resolve) => setTimeout(resolve, cfg.fadeMs));
 }
 
@@ -263,21 +263,24 @@ function frame(now) {
   lastDraw = now;
   const endSpan = span('bg'); // the draw's main-thread time, for the device report (0.00225)
   if (t0 === null) { t0 = now; firstFrame = now; canvas.classList.add('ready'); document.getElementById('bg-stack')?.classList.add('gl'); } // rest pose = the CSS image; the CSS layers go dark under the canvas (styles.css)
-  else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); tau += dt * cfg.speed; fogT += dt * cfg.fogSpeed; }
+  else { const dt = Math.min(cfg.quality.gapMs / 1000, (now - t0) / 1000); for (const L of layers) { L.tau += dt * L.tune.speed; L.fogT += dt * L.tune.fogSpeed; } } // (0.00304: per painting — the sway clock, seconds x speed, accumulated so a speed change never jumps the camera; the fog clock likewise)
   t0 = now;
   if (monitor && !held) {
     fpsW = fpsWindow(fpsW, now, slowRate, cfg.quality);
     if (fpsW.slow >= cfg.quality.slowWindows && !degrade()) { endSpan(); return; }
   }
-  const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(tau, cfg);
+  let arrive = 1;
   if (arrived !== null) { // 0.00310: after the fly-in's hand-over the sway comes in with the mist (a sine leaves rest at its fastest: 1.4° within the first second, a drift the fade used to carry)
-    const r = Math.min(1, (now - arrived) / cfg.fogFadeMs), ease = r * r * (3 - 2 * r);
-    o.yaw *= ease; o.pitch *= ease;
+    const r = Math.min(1, (now - arrived) / cfg.fogFadeMs);
+    arrive = r * r * (3 - 2 * r);
     if (r >= 1) arrived = null;
   }
-  const j = joltOffset(jolts, now);
-  o.yaw += j.yaw + swayOffset(sways, now);
-  o.pitch += j.pitch;
+  const j = joltOffset(jolts, now), sw = swayOffset(sways, now);
+  // each painting sways by its own amplitudes (0.00304: per-file overrides of yawDeg / pitchDeg — the title's own)
+  const orbitOf = (L) => {
+    const o = view === 'flat' ? { yaw: 0, pitch: 0 } : orbit(L.tau, L.tune);
+    return { yaw: o.yaw * arrive + j.yaw + sw, pitch: o.pitch * arrive + j.pitch };
+  };
   const fov = (cfg.fovDeg * Math.PI) / 180;
   const aspect = canvas.width / canvas.height;
   if (push) settlePush(now);
@@ -293,6 +296,7 @@ function frame(now) {
   layers.forEach((L, i) => {
     // crossfade like the CSS layers (2s ease-in-out): new layer over old
     const t = i === 0 ? 1 : Math.min(1, (now - L.born) / cfg.fadeMs), ease = t * t * (3 - 2 * t);
+    const o = orbitOf(L);
     f.mvp = mvp(o.yaw, o.pitch, fov, aspect, dollyOf(L, now, i === layers.length - 1)); // each layer its own camera distance (the push)
     gl.uniformMatrix4fv(loc.uMVP, false, f.mvp);
     gl.clear(gl.DEPTH_BUFFER_BIT); // each layer is its own 3D scene
@@ -347,16 +351,16 @@ function draw(L, alpha) {
   gl.disableVertexAttribArray(loc.aDepth);
 }
 
-const fogAmount = (L) => (fogOn && view === '3d' ? L.tune.fog * cfg.fogScale * fogIn : 0);
+const fogAmount = (L) => (fogOn && view === '3d' ? L.tune.fog * L.tune.fogScale * fogIn : 0);
 
 // The scene's fog puffs over it (0.101, core/bg3dPuffGL.js).
 function drawPuffs(L, alpha, f) {
   const amount = fogAmount(L);
   if (!puffR || !(amount > 0)) return;
   const P = L.tune.puffs;
-  puffR.draw(puffFrame(L.puffs, fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
+  puffR.draw(puffFrame(L.puffs, L.fogT, P, L.tune.fogWind), { ...f, uvScale: L.uvScale, depthScale: L.tune.depthScale,
     pivot: L.tune.pivot, depthTex: L.depthTex, artTex: L.tex, mist: L.mist, soft: P.soft, amount: amount * P.opacity, alpha,
-    flow: [fogT * P.flow, P.flowScale, P.flowAmount], light: L.tune.mist,
+    flow: [L.fogT * P.flow, P.flowScale, P.flowAmount], light: L.tune.mist,
     width: canvas.width, height: canvas.height, div: L.tune.puffDiv });
   gl.useProgram(mainProg);
 }
@@ -416,7 +420,8 @@ function resize() {
 // (Re)build the screen grid when the needed skirt changes: the shipped
 // overscan, or more when the sliders ask for more sway/depth.
 function refit() {
-  const m = Math.max(cfg.overscan, requiredOverscan(withJoltReserve(cfg), canvas.width / canvas.height || 16 / 9));
+  const aspect = canvas.width / canvas.height || 16 / 9; // the skirt the most demanding painting shown needs (0.00304: a painting's own depth and sway)
+  const m = Math.max(cfg.overscan, ...[cfg, ...layers.map((L) => L.tune)].map((c) => requiredOverscan(withJoltReserve(c), aspect)));
   if (Math.abs(m - gridM) < 0.005) return false;
   gridM = m;
   grid = buildGrid(cfg.grid[0], cfg.grid[1], m);
@@ -427,7 +432,8 @@ function refit() {
 
 // ---- live tuning (?debug sliders) ----
 export function liveTuning() {
-  return Object.fromEntries(TUNABLE.map((k) => [k, cfg[k]]));
+  const c = layers.at(-1)?.tune ?? cfg; // the painting on screen (0.00304: its own overrides)
+  return Object.fromEntries(TUNABLE.map((k) => [k, c[k]]));
 }
 
 export function setLiveTuning(partial) {
@@ -477,7 +483,7 @@ function shutdown() {
   }
   gl = null; puffR = null; mainProg = null; layers = []; grid = null; gridM = -1;
   t0 = null; firstFrame = null; fpsW = null; jolts = []; sways = []; flashes = []; push = null; arrived = null;
-  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; tau = 0; fogT = 0; rafT0 = 0; rafN = 0; rafRate = 0; saverFrom = -1; // (0.00197: clean for a later initBg3d, as promised)
+  level = 0; fogOn = true; view = '3d'; held = false; monitor = false; lastDraw = 0; rafT0 = 0; rafN = 0; rafRate = 0; saverFrom = -1; // (0.00197: clean for a later initBg3d, as promised)
   document.getElementById('bg-stack')?.classList.remove('gl'); // the CSS layers show again
   canvas?.remove();
   canvas = null;
