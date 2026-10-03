@@ -7,7 +7,7 @@
 // (a pulsing crimson fog), flames, embers (sparks rising through heat),
 // ether (ridged violet wisps). The shader itself is the game's (0.183,
 // src/ui/cardFx.js, where each card draws on a pooled canvas of its own
-// since 0.00226); here one context per card, made and dropped with the card.
+// since 0.00227); here one context per card, made and dropped with the card.
 
 import { VS, FS, LOOKS, TINTS, WINDOW } from '../../src/ui/cardFx.js';
 export { LOOKS, TINTS };

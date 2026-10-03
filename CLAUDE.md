@@ -290,14 +290,14 @@ embers or ether by the enemy's particle material (`cardStyle`: bone fog,
 embers flames, the wraith ether, flesh blood; the boss flames, the knight
 ether), the shrine's boons and the treasure chests each their own
 (`SHRINE_STYLE` / `CHEST_STYLE`, through `shrineUI.js litCard`). Every
-lit card draws on a WebGL canvas of its own from a POOL (0.00226:
+lit card draws on a WebGL canvas of its own from a POOL (0.00227:
 `cardFx.js POOL_MAX` 8 — every fight fits — handed from one room's cards
 to the next room's as they come and go, `acquire` / `release`, so the
 browser's ceiling on live contexts is never reached; `WARM` of them are
 made and compiled behind the title; a new room's card that finds the
 pool held by the last room's — the scenes mount the new line, then
 clear the root — gets its canvas on the next tick, `place`, after the
-tick's filter has returned the last room's). Before 0.00226 ONE hidden context
+tick's filter has returned the last room's). Before 0.00227 ONE hidden context
 drew every card in turn and each card's 2D canvas took its picture as
 an ImageBitmap (a `bitmaprenderer` context, 0.00197): the first device
 report (0.00225, the owner's iPhone) put that at 13.5 ms of main thread
@@ -1035,12 +1035,14 @@ sometimes — fetch all branches to find it.
   13.5 ms a tick in Idle and 6-8 ms in the fights — Safari's
   `createImageBitmap` from a WebGL canvas is a readback — hence the Idle
   phase's 29% dropped frames at the display rate.
-- 0.00226: the card light's pool — a WebGL canvas per lit card, reused
+- 0.00227: the card light's pool — a WebGL canvas per lit card, reused
   across rooms, no copy at all (an OffscreenCanvas whose
   `transferToImageBitmap` MOVES the picture was tried first and measured
   at 420 ms a tick under the sandbox's software GL: a transfer there is a
-  readback too). A new benchmark round (`benchmarkSince` 0.00226): the
-  next iPhone report says how much it bought.
+  readback too). A new benchmark round (`benchmarkSince` 0.00228: the
+  pool went out as 0.00227 behind another thread's 0.00226, the font
+  swap, so its notes named the round one build low): the next iPhone
+  report says how much it bought.
 - Left as found: `icon.png` (374KB, 512x512) at the root is the
   manifest's home-screen icon (`manifest.webmanifest`, purpose `any
   maskable`; index.html links only `icon-64.png` as the favicon by

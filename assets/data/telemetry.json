@@ -4,7 +4,7 @@
   "collectorVersion": "0.00225",
   "benchmarkPrompt": true,
   "benchmarkPromptRoom": 6,
-  "benchmarkSince": "0.00226",
+  "benchmarkSince": "0.00228",
   "report": { "runs": 10, "stalls": 20 },
   "perf": { "nearShare": 0.06, "paceShare": 0.15, "goodShare": 0.9, "okFps": 30, "hzSince": "0.00222" }
 }

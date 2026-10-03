@@ -140,7 +140,7 @@ src/
     particleLooks.js    what a burst is made of (materials, looks; pure)
     particles.js        the particle canvas: budget, batched drawing
     cardFx.js           the shader light behind every card: a pooled WebGL
-                        canvas per lit card, reused across rooms (0.00226; the
+                        canvas per lit card, reused across rooms (0.00227; the
                         cards past the pool take an ImageBitmap copy out of one
                         overflow context, 2D drawImage as the last fallback);
                         looks per enemy / boon / chest

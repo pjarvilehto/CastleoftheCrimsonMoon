@@ -3,10 +3,10 @@
 // by the enemy's particle material, ADDED over the frame's dark plate (the
 // card's canvas blends with mix-blend-mode: screen, styles.css .card-fx) and
 // masked to the frame's window. Every lit card draws on a WebGL canvas of
-// its own, from a small POOL (0.00226): at most POOL_MAX canvases are made
+// its own, from a small POOL (0.00227): at most POOL_MAX canvases are made
 // in a session and handed from one room's cards to the next room's as they
 // come and go, so the browser's ceiling on live contexts (about 16 a page;
-// the renderer holds one) is never reached. Before 0.00226 one hidden
+// the renderer holds one) is never reached. Before 0.00227 one hidden
 // context drew every card in turn and each card's 2D canvas took its
 // picture as an ImageBitmap; the first device report (0.00225, the owner's
 // iPhone) put that at 13.5 ms of main thread per tick at rest and 6-8 ms in
@@ -187,7 +187,7 @@ function release(slot) {
 
 // The overflow context, made on first need: a hidden canvas every card past
 // the pool is drawn on in turn, its picture copied to the card (as every
-// card was before 0.00226).
+// card was before 0.00227).
 function sharedGl() {
   if (shared || failed) return shared;
   try {
@@ -228,7 +228,7 @@ function copyCanvas() {
 // cards still hold their canvases when the new room's ask: a card that
 // finds the pool full waits, and place() gives it a canvas on the next
 // tick, after the tick's filter has returned the last room's — else every
-// room change overflowed the pool (0.00226, seen in the benchmark's own
+// room change overflowed the pool (0.00227, seen in the benchmark's own
 // report: eight made, two cards copying all phase). Nothing shows in
 // between: the units are hidden until the deal, the panels until the
 // windows return.
