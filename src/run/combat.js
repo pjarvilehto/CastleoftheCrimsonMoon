@@ -19,7 +19,7 @@ import { DATA } from '../shared/data.js';
 import { DEBUG } from '../shared/debug.js';
 import { scaleEnemy } from '../shared/balance.js';
 import { tryRevive } from './loot.js';
-import { HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges } from './classes.js';
+import { HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, rollImmune, immuneEvent } from './classes.js';
 
 // Crit multiplier (0.104): critMult, varied ±critJitter; a mega crit
 // multiplies it by megaCritMult. difficulty.json `combat`.
@@ -97,8 +97,15 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 
   const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258, live 0.00267)
   const hit = rollHit(combat, heavy, targetIndex);
-  if (!smash(combat, hit, turn)) strike(combat, targetIndex, hit, turn);
-  lifesteal(combat, hit.dmg, turn);
+  // an elemental heavy on a foe immune to it (0.00285, the developer's ask): the blow does nothing —
+  // no damage, no lifesteal — and "Immune!" prints in its place; the heavy's reach still plays
+  // (classes.js: the fire rolls every other foe), the charge or the cooldown is spent all the same
+  const element = heavy ? HEAVIES[combat.run.stats.klass.heavy].element : null;
+  if (element && rollImmune(target, element)) push(immuneEvent(combat, targetIndex, element));
+  else {
+    if (!smash(combat, hit, turn)) strike(combat, targetIndex, hit, turn);
+    lifesteal(combat, hit.dmg, turn);
+  }
   classPhase(combat, targetIndex, hit, deadBefore, turn); // the class's heavy, its blight, its mending, its thrall (0.00258, live 0.00267; nothing for the knight)
   if (enemyPhase(combat, turn)) return events; // the hero fell
   summonPhase(combat, turn);

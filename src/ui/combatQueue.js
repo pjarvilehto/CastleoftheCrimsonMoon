@@ -15,7 +15,7 @@ const EV_SFX = {
   dmg: 'hurt', dodge: 'swoosh', heal: 'heal',
   kill: 'kill', multi: 'kill', overkill: 'kill', revive: 'shrine', summon: 'shrine',
   // the classes' events (0.00270; the roots and the strain 0.00271): the hex a chime, the blight a hiss, the roots a thud and a bound foe's strain a swoosh, a charge back a zap, the thrall's rise a wail, its blows and fall a thud (audio/synth.js)
-  mark: 'chime', blight: 'hiss', entangle: 'thud', entangled: 'swoosh', charge: 'zap', thrall: 'wail', thrallhit: 'thud', thrallfall: 'thud',
+  mark: 'chime', blight: 'hiss', entangle: 'thud', entangled: 'swoosh', immune: 'swoosh', charge: 'zap', thrall: 'wail', thrallhit: 'thud', thrallfall: 'thud',
 };
 // The class's own sounds (0.00270, the developer's ask): the hero's blow
 // is atk_<class>, its heavy heavy_<class>, a blow on the hero hurt_<class>

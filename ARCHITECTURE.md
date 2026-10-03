@@ -101,7 +101,10 @@ src/
                         the blight's tick, the mending, the thrall rising),
                         FOE_TURN hooks (the roots' hold, the thrall taking
                         the blow, the roots loosening), HEAVY_KINDS and
-                        CLASS_KEYS for dataCheck; combat.js calls, never switches
+                        CLASS_KEYS for dataCheck; combat.js calls, never switches;
+                        ELEMENTS / rollImmune (0.00285): a heavy's element
+                        (fire, blight) against the foe's enemies.json immune
+                        chance — "Immune!" in place of the blow or the stack
     shrine.js           boon deal + costs + effects (ids map to code)
     loot.js             coin / XP / item rolls; takeItem() = keep (an upgrade)
                         or salvage on the spot, for kills and chests alike;

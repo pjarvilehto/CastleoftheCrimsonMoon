@@ -81,7 +81,7 @@ import { ok, fresh, sleep, El, createRun, scaleEnemy, getProfile, withAnimations
   ok('the same context with the Wizard\'s run traces Fireball, his blows arcane', heavyKindOf(ctx) === 'fireball' && traceFor(heavy, heavyKindOf(ctx)) === 'fireball' && traceFor(blow, heavyKindOf(ctx)) === 'arcane');
   ok('a context without a run reads the profile (the knight: steel on a heavy, nothing on a blow)', heavyKindOf({ unit: () => null }) === 'blow' && heavyKindOf({ unit: () => null, run: () => null }) === 'blow'
     && traceFor(heavy, heavyKindOf({})) === 'steel' && traceFor(blow, heavyKindOf({})) === null);
-  ok('the class events are a table combatFx.js plays by kind', CLASS_KINDS.join() === 'mark,blight,entangle,entangled,charge,thrall,thrallhit,thrallfall' && CLASS_KINDS.every((k) => typeof CLASS_FX[k] === 'function'));
+  ok('the class events are a table combatFx.js plays by kind', CLASS_KINDS.join() === 'mark,blight,entangle,entangled,immune,charge,thrall,thrallhit,thrallfall' && CLASS_KINDS.every((k) => typeof CLASS_FX[k] === 'function'));
   getProfile().hero = null;
   fresh();
 }

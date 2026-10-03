@@ -955,7 +955,32 @@ crits; + dodge), the Plague Sister's `censer` (blight stacks ticking a
 turn; + armor per potion) — `stats.js derivedStats` applies the
 multipliers and snapshots the block as `run.stats.klass`, `combat.js
 classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
-`canHeavy` do the rest. `node
+`canHeavy` do the rest, each heavy's code in `run/classes.js` (0.00283:
+`HEAVIES` by kind, the `AFTER_BLOW` / `FOE_TURN` hooks; combat.js calls
+them, never switches on the kind). **Immunities (0.00285, the developer's
+ask):** `enemies.json immune` per enemy, a chance 0-1 per element
+(`blight`, the censer's; `fire`, the fireball's — `classes.js ELEMENTS`,
+each HEAVY's `element`; dataCheck wants every element on every enemy):
+the undead and the vermin shrug the blight off (skeleton and wraith 0.9,
+gargoyle, hollow hound, rat and shrieker 0.5, the Vampire Lord 0.4, the
+Cinderborn and the Blood Knight 0.25), the fire-born the fire (Cinderborn
+0.9, gargoyle 0.5, wraith 0.4, Blood Knight 0.25) — my values from the
+roster's lore, to tune in the data. Last Rites rolls every living foe
+(`rollImmune`; the stacks land first so the smoke's line shows them, then
+"The smoke passes X by — Immune!" per foe that shrugged); Fireball rolls
+its target before the blow (`combat.js playerAttack`: no damage, no
+lifesteal, the charge spent all the same) and every foe the fire reaches
+(`sweep`). The event is `immune` (`target`, `element`): IMMUNE floats
+over the card, which pales, a swoosh, a grey italic line (`classFx.js
+immune`). A chance of 0 spends no roll, so the other five classes
+simulate byte-identically. **The two classes re-tuned for it** (4
+campaigns x 40 runs, median / late / room-16 boss): the Wizard fell 17.5
+/ 23.4 / 83% → 16.3 / 22.9 / 83% and the fireball's factor went 0.9 →
+1.0 (16.8 / 22.4 / 81%); the Plague Sister fell 17.0 / 23.0 / 89% → 15.5
+/ 20.7 / 78% and her damage went 0.85 → 1.0, the censer's swing 0.45 →
+0.55, the blight 0.3 → 0.4 a stack (16.0 / 22.9 / 77%: beside the Druid
+and the Hexhunter, the room-16 boss her hard fight now — a first table
+with seven of twelve foes resisting put her at 14.5). `node
 tools/simulate.mjs --hero <id>` plays a class; the second tuning round
 (4 campaigns x 40 runs, the knight at median 15.8 / room-24 boss 6%):
 Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
@@ -1789,7 +1814,9 @@ sometimes — fetch all branches to find it.
 - Voice-over: a NARRATOR volume slider if players ask · the ElevenLabs
   key is the developer's (quota per key) · the reliquary's revive is not
   narrated.
-- Game: the classes' next round — the thrall card and the rage chip (the
+- Game: a foe's immunities show nowhere before the cast (0.00285: a tag or
+  a hover line on the card would let the Wizard and the Plague Sister aim)
+  · the classes' next round — the thrall card and the rage chip (the
   class UI's "not yet": the log alone says the thrall rose, took a blow,
   crumbled; the Barbarian's rage shows nowhere), the kits' own numbers
   (0.00265: every kit item has the Rusty Sword's or the Oak Shield's),

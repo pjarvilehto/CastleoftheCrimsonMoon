@@ -7,14 +7,14 @@
 // minimum: the charges on the hero's button, the HEXED / BLIGHT / ROOTED
 // tag on a foe's card, a colour per new log line — the UI reading the class
 // from run.hero, never the profile.
-import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync } from './harness.mjs';
+import { ok, fresh, DATA, createRun, createCombat, playerAttack, getProfile, readFileSync, statSync, registry, show, sleep, t, dungeonScene, hubScene, withSeedAsync, scaleEnemy } from './harness.mjs';
 import { readdirSync } from 'node:fs';
 
 const { useHeavy, canHeavy } = await import('../../src/run/combat.js');
 const { drinkPotion } = await import('../../src/run/runState.js');
 const { createPlayerUnit, createEnemyUnit } = await import('../../src/ui/battleLine.js');
 const { derivedStats } = await import('../../src/meta/stats.js');
-const { HEAVY_KINDS, CLASS_KEYS, HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges } = await import('../../src/run/classes.js');
+const { HEAVY_KINDS, CLASS_KEYS, HEAVIES, AFTER_BLOW, FOE_TURN, usesCharges, ELEMENTS, rollImmune } = await import('../../src/run/classes.js');
 const { heroSnapshot, heroById, lookUrl } = await import('../../src/shared/heroes.js');
 const { checkData } = await import('../../src/shared/dataCheck.js');
 
@@ -54,7 +54,7 @@ const types = (evs) => evs.map((e) => e.type);
   const probs = checkData(broken);
   ok('dataCheck reads the registry: an unknown heavy kind, a missing key and a non-number are each named', probs.some((m) => m.includes('barbarian.class.heavy (kick)') && m.includes(HEAVY_KINDS.join(' | '))) && probs.some((m) => m.includes('wizard.class.rage')) && probs.some((m) => m.includes('necromancer.class.mend'))
     && checkData(DATA).length === 0, probs.join('; '));
-  ok('dataCheck.js carries no list of its own: the kinds and the keys are imported', (() => { const src = readFileSync('src/shared/dataCheck.js', 'utf8'); return src.includes("import { HEAVY_KINDS, CLASS_KEYS } from '../run/classes.js'") && !src.includes("'cleaveShare'") && !src.includes("'fireball'"); })());
+  ok('dataCheck.js carries no list of its own: the kinds and the keys are imported', (() => { const src = readFileSync('src/shared/dataCheck.js', 'utf8'); return src.includes("import { HEAVY_KINDS, CLASS_KEYS, ELEMENTS, HEAVIES } from '../run/classes.js'") && !src.includes("'cleaveShare'") && !src.includes("'fireball'"); })());
   // the fallback grep (content.test.mjs) keys on dataCheck.js's quoted leaves, which the class keys left: the same check for them here
   const files = readdirSync('src', { recursive: true }).filter((f) => String(f).endsWith('.js')).map((f) => `src/${f}`);
   const copies = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\.(\w+) \?\? -?[\d.]+/g)].filter((m) => CLASS_KEYS.includes(m[1])).map((m) => `${f}: ${m[0]}`));
@@ -154,6 +154,55 @@ const types = (evs) => evs.map((e) => e.type);
   const tune = DATA.difficulty.combat; // (a crit's damage is jittered and may go mega: the floor of the range is asserted, with markCrit in it)
   const floor = Math.round(run.stats.dmg * (tune.critMult + run.stats.critBonus + run.stats.klass.markCrit - tune.critJitter)) - 1;
   ok('a blow on the hexed foe always crits (the crit multiplier plus markCrit, no roll spent); the other foe takes a plain blow', onMark.crit && !plain.crit && onMark.dmg >= floor && onMark.dmg > plain.dmg && plain.dmg === run.stats.dmg, `${onMark.dmg} vs floor ${floor}, plain ${plain.dmg}`);
+}
+
+// Immunities (0.00285, the developer's ask): the undead and the vermin shrug the blight off, the
+// fire-born the fire — a chance per element on every enemy (enemies.json immune), rolled by Last
+// Rites on every foe and by Fireball on its target and every foe the fire reaches; "Immune!" prints
+// in place of the stacks or the damage, and the cast is spent all the same.
+{
+  fresh();
+  ok('two elements, the censer the blight\'s and the fireball the fire\'s; the other heavies none', ELEMENTS.join() === 'blight,fire' && HEAVIES.censer.element === 'blight' && HEAVIES.fireball.element === 'fire'
+    && ['blow', 'cleave', 'drain', 'mark', 'entangle'].every((k) => HEAVIES[k].element === undefined));
+  const imm = Object.entries(DATA.enemies).map(([id, e]) => [id, e.immune]);
+  ok('every enemy carries a chance 0-1 per element; the skeleton, the wraith and the gargoyle shrug the blight off, the Cinderborn the fire, the cultist nothing',
+    imm.every(([, m]) => ELEMENTS.every((el) => typeof m[el] === 'number' && m[el] >= 0 && m[el] <= 1)) && DATA.enemies.skeleton.immune.blight >= 0.75 && DATA.enemies.wraith.immune.blight >= 0.75
+    && DATA.enemies.gargoyle.immune.blight >= 0.5 && DATA.enemies.ghoul.immune.fire >= 0.75 && DATA.enemies.rat.immune.blight > 0 && DATA.enemies.bat.immune.blight > 0
+    && DATA.enemies.cultist.immune.blight === 0 && DATA.enemies.cultist.immune.fire === 0);
+  const bad = structuredClone(DATA); bad.enemies.rat.immune.fire = 1.5; delete bad.enemies.bat.immune.blight;
+  const problems = checkData(bad);
+  ok('dataCheck names a chance out of range and a missing element', problems.some((m) => m.includes('rat.immune.fire')) && problems.some((m) => m.includes('bat.immune.blight')));
+  ok('scaleEnemy carries the block; a chance of 0 spends no roll', scaleEnemy('skeleton', 3).immune === DATA.enemies.skeleton.immune
+    && (() => { const r = Math.random; let n = 0; Math.random = () => { n++; return 0; }; const a = rollImmune({ immune: { fire: 0 } }, 'fire'), b = rollImmune({ immune: { fire: 0.5 } }, 'fire'), c = rollImmune({}, 'fire'); Math.random = r; return a === false && b === true && c === false && n === 1; })());
+  // Last Rites over a foe that always shrugs it off and one that never does
+  const run = as('plaguesister');
+  const cb = room(run, [{ ...foe(100000, 0, 'Bones'), immune: { blight: 1, fire: 0 } }, { ...foe(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }]);
+  const evs = heavy(cb, 1);
+  const im = evs.filter((e) => e.type === 'immune');
+  ok('Last Rites: the immune foe prints Immune! (its target and element on the event) and takes no stack; the other is blighted and gnawed',
+    im.length === 1 && im[0].target === 0 && im[0].element === 'blight' && im[0].text.endsWith('Immune!') && cb.enemies[0].blight === 0 && cb.enemies[1].blight === 1
+    && evs.filter((e) => e.type === 'spill').length === 1 && types(evs).indexOf('blight') < types(evs).indexOf('immune'));
+  ok('…the smoke\'s line already shows the stacks that landed (the snapshot)', evs.find((e) => e.type === 'blight').snap.status[1].blight === 1);
+  // Fireball on an immune target: no blow, no lifesteal, the charge spent; the fire still reaches the others, each rolling
+  const wiz = as('wizard'); wiz.stats.lifesteal = 0.5; wiz.hp = Math.round(wiz.maxHp / 2);
+  const cf = room(wiz, [{ ...foe(100000, 0, 'Cinderborn'), immune: { blight: 0, fire: 1 } }, { ...foe(100000, 0, 'Acolyte'), immune: { blight: 0, fire: 0 } }, { ...foe(100000, 0, 'Ember'), immune: { blight: 0, fire: 1 } }]);
+  const charges = cf.charges;
+  const fevs = heavy(cf, 0);
+  const fim = fevs.filter((e) => e.type === 'immune');
+  ok('Fireball on a fire-born target: Immune! in place of the blow, no damage and no lifesteal, the charge spent; the fire takes the plain foe and the other fire-born shrugs it off too',
+    fim.length === 2 && fim.map((e) => e.target).join() === '0,2' && fim.every((e) => e.element === 'fire') && !types(fevs).includes('atk') && !types(fevs).includes('heal')
+    && cf.enemies[0].hp === 100000 && cf.enemies[2].hp === 100000 && cf.enemies[1].hp < 100000 && fevs.filter((e) => e.type === 'spill').length === 1 && cf.charges === charges - 1 && wiz.hp <= Math.round(wiz.maxHp / 2));
+  const plain = room(as('wizard'), [{ ...foe(100000), immune: { blight: 0, fire: 0 } }, { ...foe(100000), immune: { blight: 0, fire: 0 } }]);
+  ok('…and a plain room burns as before', types(heavy(plain, 0)).filter((t) => t === 'atk' || t === 'spill').length === 2);
+  // the knight's heavy has no element: a fire-born foe takes it in full
+  const kn = room(as('knight'), [{ ...foe(100000, 0, 'Cinderborn'), immune: { blight: 1, fire: 1 } }]);
+  ok('a heavy without an element ignores the immunities (the knight\'s blow on a Cinderborn lands)', types(heavy(kn, 0)).includes('atk') && kn.enemies[0].hp < 100000);
+  // the UI: the effect, the sound, the colour
+  const { fxFor } = await import('../../src/ui/combatFx.js');
+  const { CLASS_FX } = await import('../../src/ui/classFx.js');
+  const { sfxFor } = await import('../../src/ui/combatQueue.js');
+  ok('the Immune! line: an effect on the foe\'s card (IMMUNE floats), a swoosh, a grey italic line', fxFor({ type: 'immune', target: 2, element: 'fire' }).kind === 'immune' && fxFor({ type: 'immune', target: 2 }).to === 2
+    && typeof CLASS_FX.immune === 'function' && sfxFor({ type: 'immune' }) === 'swoosh' && readFileSync('styles.css', 'utf8').includes('#combat-log .immune {'));
 }
 
 // the Plague Sister: the censer's blight stacks on every foe and gnaws a turn; a potion adds armor
