@@ -1,4 +1,4 @@
-// labs/backgrounds/lab.js — the Background Lab (0.00241, see index.html).
+// labs/backgrounds/lab.js — the Background Lab (0.00242, see index.html).
 // The new room paintings tools/gen-bg.mjs made (assets/data/rooms-art.json)
 // through their stages: drafts → approved → in the game. Verdicts live in
 // localStorage: { [file]: { v: 'ok' | 'no', note, at } }, re-rolls under

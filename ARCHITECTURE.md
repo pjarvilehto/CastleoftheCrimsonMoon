@@ -188,7 +188,7 @@ labs/                   the testing pages (?debug LABS button): index.html is th
   backgrounds/          the new room paintings (gen-bg.mjs, rooms-art.json) through their
                         stages: tiles to approve / reject / regenerate with notes, a fight
                         at the game's size over one, a compare beside a game painting;
-                        COPY JSON -> rooms-rerender.json for gen-bg.mjs --rerender (0.00241)
+                        COPY JSON -> rooms-rerender.json for gen-bg.mjs --rerender (0.00242)
   world/                the world map above the dungeon (0.00210, a prototype): the
                         owner's painting under clouds, places as pins, the reveal,
                         two looks and the dive; WORLD in lab.js = the future world.json

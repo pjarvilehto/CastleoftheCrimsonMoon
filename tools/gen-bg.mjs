@@ -51,7 +51,7 @@ const REGISTRY = join(ROOT, 'assets', 'data', 'rooms-art.json');
 const BACKGROUNDS = join(ROOT, 'assets', 'data', 'backgrounds.json');
 const WEB = 'assets/bg/candidates';
 
-export const DEFAULTS = { n: 2, model: 'seedream', aspect: '16:9', concurrency: 3 }; // Seedream 4: the owner's pick (0.00241) from the verbatim round
+export const DEFAULTS = { n: 2, model: 'seedream', aspect: '16:9', concurrency: 3 }; // Seedream 4: the owner's pick (0.00242) from the verbatim round
 /** The guide's mood / composition modifiers: a room, or a boss arena (the Kind column). */
 export const MOOD = 'gloomy and moody, deep shadows, oppressive atmosphere';
 export const ARENA = 'video game boss arena background art, wide symmetrical battle stage composition with open floor space in the center';
@@ -198,10 +198,12 @@ async function main() {
     if (!bg[list]) throw new Error(`backgrounds.json has no list ${list}`);
     if (!bg[list].includes(`${id}.jpg`)) bg[list].push(`${id}.jpg`);
     if (list !== 'rooms' && ['entrance', 'antechambers'].includes(list) && !bg.rooms.includes(`${id}.jpg`)) bg.rooms.push(`${id}.jpg`);
+    // every painting carries its own fog (0.166; the suite checks): an interior's usual mist to start with, tuned in the Fog Lab
+    bg.parallax.overrides[`${id}.jpg`] ??= { fog: 0.45, fogWind: [0.006, 0.001, -0.004] };
     writeFileSync(BACKGROUNDS, JSON.stringify(bg, null, 2) + '\n');
     c.imported = `assets/bg/${id}.jpg`;
     saveRegistry(reg);
-    console.log(`imported ${id}_c${n} (${c.model}, ${r.from}${r.upscaled ? ', upscaled' : ''}) -> assets/bg/${id}.jpg, "${e.name}" in ${list}\nnow: python3 tools/gen-depth.py /tmp/da2_vits.onnx assets/bg/${id}.jpg (the suite fails without the depth map)`);
+    console.log(`imported ${id}_c${c.n} (${c.model}, ${r.from}${r.upscaled ? ', upscaled' : ''}) -> assets/bg/${id}.jpg, "${e.name}" in ${list}\nnow: python3 tools/gen-depth.py /tmp/da2_vits.onnx assets/bg/${id}.jpg (the suite fails without the depth map)`);
     return;
   }
   const rooms = has('--prompt') ? [{ id: val('--id', 'prompt'), name: val('--name', val('--id', 'prompt')), hue: 'verbatim', kind: 'room', line: val('--prompt'), verbatim: true }]

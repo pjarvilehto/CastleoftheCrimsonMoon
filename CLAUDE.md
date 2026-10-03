@@ -64,7 +64,7 @@ before structural changes. This file is the rules and the per-system notes.
     or current), FIGHT (the knight and four enemies at the game's size).
     COPY JSON packs the verdicts and queued re-rolls as `art-rerender.json`
     for `node tools/gen-art.mjs --rerender`.
-  - **Background Lab (0.00241):** `labs/backgrounds/` — the new room
+  - **Background Lab (0.00242):** `labs/backgrounds/` — the new room
     paintings `tools/gen-bg.mjs` made (`assets/data/rooms-art.json`)
     through their stages, drafts → approved → in the game: ROOM (one
     room's candidates as tiles: Approve / Reject with a note / Regenerate
@@ -567,7 +567,7 @@ open floor space in the center"), then the style block word for word:
 black ink silhouettes, bold flat angular shapes, rough hand-drawn ink
 texture and hatching, dramatic chiaroscuro lighting, video game
 background art, wide shot, no characters". New rooms
-(**the loop, 0.00241, like the portraits'):** `docs/room-prompts.md`
+(**the loop, 0.00242, like the portraits'):** `docs/room-prompts.md`
 (the recipe, the style block, a table of rooms: id, name, hue family,
 kind room / arena, line — the guide's own unused rooms are there with
 its lines) → `node tools/gen-bg.mjs [--only id]` sends the line + the

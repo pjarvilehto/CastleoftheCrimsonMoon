@@ -43,7 +43,7 @@ fresh();
     BG.BAKEOFF.every((m) => BG.modelDef(m) && !BG.modelDef(m).weights && !['pro', 'max'].includes(m)) && BG.TEXT_MODELS.flux11.build({ prompt: 'p', aspect: '16:9' }).aspect_ratio === '16:9' && BG.DEFAULTS.model === 'seedream' && BG.DEFAULTS.aspect === '16:9'
     && MODELS.gpt.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '3:2' && MODELS.bananapro.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '16:9'
     && BG.GAME.w === 2048 && BG.GAME.h === 1152 && BG.GAME.quality === 86);
-  // the stages (0.00241): the Background Lab's JSON into the registry (pure), a re-roll from a candidate, the lab's page and script
+  // the stages (0.00242): the Background Lab's JSON into the registry (pure), a re-roll from a candidate, the lab's page and script
   {
     const reg = { rooms: { r: { name: 'R', candidates: [{ n: 1, file: 'a.jpg', verdict: 'no', note: 'old' }, { n: 2, file: 'b.jpg' }, { n: 3, file: 'c.jpg' }] } } };
     const v = BG.applyVerdicts(reg, { approved: [{ id: 'r', file: 'a.jpg' }], rejected: [{ id: 'r', file: 'b.jpg', note: 'too bright' }, { id: 'r', file: 'c.jpg' }], reroll: [] });

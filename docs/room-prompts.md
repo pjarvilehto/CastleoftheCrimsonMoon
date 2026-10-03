@@ -54,7 +54,7 @@ hue family, painted on every model with the same prompt.
 | blood_baths | The Blood Baths | red | room | ruined bathhouse under the castle, a long sunken pool of dark crimson water, cracked marble pillars, steam, candles on the rim, a hooded statue, crimson and black |
 | rookery | The Rookery | cold | room | crumbling tower loft open to the night sky, crows hunched on rafters and ledges, moonlight through the broken roof, bones and straw, cold slate blue |
 
-The guide's own rooms the game does not have (0.00241; its lines, as
+The guide's own rooms the game does not have (0.00242; its lines, as
 written there):
 
 | Id | Name | Hue | Kind | Line |
