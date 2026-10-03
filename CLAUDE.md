@@ -526,13 +526,48 @@ model }`) → `--prune` (an approved character keeps only its approval;
 is in it) → ship. `--model lora --new mimic --line "CHARACTER: ..."`
 draws a character the game does not have (a default canvas; the lab
 shows it on a stand-in card) once the LoRA exists. `sharp` is the one
-npm dependency (`package.json`; the suite runs without it). **The style
-LoRA** (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer` into
-`pjarvilehto/crimson-moon-style`, captions written from the data,
-trigger `CRMSNMOON`; `assets/data/lora.json`) is built but NOT trained:
-the first run was cancelled — train it on the approved set, never on
-candidates the owner has not approved, and not on the room paintings
-for characters (a different style).
+npm dependency (`package.json`; the suite runs without it). **The
+character LoRA** (`tools/train-lora.mjs`, `ostris/flux-dev-lora-trainer`
+into the private model `pjarvilehto/crimson-moon-style`, trigger
+`CRMSNMOON`, captions written from the data — the same preamble
+`gen-art.mjs CHAR_CAPTION` the LoRA prompt uses; `assets/data/lora.json`
+records every training) was trained in 0.00235 on the 31 approved
+pictures (12 min on an H100): the trained VERSION is run (`replicate.mjs
+predictVersion`, `gen-art.mjs loraVersion`) — the generic flux-dev-lora
+runner fetches a model's weights from replicate.com, which a private
+model refuses. It draws a character from its line alone at 1 MP (the
+mimic chest came out usable; a known character comes out stiffer than
+Nano Banana's redraw of its portrait — the LoRA is for characters the
+game has no art for). Retrain only on approved candidates, never on the
+room paintings for characters (a different style); `--cancel` stops a
+run. **Every Replicate call goes through `tools/replicate.mjs`** (the
+token, the Files API, `predict` by model name, `predictVersion` by
+version, `latestVersion`).
+
+**Room paintings (0.00235).** The 48 interiors in `assets/bg/` are the
+style, all approved as they are. New rooms: `docs/room-prompts.md` (the
+style as the paintings have it, the style block, a table of rooms: id,
+name, hue family, line) → `node tools/gen-bg.mjs` paints one with two of
+the game's paintings as references (`REFS` per hue family: amber, red,
+cold, bone, gold) into `assets/bg/candidates/<id>_c<n>.jpg` at the
+model's own size, recorded in `assets/data/rooms-art.json`; `--sheet`
+makes a contact sheet; `--import <id_cN> [--list rooms|treasure|...]`
+makes the 2048x1152 q86 JPEG (a new filename, rule 7), names it in
+`backgrounds.json` and reminds you of the depth map (`gen-depth.py`; the
+suite fails without one). **The bake-off** (three rooms the game lacks —
+The Clock Tower, The Blood Baths, The Rookery — on six models, `--bakeoff`):
+**Nano Banana Pro** is the default (`DEFAULTS.model`): the closest ink,
+palette and composition, 2752x1536 native (no upscale), ~$0.15; Nano
+Banana the cheap draft (the same look at 1344x768, upscaled 1.5x at
+import); Seedream 4 the punchiest but a modern comic, and it wrote the
+room's name into the picture; GPT Image 1.5 a fine etching, 3:2 only
+(cropped) and slow; FLUX 2 Pro less inked and it refused "The Blood
+Baths" as sensitive, twice; Kontext Max soft at 1392x752. **The room LoRA**
+(`train-lora.mjs --set rooms`: the 48 named interiors — the title's and
+the death's exteriors stay out — into `pjarvilehto/crimson-moon-rooms`,
+trigger `CRMSNROOM`, caption `ROOM_CAPTION` + the room's name; the
+destination model is made on first use) draws a room from its line alone
+(`gen-bg.mjs --model lora`, 1 MP, upscaled at import).
 
 **Audio.** One AudioContext (`audio/audioCore.js`, gesture-gated); every
 sound goes music/effects bus → master → limiter (`audio/mixer.js`), levels

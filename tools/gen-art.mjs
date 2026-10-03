@@ -64,6 +64,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlink
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { keyOut, applyAlpha, bbox, placeOn, dropStray, fillHoles, SHADOW, PAPER } from './cutout.mjs';
+import { API, token, headers, upload, predict, predictVersion, latestVersion } from './replicate.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOC = join(ROOT, 'docs', 'portrait-prompts.md');
@@ -71,7 +72,6 @@ const CHARS = join(ROOT, 'assets', 'chars');
 const OUT = join(CHARS, 'candidates');
 const REGISTRY = join(ROOT, 'assets', 'data', 'art.json');
 const WEB = 'assets/chars/candidates'; // as the lab fetches it
-const API = 'https://api.replicate.com/v1';
 
 // Every editor takes the two pictures (the portrait, the style reference) and the
 // prompt; `build` maps them onto the model's own inputs (api.replicate.com,
@@ -84,14 +84,26 @@ export const MODELS = {
   banana: { model: 'google/nano-banana', priceUsd: 0.04, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, output_format: 'png' }) },
   bananapro: { model: 'google/nano-banana-pro', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, resolution: '2K', output_format: 'png', safety_filter_level: 'block_only_high' }) },
   seedream: { model: 'bytedance/seedream-4', priceUsd: 0.03, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, size: '2K', enhance_prompt: false, sequential_image_generation: 'disabled' }) },
-  gpt: { model: 'openai/gpt-image-1.5', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect === '4:3' ? '3:2' : x.aspect, quality: 'high', input_fidelity: 'high', background: 'opaque', moderation: 'low', output_format: 'png' }) },
+  gpt: { model: 'openai/gpt-image-1.5', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: ['1:1', '3:2', '2:3'].includes(x.aspect) ? x.aspect : '3:2', quality: 'high', input_fidelity: 'high', background: 'opaque', moderation: 'low', output_format: 'png' }) },
   flux2: { model: 'black-forest-labs/flux-2-pro', priceUsd: 0.05, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style].filter(Boolean), aspect_ratio: x.aspect, resolution: '2 MP', output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
   // the style LoRA (tools/train-lora.mjs): text to image, no source portrait — a NEW character (--new) or a fresh take on one
-  lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON' },
+  // the trained model itself is run (its version from assets/data/lora.json): the generic flux-dev-lora runner fetches
+  // a model's weights from replicate.com/<model>/_weights, which a PRIVATE model refuses (0.00235)
+  lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON', set: 'chars' },
 };
 /** The LoRA's prompt: the trigger, the sheet framing (as the training captions had it), the facing, the character line. */
+/** The character captions' preamble, shared by the training (train-lora.mjs) and the LoRA prompt. */
+export const CHAR_CAPTION = 'a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view';
+/** The latest succeeded training's version for a LoRA set ('chars' / 'rooms') from assets/data/lora.json, or null. */
+export function loraVersion(set = 'chars', root = ROOT) {
+  const f = join(root, 'assets', 'data', 'lora.json');
+  if (!existsSync(f)) return null;
+  const t = JSON.parse(readFileSync(f, 'utf8')).trainings.filter((x) => (x.set_name ?? 'chars') === set && x.status === 'succeeded' && x.version).pop();
+  return t ? t.version.split(':').pop() : null;
+}
 export function loraPrompt(c, hint = '') {
-  return `${MODELS.lora.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, ${facing(c.id)}: ${c.line.replace(/^CHARACTER:\s*/, '')}${hint ? ` ${hint.trim()}` : ''}`;
+  // the same words the training captions carry (tools/train-lora.mjs CHAR_CAPTION): a LoRA answers best to the caption it learned under (0.00235)
+  return `${MODELS.lora.trigger} style, ${CHAR_CAPTION}, ${facing(c.id)}: ${c.line.replace(/^CHARACTER:\s*/, '')}${hint ? ` ${hint.trim()}` : ''}`;
 }
 /** A character not in the doc (--new mimic --line "CHARACTER: ..."): no current portrait, so its cut-out goes on a default canvas. */
 export const NEW_CANVAS = { w: 600, h: 1050, box: { x0: 30, y0: 30, x1: 570, y1: 1020 } };
@@ -143,7 +155,6 @@ export const CLEAN = {
   model: 'black-forest-labs/flux-kontext-pro', priceUsd: 0.04,
   prompt: 'Remove the ground shadow under the figure, any vignette, inner panel, border, paper texture and any signature or text. Make the background one flat, uniform light grey (#c8c8c8) from edge to edge. Keep the character exactly as it is, unchanged in every line, colour and detail.',
 };
-const token = () => process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_KEY;
 
 /** The doc: { style, chars: [{ id, name, file, line }] } (the style block's [FACING] is filled per character). The File column is the character's current portrait as the data names it (enemies.json art / cards.json player.art), which gives the id (0.193: the Shrieker's file is cave_shrieker.webp, its id stays bat). */
 export function parsePrompts(md, ids = idsByFile()) {
@@ -185,7 +196,6 @@ function seedFor(id, n) {
 }
 
 // ---- Replicate ----
-const headers = () => ({ Authorization: `Bearer ${token()}` });
 // The inputs go inline as data URIs by default (--inputs data): the model's
 // own fetch of a picture uploaded to the Files API timed out on a third of
 // the pilot's tries. Kontext works at ~1MP, so the painting goes as a
@@ -200,30 +210,6 @@ async function inline(path) {
     : meta.height > 1024 || !path.endsWith('.webp') ? await img.resize({ height: 1024, withoutEnlargement: true }).webp({ quality: 90, alphaQuality: 100 }).toBuffer() : readFileSync(path);
   return `data:${path.endsWith('.jpg') ? 'image/jpeg' : 'image/webp'};base64,${buf.toString('base64')}`;
 }
-async function upload(path) {
-  const form = new FormData();
-  const type = path.endsWith('.jpg') ? 'image/jpeg' : path.endsWith('.png') ? 'image/png' : 'image/webp';
-  form.append('content', new Blob([readFileSync(path)], { type }), path.split('/').pop());
-  const res = await fetch(`${API}/files`, { method: 'POST', headers: headers(), body: form });
-  if (!res.ok) throw new Error(`upload ${path}: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
-  return (await res.json()).urls.get;
-}
-async function predict(model, input) {
-  const res = await fetch(`${API}/models/${model}/predictions`, { method: 'POST', headers: { ...headers(), 'Content-Type': 'application/json', Prefer: 'wait=60' }, body: JSON.stringify({ input }) });
-  if (!res.ok) throw new Error(`predict: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
-  let p = await res.json();
-  while (!['succeeded', 'failed', 'canceled'].includes(p.status)) {
-    await new Promise((r) => setTimeout(r, 2500));
-    const poll = await fetch(p.urls.get, { headers: headers() });
-    if (!poll.ok) throw new Error(`poll: HTTP ${poll.status}`);
-    p = await poll.json();
-  }
-  if (p.status !== 'succeeded') throw new Error(`${p.status}: ${p.error ?? '?'}`);
-  const url = Array.isArray(p.output) ? p.output[0] : p.output;
-  const img = await fetch(url);
-  if (!img.ok) throw new Error(`download: HTTP ${img.status}`);
-  return { bytes: Buffer.from(await img.arrayBuffer()), version: p.version, id: p.id, metrics: p.metrics };
-}
 
 // ---- pictures (sharp, loaded only when a picture is touched) ----
 const sharp = async () => (await import('sharp')).default;
@@ -236,14 +222,9 @@ export const MATTE = { model: '851-labs/background-remover', priceUsd: 0.001 };
 const versions = {};
 async function matteAlpha(rawPath) {
   const S = await sharp();
-  versions[MATTE.model] ??= (await (await fetch(`${API}/models/${MATTE.model}`, { headers: headers() })).json()).latest_version.id;
+  versions[MATTE.model] ??= await latestVersion(MATTE.model);
   const image = `data:image/jpeg;base64,${(await S(rawPath).jpeg({ quality: 92 }).toBuffer()).toString('base64')}`;
-  const res = await fetch(`${API}/predictions`, { method: 'POST', headers: { ...headers(), 'Content-Type': 'application/json', Prefer: 'wait=60' }, body: JSON.stringify({ version: versions[MATTE.model], input: { image, format: 'png', threshold: 0 } }) });
-  if (!res.ok) throw new Error(`matte: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
-  let p = await res.json();
-  while (!['succeeded', 'failed', 'canceled'].includes(p.status)) { await new Promise((r) => setTimeout(r, 1500)); p = await (await fetch(p.urls.get, { headers: headers() })).json(); }
-  if (p.status !== 'succeeded') throw new Error(`matte: ${p.status} ${p.error ?? ''}`);
-  const png = Buffer.from(await (await fetch(Array.isArray(p.output) ? p.output[0] : p.output)).arrayBuffer());
+  const png = (await predictVersion(versions[MATTE.model], { image, format: 'png', threshold: 0 })).bytes;
   const { data, info } = await S(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   return { data, info };
 }
@@ -469,11 +450,12 @@ async function main() {
             ? (j.model.list ? j.model.build({ prompt: j.prompt, portrait: await uploaded(j.sheet), style: null, aspect: DEFAULTS.aspect, seed: j.seed })
               : { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed })
           : j.model === MODELS.lora
-            ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
+            ? { prompt: j.prompt, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
             : j.model.build({ prompt: j.model.list ? j.prompt.replace(/\bimage 1\b/g, 'the first image').replace(/\bimage 2\b/g, 'the second image') : j.prompt,
               portrait: await uploaded(j.portraitPath ?? join(CHARS, j.c.file)), style: await uploaded(j.stylePath), aspect: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, seed: j.seed });
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
-        const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
+        const run = () => (j.model === MODELS.lora ? predictVersion(loraVersion(MODELS.lora.set) ?? (() => { throw new Error('no trained LoRA in lora.json: node tools/train-lora.mjs'); })(), input) : predict(use, input));
+        const out = await run().catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return run(); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
         await (await sharp())(out.bytes).jpeg({ quality: 92 }).toFile(rawPath);
         const cut = await cutAndFit(rawPath, j.c.file ? join(CHARS, j.c.file) : null, cutPath, { ...cutOpts, wide: WIDE[j.c.id] ?? 0 });

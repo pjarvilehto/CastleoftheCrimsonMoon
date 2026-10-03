@@ -157,7 +157,8 @@ src/
     cornerToggles.js  debugToggles.js  volumePanel.js  bgTuner.js
     phoneGate.js      the phone's PLAY / INSTALL card before the title (0.00208)
 assets/
-  bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near)
+  bg/ (+ depth/)        room art (JPEG) and depth maps (PNG, white = near); candidates/ = the new
+                        rooms tools/gen-bg.mjs painted (the model's own size, rooms-art.json)
   chars/                portraits (WebP with alpha; the file named in the data) + card
                         frames (PNG); candidates/ = the redraws tools/gen-art.mjs made
   audio/  fonts/        (audio/vo/: the narrator's 127 takes, tools/gen-vo.mjs; fonts/: the display
@@ -199,9 +200,15 @@ tools/
   audio-check.mjs       clip loudness + loops measured in Chromium
   gen-depth.py  gen-music.py (+ music/)   depth maps, the generated score
   gen-vo.mjs            the voice-over: docs/narration-script.md -> ElevenLabs -> assets/audio/vo
-  gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> FLUX Kontext (Replicate)
-                        -> assets/chars/candidates + art.json; --import puts one in the game
-package.json            tool dependencies only (sharp, for gen-art.mjs); the game has none
+  gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
+                        Banana and five others; MODELS) -> assets/chars/candidates + art.json;
+                        --import puts one in the game; --model lora draws from the line alone
+  gen-bg.mjs            new room paintings: docs/room-prompts.md -> Nano Banana Pro (the bake-off's
+                        pick) -> assets/bg/candidates + rooms-art.json; --import makes the game's JPEG
+  train-lora.mjs        the two style LoRAs (characters on the approved candidates, rooms on the
+                        paintings) -> private models on Replicate; lora.json records the trainings
+  replicate.mjs         the Replicate client the three share (token, files, predict, versions)
+package.json            tool dependencies only (sharp, for the art tools); the game has none
 ```
 
 ## Data flow

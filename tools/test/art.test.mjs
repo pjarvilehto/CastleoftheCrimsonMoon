@@ -11,7 +11,7 @@ fresh();
 
 // The doc and the generator: 13 characters, every one a portrait on disk, the facing rule
 {
-  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor, loraPrompt, NEW_CANVAS } = await import('../gen-art.mjs');
+  const { parsePrompts, promptFor, facing, MODELS, DEFAULTS, CLEAN, candidateFile, styleFor, loraPrompt, loraVersion, NEW_CANVAS } = await import('../gen-art.mjs');
   // the style LoRA (0.00201): tools/train-lora.mjs trains it on the rooms and the sheets with written captions; gen-art --model lora draws from the line alone
   const { MATTE } = await import('../gen-art.mjs');
   ok('the cut-out: a matting model by default (851-labs/background-remover), the colour key as the offline fallback', MATTE.model === '851-labs/background-remover'
@@ -20,11 +20,40 @@ fresh();
   const set = trainingSet(), wide = trainingSet({ rooms: true, sheets: true });
   ok('the LoRA training set: the approved candidates only by default (the rooms and the inked sheets opt in), each captioned with the trigger word and the character line',
     set.every((s) => s.kind === 'character' && s.name.startsWith('approved_') && s.caption.startsWith(`${LORA.trigger} style, a photoreal`) && existsSync(s.src) && !/ACCENT:|BOSS:|Facing (left|right)/.test(s.caption))
-    && wide.filter((s) => s.kind === 'room').length === readdirSync('assets/bg').filter((f) => f.endsWith('.jpg')).length && wide.some((s) => s.name.startsWith('sheet_')));
+    && wide.filter((s) => s.kind === 'room').length === Object.keys(DATA.backgrounds.roomNames).length + 1 && wide.some((s) => s.name.startsWith('sheet_')));
+  // the rooms' LoRA (0.00235): the named interiors alone (the rooms, the throne and treasure rooms, the shrine; the title's and the death's exteriors out) under their own trigger and destination
+  const { LORAS, ROOM_CAPTION } = await import('../train-lora.mjs');
+  const rooms = trainingSet({ set: 'rooms' });
+  ok('the rooms\' LoRA set: every named interior painting, captioned with its name and the rooms\' trigger, into its own model; the title and death exteriors stay out',
+    LORAS.rooms.destination === 'pjarvilehto/crimson-moon-rooms' && LORAS.rooms.trigger === 'CRMSNROOM' && LORAS.rooms.trigger !== LORAS.chars.trigger && LORA === LORAS.chars
+    && rooms.length === Object.keys(DATA.backgrounds.roomNames).length + 1 && rooms.every((s) => s.kind === 'room' && existsSync(s.src) && s.caption.startsWith(`CRMSNROOM style, ${ROOM_CAPTION}: `))
+    && rooms.some((s) => s.caption.endsWith(': The Ossuary')) && rooms.some((s) => s.caption.endsWith(`: ${DATA.backgrounds.shrineName}`))
+    && !rooms.some((s) => s.src.endsWith(DATA.backgrounds.title) || s.src.endsWith(DATA.backgrounds.death))
+    && readFileSync('tools/train-lora.mjs', 'utf8').includes("val('--set', 'chars')") && readFileSync('tools/train-lora.mjs', 'utf8').includes("has('--cancel')"));
+  // the background generator (0.00235): docs/room-prompts.md -> tools/gen-bg.mjs -> assets/bg/candidates + rooms-art.json; the bake-off picked Nano Banana Pro
+  const BG = await import('../gen-bg.mjs');
+  const rdoc = BG.parseRooms(readFileSync("docs/room-prompts.md", "utf8"));
+  ok('gen-bg: the doc parses (a style block, rooms with an id, a name, a hue family that REFS knows), the prompt names the references and the room, the references are the game\'s own paintings',
+    rdoc.style.startsWith('STYLE:') && rdoc.rooms.length >= 3 && rdoc.rooms.every((r) => /^\w+$/.test(r.id) && r.name.startsWith('The ') && r.hue in BG.REFS && r.line.startsWith('ROOM:'))
+    && Object.values(BG.REFS).every((pair) => pair.length === 2 && pair.every((f) => existsSync(`assets/bg/${f}`) && DATA.backgrounds.roomNames[f]))
+    && BG.promptFor(rdoc, rdoc.rooms[0]).includes('The first image and the second image') && BG.promptFor(rdoc, rdoc.rooms[0], '', false).includes('The two input images')
+    && BG.promptFor(rdoc, rdoc.rooms[0], 'more chains').includes('more chains') && BG.promptFor(rdoc, rdoc.rooms[0]).includes(`"${rdoc.rooms[0].name}"`)
+    && BG.refsFor(rdoc.rooms[0]) === BG.REFS[rdoc.rooms[0].hue] && BG.refsFor(rdoc.rooms[0], 'a.jpg,b.jpg').join() === 'a.jpg,b.jpg');
+  ok('gen-bg: every bake-off model is a two-picture editor in MODELS, the default is Nano Banana Pro at 16:9, GPT Image paints 3:2 for it, and the game\'s painting is 2048x1152 q86',
+    BG.BAKEOFF.every((m) => MODELS[m] && !MODELS[m].weights) && BG.DEFAULTS.model === 'bananapro' && BG.DEFAULTS.aspect === '16:9'
+    && MODELS.gpt.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '3:2' && MODELS.bananapro.build({ prompt: 'p', portrait: 'a', style: 'b', aspect: '16:9' }).aspect_ratio === '16:9'
+    && BG.GAME.w === 2048 && BG.GAME.h === 1152 && BG.GAME.quality === 86);
+  if (existsSync('assets/data/rooms-art.json')) {
+    const reg = JSON.parse(readFileSync('assets/data/rooms-art.json', 'utf8'));
+    const all = Object.values(reg.rooms).flatMap((e) => e.candidates);
+    ok('rooms-art.json: every candidate on disk with its model, seed, references and size; the numbers unique per room',
+      all.length > 0 && all.every((c) => existsSync(c.file) && c.model && Number.isInteger(c.seed) && c.refs.length === 2 && c.w > 0 && c.h > 0)
+      && Object.values(reg.rooms).every((e) => new Set(e.candidates.map((c) => c.n)).size === e.candidates.length));
+  }
   ok('gen-art --model lora: the trained weights, the trigger in the prompt, the facing, no pictures in; a new character gets a default canvas',
     MODELS.lora.model === 'black-forest-labs/flux-dev-lora' && MODELS.lora.weights === LORA.destination && MODELS.lora.trigger === LORA.trigger
-    && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a character sheet on a plain flat grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
-    && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && readFileSync('tools/gen-art.mjs', 'utf8').includes("lora_weights: MODELS.lora.weights") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
+    && loraPrompt({ id: 'mimic', line: 'CHARACTER: a treasure chest with fangs' }).startsWith(`${LORA.trigger} style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view, facing left: a treasure chest with fangs`)
+    && NEW_CANVAS.w === 600 && NEW_CANVAS.h === 1050 && loraVersion("chars") !== null && /^[0-9a-f]{64}$/.test(loraVersion("chars")) && loraVersion("nothing") === null && readFileSync("tools/gen-art.mjs", "utf8").includes("predictVersion(loraVersion(MODELS.lora.set)") && readFileSync('tools/gen-art.mjs', 'utf8').includes("val('--new')"));
   ok('the style reference: the character\'s own portrait; --refs family = the colour family\'s original (fire: the Blood Knight, cold: the skeleton); --refs sheets = the owner\'s inked sheets',
     styleFor('ghoul') === null && styleFor('ghoul', undefined, 'family') === 'assets/chars/blood_knight.webp' && styleFor('gargoyle', undefined, 'family') === 'assets/chars/skeleton.webp' && styleFor('vampire_lord', undefined, 'family') === null
     && styleFor('rat', undefined, 'sheets') === 'assets/style/rat.png' && existsSync('assets/style/rat.png') && styleFor('vampire_lord', undefined, 'sheets') === 'assets/style/wraith.png' && styleFor('bat', undefined, 'sheets') === DEFAULTS.style

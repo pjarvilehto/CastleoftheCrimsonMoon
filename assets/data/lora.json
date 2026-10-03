@@ -684,6 +684,269 @@
           "caption": "CRMSNMOON style, a photoreal dark-fantasy character render on a plain flat mid-grey background, full body, three-quarter view: a knight in jagged crimson armour and a hood, a glowing red sigil on the chest, holding a long blood-red sword point down. crimson armour; the sword and the chest sigil burn bright red."
         }
       ],
+      "status": "succeeded",
+      "version": "pjarvilehto/crimson-moon-style:aa3c5b05f14976aea39901cf63f97b9f7fd51bc8d9a4edc256efe569832f6931",
+      "metrics": {
+        "predict_time": 838.951742003,
+        "total_time": 855.334940231
+      },
+      "finished": "2026-10-03T05:04:29Z"
+    },
+    {
+      "id": "tms9ntp51hrmr0d100k8xgfxxc",
+      "set_name": "rooms",
+      "started": "2026-10-03T05:05:03Z",
+      "trainer": "ostris/flux-dev-lora-trainer:26dce37af90b9d997eeb970d92e47de3064d46c300504ae376c75bef6a9022d2",
+      "destination": "pjarvilehto/crimson-moon-rooms",
+      "trigger": "CRMSNROOM",
+      "knobs": {
+        "steps": 1500,
+        "rank": 16,
+        "resolution": "1024",
+        "learningRate": 0.0004
+      },
+      "set": [
+        {
+          "name": "room_antechamber_hall_of_mirrors",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Hall of Mirrors"
+        },
+        {
+          "name": "room_antechamber_iron_gate",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Iron Gate"
+        },
+        {
+          "name": "room_castle_alchemy_lab",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Alchemy Lab"
+        },
+        {
+          "name": "room_castle_chapel_interior",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Chapel"
+        },
+        {
+          "name": "room_castle_courtyard",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Courtyard"
+        },
+        {
+          "name": "room_castle_dungeon",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Cells"
+        },
+        {
+          "name": "room_castle_entrance",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Gatehouse"
+        },
+        {
+          "name": "room_castle_great_hall",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Feast Hall"
+        },
+        {
+          "name": "room_castle_library",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Library"
+        },
+        {
+          "name": "room_castle_ramparts",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Ramparts"
+        },
+        {
+          "name": "room_castle_shrine_gold",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: An Ominous Shrine"
+        },
+        {
+          "name": "room_castle_throne_room",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Throne Room"
+        },
+        {
+          "name": "room_corridor_bone_passage",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Bone Passage"
+        },
+        {
+          "name": "room_corridor_cavern_chasm",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Chasm Bridge"
+        },
+        {
+          "name": "room_corridor_crypt_walkway",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Crypt Walk"
+        },
+        {
+          "name": "room_corridor_flooded_hall",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Flooded Hall"
+        },
+        {
+          "name": "room_corridor_gothic_vault",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Storm Vault"
+        },
+        {
+          "name": "room_corridor_sewer_aqueduct",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Old Aqueduct"
+        },
+        {
+          "name": "room_corridor_torch_hall",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Hall of Banners"
+        },
+        {
+          "name": "room_dungeon_antechamber",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Antechamber"
+        },
+        {
+          "name": "room_dungeon_arcane_library",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Forbidden Stacks"
+        },
+        {
+          "name": "room_dungeon_armory",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Armory"
+        },
+        {
+          "name": "room_dungeon_bell_tower",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Bell Tower"
+        },
+        {
+          "name": "room_dungeon_cathedral_nave",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Crimson Cathedral"
+        },
+        {
+          "name": "room_dungeon_cistern",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Drowned Cistern"
+        },
+        {
+          "name": "room_dungeon_conservatory",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Withered Conservatory"
+        },
+        {
+          "name": "room_dungeon_kitchen",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Kitchens"
+        },
+        {
+          "name": "room_dungeon_observatory",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Observatory"
+        },
+        {
+          "name": "room_dungeon_ossuary",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Ossuary"
+        },
+        {
+          "name": "room_dungeon_portrait_gallery",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Portrait Gallery"
+        },
+        {
+          "name": "room_dungeon_prison_corridor",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Gaol Corridor"
+        },
+        {
+          "name": "room_dungeon_royal_bedroom",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Royal Bedchamber"
+        },
+        {
+          "name": "room_dungeon_servants_quarters",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Servants' Quarters"
+        },
+        {
+          "name": "room_dungeon_sewer_passage",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Sewers"
+        },
+        {
+          "name": "room_dungeon_tomb_vault",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Sealed Tomb"
+        },
+        {
+          "name": "room_dungeon_torch_corridor",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Torchlit Passage"
+        },
+        {
+          "name": "room_dungeon_treasury",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Treasury"
+        },
+        {
+          "name": "room_dungeon_war_room",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The War Room"
+        },
+        {
+          "name": "room_dungeon_wine_cellar",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Wine Cellar"
+        },
+        {
+          "name": "room_throne_ember_warlord",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Ember Throne"
+        },
+        {
+          "name": "room_throne_obsidian_sovereign",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Obsidian Throne"
+        },
+        {
+          "name": "room_throne_rose_queen",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Rose Throne"
+        },
+        {
+          "name": "room_treasure_cursed_reliquary",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Cursed Reliquary"
+        },
+        {
+          "name": "room_treasure_dragon_hoard",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Dragon's Hoard"
+        },
+        {
+          "name": "room_treasure_frozen_tribute",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Frozen Tribute"
+        },
+        {
+          "name": "room_treasure_regalia_chamber",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Regalia Chamber"
+        },
+        {
+          "name": "room_treasure_smugglers_cache",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Smugglers' Cache"
+        },
+        {
+          "name": "room_treasure_sunken_vault",
+          "kind": "room",
+          "caption": "CRMSNROOM style, an inked dark-fantasy painting of a castle interior: heavy black ink line work with cross-hatched shadows over flat painterly colour, one dominant hue on near black, one strong light source, a wide symmetric vista at eye height: The Sunken Vault"
+        }
+      ],
       "status": "starting"
     }
   ]
