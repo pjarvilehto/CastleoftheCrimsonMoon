@@ -379,7 +379,7 @@ screen-blended over the frame's dark plate INSIDE the card's plate layer —
 `.card-frame` / the panel's `.card-plate`, which carries the card's
 see-through opacity, so the plate stays as transparent as the lab's
 (0.195) — masked to the frame's window or a panel's rounded edge). Drawn at `fx.scale` of the card's
-pixels at `fx.fps` (60 since 0.00255: the 30 of the copy-out days read
+pixels at `fx.fps` (60 since 0.00257: the 30 of the copy-out days read
 as a jerk beside 120 Hz motion on the developer's Mac — the pool draws
 each card straight, a few hundredths of a ms a tick; a phone keeps 20,
 the saver 15), a fallen card lit until its unit leaves the row
