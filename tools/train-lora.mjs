@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Train the game's style LoRAs on Replicate (0.00201, two of them since
-// 0.00235), so black-forest-labs/flux-dev-lora can draw a NEW character or
+// 0.00236), so black-forest-labs/flux-dev-lora can draw a NEW character or
 // room from a text line alone, in the house style (the mimic chest, more
 // bosses, more room kinds — the backlog's art gaps). Needs
 // REPLICATE_API_TOKEN (REPLICATE_KEY is read too); in a proxied container
