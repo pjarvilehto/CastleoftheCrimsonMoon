@@ -29,6 +29,10 @@ export function createCombat(run, room) {
     heavyCd: 0,
     over: false,
     victory: false,
+    // the class (0.00258, run.stats.klass): the wizard's charges per fight, the hexhunter's mark, the necromancer's thrall
+    charges: run.stats.klass.charges,
+    marked: -1,
+    thrall: null,
   };
 }
 
@@ -58,9 +62,10 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (!target || target.hp <= 0 || combat.over) return events;
   combat.run.turns += 1; // run history (0.095)
 
-  const hit = rollHit(combat, heavy);
+  const hit = rollHit(combat, heavy, targetIndex);
   if (!smash(combat, hit, push)) strike(combat, targetIndex, hit, push);
   lifesteal(combat, hit.dmg, push);
+  classPhase(combat, targetIndex, hit, push); // the class's heavy, its blight, its mending, its thrall (0.00258; nothing for the knight)
   if (enemyPhase(combat, push)) return events; // the knight fell
   summonPhase(combat, push);
   if (living(combat).length === 0) {
@@ -74,6 +79,7 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   // to count too, so a cooldown of 3 was back after two blows and two
   // Quicken boons (floor 1) made it every turn
   if (!heavy && combat.heavyCd > 0) combat.heavyCd -= 1;
+  if (combat.run.wild > 0) combat.run.wild -= 1; // (the wild shape's turns, 0.00258)
   return events;
 }
 
@@ -81,12 +87,16 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 // x critMultiplier (0.104: varied ±critJitter; megaCritChance of crits are
 // MEGA CRITS for megaCritMult more; crit damage bonus from Precision and
 // overflow adds to critMult, 0.112/0.113). Rolls: crit, mega, jitter.
-function rollHit(combat, heavy) {
-  const tune = DATA.difficulty.combat;
-  const crit = DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < combat.run.stats.crit;
+function rollHit(combat, heavy, targetIndex = -1) {
+  const tune = DATA.difficulty.combat, run = combat.run, k = run.stats.klass;
+  // the hexhunter's mark (0.00258): every hit on the marked foe crits — no roll spent
+  const crit = (combat.marked >= 0 && combat.marked === targetIndex) || DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
   // whole numbers always (0.00199): a heavy at heavyMult 2.3 printed 358.79999 on an OVERKILL
-  let dmg = Math.round(combat.run.stats.dmg * (heavy ? tune.heavyMult : 1));
+  // the class (0.00258): its heavy's factor, the barbarian's rage (more damage the lower the HP), the druid's wild shape
+  const rage = k.rage > 0 ? 1 + k.rage * (1 - run.hp / run.maxHp) : 1;
+  const wild = run.wild > 0 ? k.wildMult : 1;
+  let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage * wild);
   if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus }, megaCrit));
   return { dmg: Math.max(1, dmg), crit, megaCrit, heavy };
 }
@@ -98,7 +108,7 @@ function rollHit(combat, heavy) {
 // (the smash phase; 0.00223: the event is `overkill`, as the UI names it).
 function smash(combat, { dmg, heavy }, push) {
   const alive = living(combat);
-  if (!heavy || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false;
+  if (!heavy || combat.run.stats.klass.heavy !== 'blow' || alive.length < 2 || dmg < alive.reduce((s, e) => s + e.hp, 0)) return false; // (0.00258: the knight's blow only)
   for (const e of alive) e.hp = 0; // before the line: its snap shows the wiped room
   // victims: their indices, so every card can burst (0.128)
   push({ type: 'overkill', text: 'OVERKILL! Everyone dies!', dmg, victims: alive.map((e) => combat.enemies.indexOf(e)) });
@@ -112,7 +122,7 @@ function smash(combat, { dmg, heavy }, push) {
 function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy }, push) {
   const target = combat.enemies[targetIndex];
   const chain = [targetIndex];
-  if (heavy && dmg >= target.hp * DATA.difficulty.spillThreshold) {
+  if (heavy && combat.run.stats.klass.heavy === 'blow' && dmg >= target.hp * DATA.difficulty.spillThreshold) { // (0.00258: the knight's blow spills; the other classes' heavies have their own reach)
     for (const [i, e] of combat.enemies.entries()) if (i !== targetIndex && e.hp > 0) chain.push(i);
   }
   let remaining = dmg;
@@ -137,6 +147,50 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy }, push) {
       push({ type: 'kill', text: `${t.name} died!`, enemy: t });
     }
   });
+  if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
+}
+
+// The class's own turn (0.00258, a draft under the simulator's study —
+// the UI knows none of these events yet, the knight makes none): after
+// the blow, its heavy's effect (cleave / fireball sweep the other foes,
+// drain heals, mark marks, censer blights, wild shape begins), then the
+// blight's tick, the druid's mending, and the necromancer's thrall rising
+// from this turn's kill.
+function classPhase(combat, targetIndex, { dmg, heavy }, push) {
+  const run = combat.run, k = run.stats.klass;
+  if (k.heavy === 'blow') return;
+  if (heavy) {
+    if (k.heavy === 'cleave' || k.heavy === 'fireball') sweep(combat, targetIndex, Math.round(dmg * (k.heavy === 'fireball' ? 1 : k.cleaveShare)), k.heavy, push);
+    else if (k.heavy === 'drain') { const healed = Math.min(run.maxHp - run.hp, Math.round(dmg * k.drainShare)); if (healed > 0) { run.hp += healed; push({ type: 'heal', text: `You drain ${healed} HP from the blow.`, healed }); } }
+    else if (k.heavy === 'mark') { if (combat.enemies[targetIndex].hp > 0) { combat.marked = targetIndex; push({ type: 'mark', text: `You hex ${combat.enemies[targetIndex].name}: every blow on it will strike true.`, target: targetIndex }); } }
+    else if (k.heavy === 'censer') { for (const e of living(combat)) e.blight = (e.blight ?? 0) + 1; push({ type: 'blight', text: 'Your censer\'s smoke settles on every foe.' }); }
+    else if (k.heavy === 'wildshape') { run.wild = k.wildTurns + 1; push({ type: 'wild', text: `You take the beast's shape for ${k.wildTurns} turns.` }); }
+  }
+  if (k.blightShare > 0) {
+    for (const [i, e] of combat.enemies.entries()) {
+      if (e.hp <= 0 || !(e.blight > 0)) continue;
+      const dealt = Math.min(e.hp, Math.max(1, Math.round(run.stats.dmg * k.blightShare * e.blight)));
+      e.hp -= dealt;
+      push({ type: 'spill', text: `The blight gnaws ${e.name} for ${dealt}.`, target: i, dmg: dealt });
+      if (e.hp === 0) push({ type: 'kill', text: `${e.name} died!`, enemy: e });
+    }
+  }
+  if (k.mend > 0 && run.hp < run.maxHp) { const healed = Math.min(run.maxHp - run.hp, Math.max(1, Math.round(run.maxHp * k.mend))); run.hp += healed; push({ type: 'heal', text: `Your wounds knit for ${healed} HP.`, healed }); }
+  if (k.thrallShare > 0 && !(combat.thrall?.hp > 0)) {
+    const fallen = [...combat.enemies].reverse().find((e) => e.hp <= 0 && !e.raised);
+    if (fallen) { fallen.raised = true; combat.thrall = { name: `thrall ${fallen.name}`, hp: Math.max(1, Math.round(fallen.maxHp * k.thrallShare)) }; combat.thrall.maxHp = combat.thrall.hp; push({ type: 'thrall', text: `${fallen.name} rises again at your side.` }); }
+  }
+}
+// a heavy's reach past its target (the barbarian's cleave, the wizard's fireball): `dmg` on every other living foe
+function sweep(combat, targetIndex, dmg, kind, push) {
+  let kills = 0;
+  for (const [i, e] of combat.enemies.entries()) {
+    if (i === targetIndex || e.hp <= 0 || dmg <= 0) continue;
+    const applied = Math.min(dmg, e.hp);
+    e.hp -= applied;
+    push({ type: 'spill', text: kind === 'fireball' ? `...the fire takes ${e.name} for ${applied}!` : `...the cleave catches ${e.name} for ${applied}!`, target: i, dmg: applied });
+    if (e.hp === 0) { kills += 1; push({ type: 'kill', text: `${e.name} died!`, enemy: e }); }
+  }
   if (kills >= 2) push({ type: 'multi', text: `MULTI-KILL! One blow fells ${kills} enemies!` });
 }
 
@@ -166,6 +220,14 @@ function enemyStrike(combat, enemy, source, push) {
   const run = combat.run;
   const tune = DATA.difficulty.combat;
   const raw = enemy.dmg + Math.floor(Math.random() * (tune.enemyDmgJitter + 1));
+  // the necromancer's thrall (0.00258) takes the blow instead, unarmored
+  if (combat.thrall?.hp > 0) {
+    const t = combat.thrall, taken = Math.min(t.hp, raw);
+    t.hp -= taken;
+    push({ type: 'thrallhit', text: `${enemy.name} hits your thrall for ${taken}.`, taken, source });
+    if (t.hp === 0) push({ type: 'thrallfall', text: 'Your thrall crumbles.' });
+    return false;
+  }
   // T4 relic: dodge — the blow misses entirely.
   if (!DEBUG.invulnerable && run.stats.dodge > 0 && Math.random() < run.stats.dodge) {
     push({ type: 'dodge', text: `You dodge ${enemy.name}'s attack!`, source });
@@ -228,7 +290,7 @@ export function heavyTarget(combat) {
 }
 
 export function canHeavy(combat) {
-  return combat.heavyCd === 0 && !combat.over;
+  return combat.heavyCd === 0 && !combat.over && (combat.run.stats.klass.charges === 0 || combat.charges > 0); // (the wizard's charges per fight, 0.00258)
 }
 
 export function useHeavy(combat) {
@@ -236,4 +298,5 @@ export function useHeavy(combat) {
   // relics and the quicken boon lower it (floor 1): that many ordinary
   // turns pass before the next heavy.
   combat.heavyCd = combat.run.stats.heavyCdMax;
+  if (combat.run.stats.klass.charges > 0) combat.charges -= 1; // (0.00258)
 }

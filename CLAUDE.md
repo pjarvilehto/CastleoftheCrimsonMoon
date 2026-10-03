@@ -707,7 +707,26 @@ the chosen one's pulse in it too), on the knight's card in combat
 reads them, the knight's ether as before). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
-with fog — my picks, tuned in the data. **What it changes:**
+with fog — my picks, tuned in the data. **The classes' gameplay, a draft
+under study (0.00258, on the branch, not shipped — the UI knows none of
+the new events; the knight's path is byte-identical in the simulator):**
+`heroes.json class` per hero (every key on every hero, `_class` says
+what each does) — multipliers on the derived HP / damage / armor, a
+potion's heal, dodge, the heavy's cooldown and factor, and `heavy`: the
+knight's `blow` (spill, OVERKILL), the Barbarian's `cleave` (+ rage), the
+Wizard's `fireball` (charges a fight), the Necromancer's `drain` (+ a
+thrall raised from a kill that takes the foes' blows), the Druid's
+`wildshape` (+ mending a turn), the Hexhunter's `mark` (every hit on it
+crits; + dodge), the Plague Sister's `censer` (blight stacks ticking a
+turn; + armor per potion) — `stats.js derivedStats` applies the
+multipliers and snapshots the block as `run.stats.klass`, `combat.js
+classPhase` / `sweep` / the thrall in `enemyStrike` / the charges in
+`canHeavy` do the rest, `runState.js` the wild shape's potion block. `node
+tools/simulate.mjs --hero <id>` plays a class; the second tuning round
+(4 campaigns x 40 runs, the knight at median 15.8 / room-24 boss 6%):
+Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
+16.0 / 4% (rooms in 2 turns, bosses hurt), Necromancer 16.0 / 5%,
+Hexhunter 15.3 / 0%. **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import
