@@ -97,7 +97,7 @@ function warmOthers() {
 }
 
 // Called once from main.js: the first gesture anywhere unlocks audio.
-// 0.00283 (the developer's ask: the hall's bed from the title screen on):
+// 0.00285 (the developer's ask: the hall's bed from the title screen on):
 // the title bed is fetched and decoded at boot, not at the first gesture —
 // on a desktop that gesture is usually Enter the Castle, and the download
 // and decode after it put the music's start in the Great Hall — and where

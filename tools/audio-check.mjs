@@ -106,16 +106,19 @@ const result = await page.evaluate(async () => {
     for (let s = loop - Math.round(0.5 * SR); s < loop + Math.round((t.tailS + 0.5) * SR); s += w) jump = Math.max(jump, Math.abs(db(rms(L, s)) - db(plain(s))));
     // A generated bed (0.00280, crossfade 'power') crossfades its own
     // continuation into its start: different music, so "restart = plain
-    // continuation" does not apply. Its seam is judged by level instead:
-    // the quietest 0.5 s inside the crossfade against the quieter of the
-    // second before it and the second after it (a dip = a seam you hear).
+    // continuation" does not apply. Its seam is judged by level: the
+    // quietest 0.5 s inside the crossfade, as rendered, against the quietest
+    // 0.5 s of the same span in EITHER passage played on its own (the take
+    // carrying on past the loop point, or its start) — a seam you hear is
+    // one quieter than both. (0.00289: it was the quieter of the seconds on
+    // either side, which a beat's gaps fooled — the boss's drums, the
+    // take's sparser start.)
     let seamDipDb = null;
     if (t.crossfade === 'power') {
-      const lv = (a, s, n) => { let x = 0; for (let k = s; k < s + n; k++) x += a[k] * a[k]; return db(Math.sqrt(x / n)); };
-      const half = Math.round(0.5 * SR), sec = SR, tl = Math.round(t.tailS * SR);
-      let low = Infinity;
-      for (let s = loop; s + half <= loop + tl; s += Math.round(0.1 * SR)) low = Math.min(low, lv(L, s, half));
-      seamDipDb = low - Math.min(lv(L, loop - sec, sec), lv(L, loop + tl, sec));
+      const half = Math.round(0.5 * SR), tl = Math.round(t.tailS * SR), step = Math.round(0.1 * SR);
+      const low = (get) => { let m = Infinity; for (let s = 0; s + half <= tl; s += step) { let x = 0; for (let k = s; k < s + half; k++) { const v = get(k); x += v * v; } m = Math.min(m, db(Math.sqrt(x / half))); } return m; };
+      const rendered = low((k) => L[loop + k]), cont = low((k) => ch[loop + k] * gain), start = low((k) => ch[k] * gain);
+      seamDipDb = rendered - Math.min(cont, start);
     }
     const v = windows(L, Rr, SR / 2).sort((a, b) => a - b);
     music[name] = { restartErrDb: 10 * Math.log10(err / sig), jumpDb: jump, seamDipDb, medianDb: v[v.length >> 1], p90Db: v[Math.floor(v.length * 0.9)] };
@@ -136,7 +139,7 @@ for (const [n, c] of Object.entries(result.clips)) {
 console.log('\n| bed | restart error dB | level jump dB | median dB | p90 dB |\n|---|---|---|---|---|');
 for (const [n, m] of Object.entries(result.music)) {
   if (m.seamDipDb !== null) { // (a generated bed: its seam's dip, not the exact-loop measures)
-    const flag = !(m.seamDipDb > -4);
+    const flag = !(m.seamDipDb > -3); // (quieter than both passages alone by 3 dB: the crossfade is heard)
     if (flag) bad++;
     console.log(`| ${n} | generated: seam dip ${f(m.seamDipDb)} dB | — | ${m.medianDb.toFixed(1)} | ${m.p90Db.toFixed(1)} |${flag ? ' CHECK' : ''}`);
     continue;

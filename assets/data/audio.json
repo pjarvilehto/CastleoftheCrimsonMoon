@@ -659,11 +659,11 @@
         "gainDb": 0.2
       },
       "boss": {
-        "file": "assets/audio/music-boss-v3.mp3",
-        "loopS": 39.9964,
+        "file": "assets/audio/music-boss-v4.mp3",
+        "loopS": 33.3322,
         "tailS": 3,
         "crossfade": "power",
-        "gainDb": -1
+        "gainDb": 2.5
       },
       "shrine": {
         "file": "assets/audio/music-shrine-v3.mp3",
