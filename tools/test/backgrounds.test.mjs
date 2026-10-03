@@ -204,6 +204,14 @@ fresh();
     && e(0.4) < e(0.2) && e(0.4) > 0 && e(1.01) === 0);
   const mk = (t0, strength, pos) => ({ t0, pos, color: [1, 0.5, 0], strength, rise: 0.08, fade: 0.5, life: 2 });
   const none = L.activeLights([], 1000);
+  { // a held light (0.00319: a find's card): full strength through the hold, then the fade; without hold the fade starts at the peak, as before
+    const k = { rise: 0.08, fade: 0.35, life: 3.2, hold: 2 };
+    ok('a held light stays full through its hold, then fades', L.envelope(1.5, k) === 1 && L.envelope(2, k) === 1 && L.envelope(2.35, k) < 0.4 && L.envelope(0.04, k) === 0.5
+      && L.envelope(0.5, { rise: 0.08, fade: 0.35, life: 1.2 }) === Math.exp(-(0.5 - 0.08) / 0.35));
+    const lights = DATA.backgrounds.parallax.lights, s4 = [1, 2, 3, 4].map((t) => lights[`find${t}`].strength);
+    ok('a find lights the scene by its rarity, the rarer the stronger, and subtle beside a crit', s4.every((v, i) => !i || v > s4[i - 1]) && s4[3] < lights.crit.strength
+      && readFileSync('src/ui/findFx.js', 'utf8').includes("bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), ms)"));
+  }
   ok('no flashes: every light slot dark', none.count === 0 && none.col.every((v) => v === 0) && none.col.length === L.MAX_LIGHTS * 3);
   const three = L.activeLights([mk(900, 0.5, [1, 1, -1]), mk(900, 2, [2, 2, -2]), mk(900, 1, [3, 3, -3]), mk(-5000, 9, [4, 4, -4])], 1000);
   ok('only the brightest live flashes draw', three.count === 2 && three.pos[0] === 2 && three.pos[3] === 3 && three.col[0] > three.col[3] && three.col[2] === 0);
@@ -301,8 +309,8 @@ fresh();
     && glSrc.includes('0.55 + (min(d, 1.0) - 0.75) / 0.25 * 0.35'));
   // a flash light alone no longer lifts the frame cap (0.00222); the painting arrives decoded off the main thread
   const bgSrc = readFileSync('src/core/bg3d.js', 'utf8');
-  ok('a flash alone keeps the rest rate; the painting and depth map come through loadPicture (createImageBitmap) and the fill waits a frame',
-    bgSrc.includes('const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps') && bgSrc.includes("loadPicture(`assets/bg/${file}`)") && glSrc.includes('createImageBitmap(blob')
+  ok('a flash alone keeps the rest rate (a light following a card lifts it, 0.00319); the painting and depth map come through loadPicture (createImageBitmap) and the fill waits a frame',
+    bgSrc.includes('const cap = push || jolts.length || sways.length || flashes.some((f) => f.track) ? cfg.motionMaxFps : cfg.maxFps') && bgSrc.includes("loadPicture(`assets/bg/${file}`)") && glSrc.includes('createImageBitmap(blob')
     && bgSrc.includes('await new Promise((resolve) => requestAnimationFrame(resolve))') && bgSrc.includes('img.close?.()'));
   ok('puffs fade softly into the scene in front of them (depth map)', src.includes('clamp((surf - d) / uSoft, 0.0, 1.0)') && P.soft > 0);
   const Pb = DATA.backgrounds.parallax, wind = (f) => Pb.overrides?.[f]?.fogWind ?? Pb.fogWind;

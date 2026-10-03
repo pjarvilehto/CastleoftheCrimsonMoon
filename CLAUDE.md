@@ -625,7 +625,7 @@ later `initBg3d` starts clean. Keep per-pixel shader work minimal;
 slowly varying terms go per vertex. Fog:
 distance haze + ~40 soft mist puffs (`bg3dPuffs.js`, half resolution) per
 `parallax.overrides.<file>.fog` and `fogWind`. Flash lights (crit, potion,
-revive): `bgLight(kind, rect)`, settings in `parallax.lights`. 0.00312 (the developer found them faint in combat — the cards, grown since 0.100, cover the light's middle): every kind's strength x1.5 and the reach 0.45 → 0.6; tuned in the Fog Lab. Big-hit sway:
+revive): `bgLight(kind, rect)`, settings in `parallax.lights`. 0.00312 (the developer found them faint in combat — the cards, grown since 0.100, cover the light's middle): every kind's strength x1.5 and the reach 0.45 → 0.6; tuned in the Fog Lab. **A find's light (0.00319, the developer's ask: subtle, bigger the rarer):** `findFx.js findPop` hands its card to `bg3d.js bgTrackLight(kind, rectOf, holdMs)` — a light read from the card's live rect every frame (its animation included; a removed card keeps the last place), full strength through the card's flight (`hold`, `bg3dLights.js envelope`), then the kind's fade from the LOOT row; `lights.find1`-`find4` by the item's tier (a warm white, cold blue, violet, red-orange; strength 0.12 / 0.2 / 0.3 / 0.45 beside a crit's 1.5); while one rides the cap is `motionMaxFps`. The Fog Lab's Find I-IV buttons fly it the game's way. Big-hit sway:
 `swayDeg` / `swayHitShare`.
 
 #### The mist's own motion and light (0.164, tuned in the Fog Lab)

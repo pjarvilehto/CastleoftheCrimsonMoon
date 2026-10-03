@@ -7,7 +7,7 @@
 
 import { loadData, DATA } from '../../src/shared/data.js';
 import { onBackgroundChange, setBackground } from '../../src/core/scene.js';
-import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgJolt, bgSway, bgPush, isBg3dActive } from '../../src/core/bg3d.js';
+import { initBg3d, showBackground3d, setLiveTuning, bgLight, bgTrackLight, bgJolt, bgSway, bgPush, isBg3dActive } from '../../src/core/bg3d.js';
 
 const KEY = 'castle-fog-lab';
 const $ = (id) => document.getElementById(id);
@@ -104,7 +104,8 @@ const row = (...kids) => { const r = document.createElement('div'); r.className 
 
 // The flashes and where the game puts them (0.00312): a blow at the struck
 // enemy's card, a potion and a revive at the hero's, OVERKILL over the row.
-const FLASHES = [['crit', 'Crit'], ['megacrit', 'Mega'], ['overkill', 'Overkill'], ['potion', 'Potion'], ['revive', 'Revive']];
+const FLASHES = [['crit', 'Crit'], ['megacrit', 'Mega'], ['overkill', 'Overkill'], ['potion', 'Potion'], ['revive', 'Revive'],
+  ['find1', 'Find I'], ['find2', 'Find II'], ['find3', 'Find III'], ['find4', 'Find IV']]; // (0.00319: a found item's light by its rarity, riding with its card)
 const STANDINS = { hero: [0.05, 0.3, 0.17, 0.56], foe: [0.42, 0.3, 0.13, 0.5], foe2: [0.57, 0.3, 0.13, 0.5] }; // [left, top, width, height] shares of the window: a desktop fight's cards
 const rectOf = ([l, t, w, h]) => ({ left: innerWidth * l, top: innerHeight * t, width: innerWidth * w, height: innerHeight * h });
 // dark card-sized boxes where a fight's cards stand, so the glow is judged as the game shows it (most of it is behind a card)
@@ -228,7 +229,18 @@ async function copy() {
   const json = patch(); code.value = json;
   try { await navigator.clipboard.writeText(json); status.textContent = 'Copied.'; } catch { status.textContent = 'Copy the values from the box.'; }
 }
+// a find's card as the game flies it (findFx.js: 260 ms in, 1.5 s held over the foes, 520 ms into the LOOT row bottom left)
+const FIND_IN = 260, FIND_HOLD = 1500, FIND_FLY = 520;
+function findFlight(kind) {
+  const t0 = performance.now(), from = rectOf([0.47, 0.32, 0.2, 0.16]), to = { left: innerWidth * 0.03, top: innerHeight * 0.9, width: 30, height: 30 };
+  const rect = () => {
+    const t = performance.now() - t0, k = Math.min(1, Math.max(0, (t - FIND_IN - FIND_HOLD) / FIND_FLY)), e = k * k;
+    return { left: from.left + (to.left - from.left) * e, top: from.top + (to.top - from.top) * e, width: from.width + (to.width - from.width) * e, height: from.height + (to.height - from.height) * e };
+  };
+  bgTrackLight(kind, rect, FIND_IN + FIND_HOLD + FIND_FLY);
+}
 function flash(kind) {
+  if (kind.startsWith('find')) return findFlight(kind);
   const r = kind === 'potion' || kind === 'revive' ? rectOf(STANDINS.hero)
     : kind === 'overkill' ? rectOf([STANDINS.foe[0], STANDINS.foe[1], STANDINS.foe2[0] + STANDINS.foe2[2] - STANDINS.foe[0], STANDINS.foe[3]])
       : rectOf(STANDINS.foe);

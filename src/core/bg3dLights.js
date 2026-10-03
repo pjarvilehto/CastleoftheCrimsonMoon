@@ -33,9 +33,12 @@ export function flashAt(kind, rect, w, h, fovDeg, lights, now) {
 // Brightness over time: a quick rise, then an exponential fade.
 // t in seconds; 0 once the light is spent. rise / fade / life come with the
 // light (parallax.lights; 0.00197: no default copies of them here).
-export function envelope(t, { rise, fade, life }) {
+// hold (s, 0.00319): a light that stays at full strength that long (a find
+// card's flight) before its fade; without it the fade starts at the peak.
+export function envelope(t, { rise, fade, life, hold }) {
   if (t < 0 || t > life) return 0;
-  return t < rise ? t / rise : Math.exp(-(t - rise) / fade);
+  const top = Math.max(rise, hold ?? 0);
+  return t < rise ? t / rise : t < top ? 1 : Math.exp(-(t - top) / fade);
 }
 
 // The lights to draw this frame: the MAX_LIGHTS brightest live ones, as

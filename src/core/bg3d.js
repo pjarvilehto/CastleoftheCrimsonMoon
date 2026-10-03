@@ -18,7 +18,7 @@ import { fogColor } from './bg3dFog.js';
 import { makePuffs, puffFrame, seedOf } from './bg3dPuffs.js';
 import { TUNABLE, tuning, depthUrl, setLive, storeLive } from './bg3dTuning.js';
 import { createPuffRenderer, depthTexture } from './bg3dPuffGL.js';
-import { flashAt, activeLights } from './bg3dLights.js';
+import { flashAt, activeLights, screenToWorld } from './bg3dLights.js';
 import { LADDER, backingSize, fpsWindow, slowAt, nextStep } from './bg3dQuality.js';
 import { reducedMotion } from '../shared/motion.js';
 import { span } from './perfSpans.js';
@@ -99,6 +99,26 @@ export function bgLight(kind, rect) {
   const f = flashAt(kind, rect, canvas.clientWidth || 1, canvas.clientHeight || 1, cfg.fovDeg, cfg.lights, performance.now());
   if (f) flashes.push(f);
 }
+
+// A light that follows an element across the screen (0.00319: a find's card
+// rising, held and flying into the LOOT row): rectOf() is read every frame
+// (a card's live rect, its animation included; a removed card's 0x0 keeps
+// the last place), full strength for holdMs, then the kind's fade — its
+// life counted from the hold's end.
+export function bgTrackLight(kind, rectOf, holdMs) {
+  if (!gl || view !== '3d') return;
+  const f = flashAt(kind, rectOf(), canvas.clientWidth || 1, canvas.clientHeight || 1, cfg.fovDeg, cfg.lights, performance.now());
+  if (!f) return;
+  f.track = rectOf; f.hold = holdMs / 1000; f.life += f.hold;
+  flashes.push(f);
+}
+const trackFlashes = () => {
+  for (const f of flashes) {
+    if (!f.track) continue;
+    const r = f.track();
+    if (r && r.width > 0) f.pos = screenToWorld(r.left + r.width / 2, r.top + r.height / 2, canvas.clientWidth || 1, canvas.clientHeight || 1, cfg.fovDeg, cfg.lights.dist);
+  }
+};
 
 // The heaviest blows rock the background about its depth centre (0.092,
 // a rotation since 0.093): dir +1 = the near art swings right (the
@@ -251,14 +271,14 @@ function frame(now) {
   // (filtered only while something plays: the quiet frame makes no garbage)
   if (jolts.length) jolts = jolts.filter((j) => now - j.t0 < JOLT_LIFE_MS);
   if (sways.length) sways = sways.filter((s) => now - s.t0 < SWAY_LIFE_MS);
-  if (flashes.length) flashes = flashes.filter((f) => now - f.t0 < f.life * 1000);
+  if (flashes.length) { flashes = flashes.filter((f) => now - f.t0 < f.life * 1000); trackFlashes(); }
   // maxFps when nothing moves; motionMaxFps while a jolt / sway / push
   // plays (at 30 fps those stutter; uncapped, 0.00197, they ran the whole
   // scene at the display's rate through most of a fight). A flash light
   // alone does not lift the cap (0.00222): its slow exponential fade reads
   // the same at the rest rate, and it used to hold 60 fps for up to 2.8 s
   // after every crit and potion.
-  const cap = push || jolts.length || sways.length ? cfg.motionMaxFps : cfg.maxFps;
+  const cap = push || jolts.length || sways.length || flashes.some((f) => f.track) ? cfg.motionMaxFps : cfg.maxFps; // (0.00319: a light following a card moves with it)
   if (!layers.length || now - lastDraw < 1000 / cap - 2) return;
   lastDraw = now;
   const endSpan = span('bg'); // the draw's main-thread time, for the device report (0.00225)

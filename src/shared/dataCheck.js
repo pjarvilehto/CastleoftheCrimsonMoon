@@ -52,7 +52,7 @@ const NUM = {
     ...['shade', 'litTint.0', 'litTint.1', 'litTint.2', 'shadeTint.0', 'shadeTint.1', 'shadeTint.2', 'sceneLight', 'nearBright'].map((k) => `parallax.mist.${k}`),
     ...['density', 'curve', 'high', 'strength', 'max'].map((k) => `parallax.haze.${k}`),
     'parallax.push.dist', 'parallax.push.inMs', 'parallax.push.outMs',
-    ...['crit', 'megacrit', 'overkill', 'potion', 'revive'].flatMap((kind) =>
+    ...['crit', 'megacrit', 'overkill', 'potion', 'revive', 'find1', 'find2', 'find3', 'find4'].flatMap((kind) => // (find1-4, 0.00319: a find's light by its rarity, findFx.js)
       ['color.0', 'color.1', 'color.2', 'strength', 'fade', 'life'].map((k) => `parallax.lights.${kind}.${k}`)),
   ],
   telemetry: ['benchmarkPromptRoom', 'perf.nearShare', 'perf.paceShare', 'perf.goodShare', 'perf.okFps', 'report.runs', 'report.stalls'],

@@ -17,6 +17,7 @@ import { potionPic, statText, findBody, tierOf } from './hud.js';
 import { potionHealFor } from '../meta/leveling.js';
 import { can, reduced } from './fxParts.js';
 import { unionRect } from './combatFx.js';
+import { bgTrackLight } from '../core/bg3d.js';
 
 const IN_MS = 260, HOLD_MS = 1500, FLY_MS = 520; // (the look: in, read, away)
 const MAX_UNITS = 12; // (a row never holds more: the boss and its summons, or six foes)
@@ -50,7 +51,11 @@ export function findPop(fx, ctx) {
   const card = findCard(fx);
   if (!card) return;
   // where it flies: the LOOT row's next free place
-  return riseAndFly(card, ctx, () => lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0)); // (ms until it lands: the scene's LOOT row takes it then)
+  const ms = riseAndFly(card, ctx, () => lootSpot(ctx.loot?.(), ctx.lootAhead?.() ?? 0)); // (ms until it lands: the scene's LOOT row takes it then)
+  // a small light in the scene that rides with the card, warmer and wider the rarer the find (0.00319,
+  // the developer's ask: subtle; parallax.lights find1-4), fading once the card has landed
+  bgTrackLight(`find${tierOf(DATA.items[fx.id])}`, () => card.getBoundingClientRect?.(), ms);
+  return ms;
 }
 
 // A found potion (0.00263, the developer's ask): the same card, the potion's
