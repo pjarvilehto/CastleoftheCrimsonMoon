@@ -29,6 +29,7 @@ export function statsPayload(p, report = takeReport()) {
       playerId: p.playerId, name: p.name ?? '', coins: p.coins, xp: p.xp, potions: p.potions, potionCap: p.potionCap,
       stats: p.stats, records: p.records, equipment: p.equipment, history: p.history ?? [],
       bench: p.bench ?? [], // 0.131: ?debug BENCHMARK results
+      hero: p.hero ? { id: p.hero.id, look: p.hero.look } : null, // 0.00252: the chosen class and its look (null until chosen)
     },
   };
 }

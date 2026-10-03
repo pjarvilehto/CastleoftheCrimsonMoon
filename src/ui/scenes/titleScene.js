@@ -21,6 +21,8 @@ export function titleScene() {
     },
   };
 
+  function wayIn() { go(getProfile().hero ? 'hub' : 'hero'); } // (a new game chooses its hero; a save that has, enters the hall)
+
   function render(root) {
     setBackground(DATA.backgrounds.title);
     const p = getProfile();
@@ -67,7 +69,7 @@ export function titleScene() {
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
           // 0.00200: a new player is asked their name on the way in (the prompt's button reads Enter the Castle), not over the title before seeing anything
-          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? go('hero') : namePrompt(() => go('hero'))) }, 'Enter the Castle'), // (0.00248: CHOOSE YOUR HERO, then the Great Hall)
+          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? wayIn() : namePrompt(wayIn)) }, 'Enter the Castle'), // (0.00248: CHOOSE YOUR HERO, then the Great Hall; 0.00252: the hero once per save — chosen, straight to the hall)
           // Shown only when a save with progress exists: offer to wipe
           // (the game's own yes/no dialog, not the browser's).
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)

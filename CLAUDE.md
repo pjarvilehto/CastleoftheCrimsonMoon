@@ -148,7 +148,7 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
    keeps the desktop values, `?desktop` too) and every phone key is listed
    in `dataCheck.js` like any other.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
-   now 5 — 0.00248 added `hero`): bump it and append a step to `MIGRATIONS` — never edit a shipped
+   now 6 — 0.00248 added `hero`, 0.00252 made it null until chosen): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
    After the steps `migrateProfile` makes an imported code whole (0.00197;
    0.00223 says exactly what): the gear slots checked against items.json
@@ -239,6 +239,8 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
   whose `room` is not a whole number up to 999 is dropped, the counts
   clamped; one such record used to break the whole dashboard).
 - The collector's `READ_KEY` is the developer's secret: never ask for it.
+  The Worker to paste as of 0.00252 carries the hero fields (`hero`,
+  `look` on every run and `hero` on the profile).
   **Reading the stats from a session (0.00229):** `node tools/reports.mjs`
   pulls every player (device, runs, benchmarks, device reports) from the
   collector when the cloud environment allows the host
@@ -640,14 +642,22 @@ on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
 tools/cut-heroes.mjs --import .` converts them to
 `assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
 keys every sheet out of its grey by `tools/cutout.mjs` (no shadow pass:
-the sheets carry none) into `assets/heroes/<id>_<look>.webp` trimmed to
-the figure, never overwriting (rule 7), and prints the `looks` lines for
-heroes.json; then `git rm` the PNGs (they stay in history). The
-cut-outs were reviewed on contact sheets: the light specks on the
-Hexhunter's crossbow and the Druid's staff are highlights in the art.
+the sheets carry none; 0.00252: then every enclosed pocket of the
+sheet's own grey goes whatever its size — the gaps in fur, a ragged hem,
+between a crossbow's limbs, at a tight tolerance so an axe blade's greys
+stay — and the edge's pale fringe is taken out, `cutout.mjs unfringe`:
+the paper's share of each edge pixel's colour removed by its alpha) into
+`assets/heroes/<id>_<look>[_<suffix>].webp` trimmed to the figure, never
+overwriting (rule 7: a redo of a deployed figure takes `--suffix`, the
+0.00252 recut is `_k2`), and prints the `looks` lines (`--json` the map)
+for heroes.json; then `git rm` the PNGs (they stay in history).
 **The screen** (`ui/scenes/heroScene.js`, `styles.css` section 6b, the
-phone's twins in 16): the title's Enter the Castle leads here every
-visit (a new player is asked their name first), over the Great Hall's
+phone's twins in 16): the title's Enter the Castle leads here ONCE per
+save (0.00252, the developer's call: `profile.hero` is null until PROCEED;
+a save that has chosen enters the hall straight away; the class changes
+only with a new game — a wipe starts at null; the v6 step took back the
+knight the v5 step gave unasked, so every save chose once on 0.00252), a
+new player asked their name first, over the Great Hall's
 own painting, so PROCEED fades this screen's pieces out and the hall's
 in with the painting never changing. The heroes' cards in a row on the
 enemy frame (`--hero-h` 48vh or what `--n` cards fit in 90vw; a figure's
@@ -658,9 +668,18 @@ look hides it, `.single`; each hero remembers its look while the player
 compares), a bar with the hero's lines and PROCEED (Space, `P`); 1-7 and
 a click choose (the number badge is the card's keyed button). **The
 pick** lands on the profile on PROCEED only — `hero: { id, look }`, save
-version 5 (`migrations.js`: a v4 save gains the knight; `cleanHero`
-makes an imported code whole: an unknown class or look is the knight's
-first); a progress wipe starts fresh (the knight). **What it changes:**
+version 6 (`cleanHero` makes an imported code whole: an unknown class or
+look is the knight's first; null stays null). **The look** can change
+later: a click on the hall's portrait (`.knight-card.pickable`, its
+`.look-tag` says which look; the phone's Equipment sheet has a Look row,
+`L`) opens `ui/lookPicker.js` — the hero large between ‹ › (the arrow
+keys, A / D), saved as it turns, shared with the stats on close; a hero
+with one look (the knight) is not pickable. **The stats (0.00252):**
+every run record carries `hero` and `look` (`history.js runRecord`), the
+upload carries `profile.hero`, the collector keeps both (Worker 0.00252
+— paste it; the old one drops them), the dashboard shows a Hero column
+and a By hero table (`stats.js byHero`: runs, depth, deaths, looks worn;
+a run before the classes counts as the knight's). **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import

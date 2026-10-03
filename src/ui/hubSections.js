@@ -13,7 +13,8 @@ import { DATA } from '../shared/data.js';
 import { getProfile } from '../meta/profile.js';
 import { itemWithForge, playerLevel, derivedStats } from '../meta/stats.js';
 import { portraitUrl } from '../shared/portraits.js';
-import { heroOf } from '../shared/heroes.js';
+import { heroOf, cleanHero } from '../shared/heroes.js';
+import { openLookPicker } from './lookPicker.js';
 import {
   STAT_DEFS, statCost, canAfford, buyStat,
   restockPotion, potionCost, satchelFull, satchelCost, satchelMaxed, expandSatchel,
@@ -133,7 +134,15 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
                 }, `+${forgeCost(id)}c`))
         : el('span', { class: 'equip-empty' }, '— empty —'));
   };
+  // the hero's look (0.00252): the phone has no portrait in its hall — a row on the Equipment sheet opens the picker
+  const hero = heroOf(p), looks = hero.looks.length;
+  const lookRow = el('div', { class: 'item-row', 'data-row': 'look' },
+    el('span', { class: 'equip-slot' }, 'Look'),
+    el('div', { class: 'equip-right' },
+      el('div', { class: 'equip-item' }, el('div', {}, hero.name), el('div', { class: 'equip-desc' }, looks > 1 ? `Look ${cleanHero(p.hero).look + 1} of ${looks}` : 'one look so far')),
+      looks > 1 ? el('button', { class: 'forge-btn', key: 'l', onclick: () => openLookPicker((changed) => { if (changed) done('look'); }) }, 'Look') : null));
   return el('div', {},
+    lookRow,
     slotRow('Weapon', eq.weapon),
     slotRow('Armor', eq.armor),
     slotRow('Boots', eq.boots),
@@ -169,6 +178,7 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
       el('div', { class: 'slot-name' }, itemName(item), forgeLvl ? el('span', { class: 'slot-plus' }, ` +${forgeLvl}`) : null),
       el('div', { class: 'slot-desc' }, describeItem(item)));
   };
+  const hero = heroOf(p), looks = hero.looks.length;
   const level = el('div', { class: 'knight-level' }, el('span', {}, 'Level '), el('b', {}, String(playerLevel(p))));
   const vals = { Level: playerLevel(p), Attack: s.dmg, HP: s.maxHp, Armor: s.armor, Crit: pct(s.crit), Lifesteal: s.lifesteal ? pct(s.lifesteal) : '—', Potions: `${p.potions}/${p.potionCap}` };
   const chip = (k, cls = '') => statBox(k, vals[k], cls);
@@ -179,7 +189,10 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     el('div', { class: 'sec-hint' }, 'worn gear · the forge enhances tier 2+ for coins'),
     el('div', { class: 'knight-doll' },
       el('div', { class: 'gear-col gear-left' }, slot('Weapon', eq.weapon), slot('Armor', eq.armor), slot('Boots', eq.boots)),
-      el('div', { class: 'knight-card' }, el('img', { src: portraitUrl('player'), alt: '' })),
+      // the portrait opens the look picker (0.00252): the same class, another of its looks
+      el('div', { class: `knight-card${looks > 1 ? ' pickable' : ''}`, 'data-row': 'look', title: looks > 1 ? 'Change your look' : null, onclick: looks > 1 ? () => openLookPicker((changed) => { if (changed) done('look'); }) : null },
+        el('img', { src: portraitUrl('player'), alt: '' }),
+        el('div', { class: 'look-tag' }, looks > 1 ? `Look ${cleanHero(p.hero).look + 1} of ${looks} · click to change` : hero.name)),
       el('div', { class: 'gear-col gear-right' }, slot('Ring I', eq.rings[0]), slot('Ring II', eq.rings[1]), slot('Trinket', eq.trinket), slot('Amulet', eq.amulet))),
     el('div', { class: 'knight-stats' }, ...['Attack', 'HP', 'Armor', 'Crit', 'Lifesteal', 'Potions'].map((k) => boxes[k])));
   return { panel, boxes, vals };

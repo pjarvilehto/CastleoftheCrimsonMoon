@@ -4,6 +4,7 @@
 // save code carries their whole history to the /analytics/ dashboard.
 
 import { DATA } from '../shared/data.js';
+import { cleanHero } from '../shared/heroes.js';
 
 export const HISTORY_MAX = 250; // newest runs kept (~60KB of save)
 
@@ -11,9 +12,10 @@ export const newPlayerId = () => Math.random().toString(36).slice(2, 10);
 
 // What one run looked like. `run` is the finished run object (after the
 // settle math: coinsRetrieved is known).
-export function runRecord(run, outcome, now = Date.now()) {
+export function runRecord(run, outcome, now = Date.now(), hero = null) {
   return {
     at: now,
+    hero: hero?.id ?? null, look: hero ? hero.look : 0, // 0.00252: who played (heroes.json id, its look) — the dashboard's By hero table
     build: DATA.build?.version ?? '?',
     outcome,
     room: run.roomNumber,
@@ -41,6 +43,6 @@ export function runRecord(run, outcome, now = Date.now()) {
 
 export function recordRun(p, run, outcome) {
   if (!Array.isArray(p.history)) p.history = [];
-  p.history.push(runRecord(run, outcome));
+  p.history.push(runRecord(run, outcome, Date.now(), p.hero ? cleanHero(p.hero) : null));
   if (p.history.length > HISTORY_MAX) p.history.splice(0, p.history.length - HISTORY_MAX);
 }

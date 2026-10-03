@@ -21,6 +21,12 @@ export function buildTable({ rows, older = [], hidden = { builds: 0, runs: 0 } }
   return `<table><tr><th>Build</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th></tr>${rows.map(row).join('')}${older.length ? `<tr class="divider"><td colspan="5">older, most played</td></tr>${older.map(row).join('')}` : ''}${hidden.builds ? `<tr class="divider"><td colspan="5">${hidden.builds} more build${hidden.builds === 1 ? '' : 's'}, ${hidden.runs} run${hidden.runs === 1 ? '' : 's'}, not shown</td></tr>` : ''}</table>`;
 }
 
+// the runs by hero (0.00252, stats.js byHero): who is played, how deep, how often they die, how many looks were worn
+export function heroTable(rows, names) {
+  if (!rows.length) return '<p class="empty">No runs recorded yet.</p>';
+  return `<table><tr><th>Hero</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th><th>Looks worn</th></tr>${rows.map((r) => `<tr><td>${esc(names.heroName(r.hero))}</td><td>${r.runs}</td><td>${r.avgRoom.toFixed(1)}</td><td>${r.bestRoom}</td><td>${pct(r.deathRate)}</td><td>${r.looks}</td></tr>`).join('')}</table>`;
+}
+
 export function playersTable(list, names) {
   if (!list.length) return '<p class="empty">No players yet — play a run in this browser, or add a tester’s save code above.</p>';
   const rows = list.map((pl) => {
@@ -36,12 +42,13 @@ export function playersTable(list, names) {
       <td>${recent.length ? (recent.reduce((a, r) => a + r.room, 0) / recent.length).toFixed(1) : '—'}</td>
       <td>${rec.deaths ?? 0}</td>
       <td>P${st.power ?? 0} V${st.vitality ?? 0} F${st.fortune ?? 0} Pr${st.precision ?? 0} E${st.endurance ?? 0}</td>
+      <td>${p.hero ? `${esc(names.heroName(p.hero.id))}<small>look ${(p.hero.look ?? 0) + 1}</small>` : '<small>not chosen</small>'}</td>
       <td>${esc(names.itemName(eq.weapon))}<small>${esc(names.itemName(eq.armor))}</small></td>
       <td>${p.coins ?? 0}c<small>${p.xp ?? 0} xp · ${p.potions ?? 0}/${p.potionCap ?? 0} potions</small></td>
       <td>${ago(last?.at)}<small>${esc(last?.build ?? '')}</small></td>
     </tr>`;
   }).join('');
-  return `<div class="scroll"><table><tr><th>Player</th><th>Tester</th><th>Lvl</th><th>Runs</th><th>Best room</th><th>Avg (last 10)</th><th>Deaths</th><th>Disciplines</th><th>Gear</th><th>Purse</th><th>Last played</th></tr>${rows}</table></div>`;
+  return `<div class="scroll"><table><tr><th>Player</th><th>Tester</th><th>Lvl</th><th>Runs</th><th>Best room</th><th>Avg (last 10)</th><th>Deaths</th><th>Disciplines</th><th>Hero</th><th>Gear</th><th>Purse</th><th>Last played</th></tr>${rows}</table></div>`;
 }
 
 export function runsTable(runs, names) {

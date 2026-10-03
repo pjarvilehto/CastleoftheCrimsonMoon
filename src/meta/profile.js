@@ -10,7 +10,6 @@ import { startingEquipment } from './equipment.js';
 import { newPlayerId } from './history.js';
 import { SAVE_VERSION, migrateProfile } from './migrations.js';
 import { cleanName } from './names.js';
-import { cleanHero } from '../shared/heroes.js';
 
 const DEFAULTS = {
   coins: 0,
@@ -43,7 +42,7 @@ function freshProfile(playerId = newPlayerId(), name = '') {
   const pc = DATA.difficulty.potions;
   return {
     ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId, name,
-    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap, hero: cleanHero(null),
+    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap, hero: null, // (0.00252: chosen once, on CHOOSE YOUR HERO; null until then)
   };
 }
 

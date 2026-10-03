@@ -246,7 +246,8 @@ primary button. While a dialog is open it owns the keyboard.
 | `1` `2` `3` | shrine / treasure | Accept a boon / open a chest |
 | `Space` | everywhere | Play (the phone gate) · Enter the Castle · Proceed (the hero) · Descend · Push Deeper (combat, shrine, treasure) · Accept Your Fate · Return to the Great Hall · the dialogs' Onward / Continue / Close · the save dialogs' Done / Load Save |
 | `E` / `N` | title | Enter the Castle / Start a New Game (then `W` wipes, `K` keeps the save) |
-| `1`-`7` / `←` `→` / `P` | hero | Choose a class / turn the chosen hero's look / Proceed to the Great Hall |
+| `1`-`7` / `←` `→` / `P` | hero | Choose a class (once per save) / turn the chosen hero's look / Proceed to the Great Hall |
+| click the portrait · `L` (phone) | hub | The look picker: `←` `→` / `A` `D` turn the look, Space / Enter / Esc close |
 | `P` `V` `F` `R` `E` | hub | Train Power / Vitality / Fortune / Precision / Endurance |
 | `U` `X` | hub | Buy potion / expand the satchel |
 | `A` `Y` `N` | hub | Alchemy: Potency / Efficiency / Infusion |

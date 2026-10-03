@@ -130,7 +130,7 @@ fresh();
     && sent[0].opts.method === 'POST' && sent[0].opts.headers['content-type'] === 'text/plain');
   const body = JSON.parse(sent[0].opts.body);
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
-    && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,history,name,playerId,potionCap,potions,records,stats,xp');
+    && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,hero,history,name,playerId,potionCap,potions,records,stats,xp'); // (hero: 0.00252)
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
   ok('sent after every run (with the device report) and once per session', src.includes('const settled = settleRun(run, outcome);') && src.includes('keepReport(runReport(settled));') && src.includes('shareStats(settled);') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;

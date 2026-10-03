@@ -16,7 +16,7 @@ import { cleanHero } from '../shared/heroes.js';
 // and APPEND a step — never edit a shipped step (testers' saves have
 // already been through it). saveVersion is deliberately NOT in DEFAULTS:
 // the load merge would stamp it onto old saves and skip their migrations.
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 const MIGRATIONS = [
   // v0 -> v1: everything pre-0.079 builds did on every load.
@@ -64,6 +64,14 @@ const MIGRATIONS = [
   (p) => {
     p.hero = cleanHero(p.hero);
   },
+  // v5 -> v6 (0.00252, the developer's call): the class is chosen ONCE per
+  // save, on CHOOSE YOUR HERO, and changed only by a new game — `hero` is
+  // null until then. The v5 step gave every save the knight unasked, so
+  // every save chooses once more (the few picks made on 0.00248-0.00251
+  // included: a day of testing).
+  (p) => {
+    p.hero = null;
+  },
 ];
 
 export function migrateProfile(p, DEFAULTS) {
@@ -95,6 +103,6 @@ export function migrateProfile(p, DEFAULTS) {
   if (!p.forged || typeof p.forged !== 'object') p.forged = {};
   for (const [id, lvl] of Object.entries(p.forged)) { if (!Object.hasOwn(DATA.items, id) || !Number.isFinite(Number(lvl))) delete p.forged[id]; else p.forged[id] = Number(lvl); }
   for (const k of ['history', 'bench']) if (!Array.isArray(p[k])) p[k] = [];
-  p.hero = cleanHero(p.hero); // (an unknown class or look in an imported code: the knight, the first look)
+  p.hero = p.hero == null ? null : cleanHero(p.hero); // (an unknown class or look in an imported code: the knight, the first look; null = not chosen yet)
 
 }

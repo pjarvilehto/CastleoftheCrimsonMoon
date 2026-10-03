@@ -442,6 +442,18 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .hero-detail .btn-row { grid-area: go; margin-top: 0; }
 .hero-detail .btn-row button { font-size: min(2.6vh, 2.2vw); padding-inline: 2.2em; }
 
+/* the look picker (0.00252, ui/lookPicker.js): the hero large between two arrows, the looks as dots */
+.look-modal { text-align: center; }
+.look-modal .sub { color: #9a8b6a; letter-spacing: 0.08em; margin: 2px 0 10px; font-size: 0.95rem; }
+.look-stage { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.look-figure { height: min(52vh, 460px); width: auto; max-width: 60vw; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.8)); -webkit-user-drag: none; }
+.look-arrow { font-size: 2rem; line-height: 1; width: 2em; height: 2em; min-width: 0; min-height: 0; padding: 0 0 0.15em; border-radius: 50%; display: grid; place-items: center; }
+.look-modal .looks { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0 2px; }
+.look-modal .dots { display: flex; gap: 7px; }
+.look-modal .dots i { width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--gold); }
+.look-modal .dots i.on { background: var(--gold); box-shadow: 0 0 8px rgba(201, 162, 39, 0.8); }
+.look-modal .which { color: #9a8b6a; letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.85rem; }
+
 /* ================= 7 The Great Hall (hub) ================= */
 /* Three side-by-side windows, slightly smaller so the painted background
    stays visible around them. Grid (not flex) — WebKit mis-sizes nested
@@ -513,6 +525,9 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .knight-panel > .sec-hint { text-align: center; margin: 2px 0 10px; }
 .knight-doll { display: grid; grid-template-columns: minmax(0, 1fr) 172px minmax(0, 1fr); gap: 10px; align-items: stretch; }
 .knight-card { align-self: center; position: relative; aspect-ratio: 663 / 1103; background: url('assets/chars/card_player.png') center / 100% 100% no-repeat; }
+.knight-card.pickable { cursor: pointer; } /* (0.00252: a click opens the look picker, ui/lookPicker.js) */
+@media (hover: hover) { .knight-card.pickable:hover .look-tag { color: var(--gold); } }
+.knight-card .look-tag { position: absolute; left: 4%; right: 4%; bottom: 3%; text-align: center; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a8b6a; text-shadow: 0 1px 4px #000; z-index: 2; pointer-events: none; }
 .knight-card img { position: absolute; left: 50%; bottom: 7%; width: 125%; max-height: 92%; object-fit: contain; object-position: bottom center; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.8)); pointer-events: none; } /* (0.00248: a standing hero fits under the name; the knight's wide sprite is as it was) */
 .gear-col { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* (over the portrait's sword) */
 .gear-slot { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 6px 9px 7px; border: 1px solid rgba(201, 162, 39, 0.22); border-radius: 4px; background: rgba(0, 0, 0, 0.45); text-transform: uppercase; }
@@ -1365,3 +1380,5 @@ html.phone .hero-detail .lore { display: none; }
 html.phone .hero-detail .traits { margin-top: 2px; gap: 6px; }
 html.phone .hero-detail .traits span { font-size: 0.65rem; padding: 2px 8px 1px; }
 html.phone .hero-detail .btn-row button { font-size: 0.95rem; padding-inline: 1.4em; }
+html.phone .look-figure { height: 38svh; } /* (0.00252: the picker under a phone's height; the modal scrolls past that) */
+html.phone .look-arrow { font-size: 1.5rem; width: 44px; height: 44px; }

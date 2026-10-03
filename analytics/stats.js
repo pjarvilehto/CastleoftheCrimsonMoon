@@ -41,6 +41,7 @@ export const RUN_FIELDS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'item
 function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
+    hero: str(r.hero, 24), look: int(r.look, 99), // 0.00252: who played
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
     perf: sanitizePerf(r.perf) }; // 0.130: frame rate (analytics/perf.js)
   for (const k of RUN_FIELDS) out[k] = k in COUNTS ? int(r[k], COUNTS[k]) : num(r[k]);
@@ -59,6 +60,7 @@ export function sanitizeProfile(p = {}) {
     equipment: Object.fromEntries(ITEM_SLOTS.map((k) => [k, str(eq[k])])),
     history: Array.isArray(p.history) ? p.history.map(sanitizeRun) : [],
     bench: sanitizeBench(p.bench), // 0.131: ?debug BENCHMARK results
+    hero: p.hero && typeof p.hero === 'object' ? { id: str(p.hero.id, 24), look: int(p.hero.look, 99) } : null, // 0.00252: the chosen class and its look
   };
 }
 
@@ -141,6 +143,14 @@ export function boonStats(runs) {
 }
 
 // Per build: runs, average depth, death rate — newest build first.
+// The runs by hero (0.00252): who is played, how deep they get, how often they die.
+export function byHero(runs) {
+  const tagged = runs.map((r) => ({ ...r, hero: r.hero || 'knight' })); // (a run before the classes, or an unchosen save's, is the knight's)
+  return countBy(tagged, 'hero')
+    .map(([hero]) => { const own = tagged.filter((r) => r.hero === hero); return { hero, ...summarize(own), looks: new Set(own.map((r) => r.look ?? 0)).size }; })
+    .sort((a, b) => b.runs - a.runs);
+}
+
 export function byBuild(runs) {
   return countBy(runs, 'build')
     .map(([build]) => ({ build, ...summarize(runs.filter((r) => r.build === build)) }))

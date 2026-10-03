@@ -129,6 +129,24 @@ export function fillHoles(data, alpha, w, h, bg, opts = {}) {
 }
 
 /**
+ * The edge's fringe (0.00252): an edge pixel keeps the colour the model
+ * blended it with — the grey paper — so on a dark ground the silhouette
+ * wears a pale halo. With the pixel's alpha known, the paper's share of
+ * its colour is taken out: c' = (c - bg * (1 - a)) / a, clamped. In place.
+ */
+export function unfringe(data, alpha, w, h, bg) {
+  let n = 0;
+  for (let p = 0; p < w * h; p++) {
+    const a = alpha[p];
+    if (a === 0 || a === 255) continue;
+    const i = p * 4, t = a / 255;
+    for (let c = 0; c < 3; c++) data[i + c] = Math.max(0, Math.min(255, Math.round((data[i + c] - bg[c] * (1 - t)) / t)));
+    n++;
+  }
+  return n;
+}
+
+/**
  * Stray marks: every connected piece but the largest that lies entirely
  * in the bottom `band` of the picture (the model's signature in a corner,
  * a scrap of shadow) is cleared. Returns how many went.

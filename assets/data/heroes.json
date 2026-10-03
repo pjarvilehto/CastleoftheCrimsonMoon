@@ -12,7 +12,7 @@
         "Armor"
       ],
       "looks": [
-        { "art": "knight_v1.webp", "fh": 0.739 }
+        { "art": "knight_v1_k2.webp", "fh": 0.739 }
       ]
     },
     {
@@ -26,11 +26,11 @@
         "No armor"
       ],
       "looks": [
-        { "art": "barbarian_v1.webp", "fh": 0.883 },
-        { "art": "barbarian_v2.webp", "fh": 0.95 },
-        { "art": "barbarian_v3.webp", "fh": 0.902 },
-        { "art": "barbarian_alt_v2.webp", "fh": 0.913 },
-        { "art": "barbarian_alt_v4.webp", "fh": 0.916 }
+        { "art": "barbarian_v1_k2.webp", "fh": 0.883 },
+        { "art": "barbarian_v2_k2.webp", "fh": 0.95 },
+        { "art": "barbarian_v3_k2.webp", "fh": 0.902 },
+        { "art": "barbarian_alt_v2_k2.webp", "fh": 0.913 },
+        { "art": "barbarian_alt_v4_k2.webp", "fh": 0.916 }
       ]
     },
     {
@@ -44,14 +44,14 @@
         "Frail"
       ],
       "looks": [
-        { "art": "wizard_v1.webp", "fh": 0.921 },
-        { "art": "wizard_v2.webp", "fh": 0.851 },
-        { "art": "wizard_v3.webp", "fh": 0.93 },
-        { "art": "wizard_v4.webp", "fh": 0.911 },
-        { "art": "wizard_alt_v1.webp", "fh": 0.961 },
-        { "art": "wizard_alt_v2.webp", "fh": 0.953 },
-        { "art": "wizard_alt_v3.webp", "fh": 0.929 },
-        { "art": "wizard_alt_v4.webp", "fh": 0.956 }
+        { "art": "wizard_v1_k2.webp", "fh": 0.921 },
+        { "art": "wizard_v2_k2.webp", "fh": 0.851 },
+        { "art": "wizard_v3_k2.webp", "fh": 0.93 },
+        { "art": "wizard_v4_k2.webp", "fh": 0.911 },
+        { "art": "wizard_alt_v1_k2.webp", "fh": 0.961 },
+        { "art": "wizard_alt_v2_k2.webp", "fh": 0.953 },
+        { "art": "wizard_alt_v3_k2.webp", "fh": 0.929 },
+        { "art": "wizard_alt_v4_k2.webp", "fh": 0.956 }
       ]
     },
     {
@@ -65,14 +65,14 @@
         "Lifesteal"
       ],
       "looks": [
-        { "art": "necromancer_v1.webp", "fh": 0.939 },
-        { "art": "necromancer_v2.webp", "fh": 0.934 },
-        { "art": "necromancer_v3.webp", "fh": 0.936 },
-        { "art": "necromancer_v4.webp", "fh": 0.945 },
-        { "art": "necromancer_alt_v1.webp", "fh": 0.943 },
-        { "art": "necromancer_alt_v2.webp", "fh": 0.946 },
-        { "art": "necromancer_alt_v3.webp", "fh": 0.935 },
-        { "art": "necromancer_alt_v4.webp", "fh": 0.91 }
+        { "art": "necromancer_v1_k2.webp", "fh": 0.939 },
+        { "art": "necromancer_v2_k2.webp", "fh": 0.934 },
+        { "art": "necromancer_v3_k2.webp", "fh": 0.936 },
+        { "art": "necromancer_v4_k2.webp", "fh": 0.945 },
+        { "art": "necromancer_alt_v1_k2.webp", "fh": 0.943 },
+        { "art": "necromancer_alt_v2_k2.webp", "fh": 0.946 },
+        { "art": "necromancer_alt_v3_k2.webp", "fh": 0.935 },
+        { "art": "necromancer_alt_v4_k2.webp", "fh": 0.91 }
       ]
     },
     {
@@ -86,11 +86,11 @@
         "Wild shape"
       ],
       "looks": [
-        { "art": "druid_v1.webp", "fh": 0.938 },
-        { "art": "druid_v4.webp", "fh": 0.935 },
-        { "art": "druid_alt_v1.webp", "fh": 0.923 },
-        { "art": "druid_alt_v3.webp", "fh": 0.872 },
-        { "art": "druid_alt_v4.webp", "fh": 0.943 }
+        { "art": "druid_v1_k2.webp", "fh": 0.938 },
+        { "art": "druid_v4_k2.webp", "fh": 0.935 },
+        { "art": "druid_alt_v1_k2.webp", "fh": 0.923 },
+        { "art": "druid_alt_v3_k2.webp", "fh": 0.872 },
+        { "art": "druid_alt_v4_k2.webp", "fh": 0.943 }
       ]
     },
     {
@@ -104,10 +104,10 @@
         "Quick"
       ],
       "looks": [
-        { "art": "hexhunter_v1.webp", "fh": 0.961 },
-        { "art": "hexhunter_v2.webp", "fh": 0.962 },
-        { "art": "hexhunter_v3.webp", "fh": 0.967 },
-        { "art": "hexhunter_v4.webp", "fh": 0.964 }
+        { "art": "hexhunter_v1_k2.webp", "fh": 0.961 },
+        { "art": "hexhunter_v2_k2.webp", "fh": 0.962 },
+        { "art": "hexhunter_v3_k2.webp", "fh": 0.967 },
+        { "art": "hexhunter_v4_k2.webp", "fh": 0.964 }
       ]
     },
     {
@@ -121,10 +121,10 @@
         "Endurance"
       ],
       "looks": [
-        { "art": "plaguesister_v1.webp", "fh": 0.921 },
-        { "art": "plaguesister_v2.webp", "fh": 0.959 },
-        { "art": "plaguesister_v3.webp", "fh": 0.926 },
-        { "art": "plaguesister_v4.webp", "fh": 0.962 }
+        { "art": "plaguesister_v1_k2.webp", "fh": 0.921 },
+        { "art": "plaguesister_v2_k2.webp", "fh": 0.959 },
+        { "art": "plaguesister_v3_k2.webp", "fh": 0.926 },
+        { "art": "plaguesister_v4_k2.webp", "fh": 0.962 }
       ]
     }
   ]

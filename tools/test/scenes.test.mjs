@@ -418,6 +418,7 @@ const up2 = (a, b) => { const pa = a.split('.').map(Number), pb = b.split('.').m
   await sleep(100);
   ok('a named player is not asked again', !dialog());
   await sleep(1300);
+  ok('…and after the wipe the hero is chosen afresh: CHOOSE YOUR HERO again (0.00252: a new game chooses, a chosen save enters the hall straight away — heroes.test)', t().includes('CHOOSE YOUR HERO') && !t().includes('GREAT HALL'));
   show(titleScene());
   await sleep(1100);
   const change = registry.app.all((n) => n.tagName === 'button' && n.className === 'link-btn')[0];

@@ -7,11 +7,11 @@
 // browser. (0.00224: pasting save codes went — every tester is collected.)
 
 import { LOCAL_SAVE_KEY, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
-  boonStats, byBuild, condenseBuilds, depthSeries, fmtDuration, toCsv } from './stats.js';
+  boonStats, byBuild, byHero, condenseBuilds, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 import { perfTable, benchTable, sanitizeDevice, sanitizeReports, reportsTable, reportText, reportsText, PERF_DEFAULTS } from './perf.js';
 import { compareVersions } from '../src/shared/version.js';
-import { buildTable, playersTable, runsTable, pct } from './tables.js';
+import { buildTable, heroTable, playersTable, runsTable, pct } from './tables.js';
 
 const TESTERS = 'castle-analytics-testers-v1'; // playerId -> tester name (0.136)
 const NAMES = 'castle-analytics-names-v1';   // pre-0.136 renames: folded into TESTERS once
@@ -143,7 +143,8 @@ const itemName = (id) => (id ? data.items[id]?.name ?? id : '—');
 const boonName = (id) => (data.offers[id] ? `${data.offers[id].icon} ${data.offers[id].buff}` : id);
 const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
 // what the tables need to name things (analytics/tables.js)
-const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
+const heroName = (id) => data.heroes?.find((h) => h.id === id)?.name ?? (id ? String(id) : 'The Curious Knight'); // (0.00252: heroes.json; a run before the classes is the knight's)
+const names = { enemyName, itemName, boonName, labelOf, heroName, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
 
 // a bad field in one record must not leave the page at "Loading play stats…" (0.00223)
 function render() {
@@ -187,6 +188,7 @@ function renderInner() {
     ${card('Boss rooms', bars(bossClears(runs, data.bossEvery, data.finalRoom).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
     ${card('By build', buildTable(condenseBuilds(byBuild(runs))))}
+    ${card('By hero', heroTable(byHero(runs), names))}
   </div>
   ${card('Performance', perfTable(shown, runs, data.perf), true)}
   ${card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)}
@@ -252,9 +254,9 @@ async function boot() {
   const build = globalThis.__castleBuild ?? await fetch(`../assets/data/build.json?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
   const q = build?.version ? `?v=${encodeURIComponent(build.version)}` : `?t=${Date.now()}`;
   const get = (f) => fetch(`../assets/data/${f}.json${q}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-  const [enemies, items, shrines, telemetry, difficulty] = await Promise.all(['enemies', 'items', 'shrines', 'telemetry', 'difficulty'].map(get));
+  const [enemies, items, shrines, telemetry, difficulty, heroes] = await Promise.all(['enemies', 'items', 'shrines', 'telemetry', 'difficulty', 'heroes'].map(get));
   Object.assign(data, {
-    enemies: enemies ?? {}, items: items ?? {}, finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''), benchmarkSince: String(telemetry?.benchmarkSince ?? ''), perf: { ...PERF_DEFAULTS, ...(telemetry?.perf ?? {}) }, // (the page's own fallbacks, as finalRoom above)
+    enemies: enemies ?? {}, items: items ?? {}, heroes: heroes?.heroes ?? [], finalRoom: difficulty?.finalBossRoom ?? data.finalRoom, bossEvery: difficulty?.bossEvery ?? data.bossEvery, levelEvery: difficulty?.levelEvery ?? data.levelEvery, build: build?.version ?? '?', endpoint: String(telemetry?.endpoint ?? ''), collectorVersion: String(telemetry?.collectorVersion ?? ''), benchmarkSince: String(telemetry?.benchmarkSince ?? ''), perf: { ...PERF_DEFAULTS, ...(telemetry?.perf ?? {}) }, // (the page's own fallbacks, as finalRoom above)
     offers: Object.fromEntries((shrines?.offers ?? []).map((o) => [o.id, o])),
   });
   server.status = data.endpoint ? 'loading' : 'off';
