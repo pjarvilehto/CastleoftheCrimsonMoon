@@ -1,4 +1,7 @@
 {
+  "0.00238": [
+    "The Great Hall, redrawn on desktop and iPad: your knight on the left with his gear around him and all his numbers beneath, Train in the middle, Alchemy on the right — each with the XP or coins it spends"
+  ],
   "0.00237": [
     "Room paintings: the owner's prompting guide (docs/image-prompting-guide.md: the recipe every painting came from) is the prompt of tools/gen-bg.mjs — the room's line with its palette cue, the mood, the Darkest Dungeon 2 + Mignola style block verbatim, as text alone; the bake-off re-run on nine models (Imagen 4 and FLUX 1.1 Pro joined): Nano Banana Pro and Nano Banana land closest, Imagen a close third",
     "The rooms' style LoRA trained on the 48 paintings (gen-bg.mjs --model lora draws a room from its line alone); the character LoRA's prompt uses the training captions' words"
