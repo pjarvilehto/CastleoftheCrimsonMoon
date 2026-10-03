@@ -78,14 +78,15 @@ fresh();
 
   const C = DATA.audio.clips; // the sound registry (0.118)
   for (const c of ['click', 'attack', 'kill', 'hurt', 'swoosh', 'shrine', 'levelup', 'rare', 'loot', 'heal', 'forge', 'victory']) {
-    ok(`sfx clip registered + on disk: ${c}`, C[c]?.file === `assets/audio/sfx-${c}.mp3` && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
+    // (0.00302: a clip the SFX Lab's review re-rendered moved into sfx/ as <c>_v<k>.mp3; the rest keep their first names)
+    ok(`sfx clip registered + on disk: ${c}`, (C[c]?.file === `assets/audio/sfx-${c}.mp3` || new RegExp(`^assets/audio/sfx/${c}_v\\d+\\.mp3$`).test(C[c]?.file)) && statSync(C[c].file).size > 5 * 1024); // 0.5s click ~ 8.8KB
   }
   // 0.00297: the developer's recordings — the death hit (a huge wooden tube, timed to the dialog) and the Heart's revive (a spooky metal hit), both stingers that duck the music
-  ok('the death hit: a new file with its loudest moment measured, a stinger', C.death.file === 'assets/audio/sfx/death_v2.mp3' && statSync(C.death.file).size > 100 * 1024
+  ok('the death hit: a new file with its loudest moment measured, a stinger', /^assets\/audio\/sfx\/death_v\d+\.mp3$/.test(C.death.file) && statSync(C.death.file).size > 100 * 1024
     && Number.isFinite(C.death.peakMs) && C.death.peakMs > 0 && C.death.stinger === true && DATA.audio.duck.clips.death > 0 && !readdirSync('assets/audio').includes('sfx-death.mp3'));
   ok('the revive hit: a file clip, a stinger ducking the music like the shrine', C.revive.file === 'assets/audio/sfx/revive_v1.mp3' && statSync(C.revive.file).size > 100 * 1024
     && C.revive.stinger === true && DATA.audio.duck.clips.revive === DATA.audio.duck.clips.shrine);
-  ok('the death and the revive sit at the stingers\' level (death -8, revive -10)', Math.abs(C.death.measuredDb + C.death.gainDb + 8) < 0.11 && Math.abs(C.revive.measuredDb + C.revive.gainDb + 10) < 0.11);
+  ok('the death and the revive sit at the stingers\' level, above the hits (death -7.5 since the 0.00302 review, revive -10)', Math.abs(C.death.measuredDb + C.death.gainDb + 7.5) < 0.11 && Math.abs(C.revive.measuredDb + C.revive.gainDb + 10) < 0.11);
   ok('generated sounds registered as synth', ['ring', 'boom', 'tick', 'thud', 'slice', 'clank'].every((n) => C[n]?.synth === true && !C[n].file));
   ok('combat sounds jittered', ['attack', 'kill', 'hurt', 'loot'].every((n) => C[n].rate?.length === 2 && C[n].jitterDb > 0));
 
@@ -106,7 +107,7 @@ fresh();
     ok('the reliquary\'s revive plays the hit too (treasureUI: the Heart unspent before, spent after, the knight alive)', read('src/ui/treasureUI.js').includes("if (!got.died && heart && !run.revive) sfx('revive');"));
     // 0.00298: the huge tom on Push Deeper (every chosen room change, not the first room's entry) and as the hall's Descend begins
     ok('the deeper strike: a file clip at the hits\' level, struck on Push Deeper and on Descend', C.deeper.file === 'assets/audio/sfx/deeper_v1.mp3' && statSync(C.deeper.file).size > 100 * 1024
-      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 12) < 0.11 && !C.deeper.stinger
+      && Math.abs(C.deeper.measuredDb + C.deeper.gainDb + 7) < 0.11 && !C.deeper.stinger // (-12 until the developer's 0.00302 review: +5)
       && d.includes("if (!instant) sfx('deeper');") && read('src/ui/scenes/hubScene.js').includes("sfx('deeper'); // the descent begins"));
   }
   ok('shrine blessing chime wired', read('src/ui/shrineUI.js').includes("sfx('shrine')"));
@@ -201,11 +202,12 @@ fresh();
 {
   const A = DATA.audio, T = A.transition, cs = T.clips.map((n) => A.clips[n]);
   ok('the transition lists ten whoosh recordings, each a measured file clip with its loudest moment', T.clips.length === 10 && new Set(T.clips).size === 10 && !T.clip
-    && cs.every((c) => /^assets\/audio\/sfx\/whoosh_\w+_v1\.mp3$/.test(c.file) && statSync(c.file).size > 100 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0)
+    && cs.every((c) => /^assets\/audio\/sfx\/whoosh_\w+_v\d+\.mp3$/.test(c.file) && statSync(c.file).size > 100 * 1024 && Number.isFinite(c.measuredDb) && Number.isFinite(c.peakMs) && c.peakMs > 0)
     && !A.clips.whoosh && !A.clips.room_swoosh && !A.variation.room_swoosh && !readFileSync('src/audio/synth.js', 'utf8').includes('whoosh'));
   ok('every whoosh\'s peak comes before mid-transition (2 s), so each can be timed to the crossfade; the level varied a little each play', T.peakAtMs === 2000
     && cs.every((c) => T.peakAtMs - c.peakMs > 0 && c.jitterDb > 0));
-  ok('the whooshes all sit at one level, the hits\' -12 (0.00298, the developer: at the old swoosh\'s -19.3 they were way too quiet)', cs.every((c) => Math.abs(c.measuredDb + c.gainDb + 12) < 0.11));
+  ok('the whooshes sit well above the hits\' -12, each at the developer\'s own level (0.00302: his SFX Lab review lifted them 3 to 7.5 dB; 0.00298 had them at -12, at the old swoosh\'s -19.3 they were way too quiet)',
+    cs.every((c) => { const l = c.measuredDb + c.gainDb; return l > -10 && l <= -4; }), cs.map((c) => (c.measuredDb + c.gainDb).toFixed(1)).join());
   ok('the old swoosh and death files are gone from the folder players download (rule 7: new names)', !readdirSync('assets/audio').some((f) => /room-swoosh|sfx-death/.test(f)));
 }
 
@@ -657,7 +659,7 @@ fresh();
   const t2 = setClip(text, 'loot', { approved: true });
   const J2 = JSON.parse(t2), J0 = JSON.parse(text);
   ok('render-sfx: setClip rewrites one clip in place (a clip whose block holds an array too), the rest byte for byte',
-    J2.clips.loot.approved === true && J2.clips.loot.rate[0] === J0.clips.loot.rate[0] && t2.split('\n').length === text.split('\n').length + 1
+    J2.clips.loot.approved === true && J2.clips.loot.rate[0] === J0.clips.loot.rate[0] && t2.split('\n').length === text.split('\n').length + (J0.clips.loot.approved ? 0 : 1)
     && JSON.stringify({ ...J2, clips: { ...J2.clips, loot: null } }) === JSON.stringify({ ...J0, clips: { ...J0.clips, loot: null } }));
   const logs = [], removed = [], rendered = [];
   const out = JSON.parse(applyReview(text, { approved: ['click'], edits: [
