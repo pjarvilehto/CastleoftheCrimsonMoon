@@ -667,7 +667,14 @@ baked in as a 0.4 s crossfade at the file's end — fades `intro.fadeMs`
 onto the 3D renderer's rest pose, the fade beginning `intro.leadMs`
 before the film's end with the film playing on under it (0.00308, the
 developer's ask after seeing it; `holdMs` = a hold after the end instead,
-with leadMs 0) (the same
+with leadMs 0; 0.00309, the developer's ask: a room change's whoosh
+peaks `intro.whooshAtMs` into the flight (`sfx.js transitionSfx(atMs)`)
+and the Descend strike, `deeper`, sounds as the title's panel comes up —
+before any gesture `sfx.js adoptRunning` takes the context only where
+the browser let the title bed start on its own (RUNNING; a suspended
+one would hold the sounds for a stale burst on the first click), so a
+desktop that blocks autoplay sees the flight silent and a phone, whose
+PLAY tap precedes the title, hears both) (the same
 painting cover-fit; what the fade covers is the renderer's haze and
 vignette), and the title's panel, held under it (`.intro-hold`), fades
 in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,

@@ -1,13 +1,14 @@
 {
   "title": "medieval_castle.jpg",
   "intro": {
-    "_doc": "The title's fly-in (0.00307, ui/titleIntro.js; a prototype): file = the clip in assets/video/, a flight from far across the valley into the title painting, its last frame the painting itself cover-fit, so the held frame fades onto the 3D renderer's rest pose with no jump (docs/video-prompts.md says how it is made; a new clip is a new filename, rule 7). enabled false = no intro. waitMs = how long the loader waits at 100% for the clip before the title shows without it; leadMs = the fade begins this long BEFORE the film's end, the film still playing under it (0.00308, the developer's ask: a crossfade a little earlier); holdMs = with leadMs 0, the last frame held after the end before the fade; fadeMs = the fade onto the painting. Played once per session; a click, a tap or a key skips it; reduced motion and a browser without H.264 skip it.",
+    "_doc": "The title's fly-in (0.00307, ui/titleIntro.js; a prototype): file = the clip in assets/video/, a flight from far across the valley into the title painting, its last frame the painting itself cover-fit, so the held frame fades onto the 3D renderer's rest pose with no jump (docs/video-prompts.md says how it is made; a new clip is a new filename, rule 7). enabled false = no intro. waitMs = how long the loader waits at 100% for the clip before the title shows without it; leadMs = the fade begins this long BEFORE the film's end, the film still playing under it (0.00308, the developer's ask: a crossfade a little earlier); holdMs = with leadMs 0, the last frame held after the end before the fade; fadeMs = the fade onto the painting; whooshAtMs = where in the flight a room change's whoosh peaks (0.00309, the developer's ask; the Descend strike sounds as the title's panel comes up — both only where the browser let the title bed start before a gesture, or after the phone's PLAY tap). Played once per session; a click, a tap or a key skips it; reduced motion and a browser without H.264 skip it.",
     "enabled": true,
     "file": "title_flyin_v1.mp4",
     "waitMs": 1500,
     "holdMs": 0,
     "leadMs": 300,
-    "fadeMs": 700
+    "fadeMs": 700,
+    "whooshAtMs": 1700
   },
   "hub": "castle_great_hall.jpg",
   "entrance": [

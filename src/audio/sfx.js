@@ -110,6 +110,7 @@ function start(name, buffer, at, { pan = 0, rate = null, gainDb = 0, plain = fal
 // (or when muted) it silently drops — effects are cosmetic, never queued.
 export function sfx(name, opts = {}) {
   const c = clip(name);
+  if (!ctx) adoptRunning(); // (0.00309: the title's fly-in sounds before any gesture where the browser let the title bed start)
   if (!c || !ctx || mute.on) return;
   const at = ctx.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000;
   if (c.synth) {
@@ -152,9 +153,22 @@ export function sfxPeakAt(name, atMs, opts = {}) {
 // of the one pitched-down swoosh), scheduled so the clip's loudest moment
 // lands peakAtMs into the transition — the middle of windows out,
 // crossfade, windows in. jitterDb varies each play's level a little.
-export function transitionSfx() {
+export function transitionSfx(atMs = DATA.audio.transition.peakAtMs) { // (0.00309: the title's fly-in asks for its own moment)
   const T = DATA.audio.transition;
-  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], T.peakAtMs);
+  sfxPeakAt(T.clips[Math.floor(Math.random() * T.clips.length)], atMs);
+}
+
+// Before the first gesture the module has no context: a sound asked for
+// then is dropped. 0.00309: where the browser let the title bed start on
+// its own (music.js startEarly — the context is RUNNING), the fly-in's
+// whoosh and the Descend strike may sound too, through the same mixer. A
+// suspended context is left alone: a source scheduled on one plays the
+// moment it resumes, a stale burst on the first click.
+function adoptRunning() {
+  const c = ensureCtx();
+  if (c?.state !== 'running') return;
+  ctx = c;
+  mixer();
 }
 
 export const isMuted = () => mute.on;

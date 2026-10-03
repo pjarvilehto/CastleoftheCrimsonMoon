@@ -14,6 +14,7 @@
 // gesture; a phone plays it after its PLAY gate anyway.
 import { DATA } from '../shared/data.js';
 import { reducedMotion } from '../shared/motion.js';
+import { transitionSfx } from '../audio/sfx.js';
 
 let video = null;   // the preloaded <video>; null where there is nothing to play
 let ready = null;   // resolves true once it can play through, false on an error
@@ -91,6 +92,6 @@ export function playIntro() {
     layer.addEventListener('pointerdown', skip);
     globalThis.addEventListener('keydown', skip, true);
     v.currentTime = 0;
-    v.play().catch(finish); // refused (no autoplay): nothing to see, fade at once
+    v.play().then(() => transitionSfx(c.whooshAtMs)).catch(finish); // refused (no autoplay): nothing to see, fade at once; playing: a room change's whoosh, its peak intro.whooshAtMs into the flight (0.00309)
   });
 }
