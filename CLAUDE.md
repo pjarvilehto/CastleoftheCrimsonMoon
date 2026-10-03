@@ -663,8 +663,11 @@ The title painting is the END of a short flight: as the title scene
 enters, `ui/titleIntro.js playIntro()` lays a muted `<video>` over
 everything (`#intro`, z-index above the corner column), the camera
 arrives at the castle, the film's last frame — the painting itself,
-baked in as a 0.4 s crossfade at the file's end — is held `intro.holdMs`
-and fades `intro.fadeMs` onto the 3D renderer's rest pose (the same
+baked in as a 0.4 s crossfade at the file's end — fades `intro.fadeMs`
+onto the 3D renderer's rest pose, the fade beginning `intro.leadMs`
+before the film's end with the film playing on under it (0.00308, the
+developer's ask after seeing it; `holdMs` = a hold after the end instead,
+with leadMs 0) (the same
 painting cover-fit; what the fade covers is the renderer's haze and
 vignette), and the title's panel, held under it (`.intro-hold`), fades
 in after. Tuning `backgrounds.json intro` (`enabled` the kill switch,

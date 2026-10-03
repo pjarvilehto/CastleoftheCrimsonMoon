@@ -50,8 +50,9 @@ export function introReady() {
 
 /**
  * The title scene's enter (the windows are out, the painting just set):
- * play the clip over everything, hold its last frame intro.holdMs, fade it
- * out over intro.fadeMs onto the renderer's rest pose. A promise that
+ * play the clip over everything and fade it out over intro.fadeMs onto the
+ * renderer's rest pose — the fade starting intro.leadMs before the film's
+ * end (0.00308), or intro.holdMs after it when leadMs is 0. A promise that
  * resolves once the layer is gone — or null at once when there is nothing
  * to play (no clip, reduced motion, already played, not decoded yet).
  */
@@ -71,11 +72,14 @@ export function playIntro() {
       if (done) return;
       done = true;
       v.removeEventListener('ended', onEnd);
+      clearTimeout(lead);
       globalThis.removeEventListener('keydown', skip, true);
       layer.classList.add('fading'); // styles.css: opacity to 0 over --fade
       setTimeout(() => { v.pause(); layer.remove(); resolve(true); }, c.fadeMs);
     };
-    const onEnd = () => setTimeout(finish, c.holdMs); // (the element keeps its last frame up)
+    const onEnd = () => setTimeout(finish, c.holdMs); // (the element keeps its last frame up; the backstop)
+    // 0.00308: the fade begins intro.leadMs BEFORE the film's end, the film still playing under it (its last stretch is the painting)
+    const lead = setTimeout(finish, Math.max(0, (v.duration || 0) * 1000 - c.leadMs));
     // a skip: any key but the browser's own (F-keys, Tab), any press on the layer; the key goes no further (the title's hotkeys would act under the clip)
     const skip = (e) => {
       if (e.key && /^(F\d+|Tab)$/.test(e.key)) return;
