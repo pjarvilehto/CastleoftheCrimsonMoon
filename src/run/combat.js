@@ -62,10 +62,11 @@ export function playerAttack(combat, targetIndex, heavy = false) {
   if (!target || target.hp <= 0 || combat.over) return events;
   combat.run.turns += 1; // run history (0.095)
 
+  const deadBefore = combat.enemies.filter((e) => e.hp <= 0).length; // (the turn's kills, for the wizard's charges — 0.00258)
   const hit = rollHit(combat, heavy, targetIndex);
   if (!smash(combat, hit, push)) strike(combat, targetIndex, hit, push);
   lifesteal(combat, hit.dmg, push);
-  classPhase(combat, targetIndex, hit, push); // the class's heavy, its blight, its mending, its thrall (0.00258; nothing for the knight)
+  classPhase(combat, targetIndex, hit, deadBefore, push); // the class's heavy, its blight, its mending, its thrall (0.00258; nothing for the knight)
   if (enemyPhase(combat, push)) return events; // the knight fell
   summonPhase(combat, push);
   if (living(combat).length === 0) {
@@ -90,14 +91,15 @@ export function playerAttack(combat, targetIndex, heavy = false) {
 function rollHit(combat, heavy, targetIndex = -1) {
   const tune = DATA.difficulty.combat, run = combat.run, k = run.stats.klass;
   // the hexhunter's mark (0.00258): every hit on the marked foe crits — no roll spent
-  const crit = (combat.marked >= 0 && combat.marked === targetIndex) || DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < run.stats.crit;
+  const marked = combat.marked >= 0 && combat.marked === targetIndex;
+  const crit = marked || DEBUG.forceCrit || DEBUG.forceMegaCrit || Math.random() < run.stats.crit;
   const megaCrit = crit && (DEBUG.forceMegaCrit || Math.random() < tune.megaCritChance);
   // whole numbers always (0.00199): a heavy at heavyMult 2.3 printed 358.79999 on an OVERKILL
   // the class (0.00258): its heavy's factor, the barbarian's rage (more damage the lower the HP), the druid's wild shape
   const rage = k.rage > 0 ? 1 + k.rage * (1 - run.hp / run.maxHp) : 1;
   const wild = run.wild > 0 ? k.wildMult : 1;
   let dmg = Math.round(run.stats.dmg * (heavy ? tune.heavyMult * k.heavyMult : 1) * rage * wild);
-  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus }, megaCrit));
+  if (crit) dmg = Math.round(dmg * critMultiplier({ ...tune, critMult: tune.critMult + combat.run.stats.critBonus + (marked ? k.markCrit : 0) }, megaCrit)); // (the hex's own crit damage, 0.00258)
   return { dmg: Math.max(1, dmg), crit, megaCrit, heavy };
 }
 
@@ -156,7 +158,7 @@ function strike(combat, targetIndex, { dmg, crit, megaCrit, heavy }, push) {
 // drain heals, mark marks, censer blights, wild shape begins), then the
 // blight's tick, the druid's mending, and the necromancer's thrall rising
 // from this turn's kill.
-function classPhase(combat, targetIndex, { dmg, heavy }, push) {
+function classPhase(combat, targetIndex, { dmg, heavy }, deadBefore, push) {
   const run = combat.run, k = run.stats.klass;
   if (k.heavy === 'blow') return;
   if (heavy) {
@@ -165,6 +167,11 @@ function classPhase(combat, targetIndex, { dmg, heavy }, push) {
     else if (k.heavy === 'mark') { if (combat.enemies[targetIndex].hp > 0) { combat.marked = targetIndex; push({ type: 'mark', text: `You hex ${combat.enemies[targetIndex].name}: every blow on it will strike true.`, target: targetIndex }); } }
     else if (k.heavy === 'censer') { for (const e of living(combat)) e.blight = (e.blight ?? 0) + 1; push({ type: 'blight', text: 'Your censer\'s smoke settles on every foe.' }); }
     else if (k.heavy === 'wildshape') { run.wild = k.wildTurns + 1; push({ type: 'wild', text: `You take the beast's shape for ${k.wildTurns} turns.` }); }
+  }
+  // the wizard's charges come back with the kills (a fireball through a room refills it; a boss's summons feed it)
+  if (k.chargeOnKill > 0) {
+    const kills = combat.enemies.filter((e) => e.hp <= 0).length - deadBefore;
+    if (kills > 0 && combat.charges < k.charges) { combat.charges = Math.min(k.charges, combat.charges + k.chargeOnKill * kills); push({ type: 'charge', text: `The kill feeds your grimoire: ${combat.charges} charge${combat.charges === 1 ? '' : 's'}.` }); }
   }
   if (k.blightShare > 0) {
     for (const [i, e] of combat.enemies.entries()) {

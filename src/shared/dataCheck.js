@@ -98,7 +98,7 @@ export function checkData(data) {
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
     // the class (0.00258): every number present, the heavy one the engine knows
     const c = h?.class;
-    const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor'];
+    const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];
     if (!c || typeof c.heavyName !== 'string' || !c.heavyName || !NUMS.every((k) => isNum(c[k])) || !['blow', 'cleave', 'fireball', 'drain', 'mark', 'censer', 'wildshape'].includes(c.heavy)) out.push(`heroes.json: ${h?.id}.class (heavyName, every number of the block, and heavy one of blow | cleave | fireball | drain | mark | censer | wildshape)`);
     // the class colour theme (0.00254): the plate's colour, the card light's look and tint
     const th = h?.theme;

@@ -59,7 +59,7 @@ export function canAffordOffer(run, o) {
     case 'leech': return hpFloorOk(run);
     case 'bulwark': return dmgFloorOk(run);
     case 'secondwind': return coinsOk(run, o);
-    case 'quicken': return hpFloorOk(run) && run.stats.heavyCdMax > 1;
+    case 'quicken': return hpFloorOk(run) && (run.stats.klass.charges > 0 || run.stats.heavyCdMax > 1); // (a charge class takes it as a charge, 0.00258)
     case 'greed': return dmgFloorOk(run);
     case 'glasscannon': return run.stats.armor >= o.minArmor;
     default: return false;
@@ -124,7 +124,9 @@ export function acceptOffer(run, o) {
     case 'quicken':
       payHp(run, o.hpCostPct);
       // Heavy cooldown starts at player.baseHeavyCd; each quicken drops it (floor 1).
-      run.stats.heavyCdMax = Math.max(1, run.stats.heavyCdMax - o.cdReduce);
+      // A charge class (the wizard, 0.00258) gets a charge a fight instead: its cooldown is already 1.
+      if (run.stats.klass.charges > 0) run.stats.klass.charges += o.cdReduce;
+      else run.stats.heavyCdMax = Math.max(1, run.stats.heavyCdMax - o.cdReduce);
       break;
     case 'greed':
       payDmg(run, o.dmgCostPct);

@@ -727,7 +727,14 @@ tools/simulate.mjs --hero <id>` plays a class; the second tuning round
 Barbarian 18.3 / 9%, Plague Sister 18.3 / 20%, Druid 16.5 / 5%, Wizard
 16.0 / 0% (the developer's call: less glass, less cannon — HP 0.9, armor
 0.7, damage 1.05, the fireball 0.9; rooms in under 3 turns, bosses
-still hurt), Necromancer 16.0 / 5%, Hexhunter 15.3 / 0%. **What it changes:**
+still hurt), Necromancer 16.0 / 5%, Hexhunter 15.3 / 0% — then (the developer's call) the Hexhunter made
+to reach room 24 (the hex adds `markCrit` 0.3 crit damage on the hexed
+foe, the heavy at 0.8: 16.5 / 6%) and the Wizard made to fare better
+against bosses (`chargeOnKill`: a kill gives a charge back, up to
+`charges`, now 3; damage 1.1; Quicken at a shrine gives a charge class a
+charge instead of a shorter cooldown, `shrine.js`: 16.5, the room-16 boss
+78% from 68%). No difficulty label on the cards (the developer's call:
+the variance stays quiet). **What it changes:**
 the knight's card in combat and the hall's knight card draw the chosen
 hero's figure (`shared/portraits.js portraitUrl('player')`; the default
 hero keeps `cards.json player.art`, the file the Art Lab's import
