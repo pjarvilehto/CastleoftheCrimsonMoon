@@ -148,7 +148,7 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
    keeps the desktop values, `?desktop` too) and every phone key is listed
    in `dataCheck.js` like any other.
 3. **Save format changes go through `SAVE_VERSION`** (`meta/migrations.js`,
-   now 6 — 0.00248 added `hero`, 0.00252 made it null until chosen): bump it and append a step to `MIGRATIONS` — never edit a shipped
+   now 6 — 0.00248 added `hero`, 0.00253 made it null until chosen): bump it and append a step to `MIGRATIONS` — never edit a shipped
    step. New defaults: `DEFAULTS` / `freshProfile()` in `meta/profile.js`.
    After the steps `migrateProfile` makes an imported code whole (0.00197;
    0.00223 says exactly what): the gear slots checked against items.json
@@ -234,12 +234,13 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
   that the collector is older, and the old Worker drops new fields (saves
   keep them; they arrive with the next upload). A Worker NEWER than the
   page's telemetry.json gets a neutral note instead (0.00223: it used to
-  be told to roll back). The Worker to paste as of 0.00223 carries the
+  be told to roll back). The Worker to paste as of 0.00252 carries each run's
+  shrine deals (`shrines`); before it, as of 0.00223, it gained the
   phone power / stall fields (0.00222) and the run-record clamp (a run
   whose `room` is not a whole number up to 999 is dropped, the counts
   clamped; one such record used to break the whole dashboard).
 - The collector's `READ_KEY` is the developer's secret: never ask for it.
-  The Worker to paste as of 0.00252 carries the hero fields (`hero`,
+  The Worker to paste as of 0.00253 carries the hero fields (`hero`,
   `look` on every run and `hero` on the profile).
   **Reading the stats from a session (0.00229):** `node tools/reports.mjs`
   pulls every player (device, runs, benchmarks, device reports) from the
@@ -311,7 +312,20 @@ tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
 24, free rooms a run or two later. Measured and set aside: lifesteal
 halved everywhere (gentler, room 24 four runs later), healing only off
 damage dealt (no change), a per-fight heal cap (the deep game stalls),
-slower enemy damage growth (undoes the smoothing). Tried and turned down by the developer: early rooms
+slower enemy damage growth (undoes the smoothing). **Shrines from the players' own picks (0.00252, the developer's call):**
+the play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
+random) had Crit 23%, Armor 19%, Quicken 16% and Bulwark / Glass Cannon
+3% each (the bot rates Glass Cannon the best — real players fear its
+armor cost); so Bulwark became the big-armor boon (+40%, at least +80,
+for -5% damage) and Glass Cannon +50% damage for -30% armor, and every
+cost came down about a third (-10% max HP, -5% damage, Crit 20 coins,
+Second Wind 30). Shrine study after: every boon gains but Greed (a coin
+trade); Bulwark +2.1 rooms late and Glass Cannon +2.0 sit just over the
+study's OP line — left so while the new pick data comes in. **The deals
+are recorded** (`run.shrines`, `shrine.js noteDeal`: each shrine's three
+offers and the pick, null = walked away; the run record's `shrines`, the
+collector's `cleanShrines`, the dashboard's Shrine picks card — a boon's
+pick rate against the times it was dealt). Tried and turned down by the developer: early rooms
 that grow with the best room ("the castle remembers"), and starting a run
 at a beaten boss's next stretch (waypoints — it also slowed room 24 to
 run ~44). HP scale (0.093): player HP, enemy damage, armor, potion
@@ -642,21 +656,21 @@ on flat grey, `hero_<id>_<look>.png` (`v1`..`vN`, `alt_v1`..); `node
 tools/cut-heroes.mjs --import .` converts them to
 `assets/style/heroes/<id>_<look>.webp` (the raw sheets, lab-only, q92),
 keys every sheet out of its grey by `tools/cutout.mjs` (no shadow pass:
-the sheets carry none; 0.00252: then every enclosed pocket of the
+the sheets carry none; 0.00253: then every enclosed pocket of the
 sheet's own grey goes whatever its size — the gaps in fur, a ragged hem,
 between a crossbow's limbs, at a tight tolerance so an axe blade's greys
 stay — and the edge's pale fringe is taken out, `cutout.mjs unfringe`:
 the paper's share of each edge pixel's colour removed by its alpha) into
 `assets/heroes/<id>_<look>[_<suffix>].webp` trimmed to the figure, never
 overwriting (rule 7: a redo of a deployed figure takes `--suffix`, the
-0.00252 recut is `_k2`), and prints the `looks` lines (`--json` the map)
+0.00253 recut is `_k2`), and prints the `looks` lines (`--json` the map)
 for heroes.json; then `git rm` the PNGs (they stay in history).
 **The screen** (`ui/scenes/heroScene.js`, `styles.css` section 6b, the
 phone's twins in 16): the title's Enter the Castle leads here ONCE per
-save (0.00252, the developer's call: `profile.hero` is null until PROCEED;
+save (0.00253, the developer's call: `profile.hero` is null until PROCEED;
 a save that has chosen enters the hall straight away; the class changes
 only with a new game — a wipe starts at null; the v6 step took back the
-knight the v5 step gave unasked, so every save chose once on 0.00252), a
+knight the v5 step gave unasked, so every save chose once on 0.00253), a
 new player asked their name first, over the Great Hall's
 own painting, so PROCEED fades this screen's pieces out and the hall's
 in with the painting never changing. The heroes' cards in a row on the
@@ -674,9 +688,9 @@ later: a click on the hall's portrait (`.knight-card.pickable`, its
 `.look-tag` says which look; the phone's Equipment sheet has a Look row,
 `L`) opens `ui/lookPicker.js` — the hero large between ‹ › (the arrow
 keys, A / D), saved as it turns, shared with the stats on close; a hero
-with one look (the knight) is not pickable. **The stats (0.00252):**
+with one look (the knight) is not pickable. **The stats (0.00253):**
 every run record carries `hero` and `look` (`history.js runRecord`), the
-upload carries `profile.hero`, the collector keeps both (Worker 0.00252
+upload carries `profile.hero`, the collector keeps both (Worker 0.00253
 — paste it; the old one drops them), the dashboard shows a Hero column
 and a By hero table (`stats.js byHero`: runs, depth, deaths, looks worn;
 a run before the classes counts as the knight's). **What it changes:**

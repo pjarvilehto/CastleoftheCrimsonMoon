@@ -105,7 +105,7 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
   ok('the hero screen has its phone twins and its rim breathes on opacity', css.includes('html.phone .hero-row {') && css.includes('html.phone .hero-detail {') && /@keyframes hero-rim \{[^}]*opacity/.test(css));
 }
 
-// 0.00252 (the developer's call): the class is chosen ONCE per save — a new
+// 0.00253 (the developer's call): the class is chosen ONCE per save — a new
 // game chooses, a save that has goes straight to the hall; the look alone
 // can change later, from the hall's portrait (the phone's Equipment sheet
 // has a Look row); the pick and the look go to the stats.
@@ -169,5 +169,5 @@ const { checkData } = await import('../../src/shared/dataCheck.js');
     && st.sanitizeProfile({}).hero === null);
   const rows = st.byHero([{ hero: 'wizard', look: 0, room: 4, outcome: 'death' }, { hero: 'wizard', look: 2, room: 6, outcome: 'retreat' }, { room: 2, outcome: 'death' }]);
   ok('By hero: runs grouped by class (a run before the classes is the knight\'s), the looks worn counted', rows.length === 2 && rows[0].hero === 'wizard' && rows[0].runs === 2 && rows[0].looks === 2 && rows[1].hero === 'knight' && rows[1].runs === 1);
-  ok('the collector to paste carries the hero fields', readFileSync('collector/worker.js', 'utf8').includes("export const VERSION = '0.00252'") && DATA.telemetry.collectorVersion === '0.00252');
+  ok('the collector to paste carries the hero fields', readFileSync('collector/worker.js', 'utf8').includes("export const VERSION = '0.00253'") && DATA.telemetry.collectorVersion === '0.00253');
 }

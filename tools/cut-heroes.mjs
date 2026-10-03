@@ -7,7 +7,7 @@
 // trimmed to the figure with a 6 px pad. After the key: every enclosed
 // pocket of the sheet's own grey goes whatever its size (the gaps in fur,
 // a ragged hem, between a crossbow's limbs — a tight tolerance, so the
-// axe blade's greys stay; 0.00252), and the edge's pale fringe is taken
+// axe blade's greys stay; 0.00253), and the edge's pale fringe is taken
 // out (cutout.mjs unfringe). Prints each look's `fh` (the
 // figure's height over the sheet's — heroes.json carries it so the heroes
 // read in scale with one another on the screen) as the JSON lines for

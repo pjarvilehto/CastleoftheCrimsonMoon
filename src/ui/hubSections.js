@@ -134,7 +134,7 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
                 }, `+${forgeCost(id)}c`))
         : el('span', { class: 'equip-empty' }, '— empty —'));
   };
-  // the hero's look (0.00252): the phone has no portrait in its hall — a row on the Equipment sheet opens the picker
+  // the hero's look (0.00253): the phone has no portrait in its hall — a row on the Equipment sheet opens the picker
   const hero = heroOf(p), looks = hero.looks.length;
   const lookRow = el('div', { class: 'item-row', 'data-row': 'look' },
     el('span', { class: 'equip-slot' }, 'Look'),
@@ -189,7 +189,7 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     el('div', { class: 'sec-hint' }, 'worn gear · the forge enhances tier 2+ for coins'),
     el('div', { class: 'knight-doll' },
       el('div', { class: 'gear-col gear-left' }, slot('Weapon', eq.weapon), slot('Armor', eq.armor), slot('Boots', eq.boots)),
-      // the portrait opens the look picker (0.00252): the same class, another of its looks
+      // the portrait opens the look picker (0.00253): the same class, another of its looks
       el('div', { class: `knight-card${looks > 1 ? ' pickable' : ''}`, 'data-row': 'look', title: looks > 1 ? 'Change your look' : null, onclick: looks > 1 ? () => openLookPicker((changed) => { if (changed) done('look'); }) : null },
         el('img', { src: portraitUrl('player'), alt: '' }),
         el('div', { class: 'look-tag' }, looks > 1 ? `Look ${cleanHero(p.hero).look + 1} of ${looks} · click to change` : hero.name)),

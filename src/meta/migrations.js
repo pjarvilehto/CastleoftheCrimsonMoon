@@ -64,7 +64,7 @@ const MIGRATIONS = [
   (p) => {
     p.hero = cleanHero(p.hero);
   },
-  // v5 -> v6 (0.00252, the developer's call): the class is chosen ONCE per
+  // v5 -> v6 (0.00253, the developer's call): the class is chosen ONCE per
   // save, on CHOOSE YOUR HERO, and changed only by a new game — `hero` is
   // null until then. The v5 step gave every save the knight unasked, so
   // every save chooses once more (the few picks made on 0.00248-0.00251

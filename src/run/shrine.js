@@ -79,7 +79,15 @@ function payCoins(run, o) {
 }
 
 // Apply the cost AND the buff. Caller re-renders.
+// A shrine's deal, noted on the run for the play stats (0.00252: the record
+// used to say only what was taken — "never offered" and "passed over" read alike).
+export function noteDeal(run, offers) {
+  (run.shrines ??= []).push({ o: offers.map((x) => x.id), t: null });
+}
+
 export function acceptOffer(run, o) {
+  const met = run.shrines?.at(-1);
+  if (met && met.t === null && met.o.includes(o.id)) met.t = o.id; // (the shrine at hand: its deal is the last noted)
   switch (o.id) {
     case 'dmg':
       payHp(run, o.hpCostPct);

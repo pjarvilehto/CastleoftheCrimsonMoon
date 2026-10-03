@@ -42,7 +42,7 @@ function freshProfile(playerId = newPlayerId(), name = '') {
   const pc = DATA.difficulty.potions;
   return {
     ...structuredClone(DEFAULTS), saveVersion: SAVE_VERSION, playerId, name,
-    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap, hero: null, // (0.00252: chosen once, on CHOOSE YOUR HERO; null until then)
+    equipment: startingEquipment(), potions: pc.startCount, potionCap: pc.startCap, hero: null, // (0.00253: chosen once, on CHOOSE YOUR HERO; null until then)
   };
 }
 

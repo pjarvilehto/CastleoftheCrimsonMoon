@@ -1,4 +1,4 @@
-// ui/lookPicker.js — the hall's look picker (0.00252, the developer's
+// ui/lookPicker.js — the hall's look picker (0.00253, the developer's
 // call): a click on the Great Hall's portrait (hubSections.js knightSection;
 // the phone's Equipment sheet has a Look row) opens this dialog — the
 // chosen hero large, ‹ › (the arrow keys, A / D) turning through its looks

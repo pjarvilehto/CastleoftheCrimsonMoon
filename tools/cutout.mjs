@@ -129,7 +129,7 @@ export function fillHoles(data, alpha, w, h, bg, opts = {}) {
 }
 
 /**
- * The edge's fringe (0.00252): an edge pixel keeps the colour the model
+ * The edge's fringe (0.00253): an edge pixel keeps the colour the model
  * blended it with — the grey paper — so on a dark ground the silhouette
  * wears a pale halo. With the pixel's alpha known, the paper's share of
  * its colour is taken out: c' = (c - bg * (1 - a)) / a, clamped. In place.

@@ -15,7 +15,7 @@ export const newPlayerId = () => Math.random().toString(36).slice(2, 10);
 export function runRecord(run, outcome, now = Date.now(), hero = null) {
   return {
     at: now,
-    hero: hero?.id ?? null, look: hero ? hero.look : 0, // 0.00252: who played (heroes.json id, its look) — the dashboard's By hero table
+    hero: hero?.id ?? null, look: hero ? hero.look : 0, // 0.00253: who played (heroes.json id, its look) — the dashboard's By hero table
     build: DATA.build?.version ?? '?',
     outcome,
     room: run.roomNumber,
@@ -26,6 +26,7 @@ export function runRecord(run, outcome, now = Date.now(), hero = null) {
     items: run.itemsFound.length,
     relic: !!run.relicFound,
     boons: (run.buffs ?? []).map((b) => b.id).filter(Boolean),
+    shrines: (run.shrines ?? []).map(({ o, t }) => ({ o: [...o], t })), // 0.00253: each shrine's deal and the pick (null = walked away)
     bosses: run.bossesBeaten ?? 0,
     killedBy: outcome === 'death' ? run.killedBy ?? null : null,
     potions: run.potionsDrunk ?? 0,

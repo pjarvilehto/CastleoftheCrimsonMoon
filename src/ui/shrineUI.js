@@ -6,7 +6,7 @@
 import { el } from '../core/dom.js';
 import { sfx } from '../audio/sfx.js';
 import { narrate } from '../audio/narrator.js';
-import { dealOffers, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
+import { dealOffers, noteDeal, canAffordOffer, acceptOffer, costText } from '../run/shrine.js';
 import { hpBar, logLine, isLowHp, potionLevel, shouldRetreat, markWayOn } from './hud.js';
 import { updateBuffs, iconArt } from './buffs.js';
 import { attachCardFx, styleNamed, SHRINE_STYLE } from './cardFx.js';
@@ -60,7 +60,7 @@ function shrineBody(run, room, { log, refresh }) {
   if (room.taken) {
     return el('div', { class: 'subtitle' }, 'The shrine\'s light fades. Its blessing is yours.');
   }
-  if (!room.dealtOffers) room.dealtOffers = dealOffers();
+  if (!room.dealtOffers) { room.dealtOffers = dealOffers(); noteDeal(run, room.dealtOffers); } // (noted once per shrine, for the play stats)
   return el('div', {},
     el('div', { class: 'subtitle' }, 'A shrine hums with dark power. Accept one boon for this run — or walk away.'),
     el('div', { class: 'shrine-cards' },

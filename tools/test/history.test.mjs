@@ -130,7 +130,7 @@ fresh();
     && sent[0].opts.method === 'POST' && sent[0].opts.headers['content-type'] === 'text/plain');
   const body = JSON.parse(sent[0].opts.body);
   ok('payload: anonymous id + dashboard fields only', body.playerId === p.playerId && body.profile.history.length === 1
-    && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,hero,history,name,playerId,potionCap,potions,records,stats,xp'); // (hero: 0.00252)
+    && Object.keys(body.profile).sort().join() === 'bench,coins,equipment,hero,history,name,playerId,potionCap,potions,records,stats,xp'); // (hero: 0.00253)
   const src = readFileSync('src/ui/scenes/dungeonScene.js', 'utf8') + readFileSync('src/main.js', 'utf8');
   ok('sent after every run (with the device report) and once per session', src.includes('const settled = settleRun(run, outcome);') && src.includes('keepReport(runReport(settled));') && src.includes('shareStats(settled);') && src.includes('shareStats(getProfile())'));
   globalThis.fetch = realFetch; globalThis.location = realLoc; DATA.telemetry.endpoint = ep;
@@ -562,4 +562,29 @@ fresh();
   const refused = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => ({ ok: false, status: 401 }) });
   const down = await err({ endpoint: 'https://stats.example', key: 'secret-k', fetchFn: async () => { throw new Error('ECONNREFUSED'); } });
   ok('reports: no key, a refused key and an unreachable host each say what to set, and never the key', noKey.includes(KEY_VAR) && noKey.includes('new session') && refused.includes('401') && !refused.includes('secret-k') && down.includes('network policy') && !down.includes('secret-k'));
+}
+
+// Shrine deals (0.00253): each shrine's three offers and the pick land in the
+// run record, the collector and the stats page clean them alike, and the
+// Shrine picks card counts a boon's rate against the times it was dealt.
+{
+  fresh();
+  const { createRun } = await import('../../src/run/runState.js');
+  const { noteDeal, acceptOffer, shrineOffers } = await import('../../src/run/shrine.js');
+  const { runRecord } = await import('../../src/meta/history.js');
+  const { cleanRun } = await import('../../collector/worker.js');
+  const { shrinePicks } = await import('../../analytics/stats.js');
+  const run = createRun(); run.coins = 500;
+  const all = shrineOffers(), by = (id) => all.find((o) => o.id === id);
+  noteDeal(run, [by('crit'), by('greed'), by('bulwark')]);
+  acceptOffer(run, by('crit'));
+  noteDeal(run, [by('dmg'), by('crit'), by('glasscannon')]); // walked away
+  const rec = runRecord(run, 'retreat');
+  ok('a run records each shrine\'s deal and the pick (null: walked away)', JSON.stringify(rec.shrines) === JSON.stringify([{ o: ['crit', 'greed', 'bulwark'], t: 'crit' }, { o: ['dmg', 'crit', 'glasscannon'], t: null }]));
+  const clean = cleanRun({ ...rec, shrines: [...rec.shrines, 'junk', { o: ['x'.repeat(99)], t: 5 }] });
+  ok('the collector keeps the deals, typed and capped', clean.shrines.length === 3 && clean.shrines[0].t === 'crit' && clean.shrines[2].o[0].length === 24 && clean.shrines[2].t === '5');
+  const picks = shrinePicks([rec, { shrines: [{ o: ['crit', 'armor', 'leech'], t: 'armor' }] }]);
+  const crit = picks.boons.find((b) => b.boon === 'crit');
+  ok('Shrine picks: a boon\'s rate is taken over dealt; walk-aways counted', picks.met === 3 && picks.walked === 1 && crit.offered === 3 && crit.taken === 1 && Math.abs(crit.rate - 1 / 3) < 1e-9);
+  fresh();
 }

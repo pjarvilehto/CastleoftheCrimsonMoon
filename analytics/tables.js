@@ -21,7 +21,7 @@ export function buildTable({ rows, older = [], hidden = { builds: 0, runs: 0 } }
   return `<table><tr><th>Build</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th></tr>${rows.map(row).join('')}${older.length ? `<tr class="divider"><td colspan="5">older, most played</td></tr>${older.map(row).join('')}` : ''}${hidden.builds ? `<tr class="divider"><td colspan="5">${hidden.builds} more build${hidden.builds === 1 ? '' : 's'}, ${hidden.runs} run${hidden.runs === 1 ? '' : 's'}, not shown</td></tr>` : ''}</table>`;
 }
 
-// the runs by hero (0.00252, stats.js byHero): who is played, how deep, how often they die, how many looks were worn
+// the runs by hero (0.00253, stats.js byHero): who is played, how deep, how often they die, how many looks were worn
 export function heroTable(rows, names) {
   if (!rows.length) return '<p class="empty">No runs recorded yet.</p>';
   return `<table><tr><th>Hero</th><th>Runs</th><th>Avg room</th><th>Best</th><th>Died</th><th>Looks worn</th></tr>${rows.map((r) => `<tr><td>${esc(names.heroName(r.hero))}</td><td>${r.runs}</td><td>${r.avgRoom.toFixed(1)}</td><td>${r.bestRoom}</td><td>${pct(r.deathRate)}</td><td>${r.looks}</td></tr>`).join('')}</table>`;

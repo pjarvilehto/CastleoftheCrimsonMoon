@@ -41,8 +41,9 @@ export const RUN_FIELDS = ['at', 'room', 'kills', 'xp', 'coins', 'banked', 'item
 function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
-    hero: str(r.hero, 24), look: int(r.look, 99), // 0.00252: who played
+    hero: str(r.hero, 24), look: int(r.look, 99), // 0.00253: who played
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
+    shrines: Array.isArray(r.shrines) ? r.shrines.slice(0, 6).filter((s) => s && typeof s === 'object').map((s) => ({ o: Array.isArray(s.o) ? s.o.slice(0, 4).map((x) => str(x, 24)) : [], t: str(s.t, 24) })) : [], // 0.00253 (collector/worker.js cleanShrines)
     perf: sanitizePerf(r.perf) }; // 0.130: frame rate (analytics/perf.js)
   for (const k of RUN_FIELDS) out[k] = k in COUNTS ? int(r[k], COUNTS[k]) : num(r[k]);
   return out;
@@ -60,7 +61,7 @@ export function sanitizeProfile(p = {}) {
     equipment: Object.fromEntries(ITEM_SLOTS.map((k) => [k, str(eq[k])])),
     history: Array.isArray(p.history) ? p.history.map(sanitizeRun) : [],
     bench: sanitizeBench(p.bench), // 0.131: ?debug BENCHMARK results
-    hero: p.hero && typeof p.hero === 'object' ? { id: str(p.hero.id, 24), look: int(p.hero.look, 99) } : null, // 0.00252: the chosen class and its look
+    hero: p.hero && typeof p.hero === 'object' ? { id: str(p.hero.id, 24), look: int(p.hero.look, 99) } : null, // 0.00253: the chosen class and its look
   };
 }
 
@@ -142,8 +143,20 @@ export function boonStats(runs) {
   return [...m.values()].map((s) => ({ ...s, avgRoom: s.rooms / s.taken })).sort((a, b) => b.taken - a.taken);
 }
 
+// Shrine pick rates (0.00253): per boon, how often a shrine dealt it and how
+// often the player then took it; the walk-aways as their own line. Only
+// runs from 0.00253 on carry the deals.
+export function shrinePicks(runs) {
+  const m = new Map(); let met = 0, walked = 0;
+  for (const r of runs) for (const s of r.shrines ?? []) {
+    met += 1; if (!s.t) walked += 1;
+    for (const id of new Set(s.o)) { const e = m.get(id) ?? { boon: id, offered: 0, taken: 0 }; e.offered += 1; if (s.t === id) e.taken += 1; m.set(id, e); }
+  }
+  return { met, walked, boons: [...m.values()].map((e) => ({ ...e, rate: e.taken / e.offered })).sort((a, b) => b.rate - a.rate) };
+}
+
 // Per build: runs, average depth, death rate — newest build first.
-// The runs by hero (0.00252): who is played, how deep they get, how often they die.
+// The runs by hero (0.00253): who is played, how deep they get, how often they die.
 export function byHero(runs) {
   const tagged = runs.map((r) => ({ ...r, hero: r.hero || 'knight' })); // (a run before the classes, or an unchosen save's, is the knight's)
   return countBy(tagged, 'hero')
