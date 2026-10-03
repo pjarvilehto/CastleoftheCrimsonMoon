@@ -3,56 +3,59 @@
     "name": "Rusty Sword",
     "slot": "weapon",
     "tier": 1,
-    "dmg": 4
+    "dmg": 6
   },
   "knights_blade": {
     "name": "Knight's Blade",
     "slot": "weapon",
     "tier": 2,
-    "dmg": 9
+    "dmg": 14
   },
   "executioner_axe": {
     "name": "Executioner's Axe",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 16
+    "dmg": 24
   },
   "oak_shield": {
     "name": "Oak Shield",
     "slot": "armor",
     "tier": 1,
-    "armor": 30
+    "armor": 40,
+    "hp": 80
   },
   "plate_armor": {
     "name": "Plate Armor",
     "slot": "armor",
     "tier": 2,
-    "armor": 80
+    "armor": 110,
+    "hp": 130
   },
   "dragonscale_mail": {
     "name": "Dragonscale Mail",
     "slot": "armor",
     "tier": 3,
-    "armor": 140
+    "armor": 195,
+    "hp": 180
   },
   "traveler_boots": {
     "name": "Traveler's Boots",
     "slot": "boots",
     "tier": 1,
-    "hp": 80
+    "hp": 20
   },
   "knights_greaves": {
     "name": "Knight's Greaves",
     "slot": "boots",
     "tier": 2,
-    "armor": 30,
-    "hp": 100
+    "armor": 6,
+    "hp": 30
   },
   "ring_of_might": {
     "name": "Ring of Might",
     "slot": "ring",
     "tier": 1,
-    "dmg": 3
+    "dmg": 1
   },
   "vampiric_ring": {
     "name": "Vampiric Ring",
@@ -64,7 +67,7 @@
     "name": "Ring of Protection",
     "slot": "ring",
     "tier": 2,
-    "armor": 40
+    "armor": 8
   },
   "lucky_charm": {
     "name": "Lucky Charm",
@@ -77,14 +80,14 @@
     "slot": "trinket",
     "tier": 2,
     "crit": 0.08,
-    "dmg": 3
+    "dmg": 1
   },
   "moonstriders": {
     "name": "Moonstriders",
     "slot": "boots",
     "tier": 3,
-    "armor": 40,
-    "hp": 140
+    "armor": 12,
+    "hp": 40
   },
   "fang_of_the_crimson_moon": {
     "name": "Fang of the Crimson Moon",
@@ -97,41 +100,41 @@
     "name": "Amulet of Vigor",
     "slot": "amulet",
     "tier": 1,
-    "hp": 150
+    "hp": 20
   },
   "amulet_of_the_crimson_moon": {
     "name": "Amulet of the Crimson Moon",
     "slot": "amulet",
     "tier": 3,
-    "dmg": 6,
+    "dmg": 2,
     "lifesteal": 0.3
   },
   "ritual_dagger": {
     "name": "Ritual Dagger",
     "slot": "weapon",
     "tier": 2,
-    "dmg": 6,
+    "dmg": 9,
     "crit": 0.1
   },
   "crimson_reaver": {
     "name": "Crimson Reaver",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 12,
+    "dmg": 18,
     "lifesteal": 0.5
   },
   "boneplate": {
     "name": "Boneplate",
     "slot": "armor",
     "tier": 2,
-    "armor": 60,
-    "hp": 100
+    "armor": 85,
+    "hp": 230
   },
   "ring_of_the_blood_moon": {
     "name": "Ring of the Blood Moon",
     "slot": "ring",
     "tier": 3,
-    "dmg": 5,
+    "dmg": 2,
     "crit": 0.08
   },
   "amulet_of_the_leech": {
@@ -139,28 +142,28 @@
     "slot": "amulet",
     "tier": 2,
     "lifesteal": 0.25,
-    "hp": 80
+    "hp": 30
   },
   "moonbrand": {
     "name": "Moonbrand",
     "slot": "weapon",
     "tier": 3,
-    "dmg": 14,
+    "dmg": 21,
     "crit": 0.1
   },
   "crimson_plate": {
     "name": "Crimson Plate",
     "slot": "armor",
     "tier": 3,
-    "armor": 110,
-    "hp": 200
+    "armor": 155,
+    "hp": 360
   },
   "wraithwalkers": {
     "name": "Wraithwalkers",
     "slot": "boots",
     "tier": 3,
-    "armor": 20,
-    "hp": 220
+    "armor": 6,
+    "hp": 40
   },
   "ring_of_the_eclipse": {
     "name": "Ring of the Eclipse",
@@ -173,29 +176,29 @@
     "name": "Bloodstone Band",
     "slot": "ring",
     "tier": 3,
-    "dmg": 7,
-    "hp": 100
+    "dmg": 3,
+    "hp": 40
   },
   "relic_of_the_first_knight": {
     "name": "Relic of the First Knight",
     "slot": "trinket",
     "tier": 3,
-    "dmg": 4,
-    "armor": 40,
-    "hp": 100
+    "dmg": 2,
+    "armor": 10,
+    "hp": 40
   },
   "amulet_of_the_blood_moon": {
     "name": "Amulet of the Blood Moon",
     "slot": "amulet",
     "tier": 3,
     "lifesteal": 0.7,
-    "hp": 100
+    "hp": 40
   },
   "fang_of_the_eclipse": {
     "name": "Fang of the Eclipse",
     "slot": "weapon",
     "tier": 4,
-    "dmg": 16,
+    "dmg": 24,
     "crit": 0.1,
     "heavyCd": 1
   },
@@ -203,47 +206,47 @@
     "name": "Bloodmoon Aegis",
     "slot": "armor",
     "tier": 4,
-    "armor": 160,
-    "hp": 200,
+    "armor": 225,
+    "hp": 420,
     "thorns": 4
   },
   "umbral_treads": {
     "name": "Umbral Treads",
     "slot": "boots",
     "tier": 4,
-    "armor": 60,
-    "hp": 160,
+    "armor": 15,
+    "hp": 50,
     "dodge": 0.08
   },
   "ring_of_the_red_veil": {
     "name": "Ring of the Red Veil",
     "slot": "ring",
     "tier": 4,
-    "dmg": 8,
+    "dmg": 3,
     "dodge": 0.06
   },
   "signet_of_the_blood_pact": {
     "name": "Signet of the Blood Pact",
     "slot": "ring",
     "tier": 4,
-    "dmg": 6,
-    "hp": 80,
+    "dmg": 2,
+    "hp": 50,
     "lifesteal": 0.8
   },
   "heart_of_the_dying_moon": {
     "name": "Heart of the Dying Moon",
     "slot": "trinket",
     "tier": 4,
-    "hp": 100,
-    "armor": 50,
+    "hp": 50,
+    "armor": 15,
     "revive": 1
   },
   "amulet_of_the_blood_eclipse": {
     "name": "Amulet of the Blood Eclipse",
     "slot": "amulet",
     "tier": 4,
-    "hp": 120,
-    "armor": 40,
+    "hp": 50,
+    "armor": 15,
     "lifesteal": 1
   }
 }

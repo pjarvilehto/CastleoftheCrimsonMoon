@@ -312,7 +312,17 @@ tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
 24, free rooms a run or two later. Measured and set aside: lifesteal
 halved everywhere (gentler, room 24 four runs later), healing only off
 damage dealt (no change), a per-fight heal cap (the deep game stalls),
-slower enemy damage growth (undoes the smoothing). **Shrines from the players' own picks (0.00252, the developer's call):**
+slower enemy damage growth (undoes the smoothing). **The weapon and the armor carry the stats (0.00259, the developer's
+call — the card shows only those two):** damage comes from the weapon,
+armor and HP from the body armor; boots, rings, trinkets and amulets are
+accessories — about a fifth of a weapon's damage (+1-3), a tenth of an
+armor's armor (+6-15) and a small HP top-up (+20/30/40/50 by tier),
+their identity in crit, lifesteal, dodge and the specials. The power
+moved into the two: weapons x1.5 damage, body armor x1.4 armor and HP
+on every piece (80-420). The simulator, 12 campaigns: run depth, the
+first room-8 kill, the late runs and coins all within noise of before
+(40 and 70 runs); the shrine study moves within its spread (Bulwark a
+little stronger late, Glass Cannon a little weaker). **Shrines from the players' own picks (0.00252, the developer's call):**
 the play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
 random) had Crit 23%, Armor 19%, Quicken 16% and Bulwark / Glass Cannon
 3% each (the bot rates Glass Cannon the best — real players fear its
