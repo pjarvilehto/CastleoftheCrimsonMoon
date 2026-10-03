@@ -15,7 +15,7 @@ import { DATA } from '../shared/data.js';
 import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
-import { heroOf, defaultHero } from '../shared/heroes.js';
+import { heroOf, defaultHero, heavyName } from '../shared/heroes.js';
 import { potionHealAmount } from '../meta/leveling.js';
 
 // Idle motion families (0.087): one CSS loop per family (styles.css
@@ -145,7 +145,7 @@ function statsBack(run) {
     ['Crit chance', () => pct(run.stats.crit)],
     ['Crit damage', () => `×${(tune.critMult + run.stats.critBonus).toFixed(2)}`],
     ['Lifesteal', () => (run.stats.lifesteal > 0 ? pct(run.stats.lifesteal) : '—')],
-    ['Heavy blow', () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`],
+    [heavyName(getProfile()), () => `×${tune.heavyMult} · ${run.stats.heavyCdMax} turns`], // (0.00259: the class's name for its heavy)
     ['Potions', () => `${run.potions} / ${run.potionCap}`],
     ['Potion heals', () => `${potionHealAmount()} HP`],
   ].map(([label, val, cls]) => ({ val, b: el('b', { class: cls ?? '' }, val()), label }));
@@ -208,7 +208,7 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   });
   attachCardFx(card, cardStyle('player'), { into: plate }); // the shader light behind the knight (0.183)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, 'Heavy Attack', cd);
+  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, heavyName(p), cd); // (0.00259: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, heroOf(p).name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);

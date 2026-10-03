@@ -96,6 +96,7 @@ export function checkData(data) {
     if (typeof h?.id !== 'string' || !h.id || typeof h.name !== 'string' || !h.name) out.push(`heroes.json: ${h?.id ?? '?'} needs an id and a name`);
     if (!Array.isArray(h?.looks) || !h.looks.length || !h.looks.every((l) => typeof l?.art === 'string' && l.art && isNum(l.fh) && l.fh > 0 && l.fh <= 1)) out.push(`heroes.json: ${h?.id}.looks (one per look: art, the figure file in assets/heroes/, and fh, its share of the sheet's height, 0-1)`);
     if (!Array.isArray(h?.traits) || typeof h?.epithet !== 'string' || typeof h?.lore !== 'string') out.push(`heroes.json: ${h?.id} needs epithet, lore and traits`);
+    if (typeof h?.heavyName !== 'string' || !h.heavyName.trim()) out.push(`heroes.json: ${h?.id}.heavyName (the heavy attack's name on the button and the STATS row, 0.00259)`);
     // the class (0.00258): every number present, the heavy one the engine knows
     const c = h?.class;
     const NUMS = ['hpMult', 'dmgMult', 'armorMult', 'potionHealMult', 'dodge', 'heavyCd', 'heavyMult', 'charges', 'cleaveShare', 'rage', 'drainShare', 'thrallShare', 'wildTurns', 'wildMult', 'mend', 'blightShare', 'potionArmor', 'markCrit', 'chargeOnKill'];

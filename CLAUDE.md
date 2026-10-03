@@ -704,7 +704,11 @@ the class's — on every card of CHOOSE YOUR HERO (`--theme` on the card,
 the chosen one's pulse in it too), on the knight's card in combat
 (`battleLine.js frame(theme)`) and on the hall's portrait), `light` and
 `tint` (the card light behind the player: `cardFx.js cardStyle('player')`
-reads them, the knight's ether as before). The knight crimson, the
+reads them, the knight's ether as before; `heavyName`, the heavy
+attack's name on the button and the STATS row — 0.00259, the
+developer's picks: Heavy Attack, Cleave, Fireball, Soul Drain, Go
+Feral, Hex, Last Rites; the blow is the same for every class,
+`shared/heroes.js heavyName`). The knight crimson, the
 Barbarian rust with embers, the Wizard blue, the Necromancer sick green,
 the Druid moss with fog, the Hexhunter violet, the Plague Sister ochre
 with fog — my picks, tuned in the data. **The classes' gameplay, a draft
