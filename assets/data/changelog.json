@@ -1,4 +1,7 @@
 {
+  "0.00302": [
+    "Export Save and Import Save moved from the title screen into the Settings menu (under Game)."
+  ],
   "0.00301": [
     "The SFX Lab (a testing page): every sound effect where it plays, with or without the scene's music, with volume, pitch and speed to try and approve."
   ],
