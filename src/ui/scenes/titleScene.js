@@ -65,6 +65,6 @@ export function titleScene() {
           ? el('div', { class: 'player-name' }, `Playing as ${p.name} · `,
               el('button', { class: 'link-btn', onclick: () => namePrompt(() => render(root)) }, 'change'))
           : null)
-    ); // (0.00301: Export / Import Save moved to the SETTINGS menu's GAME group, ui/saveTransfer.js)
+    ); // (0.00302: Export / Import Save moved to the SETTINGS menu's GAME group, ui/saveTransfer.js)
   }
 }

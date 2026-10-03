@@ -1583,7 +1583,7 @@ be served stale for ~4 hours.
   0.00243, the developer's call): the top row is FULLSCREEN (an icon, not on a
   phone) and ☰ SETTINGS (☰ alone on a phone); the menu drops down under it
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
-  SAVER), GAME (EXPORT SAVE, IMPORT SAVE — 0.00301, the developer's call:
+  SAVER), GAME (EXPORT SAVE, IMPORT SAVE — 0.00302, the developer's call:
   they were buttons at the title's foot; `ui/saveTransfer.js`, a loaded
   save returns to the title — and CHANGELIST) — and DEBUG MODE last. Add items in main.js's
   `cornerBar([...], lead)` with `menuHead` / `onOffToggle` / `panelToggle`.

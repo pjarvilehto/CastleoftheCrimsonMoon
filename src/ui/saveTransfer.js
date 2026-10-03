@@ -1,4 +1,4 @@
-// ui/saveTransfer.js — EXPORT SAVE and IMPORT SAVE (0.00301, the developer's
+// ui/saveTransfer.js — EXPORT SAVE and IMPORT SAVE (0.00302, the developer's
 // call: items of the SETTINGS menu's GAME group, before CHANGELIST; they were
 // two buttons at the title's foot). Dialogs (0.00209), like everything else.
 // Export is a copy-out code; import pastes one in and, loaded, returns to the
