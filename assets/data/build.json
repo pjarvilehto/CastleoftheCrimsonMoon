@@ -1,5 +1,5 @@
 {
-  "version": "0.00243",
+  "version": "0.00244",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,10 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00244": [
+      "Two new rooms in the castle: The Clock Tower and The Blood Baths (the owner's approvals in the Background Lab; the first paintings from the new generator, with their depth maps and fog)",
+      "gen-bg.mjs --import gives a new painting its fog override; the three approvals recorded and the rooms' other candidates pruned"
+    ],
     "0.00243": [
       "Settings: the corner buttons are one SETTINGS menu (Audio, Display, Game), with Fullscreen as an icon beside it; DEBUG MODE at the bottom shows the testing tools — no ?debug needed",
       "Thorns can now finish a foe: no more enemies left standing at 1 HP"
@@ -138,9 +142,6 @@
     "0.00230": [
       "An easier start: the weakest enemies (rats, Cave Shriekers, skeletons, Crypt Spiders) hit a quarter softer and a new game starts with 3 potions",
       "Training gives a little less per level (+2 damage, +72 HP, +8 armor) and costs a little less XP, so the knight outgrows the early rooms a few runs later"
-    ],
-    "0.00229": [
-      "Housekeeping: a tool for the owner reads the play stats straight from the collector (tools/reports.mjs); nothing changes in the game."
     ]
   }
 }

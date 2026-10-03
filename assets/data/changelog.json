@@ -1,4 +1,8 @@
 {
+  "0.00244": [
+    "Two new rooms in the castle: The Clock Tower and The Blood Baths (the owner's approvals in the Background Lab; the first paintings from the new generator, with their depth maps and fog)",
+    "gen-bg.mjs --import gives a new painting its fog override; the three approvals recorded and the rooms' other candidates pruned"
+  ],
   "0.00243": [
     "Settings: the corner buttons are one SETTINGS menu (Audio, Display, Game), with Fullscreen as an icon beside it; DEBUG MODE at the bottom shows the testing tools — no ?debug needed",
     "Thorns can now finish a foe: no more enemies left standing at 1 HP"
