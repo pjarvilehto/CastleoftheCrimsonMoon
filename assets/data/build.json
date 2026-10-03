@@ -1,5 +1,5 @@
 {
-  "version": "0.00316",
+  "version": "0.00317",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00317": [
+      "Housekeeping: the fly-in's notes name the build they shipped in."
+    ],
     "0.00316": [
       "Housekeeping: the notes name the build the descent's strike shipped in (0.00313)."
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00303": [
       "The enemies are redrawn: every approved new portrait is in the game, and a fight gives each foe of a kind its own picture (three Giant Rats, different rats where there are pictures enough); the Vampire Lord wears one of his three at random each fight."
-    ],
-    "0.00302": [
-      "Export Save and Import Save moved from the title screen into the Settings menu (under Game)."
     ]
   }
 }
