@@ -1,5 +1,5 @@
 {
-  "version": "0.00245",
+  "version": "0.00246",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00246": [
+      "Docs: a light sweep — the notes say developer where they said owner; the quick start lists the art tools; the handover and the backlog read as of this build (the redrawn portraits and the LoRAs, the Background Lab's stages, the two new rooms); the painting counts"
+    ],
     "0.00245": [
       "Lifesteal rebalanced: it now grows with the gear tiers instead of arriving all at once — tier-2 lifesteal gear heals about a third of what it did, tier-3 about 60%, the relics are unchanged, and Life Drain grants +50% (was +100%)"
     ],
@@ -137,10 +140,6 @@
     ],
     "0.00232": [
       "The Great Hall reads at a glance: each upgrade's name and level stand out, with a shorter, quieter line under it saying what it does"
-    ],
-    "0.00231": [
-      "Art Lab: the portraits redrawn in their own photoreal rendering (glows, one hue family each, the boss wide) by Nano Banana and five other editors behind --model; a matting model cuts the figures out (no more missing legs or blade edges); Regenerate with notes on every candidate (that candidate as the design, your note as the direction, a model picker), Clean, long rows in two lines",
-      "The candidates pruned to the Nano Banana set, the Pro bake-off and Seedream's two Vampire Lords; the inked-round approvals cleared"
     ]
   }
 }
