@@ -11,7 +11,7 @@ const pct = (x) => `${Number((x * 100).toFixed(1))}%`;
 
 // short (0.00208): the phone's wording — the same numbers in a 45%-wide
 // sheet (hubScene's phone assembly); the desktop keeps the sentences.
-// 0.00231 (the owner's ask): every line is the small, muted text under a
+// 0.00232 (the owner's ask): every line is the small, muted text under a
 // row's title (name + level, hubSections.js rowText) — compact, the
 // level never repeated here.
 export function statDesc(stat, currentLevel, short = false) {
@@ -49,7 +49,7 @@ export function alchemyDesc(track, short = false) {
   if (track === 'infusion') return short ? `potion armor +${infusionArmor()} (+${t.infusion.armorPerLevel} / lv)` : `potion armor +${infusionArmor()} for the room (+${t.infusion.armorPerLevel} / level)`;
   return efficiencyDesc(short);
 }
-// (0.00231: the count is the row's title, potionCount; this is the small line under it)
+// (0.00232: the count is the row's title, potionCount; this is the small line under it)
 export const potionCount = (p) => `${p.potions}/${p.potionCap}`;
 export function potionDesc(p, short = false) {
   return short ? 'price climbs per buy' : 'kept between runs · price resets each run';

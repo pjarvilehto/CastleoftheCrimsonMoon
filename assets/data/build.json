@@ -1,5 +1,5 @@
 {
-  "version": "0.00234",
+  "version": "0.00235",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -90,6 +90,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00235": [
+      "The Great Hall: whatever a purchase raises — Attack after Power or a forged blade, HP, Armor, your level, potions — now glows as it counts up"
+    ],
     "0.00234": [
       "Art Lab: the wraith's c10 approved (every character now has an approved portrait) and its other candidates pruned; the LoRA tool can cancel a training"
     ],
@@ -150,10 +153,6 @@
     ],
     "0.00221": [
       "Play stats: the Benchmarks card shows each benchmark's build in its own column, and results from before the current benchmark round are marked and muted"
-    ],
-    "0.00220": [
-      "A fallen enemy's death is its own moment: the card collapses and leaves, the row closes up, and only then do the loot and the enemies' turn print (the restack used to land in the middle of them)",
-      "The benchmark round moved with it: a benchmark from an older build is asked again"
     ]
   }
 }

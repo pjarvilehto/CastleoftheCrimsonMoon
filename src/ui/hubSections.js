@@ -20,7 +20,7 @@ import {
 import { describeItem, itemName } from './hud.js';
 import { statDesc, alchemyDesc, potionDesc, potionCount, satchelDesc } from './hubText.js';
 
-// A row's text (0.00231, the owner's ask): the title — the name and its
+// A row's text (0.00232, the owner's ask): the title — the name and its
 // level or count, what the eye looks for — over a small, muted line of
 // what it does (the phone keeps both on one line, styles.css section 16).
 const rowText = (title, level, desc) => el('div', { class: 'row-text' },

@@ -24,7 +24,7 @@ import { play } from '../../audio/music.js';
 import { confirmPrompt } from '../confirmPrompt.js';
 import { maybeAskBenchmark } from '../benchmark.js';
 import { narrate } from '../../audio/narrator.js';
-import { pulseNumber } from '../fx.js';
+import { pulseNumber, tickUp } from '../fx.js';
 
 // XP / Coins turn green when there's something to spend them on (0.090),
 // so a returning player remembers to train before descending again.
@@ -106,14 +106,18 @@ export function hubScene(opts = {}) {
 
     // 0.081: fixed 3x3 layout — Level/Coins/XP, Attack/HP/Armor, then
     // Potions alone in the middle column (hub-stats in styles.css).
-    const statsRow = el('div', { class: 'stat-grid hub-stats' },
-      statBox('Level', playerLevel(p)), // 0.080: same LV as the combat card
-      statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
-      statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
-      statBox('Attack', stats.dmg),
-      statBox('HP', stats.maxHp),
-      statBox('Armor', stats.armor),
-      statBox('Potions', `${p.potions}/${p.potionCap}`, `stat-potions ${potionLevel(p)}`));
+    const purchase = !!flashRow; // (render after a buy: the boxes it moved glow, below)
+    const vals = { Level: playerLevel(p), Attack: stats.dmg, HP: stats.maxHp, Armor: stats.armor, Potions: `${p.potions}/${p.potionCap}` };
+    const boxes = {
+      Level: statBox('Level', vals.Level), // 0.080: same LV as the combat card
+      Coins: statBox('Coins', p.coins, canSpendCoins(p) ? 'spendable' : ''),
+      XP: statBox('XP', p.xp, canSpendXp(p) ? 'spendable' : ''),
+      Attack: statBox('Attack', vals.Attack),
+      HP: statBox('HP', vals.HP),
+      Armor: statBox('Armor', vals.Armor),
+      Potions: statBox('Potions', vals.Potions, `stat-potions ${potionLevel(p)}`),
+    };
+    const statsRow = el('div', { class: 'stat-grid hub-stats' }, ...Object.values(boxes));
 
     // the three sections (ui/hubSections.js); done = a purchase landed: the row flashes after the re-render
     const done = (row) => { flashNext(row); render(root); };
@@ -133,7 +137,7 @@ export function hubScene(opts = {}) {
     const records = el('div', { class: 'subtitle records-line' }, recordsLine(p));
     const wayOn = [descendBtn, el('button', { key: 'b', onclick: () => go('title') }, 'Back')];
     root.innerHTML = '';
-    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); return; }
+    if (phone) { root.append(phoneHall(hall, statsRow, records, wayOn)); settleSheet(root); settleFlash(root); settleStats(boxes, vals, purchase); return; }
     const [train, alchemy, equipment] = hall;
     root.append(
       el('div', { class: 'hub-container' },
@@ -148,6 +152,7 @@ export function hubScene(opts = {}) {
           el('div', { class: 'panel' }, el('h1', {}, equipment.title), el('div', { class: 'subtitle' }, equipment.subtitle), equipment.body)),
         el('div', { class: 'btn-row' }, ...wayOn)));
     settleFlash(root);
+    settleStats(boxes, vals, purchase);
   }
 }
 
@@ -171,6 +176,25 @@ function settleFlash(root) {
   const row = root.querySelector?.(`[data-row="${flashRow}"]`); flashRow = null;
   const label = row?.querySelector?.('.equip-item, .row-title') ?? row?.children?.[0]; // (a forged slot: the item's name and bonus; an upgrade: its title, not the small line)
   if (label) { label.style.display = 'inline-block'; label.style.transformOrigin = 'left center'; pulseNumber(label); } // (a block would scale around its own centre, off the row)
+}
+// ...and the attribute it raised (0.00233, the owner's ask): a box whose
+// value a purchase changed — Attack after Power or a forged blade, HP after
+// Vitality, Armor after Endurance or forged armor, the Level every fifth
+// trained level, Potions after a buy or a bigger satchel — rolls up to its
+// new value and glows while it does. Coins and XP (what was spent) do not.
+let shownStats = null; // the boxes' values as last drawn
+function settleStats(boxes, vals, purchase) {
+  if (purchase && shownStats) {
+    for (const [k, v] of Object.entries(vals)) {
+      const from = shownStats[k];
+      if (from === v) continue;
+      const value = boxes[k]?.children?.[1];
+      if (!value) continue;
+      value.style.display = 'inline-block'; value.style.transformOrigin = 'right center'; // (the value sits at the box's right: grow from there)
+      if (typeof v === 'number' && typeof from === 'number') tickUp(value, from, v, 900); else pulseNumber(value);
+    }
+  }
+  shownStats = vals;
 }
 let phonePick = 0, phoneScroll = 0; // the picked sheet and how far it was scrolled (a purchase re-renders: the sheet stays put)
 function phoneHall(hall, statsRow, records, wayOn) {
