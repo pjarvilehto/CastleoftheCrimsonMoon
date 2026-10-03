@@ -62,6 +62,7 @@ const PROFILES = {
 };
 
 let failed = 0;
+const innerWidthOf = (opts) => opts.viewport.width;
 const check = (profile, name, pass, detail = '') => { console.log(`${pass ? 'PASS' : 'FAIL'}  ${profile.padEnd(11)} ${name}${detail ? `  (${detail})` : ''}`); if (!pass) failed++; };
 
 // what the page reports about an element
@@ -92,14 +93,15 @@ async function run(name, opts, url) {
     await page.waitForTimeout(1500);
     if (!phone) check(name, 'no gate', !(await page.$('.phone-gate')));
     const menuDisplay = await page.evaluate(() => getComputedStyle(document.querySelector('.corner-bar .menu-toggle')).display);
-    check(name, phone ? '☰ shown' : '☰ hidden', phone ? menuDisplay !== 'none' : menuDisplay === 'none', menuDisplay);
-    if (phone) {
+    check(name, '☰ SETTINGS shown, the menu folded under it', menuDisplay !== 'none' && await page.evaluate(() => [...document.querySelectorAll('.corner-bar > :not(.corner-top)')].every((n) => getComputedStyle(n).display === 'none')), menuDisplay);
+    { // (0.00242: SETTINGS on every screen — the phone folded its column behind ☰ first, 0.00208)
       await page.click('.corner-bar .menu-toggle'); await page.waitForTimeout(200);
       const open = await page.evaluate(() => document.querySelector('.corner-bar').classList.contains('open'));
+      const menu = await page.evaluate(() => { const b = document.querySelector('.corner-bar').getBoundingClientRect(); return { bottom: b.bottom, right: b.right, scroll: document.querySelector('.corner-bar').scrollHeight > document.querySelector('.corner-bar').clientHeight + 1 }; });
       await shot('1-menu');
       await page.mouse.click(60, 200); await page.waitForTimeout(200);
       const closed = await page.evaluate(() => !document.querySelector('.corner-bar').classList.contains('open'));
-      check(name, '☰ opens the column, a tap elsewhere closes it', open && closed);
+      check(name, 'SETTINGS opens the menu inside the window, a click elsewhere closes it', open && closed && menu.right <= innerWidthOf(opts) + 0.5 && (menu.bottom <= opts.viewport.height + 0.5 || menu.scroll), JSON.stringify(menu));
     }
     await shot('2-title');
     if (phone) { // the save dialogs sit high, above the on-screen keyboard (0.00223: their twin never matched)

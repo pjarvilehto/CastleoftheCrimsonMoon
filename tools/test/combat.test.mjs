@@ -169,7 +169,7 @@ await withSeedAsync(4, async () => {
   ok('flash timings: 0.9s build, 2s fade to 75%', css.includes('#flash.death-in  { opacity: 0.75; transition: opacity 0.9s')
     && css.includes('#flash.death-out { opacity: 0;    transition: opacity 2s'));
   const m = readFileSync('src/main.js', 'utf8');
-  ok('INVULNERABLE only with ?debug', m.includes(".has('debug')") && m.includes('debugMode && invulnerableToggle(),'));
+  ok('INVULNERABLE only under DEBUG MODE (?debug, or the menu\'s toggle)', readFileSync('src/ui/debugToggles.js', 'utf8').includes(".has('debug')") && readFileSync('src/main.js', 'utf8').includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]"));
 }
 
 // T47: 0.086 — replayable combat: events carry state snapshots; the battle
@@ -504,7 +504,7 @@ await withSeedAsync(4, async () => {
   const main = readFileSync('src/main.js', 'utf8');
   const { debugToggles, invulnerableToggle } = await import('../../src/ui/debugToggles.js');
   const labels = debugToggles().map((b) => b.textContent);
-  ok('crit toggles only under ?debug', main.includes('...(debugMode ? debugToggles() : [])')
+  ok('crit toggles only under DEBUG MODE', main.includes('...dbg.items') && readFileSync('src/ui/debugToggles.js', 'utf8').includes("[menuHead('Debug tools'), invulnerableToggle(), ...debugToggles()]")
     && labels.join('|') === 'HIDE FOREGROUND: OFF|BG VIEW: 3D|NEXT BG|BG TUNING|FORCE CRITS: OFF|FORCE MEGA CRITS: OFF|LABS|BENCHMARK', labels.join('|'));
   const inv = invulnerableToggle();
   inv.listeners.click[0]();
