@@ -710,6 +710,134 @@
           "created": "2026-10-03T06:02:25Z"
         }
       ]
+    },
+    "corridor_collapsed_gallery": {
+      "name": "The Collapsed Gallery",
+      "hue": "cold",
+      "candidates": [
+        {
+          "n": 1,
+          "file": "assets/bg/candidates/corridor_collapsed_gallery_c1.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1485862735,
+          "refs": [],
+          "prompt": "a collapsed gallery, broken beams, moonlight through the shattered roof, cold blue shafts, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:32Z"
+        },
+        {
+          "n": 2,
+          "file": "assets/bg/candidates/corridor_collapsed_gallery_c2.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1469085116,
+          "refs": [],
+          "prompt": "a collapsed gallery, broken beams, moonlight through the shattered roof, cold blue shafts, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:32Z"
+        }
+      ],
+      "line": "a collapsed gallery, broken beams, moonlight through the shattered roof, cold blue shafts",
+      "kind": "room"
+    },
+    "corridor_spiral_stair": {
+      "name": "The Spiral Stair",
+      "hue": "red",
+      "candidates": [
+        {
+          "n": 1,
+          "file": "assets/bg/candidates/corridor_spiral_stair_c1.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 481634161,
+          "refs": [],
+          "prompt": "a tower stairwell descending into darkness, a red glow from below, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:32Z"
+        },
+        {
+          "n": 2,
+          "file": "assets/bg/candidates/corridor_spiral_stair_c2.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 431301304,
+          "refs": [],
+          "prompt": "a tower stairwell descending into darkness, a red glow from below, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:38Z"
+        }
+      ],
+      "line": "a tower stairwell descending into darkness, a red glow from below",
+      "kind": "room"
+    },
+    "antechamber_crimson_veil": {
+      "name": "The Crimson Veil",
+      "hue": "red",
+      "candidates": [
+        {
+          "n": 2,
+          "file": "assets/bg/candidates/antechamber_crimson_veil_c2.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 740184167,
+          "refs": [],
+          "prompt": "a velvet-draped ruin, black candles, cracked mirrors, a door veiled in red silk, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:39Z"
+        },
+        {
+          "n": 1,
+          "file": "assets/bg/candidates/antechamber_crimson_veil_c1.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 756961786,
+          "refs": [],
+          "prompt": "a velvet-draped ruin, black candles, cracked mirrors, a door veiled in red silk, gloomy and moody, deep shadows, oppressive atmosphere, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:39Z"
+        }
+      ],
+      "line": "a velvet-draped ruin, black candles, cracked mirrors, a door veiled in red silk",
+      "kind": "room"
+    },
+    "throne_drowned_king": {
+      "name": "The Drowned Throne",
+      "hue": "teal",
+      "candidates": [
+        {
+          "n": 2,
+          "file": "assets/bg/candidates/throne_drowned_king_c2.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1218661888,
+          "refs": [],
+          "prompt": "a black coral throne in ankle-deep seawater, anglerfish lanterns, abyssal teal, video game boss arena background art, wide symmetrical battle stage composition with open floor space in the center, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:45Z"
+        },
+        {
+          "n": 1,
+          "file": "assets/bg/candidates/throne_drowned_king_c1.jpg",
+          "model": "bytedance/seedream-4",
+          "version": "hidden",
+          "seed": 1268994745,
+          "refs": [],
+          "prompt": "a black coral throne in ankle-deep seawater, anglerfish lanterns, abyssal teal, video game boss arena background art, wide symmetrical battle stage composition with open floor space in the center, in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy black ink silhouettes, bold flat angular shapes, rough hand-drawn ink texture and hatching, dramatic chiaroscuro lighting, video game background art, wide shot, no characters",
+          "w": 2560,
+          "h": 1440,
+          "created": "2026-10-03T06:12:45Z"
+        }
+      ],
+      "line": "a black coral throne in ankle-deep seawater, anglerfish lanterns, abyssal teal",
+      "kind": "arena"
     }
   }
 }

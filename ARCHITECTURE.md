@@ -185,6 +185,10 @@ labs/                   the testing pages (?debug LABS button): index.html is th
   art/                  the redrawn portraits on the real units over any room:
                         compare, line-up, fight; verdicts -> art-rerender.json
   particles/            standalone particle-look experiments
+  backgrounds/          the new room paintings (gen-bg.mjs, rooms-art.json) through their
+                        stages: tiles to approve / reject / regenerate with notes, a fight
+                        at the game's size over one, a compare beside a game painting;
+                        COPY JSON -> rooms-rerender.json for gen-bg.mjs --rerender (0.00241)
   world/                the world map above the dungeon (0.00210, a prototype): the
                         owner's painting under clouds, places as pins, the reveal,
                         two looks and the dive; WORLD in lab.js = the future world.json
@@ -203,8 +207,9 @@ tools/
   gen-art.mjs  cutout.mjs   the portraits: docs/portrait-prompts.md -> an editor on Replicate (Nano
                         Banana and five others; MODELS) -> assets/chars/candidates + art.json;
                         --import puts one in the game; --model lora draws from the line alone
-  gen-bg.mjs            new room paintings: docs/room-prompts.md -> Nano Banana Pro (the bake-off's
-                        pick) -> assets/bg/candidates + rooms-art.json; --import makes the game's JPEG
+  gen-bg.mjs            new room paintings: docs/room-prompts.md (the owner's prompting guide's
+                        recipe) -> Seedream 4 -> assets/bg/candidates + rooms-art.json; --rerender
+                        takes the Background Lab's verdicts, --prune, --import makes the game's JPEG
   train-lora.mjs        the two style LoRAs (characters on the approved candidates, rooms on the
                         paintings) -> private models on Replicate; lora.json records the trainings
   replicate.mjs         the Replicate client the three share (token, files, predict, versions)

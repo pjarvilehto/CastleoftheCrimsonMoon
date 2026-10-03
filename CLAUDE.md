@@ -64,6 +64,17 @@ before structural changes. This file is the rules and the per-system notes.
     or current), FIGHT (the knight and four enemies at the game's size).
     COPY JSON packs the verdicts and queued re-rolls as `art-rerender.json`
     for `node tools/gen-art.mjs --rerender`.
+  - **Background Lab (0.00241):** `labs/backgrounds/` — the new room
+    paintings `tools/gen-bg.mjs` made (`assets/data/rooms-art.json`)
+    through their stages, drafts → approved → in the game: ROOM (one
+    room's candidates as tiles: Approve / Reject with a note / Regenerate
+    with notes; a click shows one on the stage), FIGHT (the shown
+    candidate at full screen under the game's real card units with the
+    vignette — does it read as a battle stage), COMPARE (beside one of
+    the game's own paintings). The panel lists every room with its
+    stage, picks the model for re-rolls (Seedream 4) and queues fresh
+    re-rolls per room; COPY JSON packs the verdicts and re-rolls as
+    `rooms-rerender.json` for `node tools/gen-bg.mjs --rerender`.
   - **World Lab (0.00210):** `labs/world/` — the world map above the
     dungeon, a prototype: the owner's painting (`assets/world/world_v1.webp`,
     1500 px; the real one wants three times that or tiles) under a canvas of
@@ -555,17 +566,28 @@ open floor space in the center"), then the style block word for word:
 "in the combined style of Darkest Dungeon 2 and Mike Mignola, heavy
 black ink silhouettes, bold flat angular shapes, rough hand-drawn ink
 texture and hatching, dramatic chiaroscuro lighting, video game
-background art, wide shot, no characters". New rooms:
-`docs/room-prompts.md` (the recipe, the style block, a table of rooms:
-id, name, hue family, kind room / arena, line) → `node tools/gen-bg.mjs`
-sends the line + the mood + the block as text alone (`--refs` attaches
-two of the game's paintings of the hue family, `REFS`; it adds little)
-into `assets/bg/candidates/<id>_c<n>.jpg` at the model's own size,
-recorded in `assets/data/rooms-art.json`; `--sheet` a contact sheet;
-`--import <id_cN> [--list rooms|treasure|...]` the 2048x1152 q86 JPEG
-(a new filename, rule 7), its name in `backgrounds.json`, and the
-reminder for the depth map (`gen-depth.py`; the suite fails without
-one). **The bake-off** (three rooms the game lacks — The Clock Tower,
+background art, wide shot, no characters". New rooms
+(**the loop, 0.00241, like the portraits'):** `docs/room-prompts.md`
+(the recipe, the style block, a table of rooms: id, name, hue family,
+kind room / arena, line — the guide's own unused rooms are there with
+its lines) → `node tools/gen-bg.mjs [--only id]` sends the line + the
+mood + the block as text alone to **Seedream 4** (the owner's pick from
+the verbatim round, `DEFAULTS.model`; two versions a room; `--refs`
+attaches two of the game's paintings of the hue family, `REFS` — it
+adds little; `--prompt "..." --id x` sends a prompt exactly as written)
+into `assets/bg/candidates/<id>_c<n>.jpg` at the model's own size
+(Seedream 2560x1440), recorded in `assets/data/rooms-art.json` → the
+Background Lab → COPY JSON → `--rerender rooms-rerender.json` (verdicts
+recorded, re-rolls painted: fresh `{ id, n, hint, model }` or from a
+candidate `{ id, basedOn: n, hint, n, model }` — the candidate goes in as
+the picture, `basedOnPrompt`) → `--prune` (a room with an approval keeps
+only its approved candidates) → `--import <id>` (its latest approved
+candidate, or `<id_cN>`; `--list rooms|treasure|bosses|entrance|antechambers`)
+= the 2048x1152 q86 JPEG (a new filename, rule 7), its name in
+`backgrounds.json`, the candidate marked `imported`, and the reminder
+for the depth map (`python3 tools/gen-depth.py <model.onnx>
+assets/bg/<id>.jpg`; the suite fails without one) → ship. `--sheet` a
+contact sheet. **The bake-off** (three rooms the game lacks — The Clock Tower,
 The Blood Baths, The Rookery — `--bakeoff`, nine models in all): with my
 first, descriptive prompt and references every model drifted
 (0.00236); with the guide's recipe as text alone, **Nano Banana Pro**
