@@ -11,7 +11,9 @@
 //   node tools/gen-art.mjs --refs family|sheets           # image 2 = the colour family's best original (STYLE_REF) or the
 //                                                         # owner's inked sheet instead of the character's own portrait
 //   node tools/gen-art.mjs --style castle_courtyard.jpg   # any picture by path or painting as the reference
-//   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro
+//   node tools/gen-art.mjs --model max                    # Kontext Max instead of Pro; also banana, bananapro (Google
+//                                                         # Nano Banana / Pro), seedream (ByteDance Seedream 4), gpt (OpenAI
+//                                                         # GPT Image 1.5), flux2 (FLUX 2 Pro) — the same two pictures and prompt
 //   node tools/gen-art.mjs --inputs files                 # upload the pictures (Files API) instead of inlining them
 //   node tools/gen-art.mjs --only gargoyle --from-sheet skeleton   # drawn from its line on a style sheet, its old
 //                                                         # art left out (the one-picture Kontext replaces the figure)
@@ -64,9 +66,19 @@ const REGISTRY = join(ROOT, 'assets', 'data', 'art.json');
 const WEB = 'assets/chars/candidates'; // as the lab fetches it
 const API = 'https://api.replicate.com/v1';
 
+// Every editor takes the two pictures (the portrait, the style reference) and the
+// prompt; `build` maps them onto the model's own inputs (api.replicate.com,
+// checked 2026-10; prices from memory, the API has none). The multi-image
+// Kontext apps name them input_image_1 / _2; the others take a list, and the
+// prompt then says "the first image" / "the second image".
 export const MODELS = {
-  pro: { model: 'flux-kontext-apps/multi-image-kontext-pro', priceUsd: 0.04 },
-  max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08 },
+  pro: { model: 'flux-kontext-apps/multi-image-kontext-pro', priceUsd: 0.04, build: (x) => ({ prompt: x.prompt, input_image_1: x.portrait, input_image_2: x.style, aspect_ratio: x.aspect, output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
+  max: { model: 'flux-kontext-apps/multi-image-kontext-max', priceUsd: 0.08, build: (x) => ({ prompt: x.prompt, input_image_1: x.portrait, input_image_2: x.style, aspect_ratio: x.aspect, output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
+  banana: { model: 'google/nano-banana', priceUsd: 0.04, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, output_format: 'png' }) },
+  bananapro: { model: 'google/nano-banana-pro', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, resolution: '2K', output_format: 'png', safety_filter_level: 'block_only_high' }) },
+  seedream: { model: 'bytedance/seedream-4', priceUsd: 0.03, list: true, build: (x) => ({ prompt: x.prompt, image_input: [x.portrait, x.style], aspect_ratio: x.aspect, size: '2K', enhance_prompt: false, sequential_image_generation: 'disabled' }) },
+  gpt: { model: 'openai/gpt-image-1.5', priceUsd: 0.15, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style], aspect_ratio: x.aspect === '4:3' ? '3:2' : x.aspect, quality: 'high', input_fidelity: 'high', background: 'opaque', moderation: 'low', output_format: 'png' }) },
+  flux2: { model: 'black-forest-labs/flux-2-pro', priceUsd: 0.05, list: true, build: (x) => ({ prompt: x.prompt, input_images: [x.portrait, x.style], aspect_ratio: x.aspect, resolution: '2 MP', output_format: 'png', safety_tolerance: 2, seed: x.seed }) },
   // the style LoRA (tools/train-lora.mjs): text to image, no source portrait — a NEW character (--new) or a fresh take on one
   lora: { model: 'black-forest-labs/flux-dev-lora', priceUsd: 0.03, weights: 'pjarvilehto/crimson-moon-style', trigger: 'CRMSNMOON' },
 };
@@ -268,7 +280,7 @@ async function main() {
   const model = MODELS[val('--model', DEFAULTS.model)];
   const refs = val('--refs', 'own');
   if (!['own', 'family', 'sheets'].includes(refs)) throw new Error('--refs own | family | sheets');
-  if (!model) throw new Error('--model pro | max');
+  if (!model) throw new Error(`--model ${Object.keys(MODELS).join(' | ')}`);
   const tolerance = Number(val('--tolerance', DEFAULTS.tolerance)), shadow = Number(val('--shadow', SHADOW.tolerance)), paper = val('--paper', '1') !== '0', holes = val('--holes', '1') !== '0';
   const cutOpts = { tolerance, shadow, paper, holes };
   mkdirSync(OUT, { recursive: true });
@@ -403,7 +415,8 @@ async function main() {
             ? { prompt: j.prompt, input_image: await uploaded(j.sheet), aspect_ratio: DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed }
           : model === MODELS.lora
             ? { prompt: j.prompt, lora_weights: MODELS.lora.weights, aspect_ratio: DEFAULTS.aspect, output_format: 'png', num_inference_steps: 28, guidance: 3, megapixels: '1', seed: j.seed }
-            : { prompt: j.prompt, input_image_1: await uploaded(join(CHARS, j.c.file)), input_image_2: await uploaded(j.stylePath), aspect_ratio: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, output_format: 'png', safety_tolerance: 2, seed: j.seed };
+            : model.build({ prompt: model.list ? j.prompt.replace(/\bimage 1\b/g, 'the first image').replace(/\bimage 2\b/g, 'the second image') : j.prompt,
+              portrait: await uploaded(join(CHARS, j.c.file)), style: await uploaded(j.stylePath), aspect: WIDE[j.c.id] ? '4:3' : DEFAULTS.aspect, seed: j.seed });
         // the model's own fetch of a just-uploaded picture times out now and then (the pilot: 3 of 13 first tries): one more go
         const out = await predict(use, input).catch(async (e) => { if (!/timed out/i.test(e.message)) throw e; console.log(`  retry ${name}: ${e.message}`); await new Promise((r) => setTimeout(r, 4000)); return predict(use, input); });
         const rawPath = join(OUT, `${name}_raw.jpg`), cutPath = join(OUT, `${name}.webp`);
