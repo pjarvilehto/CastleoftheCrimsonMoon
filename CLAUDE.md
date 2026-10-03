@@ -1190,7 +1190,10 @@ be served stale for ~4 hours.
   `#app` without a key trap, and a reliquary death left Push Deeper live
   under it). Yes/no: `ui/confirmPrompt.js` (the title's Start a New Game
   included). Never the browser's `confirm()`.
-- Keyboard-reachable buttons get `key: 'x'` in `el()`; a screen's way
+- Keyboard-reachable buttons get `key: 'x'` in `el()` (a second key: a
+  `data-key-alt` attribute, served after every button's own — 0.00285: H on
+  every class's special, whose own key is a letter of its name, `heroes.json
+  heavyKey`); a screen's way
   forward also gets `proceed: true` (Space clicks it, a tiny `[space]` sits
   under its label; in a dialog pass it as `openDialog({ proceed })`).
   Yes/no prompts and text fields don't get one. A held Space steps once.

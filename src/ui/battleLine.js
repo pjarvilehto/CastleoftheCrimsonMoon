@@ -279,7 +279,9 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
   });
   attachCardFx(card, cardStyle('player', false, hero.theme), { into: plate }); // the shader light behind the hero (0.183), in the class's theme (0.00254)
   const cd = el('span', { class: 'heavy-cd' }, '');
-  const heavyBtn = el('button', { key: 'h', onclick: onHeavy }, hero.heavyName, cd); // (0.00267: the class's own name — Cleave, Fireball, Soul Drain…; H either way)
+  // The special's key (0.00285): a letter of its own name, underlined like Attack's A (heroes.json
+  // heavyKey — C for Cleave, F for Fireball…), and H on every class as before (data-key-alt).
+  const heavyBtn = el('button', { key: hero.heavyKey, 'data-key-alt': 'h', onclick: onHeavy }, hero.heavyName, cd); // (0.00267: the class's own name)
   const potionBtn = el('button', { key: 'p', onclick: onPotion }, 'Drink Potion');
   const unit = el('div', { class: 'unit player-unit', style: bandStyle() }, el('div', { class: 'hero-title card-name' }, hero.name.toUpperCase()), card, el('div', { class: 'unit-actions' }, heavyBtn, potionBtn)); // (0.00248: the chosen class; 0.00251: above the card)
   const heavyDisabled = disabler(heavyBtn), potionDisabled = disabler(potionBtn);

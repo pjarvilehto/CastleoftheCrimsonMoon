@@ -6,7 +6,7 @@
       "name": "The Curious Knight",
       "epithet": "Steel and stubbornness",
       "lore": "A wanderer who came for the legend and stayed for the fight. A sword, a coat of mail and no sense of when to leave.",
-      "heavyName": "Heavy Attack",
+      "heavyName": "Heavy Attack", "heavyKey": "h",
       "traits": [
         "Sword",
         "Heavy blows",
@@ -30,7 +30,7 @@
       "name": "The Barbarian",
       "epithet": "The axe decides",
       "lore": "From the frozen marches, where the moon is one more thing to kill. Hits harder, bleeds more, drinks last.",
-      "heavyName": "Cleave",
+      "heavyName": "Cleave", "heavyKey": "c",
       "traits": [
         "Great axe",
         "Rage",
@@ -54,7 +54,7 @@
       "name": "The Wizard",
       "epithet": "Old fire, older book",
       "lore": "He has read what the castle is and came anyway, with a staff, a chained grimoire and three good spells.",
-      "heavyName": "Fireball",
+      "heavyName": "Fireball", "heavyKey": "f",
       "traits": [
         "Staff",
         "Spells",
@@ -81,7 +81,7 @@
       "name": "The Necromancer",
       "epithet": "The dead owe him",
       "lore": "The castle's own trade, turned against it. Every corpse on the floor is a servant waiting for its word.",
-      "heavyName": "Soul Drain",
+      "heavyName": "Soul Drain", "heavyKey": "s",
       "traits": [
         "Ritual dagger",
         "Thralls",
@@ -108,7 +108,7 @@
       "name": "The Druid",
       "epithet": "The forest remembers",
       "lore": "Antlers, feathers and a staff that still grows. The wild has its own quarrel with the Crimson Moon.",
-      "heavyName": "Entangle",
+      "heavyName": "Entangle", "heavyKey": "e",
       "traits": [
         "Living staff",
         "Mending",
@@ -132,7 +132,7 @@
       "name": "The Hexhunter",
       "epithet": "Silver bolts, cold eyes",
       "lore": "A witchfinder who turned her craft on the things that made the witches. A crossbow, a pocket of charms and no mercy left to spend.",
-      "heavyName": "Hex",
+      "heavyName": "Hex", "heavyKey": "h",
       "traits": [
         "Crossbow",
         "Hexes",
@@ -155,7 +155,7 @@
       "name": "The Plague Sister",
       "epithet": "Mercy, by the censer",
       "lore": "A nursing order that outlived its abbey. She carries its reliquary on her back and its fever in a censer, and tends the dying either way.",
-      "heavyName": "Last Rites",
+      "heavyName": "Last Rites", "heavyKey": "l",
       "traits": [
         "Censer",
         "Blight",
