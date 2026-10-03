@@ -1,5 +1,5 @@
 {
-  "version": "0.00318",
+  "version": "0.00319",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00319": [
+      "Items you find in combat carry a small light through the room as they fly to your loot — the rarer the item, the brighter its glow."
+    ],
     "0.00318": [
       "Thicker mist in every room: more fog puffs, denser and more of it."
     ],
@@ -143,9 +146,6 @@
     ],
     "0.00305": [
       "New recorded sounds from the SFX Lab review: a knife shing on the blows, a heavier thud and a bigger metallic clank under the hits, an impact for a critical hit, a new potion sound and a gnarling hollow hound."
-    ],
-    "0.00304": [
-      "The sound effects re-tuned from the SFX Lab review: the foes' cries and attacks pitched down, the whooshes louder, the death and shrine hits deeper, the blows and the kill a touch lower."
     ]
   }
 }
