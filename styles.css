@@ -34,7 +34,7 @@
   --panel: rgba(12, 10, 8, 0.82);
   --panel-border: rgba(201, 162, 39, 0.35);
   --ratio-p: 0.605; --ratio-e: 0.3734; /* the cards' width / height (the card art: player 669/1106, enemy 413/1106) — the --card-h budget, desktop, tablet and phone (0.00209: one copy) */
-  --corner-w: 150px; /* the corner column's reach over the right edge (the tablet's reservation) */
+  --corner-w: 160px; /* the corner column's reach over the right edge (the tablet's reservation; 0.00226: 150 -> 160, D-DIN Condensed sets ~7% wider) */
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; background: var(--ink); }
