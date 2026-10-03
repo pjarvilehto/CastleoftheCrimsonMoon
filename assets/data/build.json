@@ -1,5 +1,5 @@
 {
-  "version": "0.00223",
+  "version": "0.00224",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -88,6 +88,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00224": [
+      "Play stats: the By build table shows the newest ten builds and the three most played older ones; the save-code entry is gone — every tester is collected."
+    ],
     "0.00223": [
       "A death in a Sealed Reliquary now counts the room it led to, in your records and on the end screen.",
       "A potion drunk between rooms no longer leaves phantom armor for the next fight; summons are never marked elite.",
@@ -148,13 +151,6 @@
     ],
     "0.00210": [
       "World Lab (under ?debug LABS): the world map above the dungeon as a prototype — the castle as one pin on a painted world under clouds, clearing a place burns the clouds away around its roads, seen from above or from the sky, with the dive through the clouds into a place"
-    ],
-    "0.00209": [
-      "Review after the phone work: the shrine, treasure and title panels now get the phone's compact layout (a desktop rule used to win), the hall keeps clear of the notch, XP and coins are readable, the boons sit on top of the knight's card, and FULLSCREEN leaves the phone's menu — PLAY is the way in",
-      "A phone's first tap starts the music and the narrator's welcome (a touch counts at the tap's end); PLAY is a proper dialog and INSTALL works more than once",
-      "The 3D background draws at no more than 2x pixel density on sharp phone screens (cooler, smoother)",
-      "Export Save and Import Save open as dialogs; the Great Hall's dot on EQUIPMENT lights when something can be forged (it used to light ALCHEMY)",
-      "Fixes: a failed load says so and a tap retries; a room change on a flat background waits for the painting; music muted during its first load stays silent; a rare freeze after an effect error; the equipment rows' styles"
     ]
   }
 }
