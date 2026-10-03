@@ -115,6 +115,6 @@ function swapOut(arr, idx, newId, summary) {
 function salvage(id, summary) {
   const it = DATA.items[id];
   if (!it) return; // an item the data no longer lists (0.00223): nothing to sell
-  summary.salvaged.push({ id, name: it.name, tier: it.tier }); // (0.00259: the id, for the run end's pictures)
+  summary.salvaged.push({ id, name: it.name, tier: it.tier }); // (0.00260: the id, for the run end's pictures)
   summary.coins += salvageValue(id);
 }

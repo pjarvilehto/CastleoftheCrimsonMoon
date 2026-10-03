@@ -78,7 +78,7 @@ export function playFx(fx, ctx) {
     case 'overkill': return overkill(fx, ctx);
     case 'multi': shake(ctx, 1.1); return bgSway(1.2, 1);
     case 'summon': return summon(fx, ctx);
-    case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies to the hero (0.00259)
+    case 'find': return findPop(fx, ctx); // a kept find rises as a card and flies to the hero (0.00260)
     default: return undefined;
   }
 }

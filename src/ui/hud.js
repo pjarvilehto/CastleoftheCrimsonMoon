@@ -55,7 +55,7 @@ const GLYPHS = { atk: '⚔ ', heal: '✚ ', loot: '◆ ', move: '➤ ', multi: '
 // of every hit's frame.
 const LOG_MAX_LINES = 200;
 
-// 0.00259: an { item, id } part (run/loot.js takeItem) leads with the item's
+// 0.00260: an { item, id } part (run/loot.js takeItem) leads with the item's
 // small picture, rimmed in its rarity.
 export function logLine(logEl, content, cls = 'sys') {
   const parts = (Array.isArray(content) ? content : [content])
@@ -78,14 +78,14 @@ export function itemName(item) {
   return el('span', { class: rarityClass(item) }, item.name);
 }
 
-// An item's picture (0.00259, items.json art): an <img> classed `item-pic
+// An item's picture (0.00260, items.json art): an <img> classed `item-pic
 // tier-N` (+ cls) for the rarity rim, or null for an item with none.
 export function itemPic(id, cls = '') {
   const src = itemArtUrl(id), item = DATA.items[id];
   return src ? el('img', { class: `item-pic tier-${Math.min(4, Math.max(1, item.tier || 1))}${cls ? ` ${cls}` : ''}`, src, alt: '', draggable: 'false' }) : null;
 }
 
-// A worn slot's name (0.00248, from hubSections.js; 0.00259 here, so combat's
+// A worn slot's name (0.00248, from hubSections.js; 0.00260 here, so combat's
 // find card names it too): the settle record's { slot, index }.
 const SLOT_LABEL = { weapon: 'Weapon', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', amulet: 'Amulet' };
 export const gearLabel = ({ slot, index }) => (slot === 'rings' ? ['Ring I', 'Ring II'][index] : SLOT_LABEL[slot]);

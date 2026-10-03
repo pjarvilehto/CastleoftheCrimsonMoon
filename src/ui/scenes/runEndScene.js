@@ -8,7 +8,7 @@ import { gainLine } from '../../shared/itemArt.js';
 import { play } from '../../audio/music.js';
 import { narrate } from '../../audio/narrator.js';
 
-// The run's finds (0.00259): a card per slot they changed — the picture
+// The run's finds (0.00260): a card per slot they changed — the picture
 // fading down into the slot, the name in its rarity, its stats and what it
 // beat; a relic tagged. What was salvaged (the gear they replaced, a find a
 // later one beat) is a row of small grey chips with the coins.

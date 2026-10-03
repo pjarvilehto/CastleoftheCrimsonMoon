@@ -36,11 +36,11 @@ fresh();
   ok('background stage completes and reports progress (over the essentials)', rp.ready && rp.done === rp.total && rp.total === need.length);
   ok('the stage waits for no room painting; the rooms load after the essentials',
     DATA.backgrounds.rooms.filter((f) => ![DATA.backgrounds.title, DATA.backgrounds.hub, DATA.backgrounds.death, DATA.backgrounds.shrine].includes(f)).every((f) => !need.includes(`assets/bg/${f}`) && roomArt.includes(`assets/bg/${f}`))
-    && later.join() === [...need, ...pre.heroLaterUrls(), ...pre.itemUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between; 0.00259: the gear's pictures)
+    && later.join() === [...need, ...pre.heroLaterUrls(), ...pre.itemUrls(), ...roomArt].join()); // (0.00248: the heroes' other looks sit between; 0.00260: the gear's pictures)
   {
     const { getProfile } = await import('../../src/meta/profile.js');
     const items = pre.itemUrls(), weapon = `assets/items/${DATA.items[getProfile().equipment.weapon].art}`;
-    ok('the gear\'s pictures load after the essentials, before the rooms: every item\'s, once, the worn gear first (0.00259)',
+    ok('the gear\'s pictures load after the essentials, before the rooms: every item\'s, once, the worn gear first (0.00260)',
       items.length === Object.keys(DATA.items).length && new Set(items).size === items.length && items.indexOf(weapon) < 7 && !need.some((u) => items.includes(u)));
   }
 

@@ -89,7 +89,7 @@ export function checkData(data) {
   // every portrait is named in the data (0.184): enemies.json art, cards.json player.art
   for (const [id, e] of Object.entries(data.enemies ?? {})) if (typeof e?.art !== 'string' || !e.art) out.push(`enemies.json: ${id}.art (the portrait file in assets/chars/)`);
   if (typeof data.cards?.player?.art !== 'string' || !data.cards.player.art) out.push('cards.json: player.art (the knight\'s portrait file in assets/chars/)');
-  // every item names its picture (0.00259): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
+  // every item names its picture (0.00260): items.json art, the file in assets/items/ (tools/gen-items.mjs --import)
   for (const [id, it] of Object.entries(data.items ?? {})) if (typeof it?.art !== 'string' || !/\.webp$/.test(it.art)) out.push(`items.json: ${id}.art (the item's picture, a .webp in assets/items/)`);
   // the character classes (0.00248): every hero whole, the default one of them
   const heroes = Array.isArray(data.heroes?.heroes) ? data.heroes.heroes : [];

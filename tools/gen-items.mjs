@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Paint the gear's pictures on Replicate (0.00259). The prompts live in
+// Paint the gear's pictures on Replicate (0.00260). The prompts live in
 // docs/item-prompts.md (the style block + one line per item); every
 // candidate is kept (assets/items/candidates/<id>_c<n>.webp, 512 px, never
 // overwritten — lab-only, no player fetches it) and recorded in

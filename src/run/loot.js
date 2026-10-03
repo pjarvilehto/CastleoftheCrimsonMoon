@@ -41,7 +41,7 @@ export function rollLoot(enemy, fortuneBonus, roomNumber = Infinity, hasRelic = 
 // salvaged on the spot — it would only be salvaged at the end, so take the
 // coins now instead of piling up junk (0.091; same value, same toll).
 // log(text, cls, extra) prints the line: { item, id } parts are rendered
-// rarity-colored (with the item's picture, 0.00259) by hud.logLine — run/
+// rarity-colored (with the item's picture, 0.00260) by hud.logLine — run/
 // stays free of UI imports (0.079). A kept find's line also carries
 // extra.find = { id, slot, index, from }: the slot it takes in the preview
 // and what it replaces (null: an empty slot) — combat's find card.

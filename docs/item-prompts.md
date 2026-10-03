@@ -3,7 +3,7 @@
 The pictures of the gear (`items.json art`, `assets/items/`), painted by
 `node tools/gen-items.mjs` from this file: the style block below, then
 "The object: " and the item's line. The direction is the developer's
-(0.00259): dramatic low-key light, an Unreal Engine 5 render, a touch of
+(0.00260): dramatic low-key light, an Unreal Engine 5 render, a touch of
 Mike Mignola. Picked over three models on four items: **Nano Banana Pro**
 (the default) had the render and the light; Seedream 4 was as dramatic but
 added things (gems on the oak shield) and cropped; Nano Banana drew the

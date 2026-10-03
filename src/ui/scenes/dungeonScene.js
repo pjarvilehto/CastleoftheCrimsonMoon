@@ -52,7 +52,7 @@ export function dungeonScene() {
   let buffBar = null;    // the shrine blessings' bar (bottom-left; on a phone on top of the knight's card)
   let deathShown = false; // death modal fired for the fatal blow
   let ui = null;         // the persistent battle line of the current combat room (0.086)
-  let lootEl = null;    // the LOOT row under XP / COINS (0.00259): the run's finds as small pictures
+  let lootEl = null;    // the LOOT row under XP / COINS (0.00260): the run's finds as small pictures
   let lootShown = 0;    // how many of run.itemsFound it shows — a find joins when its card has flown in
 
   const playback = createPlayback({
@@ -206,7 +206,7 @@ export function dungeonScene() {
     if (showProceed) markWayOn(ui.proceed.children[0], ui.proceed.children[1], run);
   }
 
-  // The LOOT row (0.00259): the newest LOOT_SHOWN of the run's finds, oldest first.
+  // The LOOT row (0.00260): the newest LOOT_SHOWN of the run's finds, oldest first.
   function showLoot(n, rebuild = false) {
     n = Math.min(n, run.itemsFound.length);
     if (!lootEl || (n === lootShown && !rebuild)) { lootShown = Math.max(lootShown, n); return; }
@@ -263,7 +263,7 @@ export function dungeonScene() {
       parts.push(' — loot: ');
       newItems.forEach((id, i) => {
         if (i > 0) parts.push(', ');
-        parts.push(itemPic(id, 'log-art'), itemName(DATA.items[id])); // (0.00259: with its picture, like the Found line)
+        parts.push(itemPic(id, 'log-art'), itemName(DATA.items[id])); // (0.00260: with its picture, like the Found line)
       });
     }
     return parts;

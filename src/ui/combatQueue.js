@@ -38,7 +38,7 @@ export function queueEvents(events, { run, combat, playback }) {
       if (ev.silent) { applyLoot(run, ev.enemy, () => {}); continue; }
       // Death line prints on one tick; the card goes down on the next.
       playback.enqueue({ text: ev.text, cls: 'atk', snap: ev.snap, sink: combat.enemies.indexOf(ev.enemy), sfx: 'kill' });
-      applyLoot(run, ev.enemy, (text, cls, extra) => playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot', vo: cls === 'relic' ? 'relic_found' : undefined, fx: extra?.find ? { kind: 'find', ...extra.find } : undefined })); // (0.00259: a kept find rises as a card — ui/findFx.js)
+      applyLoot(run, ev.enemy, (text, cls, extra) => playback.enqueue({ text, cls, sfx: cls === 'relic' ? 'rare' : 'loot', vo: cls === 'relic' ? 'relic_found' : undefined, fx: extra?.find ? { kind: 'find', ...extra.find } : undefined })); // (0.00260: a kept find rises as a card — ui/findFx.js)
       continue;
     }
     const cls = ev.type === 'multi' ? 'multi' : (ev.type === 'dmg' || ev.type === 'spill') ? 'atk' : ev.type;

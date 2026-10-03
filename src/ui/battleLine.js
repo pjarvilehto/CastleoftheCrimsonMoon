@@ -182,7 +182,7 @@ function invPage(run) {
     const known = ids.filter((id) => DATA.items[id]), items = known.map((id) => DATA.items[id]);
     found.textContent = '';
     found.append(el('div', { class: 'inv-head' }, items.length ? 'Found this run' : 'Nothing found yet this run'),
-      ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00259: its picture)
+      ...known.slice(-FOUND_SHOWN).reverse().map((id) => { const it = DATA.items[id]; return el('div', { class: 'inv-found' }, itemPic(id, 'inv-pic'), // (0.00260: its picture)
         el('span', { class: rarityClass(it) }, it.name.toUpperCase()), el('small', {}, `${SLOT_NAME[it.slot] ?? it.slot} ↑`)); }),
       ...(items.length > FOUND_SHOWN ? [el('div', { class: 'inv-more' }, `+${items.length - FOUND_SHOWN} more`)] : []));
   };

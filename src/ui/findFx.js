@@ -1,4 +1,4 @@
-// ui/findFx.js — a kept find in combat (0.00259, the developer's pick from
+// ui/findFx.js — a kept find in combat (0.00260, the developer's pick from
 // the mockups): as its "Found:" line prints, the item rises as a card over
 // the enemies still standing — its picture fading into the text (the hall's
 // look), FOUND · the slot, the name in its rarity, its stats and what it

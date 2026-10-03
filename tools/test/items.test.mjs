@@ -1,4 +1,4 @@
-// tools/test/items.test.mjs — the gear's pictures (0.00259): the files and
+// tools/test/items.test.mjs — the gear's pictures (0.00260): the files and
 // the prompt sheet, what a find is worth over what it replaced, and every
 // place a picture shows — the log line, the find card in combat, the hall's
 // slots (desktop and phone), the hero card's inventory, the run's end.

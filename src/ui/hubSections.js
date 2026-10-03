@@ -101,7 +101,7 @@ export function alchemySection(p, phone, done, spend = false) {
     }));
 }
 
-// A worn slot's label in the hall (0.00248; it lives in hud.js since 0.00259, combat's find card names slots too).
+// A worn slot's label in the hall (0.00248; it lives in hud.js since 0.00260, combat's find card names slots too).
 export { gearLabel };
 // The NEW tag on a slot this run's finds filled (0.00248; the hall's reveal).
 const newTag = (found, label) => (found.has(label) ? el('span', { class: 'slot-new' }, 'New') : null);
@@ -117,7 +117,7 @@ export function equipSection(p, done, found = new Set(), waiting = new Set()) {
     const canForge = !!item && forgeable(id) && !waiting.has(label);
     const pic = id ? itemPic(id) : null;
     return el('div', { class: `item-row${pic ? ' has-art' : ''}`, 'data-row': `slot-${label}` }, // (0.00209: classes, not inline styles — the phone layer restyles them)
-      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00259: the item's picture behind the row's left end, fading toward the name)
+      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00260: the item's picture behind the row's left end, fading toward the name)
       el('span', { class: 'equip-slot' }, label, newTag(found, label)),
       item
         ? el('div', { class: 'equip-right' },
@@ -168,7 +168,7 @@ export function knightSection(p, done, found = new Set(), waiting = new Set()) {
     const forgeLvl = p.forged[id] ?? 0;
     const pic = itemPic(id);
     return el('div', { class: `gear-slot gear-${rarityClass(item)}${found.has(label) ? ' found' : ''}${pic ? ' has-art' : ''}`, 'data-row': `slot-${label}` },
-      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00259: the item's picture on the slot's outer side, fading toward the card; the text over it)
+      pic ? el('div', { class: 'slot-art' }, pic) : null, // (0.00260: the item's picture on the slot's outer side, fading toward the card; the text over it)
       el('div', { class: 'slot-kind' }, label, newTag(found, label)),
       waiting.has(label) ? null
       : forgeable(id) && !forgeMaxed(id)

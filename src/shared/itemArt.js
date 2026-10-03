@@ -1,4 +1,4 @@
-// shared/itemArt.js — the gear's pictures (0.00259). The file is data:
+// shared/itemArt.js — the gear's pictures (0.00260). The file is data:
 // items.json `art` per item, in assets/items/ (tools/gen-items.mjs
 // --import; a redraw lands under a new name, rule 7). Also what a find is
 // worth against what it replaced, for the find card in combat and the

@@ -656,7 +656,7 @@ interiors — the title's and the death's exteriors stay out — into
 destination model is made on first use) draws a room from its line
 alone (`gen-bg.mjs --model lora`, 1344x768, upscaled at import).
 
-**Item art (0.00259, the developer's direction and picks from the
+**Item art (0.00260, the developer's direction and picks from the
 mockups).** Every item has a picture: `items.json art` per item, a 256 px
 WebP in `assets/items/` (~8 KB; 300 KB for all 36), read through
 `shared/itemArt.js` (`itemArtUrl`, `itemArtUrls`, and `gainLine(from,
@@ -1403,7 +1403,7 @@ sometimes — fetch all branches to find it.
   the `fog-lab/`, `particle-lab/`, `vo-lab/` forwarding stubs;
   `wrangler.jsonc` + `.assetsignore` (the unused Workers path);
   `assets/chars/candidates` (12.6MB), `assets/items/candidates` (1MB,
-  0.00259) and `assets/style` (16MB with the hero sheets, 0.00248) are
+  0.00260) and `assets/style` (16MB with the hero sheets, 0.00248) are
   lab-only art no player fetches but every clone and deploy carries (an
   Actions deploy could exclude them); the Particle Lab is a standalone
   copy of the pre-0.128 looks; four portraits weigh 200-260KB (content,
@@ -1462,7 +1462,7 @@ sometimes — fetch all branches to find it.
   batch (`docs/image-prompting-guide.md` §3: arenas, thrones, corridors,
   antechambers, shrines) · a generated painting's fog is a default until
   the Fog Lab tunes it · the mimic chest has art but no enemy entry ·
-  the item pictures have no lab view yet (0.00259: reviewed on
+  the item pictures have no lab view yet (0.00260: reviewed on
   `gen-items.mjs --sheet`; the Art Lab's COMPARE would suit them) ·
   Moonbrand's runes and the Blood Eclipse amulet's corona were
   re-asked for in their lines — a redraw with `--hint` if they still

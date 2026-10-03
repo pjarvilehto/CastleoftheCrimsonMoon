@@ -348,7 +348,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .rarity-2 { color: #6fa8dc; text-shadow: 0 0 12px rgba(111, 168, 220, 0.8); animation: rarity-pulse-2 2.8s ease-in-out infinite; }
 .rarity-3 { color: #c07ae8; font-weight: bold; text-shadow: 0 0 18px rgba(192, 122, 232, 1), 0 0 34px rgba(192, 122, 232, 0.5); animation: rarity-pulse-3 2.2s ease-in-out infinite; }
 .rarity-4 { color: #ff6b4a; font-weight: bold; text-shadow: 0 0 18px rgba(255, 90, 60, 1), 0 0 36px rgba(255, 170, 60, 0.6); animation: rarity-pulse-4 1.8s ease-in-out infinite; }
-/* An item's picture (0.00259, hud.js itemPic; items.json art): a small one gets a rim in its rarity's colour */
+/* An item's picture (0.00260, hud.js itemPic; items.json art): a small one gets a rim in its rarity's colour */
 .item-pic { display: block; object-fit: cover; }
 .item-pic.tier-1 { --rim: rgba(163, 155, 135, 0.55); --rim-glow: transparent; }
 .item-pic.tier-2 { --rim: rgba(111, 168, 220, 0.75); --rim-glow: rgba(111, 168, 220, 0.35); }
@@ -556,7 +556,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .gear-slot.found { border-color: rgba(232, 196, 92, 0.75); }
 .slot-desc { color: #85775a; font-size: 0.7rem; letter-spacing: 0.04em; }
 .gear-slot .forge-btn, .gear-slot .forge-max { position: absolute; top: 5px; padding: 2px 7px; font-size: 0.72rem; } /* the Forge in the slot's outer top corner */
-/* the item's picture (0.00259, the developer's pick "B"): large on the slot's outer side, fading toward the card, the text over it;
+/* the item's picture (0.00260, the developer's pick "B"): large on the slot's outer side, fading toward the card, the text over it;
    the art layer clips itself (not the slot: the purchase flash grows the name past the slot's edge) */
 .gear-slot .slot-art { position: absolute; inset: 0; overflow: hidden; border-radius: 4px; pointer-events: none; }
 .gear-slot .slot-art img { position: absolute; top: -25%; height: 150%; width: auto; aspect-ratio: 1; filter: brightness(1.45) contrast(1.08) saturate(1.1); }
@@ -832,7 +832,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .card-back .inv-head { margin: 0.45em 6% 0.1em; color: var(--gold); letter-spacing: 0.18em; font-size: 0.56em; }
 .card-back .inv-found { margin: 0 6%; display: flex; justify-content: space-between; align-items: baseline; gap: 0.4em; font-size: 0.72em; }
 .card-back .inv-found span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: none; animation: none; }
-.card-back .inv-found .inv-pic { width: 1.7em; height: 1.7em; flex-shrink: 0; align-self: center; border-radius: 2px; border: 1px solid var(--rim); } /* (0.00259: the find's picture) */
+.card-back .inv-found .inv-pic { width: 1.7em; height: 1.7em; flex-shrink: 0; align-self: center; border-radius: 2px; border: 1px solid var(--rim); } /* (0.00260: the find's picture) */
 .card-back .inv-found small, .card-back .inv-more { color: #8a7c5e; font-size: 0.78em; letter-spacing: 0.08em; white-space: nowrap; }
 .card-back .inv-more { margin: 0 6%; font-size: 0.56em; }
 .card-back .page-dots { display: flex; justify-content: center; gap: 0.45em; margin-top: auto; padding-bottom: 0.35em; }
@@ -938,7 +938,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .res-row { display: flex; gap: 1vw; align-items: baseline; font-size: 2vh; }
 .res-label { color: #9a8b6a; letter-spacing: 0.25vh; width: 5em; }
 .res-row b { color: var(--parchment); font-size: 1.2em; display: inline-block; transform-origin: left center; } /* (the pulse when a number changes, fx.js pulseNumber, grows from the left) */
-/* LOOT (0.00259, dungeonScene.js showLoot): the run's finds so far as small pictures, the newest last */
+/* LOOT (0.00260, dungeonScene.js showLoot): the run's finds so far as small pictures, the newest last */
 .res-loot { align-items: center; gap: 0.8vw; }
 .res-loot .res-label { width: auto; } /* (its own width, not the 5em column: six finds and the label keep left of the log in a 960 px window) */
 .res-loot.none { display: none; }
@@ -996,7 +996,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 /* floating combat numbers: a layer over the battle line (not inside the
    cards), so they survive any card update */
 .fx-layer { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
-/* A find in combat (0.00259, ui/findFx.js): the item rising as a card over the foes, then flying into the hero's card */
+/* A find in combat (0.00260, ui/findFx.js): the item rising as a card over the foes, then flying into the hero's card */
 .find-pop { position: fixed; left: 0; top: 0; width: min(400px, 34vw); height: min(104px, 12.8vh); min-height: 64px; overflow: hidden; border: 1px solid var(--rim); border-radius: 5px; text-transform: uppercase;
   background: linear-gradient(to right, rgba(8, 5, 3, 0.2), rgba(8, 5, 3, 0.92) 46%); box-shadow: 0 0 28px 4px var(--rim-glow), 0 10px 30px rgba(0, 0, 0, 0.9); will-change: transform, opacity; }
 .find-pop.tier-1 { --rim: rgba(163, 155, 135, 0.6); --rim-glow: rgba(163, 155, 135, 0.15); --name: #c9bfa8; }
@@ -1079,7 +1079,7 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
 .treasure-lethal { color: #e05a4a; font-weight: bold; }
 
 /* ================= 12 Run end ================= */
-/* The run's finds (0.00259, runEndScene.js findCard): a card per slot they changed, the picture fading down into the name; what was salvaged as grey chips */
+/* The run's finds (0.00260, runEndScene.js findCard): a card per slot they changed, the picture fading down into the name; what was salvaged as grey chips */
 .loot-summary { text-align: center; }
 .finds-row { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
 .find-card { position: relative; flex: 0 1 150px; min-width: 0; aspect-ratio: 150 / 196; container-type: inline-size; overflow: hidden; border: 1px solid var(--rim); border-radius: 5px; background: #0b0705; box-shadow: 0 0 16px var(--rim-glow); text-transform: uppercase; }
@@ -1489,7 +1489,7 @@ html.phone .hero-detail .btn-row button { font-size: 0.95rem; padding-inline: 1.
 html.phone .look-figure { height: 38svh; } /* (0.00253: the picker under a phone's height; the modal scrolls past that) */
 html.phone .look-arrow { font-size: 1.5rem; width: 44px; height: 44px; }
 
-/* ---- the gear's pictures (0.00259): the Equipment rows, the LOOT row, the find card, the run's end ---- */
+/* ---- the gear's pictures (0.00260): the Equipment rows, the LOOT row, the find card, the run's end ---- */
 html.phone .phone-hub .item-row.has-art { position: relative; }
 html.phone .phone-hub .item-row .slot-art { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
 html.phone .phone-hub .item-row .slot-art img { position: absolute; left: -4px; top: -37.5%; height: 175%; width: auto; aspect-ratio: 1; filter: brightness(1.45) contrast(1.08) saturate(1.1); -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 100%); mask-image: linear-gradient(to right, #000 45%, transparent 100%); }

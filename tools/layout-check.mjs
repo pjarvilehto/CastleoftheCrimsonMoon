@@ -186,7 +186,7 @@ async function run(name, opts, url) {
     });
     await shot('5-fight');
     check(name, 'fight: nothing overflows sideways', fight.scrollW <= fight.w, `${fight.scrollW} of ${fight.w}`);
-    { // the LOOT row full (0.00259: six finds; a phone has none — its top strip is the room title's): clear of the knight's buttons, the log and the title
+    { // the LOOT row full (0.00260: six finds; a phone has none — its top strip is the room title's): clear of the knight's buttons, the log and the title
       const finds = await page.evaluate(async () => {
         const { itemPic } = await import('/src/ui/hud.js');
         const row = document.querySelector('.res-loot'), tray = row?.querySelector('.loot-tray');
@@ -233,7 +233,7 @@ async function run(name, opts, url) {
     await settled(page);
     await page.evaluate(async () => {
       const [{ runEndScene }, { show }, { createRun }] = await Promise.all([import('/src/ui/scenes/runEndScene.js'), import('/src/core/scene.js'), import('/src/run/runState.js')]);
-      // (0.00259: the worst case — every slot changed, a card each, and three salvaged)
+      // (0.00260: the worst case — every slot changed, a card each, and three salvaged)
       const changes = [['weapon', 'rusty_sword', 'moonbrand'], ['armor', 'oak_shield', 'crimson_plate'], ['boots', null, 'umbral_treads'], ['rings', 'ring_of_might', 'vampiric_ring', 0], ['rings', null, 'ring_of_the_blood_moon', 1], ['trinket', null, 'lucky_charm'], ['amulet', null, 'amulet_of_the_blood_eclipse']]
         .map(([slot, from, to, index]) => ({ slot, index, from, to }));
       const salvaged = ['rusty_sword', 'oak_shield', 'ring_of_might'].map((id) => ({ id, name: id, tier: 1 }));

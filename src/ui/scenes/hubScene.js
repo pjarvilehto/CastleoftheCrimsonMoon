@@ -83,7 +83,7 @@ export function hubScene(opts = {}) {
           { boxShadow: '0 0 22px 4px rgba(232,196,92,0.85)', borderColor: 'rgba(255,236,170,1)', offset: 0.3 },
           { boxShadow: '0 0 0 0 rgba(232,196,92,0)' },
         ], { duration: 1400, easing: 'ease-out' });
-        row?.querySelector?.('.slot-art img')?.animate?.([ // (0.00259, one-shot: the find's picture flashes in as it lands)
+        row?.querySelector?.('.slot-art img')?.animate?.([ // (0.00260, one-shot: the find's picture flashes in as it lands)
           { opacity: 0, filter: 'brightness(2.6) contrast(1.08) saturate(0.6)', transform: 'scale(1.18)' }, // (the filter list matches styles.css .slot-art img's, so it eases back into it)
           { opacity: 1, filter: 'brightness(1.9) contrast(1.08) saturate(1.1)', transform: 'scale(1.04)', offset: 0.3 },
           { opacity: 1 },
