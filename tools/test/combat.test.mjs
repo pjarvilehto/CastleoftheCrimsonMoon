@@ -453,7 +453,7 @@ await withSeedAsync(4, async () => {
   // the elite star no longer drops its name below the others.
   const css = readFileSync('styles.css', 'utf8');
   ok('button caps centered via text-box trim (with fallback nudge)', /@supports \(text-box: trim-both cap alphabetic\) \{\s*\.btn-label \{ top: 0; text-box: trim-both cap alphabetic; padding-block: calc\(\(1lh - 1cap\) \/ 2\); \}/.test(css)
-    && css.includes('.btn-label { position: relative; top: 0.15em; }'));
+    && css.includes('.btn-label { position: relative; top: 0.015em; }')); // (0.00226: D-DIN Condensed's metrics)
   ok('elite star stays out of the name line box', /\.elite-star \{[^}]*line-height: 0;/.test(css));
   resetProfile();
 }

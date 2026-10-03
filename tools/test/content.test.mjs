@@ -373,3 +373,15 @@ fresh();
   const orphans = Object.entries(want).flatMap(([dir, names]) => readdirSync(dir).filter((f) => statSync(`${dir}/${f}`).isFile() && !names.has(f)).map((f) => `${dir}/${f}`));
   ok('no orphaned asset: every painting, depth map, sound, take, portrait, frame and icon on disk is one the game names', orphans.length === 0, orphans.join(', '));
 }
+
+// 0.00226: the display font is D-DIN Condensed Bold (SIL OFL, its licence
+// beside it); Apple's DIN Condensed is gone from the game, the labs and the
+// stats page
+{
+  const pages = ['styles.css', 'index.html', 'src/main.js', 'analytics/dashboard.css', 'labs/index.html',
+    ...readdirSync('labs', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `labs/${d.name}/index.html`)];
+  const old = pages.filter((p) => /DINCondensedBold|['"]DIN Condensed['"]/.test(readFileSync(p, 'utf8')));
+  ok('the font is D-DIN Condensed, its OFL licence ships with it, and the old DIN Condensed is gone everywhere',
+    statSync('assets/fonts/D-DINCondensed-Bold.woff2').isFile() && readFileSync('assets/fonts/D-DIN-OFL.txt', 'utf8').includes('SIL Open Font License')
+    && readdirSync('assets/fonts').every((f) => !/^DINCondensed/.test(f)) && old.length === 0, old.join(', '));
+}

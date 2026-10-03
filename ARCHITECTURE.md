@@ -2,7 +2,7 @@
 
 Gothic roguelite browser game. Vanilla JS ES modules, **no framework, no
 build step**, DOM-based UI over full-screen painted backgrounds (rendered in
-3D when WebGL allows). DIN Condensed Bold via @font-face; all-caps UI
+3D when WebGL allows). D-DIN Condensed Bold (OFL) via @font-face; all-caps UI
 chrome, mixed-case combat log. `CLAUDE.md` holds the working rules and the
 per-system notes; this file is the map.
 

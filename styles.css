@@ -46,13 +46,13 @@ img { -webkit-touch-callout: none; }  /* no save-image sheet on a long press */
 .rotate-notice .panel { text-align: center; max-width: 420px; }
 @media (pointer: coarse) and (orientation: portrait) { .rotate-notice { display: flex; } }
 @font-face {
-  font-family: 'DIN Condensed';
-  src: url('assets/fonts/DINCondensedBold.woff2') format('woff2'), url('assets/fonts/DINCondensedBold.ttf') format('truetype'); /* (0.00223: the WOFF2 is a third of the TTF; the TTF stays for the labs and old browsers) */
+  font-family: 'D-DIN Condensed';
+  src: url('assets/fonts/D-DINCondensed-Bold.woff2') format('woff2'); /* (0.00226: Datto's D-DIN Condensed Bold, SIL Open Font License — assets/fonts/D-DIN-OFL.txt; it replaced Apple's DIN Condensed, a macOS system font without a web licence) */
   /* single Bold cut: no weight descriptor, so every weight matches it */
   font-display: swap;
 }
 body {
-  font-family: 'DIN Condensed', 'Arial Narrow', Impact, sans-serif;
+  font-family: 'D-DIN Condensed', 'Arial Narrow', Impact, sans-serif;
   color: var(--parchment);
   font-size: 1.1rem; /* condensed faces read small — bump the base */
 }
@@ -250,9 +250,11 @@ button.proceed { position: relative; padding-bottom: calc(10px + 0.25em); paddin
    letters themselves — the same on every OS (Mac, Windows and Linux read
    different vertical metrics from the font, which a fixed nudge can't
    match). The padding gives back the line height, so buttons keep their
-   size. Fallback (no text-box): DIN Condensed's caps ride 0.144em above
-   the middle of the line box (hhea metrics), so nudge them down. */
-.btn-label { position: relative; top: 0.15em; }
+   size. Fallback (no text-box): D-DIN Condensed's caps sit 0.014em above
+   the middle of the line box (hhea 0.831 / 0.169, caps 0.69; the old DIN
+   Condensed's rode 0.144em above and took a 0.15em nudge), so nudge them
+   down that much. */
+.btn-label { position: relative; top: 0.015em; }
 @supports (text-box: trim-both cap alphabetic) {
   .btn-label { top: 0; text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
 }
