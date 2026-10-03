@@ -11,6 +11,7 @@
 //   node tools/train-lora.mjs --steps 1500 --rank 16 --rooms --sheets   # knobs; --rooms adds the room paintings,
 //                                                 # --sheets the owner's inked sheets (both off: a different style)
 //   node tools/train-lora.mjs --status            # the last training's state (assets/data/lora.json)
+//   node tools/train-lora.mjs --cancel            # cancel the last training (billed to the minute it stops)
 //
 // The set (assets/data/lora.json records what went in): the APPROVED
 // candidates' raw pictures (the owner's picks in the Art Lab, art.json
@@ -115,6 +116,16 @@ async function main() {
   const has = (f) => args.includes(f);
   const val = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
   const reg = loadReg();
+  if (has('--cancel')) {
+    const last = reg.trainings[reg.trainings.length - 1];
+    if (!last) { console.log('no training yet'); return; }
+    const res = await fetch(`${API}/trainings/${last.id}/cancel`, { method: 'POST', headers: headers() });
+    if (!res.ok) throw new Error(`cancel ${last.id}: HTTP ${res.status}`);
+    last.status = (await res.json()).status;
+    saveReg(reg);
+    console.log(`${last.id}: ${last.status}`);
+    return;
+  }
   if (has('--status')) {
     const last = reg.trainings[reg.trainings.length - 1];
     if (!last) { console.log('no training yet'); return; }
