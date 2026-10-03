@@ -1213,7 +1213,10 @@ be served stale for ~4 hours.
   Lifesteal / Potions under it), TRAIN and ALCHEMY as three panels of one
   height (`.hall-desk`), each purse in its section's head (`secHead`);
   1001-1400px wide the panels `zoom` down in three steps (an iPad gets the
-  same hall smaller), under 1000px one scrolling column;
+  same hall smaller), under 1000px one scrolling column; on a large window
+  the title, panels and buttons `zoom` UP in five steps, 1.15 at 1700x1000
+  to 2.2 at 3400x1900 (0.00281: the 1400px panels sat small on a 2560px
+  Mac mini screen; each step needs the height too);
   **a run's finds revealed (0.00249, the owner's ask):** `equipItems`
   records `changes` (each slot the finds filled: from → to), the run's end
   hands them to the hall (`go('hub', { fromRun, finds })`), and the hall
