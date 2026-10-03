@@ -865,6 +865,10 @@ be served stale for ~4 hours.
   in groups — AUDIO (MUSIC, SOUND, NARRATOR, VOLUME), DISPLAY (BATTERY
   SAVER), GAME (CHANGELIST) — and DEBUG MODE last. Add items in main.js's
   `cornerBar([...], lead)` with `menuHead` / `onOffToggle` / `panelToggle`.
+  A click outside the open menu closes it and is swallowed, except inside
+  a dialog an item opened (0.00255: BENCHMARK's Start was eaten).
+  BENCHMARK mid-run (0.00256) settles the run as a retreat first (the
+  dungeon scene's `leaveRun(next)`), then runs and returns to the hall.
   **DEBUG MODE** (`ui/debugToggles.js debugMenu`): ON shows the testing
   tools under it (INVULNERABLE, background views and tuning, FORCE CRITS,
   LABS (the menu page), BENCHMARK; each `.dbg`, hidden until the corner
@@ -973,6 +977,13 @@ be served stale for ~4 hours.
   counts it as two enemy widths in the row's `--slots` (the `--card-h`
   budget), so the boss and its three summons (`maxAlive`) still fit
   without shrinking at 16:9. New boss art should suit a wide card.
+- The knight's card turns over on a click (0.00256, the developer's call):
+  `battleLine.js statsBack` — STATS, the run's totals only (health,
+  attack, armor, crit chance / damage, lifesteal, the heavy blow, potions,
+  a potion's heal), refreshed by the update tick while it shows; the turn
+  is two `rotateY` halves with the face swapped edge-on (`flipCard`,
+  `composite: 'add'` like the kick; instant under reduced motion); the
+  phone's twins compact the rows.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
   would and only while it could (`.targetable`). A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —

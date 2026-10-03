@@ -69,6 +69,9 @@ export function dungeonScene() {
 
   return {
     inRun: true, // a reload now would lose the run (update prompt waits, 0.094)
+    // DEBUG MODE's BENCHMARK mid-run (0.00256): the run settles as it stands
+    // (a retreat; a death if the knight is down), then `next` instead of the run's end.
+    leaveRun: (next) => endRun(null, run.hp > 0 ? 'retreat' : 'death', next),
     enter(root) {
       startPerf(); // the run's frame rate, for the play stats (0.130)
       narratorRun();
@@ -285,11 +288,11 @@ export function dungeonScene() {
     return !combat.over && !playback.isPrinting();
   }
 
-  function endRun(root, outcome) {
+  function endRun(root, outcome, next = null) {
     run.perf ??= stopPerf(); // ??=: a double Retreat must not wipe it (0.130)
     const settled = settleRun(run, outcome);
     keepReport(runReport(settled)); // the device report rides with this upload (0.00225)
     shareStats(settled); // play stats (0.102)
-    go('runEnd', run, outcome);
+    if (next) next(); else go('runEnd', run, outcome);
   }
 }

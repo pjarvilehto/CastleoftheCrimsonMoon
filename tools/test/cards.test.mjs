@@ -81,6 +81,25 @@ ok('the Card Lab imports the game\'s shader and tables', readFileSync('labs/card
   ok('the band carries the mask and is three cards wide; the copy keeps its brightness', css.includes('.glint-band {\n  position: absolute; top: 0; bottom: 0; left: -100%; width: 300%;') && css.includes('.portrait.glint { filter: brightness(1.9) saturate(0.5); max-width: calc(128% / 3); }') && !/\.portrait\.glint \{[^}]*mask/.test(css));
 }
 
+// The knight's card turns to its STATS back on a click and back again
+// (0.00256); the back shows the run's own totals and follows the tick.
+{
+  const { createPlayerUnit } = await import('../../src/ui/battleLine.js');
+  const run = createRun();
+  const p = createPlayerUnit(run, { onHeavy() {}, onPotion() {} });
+  const back = p.card.children.find((n) => n.classList.contains('card-back'));
+  const val = (label) => back.children.find((r) => r.children?.[0]?.textContent === label)?.children[1].textContent;
+  await p.card.listeners.click[0](); await sleep(0);
+  const flipped = p.card.classList.contains('flipped');
+  run.hp = run.maxHp - 7; run.stats.lifesteal = 0.25;
+  p.update({ hp: run.hp, heavyCd: 0, heavyReady: true });
+  ok('a click turns the knight\'s card to STATS: health, attack, armor, crit, lifesteal from the run, kept current by the tick', flipped && back.children[0].textContent === 'Stats'
+    && val('Health') === `${run.maxHp - 7} / ${run.maxHp}` && val('Attack') === `${run.stats.dmg}` && val('Lifesteal') === '25%'
+    && val('Crit damage') === `×${(DATA.difficulty.combat.critMult + run.stats.critBonus).toFixed(2)}` && val('Potions') === `${run.potions} / ${run.potionCap}`);
+  await p.card.listeners.click[0](); await sleep(0);
+  ok('…and a second click turns it back', !p.card.classList.contains('flipped'));
+}
+
 // The cards in 3D, played (0.00223: the harness lends Web Animations for a
 // block — these used to be checks on the source text)
 {
