@@ -1,5 +1,5 @@
 {
-  "version": "0.00307",
+  "version": "0.00308",
   "modules": [
     "src/audio/audioCore.js",
     "src/audio/audioMath.js",
@@ -101,6 +101,9 @@
     "src/ui/volumePanel.js"
   ],
   "changelog": {
+    "0.00308": [
+      "The title's fly-in fades into the living painting a little earlier, while the film is still arriving."
+    ],
     "0.00307": [
       "A prototype of the title's fly-in: the castle approached from across the valley before the title shows, once a visit; a click or a key skips it."
     ],
@@ -146,9 +149,6 @@
     ],
     "0.00294": [
       "The run's end: the five numbers sit on one line and the found items show as larger cards (two rows when you found many)."
-    ],
-    "0.00293": [
-      "Immunities: the undead and the vermin can shrug off Last Rites' blight and the fire-born the Wizard's Fireball — 'Immune!' instead; the Wizard and the Plague Sister hit a little harder to make up for it"
     ]
   }
 }
