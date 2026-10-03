@@ -1455,7 +1455,16 @@ be served stale for ~4 hours.
   still gold ⓘ under the gear names says the card turns; the phone's
   twins compact the pages.
 - Enemy cards (0.155) attack on a click, exactly as their Attack button
-  would and only while it could (`.targetable`). A fallen enemy's figure
+  would and only while it could (`.targetable`). **A foe's stats card
+  (0.00295, the developer's call):** a tap on its NAME (dotted, an ⓘ after
+  it — a long name wraps it to a second line, accepted) turns the card over
+  (`battleLine.js foeBack`, `flipCard`, `.enemy-char.flipped .foe-back`):
+  the name, LV and Boss / Elite, health (kept current by the tick), attack,
+  its special (the boss's summons, an elite's relic, a summon's no reward),
+  its immunities as chips (`enemies.json immune`) and a line of lore
+  (`enemies.json lore`, dataCheck wants one per enemy) — no armor (foes have
+  none); a tap on the back turns it face up, the card's click does not
+  attack while turned, and a fallen foe collapses face up. A fallen enemy's figure
   collapses and its whole card leaves the row (0.00216, the developer's call —
   the faint skull cards went; summons did this since 0.092): `battleLine.js
   vanish` → `onGone` → `battleRoom.js fit()` recounts `--n`, so the cards

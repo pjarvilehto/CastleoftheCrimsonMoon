@@ -88,6 +88,8 @@ export function checkData(data) {
     if (!(e?.coins?.length === 2 && e.coins.every(isNum))) out.push(`enemies.json: ${id}.coins ([lo, hi])`);
     // its immunities (0.00293): a chance 0-1 per element, every element on every enemy (0 = none)
     for (const el of ELEMENTS) if (!(isNum(e?.immune?.[el]) && e.immune[el] >= 0 && e.immune[el] <= 1)) out.push(`enemies.json: ${id}.immune.${el} (a chance 0-1)`);
+    // its lore line (0.00295): the stats card's last line
+    if (!(typeof e?.lore === 'string' && e.lore.trim())) out.push(`enemies.json: ${id}.lore (a line of text)`);
   }
   for (const [kind, h] of Object.entries(HEAVIES)) if (h.element && !ELEMENTS.includes(h.element)) out.push(`classes.js: the ${kind} heavy's element (${h.element}) is not one of ${ELEMENTS.join(', ')}`);
   // the boss and the knight's first gear (0.00197: data, were names in src)

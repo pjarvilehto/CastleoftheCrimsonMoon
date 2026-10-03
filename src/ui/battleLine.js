@@ -16,7 +16,7 @@ import { attachCardFx, cardStyle } from './cardFx.js';
 import { reducedMotion } from '../shared/motion.js';
 import { portraitUrl as ART } from '../shared/portraits.js';
 import { heroById, lookUrl, lookIsSprite } from '../shared/heroes.js';
-import { usesCharges } from '../run/classes.js';
+import { usesCharges, ELEMENTS } from '../run/classes.js';
 import { potionHealFor } from '../meta/leveling.js';
 import { GEAR_SLOTS } from '../meta/equipment.js';
 
@@ -306,6 +306,36 @@ export function createPlayerUnit(run, { onHeavy, onPotion }) {
 
 // Enemy unit. update({ hp, dead, printing, combatOver, meter? })
 // onGone: a fallen summon's card has left the row (0.092).
+// A foe's stats card (0.00295, the developer's call): a tap on its name
+// turns the card over to its name, level, health, attack, its special (the
+// boss's summons, an elite's relic, a summon's empty pockets), the elements
+// it shrugs off (enemies.json immune) and a line of lore. A tap on the back
+// turns it face up again; the card's own click (the attack) waits meanwhile.
+function foeBack(e, name, lv, elite) {
+  const base = DATA.enemies[e.id];
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const sm = DATA.difficulty.boss.summon;
+  const special = e.summonEvery
+    ? [`Summons a ${DATA.enemies[sm.enemy].name.toLowerCase()} every ${e.summonEvery} turns — ${sm.maxAlive} at most.`, 'Its summons give no reward.']
+    : e.summoned ? ['Summoned — gives no reward.']
+    : elite ? [`★ Elite — can drop a crimson relic (room ${DATA.difficulty.t4MinRoom}+).`] : [];
+  const immune = ELEMENTS.filter((k) => base.immune[k] > 0);
+  const hpVal = el('b', {}, `${e.maxHp} / ${e.maxHp}`);
+  const page = el('div', { class: 'card-back foe-back' },
+    el('h2', {}, name),
+    el('div', { class: 'foe-sub' }, lv, e.boss ? el('b', {}, ' · Boss') : elite ? el('b', {}, ' · Elite') : null),
+    el('div', { class: 'back-rule' }),
+    el('div', { class: 'back-row st st-hp' }, el('span', {}, 'Health'), hpVal),
+    el('div', { class: 'back-row st st-dmg' }, el('span', {}, 'Attack'), el('b', {}, `${e.dmg}`)),
+    el('div', { class: 'foe-hd' }, 'Special'),
+    ...(special.length ? special.map((t) => el('div', { class: 'foe-sp' }, t)) : [el('div', { class: 'foe-sp none' }, 'None')]),
+    el('div', { class: 'foe-hd' }, 'Immune'),
+    immune.length ? el('div', { class: 'foe-chips' }, ...immune.map((k) => el('span', { class: `foe-chip ${k}` }, `${k} ${pct(base.immune[k])}`))) : el('div', { class: 'foe-sp none' }, 'None'),
+    el('div', { class: 'foe-lore' }, base.lore),
+    el('div', { class: 'back-hint' }, 'tap to turn back'));
+  return { el: page, set: (hp) => setText(hpVal, `${Math.max(0, hp)} / ${e.maxHp}`) };
+}
+
 export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const [name, lv] = splitName(e.name);
   const hp = hpLine(e.maxHp, e.maxHp);
@@ -328,17 +358,30 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   // Attack button would (and only when that button could)
   const plate = frame();
   const foeTag = el('div', { class: 'foe-tag card-sub' }, ''); // (0.00267: HEXED by the hexhunter, BLIGHT ×n under the plague sister's censer; empty otherwise)
-  const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit) onAttack(); } },
+  const back = foeBack(e, name, lv, elite);
+  let flipped = false, flipping = false;
+  const turn = async (ev) => { // the name (face up) or the back (face down) turns the card (0.00295)
+    ev?.stopPropagation?.();
+    if (flipping || down) return;
+    flipping = true;
+    await flipCard(card, () => { flipped = !flipped; setClass(card, 'flipped', flipped); });
+    flipping = false;
+  };
+  back.el.addEventListener('click', turn);
+  const card = el('div', { class: `char-card enemy-char enemy-${e.id}${e.boss ? ' boss-card' : ''}`, id: `enemy-${i}`, onclick: () => { if (canHit && !flipped) onAttack(); } },
     plate,
     el('div', { class: 'card-head' },
-      el('span', { class: 'card-name' }, name,
-        elite ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null),
+      el('span', { class: 'card-name' },
+        el('span', { class: 'nm-tap', title: 'Stats', onclick: turn }, name),
+        elite ? el('span', { class: 'elite-star', title: `Elite - can drop crimson relics (room ${DATA.difficulty.t4MinRoom}+)` }, ' ★') : null,
+        el('span', { class: 'info-i nm-i', 'aria-hidden': 'true', onclick: turn }, 'i')),
       el('span', { class: 'lv-badge' }, lv)),
     aura,
     img,
     foeTag,
     hp.line,
-    meterLine);
+    meterLine,
+    back.el);
   attachCardFx(card, cardStyle(e.id, !!e.boss), { into: plate }); // the shader light behind the figure, by its material (0.183)
   // A fallen enemy's Attack button stays mounted but hidden (ghost-btn)
   // through the collapse, so the bottom-aligned card can't shift before
@@ -351,6 +394,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
   const atkDisabled = disabler(atk);
   const update = (s) => {
     hp.set(Math.max(0, s.hp), e.maxHp);
+    back.set(s.hp);
     if (meterFill && s.meter != null) {
       const w = `${Math.round((100 * s.meter) / e.summonEvery)}%`;
       if (meterFill.style.width !== w) meterFill.style.width = w;
@@ -358,6 +402,7 @@ export function createEnemyUnit(e, i, { onAttack, onGone }) {
     }
     if (s.dead && !down) {
       down = true;
+      if (flipped) { flipped = false; setClass(card, 'flipped', false); } // a fallen foe collapses face up
       setClass(card, 'dying', true);
       collapse(img, () => { setClass(card, 'dying', false); vanish(unit, onGone); }, self);
     }
