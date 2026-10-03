@@ -11,6 +11,15 @@ import { confirmPrompt } from '../confirmPrompt.js';
 import { armOnGesture } from '../../audio/narrator.js';
 import { openDialog } from '../dialog.js';
 import { recordsLine } from '../hubText.js';
+import { isMobile, fullscreenOn, canFullscreen, enterFullscreen } from '../../shared/platform.js';
+
+// Enter the Castle takes a desktop full screen (0.00296, the developer's ask):
+// the click is the gesture the browser wants; denied or unavailable, the game
+// plays windowed, and Esc / the corner's icon leave it as before. A phone has
+// its own PLAY gate and a tablet keeps its browser.
+function enterFull() {
+  if (!isMobile() && canFullscreen() && !fullscreenOn()) enterFullscreen();
+}
 
 export function titleScene() {
   return {
@@ -69,7 +78,7 @@ export function titleScene() {
           : el('div', { class: 'subtitle' }, p.name ? `Your first descent awaits, ${p.name}.` : 'Your first descent awaits.'),
         el('div', { class: 'btn-row' },
           // 0.00200: a new player is asked their name on the way in (the prompt's button reads Enter the Castle), not over the title before seeing anything
-          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => (getProfile().name ? wayIn() : namePrompt(wayIn)) }, 'Enter the Castle'), // (0.00248: CHOOSE YOUR HERO, then the Great Hall; 0.00253: the hero once per save — chosen, straight to the hall)
+          el('button', { class: 'primary', key: 'e', proceed: true, onclick: () => { enterFull(); return getProfile().name ? wayIn() : namePrompt(wayIn); } }, 'Enter the Castle'), // (0.00248: CHOOSE YOUR HERO, then the Great Hall; 0.00253: the hero once per save — chosen, straight to the hall)
           // Shown only when a save with progress exists: offer to wipe
           // (the game's own yes/no dialog, not the browser's).
           loadProfile() !== null && (p.records.runs > 0 || p.coins > 0 || p.xp > 0)

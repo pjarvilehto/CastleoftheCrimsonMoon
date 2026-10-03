@@ -1365,7 +1365,11 @@ be served stale for ~4 hours.
   clear of the corner column under 1400. `manifest.webmanifest` + the
   Apple metas make a home-screen app (fullscreen, landscape — iPhone
   Safari has no page fullscreen and ignores the orientation; the
-  FULLSCREEN toggle also speaks Safari's prefixed API). `?desktop` skips
+  FULLSCREEN toggle also speaks Safari's prefixed API). **A desktop's Enter the Castle
+  takes full screen** (0.00296, the developer's ask: `titleScene.js
+  enterFull`, the click being the browser's gesture; not on a handheld —
+  the phone's PLAY gate does it there; denied, the game plays windowed;
+  Esc and the corner's icon leave it). `?desktop` skips
   the device check (testers, the headless checks).
   **The phone layer (0.00208; rule 8 says how it is kept):** `styles.css`
   section 16 says what it does, screen by screen (combat as one line of
