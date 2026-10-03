@@ -25,7 +25,7 @@
 // screen); the latest device is kept on the player. 0.131: the profile's
 // `bench` — ?debug BENCHMARK results (idle / combat / overkill phases).
 
-export const VERSION = '0.00251'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
+export const VERSION = '0.00252'; // (telemetry.json collectorVersion must match; the owner pastes this file into the Worker)
 const ID = /^[a-z0-9]{4,16}$/;
 const MAX_BODY = 250_000;    // bytes; a full 250-run save is ~70KB
 const MAX_RUNS = 2000;       // per player, newest kept
@@ -101,7 +101,7 @@ export function cleanDevice(d) {
   return { gpu: str(d.gpu, 120), browser: str(d.browser, 30), os: str(d.os, 20), screen: str(d.screen, 20), ...pick(d, ['cores', 'mem'], num) };
 }
 
-// a run's shrines (0.00251): at most 6, each its offered ids (at most 4) and the one taken (analytics/stats.js keeps the same)
+// a run's shrines (0.00252): at most 6, each its offered ids (at most 4) and the one taken (analytics/stats.js keeps the same)
 export const cleanShrines = (a) => (Array.isArray(a) ? a.slice(0, 6).filter((s) => s && typeof s === 'object').map((s) => ({ o: Array.isArray(s.o) ? s.o.slice(0, 4).map((x) => str(x, 24)) : [], t: str(s.t, 24) })) : []);
 
 export function cleanRun(r) {
@@ -114,7 +114,7 @@ export function cleanRun(r) {
     build: str(r.build, 12), outcome: r.outcome === 'retreat' ? 'retreat' : 'death', // (a run that is not a retreat ended in death — as the dashboard reads it)
     relic: !!r.relic, killedBy: str(r.killedBy, 40),
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [], // (the dashboard keeps 12)
-    shrines: cleanShrines(r.shrines), // 0.00251: each shrine's deal and the pick
+    shrines: cleanShrines(r.shrines), // 0.00252: each shrine's deal and the pick
     perf: cleanPerf(r.perf),
   };
 }

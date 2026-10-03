@@ -79,7 +79,7 @@ function payCoins(run, o) {
 }
 
 // Apply the cost AND the buff. Caller re-renders.
-// A shrine's deal, noted on the run for the play stats (0.00251: the record
+// A shrine's deal, noted on the run for the play stats (0.00252: the record
 // used to say only what was taken — "never offered" and "passed over" read alike).
 export function noteDeal(run, offers) {
   (run.shrines ??= []).push({ o: offers.map((x) => x.id), t: null });

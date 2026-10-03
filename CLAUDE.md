@@ -234,7 +234,7 @@ node tools/cut-heroes.mjs [--import .] [--only wizard]  # the hero figures out o
   that the collector is older, and the old Worker drops new fields (saves
   keep them; they arrive with the next upload). A Worker NEWER than the
   page's telemetry.json gets a neutral note instead (0.00223: it used to
-  be told to roll back). The Worker to paste as of 0.00251 carries each run's
+  be told to roll back). The Worker to paste as of 0.00252 carries each run's
   shrine deals (`shrines`); before it, as of 0.00223, it gained the
   phone power / stall fields (0.00222) and the run-record clamp (a run
   whose `room` is not a whole number up to 999 is dropped, the counts
@@ -310,7 +310,7 @@ tier 4 unchanged, Life Drain +50% (was +100%): the same run ~35 to room
 24, free rooms a run or two later. Measured and set aside: lifesteal
 halved everywhere (gentler, room 24 four runs later), healing only off
 damage dealt (no change), a per-fight heal cap (the deep game stalls),
-slower enemy damage growth (undoes the smoothing). **Shrines from the players' own picks (0.00251, the developer's call):**
+slower enemy damage growth (undoes the smoothing). **Shrines from the players' own picks (0.00252, the developer's call):**
 the play stats (210 runs, 9 players; picks of what was dealt, 3 of 9 at
 random) had Crit 23%, Armor 19%, Quicken 16% and Bulwark / Glass Cannon
 3% each (the bot rates Glass Cannon the best — real players fear its

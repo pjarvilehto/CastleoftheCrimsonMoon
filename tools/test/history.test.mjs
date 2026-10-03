@@ -564,7 +564,7 @@ fresh();
   ok('reports: no key, a refused key and an unreachable host each say what to set, and never the key', noKey.includes(KEY_VAR) && noKey.includes('new session') && refused.includes('401') && !refused.includes('secret-k') && down.includes('network policy') && !down.includes('secret-k'));
 }
 
-// Shrine deals (0.00251): each shrine's three offers and the pick land in the
+// Shrine deals (0.00252): each shrine's three offers and the pick land in the
 // run record, the collector and the stats page clean them alike, and the
 // Shrine picks card counts a boon's rate against the times it was dealt.
 {

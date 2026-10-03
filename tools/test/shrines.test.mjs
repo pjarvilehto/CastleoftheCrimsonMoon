@@ -54,7 +54,7 @@ fresh();
   const bulwark = shrineOffers().find((o) => o.id === 'bulwark');
   const bd0 = run.stats.dmg; const ba0 = run.stats.armor;
   acceptOffer(run, bulwark);
-  ok('bulwark boon: +armorPct armor (at least armorAdd), -dmgCostPct dmg (0.00251: +40% / +80 for -5%)', run.stats.armor === ba0 + Math.max(bulwark.armorAdd, Math.round(ba0 * bulwark.armorPct)) && run.stats.dmg === Math.round(bd0 * (1 - bulwark.dmgCostPct)));
+  ok('bulwark boon: +armorPct armor (at least armorAdd), -dmgCostPct dmg (0.00252: +40% / +80 for -5%)', run.stats.armor === ba0 + Math.max(bulwark.armorAdd, Math.round(ba0 * bulwark.armorPct)) && run.stats.dmg === Math.round(bd0 * (1 - bulwark.dmgCostPct)));
   const secondwind = shrineOffers().find((o) => o.id === 'secondwind');
   run.coins = 100; run.hp = 1; const pw0 = run.potions;
   acceptOffer(run, secondwind);

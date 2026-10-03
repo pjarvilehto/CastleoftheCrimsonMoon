@@ -141,11 +141,11 @@ function serverCard() {
 const enemyName = (id) => data.enemies[id]?.name ?? id;
 const itemName = (id) => (id ? data.items[id]?.name ?? id : '—');
 const boonName = (id) => (data.offers[id] ? `${data.offers[id].icon} ${data.offers[id].buff}` : id);
-// The Shrine picks card (0.00251): a bar per boon at its pick rate, the walk-aways last.
+// The Shrine picks card (0.00252): a bar per boon at its pick rate, the walk-aways last.
 const shrinePickBars = ({ met, walked, boons }) => (met
   ? bars([...boons.map((b) => ({ label: boonName(b.boon), value: b.rate, note: `${b.taken}/${b.offered} picked` })),
     { label: 'walked away', value: walked / met, note: `${walked}/${met} shrines` }], { fmt: pct, color: '#b99ae8' })
-  : '<p class="help">No shrine deals recorded yet: runs from build 0.00251 on carry them.</p>');
+  : '<p class="help">No shrine deals recorded yet: runs from build 0.00252 on carry them.</p>');
 const labelOf = (key) => players.find((p) => p.key === key)?.label ?? key;
 // what the tables need to name things (analytics/tables.js)
 const names = { enemyName, itemName, boonName, labelOf, offers: () => data.offers, get levelEvery() { return data.levelEvery; } };
@@ -191,7 +191,7 @@ function renderInner() {
     ${card('What kills players', bars(countBy(runs, 'killedBy').map(([id, n]) => ({ label: enemyName(id), value: n })), { color: '#c14b4b' }))}
     ${card('Boss rooms', bars(bossClears(runs, data.bossEvery, data.finalRoom).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
-    ${card('Shrine picks <em>(how often a boon was taken when dealt; from 0.00251)</em>', shrinePickBars(shrinePicks(runs)))}
+    ${card('Shrine picks <em>(how often a boon was taken when dealt; from 0.00252)</em>', shrinePickBars(shrinePicks(runs)))}
     ${card('By build', buildTable(condenseBuilds(byBuild(runs))))}
   </div>
   ${card('Performance', perfTable(shown, runs, data.perf), true)}

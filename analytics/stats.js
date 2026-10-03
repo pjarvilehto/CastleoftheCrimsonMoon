@@ -42,7 +42,7 @@ function sanitizeRun(r = {}) {
   const out = { outcome: r.outcome === 'retreat' ? 'retreat' : 'death', build: str(r.build, 12) ?? '?',
     killedBy: str(r.killedBy), relic: !!r.relic,
     boons: Array.isArray(r.boons) ? r.boons.slice(0, 12).map((b) => str(b, 24)) : [],
-    shrines: Array.isArray(r.shrines) ? r.shrines.slice(0, 6).filter((s) => s && typeof s === 'object').map((s) => ({ o: Array.isArray(s.o) ? s.o.slice(0, 4).map((x) => str(x, 24)) : [], t: str(s.t, 24) })) : [], // 0.00251 (collector/worker.js cleanShrines)
+    shrines: Array.isArray(r.shrines) ? r.shrines.slice(0, 6).filter((s) => s && typeof s === 'object').map((s) => ({ o: Array.isArray(s.o) ? s.o.slice(0, 4).map((x) => str(x, 24)) : [], t: str(s.t, 24) })) : [], // 0.00252 (collector/worker.js cleanShrines)
     perf: sanitizePerf(r.perf) }; // 0.130: frame rate (analytics/perf.js)
   for (const k of RUN_FIELDS) out[k] = k in COUNTS ? int(r[k], COUNTS[k]) : num(r[k]);
   return out;
@@ -141,9 +141,9 @@ export function boonStats(runs) {
   return [...m.values()].map((s) => ({ ...s, avgRoom: s.rooms / s.taken })).sort((a, b) => b.taken - a.taken);
 }
 
-// Shrine pick rates (0.00251): per boon, how often a shrine dealt it and how
+// Shrine pick rates (0.00252): per boon, how often a shrine dealt it and how
 // often the player then took it; the walk-aways as their own line. Only
-// runs from 0.00251 on carry the deals.
+// runs from 0.00252 on carry the deals.
 export function shrinePicks(runs) {
   const m = new Map(); let met = 0, walked = 0;
   for (const r of runs) for (const s of r.shrines ?? []) {
