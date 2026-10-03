@@ -1,4 +1,8 @@
 {
+  "0.00263": [
+    "Potions have a picture: on your hero's card beside the count, and in the log.",
+    "A potion found in combat rises as a card like a find, then flies into your hero's potion count, which glows as it counts it."
+  ],
   "0.00262": [
     "A find in combat now flies into your LOOT at the bottom left (it's yours once you leave the castle), and lands there with a flash; on a phone it flies to your coins."
   ],
