@@ -761,8 +761,11 @@ the dashboard's fields, typed and capped, merges history by timestamp and
 rate-limits; reads need the Bearer `READ_KEY`. Collector 0.00222 keeps
 `stalls`, `worstOut` and `power` — the owner pastes the Worker; until
 then the old one drops the three fields (the saves keep them). The dashboard shows the
-collected players, this browser's save and pasted save codes (untrusted:
-`sanitizeProfile()`), deduped by playerId; the owner can give each player a
+collected players and this browser's save (every record untrusted:
+`sanitizeProfile()`; pasting save codes went in 0.00224 — every tester is
+collected), deduped by playerId; its By build table shows the newest ten
+builds and the three most played older ones (`stats.js condenseBuilds`);
+the owner can give each player a
 **tester name** (kept in that browser, shown as "tester · player name"). **BENCHMARK**
 (`ui/benchmark.js` + `ui/scenes/benchmarkScene.js`): a seeded, fixed ~36 s
 fight (idle / combat / overkill) on the real combat pieces, the background's

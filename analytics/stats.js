@@ -147,6 +147,16 @@ export function byBuild(runs) {
     .sort((a, b) => compareVersions(b.build, a.build));
 }
 
+// The build table condensed (0.00224): the newest `recent` builds, then of
+// the older ones the `older` most played (in build order); `hidden` = the
+// builds and runs left out, for the table's footer.
+export function condenseBuilds(rows, recent = 10, older = 3) {
+  const top = rows.slice(0, recent), rest = rows.slice(recent);
+  const keep = new Set([...rest].sort((a, b) => b.runs - a.runs || compareVersions(b.build, a.build)).slice(0, older));
+  const out = rest.filter((r) => keep.has(r));
+  return { rows: top, older: out, hidden: { builds: rest.length - out.length, runs: rest.filter((r) => !keep.has(r)).reduce((n, r) => n + r.runs, 0) } };
+}
+
 // Depth per run, one series per player (x = their run number).
 // A run that won the game (0.123): it beat the boss of finalBossRoom —
 // it went past that room, or retreated from it (retreat is only offered

@@ -1,19 +1,18 @@
 // analytics/dashboard.js — the play-stats page at /analytics/ (0.095).
 // Players: every tester, collected automatically (0.102: the game sends
 // its run history to the collector Worker, collector/worker.js, named in
-// assets/data/telemetry.json), this browser's own save (read live from
-// localStorage) and any save codes pasted here. One player shows once:
-// matched by the save's anonymous playerId (this browser > collected >
-// pasted code). Names given here stay in this browser.
+// assets/data/telemetry.json) and this browser's own save (read live from
+// localStorage). One player shows once: matched by the save's anonymous
+// playerId (this browser > collected). Names given here stay in this
+// browser. (0.00224: pasting save codes went — every tester is collected.)
 
-import { LOCAL_SAVE_KEY, decodeSave, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
-  boonStats, byBuild, depthSeries, fmtDuration, toCsv } from './stats.js';
+import { LOCAL_SAVE_KEY, sanitizeProfile, allRuns, filterRuns, summarize, countBy, endRooms, bossClears,
+  boonStats, byBuild, condenseBuilds, depthSeries, fmtDuration, toCsv } from './stats.js';
 import { esc, bars, lines, columns } from './charts.js';
 import { perfTable, benchTable, sanitizeDevice, PERF_DEFAULTS } from './perf.js';
 import { compareVersions } from '../src/shared/version.js';
 import { buildTable, playersTable, runsTable, pct } from './tables.js';
 
-const STORE = 'castle-analytics-players-v1';
 const TESTERS = 'castle-analytics-testers-v1'; // playerId -> tester name (0.136)
 const NAMES = 'castle-analytics-names-v1';   // pre-0.136 renames: folded into TESTERS once
 const KEY = 'castle-analytics-key-v1';       // the collector's READ_KEY
@@ -55,14 +54,9 @@ function loadPlayers() {
       // the name the player typed (0.109), else their id
       base: `${profile.name || `Player ${id.slice(0, 4).toUpperCase()}`}${country(r.country) ? ` · ${country(r.country)}` : ''}`.slice(0, 40) };
   });
-  // stored players are re-sanitised too: codes imported before 0.097 were kept as-is
-  const stored = Array.isArray(read(STORE)) ? read(STORE) : [];
-  const imported = stored.map((s) => ({
-    key: String(s.key), importedAt: Number(s.importedAt) || 0, source: 'code', profile: sanitizeProfile(s.profile) }))
-    .map((pl, i) => ({ ...pl, base: (pl.profile.name || String(stored[i].label ?? 'Player')).slice(0, 40) }));
   const seen = new Set();
   const t = testers();
-  players = [...mine, ...collected, ...imported].filter((pl) => {
+  players = [...mine, ...collected].filter((pl) => {
     const id = pl.profile.playerId;
     if (!id) return true;
     if (seen.has(id)) return false;
@@ -120,11 +114,11 @@ async function refresh() {
 
 function serverCard() {
   const text = {
-    off: 'Automatic collection is not set up yet (collector/README.md) — until then, add testers by save code below.',
+    off: 'Automatic collection is not set up yet (collector/README.md).',
     loading: 'Loading collected players…',
     ok: `Collected automatically: ${server.records.length} player${server.records.length === 1 ? '' : 's'} · updated ${server.at ? new Date(server.at).toLocaleTimeString() : '—'}${server.delta === null || server.delta === undefined ? '' : server.delta > 0 ? ` (+${server.delta} new run${server.delta === 1 ? '' : 's'})` : ' (no new runs)'}.`,
     key: 'Enter the stats key (the collector’s READ_KEY) to see collected players.',
-    error: 'Could not reach the stats collector — showing this browser and pasted codes only.',
+    error: 'Could not reach the stats collector — showing this browser’s save only.',
   }[server.status];
   // the deployed collector is pasted in by hand: say when it's behind the repo — and when it is AHEAD of this page
   // (0.00223: a newer Worker used to be called out of date, with the paste instruction; the `?? '0'` is load-bearing: compareVersions(null, x) is 0)
@@ -139,27 +133,8 @@ function serverCard() {
       ${server.status === 'key' ? '<input id="read-key" type="password" placeholder="Stats key"><button data-act="key">Unlock</button>' : ''}
       ${data.endpoint ? `<button data-act="refresh"${server.busy ? ' disabled' : ''}>${server.busy ? 'Refreshing…' : 'Refresh'}</button>` : ''}
     </div>
+    ${message ? `<p class="msg">${esc(message)}</p>` : ''}
   </section>`;
-}
-
-function saveImported() {
-  const ok = write(STORE, players.filter((p) => p.source === 'code')
-    .map(({ key, base, profile, importedAt }) => ({ key, label: base, profile, importedAt }))); // the code's own label, never the tester name
-  if (!ok) message = 'Could not save the imported players in this browser (storage full or blocked).';
-}
-
-// A pasted code: a new player, or a newer save of one already here
-// (same playerId) — then it replaces the old one.
-function addCode(code, label) {
-  const profile = decodeSave(code);
-  if (!profile) return 'That is not a save code. Testers copy it from the title screen: Export Save.';
-  const id = profile.playerId;
-  if (id && players.some((p) => p.source === 'local' && p.profile.playerId === id)) return 'That is this browser’s own save — it is already shown.';
-  const same = id && players.find((p) => p.source === 'code' && p.profile.playerId === id);
-  if (same) Object.assign(same, { profile, importedAt: Date.now(), base: profile.name || label || same.base });
-  else players.push({ key: `p${Date.now().toString(36)}`, source: 'code', profile, importedAt: Date.now(), base: profile.name || label || `Player ${id ? id.slice(0, 4).toUpperCase() : players.length + 1}` });
-  saveImported();
-  return `${same ? 'Updated' : 'Added'} ${profile.name || label || same?.base || 'player'}: ${(profile.history ?? []).length} recorded runs.`;
 }
 
 const enemyName = (id) => data.enemies[id]?.name ?? id;
@@ -189,16 +164,6 @@ function renderInner() {
     <p class="sub">Castle of the Crimson Moon · live build ${esc(data.build)} · ${players.length} player${players.length === 1 ? '' : 's'}</p>
   </header>
   ${serverCard()}
-  <section class="card add">
-    <h2>Add a save code</h2>
-    <p class="help">Only needed for players the collector can’t see (e.g. the staging site): title screen → <b>Export Save</b> → paste the code here. A newer code from the same player replaces the old one. Runs are recorded from build 0.095 on.</p>
-    <div class="add-row">
-      <input id="add-label" placeholder="Name (optional)" maxlength="40">
-      <textarea id="add-code" rows="2" placeholder="Paste a save code"></textarea>
-      <button data-act="add">Add</button>
-    </div>
-    ${message ? `<p class="msg">${esc(message)}</p>` : ''}
-  </section>
   <section class="filters">
     <label>Player <select data-view="player">${opt('all', view.player, 'All players')}${players.map((p) => opt(p.key, view.player, p.label)).join('')}</select></label>
     <label>Build <select data-view="build">${opt('all', view.build, 'All builds')}${builds.map((b) => opt(b, view.build, b)).join('')}</select></label>
@@ -220,7 +185,7 @@ function renderInner() {
     ${card('What kills players', bars(countBy(runs, 'killedBy').map(([id, n]) => ({ label: enemyName(id), value: n })), { color: '#c14b4b' }))}
     ${card('Boss rooms', bars(bossClears(runs, data.bossEvery, data.finalRoom).map((b) => ({ label: `Room ${b.room}`, value: b.reached ? b.cleared / b.reached : 0, note: `${b.cleared}/${b.reached} runs` })), { fmt: pct }))}
     ${card('Shrine boons', bars(boonStats(runs).map((b) => ({ label: b.boon === '(none)' ? 'no boon' : boonName(b.boon), value: b.taken, note: `avg room ${b.avgRoom.toFixed(1)}` })), { color: '#b99ae8' }))}
-    ${card('By build', buildTable(byBuild(runs)))}
+    ${card('By build', buildTable(condenseBuilds(byBuild(runs))))}
   </div>
   ${card('Performance', perfTable(shown, runs, data.perf), true)}
   ${card('Benchmarks', benchTable(shown, data.benchmarkSince, data.perf), true)}
@@ -241,17 +206,7 @@ function wire() {
   root.addEventListener('click', (e) => {
     const btn = e.target.closest?.('[data-act]');
     const act = btn?.dataset.act;
-    if (act === 'add') {
-      message = addCode(document.getElementById('add-code').value, document.getElementById('add-label').value.trim());
-      loadPlayers(); // labels (tester names) for the new player
-      render();
-    } else if (act === 'remove') {
-      const key = btn.dataset.key;
-      players = players.filter((p) => p.key !== key);
-      if (view.player === key) view.player = 'all';
-      saveImported();
-      render();
-    } else if (act === 'refresh') {
+    if (act === 'refresh') {
       refresh();
     } else if (act === 'key') {
       write(KEY, document.getElementById('read-key').value.trim());

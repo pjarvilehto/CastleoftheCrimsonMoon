@@ -70,6 +70,14 @@ fresh();
   const bs = st.boonStats(runs);
   ok('boon stats: taken + avg depth', bs.find((b) => b.boon === 'crit').taken === 2 && bs.find((b) => b.boon === 'dmg').avgRoom === 12.5 && bs.find((b) => b.boon === '(none)').taken === 1);
   ok('by build: newest first (numeric)', st.byBuild(runs).map((b) => b.build).join() === '0.100,0.096,0.095');
+  // 0.00224: the table condensed — the newest 10, then the 3 most played older ones, the rest counted in a footer
+  const many = Array.from({ length: 16 }, (_, i) => ({ build: `0.00${String(300 - i).padStart(3, '0')}`, runs: i === 12 ? 40 : i === 15 ? 9 : i === 11 ? 9 : 1, avgRoom: 1, bestRoom: 1, deathRate: 0 }));
+  const c = st.condenseBuilds(many);
+  ok('condenseBuilds: the newest ten, the three most played of the rest in build order, the rest counted', c.rows.length === 10 && c.rows[0].build === '0.00300' && c.rows[9].build === '0.00291'
+    && c.older.map((r) => r.build).join() === '0.00289,0.00288,0.00285' && c.hidden.builds === 3 && c.hidden.runs === 3 && st.condenseBuilds(many.slice(0, 4)).older.length === 0 && st.condenseBuilds(many.slice(0, 4)).hidden.builds === 0);
+  const { buildTable } = await import('../../analytics/tables.js');
+  const bt = buildTable(c);
+  ok('the By build table shows the divider and the footer', (bt.match(/<tr>/g) ?? []).length === 14 && bt.includes('older, most played') && bt.includes('3 more builds, 3 runs, not shown') && !buildTable(st.condenseBuilds(many.slice(0, 4))).includes('divider'));
   ok('filters by player and build', st.filterRuns(runs, { build: '0.095' }).length === 2 && st.filterRuns(runs, { player: 'zz' }).length === 0);
   ok('killers ranked', st.countBy(runs, 'killedBy').length === 3);
   const csv = st.toCsv(runs, () => 'Te,"st"');
@@ -183,7 +191,8 @@ fresh();
   ok('dashboard: a collector behind this page asks for the paste; one ahead of it says the page is behind main (0.00223)', dash.includes("compareVersions(server.version ?? '0', data.collectorVersion)") && lt > 0 && paste > lt && gt > paste && dash.lastIndexOf('paste collector/worker.js') === paste);
   ok('dashboard: tester names (0.136) show beside the typed name, never replace it; old renames fold in; codes keep their own label',
     dash.includes("label: tester ? `${tester} · ${pl.base}` : pl.base") && dash.includes('base: `${profile.name ||') && dash.includes('t[id] ??= String(n)')
-    && dash.includes('({ key, label: base, profile, importedAt })') && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
+    && readFileSync('analytics/tables.js', 'utf8').includes('data-tester="${esc(pl.testerKey)}"'));
+  ok('dashboard: no save-code entry any more — every tester is collected (0.00224)', !dash.includes('addCode') && !dash.includes('add-code') && !dash.includes('decodeSave') && !readFileSync('analytics/tables.js', 'utf8').includes("data-act=\"remove\""));
   ok('a name change is sent to the collector at once', readFileSync('src/ui/namePrompt.js', 'utf8').includes('shareStats(getProfile())'));
   ok('dashboard sends the key as a header (query only as a fallback for an older collector)', dash.includes('authorization: `Bearer ${key}`'));
   resetProfile();

@@ -35,6 +35,7 @@ button:hover:not(:disabled) { border-color: var(--gold); color: #fff; }
 button:disabled { opacity: 0.4; cursor: default; }
 button.small { padding: 3px 9px; font-size: 0.85rem; }
 .msg { margin: 10px 0 0; color: var(--gold); }
+tr.divider td { color: var(--muted, #9a8b6a); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 10px; }
 .filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 0 0 16px; }
 .filters label { color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
 .filters button { margin-left: auto; }
